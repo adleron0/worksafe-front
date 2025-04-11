@@ -11,7 +11,6 @@ const api = axios.create({
   withCredentials: true,
   headers: {
     Authorization: `Bearer ${accessToken}`,
-    'Content-Type': 'multipart/form-data'
   },
 });
 

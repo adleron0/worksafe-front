@@ -13,8 +13,15 @@ import { get } from "@/services/api";
 import Form from "./UserForm";
 import Icon from "@/components/general-components/Icon";
 import { User } from "@/pages/Users/Interfaces/user.interface";
+import { FC } from "react";
 
-const Profile = () => {
+interface ProfileProps {
+  showTrigger?: boolean;
+  open: boolean;
+  openChange?: () => void;
+}
+
+const Profile: FC<ProfileProps> = ({ showTrigger = true, open, openChange }) => {
   const searchParams ={
     limit: 10,
     page: 0,
@@ -39,13 +46,17 @@ const Profile = () => {
 
   return (
     <>
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="ghost" className="flex h-8 items-center font-normal justify-start gap-2 px-2 py-1 w-full rounded-sm">
-            <Icon name="user-pen" className="h-4 w-4" />
-            Editar Perfil
-          </Button>
-        </SheetTrigger>
+      <Sheet open={open} onOpenChange={openChange}>
+        {
+          showTrigger && (
+            <SheetTrigger asChild>
+              <Button variant="ghost" className="flex h-8 items-center font-normal justify-start gap-2 px-2 py-1 w-full rounded-sm">
+                <Icon name="user-pen" className="h-4 w-4" />
+                Editar Perfil
+              </Button>
+            </SheetTrigger>
+          )
+        }
         <SheetContent side="right" className="w-11/12 overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Meu Perfil</SheetTitle>

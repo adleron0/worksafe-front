@@ -19,6 +19,11 @@ const AvatarMenu = () => {
   const navigate = useNavigate();
   const { setAccessTokenState, setIsLogged, user } = useAuth();
   const [isDarkMode, setIsDarkMode] = useState(false); // Estado do modo escuro
+  const [openProfile, setOpenProfile] = useState(false);
+
+  const handleOpenProfile = () => {
+    setOpenProfile(!openProfile);
+  };
 
   // Recupera a preferência do modo escuro do localStorage
   useEffect(() => {
@@ -85,7 +90,13 @@ const AvatarMenu = () => {
           </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-40">
-          <Profile />
+          <DropdownMenuItem
+            className="cursor-pointer flex gap-2"
+            onClick={handleOpenProfile}
+          >
+            <Icon name="user-pen" className="h-4 w-4" />
+            Editar Perfil
+          </DropdownMenuItem>
           <DropdownMenuItem
             className="cursor-pointer flex gap-2"
             onClick={handleDarkMode}
@@ -118,6 +129,7 @@ const AvatarMenu = () => {
         </DropdownMenuContent>
       </DropdownMenu>
       {isPending && <Loader title={"Deslogando..."} />}
+      <Profile showTrigger={false} open={openProfile} openChange={handleOpenProfile} />
     </div>
   );
 };

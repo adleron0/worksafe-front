@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 
-const CerberusHome = () => {
+const Home = () => {
   const { toast } = useToast();
   
   const emitToasTeste = () => {
@@ -26,4 +26,4 @@ const CerberusHome = () => {
   );
 };
 
-export default CerberusHome;
+export default Home;

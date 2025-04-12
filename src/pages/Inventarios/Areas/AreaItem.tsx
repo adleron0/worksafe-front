@@ -138,7 +138,7 @@ const AreaItem = ({ area }: AreaItemProps) => {
             variant="outline"
             onClick={() => {
               navigate({
-                to: `/confinus/areas/${area.id}`,
+                to: `/inventarios/areas/${area.id}`,
               })
             }}
             className="flex items-center gap-1 cursor-pointer h-7 w-full text-xs truncate"

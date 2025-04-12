@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import CerberusHome from '@/pages/Confinus/CerberusHome'
+import Home from '@/pages/Inventarios/Home'
 
 export const Route = createFileRoute('/_authenticated/inventarios/')({
-  component: () => <CerberusHome />,
+  component: () => <Home />,
 })

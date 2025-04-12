@@ -1,11 +1,4 @@
 import React, { useState, useEffect } from "react";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { formatCPF, unformatCPF } from "@/utils/cpf-mask";
 import { formatPHONE } from "@/utils/phone-mask";
 import { User } from "@/pages/Users/Interfaces/user.interface";
+import Select from "@/components/general-components/Select";
 import DropUpload from "@/components/general-components/DropUpload";
 
 interface UserFormProps {
@@ -270,22 +264,23 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
               />
               {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
             </div>
-            <div>
-              <Label htmlFor="roleId">Função</Label>
-              <Select
-                onValueChange={(value) => handleChange("roleId", Number(value))}
-                value={dataForm.roleId.toString()}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Selecione a função" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Admin</SelectItem>
-                  <SelectItem value="2">Manager</SelectItem>
-                  <SelectItem value="3">User</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {
+              !self && 
+              <div>
+                <Label htmlFor="roleId">Função</Label>
+                <Select 
+                  name="roleId"
+                  options={[
+                    { id: 1, name: "Admin" },
+                    { id: 2, name: "Manager" },
+                    { id: 3, name: "User" },
+                  ]} 
+                  onChange={(name, value) => handleChange(name, Number(value))} 
+                  state={dataForm.roleId !== undefined ? String(dataForm.roleId) : ""}
+                  placeholder="Selecione a função"
+                />
+              </div>
+            }
           </>
         )
       }

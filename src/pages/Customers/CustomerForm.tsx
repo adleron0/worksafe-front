@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
+import Select from "@/components/general-components/Select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +11,7 @@ import Loader from "@/components/general-components/Loader";
 import { useAuth } from "@/context/AuthContext";
 import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
 import { formatPHONE } from "@/utils/phone-mask";
+import { formatCEP } from "@/utils/cep-mask";
 import { Customer as EntityInterface } from "@/pages/Customers/interfaces/customer.interface";
 import DropUpload from "@/components/general-components/DropUpload";
 import { IEntity } from "@/general-interfaces/entity.interface";
@@ -89,9 +84,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   useEffect(() => {
     if (formData) {
       Object.keys(formData).forEach((key) => {
-        if (formData[key as keyof typeof formData]) {
-          setDataForm((prev) => ({ ...prev, [key]: formData[key as keyof typeof formData] }));
-        }
+        setDataForm((prev) => ({ ...prev, [key]: formData[key as keyof typeof formData] }));
       });
       if (formData.imageUrl) {
         setPreview(formData.imageUrl);
@@ -183,7 +176,11 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   } = useQuery<Response | undefined, ApiError>({
     queryKey: [`listRanks`],
     queryFn: async () => {
-      return get('ranks', '', [{ key: 'limit', value: 999 }]);
+      const params = [
+        { key: 'limit', value: 999 },
+        { key: 'order-id', value: 'asc' },
+      ];
+      return get('ranks', '', params);
     },
   });
 
@@ -192,16 +189,25 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   } = useQuery<Response | undefined, ApiError>({
     queryKey: [`listStates`],
     queryFn: async () => {
-      return get('states', '', [{ key: 'limit', value: 999 }]);
+      const params = [
+        { key: 'limit', value: 999 },
+        { key: 'order-name', value: 'asc' },
+      ];
+      return get('states', '', params);
     },
   });
 
   const { 
     data: cities, 
   } = useQuery<Response | undefined, ApiError>({
-    queryKey: [`listCities`],
+    queryKey: [`listCities`, dataForm.stateId],
     queryFn: async () => {
-      return get('cities', '', [{ key: 'limit', value: 999 }]);
+      const params = [
+        { key: 'stateId', value: dataForm.stateId },
+        { key: 'limit', value: 999 },
+        { key: 'order-name', value: 'asc' },
+      ];
+      return get('cities', '', params);
     },
   });
 
@@ -278,59 +284,35 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
       <div>
         <Label htmlFor="rankId">Classificação</Label>
-        <Select
-          onValueChange={(value) => handleChange("rankId", Number(value))}
-          value={dataForm.rankId ? dataForm.rankId.toString() : "0"}
-        >
-          <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Selecione a classificação" />
-          </SelectTrigger>
-          <SelectContent>
-            {
-              ranks?.rows.map((rank: any) => (
-                <SelectItem key={rank.id} value={rank.id.toString()}>{rank.name}</SelectItem>
-              ))
-            }
-          </SelectContent>
-        </Select>
+        <Select 
+          name="rankId"
+          options={ranks?.rows || []} 
+          onChange={(name, value) => handleChange(name, Number(value))} 
+          state={dataForm.rankId !== undefined ? String(dataForm.rankId) : ""}
+          placeholder="Selecione a classificação"
+        />
       </div>
       
       <div>
         <Label htmlFor="stateId">Estado</Label>
-        <Select
-          onValueChange={(value) => handleChange("stateId", Number(value))}
-          value={dataForm.stateId ? dataForm.stateId.toString() : "0"}
-        >
-          <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Selecione o estado" />
-          </SelectTrigger>
-          <SelectContent>
-            {
-              states?.rows.map((state: any) => (
-                <SelectItem key={state.id} value={state.id.toString()}>{state.name}</SelectItem>
-              ))
-            }
-          </SelectContent>
-        </Select>
+        <Select 
+          name="stateId"
+          options={states?.rows || []} 
+          onChange={(name, value) => handleChange(name, Number(value))} 
+          state={dataForm.stateId !== undefined ? String(dataForm.stateId) : ""}
+          placeholder="Selecione o estado"
+        />
       </div>
       
       <div>
         <Label htmlFor="cityId">Cidade</Label>
-        <Select
-          onValueChange={(value) => handleChange("cityId", Number(value))}
-          value={dataForm.cityId ? dataForm.cityId.toString() : "0"}
-        >
-          <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Selecione a cidade" />
-          </SelectTrigger>
-          <SelectContent>
-            {
-              cities?.rows.map((city: any) => (
-                <SelectItem key={city.id} value={city.id.toString()}>{city.name}</SelectItem>
-              ))
-            }
-          </SelectContent>
-        </Select>
+        <Select 
+          name="cityId"
+          options={cities?.rows || []} 
+          onChange={(name, value) => handleChange(name, Number(value))} 
+          state={dataForm.cityId !== undefined ? String(dataForm.cityId) : ""}
+          placeholder="Selecione a cidade"
+        />
       </div>
       
       <div>
@@ -339,8 +321,11 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           id="zipcode"
           name="zipcode"
           placeholder="00000-000"
-          value={dataForm.zipcode}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
+          value={formatCEP(dataForm.zipcode)}
+          onChange={(e) => {
+            const raw = e.target.value.replace(/\D/g, ''); // só números
+            handleChange(e.target.name, formatCEP(raw));
+          }}
           className="mt-1"
         />
       </div>

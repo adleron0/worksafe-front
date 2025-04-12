@@ -10,7 +10,7 @@ import Loader from "@/components/general-components/Loader";
 import { useAuth } from "@/context/AuthContext";
 import { formatCPF, unformatCPF } from "@/utils/cpf-mask";
 import { formatPHONE } from "@/utils/phone-mask";
-import { User } from "@/pages/Users/Interfaces/user.interface";
+import { User } from "./interfaces/user.interface";
 import Select from "@/components/general-components/Select";
 import DropUpload from "@/components/general-components/DropUpload";
 

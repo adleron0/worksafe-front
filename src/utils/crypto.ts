@@ -1,5 +1,5 @@
 import CryptoJS from 'crypto-js'; // Importa o pacote completo
-import { IPayload } from '@/interfaces/auth.interface';
+import { IPayload } from '@/general-interfaces/auth.interface';
 
 // Converte a chave para um WordArray, como no back-end
 const SECRET_KEY = CryptoJS.enc.Utf8.parse(

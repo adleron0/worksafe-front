@@ -2,7 +2,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { User } from "@/pages/Users/Interfaces/user.interface";
+import { User } from "./interfaces/user.interface";
 import useVerify from "@/hooks/use-verify";
 import { patch } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

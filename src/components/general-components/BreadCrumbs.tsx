@@ -1,4 +1,4 @@
-import { Link, useMatches } from '@tanstack/react-router';
+import { useMatches, useRouter } from '@tanstack/react-router';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,6 +11,7 @@ import React from 'react';
 
 const BreadCrumbs = () => {
   const matches = useMatches();
+  const router = useRouter();
   const pathName = matches[2].pathname.endsWith('/') ? matches[2].pathname.slice(0, -1) : matches[2].pathname;
   const pathArray = pathName.split('/');
 
@@ -31,10 +32,14 @@ const BreadCrumbs = () => {
                 {isLast ? (
                   <BreadcrumbPage>{path}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink asChild>
-                    <Link to={`/${pathArray.slice(0, index + 1).join('/') || '#'}`}>
-                      {path}
-                    </Link>
+                  <BreadcrumbLink 
+                    onClick={() => {
+                      const targetPath = `/${pathArray.slice(0, index + 1).join('/')}`;
+                      router.navigate({ to: targetPath as any });
+                    }}
+                    className="cursor-pointer"
+                  >
+                    {path}
                   </BreadcrumbLink>
                 )}
               </BreadcrumbItem>

@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 // import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Area } from "@/interfaces/area.interface";
+import { Area } from "./interfaces/area.interface";
 import useVerify from "@/hooks/use-verify";
 import { inactiveArea, activeArea } from "@/services/areaService";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import Loader from "@/components/general-components/Loader";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import AreaForm from "./AreaForm";
-import { ApiError } from "@/interfaces/api.interface";
+import { ApiError } from "@/general-interfaces/api.interface";
 import { Separator } from "@/components/ui/separator";
 import { SendHorizontal } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";

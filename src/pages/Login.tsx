@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { EyeOpenIcon, EyeClosedIcon  } from "@radix-ui/react-icons";
 import { VscLoading } from "react-icons/vsc";
-import { LoginData } from "@/interfaces/auth.interface";
+import { LoginData } from "@/general-interfaces/auth.interface";
 import { useAuth } from '@/context/AuthContext';
 import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
 import loginSafety from "../assets/building-safety-animate.svg";

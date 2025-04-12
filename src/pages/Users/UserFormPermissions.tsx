@@ -11,9 +11,9 @@ import { DialogDescription } from "@/components/ui/dialog";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { useState } from "react";
 import Loader from "@/components/general-components/Loader";
-import { User } from "@/pages/Users/Interfaces/user.interface";
-import { Permission, UserPermission } from "@/pages/Users/Interfaces/permission.interface";
-import { ApiError } from "@/interfaces/api.interface";
+import { User } from "./interfaces/user.interface";
+import { Permission, UserPermission } from "./interfaces/permission.interface";
+import { ApiError } from "@/general-interfaces/api.interface";
 import Icon from "@/components/general-components/Icon";
 
 const PermissionsForm = ({ user }: { user: User }) => {

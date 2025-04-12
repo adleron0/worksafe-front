@@ -110,7 +110,7 @@ const Users = () => {
         title={`Buscar ${entity.pluralName}`}
         description={`Preencha os campos abaixo para filtrar ${entity.pluralName}.`}
         side="left"
-        form={ <SearchForm onSubmit={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} entity={entity} /> }
+        form={ <SearchForm onSubmit={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
       />
 
       {/* Formulário de cadastro */}
@@ -128,7 +128,7 @@ const Users = () => {
             : `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
           : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
         side="right"
-        form={ <Form openSheet={setOpenForm} formData={formData} entity={entity} /> }
+        form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} /> }
       />
 
       {/* Listagem de items */}

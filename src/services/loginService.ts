@@ -1,5 +1,5 @@
 import api from './api';
-import { LoginData } from '@/interfaces/auth.interface';
+import { LoginData } from '@/general-interfaces/auth.interface';
 
 // URL base da API
 const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:3000";

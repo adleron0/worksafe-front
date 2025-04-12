@@ -17,8 +17,8 @@ import Loader from "@/components/general-components/Loader";
 import { DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/context/AuthContext";
 import { Plus, Edit3 } from "lucide-react";
-import { Area } from "@/interfaces/area.interface";
-import { ApiError } from "@/interfaces/api.interface";
+import { Area } from "./interfaces/area.interface";
+import { ApiError } from "@/general-interfaces/api.interface";
 import DropUpload from "@/components/general-components/DropUpload";
 
 const AreaForm = ({ areaToEdit }: { areaToEdit?: Area }) => {

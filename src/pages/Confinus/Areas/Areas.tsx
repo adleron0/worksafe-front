@@ -8,8 +8,8 @@ import Pagination from "@/components/general-components/Pagination";
 import { listAreasCompany } from "@/services/areaService";
 import { useQuery } from "@tanstack/react-query";
 import AreaItemSkeleton from "./Skeletons/areaItemSkeleton";
-import { ApiError } from "@/interfaces/api.interface";
-import { Area } from "@/interfaces/area.interface";
+import { ApiError } from "@/general-interfaces/api.interface";
+import { Area } from "./interfaces/area.interface";
 import AreaItem from "./AreaItem";
 
 const Areas = () => {

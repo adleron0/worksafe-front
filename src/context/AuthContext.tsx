@@ -6,7 +6,7 @@ import { createContext, useState, useContext, ReactNode, useMemo, useEffect } fr
 import api from '@/services/api';
 import { decryptPayload } from '@/utils/crypto';
 import { decodeJwtPayload } from '@/utils/decodeJwt';
-import { IPayload } from '@/interfaces/auth.interface';
+import { IPayload } from '@/general-interfaces/auth.interface';
 
 interface AuthContextProps {
   accessToken: string | null;

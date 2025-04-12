@@ -12,8 +12,8 @@ import ItemList from "./UserItem";
 import Form from "./UserForm";
 import SearchForm from "./UserSeach";
 // Interfaces
-import { User } from "@/pages/Users/Interfaces/user.interface";
-import { ApiError } from "@/interfaces/api.interface";
+import { User } from "./interfaces/user.interface";
+import { ApiError } from "@/general-interfaces/api.interface";
 
 const Users = () => {
   const { can } = useVerify();

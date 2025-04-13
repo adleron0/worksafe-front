@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
-
+import RotatingText from "@/components/ui-bits/RotatingText/RotatingText";
+import Icon from "@/components/general-components/Icon";
 import {
   Phone,
   MessageCircleMore,
@@ -13,14 +15,12 @@ import {
   Award,
   Clock,
   Users,
-  Menu,
   X,
   ChevronRight,
   Star,
   CheckCircle,
   ArrowUpRight,
   Trash,
-  ChevronUp,
   ChevronDown,
 } from "lucide-react";
 
@@ -31,53 +31,56 @@ const yearsOfExperience = new Date().getFullYear() - foundationYear;
 // Logo
 import Logo from "@/components/general-components/Logo";
 
+// Video Hero
+import HeroVideo from "../assets/video-website-header.mp4";
+
 // Video Treinamento
 const TreinamentoVideo = "/assets/videos/treinamento.mp4";
 
 // Imagens do About
-import AboutImage1 from "../../public/assets/images/fundador-1.webp";
-import AboutImage2 from "../../public/assets/images/fundador-2.webp";
+import AboutImage1 from "../assets/images/fundador-1.webp";
+import AboutImage2 from "../assets/images/fundador-2.webp";
 
 // Imagens Serviços
-import Altura from "../../public/assets/images/altura.jpg";
-import Confinado from "../../public/assets/images/confinado.jpg";
-import Resgate from "../../public/assets/images/resgate.jpg";
-import LinhaDeVida from "../../public/assets/images/linha-de-vida.jpg";
-import Eolica from "../../public/assets/images/eolica.webp";
+// import Altura from "../assets/images/altura.jpg";
+import Confinado from "../assets/images/confinado.jpg";
+import Resgate from "../assets/images/resgate.jpg";
+import LinhaDeVida from "../assets/images/linha-de-vida.jpg";
+import Eolica from "../assets/images/eolica.webp";
 
 // Imagens Hero Slides
-import Altura2 from "../../public/assets/images/altura-2.jpg";
-import Equipamentos from "../../public/assets/images/equipamentos.jpg";
-import Treinamento from "../../public/assets/images/treinamento.jpg";
-import Resgate2 from "../../public/assets/images/resgate-2.jpg";
+import Altura2 from "../assets/images/altura-2.jpg";
+// import Equipamentos from "../assets/images/equipamentos.jpg";
+// import Treinamento from "../assets/images/treinamento.jpg";
+// import Resgate2 from "../assets/images/resgate-2.jpg";
 
 // Hero Slides
-const slides = [
-  {
-    image: Altura,
-    title: "Especialistas em Trabalho em Altura",
-    subtitle: "Segurança e qualidade em cada projeto",
-    highlight: `${yearsOfExperience}+ anos de experiência`,
-  },
-  {
-    image: Resgate2,
-    title: "Equipe de Resgate de Prontidão",
-    subtitle: "Expertise na segurança em Altura e Espaços Confinados",
-    highlight: `Atendimento 24h`,
-  },
-  {
-    image: Equipamentos,
-    title: "Equipamentos Certificados",
-    subtitle: "As melhores marcas do mercado",
-    highlight: "100% certificados",
-  },
-  {
-    image: Treinamento,
-    title: "Treinamentos Especializados",
-    subtitle: "Capacitação em Acesso por Cordas e NBRs diversas",
-    highlight: "1000+ profissionais treinados",
-  },
-];
+// const slides = [
+//   {
+//     image: Altura,
+//     title: "Especialistas em Trabalho em Altura",
+//     subtitle: "Segurança e qualidade em cada projeto",
+//     highlight: `${yearsOfExperience}+ anos de experiência`,
+//   },
+//   {
+//     image: Resgate2,
+//     title: "Equipe de Resgate de Prontidão",
+//     subtitle: "Expertise na segurança em Altura e Espaços Confinados",
+//     highlight: `Atendimento 24h`,
+//   },
+//   {
+//     image: Equipamentos,
+//     title: "Equipamentos Certificados",
+//     subtitle: "As melhores marcas do mercado",
+//     highlight: "100% certificados",
+//   },
+//   {
+//     image: Treinamento,
+//     title: "Treinamentos Especializados",
+//     subtitle: "Capacitação em Acesso por Cordas e NBRs diversas",
+//     highlight: "1000+ profissionais treinados",
+//   },
+// ];
 
 // Serviços
 const services = [
@@ -148,7 +151,7 @@ const services = [
 ];
 
 // Produto Destaque Venda
-import Corda11 from "../../public/assets/images/equipamentos/corda-11.webp";
+import Corda11 from "../assets/images/equipamentos/corda-11.webp";
 const featuredProduct = {
   id: "corda-11-mm",
   name: "Corda de 11mm Para Trabalho em Altura e Resgate",
@@ -167,20 +170,20 @@ const featuredProduct = {
 };
 
 // Imagens de Equipamentos para Venda
-import AscensorDePunho from "../../public/assets/images/equipamentos/ascensor-de-punho.webp";
-import Capacete from "../../public/assets/images/equipamentos/capacete.webp";
-import Cinto7y from "../../public/assets/images/equipamentos/cinto-7y.webp";
-import DescensorAutoblocante from "../../public/assets/images/equipamentos/descensor-autoblocante.webp";
-import FitaAncoragem from "../../public/assets/images/equipamentos/fita-ancoragem.webp";
-import LoryAutoBlocante from "../../public/assets/images/equipamentos/lory-auto-blocante.webp";
-import MosquetaoOvalAco from "../../public/assets/images/equipamentos/mosquetao-oval-aco.webp";
-import OlhalAncoragemPredial from "../../public/assets/images/equipamentos/olhal-ancoragem-predial.webp";
-import PoliaDupla from "../../public/assets/images/equipamentos/polia-dupla.webp";
-import PoliaSimples from "../../public/assets/images/equipamentos/polia-simples.webp";
-import TalabarteY from "../../public/assets/images/equipamentos/talabarte-y.webp";
-import TravaQuedasCordaAbs from "../../public/assets/images/equipamentos/trava-quedas-corda-abs.webp";
-import TravaQuedasRetratil from "../../public/assets/images/equipamentos/trava-quedas-retratil.webp";
-import Mochila from "../../public/assets/images/equipamentos/mochila-equipamentos.webp";
+import AscensorDePunho from "../assets/images/equipamentos/ascensor-de-punho.webp";
+import Capacete from "../assets/images/equipamentos/capacete.webp";
+import Cinto7y from "../assets/images/equipamentos/cinto-7y.webp";
+import DescensorAutoblocante from "../assets/images/equipamentos/descensor-autoblocante.webp";
+import FitaAncoragem from "../assets/images/equipamentos/fita-ancoragem.webp";
+import LoryAutoBlocante from "../assets/images/equipamentos/lory-auto-blocante.webp";
+import MosquetaoOvalAco from "../assets/images/equipamentos/mosquetao-oval-aco.webp";
+import OlhalAncoragemPredial from "../assets/images/equipamentos/olhal-ancoragem-predial.webp";
+import PoliaDupla from "../assets/images/equipamentos/polia-dupla.webp";
+import PoliaSimples from "../assets/images/equipamentos/polia-simples.webp";
+import TalabarteY from "../assets/images/equipamentos/talabarte-y.webp";
+import TravaQuedasCordaAbs from "../assets/images/equipamentos/trava-quedas-corda-abs.webp";
+import TravaQuedasRetratil from "../assets/images/equipamentos/trava-quedas-retratil.webp";
+import Mochila from "../assets/images/equipamentos/mochila-equipamentos.webp";
 
 // Produtos para Venda
 const products = [
@@ -355,12 +358,12 @@ const products = [
 ];
 
 // Imagens Produtos Locação
-import ConjuntoAutonomo from "../../public/assets/images/locacao/conjunto-autonomo.webp";
-import Detector from "../../public/assets/images/locacao/detector.webp";
-import Exaustor from "../../public/assets/images/locacao/exaustor.webp";
-import KitResgate from "../../public/assets/images/locacao/kit-resgate.webp";
-import MacaSked from "../../public/assets/images/locacao/maca-sked.webp";
-import Tripe from "../../public/assets/images/locacao/tripe.webp";
+import ConjuntoAutonomo from "../assets/images/locacao/conjunto-autonomo.webp";
+import Detector from "../assets/images/locacao/detector.webp";
+import Exaustor from "../assets/images/locacao/exaustor.webp";
+import KitResgate from "../assets/images/locacao/kit-resgate.webp";
+import MacaSked from "../assets/images/locacao/maca-sked.webp";
+import Tripe from "../assets/images/locacao/tripe.webp";
 
 // Aluguel de Equipamentos
 const rentals = [
@@ -448,23 +451,23 @@ const rentals = [
 ];
 
 // Training Courses
-import Brigada from "../../public/assets/images/treinamentos/brigada.jpg";
-import Nr35Trabalhador from "../../public/assets/images/treinamentos/nr35-trabalhador.jpg";
-import Nr35Liberador from "../../public/assets/images/treinamentos/nr35-liberador.webp";
-import Nr35Supervisor from "../../public/assets/images/treinamentos/nr35-supervisor.jpg";
-import NR11 from "../../public/assets/images/treinamentos/nr-11.jpg";
-import NR12 from "../../public/assets/images/treinamentos/nr-12.png";
-import NR20 from "../../public/assets/images/treinamentos/nr-20.jpg";
-import NR23 from "../../public/assets/images/treinamentos/nr-23.webp";
-import Nr33 from "../../public/assets/images/treinamentos/nr-33.webp";
-import Nr33Supervisor from "../../public/assets/images/treinamentos/nr33-supervisor.webp";
-import RTI from "../../public/assets/images/treinamentos/resgate-industrial.webp";
-import RTO from "../../public/assets/images/treinamentos/resgate-operacional.webp";
-import RTL from "../../public/assets/images/treinamentos/resgate-lider.webp";
-import RTC from "../../public/assets/images/treinamentos/resgate-coordenador.jpg";
-import N1 from "../../public/assets/images/treinamentos/n1.webp";
-import N2 from "../../public/assets/images/treinamentos/n2.webp";
-import N3 from "../../public/assets/images/treinamentos/n3.jpg";
+import Brigada from "../assets/images/treinamentos/brigada.jpg";
+import Nr35Trabalhador from "../assets/images/treinamentos/nr35-trabalhador.jpg";
+import Nr35Liberador from "../assets/images/treinamentos/nr35-liberador.webp";
+import Nr35Supervisor from "../assets/images/treinamentos/nr35-supervisor.jpg";
+import NR11 from "../assets/images/treinamentos/nr-11.jpg";
+import NR12 from "../assets/images/treinamentos/nr-12.png";
+import NR20 from "../assets/images/treinamentos/nr-20.jpg";
+import NR23 from "../assets/images/treinamentos/nr-23.webp";
+import Nr33 from "../assets/images/treinamentos/nr-33.webp";
+import Nr33Supervisor from "../assets/images/treinamentos/nr33-supervisor.webp";
+import RTI from "../assets/images/treinamentos/resgate-industrial.webp";
+import RTO from "../assets/images/treinamentos/resgate-operacional.webp";
+import RTL from "../assets/images/treinamentos/resgate-lider.webp";
+import RTC from "../assets/images/treinamentos/resgate-coordenador.jpg";
+import N1 from "../assets/images/treinamentos/n1.webp";
+import N2 from "../assets/images/treinamentos/n2.webp";
+import N3 from "../assets/images/treinamentos/n3.jpg";
 
 const courses = [
   {
@@ -715,12 +718,12 @@ const courses = [
 ];
 
 // Imagens Clientes
-import AlagoasAmbiental from "../../public/assets/images/clientes/alagoas-ambiental.png";
-import AmbiparLogo from "../../public/assets/images/clientes/ambipar-logo.png";
-import Braskem from "../../public/assets/images/clientes/braskem.png";
-import Petrobras from "../../public/assets/images/clientes/petrobras.png";
-import Prevenir from "../../public/assets/images/clientes/prevenir.png";
-import RipAlagoas from "../../public/assets/images/clientes/rip-alagoas.png";
+import AlagoasAmbiental from "../assets/images/clientes/alagoas-ambiental.png";
+import AmbiparLogo from "../assets/images/clientes/ambipar-logo.png";
+import Braskem from "../assets/images/clientes/braskem.png";
+import Petrobras from "../assets/images/clientes/petrobras.png";
+import Prevenir from "../assets/images/clientes/prevenir.png";
+import RipAlagoas from "../assets/images/clientes/rip-alagoas.png";
 
 // Client Logos
 const clients = [
@@ -801,35 +804,35 @@ const faqs = [
 
 
 // Testimonials
-const testimonials = [
-  {
-    name: "João Silva",
-    company: "Construtora ABC",
-    role: "Gerente de Segurança",
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200",
-    video: "https://www.youtube.com/embed/your-video-id-1",
-    text: "A RTL transformou nossa abordagem em segurança do trabalho. Os treinamentos são excepcionais.",
-  },
-  {
-    name: "Maria Santos",
-    company: "Indústria XYZ",
-    role: "Coordenadora de EHS",
-    image:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200",
-    video: "https://www.youtube.com/embed/your-video-id-2",
-    text: "Equipamentos de alta qualidade e suporte técnico incomparável. Recomendo fortemente.",
-  },
-  {
-    name: "Pedro Costa",
-    company: "Engenharia Beta",
-    role: "Diretor de Operações",
-    image:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200",
-    video: "https://www.youtube.com/embed/your-video-id-3",
-    text: "Parceria que faz diferença. Profissionalismo em cada detalhe dos serviços prestados.",
-  },
-];
+// const testimonials = [
+//   {
+//     name: "João Silva",
+//     company: "Construtora ABC",
+//     role: "Gerente de Segurança",
+//     image:
+//       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200",
+//     video: "https://www.youtube.com/embed/your-video-id-1",
+//     text: "A RTL transformou nossa abordagem em segurança do trabalho. Os treinamentos são excepcionais.",
+//   },
+//   {
+//     name: "Maria Santos",
+//     company: "Indústria XYZ",
+//     role: "Coordenadora de EHS",
+//     image:
+//       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200",
+//     video: "https://www.youtube.com/embed/your-video-id-2",
+//     text: "Equipamentos de alta qualidade e suporte técnico incomparável. Recomendo fortemente.",
+//   },
+//   {
+//     name: "Pedro Costa",
+//     company: "Engenharia Beta",
+//     role: "Diretor de Operações",
+//     image:
+//       "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200",
+//     video: "https://www.youtube.com/embed/your-video-id-3",
+//     text: "Parceria que faz diferença. Profissionalismo em cada detalhe dos serviços prestados.",
+//   },
+// ];
 
 // Features
 const features = [
@@ -867,13 +870,13 @@ type CartItem = {
 };
 
 export default function Home() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [currentCourse, setCurrentCourse] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<typeof courses[0] | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const navigate = useNavigate();
+
 
   const toggleFaq = (index: number) => {
     setActiveIndex(activeIndex === index ? null : index);
@@ -900,21 +903,6 @@ export default function Home() {
       document.body.style.overflow = "";
     };
   }, [isMenuOpen, isCartOpen, selectedCourse]);
-
-  // Atualização automática do slider e dos cursos
-  useEffect(() => {
-    const slideTimer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 8000);
-    return () => clearInterval(slideTimer);
-  }, []);
-
-  useEffect(() => {
-    const courseTimer = setInterval(() => {
-      setCurrentCourse((prev) => (prev + 1) % courses.length);
-    }, 8000);
-    return () => clearInterval(courseTimer);
-  }, []);
 
   // Recupera o carrinho do localStorage ao montar
   useEffect(() => {
@@ -1049,7 +1037,7 @@ export default function Home() {
     <>
       {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 bg-orange-700/50 backdrop-blur-sm transition-opacity duration-300 z-40 ${
+        className={`fixed inset-0 bg-primary/30 backdrop-blur-sm transition-opacity duration-300 z-40 ${
           isMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setIsMenuOpen(false)}
@@ -1059,56 +1047,60 @@ export default function Home() {
         <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
           <div className="flex items-center justify-between h-20">
             <div className="flex gap-1 items-center">
-              <Logo colorPath24="hsl(var(--inverse-foreground))" colorPath25="hsl(var(--primary))" className="h-8 w-8" />
+              <Logo colorPath24="hsl(var(--inverse-foreground))" colorPath25="hsl(var(--primary))" className="h-10 w-10" />
               <div className="flex flex-col text-inverse-foreground">
-                <span className="font-black text-xl">WORKSAFE</span>
-                <span className="text-xs -mt-1 font-semibold">Brasil</span>
+                <span className="font-black text-2xl">WORKSAFE</span>
+                <span className="text-sm -mt-1.5 font-semibold">Brasil</span>
               </div>
             </div>
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-4">
               <a
                 href="#servicos"
-                className="text-gray-600 hover:text-yellow-500 transition-colors"
+                className="text-gray-600 hover:text-primary transition-colors"
               >
                 Serviços
               </a>
               <a
                 href="#produtos"
-                className="text-gray-600 hover:text-yellow-500 transition-colors"
+                className="text-gray-600 hover:text-primary transition-colors"
               >
                 Produtos
               </a>
               <a
                 href="#aluguel"
-                className="text-gray-600 hover:text-yellow-500 transition-colors"
+                className="text-gray-600 hover:text-primary transition-colors"
               >
                 Aluguel
               </a>
               <a
                 href="#treinamentos"
-                className="text-gray-600 hover:text-yellow-500 transition-colors"
+                className="text-gray-600 hover:text-primary transition-colors"
               >
                 Treinamentos
               </a>
               <a
                 href="#sobre"
-                className="text-gray-600 hover:text-yellow-500 transition-colors"
+                className="text-gray-600 hover:text-primary transition-colors"
               >
                 Sobre Nós
               </a>
               <Button
-                onClick={() => handleWhatsApp()}
+                onClick={() => {
+                  navigate({
+                    to: `/login`,
+                  })
+                }}
                 className="bg-primary  text-white"
               >
-                Fale Conosco <Phone className="h-4 w-4 ml-2" />
+                Login
               </Button>
               {/* Botão do Carrinho */}
               <button
-                className="relative p-2 hover:scale-110 transition-transform duration-200"
+                className="relative p-2 hover:scale-110 cursor-pointer transition-transform duration-200"
                 onClick={() => setIsCartOpen(true)}
               >
-                <ShoppingCart className="w-6 h-6 text-inverse-foreground" />
+                <ShoppingCart className="w-6 h-6 text-gray-900" />
                 {cart.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-primary text-white rounded-full text-xs w-5 h-5 flex items-center justify-center animate-bounce">
                     {cart.reduce((acc, item) => acc + item.quantity, 0)}
@@ -1120,7 +1112,7 @@ export default function Home() {
             <div className="md:hidden flex items-center gap-2">
               {/* Botão do Carrinho */}
               <button
-                className="relative p-2 hover:scale-110 transition-transform duration-200"
+                className="relative text-gray-900 cursor-pointer p-2 hover:scale-110 transition-transform duration-200"
                 onClick={() => setIsCartOpen(true)}
               >
                 <ShoppingCart className="w-6 h-6" />
@@ -1162,35 +1154,35 @@ export default function Home() {
 
                 <a
                   href="#sobre"
-                  className="text-gray-600 hover:text-yellow-500 transition-colors"
+                  className="text-gray-600 hover:text-primary transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Sobre Nós
                 </a>
                 <a
                   href="#servicos"
-                  className="text-gray-600 hover:text-yellow-500 transition-colors"
+                  className="text-gray-600 hover:text-primary transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Serviços
                 </a>
                 <a
                   href="#produtos"
-                  className="text-gray-600 hover:text-yellow-500 transition-colors"
+                  className="text-gray-600 hover:text-primary transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Produtos
                 </a>
                 <a
                   href="#aluguel"
-                  className="text-gray-600 hover:text-yellow-500 transition-colors"
+                  className="text-gray-600 hover:text-primary transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Aluguel
                 </a>
                 <a
                   href="#treinamentos"
-                  className="text-gray-600 hover:text-yellow-500 transition-colors"
+                  className="text-gray-600 hover:text-primary transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Treinamentos
@@ -1198,12 +1190,13 @@ export default function Home() {
 
                 <Button
                   onClick={() => {
-                    handleWhatsApp();
-                    setIsMenuOpen(false);
+                    navigate({
+                      to: `/login`,
+                    })
                   }}
                   className="bg-primary hover:brightness-125 text-white w-full"
                 >
-                  Fale Conosco <Phone className="ml-2" />
+                  Login
                 </Button>
               </div>
             </div>
@@ -1230,15 +1223,15 @@ export default function Home() {
           {/* Cart Header */}
           <div className="flex justify-between items-center p-6 border-b">
             <div className="flex items-center gap-2">
-              <ShoppingCart className="w-6 h-6 text-orange-500" />
-              <h2 className="text-xl font-bold">Carrinho</h2>
+              <ShoppingCart className="w-6 h-6 text-primary" />
+              <h2 className="text-xl font-bold text-primary">Carrinho</h2>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setIsCartOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-1 hover:bg-gray-100 rounded-sm cursor-pointer text-gray-700 hover:text-destructive transition-colors"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -1318,50 +1311,64 @@ export default function Home() {
       <main className="min-h-screen pt-20">
         {/* Hero Section with Slider */}
         <section className="relative h-[calc(100vh-5rem)] overflow-hidden">
-          {slides.map((slide, index) => (
-            <div
-              key={index}
-              className={`absolute inset-0 transition-opacity duration-1000 ${
-                currentSlide === index ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              <div
-                className="absolute inset-0 bg-cover bg-center hero-slide"
-                style={{
-                  backgroundImage: `url(${
-                    typeof slide.image === "string" ? slide.image : slide.image.src
-                  })`,
-                }}
-              >
-                <div className="absolute inset-0 gradient-overlay" />
-              </div>
-              <div className="relative h-full flex items-center">
-                <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
-                  <div className="max-w-3xl">
-                    <span className="inline-block bg-orange-400 text-black px-4 py-2 rounded-full text-sm font-semibold mb-4">
-                      {slide.highlight}
-                    </span>
-                    <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-                      {slide.title}
-                    </h1>
-                    <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-8">
-                      {slide.subtitle}
-                    </p>
-                    <div className="flex flex-col md:flex-row gap-4">
-                      <Button
-                        size="lg"
-                        className="bg-gradient-to-r from-red-500 to-orange-500 hover:brightness-125 text-white text-lg px-8"
-                        onClick={() => handleWhatsApp()}
-                      >
-                        Solicite um Orçamento <Phone className="ml-2" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+          {/* Video background */}
+          <video
+            autoPlay
+            loop
+            muted
+            className="absolute inset-0 w-full h-full object-cover"
+            src={HeroVideo}
+          />
+          {/* Overlay */}
+          <div className="bg-black/50 absolute inset-0 z-0" />
+
+          <div className="relative h-full flex items-center py-20">
+            <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-60 w-full">
+              <div className="max-w-4xl flex flex-col gap-4 items-start justify-center text-left">
+                <h2 className="text-white text-xl sm:text-2xl md:text-4xl font-medium leading-tight">
+                  Somos Especialistas em
+                </h2>
+
+                <RotatingText
+                  texts={[
+                    'Alpinismo Industrial',
+                    'Treinamentos das NBRs',
+                    'Trabalhos em Altura',
+                    'Espaços Confinados',
+                    'Resgate Técnico Industrial',
+                    'Soluções em Linha de Vida',
+                    'Formações NR33 e NR35',
+                    'Consultoria em SST'
+                  ]}
+                  mainClassName="px-4 py-2 sm:py-2.5 text-2xl sm:text-3xl md:text-5xl font-bold bg-primary text-white rounded-lg shadow-lg"
+                  staggerFrom="last"
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "-120%" }}
+                  staggerDuration={0.025}
+                  splitLevelClassName="overflow-hidden pb-1 sm:pb-1.5"
+                  transition={{ type: "spring", damping: 30, stiffness: 400 }}
+                  rotationInterval={5000}
+                />
+
+                <p className="text-zinc-200 text-base sm:text-2xl max-w-xl">
+                  Venha conhecer o maior centro em segurança do trabalho industrial do Nordeste.
+                </p>
+
+                <Button 
+                  variant="outline"
+                  className="flex items-center border-primary px-6 bg-transparent hover:bg-primary"
+                >
+                  Saiba mais
+                  <Icon name="arrow-right" className="ml-2 w-4 h-4" />
+                </Button>
               </div>
             </div>
-          ))}
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3">
+          </div>
+
+
+          {/* Navigation dots */}
+          {/* <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3">
             {slides.map((_, index) => (
               <button
                 key={index}
@@ -1371,7 +1378,7 @@ export default function Home() {
                 onClick={() => setCurrentSlide(index)}
               />
             ))}
-          </div>
+          </div> */}
         </section>
 
         {/* Features Section */}
@@ -1785,8 +1792,6 @@ export default function Home() {
                       <img
                         src={course.image}
                         alt={course.name}
-                        layout="fill"
-                        objectFit="cover"
                         className="transition-transform duration-500"
                       />
                       <div className="absolute top-1 left-1 flex gap-2 items-center px-2 py-1 h-6 text-xs bg-green-100 rounded-full">
@@ -1839,8 +1844,6 @@ export default function Home() {
                     <img
                       src={selectedCourse.image}
                       alt={selectedCourse.name}
-                      layout="fill"
-                      objectFit="cover"
                       className="rounded-xl brightness-50"
                     />
                     {selectedCourse.flag && (
@@ -2071,7 +2074,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
               <div>
                 <div className="flex items-center gap-2 mb-6">
-                  <img src={Logo} width={40} height={40} alt="Logo" />
+                  {/* <img src={Logo} width={40} height={40} alt="Logo" /> */}
                   <span className="text-xl font-extrabold bg-primary bg-clip-text text-transparent">
                     RPL Rope Access
                   </span>

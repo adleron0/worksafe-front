@@ -21,6 +21,10 @@ import {
 } from "lucide-react";
 import NavBar from "./components/NavBar";
 import Hero from "./components/Hero";
+import Feature from "./components/Feature";
+import About from "./components/About";
+import Services from "./components/Services";
+import Products from "./components/Products";
 
 // Calcula anos
 const foundationYear = 2018;
@@ -985,273 +989,25 @@ export default function Home() {
           <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {features.map((feature, index) => (
-                <div key={index} className="text-center p-6 rounded-xl card-hover">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 bg-gradient-to-r from-green-400 to-primary-light text-white">
-                    <feature.icon size={32} />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
-                </div>
+                <Feature
+                  key={index}
+                  icon={feature.icon}
+                  title={feature.title}
+                  description={feature.description}
+                />
               ))}
             </div>
           </div>
         </section>
 
         {/* About Section */}
-        <section id="sobre" className="py-20 bg-gray-50">
-          <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <h2 className="section-title w-full text-center text-3xl md:text-5xl font-bold mb-8 pb-4">
-                  Sobre Nós
-                </h2>
-                <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                  Desde 2018, a RPL Rope Access se consolidou como referência em soluções de acesso por cordas e segurança do trabalho.
-                </p>
-                <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                  Com mais de {yearsOfExperience} anos de experiência no setor, atuamos com excelência e compromisso na execução de serviços em altura, sempre priorizando a segurança e a qualidade.
-                </p>
-                <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                  Nosso fundador, Roberto Leite, é profissional certificado em Nível 3 de Acesso por Cordas desde 2012, trazendo para a empresa toda sua experiência e conhecimento técnico.
-                </p>
-                <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                  Contamos com uma equipe de especialistas altamente qualificados e certificados, garantindo que cada projeto seja realizado de acordo com as normas técnicas e padrões de segurança mais rigorosos do mercado.
-                </p>
-                <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                  Na RPL Rope Access, unimos expertise, profissionalismo e inovação para oferecer soluções sob medida para nossos clientes, assegurando a eficiência e a segurança em todas as etapas do trabalho.
-                </p>
-                <div className="grid grid-cols-2 gap-6 mb-8">
-                  <div className="stats-grid p-6 rounded-2xl">
-                    <h3 className="font-bold text-4xl bg-primary-light text-transparent bg-clip-text mb-2">
-                      500+
-                    </h3>
-                    <p className="text-gray-600 font-medium">Projetos Realizados</p>
-                  </div>
-                  <div className="stats-grid p-6 rounded-2xl">
-                    <h3 className="font-bold text-4xl bg-primary-light text-transparent bg-clip-text mb-2">
-                      1000+
-                    </h3>
-                    <p className="text-gray-600 font-medium">Profissionais Treinados</p>
-                  </div>
-                </div>
-                <Button
-                  size="lg"
-                  className="bg-primary-light hover:brightness-125 text-white text-lg px-8 shadow-lg"
-                  onClick={() => handleWhatsApp()}
-                >
-                  Entre em Contato <Phone className="ml-2" />
-                </Button>
-              </div>
-              <div className="space-y-6">
-                <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl">
-                  <img
-                    src={AboutImage1}
-                    alt="Fundador 1"
-                    width={1080}
-                    height={1080}
-                    className="object-cover w-full h-full"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-6">
-                  <video
-                    className="w-full rounded-xl z-10 cursor-pointer"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                  >
-                    <source src={TreinamentoVideo} type="video/mp4" />
-                    Seu navegador não suporta a tag de vídeo.
-                  </video>
-                  <div className="relative rounded-xl overflow-hidden shadow-lg h-full">
-                    <img
-                      src={AboutImage2}
-                      alt="Fundador 2"
-                      width={1080}
-                      height={1080}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <About />
 
         {/* Services Section */}
-        <section className="py-20 bg-gray-50" id="servicos">
-          <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
-            <div className="text-center mb-16">
-              <h2 className="section-title text-3xl md:text-5xl font-bold mb-6 pb-4">
-                Nossos Serviços
-              </h2>
-              <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                Soluções especializadas para trabalhos em altura, espaços confinados e resgate.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {services.map((service, index) => (
-                <div
-                  key={`service-${index}`}
-                  className="flex flex-col bg-white rounded-2xl overflow-hidden shadow-lg group hover:-translate-y-2 transition-all duration-300"
-                >
-                  <div className="aspect-[4/3] relative">
-                    <div className="absolute inset-0 bg-cover bg-center">
-                      <img
-                        src={service.image}
-                        alt={service.name}
-                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        width={400}
-                        height={400}
-                      />
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent duration-500 group-hover:scale-110" />
-                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                      <h3 className="text-2xl font-bold mb-2">{service.name}</h3>
-                    </div>
-                  </div>
-                  <div className="p-6 flex flex-col flex-grow">
-                    <ul className="space-y-3">
-                      {service.features.map((feature, idx) => (
-                        <li key={`services-features-${idx}`} className="flex items-center text-gray-700">
-                          <CheckCircle className="w-5 h-5 text-orange-500 mr-2 flex-shrink-0" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="mt-auto">
-                      <Button
-                        className="w-full mt-6 bg-black hover:bg-orange-500 text-white transition-colors"
-                        onClick={() => handleWhatsApp()}
-                      >
-                        Solicitar Orçamento
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <Services handleWhatsApp={handleWhatsApp} />
 
         {/* Products Section */}
-        <section id="produtos" className="py-20 bg-gray-50">
-          <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
-            <div className="text-center mb-16">
-              <h2 className="section-title text-3xl md:text-5xl font-bold mb-6 pb-4">
-                Equipamentos e EPIs
-              </h2>
-              <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                Oferecemos uma linha completa de equipamentos certificados para trabalho em altura e espaços confinados.
-              </p>
-            </div>
-
-            {/* Produto Destaque */}
-            <div className="mb-16">
-              <div className="bg-white rounded-2xl overflow-hidden shadow-xl">
-                <div className="grid grid-cols-1 md:grid-cols-2">
-                  <div className="relative h-64 md:h-full">
-                    <img
-                      src={featuredProduct.image}
-                      alt={featuredProduct.name}
-                      width={1080}
-                      height={1080}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                    <div className="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-orange-400 text-white px-4 py-2 rounded-full font-semibold">
-                      Produto em Destaque
-                    </div>
-                  </div>
-                  <div className="p-8 flex flex-col justify-center">
-                    <h3 className="text-2xl font-bold mb-4">{featuredProduct.name}</h3>
-                    <p className="text-gray-600 mb-6">{featuredProduct.description}</p>
-                    <ul className="space-y-3 mb-8">
-                      {featuredProduct.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center text-gray-700">
-                          <CheckCircle className="w-5 h-5 text-orange-500 mr-2" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="flex flex-col items-center gap-4 mb-6">
-                      <span className="text-3xl font-bold bg-primary-light bg-clip-text text-transparent">
-                        Entre em contato
-                      </span>
-                      <span>Disponibilidade e valores sob consulta!</span>
-                    </div>
-                    <div className="flex gap-4">
-                      <Button onClick={() => addToCart(featuredProduct)} size="lg" className="flex-1 bg-primary-light hover:brightness-125 text-white">
-                        Adicionar ao Carrinho
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Grid de Produtos */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12">
-              {displayedProducts.map((product, index) => (
-                <Card id={index === 2 ? "grid-produtos" : undefined} key={index} className="h-full flex flex-col overflow-hidden group card-hover border-0 shadow-lg">
-                  <div className="aspect-square relative overflow-hidden">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
-                      width={400}
-                      height={400}
-                    />
-                  </div>
-                  <div className="p-6 flex flex-col flex-grow">
-                    <h3 className="text-xl font-semibold mb-2">{product.name}</h3>
-                    <p className="text-gray-600 mb-4">{product.description}</p>
-                    <div className="flex flex-col items-center justify-between mb-4">
-                      <div className="flex flex-col items-center">
-                        <span className="text-2xl font-bold text-yellow-600">
-                          Entre em contato
-                        </span>
-                        <span className="text-center text-xs md:text-sm">
-                          Disponibilidade e valores sob consulta!
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mt-auto">
-                      <Button
-                        className="w-full bg-black hover:bg-yellow-500 text-white transition-colors"
-                        onClick={() => addToCart(product)}
-                        disabled={!product.inStock}
-                      >
-                        {product.inStock ? "Adicionar ao Carrinho" : "Avise-me"}
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-
-            {/* Botão "Ver Mais" / "Ocultar" */}
-            <div className="text-center">
-              <Button
-                size="lg"
-                className="bg-primary-light hover:brightness-125 text-white text-lg px-8 shadow-lg"
-                onClick={() => {
-                  setShowAllProducts((prev) => !prev);
-                  if (showAllProducts) document.getElementById("grid-produtos")?.scrollIntoView();
-                }}
-              >
-                {showAllProducts ? (
-                  <>
-                    Ocultar <ChevronRight className="ml-2 rotate-180" />
-                  </>
-                ) : (
-                  <>
-                    Ver Mais <Plus className="ml-2" />
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </section>
+        <Products addToCart={addToCart} formatCurrency={formatCurrency} />
 
         {/* CTA Section 1 */}
         <section className="py-10 bg-gradient-to-r from-red-500 to-orange-400">

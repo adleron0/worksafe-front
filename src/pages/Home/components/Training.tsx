@@ -298,7 +298,7 @@ const Training: React.FC<TrainingProps> = ({ formatCurrency }) => {
                   <img
                     src={course.image}
                     alt={course.name}
-                    className="transition-transform duration-500"
+                    className="transition-transform duration-500 object-cover w-full h-full"
                   />
                   <div className="absolute top-1 left-1 flex gap-2 items-center px-2 py-1 h-6 text-xs bg-green-100 rounded-full">
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"/>

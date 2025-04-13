@@ -1,17 +1,14 @@
-import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import {
   Phone,
   MessageCircleMore,
-  ArrowRight,
   Shield,
   Award,
   Clock,
   Users,
-  X,
-  Star,
   ChevronDown,
 } from "lucide-react";
+import Training from "./components/Training";
 import NavBar from "./components/NavBar";
 import Hero from "./components/Hero";
 import Feature from "./components/Feature";
@@ -19,278 +16,11 @@ import About from "./components/About";
 import Services from "./components/Services";
 import Products from "./components/Products";
 import Rentals from "./components/Rentals";
+import Cta from "./components/Cta";
 
 // Calcula anos
 const foundationYear = 2018;
 const yearsOfExperience = new Date().getFullYear() - foundationYear;
-
-// Training Courses
-import Brigada from "../../assets/images/treinamentos/brigada.jpg";
-import Nr35Trabalhador from "../../assets/images/treinamentos/nr35-trabalhador.jpg";
-import Nr35Liberador from "../../assets/images/treinamentos/nr35-liberador.webp";
-import Nr35Supervisor from "../../assets/images/treinamentos/nr35-supervisor.jpg";
-import NR11 from "../../assets/images/treinamentos/nr-11.jpg";
-import NR12 from "../../assets/images/treinamentos/nr-12.png";
-import NR20 from "../../assets/images/treinamentos/nr-20.jpg";
-import NR23 from "../../assets/images/treinamentos/nr-23.webp";
-import Nr33 from "../../assets/images/treinamentos/nr-33.webp";
-import Nr33Supervisor from "../../assets/images/treinamentos/nr33-supervisor.webp";
-import RTI from "../../assets/images/treinamentos/resgate-industrial.webp";
-import RTO from "../../assets/images/treinamentos/resgate-operacional.webp";
-import RTL from "../../assets/images/treinamentos/resgate-lider.webp";
-import RTC from "../../assets/images/treinamentos/resgate-coordenador.jpg";
-import N1 from "../../assets/images/treinamentos/n1.webp";
-import N2 from "../../assets/images/treinamentos/n2.webp";
-import N3 from "../../assets/images/treinamentos/n3.jpg";
-import Cta from "./components/Cta";
-
-const courses = [
-  {
-    name: "Acesso por Corda - N1",
-    flag: "N1 - Aneac",
-    image: N1,
-    duration: "48 horas",
-    highlights: [
-      "Apinismo Industrial N1",
-      "Certificadora Internacional",
-      "Aulas práticas",
-      "Material incluso",
-      "Instrutores especializados",
-    ],
-    nextDate: "sob consulta",
-    price: 2600,
-  },
-  {
-    name: "Acesso por Corda - N2",
-    flag: "N2 - Aneac",
-    image: N2,
-    duration: "48 horas",
-    highlights: [
-      "Apinismo Industrial N2",
-      "Certificadora Internacional",
-      "Aulas práticas",
-      "Material incluso",
-      "Instrutores especializados",
-    ],
-    nextDate: "sob consulta",
-    price: 2800,
-  },
-  {
-    name: "Acesso por Corda - N3",
-    flag: "N3 - Aneac",
-    image: N3,
-    duration: "48 horas",
-    highlights: [
-      "Apinismo Industrial N3",
-      "Certificadora Internacional",
-      "Aulas práticas",
-      "Material incluso",
-      "Instrutores especializados",
-    ],
-    nextDate: "sob consulta",
-    price: 3000,
-  },
-  {
-    name: "NR-35 Trabalho em Altura",
-    flag: "Trabalhador",
-    image: Nr35Trabalhador,
-    duration: "8 horas",
-    highlights: [
-      "Trabalho em Altura - Versão Trabalhador",
-      "Validade de 2 anos",
-      "Aulas práticas",
-      "Material incluso",
-      "Instrutores especializados",
-    ],
-    nextDate: "sob consulta",
-    price: 0,
-  },
-  {
-    name: "NR-35 Trabalho em Altura",
-    flag: "Liberador",
-    image: Nr35Liberador,
-    duration: "16 horas",
-    highlights: [
-      "Trabalho em Altura - Versão Liberador",
-      "Validade de 2 anos",
-      "Aulas práticas",
-      "Material incluso",
-      "Instrutores especializados",
-    ],
-    nextDate: "sob consulta",
-    price: 0,
-  },
-  {
-    name: "NR-35 Trabalho em Altura",
-    flag: "Supervisor",
-    image: Nr35Supervisor,
-    duration: "40 horas",
-    highlights: [
-      "Trabalho em Altura - Versão Supervisor",
-      "Validade de 2 anos",
-      "Aulas práticas",
-      "Material incluso",
-      "Instrutores especializados",
-    ],
-    nextDate: "sob consulta",
-    price: 0,
-  },
-  {
-    name: "NR-33 Espaço Confinado",
-    flag: "Trabalhador e Vigia",
-    image: Nr33,
-    duration: "16 horas",
-    highlights: [
-      "Trabalhador e Vigia",
-      "Certificado MTE",
-      "Simulações reais",
-      "EPIs fornecidos",
-      "Avaliação prática",
-    ],
-    nextDate: "sob consulta",
-    price: 0,
-  },
-  {
-    name: "NR-33 Espaço Confinado",
-    flag: "Supervisor",
-    image: Nr33Supervisor,
-    duration: "40 horas",
-    highlights: [
-      "Supervisor",
-      "Certificado MTE",
-      "Simulações reais",
-      "EPIs fornecidos",
-      "Avaliação prática",
-    ],
-    nextDate: "sob consulta",
-    price: 0,
-  },
-  {
-    name: "Brigada de Incêndio",
-    image: Brigada,
-    duration: "56 a 80 horas",
-    highlights: [
-      "Brigada de Incêndio - Norma atualizada",
-      "Prática com fogo real",
-      "Primeiros socorros",
-      "Certificação civil",
-    ],
-    nextDate: "sob consulta",
-    price: 0,
-  },
-  {
-    name: "Resgate Técnico Industrial",
-    flag: "Industrial - RPL",
-    image: RTI,
-    duration: "24 horas",
-    highlights: [
-      "Nível básico de qualificação em resgate",
-      "Participa de resgates limitados em altura e espaços confinados",
-      "Utiliza sistemas de proteção individual para restrição de movimentação e retenção de quedas",
-      "Deslocamento seguro com posicionamento vertical simples",
-      "Emprego restrito de sistemas pré-engenharia ou pré-montados"
-    ],
-    nextDate: "sob consulta",
-    price: 650,
-  },
-  {
-    name: "Resgate Operacional",
-    flag: "Operacional - RPL",
-    image: RTO,
-    duration: "48 horas",
-    highlights: [
-      "Nível inicial de qualificação em resgate",
-      "Participa de resgates em altura e espaços confinados",
-      "Utiliza sistemas de proteção individual para movimentação vertical",
-      "Emprega sistemas montados de vantagem mecânica e resgate pré-montado",
-      "Execução de progressões diversas com corda, mecânica e elétrica"
-    ],
-    nextDate: "sob consulta",
-    price: 850,
-  },
-  {
-    name: "Resgate Líder",
-    flag: "Líder - RPL",
-    image: RTL,
-    duration: "48 horas",
-    highlights: [
-      "Nível intermediário de qualificação em resgate",
-      "Atua em resgates em qualquer nível de altura",
-      "Realiza movimentação básica de vítimas com ou sem macas",
-      "Emprego de sistemas montados de vantagem mecânica e pré-montados",
-      "Acesso autônomo por técnicas de progressões diversas"
-    ],
-    nextDate: "sob consulta",
-    price: 0,
-  },
-  {
-    name: "Resgate Coordenador",
-    flag: "Coordenador - RPL",
-    image: RTC,
-    duration: "48 horas",
-    highlights: [
-      "Nível avançado de qualificação em resgate",
-      "Coordena operações de resgate presencialmente",
-      "Planeja e dimensiona operações de resgate por corda",
-      "Estabelece funções e designa responsabilidades na operação",
-      "Atua em resgates de alta complexidade e avançados em suspensão"
-    ],
-    nextDate: "sob consulta",
-    price: 0,
-  },  
-  {
-    name: "NR11 - Transporte, Movimentação, Armazenagem e Manuseio de Materiais",
-    image: NR11,
-    duration: "8 a 24 horas",
-    highlights: [
-      "NR11 - Abordagem completa das normas de segurança",
-      "Treinamento teórico e prático",
-      "Conteúdo atualizado",
-      "Certificação reconhecida",
-    ],
-    nextDate: "sob consulta",
-    price: 0,
-  },
-  {
-    name: "NR-12 - Segurança no Trabalho em Máquinas e Equipamentos",
-    image: NR12,
-    duration: "8 a 16 horas",
-    highlights: [
-      "NR-12 - Técnicas avançadas em segurança",
-      "Equipamento especializado",
-      "Simulações reais",
-      "Certificado internacional",
-    ],
-    nextDate: "sob consulta",
-    price: 0,
-  },
-  {
-    name: "NR20 - Líquidos, Combustíveis e Inflamáveis",
-    image: NR20,
-    duration: "16 a 40 horas",
-    highlights: [
-      "NR20 - Procedimentos de segurança com inflamáveis",
-      "Análise de riscos e medidas preventivas",
-      "Treinamento prático com cenários reais",
-      "Certificação conforme regulamentação",
-    ],
-    nextDate: "sob consulta",
-    price: 0,
-  },
-  {
-    name: "NR23 - Proteção Contra Incêndios",
-    image: NR23,
-    duration: "16 a 40 horas",
-    highlights: [
-      "NR23 - Técnicas de prevenção e combate a incêndios",
-      "Procedimentos de evacuação e emergência",
-      "Simulações práticas e treinamento realista",
-      "Certificação reconhecida",
-    ],
-    nextDate: "sob consulta",
-    price: 0,
-  }
-];
 
 // Imagens Clientes
 import AlagoasAmbiental from "../../assets/images/clientes/alagoas-ambiental.png";
@@ -377,38 +107,6 @@ const faqs = [
   },
 ];
 
-
-// Testimonials
-// const testimonials = [
-//   {
-//     name: "João Silva",
-//     company: "Construtora ABC",
-//     role: "Gerente de Segurança",
-//     image:
-//       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200",
-//     video: "https://www.youtube.com/embed/your-video-id-1",
-//     text: "A RTL transformou nossa abordagem em segurança do trabalho. Os treinamentos são excepcionais.",
-//   },
-//   {
-//     name: "Maria Santos",
-//     company: "Indústria XYZ",
-//     role: "Coordenadora de EHS",
-//     image:
-//       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200",
-//     video: "https://www.youtube.com/embed/your-video-id-2",
-//     text: "Equipamentos de alta qualidade e suporte técnico incomparável. Recomendo fortemente.",
-//   },
-//   {
-//     name: "Pedro Costa",
-//     company: "Engenharia Beta",
-//     role: "Diretor de Operações",
-//     image:
-//       "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200",
-//     video: "https://www.youtube.com/embed/your-video-id-3",
-//     text: "Parceria que faz diferença. Profissionalismo em cada detalhe dos serviços prestados.",
-//   },
-// ];
-
 // Features
 const features = [
   {
@@ -446,19 +144,10 @@ type CartItem = {
 
 export default function Home() {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<typeof courses[0] | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const toggleFaq = (index: number) => {
     setActiveIndex(activeIndex === index ? null : index);
-  };
-
-  const openModal = (course: typeof courses[0]) => {
-    setSelectedCourse(course);
-  };
-
-  const closeModal = () => {
-    setSelectedCourse(null);
   };
 
   // Recupera o carrinho do localStorage ao montar
@@ -493,7 +182,6 @@ export default function Home() {
   const clearCart = () => {
     setCart([]);
   };
-
 
   // Configurações WhatsApp
   const whatsappNumber1 = "82988361789";
@@ -585,135 +273,7 @@ export default function Home() {
           handleWhatsApp={handleWhatsApp}
         />
 
-        {/* Training Section */}
-        <section id="treinamentos" className="py-20 bg-gray-50">
-          <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
-            <div className="text-center mb-16">
-              <h2 className="section-title text-3xl md:text-5xl font-bold mb-6 pb-4">
-                Treinamentos
-              </h2>
-              <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                Capacitação profissional em normas regulamentadoras e procedimentos de emergência.
-              </p>
-            </div>
-
-            {/* Grid de Cursos */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {courses.map((course, index) => (
-                  <div
-                    key={index}
-                    className="border rounded-xl shadow-lg p-4 bg-white cursor-pointer transition-transform hover:scale-105"
-                    onClick={() => openModal(course)}
-                  >
-                    <div className="relative h-48 w-full rounded-xl overflow-hidden">
-                      <img
-                        src={course.image}
-                        alt={course.name}
-                        className="transition-transform duration-500"
-                      />
-                      <div className="absolute top-1 left-1 flex gap-2 items-center px-2 py-1 h-6 text-xs bg-green-100 rounded-full">
-                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"/>
-                        <span>Disponível</span>
-                      </div>
-                      {course.flag && (
-                        <div className="absolute bottom-1 right-1 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                          {course.flag}
-                        </div>
-                      )}
-                    </div>
-                    <h3 className="mt-4 font-bold text-lg bg-primary-light bg-clip-text text-transparent">{course.name}</h3>
-                    <p className="text-gray-600">{course.duration}</p>
-                    {course.price > 0 ? (
-                      <div className="mt-2 flex items-center justify-between">
-                        <div className="flex flex-col">
-                          <span className="text-sm text-gray-500">Investimento</span>
-                          <span className="text-xl font-bold text-orange-500">{formatCurrency(course.price)}</span>
-                        </div>
-                        <Star className="w-5 h-5 text-yellow-400" />
-                      </div>
-                    ) : (
-                      <p className="text-gray-600 font-semibold mt-2 italic">valores sob consulta</p>
-                    )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Modal de Detalhes do Curso */}
-          {selectedCourse && (
-            <div className="fixed inset-0 flex items-center justify-center z-50">
-              {/* Overlay */}
-              <div
-                className="absolute inset-0 bg-black opacity-50"
-                onClick={closeModal}
-              />
-
-              {/* Conteúdo do Modal */}
-                <div className="relative bg-white rounded-xl shadow-2xl p-6 pr-0 max-w-lg h-5/6 w-full mx-4 z-10">
-                <button
-                  onClick={closeModal}
-                  className="absolute z-10 top-4 right-4 text-white p-1 hover:text-gray-900 bg-gradient-to-r from-red-500 to-orange-500 rounded-md transition-colors"
-                >
-                  <X size={18} />
-                </button>
-                <div className="overflow-y-auto h-5/6 pr-6">
-                  <div className="relative h-64 w-full rounded-xl overflow-hidden">
-                    <img
-                      src={selectedCourse.image}
-                      alt={selectedCourse.name}
-                      className="rounded-xl brightness-50"
-                    />
-                    {selectedCourse.flag && (
-                      <div className="absolute top-4 right-4 bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
-                        {selectedCourse.flag}
-                      </div>
-                    )}
-                  </div>
-                  <h2 className="mt-4 text-2xl font-bold">{selectedCourse.name}</h2>
-                  <div className="flex justify-between items-center mt-2">
-                    <p className="text-gray-600">
-                      Duração: {selectedCourse.duration}
-                    </p>
-                    {selectedCourse.price > 0 && (
-                      <p className="text-xl font-bold text-orange-500">
-                        {formatCurrency(selectedCourse.price)}
-                      </p>
-                    )}
-                  </div>
-                  <div className="mt-4">
-                    <h4 className="font-semibold mb-2">Destaques:</h4>
-                    <ul className="space-y-2">
-                      {selectedCourse.highlights.map((highlight, idx) => (
-                        <li key={idx} className="flex items-center text-gray-700">
-                          <div className="w-5 aspect-square mr-1">
-                            <Shield className="w-4 h-4 text-yellow-500 mr-2" />
-                          </div>
-                          <p>{highlight}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-                <div className="mt-6 flex items-center justify-between p-2 mr-6" style={{boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1)'}}>
-                  <span className="text-sm text-gray-500">
-                    Próxima turma:<br/>
-                    {selectedCourse.nextDate}
-                  </span>
-                  <Button
-                    onClick={() =>
-                      handleWhatsApp(
-                        `Olá, gostaria de inscrever-me na próxima turma de ${selectedCourse.name}${selectedCourse.flag ? ` (${selectedCourse.flag})` : ''}! ${selectedCourse.price > 0 ? `\nValor do investimento: ${formatCurrency(selectedCourse.price)}` : ''}`
-                      )
-                    }
-                    className="bg-gradient-to-r from-red-500 to-orange-500 hover:brightness-110 text-white"
-                  >
-                    Inscrever-se <ArrowRight className="ml-2" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </section>
+        <Training formatCurrency={formatCurrency} />
 
         <section id="faq" className="py-20 bg-gradient-to-b from-white to-gray-50">
           <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">

@@ -49,6 +49,7 @@ import LinhaDeVida from "../assets/images/linha-de-vida.jpg";
 import Eolica from "../assets/images/eolica.webp";
 
 // Imagens Hero Slides
+// comenta algo
 import Altura2 from "../assets/images/altura-2.jpg";
 // import Equipamentos from "../assets/images/equipamentos.jpg";
 // import Treinamento from "../assets/images/treinamento.jpg";

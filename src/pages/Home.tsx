@@ -1038,7 +1038,7 @@ export default function Home() {
     <>
       {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 bg-primary/30 backdrop-blur-sm transition-opacity duration-300 z-40 ${
+        className={`fixed inset-0 bg-primary-light/30 backdrop-blur-sm transition-opacity duration-300 z-40 ${
           isMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setIsMenuOpen(false)}
@@ -1048,7 +1048,7 @@ export default function Home() {
         <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
           <div className="flex items-center justify-between h-20">
             <div className="flex gap-1 items-center">
-              <Logo colorPath24="black" colorPath25="hsl(var(--primary))" className="h-10 w-10" />
+              <Logo colorPath24="black" colorPath25="hsl(var(--primary-light))" className="h-10 w-10" />
               <div className="flex flex-col text-black">
                 <span className="font-black text-2xl">WORKSAFE</span>
                 <span className="text-sm -mt-1.5 font-semibold">Brasil</span>
@@ -1058,31 +1058,31 @@ export default function Home() {
             <div className="hidden md:flex items-center gap-4">
               <a
                 href="#servicos"
-                className="text-gray-600 hover:text-primary transition-colors"
+                className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Serviços
               </a>
               <a
                 href="#produtos"
-                className="text-gray-600 hover:text-primary transition-colors"
+                className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Produtos
               </a>
               <a
                 href="#aluguel"
-                className="text-gray-600 hover:text-primary transition-colors"
+                className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Aluguel
               </a>
               <a
                 href="#treinamentos"
-                className="text-gray-600 hover:text-primary transition-colors"
+                className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Treinamentos
               </a>
               <a
                 href="#sobre"
-                className="text-gray-600 hover:text-primary transition-colors"
+                className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Sobre Nós
               </a>
@@ -1092,7 +1092,7 @@ export default function Home() {
                     to: `/login`,
                   })
                 }}
-                className="bg-primary  text-white"
+                className="bg-primary-light  text-white"
               >
                 Login
               </Button>
@@ -1103,7 +1103,7 @@ export default function Home() {
               >
                 <ShoppingCart className="w-6 h-6 text-gray-900" />
                 {cart.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-white rounded-full text-xs w-5 h-5 flex items-center justify-center animate-bounce">
+                  <span className="absolute -top-1 -right-1 bg-primary-light text-white rounded-full text-xs w-5 h-5 flex items-center justify-center animate-bounce">
                     {cart.reduce((acc, item) => acc + item.quantity, 0)}
                   </span>
                 )}
@@ -1118,14 +1118,14 @@ export default function Home() {
               >
                 <ShoppingCart className="w-6 h-6" />
                 {cart.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-white rounded-full text-xs w-5 h-5 flex items-center justify-center animate-bounce">
+                  <span className="absolute -top-1 -right-1 bg-primary-light text-white rounded-full text-xs w-5 h-5 flex items-center justify-center animate-bounce">
                     {cart.reduce((acc, item) => acc + item.quantity, 0)}
                   </span>
                 )}
               </button>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="group h-8 w-8 rounded-lg bg-primary hover:brightness-125 text-white"
+                className="group h-8 w-8 rounded-lg bg-primary-light hover:brightness-125 text-white"
               >
                 <div className="grid justify-items-center gap-1">
                   <span
@@ -1155,35 +1155,35 @@ export default function Home() {
 
                 <a
                   href="#sobre"
-                  className="text-gray-600 hover:text-primary transition-colors"
+                  className="text-gray-600 hover:text-primary-light transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Sobre Nós
                 </a>
                 <a
                   href="#servicos"
-                  className="text-gray-600 hover:text-primary transition-colors"
+                  className="text-gray-600 hover:text-primary-light transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Serviços
                 </a>
                 <a
                   href="#produtos"
-                  className="text-gray-600 hover:text-primary transition-colors"
+                  className="text-gray-600 hover:text-primary-light transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Produtos
                 </a>
                 <a
                   href="#aluguel"
-                  className="text-gray-600 hover:text-primary transition-colors"
+                  className="text-gray-600 hover:text-primary-light transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Aluguel
                 </a>
                 <a
                   href="#treinamentos"
-                  className="text-gray-600 hover:text-primary transition-colors"
+                  className="text-gray-600 hover:text-primary-light transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Treinamentos
@@ -1195,7 +1195,7 @@ export default function Home() {
                       to: `/login`,
                     })
                   }}
-                  className="bg-primary hover:brightness-125 text-white w-full"
+                  className="bg-primary-light hover:brightness-125 text-white w-full"
                 >
                   Login
                 </Button>
@@ -1224,8 +1224,8 @@ export default function Home() {
           {/* Cart Header */}
           <div className="flex justify-between items-center p-6 border-b">
             <div className="flex items-center gap-2">
-              <ShoppingCart className="w-6 h-6 text-primary" />
-              <h2 className="text-xl font-bold text-primary">Carrinho</h2>
+              <ShoppingCart className="w-6 h-6 text-primary-light" />
+              <h2 className="text-xl font-bold text-primary-light">Carrinho</h2>
             </div>
             <div className="flex gap-2">
               <button
@@ -1293,7 +1293,7 @@ export default function Home() {
                 handleWhatsApp(generateCartMessage());
                 setIsCartOpen(false);
               }}
-              className="w-full bg-primary hover:brightness-110 text-white gap-2"
+              className="w-full bg-primary-light hover:brightness-110 text-white gap-2"
             >
               <ShoppingCart className="w-5 h-5" />
               Solicitar Orçamento
@@ -1316,7 +1316,8 @@ export default function Home() {
           <video
             autoPlay
             loop
-            muted
+            muted={true}
+            playsInline
             className="absolute inset-0 w-full h-full object-cover"
             src={HeroVideo}
           />
@@ -1341,7 +1342,7 @@ export default function Home() {
                     'Formações NR33 e NR35',
                     'Consultoria em SST'
                   ]}
-                  mainClassName="px-4 py-2 sm:py-2.5 text-2xl sm:text-3xl md:text-5xl font-bold bg-primary text-white rounded-lg shadow-lg"
+                  mainClassName="px-4 py-2 sm:py-2.5 text-2xl sm:text-3xl md:text-5xl font-bold bg-primary-light text-white rounded-lg shadow-lg"
                   staggerFrom="last"
                   initial={{ y: "100%" }}
                   animate={{ y: 0 }}
@@ -1358,7 +1359,7 @@ export default function Home() {
 
                 <Button 
                   variant="outline"
-                  className="flex items-center border-primary px-6 bg-transparent hover:bg-primary"
+                  className="flex items-center text-primary-light hover:text-white border-primary-light px-6 bg-transparent hover:bg-primary-light duration-300 ease-in-out"
                 >
                   Saiba mais
                   <Icon name="arrow-right" className="ml-2 w-4 h-4" />
@@ -1424,13 +1425,13 @@ export default function Home() {
                 </p>
                 <div className="grid grid-cols-2 gap-6 mb-8">
                   <div className="stats-grid p-6 rounded-2xl">
-                    <h3 className="font-bold text-4xl bg-primary text-transparent bg-clip-text mb-2">
+                    <h3 className="font-bold text-4xl bg-primary-light text-transparent bg-clip-text mb-2">
                       500+
                     </h3>
                     <p className="text-gray-600 font-medium">Projetos Realizados</p>
                   </div>
                   <div className="stats-grid p-6 rounded-2xl">
-                    <h3 className="font-bold text-4xl bg-primary text-transparent bg-clip-text mb-2">
+                    <h3 className="font-bold text-4xl bg-primary-light text-transparent bg-clip-text mb-2">
                       1000+
                     </h3>
                     <p className="text-gray-600 font-medium">Profissionais Treinados</p>
@@ -1438,7 +1439,7 @@ export default function Home() {
                 </div>
                 <Button
                   size="lg"
-                  className="bg-primary hover:brightness-125 text-white text-lg px-8 shadow-lg"
+                  className="bg-primary-light hover:brightness-125 text-white text-lg px-8 shadow-lg"
                   onClick={() => handleWhatsApp()}
                 >
                   Entre em Contato <Phone className="ml-2" />
@@ -1576,13 +1577,13 @@ export default function Home() {
                       ))}
                     </ul>
                     <div className="flex flex-col items-center gap-4 mb-6">
-                      <span className="text-3xl font-bold bg-primary bg-clip-text text-transparent">
+                      <span className="text-3xl font-bold bg-primary-light bg-clip-text text-transparent">
                         Entre em contato
                       </span>
                       <span>Disponibilidade e valores sob consulta!</span>
                     </div>
                     <div className="flex gap-4">
-                      <Button onClick={() => addToCart(featuredProduct)} size="lg" className="flex-1 bg-primary hover:brightness-125 text-white">
+                      <Button onClick={() => addToCart(featuredProduct)} size="lg" className="flex-1 bg-primary-light hover:brightness-125 text-white">
                         Adicionar ao Carrinho
                       </Button>
                     </div>
@@ -1635,7 +1636,7 @@ export default function Home() {
             <div className="text-center">
               <Button
                 size="lg"
-                className="bg-primary hover:brightness-125 text-white text-lg px-8 shadow-lg"
+                className="bg-primary-light hover:brightness-125 text-white text-lg px-8 shadow-lg"
                 onClick={() => {
                   setShowAllProducts((prev) => !prev);
                   if (showAllProducts) document.getElementById("grid-produtos")?.scrollIntoView();
@@ -1805,7 +1806,7 @@ export default function Home() {
                         </div>
                       )}
                     </div>
-                    <h3 className="mt-4 font-bold text-lg bg-primary bg-clip-text text-transparent">{course.name}</h3>
+                    <h3 className="mt-4 font-bold text-lg bg-primary-light bg-clip-text text-transparent">{course.name}</h3>
                     <p className="text-gray-600">{course.duration}</p>
                     {course.price > 0 ? (
                       <div className="mt-2 flex items-center justify-between">
@@ -2076,7 +2077,7 @@ export default function Home() {
               <div>
                 <div className="flex items-center gap-2 mb-6">
                   {/* <img src={Logo} width={40} height={40} alt="Logo" /> */}
-                  <span className="text-xl font-extrabold bg-primary bg-clip-text text-transparent">
+                  <span className="text-xl font-extrabold bg-primary-light bg-clip-text text-transparent">
                     RPL Rope Access
                   </span>
                 </div>

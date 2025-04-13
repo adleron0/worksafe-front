@@ -35,6 +35,7 @@
     "clsx": "^2.1.1",
     "crypto-js": "^4.2.0",
     "date-fns": "^3.6.0",
+    "framer-motion": "^11.18.2",
     "konva": "^9.3.16",
     "lucide-react": "^0.452.0",
     "next-themes": "^0.3.0",

@@ -1048,8 +1048,8 @@ export default function Home() {
         <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
           <div className="flex items-center justify-between h-20">
             <div className="flex gap-1 items-center">
-              <Logo colorPath24="hsl(var(--inverse-foreground))" colorPath25="hsl(var(--primary))" className="h-10 w-10" />
-              <div className="flex flex-col text-inverse-foreground">
+              <Logo colorPath24="black" colorPath25="hsl(var(--primary))" className="h-10 w-10" />
+              <div className="flex flex-col text-black">
                 <span className="font-black text-2xl">WORKSAFE</span>
                 <span className="text-sm -mt-1.5 font-semibold">Brasil</span>
               </div>

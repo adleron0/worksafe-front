@@ -465,6 +465,7 @@ import RTC from "../../assets/images/treinamentos/resgate-coordenador.jpg";
 import N1 from "../../assets/images/treinamentos/n1.webp";
 import N2 from "../../assets/images/treinamentos/n2.webp";
 import N3 from "../../assets/images/treinamentos/n3.jpg";
+import Cta from "./components/Cta";
 
 const courses = [
   {
@@ -1008,27 +1009,13 @@ export default function Home() {
 
         {/* Products Section */}
         <Products addToCart={addToCart} formatCurrency={formatCurrency} />
-
-        {/* CTA Section 1 */}
-        <section className="py-10 bg-gradient-to-r from-red-500 to-orange-400">
-          <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
-            <div className="text-center">
-              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-                Precisando de Equipamentos com Urgência?
-              </h2>
-              <p className="text-white/90 text-xl mb-8 max-w-2xl mx-auto">
-                Entre em contato agora mesmo e receba uma cotação!
-              </p>
-              <Button
-                size="lg"
-                className="bg-black hover:bg-black/80 text-white text-lg px-12"
-                onClick={() => handleWhatsApp()}
-              >
-                Solicitar Cotação <ArrowUpRight className="ml-2" />
-              </Button>
-            </div>
-          </div>
-        </section>
+        <Cta
+          title="Precisando de Equipamentos com Urgência?"
+          subtitle="Entre em contato agora mesmo e receba uma cotação!"
+          buttonText="Solicitar Cotação"
+          whatsAppMessage="Olá, gostaria de solicitar um orçamento."
+          handleWhatsApp={handleWhatsApp}
+        />
 
         {/* Rentals Section */}
         <section id="aluguel" className="py-20 bg-white">
@@ -1101,27 +1088,13 @@ export default function Home() {
         </section>
 
         {/* CTA Section 2 */}
-        <section className="py-20 bg-black text-white">
-          <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
-            <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl md:text-5xl font-bold mb-6">
-                Precisa de Treinamento para sua Equipe?
-              </h2>
-              <p className="text-xl text-gray-300 mb-8">
-                Oferecemos treinamentos in-company personalizados para sua Empresa. Capacite sua equipe com os melhores profissionais do mercado.
-              </p>
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-red-400 to-orange-500 hover:brightness-125 text-white text-sm md:text-lg px-12"
-                onClick={() =>
-                  handleWhatsApp("Olá, gostaria de agendar um treinamento para minha equipe!")
-                }
-              >
-                Agendar Consultoria Gratuita <ArrowRight className="ml-2" />
-              </Button>
-            </div>
-          </div>
-        </section>
+        <Cta
+          title="Precisa de Treinamento para sua Equipe?"
+          subtitle="Oferecemos treinamentos in-company personalizados para sua Empresa. Capacite sua equipe com os melhores profissionais do mercado."
+          buttonText="Agendar Consultoria Gratuita"
+          whatsAppMessage="Olá, gostaria de agendar um treinamento para minha equipe!"
+          handleWhatsApp={handleWhatsApp}
+        />
 
         {/* Training Section */}
         <section id="treinamentos" className="py-20 bg-gray-50">

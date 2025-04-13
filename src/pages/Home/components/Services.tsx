@@ -129,14 +129,14 @@ const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
                 <ul className="space-y-3">
                   {service.features.map((feature, idx) => (
                     <li key={`services-features-${idx}`} className="flex items-center text-gray-700">
-                      <CheckCircle className="w-5 h-5 text-orange-500 mr-2 flex-shrink-0" />
+                      <CheckCircle className="w-5 h-5 text-primary-light mr-2 flex-shrink-0" />
                       {feature}
                     </li>
                   ))}
                 </ul>
                 <div className="mt-auto">
                   <Button
-                    className="w-full mt-6 bg-black hover:bg-orange-500 text-white transition-colors"
+                    className="w-full mt-6 bg-black hover:bg-primary-light text-white transition-colors"
                     onClick={() => handleWhatsApp()}
                   >
                     Solicitar Orçamento

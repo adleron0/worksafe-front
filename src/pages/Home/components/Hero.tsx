@@ -2,7 +2,6 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import RotatingText from "@/components/ui-bits/RotatingText/RotatingText";
 import Icon from "@/components/general-components/Icon";
-import { Phone, ArrowRight } from "lucide-react";
 
 // Video Hero
 import HeroVideo from "../../../assets/video-website-header.mp4";
@@ -11,7 +10,7 @@ interface HeroProps {
   yearsOfExperience: number;
 }
 
-const Hero: React.FC<HeroProps> = ({ yearsOfExperience }) => {
+const Hero: React.FC<HeroProps> = () => {
   return (
     <section className="relative h-[calc(100vh-5rem)] overflow-hidden">
       {/* Video background */}
@@ -46,7 +45,7 @@ const Hero: React.FC<HeroProps> = ({ yearsOfExperience }) => {
                 'Formações NR33 e NR35',
                 'Consultoria em SST'
               ]}
-              mainClassName="px-4 py-2 sm:py-2.5 text-2xl sm:text-3xl md:text-5xl font-bold bg-primary-light text-white rounded-lg shadow-lg"
+              mainClassName="px-4 py-2 sm:py-2.5 text-2xl sm:text-3xl md:text-5xl font-bold bg-transparent border border-primary-light text-primary-light rounded-lg shadow-lg"
               staggerFrom="last"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
@@ -62,8 +61,8 @@ const Hero: React.FC<HeroProps> = ({ yearsOfExperience }) => {
             </p>
 
             <Button
-              variant="outline"
-              className="flex items-center text-primary-light hover:text-white border-primary-light px-6 bg-transparent hover:bg-primary-light duration-300 ease-in-out"
+              variant="default"
+              className="flex items-center"
             >
               Saiba mais
               <Icon name="arrow-right" className="ml-2 w-4 h-4" />

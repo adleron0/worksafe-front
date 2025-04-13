@@ -14,7 +14,8 @@ import { VscLoading } from "react-icons/vsc";
 import { LoginData } from "@/general-interfaces/auth.interface";
 import { useAuth } from '@/context/AuthContext';
 import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
-import loginSafety from "../assets/building-safety-animate.svg";
+import Logo from "@/components/general-components/Logo";
+import { ArrowLeft } from "lucide-react";
 
 const Login = () => {
   const { setAccessTokenState, setIsLogged, reloadUser, accessToken } = useAuth();
@@ -77,8 +78,36 @@ const Login = () => {
 
   return (
     <main className="h-screen flex flex-col md:flex-row w-full">
-      <div className="bg-primary-foreground w-full h-1/3 md:h-full flex items-center justify-center p-4 md:p-16">
-        <img src={loginSafety} alt="login-safety" className="max-w-xl h-full md:h-auto object-contain" />
+      <div className="relative bg-muted w-full h-1/3 md:h-full flex flex-col gap-8 items-center justify-center p-4 md:p-16">
+        {/* Botão de Voltar para Home */}
+        <Button
+          variant="default"
+          onClick={() => navigate({ to: '/' })}
+          className="absolute top-4 left-4 bg-transparent hover:bg-primary-light border border-primary text-primary p-2 hover:scale-110 hover:text-white rounded-md transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        
+        <div className="hidden md:flex w-full max-w-3xl">
+          <div className="flex gap-1 items-center justify-center w-full">
+            <Logo colorPath24="black" colorPath25="hsl(var(--primary-light))" className="h-15 w-15" />
+            <div className="flex flex-col text-black">
+              <span className="font-black text-4xl">WORKSAFE</span>
+              <span className="text-lg -mt-1.5 font-semibold">Brasil</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-4 items-center justify-center w-full max-w-3xl">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Bem-vindo de volta!</h1>
+          <p className="text-foreground text-sm max-w-4/5 md:text-base mt-2">
+            Aqui você acessa o sistema de gerenciamento WorkSafe Brasil para gestão dos seus serviços, atividades,
+            áreas de risco e de seus colaboradores.
+          </p>
+          <p className="text-muted-foreground font-light max-w-4/5 text-sm md:text-base mt-2">
+            Se ainda não possui acesso ao nosso sistema, entre em contato com nosso time comercial ou suporte para
+            avaliarmos seus caso e liberar o acesso.
+          </p>
+        </div>
       </div>
       <section className="flex items-center justify-center bg-background h-full max-w-3xl w-full p-4">
         <Card className="w-full max-w-md">

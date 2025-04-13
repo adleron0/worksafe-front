@@ -31,8 +31,8 @@ const featuredProduct = {
   id: "corda-11-mm",
   name: "Corda de 11mm Para Trabalho em Altura e Resgate",
   image: Corda11,
-  price: 2499.9,
-  oldPrice: 2999.9,
+  price: 0,
+  oldPrice: 0,
   description:
     "A corda semi-estática de 11mm é de alta performance, garantindo segurança para trabalho ou esportes em altura. Possui certificações NR 18 e NBR 15986, construída com alma e capa para máxima resistência e durabilidade.",
   features: [
@@ -50,8 +50,8 @@ const products = [
     id: "ascensor-de-punho",
     name: "Ascensor de Punho",
     image: AscensorDePunho,
-    price: 289.9,
-    oldPrice: 329.9,
+    price: 0,
+    oldPrice: 0,
     description:
       "Facilita a ascensão em cordas com bloqueio seguro e manuseio simples.",
     rating: 4.8,
@@ -62,8 +62,8 @@ const products = [
     id: "capacete-01",
     name: "Capacete de Segurança Tipo III  Classe A",
     image: Capacete,
-    price: 189.9,
-    oldPrice: 219.9,
+    price: 0,
+    oldPrice: 0,
     description:
       "Utilizado como EPI no trabalhos em altura e espaços confinados na construção civil, petroquímica, mineração, agroindústria, dentre outras.",
     rating: 4.9,
@@ -74,8 +74,8 @@ const products = [
     id: "cinto-7y",
     name: "Cinto Paraquedista 7Y",
     image: Cinto7y,
-    price: 449.9,
-    oldPrice: 499.9,
+    price: 0,
+    oldPrice: 0,
     description:
       "Cinto completo com múltiplos pontos de conexão para maior segurança.",
     rating: 4.7,
@@ -86,8 +86,8 @@ const products = [
     id: "descensor-autoblocante",
     name: "Descensor Autoblocante",
     image: DescensorAutoblocante,
-    price: 349.9,
-    oldPrice: 399.9,
+    price: 0,
+    oldPrice: 0,
     description:
       "Permite descida controlada e bloqueio automático para trabalhos em altura.",
     rating: 4.8,
@@ -98,8 +98,8 @@ const products = [
     id: "mochila",
     name: "Mochila de Equipamentos",
     image: Mochila,
-    price: 149.9,
-    oldPrice: 199.9,
+    price: 0,
+    oldPrice: 0,
     description:
       "Mochila de equipamentos para armazenamento de materiais e equipamentos.",
     rating: 4.8,
@@ -110,8 +110,8 @@ const products = [
     id: "fita-ancoragem",
     name: "Fita Anelar de Ancoragem",
     image: FitaAncoragem,
-    price: 129.9,
-    oldPrice: 159.9,
+    price: 0,
+    oldPrice: 0,
     description:
       "Fita completa com múltiplos pontos de conexão para maior segurança.",
     rating: 4.6,
@@ -122,8 +122,8 @@ const products = [
     id: "lory-auto-blocante",
     name: "Lory Auto Blocante",
     image: LoryAutoBlocante,
-    price: 399.9,
-    oldPrice: 449.9,
+    price: 0,
+    oldPrice: 0,
     description:
       "Descensor auto-blocante LORY SAFE com função anti-pânico, ideal para atividades em acesso por cordas, rapel e escalada.",
     rating: 4.9,
@@ -134,8 +134,8 @@ const products = [
     id: "mosquetao-oval-aco",
     name: "Mosquetão Oval de Aço",
     image: MosquetaoOvalAco,
-    price: 54.9,
-    oldPrice: 69.9,
+    price: 0,
+    oldPrice: 0,
     description:
       "Mosquetão oval em aço para conexões seguras em qualquer situação.",
     rating: 4.8,
@@ -146,8 +146,8 @@ const products = [
     id: "olhal-ancoragem-predial",
     name: "Olhal de Ancoragem",
     image: OlhalAncoragemPredial,
-    price: 69.9,
-    oldPrice: 79.9,
+    price: 0,
+    oldPrice: 0,
     description:
       "Projetado para ancoragens prediais e linhas de vida, resistente e durável.",
     rating: 4.7,
@@ -158,8 +158,8 @@ const products = [
     id: "polia-dupla",
     name: "Polia Dupla",
     image: PoliaDupla,
-    price: 149.9,
-    oldPrice: 179.9,
+    price: 0,
+    oldPrice: 0,
     description:
       "Ideal para sistemas de redução de força e resgates em altura.",
     rating: 4.8,
@@ -170,8 +170,8 @@ const products = [
     id: "polia-simples",
     name: "Polia Simples",
     image: PoliaSimples,
-    price: 99.9,
-    oldPrice: 119.9,
+    price: 0,
+    oldPrice: 0,
     description:
       "Polia de uso geral para aplicações de içamento e desvio de carga.",
     rating: 4.6,
@@ -182,8 +182,8 @@ const products = [
     id: "talabarte-y",
     name: "Talabarte em Y",
     image: TalabarteY,
-    price: 229.9,
-    oldPrice: 259.9,
+    price: 0,
+    oldPrice: 0,
     description:
       "Talabarte versátil em Y para movimentação segura em estruturas.",
     rating: 4.7,
@@ -194,8 +194,8 @@ const products = [
     id: "trava-quedas-corda-abs",
     name: "Trava-Quedas para Corda ABS",
     image: TravaQuedasCordaAbs,
-    price: 279.9,
-    oldPrice: 319.9,
+    price: 0,
+    oldPrice: 0,
     description:
       "Bloqueio automático em cordas, garantindo segurança e praticidade.",
     rating: 4.8,
@@ -206,8 +206,8 @@ const products = [
     id: "trava-quedas-retratil",
     name: "Trava-Quedas Retrátil",
     image: TravaQuedasRetratil,
-    price: 759.9,
-    oldPrice: 849.9,
+    price: 0,
+    oldPrice: 0,
     description:
       "Dispositivo retrátil de segurança para total liberdade de movimento.",
     rating: 4.9,
@@ -264,7 +264,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
                   alt={featuredProduct.name}
                   className="absolute inset-0 w-full h-full object-cover"
                 />
-                <div className="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-orange-400 text-white px-4 py-2 rounded-full font-semibold">
+                <div className="absolute top-4 left-4 bg-gradient-to-r from-green-400 to-primary-light text-white px-4 py-2 rounded-full font-semibold">
                   Produto em Destaque
                 </div>
               </div>
@@ -274,17 +274,32 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
                 <ul className="space-y-3 mb-8">
                   {featuredProduct.features.map((feature, idx) => (
                     <li key={idx} className="flex items-center text-gray-700">
-                      <CheckCircle className="w-5 h-5 text-orange-500 mr-2" />
+                      <CheckCircle className="w-5 h-5 text-primary-light mr-2" />
                       {feature}
                     </li>
                   ))}
                 </ul>
-                <div className="flex flex-col items-center gap-4 mb-6">
-                  <span className="text-3xl font-bold bg-primary-light bg-clip-text text-transparent">
-                    Entre em contato
-                  </span>
-                  <span>Disponibilidade e valores sob consulta!</span>
-                </div>
+                { Number(featuredProduct.price) > 0 ? 
+                    <div className="flex flex-col items-center mb-6">
+                      <span className="text-sm text-gray-500 line-through">
+                        { Number(featuredProduct.oldPrice) > 0 ? `${formatCurrency(featuredProduct.oldPrice)}` : '' }
+                      </span>
+                      <span className="text-3xl font-bold bg-primary-light bg-clip-text text-transparent">
+                        { formatCurrency(featuredProduct.price) }
+                      </span>
+                    </div>
+                   : 
+                    <div className="flex flex-col items-center justify-between mb-4">
+                      <div className="flex flex-col items-center">
+                        <span className="text-2xl font-bold text-primary-light">
+                          Entre em contato
+                        </span>
+                        <span className="text-center text-xs md:text-sm">
+                          Disponibilidade e valores sob consulta!
+                        </span>
+                      </div>
+                    </div>
+                  }
                 <div className="flex gap-4">
                   <Button onClick={() => addToCart(featuredProduct)} size="lg" className="flex-1 bg-primary-light hover:brightness-125 text-white">
                     Adicionar ao Carrinho
@@ -311,19 +326,32 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
               <div className="p-6 flex flex-col flex-grow">
                 <h3 className="text-xl font-semibold mb-2">{product.name}</h3>
                 <p className="text-gray-600 mb-4">{product.description}</p>
-                <div className="flex flex-col items-center justify-between mb-4">
-                  <div className="flex flex-col items-center">
-                    <span className="text-2xl font-bold text-yellow-600">
-                      Entre em contato
-                    </span>
-                    <span className="text-center text-xs md:text-sm">
-                      Disponibilidade e valores sob consulta!
-                    </span>
-                  </div>
-                </div>
+                
                 <div className="mt-auto">
+                  { Number(product.price) > 0 ? 
+                    <div className="flex flex-col items-center mb-6">
+                      <span className="text-sm text-gray-500 line-through">
+                        { Number(product.oldPrice) > 0 ? `${formatCurrency(product.oldPrice)}` : '' }
+                      </span>
+                      <span className="text-3xl font-bold bg-primary-light bg-clip-text text-transparent">
+                        { formatCurrency(product.price) }
+                      </span>
+                    </div>
+                   : 
+                    <div className="flex flex-col items-center justify-between mb-4">
+                      <div className="flex flex-col items-center">
+                        <span className="text-2xl font-bold text-primary-light">
+                          Entre em contato
+                        </span>
+                        <span className="text-center text-xs md:text-sm">
+                          Disponibilidade e valores sob consulta!
+                        </span>
+                      </div>
+                    </div>
+                  }
+
                   <Button
-                    className="w-full bg-black hover:bg-yellow-500 text-white transition-colors"
+                    className="w-full bg-black hover:bg-primary-light text-white transition-colors"
                     onClick={() => addToCart(product)}
                     disabled={!product.inStock}
                   >

@@ -1328,7 +1328,7 @@ export default function Home() {
             <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-60 w-full">
               <div className="max-w-4xl flex flex-col gap-4 items-start justify-center text-left">
                 <h2 className="text-white text-xl sm:text-2xl md:text-4xl font-medium leading-tight">
-                  Somos Especialistas em
+                  Nossa Especialidade
                 </h2>
 
                 <RotatingText
@@ -1389,7 +1389,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {features.map((feature, index) => (
                 <div key={index} className="text-center p-6 rounded-xl card-hover">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 bg-gradient-to-r from-red-400 to-orange-500 text-white">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 bg-gradient-to-r from-green-400 to-primary-light text-white">
                     <feature.icon size={32} />
                   </div>
                   <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>

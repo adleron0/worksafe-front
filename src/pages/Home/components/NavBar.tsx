@@ -8,7 +8,6 @@ import {
   Plus,
   Minus,
   Trash,
-  ChevronRight,
 } from "lucide-react";
 
 // Define the type for cart items

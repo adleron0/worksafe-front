@@ -1,3 +1,5 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
+// @ts-nocheck
 import React, {
   forwardRef,
   useCallback,

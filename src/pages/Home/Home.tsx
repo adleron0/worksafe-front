@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import RotatingText from "@/components/ui-bits/RotatingText/RotatingText";
@@ -7,10 +6,8 @@ import Icon from "@/components/general-components/Icon";
 import {
   Phone,
   MessageCircleMore,
-  ShoppingCart,
   ArrowRight,
   Plus,
-  Minus,
   Shield,
   Award,
   Clock,
@@ -20,40 +17,37 @@ import {
   Star,
   CheckCircle,
   ArrowUpRight,
-  Trash,
   ChevronDown,
 } from "lucide-react";
+import NavBar from "./components/NavBar";
 
 // Calcula anos
 const foundationYear = 2018;
 const yearsOfExperience = new Date().getFullYear() - foundationYear;
 
-// Logo
-import Logo from "@/components/general-components/Logo";
-
 // Video Hero
-import HeroVideo from "../assets/video-website-header.mp4";
+import HeroVideo from "../../assets/video-website-header.mp4";
 
 // Video Treinamento
 const TreinamentoVideo = "/assets/videos/treinamento.mp4";
 
 // Imagens do About
-import AboutImage1 from "../assets/images/fundador-1.webp";
-import AboutImage2 from "../assets/images/fundador-2.webp";
+import AboutImage1 from "../../assets/images/fundador-1.webp";
+import AboutImage2 from "../../assets/images/fundador-2.webp";
 
 // Imagens Serviços
-// import Altura from "../assets/images/altura.jpg";
-import Confinado from "../assets/images/confinado.jpg";
-import Resgate from "../assets/images/resgate.jpg";
-import LinhaDeVida from "../assets/images/linha-de-vida.jpg";
-import Eolica from "../assets/images/eolica.webp";
+// import Altura from "../../assets/images/altura.jpg";
+import Confinado from "../../assets/images/confinado.jpg";
+import Resgate from "../../assets/images/resgate.jpg";
+import LinhaDeVida from "../../assets/images/linha-de-vida.jpg";
+import Eolica from "../../assets/images/eolica.webp";
 
 // Imagens Hero Slides
 // comenta algo
-import Altura2 from "../assets/images/altura-2.jpg";
-// import Equipamentos from "../assets/images/equipamentos.jpg";
-// import Treinamento from "../assets/images/treinamento.jpg";
-// import Resgate2 from "../assets/images/resgate-2.jpg";
+import Altura2 from "../../assets/images/altura-2.jpg";
+// import Equipamentos from "../../assets/images/equipamentos.jpg";
+// import Treinamento from "../../assets/images/treinamento.jpg";
+// import Resgate2 from "../../assets/images/resgate-2.jpg";
 
 // Hero Slides
 // const slides = [
@@ -152,7 +146,7 @@ const services = [
 ];
 
 // Produto Destaque Venda
-import Corda11 from "../assets/images/equipamentos/corda-11.webp";
+import Corda11 from "../../assets/images/equipamentos/corda-11.webp";
 const featuredProduct = {
   id: "corda-11-mm",
   name: "Corda de 11mm Para Trabalho em Altura e Resgate",
@@ -171,20 +165,20 @@ const featuredProduct = {
 };
 
 // Imagens de Equipamentos para Venda
-import AscensorDePunho from "../assets/images/equipamentos/ascensor-de-punho.webp";
-import Capacete from "../assets/images/equipamentos/capacete.webp";
-import Cinto7y from "../assets/images/equipamentos/cinto-7y.webp";
-import DescensorAutoblocante from "../assets/images/equipamentos/descensor-autoblocante.webp";
-import FitaAncoragem from "../assets/images/equipamentos/fita-ancoragem.webp";
-import LoryAutoBlocante from "../assets/images/equipamentos/lory-auto-blocante.webp";
-import MosquetaoOvalAco from "../assets/images/equipamentos/mosquetao-oval-aco.webp";
-import OlhalAncoragemPredial from "../assets/images/equipamentos/olhal-ancoragem-predial.webp";
-import PoliaDupla from "../assets/images/equipamentos/polia-dupla.webp";
-import PoliaSimples from "../assets/images/equipamentos/polia-simples.webp";
-import TalabarteY from "../assets/images/equipamentos/talabarte-y.webp";
-import TravaQuedasCordaAbs from "../assets/images/equipamentos/trava-quedas-corda-abs.webp";
-import TravaQuedasRetratil from "../assets/images/equipamentos/trava-quedas-retratil.webp";
-import Mochila from "../assets/images/equipamentos/mochila-equipamentos.webp";
+import AscensorDePunho from "../../assets/images/equipamentos/ascensor-de-punho.webp";
+import Capacete from "../../assets/images/equipamentos/capacete.webp";
+import Cinto7y from "../../assets/images/equipamentos/cinto-7y.webp";
+import DescensorAutoblocante from "../../assets/images/equipamentos/descensor-autoblocante.webp";
+import FitaAncoragem from "../../assets/images/equipamentos/fita-ancoragem.webp";
+import LoryAutoBlocante from "../../assets/images/equipamentos/lory-auto-blocante.webp";
+import MosquetaoOvalAco from "../../assets/images/equipamentos/mosquetao-oval-aco.webp";
+import OlhalAncoragemPredial from "../../assets/images/equipamentos/olhal-ancoragem-predial.webp";
+import PoliaDupla from "../../assets/images/equipamentos/polia-dupla.webp";
+import PoliaSimples from "../../assets/images/equipamentos/polia-simples.webp";
+import TalabarteY from "../../assets/images/equipamentos/talabarte-y.webp";
+import TravaQuedasCordaAbs from "../../assets/images/equipamentos/trava-quedas-corda-abs.webp";
+import TravaQuedasRetratil from "../../assets/images/equipamentos/trava-quedas-retratil.webp";
+import Mochila from "../../assets/images/equipamentos/mochila-equipamentos.webp";
 
 // Produtos para Venda
 const products = [
@@ -359,12 +353,12 @@ const products = [
 ];
 
 // Imagens Produtos Locação
-import ConjuntoAutonomo from "../assets/images/locacao/conjunto-autonomo.webp";
-import Detector from "../assets/images/locacao/detector.webp";
-import Exaustor from "../assets/images/locacao/exaustor.webp";
-import KitResgate from "../assets/images/locacao/kit-resgate.webp";
-import MacaSked from "../assets/images/locacao/maca-sked.webp";
-import Tripe from "../assets/images/locacao/tripe.webp";
+import ConjuntoAutonomo from "../../assets/images/locacao/conjunto-autonomo.webp";
+import Detector from "../../assets/images/locacao/detector.webp";
+import Exaustor from "../../assets/images/locacao/exaustor.webp";
+import KitResgate from "../../assets/images/locacao/kit-resgate.webp";
+import MacaSked from "../../assets/images/locacao/maca-sked.webp";
+import Tripe from "../../assets/images/locacao/tripe.webp";
 
 // Aluguel de Equipamentos
 const rentals = [
@@ -452,23 +446,23 @@ const rentals = [
 ];
 
 // Training Courses
-import Brigada from "../assets/images/treinamentos/brigada.jpg";
-import Nr35Trabalhador from "../assets/images/treinamentos/nr35-trabalhador.jpg";
-import Nr35Liberador from "../assets/images/treinamentos/nr35-liberador.webp";
-import Nr35Supervisor from "../assets/images/treinamentos/nr35-supervisor.jpg";
-import NR11 from "../assets/images/treinamentos/nr-11.jpg";
-import NR12 from "../assets/images/treinamentos/nr-12.png";
-import NR20 from "../assets/images/treinamentos/nr-20.jpg";
-import NR23 from "../assets/images/treinamentos/nr-23.webp";
-import Nr33 from "../assets/images/treinamentos/nr-33.webp";
-import Nr33Supervisor from "../assets/images/treinamentos/nr33-supervisor.webp";
-import RTI from "../assets/images/treinamentos/resgate-industrial.webp";
-import RTO from "../assets/images/treinamentos/resgate-operacional.webp";
-import RTL from "../assets/images/treinamentos/resgate-lider.webp";
-import RTC from "../assets/images/treinamentos/resgate-coordenador.jpg";
-import N1 from "../assets/images/treinamentos/n1.webp";
-import N2 from "../assets/images/treinamentos/n2.webp";
-import N3 from "../assets/images/treinamentos/n3.jpg";
+import Brigada from "../../assets/images/treinamentos/brigada.jpg";
+import Nr35Trabalhador from "../../assets/images/treinamentos/nr35-trabalhador.jpg";
+import Nr35Liberador from "../../assets/images/treinamentos/nr35-liberador.webp";
+import Nr35Supervisor from "../../assets/images/treinamentos/nr35-supervisor.jpg";
+import NR11 from "../../assets/images/treinamentos/nr-11.jpg";
+import NR12 from "../../assets/images/treinamentos/nr-12.png";
+import NR20 from "../../assets/images/treinamentos/nr-20.jpg";
+import NR23 from "../../assets/images/treinamentos/nr-23.webp";
+import Nr33 from "../../assets/images/treinamentos/nr-33.webp";
+import Nr33Supervisor from "../../assets/images/treinamentos/nr33-supervisor.webp";
+import RTI from "../../assets/images/treinamentos/resgate-industrial.webp";
+import RTO from "../../assets/images/treinamentos/resgate-operacional.webp";
+import RTL from "../../assets/images/treinamentos/resgate-lider.webp";
+import RTC from "../../assets/images/treinamentos/resgate-coordenador.jpg";
+import N1 from "../../assets/images/treinamentos/n1.webp";
+import N2 from "../../assets/images/treinamentos/n2.webp";
+import N3 from "../../assets/images/treinamentos/n3.jpg";
 
 const courses = [
   {
@@ -719,12 +713,12 @@ const courses = [
 ];
 
 // Imagens Clientes
-import AlagoasAmbiental from "../assets/images/clientes/alagoas-ambiental.png";
-import AmbiparLogo from "../assets/images/clientes/ambipar-logo.png";
-import Braskem from "../assets/images/clientes/braskem.png";
-import Petrobras from "../assets/images/clientes/petrobras.png";
-import Prevenir from "../assets/images/clientes/prevenir.png";
-import RipAlagoas from "../assets/images/clientes/rip-alagoas.png";
+import AlagoasAmbiental from "../../assets/images/clientes/alagoas-ambiental.png";
+import AmbiparLogo from "../../assets/images/clientes/ambipar-logo.png";
+import Braskem from "../../assets/images/clientes/braskem.png";
+import Petrobras from "../../assets/images/clientes/petrobras.png";
+import Prevenir from "../../assets/images/clientes/prevenir.png";
+import RipAlagoas from "../../assets/images/clientes/rip-alagoas.png";
 
 // Client Logos
 const clients = [
@@ -871,13 +865,9 @@ type CartItem = {
 };
 
 export default function Home() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<typeof courses[0] | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const navigate = useNavigate();
-
 
   const toggleFaq = (index: number) => {
     setActiveIndex(activeIndex === index ? null : index);
@@ -890,20 +880,6 @@ export default function Home() {
   const closeModal = () => {
     setSelectedCourse(null);
   };
-
-  // Desativa rolagem do body se o menu ou o carrinho estiverem abertos
-  useEffect(() => {
-    if (isMenuOpen || isCartOpen || selectedCourse) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-
-    // Limpa o estilo ao desmontar componente (boa prática)
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isMenuOpen, isCartOpen, selectedCourse]);
 
   // Recupera o carrinho do localStorage ao montar
   useEffect(() => {
@@ -934,45 +910,10 @@ export default function Home() {
     });
   };
 
-  // Funções para modificar o carrinho
-  const incrementQuantity = (id: string) => {
-    setCart((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-      )
-    );
-  };
-
-  const decrementQuantity = (id: string) => {
-    setCart((prev) =>
-      prev
-        .map((item) =>
-          item.id === id ? { ...item, quantity: item.quantity - 1 } : item
-        )
-        .filter((item) => item.quantity > 0)
-    );
-  };
-
-  const removeItem = (id: string) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
-  };
-
   const clearCart = () => {
     setCart([]);
   };
 
-  // Função para gerar a mensagem do carrinho para o WhatsApp
-  const generateCartMessage = () => {
-    if (cart.length === 0) {
-      return "Olá, gostaria de solicitar um orçamento.";
-    }
-    let message =
-      "Olá, gostaria de solicitar um orçamento para os seguintes itens:\n\n";
-    cart.forEach((item) => {
-      message += `• ${item.name} (Quantidade: ${item.quantity})\n`;
-    });
-    return message;
-  };
 
   // Configurações WhatsApp
   const whatsappNumber1 = "82988361789";
@@ -1036,293 +977,24 @@ export default function Home() {
 
   return (
     <>
-      {/* Mobile Menu Overlay */}
-      <div
-        className={`fixed inset-0 bg-primary-light/30 backdrop-blur-sm transition-opacity duration-300 z-40 ${
-          isMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-        onClick={() => setIsMenuOpen(false)}
-      />
-      {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-50 shadow-sm">
-        <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
-          <div className="flex items-center justify-between h-20">
-            <div className="flex gap-1 items-center">
-              <Logo colorPath24="black" colorPath25="hsl(var(--primary-light))" className="h-10 w-10" />
-              <div className="flex flex-col text-black">
-                <span className="font-black text-2xl">WORKSAFE</span>
-                <span className="text-sm -mt-1.5 font-semibold">Brasil</span>
-              </div>
-            </div>
-            {/* Desktop Menu */}
-            <div className="hidden md:flex items-center gap-4">
-              <a
-                href="#servicos"
-                className="text-gray-600 hover:text-primary-light transition-colors"
-              >
-                Serviços
-              </a>
-              <a
-                href="#produtos"
-                className="text-gray-600 hover:text-primary-light transition-colors"
-              >
-                Produtos
-              </a>
-              <a
-                href="#aluguel"
-                className="text-gray-600 hover:text-primary-light transition-colors"
-              >
-                Aluguel
-              </a>
-              <a
-                href="#treinamentos"
-                className="text-gray-600 hover:text-primary-light transition-colors"
-              >
-                Treinamentos
-              </a>
-              <a
-                href="#sobre"
-                className="text-gray-600 hover:text-primary-light transition-colors"
-              >
-                Sobre Nós
-              </a>
-              <Button
-                onClick={() => {
-                  navigate({
-                    to: `/login`,
-                  })
-                }}
-                className="bg-primary-light  text-white"
-              >
-                Login
-              </Button>
-              {/* Botão do Carrinho */}
-              <button
-                className="relative p-2 hover:scale-110 cursor-pointer transition-transform duration-200"
-                onClick={() => setIsCartOpen(true)}
-              >
-                <ShoppingCart className="w-6 h-6 text-gray-900" />
-                {cart.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary-light text-white rounded-full text-xs w-5 h-5 flex items-center justify-center animate-bounce">
-                    {cart.reduce((acc, item) => acc + item.quantity, 0)}
-                  </span>
-                )}
-              </button>
-            </div>
-            {/* Mobile Menu Button */}
-            <div className="md:hidden flex items-center gap-2">
-              {/* Botão do Carrinho */}
-              <button
-                className="relative text-gray-900 cursor-pointer p-2 hover:scale-110 transition-transform duration-200"
-                onClick={() => setIsCartOpen(true)}
-              >
-                <ShoppingCart className="w-6 h-6" />
-                {cart.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary-light text-white rounded-full text-xs w-5 h-5 flex items-center justify-center animate-bounce">
-                    {cart.reduce((acc, item) => acc + item.quantity, 0)}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="group h-8 w-8 rounded-lg bg-primary-light hover:brightness-125 text-white"
-              >
-                <div className="grid justify-items-center gap-1">
-                  <span
-                    className={`h-0.5 w-5 rounded-full bg-white transition-transform duration-300 ${
-                      isMenuOpen ? "rotate-45 translate-y-1.5" : ""
-                    }`}
-                  />
-                  <span
-                    className={`h-0.5 w-5 rounded-full bg-white transition-transform duration-300 ${
-                      isMenuOpen ? "scale-x-0" : ""
-                    }`}
-                  />
-                  <span
-                    className={`h-0.5 w-5 rounded-full bg-white transition-transform duration-300 ${
-                      isMenuOpen ? "-rotate-45 -translate-y-1.5" : ""
-                    }`}
-                  />
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Menu */}
-          {isMenuOpen && (
-            <div className="md:hidden py-4 border-t">
-              <div className="flex flex-col gap-4">
-
-                <a
-                  href="#sobre"
-                  className="text-gray-600 hover:text-primary-light transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Sobre Nós
-                </a>
-                <a
-                  href="#servicos"
-                  className="text-gray-600 hover:text-primary-light transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Serviços
-                </a>
-                <a
-                  href="#produtos"
-                  className="text-gray-600 hover:text-primary-light transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Produtos
-                </a>
-                <a
-                  href="#aluguel"
-                  className="text-gray-600 hover:text-primary-light transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Aluguel
-                </a>
-                <a
-                  href="#treinamentos"
-                  className="text-gray-600 hover:text-primary-light transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Treinamentos
-                </a>
-
-                <Button
-                  onClick={() => {
-                    navigate({
-                      to: `/login`,
-                    })
-                  }}
-                  className="bg-primary-light hover:brightness-125 text-white w-full"
-                >
-                  Login
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </nav>
-
-      {/* Menu Lateral do Carrinho */}
-      {/* Cart Overlay */}
-      <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 z-40 ${
-          isCartOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-        onClick={() => setIsCartOpen(false)}
-      />
-
-      {/* Cart Sidebar */}
-      <div
-        className={`fixed top-0 right-0 w-full md:w-96 h-full bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${
-          isCartOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <div className="flex flex-col h-full">
-          {/* Cart Header */}
-          <div className="flex justify-between items-center p-6 border-b">
-            <div className="flex items-center gap-2">
-              <ShoppingCart className="w-6 h-6 text-primary-light" />
-              <h2 className="text-xl font-bold text-primary-light">Carrinho</h2>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setIsCartOpen(false)}
-                className="p-1 hover:bg-gray-100 rounded-sm cursor-pointer text-gray-700 hover:text-destructive transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Cart Content */}
-          <div className="flex-1 overflow-y-auto p-4">
-            {cart.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <ShoppingCart className="w-16 h-16 text-gray-300 mb-4" />
-                <p className="text-gray-500 mb-2">Seu carrinho está vazio</p>
-                <p className="text-sm text-gray-400">
-                  Adicione produtos para solicitar um orçamento
-                </p>
-              </div>
-            ) : (
-              <ul className="space-y-6">
-                {cart.map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <h3 className="font-medium">{item.name}</h3>
-                      <p className="text-sm text-gray-500">
-                        Quantidade: {item.quantity}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => decrementQuantity(item.id)}
-                        className="p-1 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => incrementQuantity(item.id)}
-                        className="p-1 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="p-1 rounded bg-red-200 hover:bg-red-300 transition-colors"
-                      >
-                        <Trash className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* Cart Footer */}
-          <div className="flex flex-col md:flex-row gap-2 p-4 border-t bg-gray-50">
-            <Button
-              onClick={() => {
-                handleWhatsApp(generateCartMessage());
-                setIsCartOpen(false);
-              }}
-              className="w-full bg-primary-light hover:brightness-110 text-white gap-2"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              Solicitar Orçamento
-            </Button>
-            <Button
-              variant="outline"
-              onClick={clearCart}
-              className="border-gray-300 w-full text-gray-600 hover:bg-gray-100"
-            >
-              Limpar Carrinho
-            </Button>
-          </div>
-        </div>
-      </div>
+      <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
 
       <main className="min-h-screen pt-20">
         {/* Hero Section with Slider */}
         <section className="relative h-[calc(100vh-5rem)] overflow-hidden">
           {/* Video background */}
           <video
-            autoPlay
-            loop
-            muted={true}
-            playsInline
             className="absolute inset-0 w-full h-full object-cover"
-            src={HeroVideo}
-          />
+            autoPlay
+            muted
+            loop
+            playsInline
+          >
+            <source src={HeroVideo} type="video/mp4" />
+            Seu navegador não suporta a tag de vídeo.
+          </video>
           {/* Overlay */}
-          <div className="bg-black/50 absolute inset-0 z-0" />
+          <div className="bg-black/40 absolute inset-0 z-0" />
 
           <div className="relative h-full flex items-center py-20">
             <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-60 w-full">

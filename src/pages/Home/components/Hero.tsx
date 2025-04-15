@@ -25,7 +25,7 @@ const Hero: React.FC<HeroProps> = () => {
         Seu navegador não suporta a tag de vídeo.
       </video>
       {/* Overlay */}
-      <div className="bg-black/40 absolute inset-0 z-0" />
+      <div className="bg-black/30 absolute inset-0 z-0" />
 
       <div className="relative h-full flex items-center py-20">
         <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-60 w-full">
@@ -45,7 +45,7 @@ const Hero: React.FC<HeroProps> = () => {
                 'Formações NR33 e NR35',
                 'Consultoria em SST'
               ]}
-              mainClassName="px-4 py-2 sm:py-2.5 text-2xl sm:text-3xl md:text-5xl font-bold bg-transparent border border-primary-light text-primary-light rounded-lg shadow-lg"
+              mainClassName="px-4 py-2 sm:py-2.5 text-2xl sm:text-3xl md:text-5xl font-bold bg-primary-light border border-primary-light text-white rounded-lg shadow-lg"
               staggerFrom="last"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}

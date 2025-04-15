@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
 import Pagination from "@/components/general-components/Pagination";
+import Dialog from "@/components/general-components/Dialog";
 // Template Page list-form
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
@@ -19,6 +20,7 @@ const Users = () => {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
+  const [openContactModal, setOpenContactModal] = useState(false);
   const [formData, setFormData] = useState<EntityInterface>();
   const [formType, setFormType] = useState("both");
   const [searchParams, setSearchParams] = useState({
@@ -149,6 +151,7 @@ const Users = () => {
                 setFormData={setFormData} 
                 setFormType={setFormType}
                 setOpenForm={setOpenForm}
+                openContactModal={setOpenContactModal}
               />
             ))
           : (
@@ -158,6 +161,17 @@ const Users = () => {
           )
         }
       </div>
+
+      {/* Modal de contato */}
+      <Dialog 
+        open={openContactModal}
+        onOpenChange={setOpenContactModal}
+        showBttn={false}
+        title="Contato"
+        description="Envie um email para o suporte."
+      >
+        <p>testando</p>
+      </Dialog>
 
       {/* Paginação */}
       <div className="mt-4">

@@ -20,9 +20,10 @@ interface ItemsProps {
   setFormData: (data: any) => void;
   setFormType: (type: string) => void;
   setOpenForm: (open: boolean) => void;
+  openContactModal: (open: boolean) => void;
 }
 
-const CustomerItem = ({ item, index, entity, setFormData, setFormType, setOpenForm }: ItemsProps) => {
+const CustomerItem = ({ item, index, entity, setFormData, setFormType, setOpenForm, openContactModal }: ItemsProps) => {
   const { can } = useVerify();
   const queryClient = useQueryClient();
 
@@ -204,6 +205,19 @@ const CustomerItem = ({ item, index, entity, setFormData, setFormType, setOpenFo
                   )
                 )
               }
+
+              <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                <Button 
+                  variant="ghost" 
+                  className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                  onClick={() => {
+                    openContactModal(true);
+                  }}
+                >
+                  <Icon name="phone" className="w-3 h-3" /> 
+                  <p>Contados</p>
+                </Button>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

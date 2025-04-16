@@ -17,10 +17,9 @@ interface ItemsProps {
   entity: IDefaultEntity;
   setFormData: (data: any) => void;
   setOpenForm: (open: boolean) => void;
-  openContactModal: (open: boolean) => void;
 }
 
-const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openContactModal }: ItemsProps) => {
+const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => {
   const { can } = useVerify();
   const queryClient = useQueryClient();
 

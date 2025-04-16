@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { DateRange } from "react-day-picker";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,8 +22,6 @@ interface SearchFormProps {
 }
 
 const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, params }) => {
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   const form = useForm<SearchFormData>({
     resolver: zodResolver(SearchSchema),
@@ -44,19 +41,11 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
     form.setValue("active",  value === "true" ? true : false);
   };
 
-  const handleDateSelect = (range: DateRange | undefined) => {
-    setStartDate(range?.from);
-    setEndDate(range?.to);
-  };
-
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((data) => {
-          const createdAt: [Date | undefined, Date | undefined] | undefined =
-            startDate && endDate ? [startDate, endDate] : undefined;
-        
-          onSubmit({ ...data, ...(createdAt ? { createdAt } : {}) });
+          onSubmit({ ...data });
           openSheet(false);
         })}
         className="space-y-4"
@@ -102,8 +91,6 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
             className="w-1/2"
             onClick={() => {
               form.reset();
-              setStartDate(undefined);
-              setEndDate(undefined);
               onClear();
               openSheet(false);
             }}

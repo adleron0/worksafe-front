@@ -1,5 +1,6 @@
 // Função para formatar o CNPJ (somente para exibição)
 export const formatCNPJ = (value: string) => {
+  if (!value) return value;
   return value
     .replace(/\D/g, '') // Remove qualquer caractere que não seja número
     .replace(/^(\d{2})(\d)/, '$1.$2') // Insere o primeiro ponto

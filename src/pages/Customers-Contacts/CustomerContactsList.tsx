@@ -9,39 +9,37 @@ import Dialog from "@/components/general-components/Dialog";
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
 import ItemSkeleton from "./Skeletons/userItemSkeleton";
-import ItemList from "./CustomerItem";
-import Form from "./CustomerForm";
-import SearchForm from "./CustomerSeach";
-import CustomerContacts from "@/pages/Customers-Contacts/CustomerContactsList";
+import ItemList from "./CustomerContactsItem";
+import Form from "./CustomerContactsForm";
+import SearchForm from "./CustomerContactsSeach";
 // Interfaces
-import { Customer as EntityInterface } from "@/pages/Customers/interfaces/customer.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
-const List = () => {
+const List = ({ customerId }: { customerId: number }) => {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [openContactModal, setOpenContactModal] = useState(false);
-  const [formData, setFormData] = useState<EntityInterface>();
+  const [formData, setFormData] = useState<IEntity>();
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
-    show: ['state', 'city', 'rank'],
-    'order-active': 'desc',
+    show: ['role'],
     'order-name': 'asc',
   });
   const initialFormRef = useRef(searchParams);
 
   // Define variáveis de entidade
   const entity = {
-    name: "Cliente",
-    pluralName: "Clientes",
-    model: "customer",
+    name: "Contato do Cliente",
+    pluralName: "Contatos de Clientes",
+    model: "customer-contacts",
     ability: "clientes",
   }
 
   interface Response {
-    rows: EntityInterface[];
+    rows: IEntity[];
     total: number;
   }
 
@@ -92,7 +90,7 @@ const List = () => {
     <>
       <HeaderLists
         titlePage={`${entity.pluralName}`}
-        descriptionPage={`Administrar nossos ${entity.pluralName}`}
+        descriptionPage={`Administrar ${entity.pluralName}`}
         entityName={entity.name}
         ability={entity.ability}
         limit={data?.total || 0}
@@ -126,7 +124,7 @@ const List = () => {
           ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
           : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
         side="right"
-        form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} /> }
+        form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} customerId={customerId} /> }
       />
 
       {/* Listagem de items */}
@@ -138,7 +136,7 @@ const List = () => {
               <p>Erro: {error?.response?.data?.message}</p>
             </div>
           : data?.rows && data.rows.length > 0 
-          ? data.rows.map((item: EntityInterface, i: number) => (
+          ? data.rows.map((item: IEntity, i: number) => (
               <ItemList 
                 key={item.id} 
                 item={item} 
@@ -151,7 +149,7 @@ const List = () => {
             ))
           : (
             <div className="w-full flex justify-center items-center font-medium text-primary py-4 rounded border border-primary">
-              <p>Nenhum usuário encontrado!</p>
+              <p>Nenhum {entity.name} encontrado!</p>
             </div>
           )
         }
@@ -162,11 +160,10 @@ const List = () => {
         open={openContactModal}
         onOpenChange={setOpenContactModal}
         showBttn={false}
-        showHeader={false}
         title="Contato"
         description="Gestão de contatos do cliente."
       >
-        <CustomerContacts customerId={formData?.id || 0} />
+        <p>testando</p>
       </Dialog>
 
       {/* Paginação */}

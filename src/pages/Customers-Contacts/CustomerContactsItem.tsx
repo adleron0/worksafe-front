@@ -1,8 +1,7 @@
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Customer as EntityInterface } from "@/pages/Customers/interfaces/customer.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import useVerify from "@/hooks/use-verify";
 import { patch } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,10 +10,9 @@ import Loader from "@/components/general-components/Loader";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
-import { formatCNPJ } from "@/utils/cpnj-mask";
 
 interface ItemsProps {
-  item: EntityInterface;
+  item: IEntity;
   index: number;
   entity: IDefaultEntity;
   setFormData: (data: any) => void;
@@ -28,7 +26,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
 
    // Mutation para inativar
   const { mutate: deactivate, isPending: isInactivating } = useMutation({
-    mutationFn: (id: number) => patch<EntityInterface>(entity.model, `inactive/${id}`),
+    mutationFn: (id: number) => patch<IEntity>(entity.model, `inactive/${id}`),
     onSuccess: () => {
       toast({
         title: `${entity.name} ${item.name} inativado!`,
@@ -48,7 +46,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
 
   // Mutation para ativar
   const { mutate: activate, isPending: isActivating } = useMutation({
-    mutationFn: (id: number) => patch<EntityInterface>(entity.model, `active/${id}`),
+    mutationFn: (id: number) => patch<IEntity>(entity.model, `active/${id}`),
     onSuccess: () => {
       toast({
         title: `${entity.name} ${item.name} reativado!`,
@@ -81,35 +79,28 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
       {/* Renderiza o Header apenas no primeiro item */}
       {index === 0 && (
         <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
-          <div className="w-3/12">Cliente</div>
-          <div className="w-2/12">Endereço</div>
+          <div className="w-4/12">Nome</div>
+          <div className="w-2/12">Setor</div>
           <div className="w-3/12">Contatos</div>
-          <div className="w-2/12">Cadastro</div>
-          <div className="w-1/12">Status</div>
+          <div className="w-2/12">Status</div>
           <div className="w-1/12">Ações</div>
         </div>
       )}
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
-        {/* Avatar e Nome */}
-        <div className="w-full lg:w-3/12 flex items-center space-x-4">
-          <Avatar className="border">
-            <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
-            <AvatarFallback>{item.name[0]}</AvatarFallback>
-          </Avatar>
+        {/* Nome */}
+        <div className="w-full lg:w-4/12 flex items-center space-x-4">
           <div className="break-all">
             <h2 className="text-sm font-semibold">{item.name}</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-100">{formatCNPJ(item.cnpj)}</p>
           </div>
         </div>
 
-        {/* Endereço */}
+        {/* Setor */}
         <div className="lg:w-2/12 flex items-baseline gap-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Endereço: </p>
           <div className="break-all">
-            <h2 className="text-sm font-semibold">{item?.state?.name}</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-100">{item?.city?.name}</p>
+            <h2 className="text-sm font-semibold">{item?.role?.name}</h2>
           </div>
         </div>
 
@@ -125,26 +116,18 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
           </div>
         </div>
 
-        {/* Data de Criação */}
-        <div className="lg:w-2/12 flex items-baseline gap-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Cadastro: </p>
-          <p className="text-sm text-gray-600 dark:text-gray-100">
-            {new Date(item.createdAt || '2024-01-01').toLocaleDateString()}
-          </p>
-        </div>
-
         {/* Status */}
-        <div className="lg:w-1/12 flex items-baseline gap-2">
+        <div className="lg:w-2/12 flex items-baseline gap-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
           <Badge
             variant="outline"
             className={`${
-              item.active
+              !item.inactivedAt
               ? "bg-green-200 text-green-900 dark:bg-green-900 dark:text-green-200"
               : "bg-red-200 text-red-900 dark:bg-red-900 dark:text-red-200"
             } rounded-full px-2 py-1 text-xs`}
           >
-            {item.active ? "Ativo" : "Inativo"}
+            {!item.inactivedAt ? "Ativo" : "Inativo"}
           </Badge>
         </div>
 
@@ -175,23 +158,9 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
                   </Button>
                 )
               }
-
-              <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                <Button 
-                  variant="ghost" 
-                  className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
-                  onClick={() => {
-                    openContactModal(true);
-                    setFormData(item);
-                  }}
-                >
-                  <Icon name="phone" className="w-3 h-3" /> 
-                  <p>Contados</p>
-                </Button>
-              </DropdownMenuItem>
               
               {
-                item.active ? (
+                !item.inactivedAt ? (
                   can(`inactive_${entity.ability}`) && (
                       <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
                         <ConfirmDialog

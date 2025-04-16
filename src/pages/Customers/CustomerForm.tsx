@@ -14,13 +14,13 @@ import { formatPHONE } from "@/utils/phone-mask";
 import { formatCEP } from "@/utils/cep-mask";
 import { Customer as EntityInterface } from "@/pages/Customers/interfaces/customer.interface";
 import DropUpload from "@/components/general-components/DropUpload";
-import { IEntity } from "@/general-interfaces/entity.interface";
+import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 
 interface FormProps {
   formData?: EntityInterface;
   openSheet: (open: boolean) => void;
-  entity: IEntity;
+  entity: IDefaultEntity;
 }
 
 const Form = ({ formData, openSheet, entity }: FormProps) => {
@@ -100,7 +100,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   }, []);
 
   const { mutate: registerCustomer, isPending } = useMutation({
-    mutationFn: (newCustomer: FormData) => post<EntityInterface>(entity.model, '', newCustomer),
+    mutationFn: (newItem: FormData) => post<EntityInterface>(entity.model, '', newItem),
     onSuccess: () => {
       toast({
         title: `${entity.name} cadastrado!`,
@@ -122,7 +122,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   });
 
   const { mutate: updateCustomerMutation, isPending: isPendingUpdate } = useMutation({
-    mutationFn: (updatedCustomer: FormData) => put<EntityInterface>(entity.model, `${formData?.id}`, updatedCustomer),
+    mutationFn: (updatedItem: FormData) => put<EntityInterface>(entity.model, `${formData?.id}`, updatedItem),
     onSuccess: () => {
       toast({
         title: `${entity.name} atualizado!`,
@@ -401,11 +401,11 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
             ? "Atualizando..."
             : "Registrando..."
           : formData
-          ? "Atualizar Cliente"
-          : "Registrar Cliente"}
+          ? `Atualizar ${entity.name}`
+          : `Registrar ${entity.name}`}
       </Button>
       {(isPending || isPendingUpdate) && (
-        <Loader title={formData ? "Atualizando Cliente..." : "Registrando Cliente..."} />
+        <Loader title={formData ? `Atualizando ${entity.name}...` : `Registrando ${entity.name}...`} />
       )}
     </form>
   );

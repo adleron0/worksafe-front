@@ -11,6 +11,7 @@ import Icon from "./Icon";
 
 interface DialogProps {
   showBttn?: boolean;
+  showHeader?: boolean;
   titleBttn?: string;
   iconBttn?: string;
   children?: React.ReactNode;
@@ -22,6 +23,7 @@ interface DialogProps {
 
 const Dialog: React.FC<DialogProps> = ({
   showBttn = true,
+  showHeader = true,
   titleBttn,
   iconBttn,
   children,
@@ -45,13 +47,17 @@ const Dialog: React.FC<DialogProps> = ({
           </DialogTrigger>
         )
       }
-      <DialogContent className="sm:max-w-[425px] max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{ title }</DialogTitle>
-          <DialogDescription>
-            { description }
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[90vw] max-h-[85vh] overflow-y-auto">
+        {
+          showHeader && (
+            <DialogHeader>
+              <DialogTitle>{ title }</DialogTitle>
+              <DialogDescription>
+                { description }
+              </DialogDescription>
+            </DialogHeader>
+          )
+        }
           { children }
       </DialogContent>
     </UiDialog>

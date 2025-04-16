@@ -1,4 +1,4 @@
-export interface IEntity {
+export interface IDefaultEntity {
   name: string,
   pluralName: string,
   model: string,

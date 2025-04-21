@@ -62,7 +62,7 @@ const Hero: React.FC<HeroProps> = () => {
 
             <Button
               variant="default"
-              className="flex items-center"
+              className="flex items-center bg-primary-light text-white rounded-lg shadow-lg hover:bg-white hover:ring-2 hover:text-primary-light duration-200 ease-in-out"
             >
               Saiba mais
               <Icon name="arrow-right" className="ml-2 w-4 h-4" />

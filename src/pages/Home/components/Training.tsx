@@ -157,7 +157,7 @@ const courses = [
   },
   {
     name: "Resgate Técnico Industrial",
-    flag: "Industrial - RPL",
+    flag: "Industrial",
     image: RTI,
     duration: "24 horas",
     highlights: [
@@ -172,7 +172,7 @@ const courses = [
   },
   {
     name: "Resgate Operacional",
-    flag: "Operacional - RPL",
+    flag: "Operacional",
     image: RTO,
     duration: "48 horas",
     highlights: [
@@ -187,7 +187,7 @@ const courses = [
   },
   {
     name: "Resgate Líder",
-    flag: "Líder - RPL",
+    flag: "Líder",
     image: RTL,
     duration: "48 horas",
     highlights: [
@@ -202,7 +202,7 @@ const courses = [
   },
   {
     name: "Resgate Coordenador",
-    flag: "Coordenador - RPL",
+    flag: "Coordenador",
     image: RTC,
     duration: "48 horas",
     highlights: [
@@ -279,7 +279,7 @@ const Training: React.FC<TrainingProps> = ({ formatCurrency }) => {
     <section id="treinamentos" className="py-20 bg-gray-50">
       <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
         <div className="text-center mb-16">
-          <h2 className="section-title text-3xl md:text-5xl font-bold mb-6 pb-4">
+          <h2 className="section-title text-gray-700 text-3xl md:text-5xl font-bold mb-6 pb-4">
             Treinamentos
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">

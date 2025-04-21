@@ -6,7 +6,7 @@ const foundationYear = 2019;
 const yearsOfExperience = new Date().getFullYear() - foundationYear;
 
 // Video Treinamento
-const TreinamentoVideo = "../../../assets/videos/treinamento.mp4";
+const TreinamentoVideo = "/assets/videos/treinamento.mp4";
 
 // Imagens do About
 import AboutImage1 from "../../../assets/images/fundador-1.webp";
@@ -29,11 +29,11 @@ const About = () => {
       <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="section-title w-full text-center text-3xl md:text-5xl font-bold mb-8 pb-4">
+            <h2 className="section-title text-gray-700 w-full text-center text-3xl md:text-5xl font-bold mb-8 pb-4">
               Sobre Nós
             </h2>
             <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-              Desde 2019, a WORKSAFE BRASIL se especializou tornando-se referência em soluções para atividades de alto risco.
+              Desde 2019, a <strong className="text-primary-light">WORKSAFE BRASIL</strong> se especializou tornando-se referência em soluções para atividades de alto risco.
             </p>
             <p className="text-gray-600 text-lg mb-8 leading-relaxed">
               Com mais de {yearsOfExperience} anos de experiência no setor, atuamos com excelência e compromisso na execução de serviços em altura, espaços confinados e resgate, sempre priorizando a segurança e a qualidade.
@@ -42,7 +42,7 @@ const About = () => {
               Nosso fundador, Odenis Mesquita, é profissional certificado em Nível 3i de Acesso por Cordas nacional e internacional sendo grande representante da ANEAC em Pernambuco, trazendo para a empresa toda sua experiência e conhecimento técnico.
             </p>
             <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-              Na WORKSAFE BRASIL, unimos expertise, profissionalismo e inovação para oferecer soluções sob medida para nossos clientes, assegurando a eficiência e a segurança em todas as etapas do trabalho.
+              Na <strong className="text-primary-light">WORKSAFE BRASIL</strong>, unimos expertise, profissionalismo e inovação para oferecer soluções sob medida para nossos clientes, assegurando a eficiência e a segurança em todas as etapas do trabalho.
             </p>
             <div className="grid grid-cols-2 gap-6 mb-8">
               <div className="stats-grid p-6 rounded-2xl">
@@ -78,7 +78,7 @@ const About = () => {
             </div>
             <div className="grid grid-cols-2 gap-6">
               <video
-                className="w-full rounded-xl z-10 cursor-pointer"
+                className="w-full rounded-xl z-10 cursor-default"
                 autoPlay
                 muted
                 loop

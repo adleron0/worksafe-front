@@ -246,7 +246,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
     <section id="produtos" className="py-20 bg-gray-50">
       <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
         <div className="text-center mb-16">
-          <h2 className="section-title text-3xl md:text-5xl font-bold mb-6 pb-4">
+          <h2 className="section-title text-gray-700 text-3xl md:text-5xl font-bold mb-6 pb-4">
             Equipamentos e EPIs
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
@@ -269,7 +269,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
                 </div>
               </div>
               <div className="p-8 flex flex-col justify-center">
-                <h3 className="text-2xl font-bold mb-4">{featuredProduct.name}</h3>
+                <h3 className="text-2xl text-black font-bold mb-4">{featuredProduct.name}</h3>
                 <p className="text-gray-600 mb-6">{featuredProduct.description}</p>
                 <ul className="space-y-3 mb-8">
                   {featuredProduct.features.map((feature, idx) => (
@@ -290,7 +290,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
                     </div>
                    : 
                     <div className="flex flex-col items-center justify-between mb-4">
-                      <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-center text-gray-700">
                         <span className="text-2xl font-bold text-primary-light">
                           Entre em contato
                         </span>
@@ -323,8 +323,8 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
                   height={400}
                 />
               </div>
-              <div className="p-6 flex flex-col flex-grow">
-                <h3 className="text-xl font-semibold mb-2">{product.name}</h3>
+              <div className="p-6 flex flex-col flex-grow bg-white">
+                <h3 className="text-xl text-black font-semibold mb-2">{product.name}</h3>
                 <p className="text-gray-600 mb-4">{product.description}</p>
                 
                 <div className="mt-auto">
@@ -339,7 +339,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
                     </div>
                    : 
                     <div className="flex flex-col items-center justify-between mb-4">
-                      <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-center text-gray-700">
                         <span className="text-2xl font-bold text-primary-light">
                           Entre em contato
                         </span>

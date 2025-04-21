@@ -278,7 +278,7 @@ export default function Home() {
         <section id="faq" className="py-20 bg-gradient-to-b from-white to-gray-50">
           <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
             <div className="text-center mb-16">
-              <h2 className="section-title text-3xl md:text-5xl font-bold mb-6 pb-4">
+              <h2 className="section-title text-gray-700 text-3xl md:text-5xl font-bold mb-6 pb-4">
                 Perguntas Frequentes
               </h2>
               <p className="text-gray-600 text-lg max-w-2xl mx-auto">
@@ -324,7 +324,7 @@ export default function Home() {
         <section className="py-20 bg-white">
           <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
             <div className="text-center mb-16">
-              <h2 className="section-title text-3xl md:text-5xl font-bold mb-6 pb-4">
+              <h2 className="section-title text-gray-700 text-3xl md:text-5xl font-bold mb-6 pb-4">
                 Nossos Clientes
               </h2>
               <p className="text-gray-600 text-lg max-w-2xl mx-auto">
@@ -358,7 +358,7 @@ export default function Home() {
                 <div className="flex items-center gap-2 mb-6">
                   {/* <img src={Logo} width={40} height={40} alt="Logo" /> */}
                   <span className="text-xl font-extrabold bg-primary-light bg-clip-text text-transparent">
-                    RPL Rope Access
+                    WORKSAFE BRASIL
                   </span>
                 </div>
                 <p className="text-gray-400 mb-6">
@@ -430,7 +430,7 @@ export default function Home() {
                     </svg>
                     <div>
                       <p>E-mail</p>
-                      <p className="text-white">rplropeaccess@gmail.com</p>
+                      <p className="text-white">contato@worksafebrasil.com.br</p>
                     </div>
                   </li>
                   <li className="flex items-start gap-3 text-gray-400">
@@ -452,7 +452,7 @@ export default function Home() {
             </div>
             <div className="border-t border-gray-800 mt-16 pt-8 text-center text-gray-400">
               <p>
-                © 2024 RPL Rope Access. Todos os direitos reservados.
+                © 2025 WORKSAFE BRASIL. Todos os direitos reservados.
               </p>
             </div>
           </div>
@@ -461,7 +461,7 @@ export default function Home() {
         {/* Floating WhatsApp Button */}
         <button
           onClick={() =>
-            handleWhatsApp("Olá, gostaria de falar com a RPL Rope Access!")
+            handleWhatsApp("Olá, gostaria de falar com a WORKSAFE BRASIL!")
           }
           className="floating-whatsapp fixed bottom-8 right-8 bg-green-500 text-white p-4 rounded-full shadow-lg hover:bg-green-600 transition-colors z-40 flex items-center gap-2"
         >

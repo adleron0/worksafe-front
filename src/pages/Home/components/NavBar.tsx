@@ -298,30 +298,30 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                 {cart.map((item) => (
                   <li
                     key={item.id}
-                    className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="flex items-center gap-4 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
                   >
                     <div className="flex-1">
-                      <h3 className="font-medium">{item.name}</h3>
-                      <p className="text-sm text-gray-500">
+                      <h3 className="font-medium text-sm text-gray-700">{item.name}</h3>
+                      <p className="text-xs text-gray-500">
                         Quantidade: {item.quantity}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex text-gray-700 items-center gap-2">
                       <button
                         onClick={() => decrementQuantity(item.id)}
-                        className="p-1 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+                        className="p-1 rounded cursor-pointer bg-gray-200 hover:bg-gray-300 transition-colors"
                       >
                         <Minus className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => incrementQuantity(item.id)}
-                        className="p-1 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+                        className="p-1 rounded cursor-pointer bg-gray-200 hover:bg-gray-300 transition-colors"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="p-1 rounded bg-red-200 hover:bg-red-300 transition-colors"
+                        className="p-1 rounded cursor-pointer bg-red-200 hover:bg-red-300 transition-colors"
                       >
                         <Trash className="w-4 h-4" />
                       </button>
@@ -339,7 +339,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                 handleWhatsApp(generateCartMessage());
                 setIsCartOpen(false);
               }}
-              className="w-full bg-primary-light hover:brightness-110 text-white gap-2"
+              className="w-full bg-primary-light text-white gap-2"
             >
               <ShoppingCart className="w-5 h-5" />
               Solicitar Orçamento
@@ -347,7 +347,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
             <Button
               variant="outline"
               onClick={clearCart}
-              className="border-gray-300 w-full text-gray-600 hover:bg-gray-100"
+              className="border-gray-300 w-full text-gray-600 hover:text-gray-700 bg-gray-50 hover:bg-gray-100"
             >
               Limpar Carrinho
             </Button>

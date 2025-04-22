@@ -332,7 +332,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
             )}
           </div>
 
-          {/* Cart Footer */}
+          {/* Cart Footer a */}
           <div className="flex flex-col md:flex-row gap-2 p-4 border-t bg-gray-50">
             <Button
               onClick={() => {

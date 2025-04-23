@@ -14,7 +14,7 @@ import AboutImage2 from "../../../assets/images/fundador-2.webp";
 
 const About = () => {
   // Configurações WhatsApp
-  const whatsappNumber1 = "82988361789";
+  const whatsappNumber1 = "+5581989479259";
 
   // Função para abrir o WhatsApp com a mensagem
   const handleWhatsApp = (message: string = "") => {

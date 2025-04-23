@@ -35,26 +35,17 @@ export default function Clients() {
   ];
 
   return (
-    <section id="clientes" className="py-16 bg-gray-50 overflow-hidden">
+    <section id="clientes" className="py-10 bg-gray-50 overflow-hidden">
       <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
-        <div className="text-center mb-12">
-          <h2 className="section-title text-gray-700 text-3xl md:text-5xl font-bold mb-6 pb-4">
-            Nossos Clientes
-          </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Empresas que confiam em nossos serviços e produtos de qualidade.
-          </p>
-        </div>
-        
         {/* First slider - Left to Right */}
-        <div className="relative mb-8 overflow-hidden">
+        <div className="relative overflow-hidden">
           {/* Fade effect - left side */}
           <div className="absolute left-0 top-0 h-full w-24 bg-gradient-to-r from-gray-50 to-transparent z-10"></div>
           
           <div className="flex overflow-hidden whitespace-nowrap">
-            <div className="flex space-x-12 py-4 animate-marquee">
+            <div className="flex space-x-8 py-4 animate-marquee">
               {clientImages.map((src, index) => (
-                <div key={`slider1-${index}`} className="flex-shrink-0 h-20 w-auto">
+                <div key={`slider1-${index}`} className="flex-shrink-0 h-24 w-auto">
                   <img 
                     src={src} 
                     alt={`Cliente ${index + 1}`} 
@@ -64,7 +55,7 @@ export default function Clients() {
               ))}
               {/* Duplicate images for seamless loop */}
               {clientImages.map((src, index) => (
-                <div key={`slider1-dup-${index}`} className="flex-shrink-0 h-20 w-auto">
+                <div key={`slider1-dup-${index}`} className="flex-shrink-0 h-24 w-auto">
                   <img 
                     src={src} 
                     alt={`Cliente ${index + 1}`} 
@@ -85,9 +76,9 @@ export default function Clients() {
           <div className="absolute left-0 top-0 h-full w-24 bg-gradient-to-r from-gray-50 to-transparent z-10"></div>
           
           <div className="flex overflow-hidden whitespace-nowrap">
-            <div className="flex space-x-12 py-4 animate-marquee-reverse">
+            <div className="flex space-x-8 py-4 animate-marquee-reverse">
               {[...clientImages].reverse().map((src, index) => (
-                <div key={`slider2-${index}`} className="flex-shrink-0 h-20 w-auto">
+                <div key={`slider2-${index}`} className="flex-shrink-0 h-24 w-auto">
                   <img 
                     src={src} 
                     alt={`Cliente ${index + 1}`} 
@@ -97,7 +88,7 @@ export default function Clients() {
               ))}
               {/* Duplicate images for seamless loop */}
               {[...clientImages].reverse().map((src, index) => (
-                <div key={`slider2-dup-${index}`} className="flex-shrink-0 h-20 w-auto">
+                <div key={`slider2-dup-${index}`} className="flex-shrink-0 h-24 w-auto">
                   <img 
                     src={src} 
                     alt={`Cliente ${index + 1}`} 

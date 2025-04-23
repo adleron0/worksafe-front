@@ -11,6 +11,17 @@ interface HeroProps {
 }
 
 const Hero: React.FC<HeroProps> = () => {
+  // Configurações WhatsApp
+  const whatsappNumber1 = "+5581989479259";
+
+  // Função para abrir o WhatsApp com a mensagem
+  const handleWhatsApp = (message: string = "") => {
+    const url = `https://wa.me/${whatsappNumber1}${
+      message ? `?text=${encodeURIComponent(message)}` : ""
+    }`;
+    window.open(url, "_blank");
+  };
+
   return (
     <section className="relative h-[calc(100vh-5rem)] overflow-hidden">
       {/* Video background */}
@@ -62,6 +73,7 @@ const Hero: React.FC<HeroProps> = () => {
 
             <Button
               variant="default"
+              onClick={() => handleWhatsApp("Olá, gostaria de falar com a WORKSAFE BRASIL!")}
               className="flex items-center bg-primary-light text-white rounded-lg shadow-lg hover:bg-white hover:ring-2 hover:text-primary-light duration-200 ease-in-out"
             >
               Saiba mais

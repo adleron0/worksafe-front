@@ -22,42 +22,6 @@ import Cta from "./components/Cta";
 const foundationYear = 2018;
 const yearsOfExperience = new Date().getFullYear() - foundationYear;
 
-// Imagens Clientes
-import AlagoasAmbiental from "../../assets/images/clientes/alagoas-ambiental.png";
-import AmbiparLogo from "../../assets/images/clientes/ambipar-logo.png";
-import Braskem from "../../assets/images/clientes/braskem.png";
-import Petrobras from "../../assets/images/clientes/petrobras.png";
-import Prevenir from "../../assets/images/clientes/prevenir.png";
-import RipAlagoas from "../../assets/images/clientes/rip-alagoas.png";
-
-// Client Logos
-const clients = [
-  {
-    name: "Alagoas Ambiental",
-    logo: AlagoasAmbiental,
-  },
-  {
-    name: "Ambipar",
-    logo: AmbiparLogo,
-  },
-  {
-    name: "Braskem",
-    logo: Braskem,
-  },
-  {
-    name: "Petrobras",
-    logo: Petrobras,
-  },
-  {
-    name: "Prevenir",
-    logo: Prevenir,
-  },
-  {
-    name: "RIP Kaefer",
-    logo: RipAlagoas,
-  },
-];
-
 // FAQ treinamentos
 const faqs = [
   {
@@ -314,36 +278,6 @@ export default function Home() {
                       {faq.answer}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Clients Section */}
-        <section className="py-20 bg-white">
-          <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
-            <div className="text-center mb-16">
-              <h2 className="section-title text-gray-700 text-3xl md:text-5xl font-bold mb-6 pb-4">
-                Nossos Clientes
-              </h2>
-              <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                Empresas que confiam em nossa expertise e qualidade.
-              </p>
-            </div>
-            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
-              {clients.map((client, index) => (
-                <div
-                  key={index}
-                  className="w-32 md:w-48 grayscale hover:grayscale-0 transition-all duration-300"
-                >
-                  <img
-                    src={client.logo}
-                    alt={client.name}
-                    className="w-full h-auto"
-                    width={400}
-                    height={400}
-                  />
                 </div>
               ))}
             </div>

@@ -13,6 +13,7 @@ import NavBar from "./components/NavBar";
 import Hero from "./components/Hero";
 import Feature from "./components/Feature";
 import About from "./components/About";
+import Clients from "./components/Clients";
 import Services from "./components/Services";
 import Products from "./components/Products";
 import Rentals from "./components/Rentals";
@@ -192,6 +193,9 @@ export default function Home() {
 
       <main className="min-h-screen pt-20">
         <Hero yearsOfExperience={yearsOfExperience} />
+
+        {/* Clients Section */}
+        <Clients />
 
         {/* Features Section */}
         <section className="py-16 bg-white">

@@ -25,14 +25,14 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
 
   // Schema
   const userSchema = z.object({
-    name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
+    name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     email: z.string().email({ message: "Email inválido" }),
     phone: z.string().min(10, { message: "Telefone deve ter pelo menos 10 dígitos" }),
     cpf: z.string().length(11, { message: "CPF deve ter 11 dígitos" }),
     password: z.string().optional().or(
       z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" })
     ),
-    roleId: z.number(),
+    roleId: z.number().min(1, { message: "Função deve ser selecionada" }),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
       (value) => value === null || value instanceof File,
@@ -58,7 +58,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
     phone: formData?.phone || "",
     cpf: formData?.cpf || "",
     password: formData?.password || "",
-    roleId: formData?.roleId || 4,
+    roleId: formData?.roleId || 3,
     imageUrl: formData?.imageUrl || null,
     image: null,
   });
@@ -158,7 +158,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
               EditPreview={preview}
             />
             <div>
-              <Label htmlFor="name">Nome</Label>
+              <Label htmlFor="name">Nome <span>*</span></Label>
               <Input
                 id="name"
                 name="name"
@@ -170,7 +170,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
               {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
             </div>
             <div>
-              <Label htmlFor="cpf">CPF</Label>
+              <Label htmlFor="cpf">CPF <span>*</span></Label>
               <Input
                 id="cpf"
                 name="cpf"
@@ -186,7 +186,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
               {errors.cpf && <p className="text-red-500 text-sm">{errors.cpf}</p>}
             </div>
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email <span>*</span></Label>
               <Input
                 id="email"
                 name="email"
@@ -199,7 +199,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
               {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
             </div>
             <div>
-              <Label htmlFor="phone">Telefone</Label>
+              <Label htmlFor="phone">Telefone <span>*</span></Label>
               <Input
                 id="phone"
                 name="phone"
@@ -213,7 +213,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
             {
               !self && 
               <div>
-                <Label htmlFor="roleId">Função</Label>
+                <Label htmlFor="roleId">Função <span>*</span></Label>
                 <Select 
                   name="roleId"
                   options={[
@@ -225,6 +225,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
                   state={dataForm.roleId !== undefined ? String(dataForm.roleId) : ""}
                   placeholder="Selecione a função"
                 />
+                {errors.roleId && <p className="text-red-500 text-sm">{errors.roleId}</p>}
               </div>
             }
           </>
@@ -234,7 +235,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
       {
         onlyPassword == 'only' && (
           <div>
-            <Label htmlFor="password">Senha</Label>
+            <Label htmlFor="password">Senha <span>*</span></Label>
             <Input
               id="password"
               name="password"
@@ -244,6 +245,11 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
               onChange={(e) => handleChange(e.target.name, e.target.value)}
               className="mt-1"
             />
+            {
+              dataForm.password && (
+                <span className={`${dataForm.password?.length >= 6 ? "text-green-500" : "text-red-500"} text-xs`}>* Mínimo 6 caracteres</span>
+              )
+            }
             {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
           </div>
         )
@@ -252,7 +258,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
 {
         onlyPassword == 'both' && (
           <div>
-            <Label htmlFor="password">Senha</Label>
+            <Label htmlFor="password">Senha <span>*</span></Label>
             <Input
               id="password"
               name="password"
@@ -262,6 +268,11 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
               onChange={(e) => handleChange(e.target.name, e.target.value)}
               className="mt-1"
             />
+            {
+              dataForm.password && (
+                <span className={`${dataForm.password?.length >= 6 ? "text-green-500" : "text-red-500"} text-xs`}>* Mínimo 6 caracteres</span>
+              )
+            }
             {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
           </div>
         )

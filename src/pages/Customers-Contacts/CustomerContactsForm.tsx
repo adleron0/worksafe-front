@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import Select from "@/components/general-components/Select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,41 +25,25 @@ const Form = ({ formData, openSheet, entity, customerId }: FormProps) => {
 
   // Schema
   const Schema = z.object({
-    name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
+    name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     email: z.string().email({ message: "Email inválido" }),
     phone: z.string().min(10, { message: "Telefone deve ter pelo menos 10 dígitos" }),
-    roleId: z.number(),
+    roleId: z.number().min(1, { message: "Setor deve ser selecionada" }),
     customerId: z.number(),
   })
 
   type FormData = z.infer<typeof Schema>;
 
   const [dataForm, setDataForm] = useState<FormData>({
-    name: "",
-    email: "",
-    phone: "",
-    roleId: 0,
-    customerId: customerId,
+    name: formData?.name || "",
+    email: formData?.email || "",
+    phone: formData?.phone || "",
+    roleId: formData?.roleId || 0,
+    customerId: formData?.customerId || customerId,
   });
   const initialFormRef = useRef(dataForm);
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
-  // Efeito para pré-preencher o formulário quando formData for fornecido
-  useEffect(() => {
-    if (formData) {
-      Object.keys(formData).forEach((key) => {
-        setDataForm((prev) => ({ ...prev, [key]: formData[key as keyof typeof formData] }));
-      });
-    }
-  }, [formData, customerId]);
-
-  // Se for formulário de criação, limpa os campos
-  useEffect(() => {
-    if (!formData) {
-      setDataForm(initialFormRef.current);
-    }
-  }, []);
 
   const { mutate: registerCustomer, isPending } = useMutation({
     mutationFn: (newItem: FormData) => post<IEntity>(entity.model, '', newItem),
@@ -149,7 +133,7 @@ const Form = ({ formData, openSheet, entity, customerId }: FormProps) => {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
       <div>
-        <Label htmlFor="name">Nome</Label>
+        <Label htmlFor="name">Nome <span>*</span></Label>
         <Input
           id="name"
           name="name"
@@ -161,7 +145,7 @@ const Form = ({ formData, openSheet, entity, customerId }: FormProps) => {
         {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
       </div>
       <div>
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Email <span>*</span></Label>
         <Input
           id="email"
           name="email"
@@ -174,7 +158,7 @@ const Form = ({ formData, openSheet, entity, customerId }: FormProps) => {
         {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
       </div>
       <div>
-        <Label htmlFor="phone">Telefone</Label>
+        <Label htmlFor="phone">Telefone <span>*</span></Label>
         <Input
           id="phone"
           name="phone"
@@ -186,7 +170,7 @@ const Form = ({ formData, openSheet, entity, customerId }: FormProps) => {
         {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
       </div>
       <div>
-        <Label htmlFor="roleId">Setor</Label>
+        <Label htmlFor="roleId">Setor <span>*</span></Label>
         <Select 
           name="roleId"
           options={roles?.rows || []} 
@@ -194,6 +178,7 @@ const Form = ({ formData, openSheet, entity, customerId }: FormProps) => {
           state={dataForm.roleId !== undefined ? String(dataForm.roleId) : ""}
           placeholder="Selecione a classificação"
         />
+        {errors.roleId && <p className="text-red-500 text-sm">{errors.roleId}</p>}
       </div>
 
       <Button

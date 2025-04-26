@@ -27,13 +27,13 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   // Schema
   const Schema = z.object({
-    name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
+    name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     corporateName: z.string().min(2, { message: "Razão social deve ter pelo menos 2 caracteres" }),
     email: z.string().email({ message: "Email inválido" }),
     phone: z.string().min(10, { message: "Telefone deve ter pelo menos 10 dígitos" }),
     cnpj: z.string().length(14, { message: "CNPJ deve ter 14 dígitos" }),
-    stateId: z.number(),
-    cityId: z.number(),
+    stateId: z.number().min(1, { message: "Estado deve ser selecionado" }),
+    cityId: z.number().min(1, { message: "Cidade deve ser selecionada" }),
     neighborhood: z.string().optional(),
     zipcode: z.string().optional(),
     street: z.string().optional(),
@@ -208,7 +208,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         EditPreview={preview}
       />
       <div>
-        <Label htmlFor="name">Nome</Label>
+        <Label htmlFor="name">Nome <span>*</span></Label>
         <Input
           id="name"
           name="name"
@@ -220,7 +220,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
       </div>
       <div>
-        <Label htmlFor="corporateName">Razão Social</Label>
+        <Label htmlFor="corporateName">Razão Social <span>*</span></Label>
         <Input
           id="corporateName"
           name="corporateName"
@@ -232,7 +232,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {errors.corporateName && <p className="text-red-500 text-sm">{errors.corporateName}</p>}
       </div>
       <div>
-        <Label htmlFor="cnpj">CNPJ</Label>
+        <Label htmlFor="cnpj">CNPJ <span>*</span></Label>
         <Input
           id="cnpj"
           name="cnpj"
@@ -248,7 +248,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {errors.cnpj && <p className="text-red-500 text-sm">{errors.cnpj}</p>}
       </div>
       <div>
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Email <span>*</span></Label>
         <Input
           id="email"
           name="email"
@@ -261,7 +261,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
       </div>
       <div>
-        <Label htmlFor="phone">Telefone</Label>
+        <Label htmlFor="phone">Telefone <span>*</span></Label>
         <Input
           id="phone"
           name="phone"
@@ -284,7 +284,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
       
       <div>
-        <Label htmlFor="stateId">Estado</Label>
+        <Label htmlFor="stateId">Estado <span>*</span></Label>
         <Select 
           name="stateId"
           options={states?.rows || []} 
@@ -292,10 +292,11 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           state={dataForm.stateId ? String(dataForm.stateId) : ""}
           placeholder="Selecione o estado"
         />
+        {errors.stateId && <p className="text-red-500 text-sm">{errors.stateId}</p>}
       </div>
       
       <div>
-        <Label htmlFor="cityId">Cidade</Label>
+        <Label htmlFor="cityId">Cidade <span>*</span></Label>
         <Select 
           name="cityId"
           options={cities?.rows || []} 
@@ -303,6 +304,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           state={dataForm.cityId ? String(dataForm.cityId) : ""}
           placeholder="Selecione a cidade"
         />
+        {errors.cityId && <p className="text-red-500 text-sm">{errors.cityId}</p>}
       </div>
       
       <div>

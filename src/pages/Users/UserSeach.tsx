@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import Select from "@/components/general-components/Select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "@radix-ui/react-icons";
@@ -19,7 +19,7 @@ const userSearchSchema = z.object({
   searchName: z.string().optional(),
   active: z.boolean().optional(),
   cpf: z.string().optional(),
-  roleId: z.number().optional(),
+  roleId: z.union([z.number(), z.array(z.number())]).optional(),
   createdAt: z.tuple([z.date().optional(), z.date().optional()]).optional(),
 });
 
@@ -29,7 +29,7 @@ interface UserSearchFormProps {
   onSubmit: (data: UserSearchFormData) => void;
   onClear: () => void;
   openSheet: (open: boolean) => void;
-  params: any;
+  params: Partial<UserSearchFormData>;
 }
 
 const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, openSheet, params }) => {
@@ -49,16 +49,41 @@ const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, open
 
   useEffect(() => {
     Object.keys(params).forEach((key) => {
-      form.setValue(key as keyof UserSearchFormData, params[key]);
+      // Check if the key is a valid key of UserSearchFormData
+      if (key in form.getValues()) {
+        form.setValue(
+          key as keyof UserSearchFormData, 
+          params[key as keyof typeof params]
+        );
+      }
     });
-  }, []);
+  }, [params]);
 
-  const handleRoleChange = (value: string) => {
-    form.setValue("roleId", Number(value));
+  // Options for selects
+  const statusOptions = [
+    { id: "true", name: "Ativo" },
+    { id: "false", name: "Inativo" }
+  ];
+
+  const roleOptions = [
+    { id: "1", name: "Admin" },
+    { id: "2", name: "Manager" },
+    { id: "3", name: "User" }
+  ];
+
+  const handleRoleChange = (_name: string, value: string | string[]) => {
+    if (typeof value === 'string') {
+      form.setValue("roleId", Number(value));
+    } else if (Array.isArray(value)) {
+      // Convert array of strings to array of numbers
+      form.setValue("roleId", value.map(v => Number(v)));
+    }
   };
 
-  const handleStatusChange = (value: string) => {
-    form.setValue("active",  value === "true" ? true : false);
+  const handleStatusChange = (_name: string, value: string | string[]) => {
+    if (typeof value === 'string') {
+      form.setValue("active", value === "true" ? true : false);
+    }
   };
 
   const handleDateSelect = (range: DateRange | undefined) => {
@@ -82,15 +107,13 @@ const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, open
         {/* Status */}
         <div>
           <FormLabel htmlFor="active">Status</FormLabel>
-          <Select onValueChange={handleStatusChange} value={form.watch("active")?.toString() || ""}>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Selecione status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="true">Ativo</SelectItem>
-              <SelectItem value="false">Inativo</SelectItem>
-            </SelectContent>
-          </Select>
+          <Select 
+            name="active"
+            options={statusOptions}
+            state={form.watch("active")?.toString() || ""}
+            onChange={handleStatusChange}
+            placeholder="Selecione status"
+          />
         </div>
 
         {/* Nome */}
@@ -139,16 +162,20 @@ const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, open
         {/* Função (Select) */}
         <div>
           <FormLabel htmlFor="roleId">Função</FormLabel>
-          <Select onValueChange={handleRoleChange} value={form.watch("roleId")?.toString() || ""}>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Selecione a função" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">Admin</SelectItem>
-              <SelectItem value="2">Manager</SelectItem>
-              <SelectItem value="3">User</SelectItem>
-            </SelectContent>
-          </Select>
+          <Select 
+            name="roleId"
+            options={roleOptions}
+            state={(() => {
+              const roleId = form.watch("roleId");
+              if (roleId && Array.isArray(roleId)) {
+                return roleId.map((id: number) => id.toString());
+              }
+              return roleId?.toString() || "";
+            })()}
+            onChange={handleRoleChange}
+            placeholder="Selecione a função"
+            multiple
+          />
         </div>
 
         {/* Data de Criação (Range Picker) */}

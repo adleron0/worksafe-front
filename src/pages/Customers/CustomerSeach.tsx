@@ -6,14 +6,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "@radix-ui/react-icons";
-import { cn } from "@/lib/utils";
+import Select from "@/components/general-components/Select";
 import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
 import { Controller } from "react-hook-form";
-import { format } from "date-fns";
+import CalendarPicker from "@/components/general-components/Calendar";
 
 const SearchSchema = z.object({
   searchName: z.string().optional(),
@@ -28,7 +24,7 @@ interface SearchFormProps {
   onSubmit: (data: SearchFormData) => void;
   onClear: () => void;
   openSheet: (open: boolean) => void;
-  params: any;
+  params: Record<string, unknown>;
 }
 
 const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, params }) => {
@@ -47,17 +43,38 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
 
   useEffect(() => {
     Object.keys(params).forEach((key) => {
-      form.setValue(key as keyof SearchFormData, params[key]);
+      const paramKey = key as keyof SearchFormData;
+      const value = params[key];
+      
+      // Type checking for each field
+      if (paramKey === 'active' && (typeof value === 'boolean' || value === undefined)) {
+        form.setValue(paramKey, value);
+      } else if (paramKey === 'searchName' && (typeof value === 'string' || value === undefined)) {
+        form.setValue(paramKey, value);
+      } else if (paramKey === 'cnpj' && (typeof value === 'string' || value === undefined)) {
+        form.setValue(paramKey, value);
+      } else if (paramKey === 'createdAt' && (Array.isArray(value) || value === undefined)) {
+        form.setValue(paramKey, value as [Date | undefined, Date | undefined] | undefined);
+      }
     });
   }, []);
 
-  const handleStatusChange = (value: string) => {
-    form.setValue("active",  value === "true" ? true : false);
+  const handleStatusChange = (value: string | string[]) => {
+    if (typeof value === 'string') {
+      form.setValue("active", value === "true" ? true : false);
+    }
   };
 
-  const handleDateSelect = (range: DateRange | undefined) => {
-    setStartDate(range?.from);
-    setEndDate(range?.to);
+  const statusOptions = [
+    { id: "true", name: "Ativo" },
+    { id: "false", name: "Inativo" }
+  ];
+
+  const handleDateSelect = (value: DateRange | Date | Date[] | undefined) => {
+    if (value && !Array.isArray(value) && !(value instanceof Date) && 'from' in value) {
+      setStartDate(value.from);
+      setEndDate(value.to);
+    }
   };
 
   return (
@@ -76,15 +93,13 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
         {/* Status */}
         <div>
           <FormLabel htmlFor="active">Status</FormLabel>
-          <Select onValueChange={handleStatusChange} value={form.watch("active")?.toString() || ""}>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Selecione status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="true">Ativo</SelectItem>
-              <SelectItem value="false">Inativo</SelectItem>
-            </SelectContent>
-          </Select>
+          <Select 
+            name="active"
+            options={statusOptions}
+            state={form.watch("active")?.toString() || ""}
+            placeholder="Selecione status"
+            onChange={handleStatusChange}
+          />
         </div>
 
         {/* Nome */}
@@ -137,34 +152,14 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
           render={() => (
             <FormItem>
               <FormLabel>Data de Criação</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !startDate && !endDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate && endDate
-                      ? `${format(startDate, "dd/MM/yyyy")} - ${format(endDate, "dd/MM/yyyy")}`
-                      : startDate
-                      ? format(startDate, "dd/MM/yyyy")
-                      : "Selecione uma data"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="range"
-                    selected={{ from: startDate, to: endDate }}
-                    onSelect={handleDateSelect}
-                    numberOfMonths={1}
-                    initialFocus
-                    style={{ pointerEvents: "auto" }}
-                  />
-                </PopoverContent>
-              </Popover>
+              <CalendarPicker
+                mode="range"
+                startDate={startDate}
+                endDate={endDate}
+                onDateChange={handleDateSelect}
+                placeholder="Selecione uma data"
+                numberOfMonths={1}
+              />
             </FormItem>
           )}
         />

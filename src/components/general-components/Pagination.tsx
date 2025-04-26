@@ -71,7 +71,7 @@ const Pagination: React.FC<PaginationProps> = ({
       <span
         className="text-muted-foreground text-xs"
       >
-        {`Listando do item ${currentPage * itemsPerPage + 1} ao ${Math.min((currentPage + 1) * itemsPerPage, totalItems)} de um total de ${totalItems} itens`}  
+        {`Listando do item ${currentPage * itemsPerPage + 1} ao ${Math.min((currentPage + 1) * itemsPerPage, totalItems)} de um total de ${totalItems}`}  
       </span>
       <ShadPagination className="mt-2">
 

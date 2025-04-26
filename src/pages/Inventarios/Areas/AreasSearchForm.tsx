@@ -29,11 +29,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "@radix-ui/react-icons";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import CalendarPicker from "@/components/general-components/Calendar";
 import { SlidersHorizontal } from "lucide-react";
 import { DialogDescription } from "@/components/ui/dialog";
 
@@ -68,9 +64,11 @@ const AreaSearchForm: React.FC<AreaSearchFormProps> = ({ onSubmit, onClear }) =>
     form.setValue("active", value === "true" ? true : false);
   };
 
-  const handleDateSelect = (range: DateRange | undefined) => {
-    setStartDate(range?.from);
-    setEndDate(range?.to);
+  const handleDateSelect = (value: DateRange | Date | Date[] | undefined) => {
+    if (value && !Array.isArray(value) && !(value instanceof Date) && 'from' in value) {
+      setStartDate(value.from);
+      setEndDate(value.to);
+    }
   };
 
   return (
@@ -138,37 +136,14 @@ const AreaSearchForm: React.FC<AreaSearchFormProps> = ({ onSubmit, onClear }) =>
               render={() => (
                 <FormItem>
                   <FormLabel>Data de Criação</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !startDate && !endDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {startDate && endDate
-                          ? `${format(startDate, "dd/MM/yyyy")} - ${format(
-                              endDate,
-                              "dd/MM/yyyy"
-                            )}`
-                          : startDate
-                          ? format(startDate, "dd/MM/yyyy")
-                          : "Selecione uma data"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="range"
-                        selected={{ from: startDate, to: endDate }}
-                        onSelect={handleDateSelect}
-                        numberOfMonths={1}
-                        initialFocus
-                        style={{ pointerEvents: "auto" }}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <CalendarPicker
+                    mode="range"
+                    startDate={startDate}
+                    endDate={endDate}
+                    onDateChange={handleDateSelect}
+                    placeholder="Selecione uma data"
+                    numberOfMonths={1}
+                  />
                 </FormItem>
               )}
             />

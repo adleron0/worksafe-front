@@ -7,13 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import Select from "@/components/general-components/Select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "@radix-ui/react-icons";
-import { cn } from "@/lib/utils";
+import CalendarPicker from "@/components/general-components/Calendar";
 import { formatCPF, unformatCPF } from "@/utils/cpf-mask";
 import { Controller } from "react-hook-form";
-import { format } from "date-fns";
 
 const userSearchSchema = z.object({
   searchName: z.string().optional(),
@@ -68,7 +64,7 @@ const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, open
   const roleOptions = [
     { id: "1", name: "Admin" },
     { id: "2", name: "Manager" },
-    { id: "3", name: "User" }
+    { id: "3", name: "User" },
   ];
 
   const handleRoleChange = (_name: string, value: string | string[]) => {
@@ -86,9 +82,11 @@ const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, open
     }
   };
 
-  const handleDateSelect = (range: DateRange | undefined) => {
-    setStartDate(range?.from);
-    setEndDate(range?.to);
+  const handleDateSelect = (value: DateRange | Date | Date[] | undefined) => {
+    if (value && !Array.isArray(value) && !(value instanceof Date) && 'from' in value) {
+      setStartDate(value.from);
+      setEndDate(value.to);
+    }
   };
 
   return (
@@ -159,7 +157,7 @@ const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, open
           )}
         />
 
-        {/* Função (Select) */}
+        {/* Função (Select com multiple) */}
         <div>
           <FormLabel htmlFor="roleId">Função</FormLabel>
           <Select 
@@ -185,34 +183,14 @@ const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, open
           render={() => (
             <FormItem>
               <FormLabel>Data de Criação</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !startDate && !endDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate && endDate
-                      ? `${format(startDate, "dd/MM/yyyy")} - ${format(endDate, "dd/MM/yyyy")}`
-                      : startDate
-                      ? format(startDate, "dd/MM/yyyy")
-                      : "Selecione uma data"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="range"
-                    selected={{ from: startDate, to: endDate }}
-                    onSelect={handleDateSelect}
-                    numberOfMonths={1}
-                    initialFocus
-                    style={{ pointerEvents: "auto" }}
-                  />
-                </PopoverContent>
-              </Popover>
+              <CalendarPicker
+                mode="range"
+                startDate={startDate}
+                endDate={endDate}
+                onDateChange={handleDateSelect}
+                placeholder="Selecione uma data"
+                numberOfMonths={1}
+              />
             </FormItem>
           )}
         />

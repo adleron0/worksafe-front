@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronDownIcon } from "@radix-ui/react-icons";
+import { ChevronDownIcon, Cross2Icon } from "@radix-ui/react-icons";
 
 interface OptionType {
     [key: string]: string | number;
@@ -77,6 +77,22 @@ const Select = ({
     onChange(name, newSelectedItems);
   };
 
+  const handleSelectAll = () => {
+    // If all items are already selected, deselect all
+    const allOptionValues = options.map(option => String(option[value]));
+    const allSelected = allOptionValues.every(val => selectedItems.includes(val));
+    
+    const newSelectedItems = allSelected ? [] : allOptionValues;
+    setSelectedItems(newSelectedItems);
+    onChange(name, newSelectedItems);
+  };
+
+  const handleClearAll = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent dropdown from opening/closing
+    setSelectedItems([]);
+    onChange(name, []);
+  };
+
   const getSelectedLabels = () => {
     if (!selectedItems.length) return placeholder;
     
@@ -102,20 +118,53 @@ const Select = ({
             key={key}
           >
             <span className="truncate">{getSelectedLabels()}</span>
-            <ChevronDownIcon className="h-4 w-4 opacity-50 ml-2" />
+            <div className="flex items-center">
+              {selectedItems.length > 0 && (
+                <Cross2Icon 
+                  className="h-3 w-3 opacity-50 mr-0.5 hover:opacity-100 cursor-pointer" 
+                  onClick={handleClearAll}
+                />
+              )}
+              <ChevronDownIcon className="h-4 w-4 opacity-50" />
+            </div>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-full min-w-[200px]">
+        <DropdownMenuContent 
+          className="w-full min-w-[200px] p-0" 
+          style={{ 
+            width: 'var(--radix-dropdown-menu-trigger-width)'
+          }}
+        >
           {options && options.length > 0 ? (
-            options.map((option) => (
-              <DropdownMenuCheckboxItem
-                key={option[value]}
-                checked={selectedItems.includes(String(option[value]))}
-                onCheckedChange={() => handleMultipleValueChange(String(option[value]))}
+            <div className="flex flex-col">
+              {/* Fixed header with "Select All" option */}
+              <div className="sticky top-0 z-10 bg-background border-b">
+                <DropdownMenuCheckboxItem
+                  className="cursor-pointer font-semibold py-2"
+                  checked={options.length > 0 && selectedItems.length === options.length}
+                  onCheckedChange={handleSelectAll}
+                >
+                  Selecionar Todos
+                </DropdownMenuCheckboxItem>
+              </div>
+              
+              {/* Scrollable options list */}
+              <div 
+                className="overflow-y-auto"
+                style={{ maxHeight: '250px' }}
               >
-                {option[label]}
-              </DropdownMenuCheckboxItem>
-            ))
+                {options.map((option) => (
+                <DropdownMenuCheckboxItem
+                  className="cursor-pointer"
+                  key={option[value]}
+                  checked={selectedItems.includes(String(option[value]))}
+                  onCheckedChange={() => handleMultipleValueChange(String(option[value]))}
+                >
+                  {option[label]}
+                </DropdownMenuCheckboxItem>
+                ))}
+              </div>
+            </div>
           ) : (
             <div className="px-2 py-1.5 text-sm text-muted-foreground">
               Nenhuma opção disponível

@@ -25,7 +25,7 @@ interface UserSearchFormProps {
   onSubmit: (data: UserSearchFormData) => void;
   onClear: () => void;
   openSheet: (open: boolean) => void;
-  params: Partial<UserSearchFormData>;
+  params: Record<string, any>;
 }
 
 const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, openSheet, params }) => {
@@ -45,15 +45,26 @@ const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, open
 
   useEffect(() => {
     Object.keys(params).forEach((key) => {
+      const paramValue = params[key as keyof typeof params];
       // Check if the key is a valid key of UserSearchFormData
       if (key in form.getValues()) {
-        form.setValue(
-          key as keyof UserSearchFormData, 
-          params[key as keyof typeof params]
-        );
+        if (key === 'createdAt' && Array.isArray(paramValue) && paramValue.length === 2) {
+          // Handle date range specifically
+          const [start, end] = paramValue as [Date | undefined, Date | undefined];
+          setStartDate(start);
+          setEndDate(end);
+          // Also set the form value if needed, though CalendarPicker uses startDate/endDate props
+          form.setValue('createdAt', paramValue as [Date | undefined, Date | undefined]); 
+        } else {
+          // Handle other form fields
+          form.setValue(
+            key as keyof UserSearchFormData,
+            paramValue
+          );
+        }
       }
     });
-  }, [params]);
+  }, [params, form]); // Add form to dependency array as setValue is used
 
   // Options for selects
   const statusOptions = [

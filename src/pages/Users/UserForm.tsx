@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +7,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import Loader from "@/components/general-components/Loader";
-import { useAuth } from "@/context/AuthContext";
 import { formatCPF, unformatCPF } from "@/utils/cpf-mask";
 import { formatPHONE } from "@/utils/phone-mask";
 import { User } from "./interfaces/user.interface";
@@ -23,8 +22,6 @@ interface UserFormProps {
 
 const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) => {
   const queryClient = useQueryClient();
-  const { user } = useAuth(); 
-  const companyId = user?.companyId || 1;
 
   // Schema
   const userSchema = z.object({
@@ -35,7 +32,6 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
     password: z.string().optional().or(
       z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" })
     ),
-    companyId: z.number(),
     roleId: z.number(),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
@@ -57,54 +53,26 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
   type UserFormData = z.infer<typeof userSchema>;
 
   const [dataForm, setDataForm] = useState<UserFormData>({
-    name: "",
-    email: "",
-    phone: "",
-    cpf: "",
-    password: "",
-    companyId,
-    roleId: 4,
+    name: formData?.name || "",
+    email: formData?.email || "",
+    phone: formData?.phone || "",
+    cpf: formData?.cpf || "",
+    password: formData?.password || "",
+    roleId: formData?.roleId || 4,
+    imageUrl: formData?.imageUrl || null,
     image: null,
-    imageUrl: null,
   });
+  const initialFormRef = useRef(dataForm);
 
   const [preview, setPreview] = useState<string | null>(null); // Preview da imagem quando for editar
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Efeito para pré-preencher o formulário quando formData for fornecido
+  // Efeito para preview de imagem se necessário
   useEffect(() => {
     if (formData) {
-      setDataForm({
-        name: formData.name || "",
-        email: formData.email || "",
-        phone: formData.phone || "",
-        cpf: formData.cpf || "",
-        password: "",
-        companyId: formData.companyId || companyId,
-        roleId: formData.roleId || 4,
-        image: null,
-        imageUrl: formData.imageUrl || null,
-      });
       if (formData.imageUrl) {
         setPreview(formData.imageUrl);
       }
-    }
-  }, [formData, companyId]);
-
-  // Se for formulário de criação, limpa os campos
-  useEffect(() => {
-    if (!formData) {
-      setDataForm({
-        name: "",
-        email: "",
-        phone: "",
-        cpf: "",
-        password: "",
-        companyId,
-        roleId: 4,
-        image: null,
-        imageUrl: null,
-      });
     }
   }, []);
 
@@ -118,17 +86,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
       });
       queryClient.invalidateQueries({ queryKey: ["listCompanyUsers"] });
       // Limpa o formulário e fecha o Sheet
-      setDataForm({
-        name: "",
-        email: "",
-        phone: "",
-        cpf: "",
-        password: "",
-        companyId,
-        roleId: 4,
-        image: null,
-        imageUrl: null,
-      });
+      setDataForm(initialFormRef.current);
       openSheet(false);
     },
     onError: (error: any) => {
@@ -151,19 +109,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
       queryClient.invalidateQueries({ queryKey: ["listCompanyUsers"] });
       queryClient.invalidateQueries({ queryKey: ["selfUser"] });
       // Limpa o formulário e fecha o Sheet
-      if (!self) {
-        setDataForm({
-          name: "",
-          email: "",
-          phone: "",
-          cpf: "",
-          password: "",
-          companyId,
-          roleId: 4,
-          image: null,
-          imageUrl: null,
-        });
-      }
+      setDataForm(initialFormRef.current);
       openSheet(false);
     },
     onError: (error: any) => {

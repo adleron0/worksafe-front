@@ -8,7 +8,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import Loader from "@/components/general-components/Loader";
-import { useAuth } from "@/context/AuthContext";
 import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
 import { formatPHONE } from "@/utils/phone-mask";
 import { formatCEP } from "@/utils/cep-mask";
@@ -25,8 +24,6 @@ interface FormProps {
 
 const Form = ({ formData, openSheet, entity }: FormProps) => {
   const queryClient = useQueryClient();
-  const { user } = useAuth(); 
-  const companyId = user?.companyId || 1;
 
   // Schema
   const Schema = z.object({
@@ -51,51 +48,39 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         message: "Imagem deve ser um arquivo ou nulo.",
       }
     ),
-    companyId: z.number(),
   })
 
   type FormData = z.infer<typeof Schema>;
 
   const [dataForm, setDataForm] = useState<FormData>({
-    name: "",
-    corporateName: "",
-    companyId,
-    email: "",
-    imageUrl: null,
+    name: formData?.name || "",
+    corporateName: formData?.corporateName || "",
+    email: formData?.email || "",
+    imageUrl: formData?.imageUrl || null,
     image: null,
-    phone: "",
-    cnpj: "",
-    stateId: 0,
-    cityId: 0,
-    neighborhood: "",
-    zipcode: "",
-    street: "",
-    number: 0,
-    rankId: 0,
-    description: "",
-    complement: "",
+    phone: formData?.phone || "",
+    cnpj: formData?.cnpj || "",
+    stateId: formData?.stateId || 0,
+    cityId: formData?.cityId || 0,
+    neighborhood: formData?.neighborhood || "",
+    zipcode: formData?.zipcode || "",
+    street: formData?.street || "",
+    number: formData?.number || 0,
+    rankId: formData?.rankId || 0,
+    description: formData?.description || "",
+    complement: formData?.complement || "",
   });
   const initialFormRef = useRef(dataForm);
 
-  const [preview, setPreview] = useState<string | null>(null); // Preview da imagem quando for editar
+  const [preview, setPreview] = useState<string | null>(''); // Preview da imagem quando for editar
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Efeito para pré-preencher o formulário quando formData for fornecido
+  // Efeito para preview de imagem se necessário
   useEffect(() => {
     if (formData) {
-      Object.keys(formData).forEach((key) => {
-        setDataForm((prev) => ({ ...prev, [key]: formData[key as keyof typeof formData] }));
-      });
       if (formData.imageUrl) {
         setPreview(formData.imageUrl);
       }
-    }
-  }, [formData, companyId]);
-
-  // Se for formulário de criação, limpa os campos
-  useEffect(() => {
-    if (!formData) {
-      setDataForm(initialFormRef.current);
     }
   }, []);
 
@@ -112,7 +97,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       setDataForm(initialFormRef.current);
       openSheet(false);
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: `Erro ao cadastrar ${entity.name}`,
         description: error.response?.data?.message || "Erro desconhecido.",
@@ -134,7 +119,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       setDataForm(initialFormRef.current);
       openSheet(false);
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: `Erro ao atualizar ${entity.name}`,
         description: error.response?.data?.message || "Erro desconhecido.",
@@ -152,13 +137,16 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     const result = Schema.safeParse(dataForm);
 
     if (!result.success) {
-      const formattedErrors: any = result.error.format();
+      // Extract error messages from Zod validation result
       const newErrors: { [key: string]: string } = {};
-      for (const key in formattedErrors) {
-        if (key !== "_errors") {
-          newErrors[key] = formattedErrors[key]?._errors[0] || "";
+      
+      result.error.errors.forEach((error) => {
+        const path = error.path.join('.');
+        if (path) {
+          newErrors[path] = error.message;
         }
-      }
+      });
+      
       setErrors(newErrors);
       return;
     }
@@ -209,6 +197,8 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       ];
       return get('cities', '', params);
     },
+    // Only run the query if stateId is valid (greater than 0)
+    enabled: dataForm.stateId > 0,
   });
 
   return (
@@ -288,7 +278,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           name="rankId"
           options={ranks?.rows || []} 
           onChange={(name, value) => handleChange(name, Number(value))} 
-          state={dataForm.rankId !== undefined ? String(dataForm.rankId) : ""}
+          state={dataForm.rankId ? String(dataForm.rankId) : ""}
           placeholder="Selecione a classificação"
         />
       </div>
@@ -299,7 +289,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           name="stateId"
           options={states?.rows || []} 
           onChange={(name, value) => handleChange(name, Number(value))} 
-          state={dataForm.stateId !== undefined ? String(dataForm.stateId) : ""}
+          state={dataForm.stateId ? String(dataForm.stateId) : ""}
           placeholder="Selecione o estado"
         />
       </div>
@@ -310,7 +300,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           name="cityId"
           options={cities?.rows || []} 
           onChange={(name, value) => handleChange(name, Number(value))} 
-          state={dataForm.cityId !== undefined ? String(dataForm.cityId) : ""}
+          state={dataForm.cityId ? String(dataForm.cityId) : ""}
           placeholder="Selecione a cidade"
         />
       </div>

@@ -45,15 +45,15 @@ const About = () => {
               Na <strong className="text-primary-light">WORKSAFE BRASIL</strong>, unimos expertise, profissionalismo e inovação para oferecer soluções sob medida para nossos clientes, assegurando a eficiência e a segurança em todas as etapas do trabalho.
             </p>
             <div className="grid grid-cols-2 gap-6 mb-8">
-              <div className="stats-grid p-6 rounded-2xl">
-                <h3 className="font-bold text-4xl bg-primary-light text-transparent bg-clip-text mb-2">
-                  500+
+              <div className="stats-grid p-2 rounded-2xl">
+                <h3 className="font-bold text-2xl md:text-4xl bg-primary-light text-transparent bg-clip-text mb-2">
+                  800+
                 </h3>
                 <p className="text-gray-600 font-medium">Serviços Realizados</p>
               </div>
-              <div className="stats-grid p-6 rounded-2xl">
-                <h3 className="font-bold text-4xl bg-primary-light text-transparent bg-clip-text mb-2">
-                  1000+
+              <div className="stats-grid p-2 rounded-2xl">
+                <h3 className="font-bold text-2xl md:text-4xl bg-primary-light text-transparent bg-clip-text mb-2">
+                  +4000
                 </h3>
                 <p className="text-gray-600 font-medium">Profissionais Treinados</p>
               </div>

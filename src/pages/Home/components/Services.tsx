@@ -2,97 +2,121 @@ import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ApiError } from "@/general-interfaces/api.interface";
+import { SiteServices as EntityInterface } from "@/pages/Site-Services/interfaces/site-services.interface";
+import { get } from "@/services/api";
 
 // Imagens Serviços
 // import Altura from "../../assets/images/altura.jpg";
-import Confinado from "../../../assets/images/confinado.jpg";
-import Resgate from "../../../assets/images/resgate.jpg";
-import LinhaDeVida from "../../../assets/images/linha-de-vida.jpg";
-import Eolica from "../../../assets/images/eolica.webp";
+// import Confinado from "../../../assets/images/confinado.jpg";
+// import Resgate from "../../../assets/images/resgate.jpg";
+// import LinhaDeVida from "../../../assets/images/linha-de-vida.jpg";
+// import Eolica from "../../../assets/images/eolica.webp";
 
 // Imagens Hero Slides
 // comenta algo
-import Altura2 from "../../../assets/images/altura-2.jpg";
+// import Altura2 from "../../../assets/images/altura-2.jpg";
 // import Equipamentos from "../../assets/images/equipamentos.jpg";
 // import Treinamento from "../../assets/images/treinamento.jpg";
 // import Resgate2 from "../../assets/images/resgate-2.jpg";
 
 // Imagens do About
-import AboutImage1 from "../../../assets/images/fundador-1.webp";
+// import AboutImage1 from "../../../assets/images/fundador-1.webp";
 
 // Serviços
-const services = [
-  {
-    name: "Serviços em Altura",
-    image: Altura2,
-    features: [
-      "Alpinismo Industrial",
-      "Limpeza de fachadas e telhados",
-      "Serviços de impermeabilização",
-      "Manutenção de estruturas",
-      "Pintura industrial",
-      "Instalação de equipamentos",
-      "Montagem de Pontos de Ancoragem",
-    ],
-  },
-  {
-    name: "Espaços Confinados",
-    image: Confinado,
-    features: [
-      "Inspeção de tanques",
-      "Limpeza de silos e tanques",
-      "Manutenção de caldeiras",
-      "Resgate em confinados",
-    ],
-  },
-  {
-    name: "Resgate de Prontidão",
-    image: Resgate,
-    features: [
-      "Equipe 24/7",
-      "Profissionais certificados",
-      "Equipamentos especializados",
-      "Plano de resgate",
-    ],
-  },
-  {
-    name: "Linha de Vida Temporária",
-    image: LinhaDeVida,
-    features: [
-      "Instalação rápida e segura",
-      "Sistemas moduláveis conforme necessidade",
-      "Monitoramento contínuo",
-      "Suporte técnico especializado",
-    ],
-  },
-  {
-    name: "Manutenção de Torre Eólica",
-    image: Eolica,
-    features: [
-      "Monitoramento contínuo com foco em segurança",
-      "Equipe certificada GWO para alpinismo em torres eólicas",
-      "Procedimentos rigorosos de segurança em parques eólicos",
-      "Sistemas moduláveis com inspeção especializada",
-    ],
-  },
-  {
-    name: "Supervisão Remota",
-    image: AboutImage1,
-    features: [
-      "Acompanhamento remoto por Profissional N3",
-      "Elaboração de planos de segurança",
-      "Plano de execusão para atividades em altura",
-      "Procedimentos de emergencia",
-      "Plano de resgate e sistema de proteção contra quedas",
-    ],
-  },
-];
+// const services = [
+//   {
+//     name: "Serviços em Altura",
+//     image: Altura2,
+//     features: [
+//       "Alpinismo Industrial",
+//       "Limpeza de fachadas e telhados",
+//       "Serviços de impermeabilização",
+//       "Manutenção de estruturas",
+//       "Pintura industrial",
+//       "Instalação de equipamentos",
+//       "Montagem de Pontos de Ancoragem",
+//     ],
+//   },
+//   {
+//     name: "Espaços Confinados",
+//     image: Confinado,
+//     features: [
+//       "Inspeção de tanques",
+//       "Limpeza de silos e tanques",
+//       "Manutenção de caldeiras",
+//       "Resgate em confinados",
+//     ],
+//   },
+//   {
+//     name: "Resgate de Prontidão",
+//     image: Resgate,
+//     features: [
+//       "Equipe 24/7",
+//       "Profissionais certificados",
+//       "Equipamentos especializados",
+//       "Plano de resgate",
+//     ],
+//   },
+//   {
+//     name: "Linha de Vida Temporária",
+//     image: LinhaDeVida,
+//     features: [
+//       "Instalação rápida e segura",
+//       "Sistemas moduláveis conforme necessidade",
+//       "Monitoramento contínuo",
+//       "Suporte técnico especializado",
+//     ],
+//   },
+//   {
+//     name: "Manutenção de Torre Eólica",
+//     image: Eolica,
+//     features: [
+//       "Monitoramento contínuo com foco em segurança",
+//       "Equipe certificada GWO para alpinismo em torres eólicas",
+//       "Procedimentos rigorosos de segurança em parques eólicos",
+//       "Sistemas moduláveis com inspeção especializada",
+//     ],
+//   },
+//   {
+//     name: "Supervisão Remota",
+//     image: AboutImage1,
+//     features: [
+//       "Acompanhamento remoto por Profissional N3",
+//       "Elaboração de planos de segurança",
+//       "Plano de execusão para atividades em altura",
+//       "Procedimentos de emergencia",
+//       "Plano de resgate e sistema de proteção contra quedas",
+//     ],
+//   },
+// ];
 
 interface ServicesProps {
   handleWhatsApp: (message?: string) => void;
 }
 
 const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
+  interface Response {
+    rows: EntityInterface[];
+    total: number;
+  }
+
+  const { 
+    data, 
+    // isLoading, 
+  } = useQuery<Response | undefined, ApiError>({
+    queryKey: ["listSiteServices"],
+    queryFn: async () => {
+      const params = [
+        { key: 'limit', value: 999 },
+        { key: 'active', value: true },
+        { key: 'order-name', value: 'asc' },
+      ]
+      return get('site-services', '', params);
+    },
+  });
+
   return (
     <section className="py-20 bg-gray-50" id="servicos">
       <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
@@ -105,7 +129,7 @@ const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {services.map((service, index) => (
+          {data?.rows?.map((service, index) => (
             <div
               key={`service-${index}`}
               className="flex flex-col bg-white rounded-2xl overflow-hidden shadow-lg group hover:-translate-y-2 transition-all duration-300"
@@ -113,7 +137,7 @@ const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
               <div className="aspect-[4/3] relative">
                 <div className="absolute inset-0 bg-cover bg-center">
                   <img
-                    src={service.image}
+                    src={service.imageUrl || ""}
                     alt={service.name}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     width={400}
@@ -127,7 +151,7 @@ const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
               </div>
               <div className="p-6 flex flex-col flex-grow">
                 <ul className="space-y-3">
-                  {service.features.map((feature, idx) => (
+                  {service.features?.split(',').map((feature, idx) => (
                     <li key={`services-features-${idx}`} className="flex items-center text-gray-700">
                       <CheckCircle className="w-5 h-5 text-primary-light mr-2 flex-shrink-0" />
                       {feature}

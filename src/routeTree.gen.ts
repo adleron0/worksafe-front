@@ -21,6 +21,7 @@ import { Route as AuthenticatedInventariosIndexImport } from './routes/_authenti
 import { Route as AuthenticatedClientesIndexImport } from './routes/_authenticated/clientes/index'
 import { Route as AuthenticatedCertusIndexImport } from './routes/_authenticated/certus/index'
 import { Route as AuthenticatedAltusIndexImport } from './routes/_authenticated/altus/index'
+import { Route as AuthenticatedSiteServicosImport } from './routes/_authenticated/site/servicos'
 import { Route as AuthenticatedInventariosDashboardImport } from './routes/_authenticated/inventarios/dashboard'
 import { Route as AuthenticatedInventariosAutorizadosImport } from './routes/_authenticated/inventarios/autorizados'
 import { Route as AuthenticatedInventariosAccessControlImport } from './routes/_authenticated/inventarios/access-control'
@@ -99,6 +100,12 @@ const AuthenticatedCertusIndexRoute = AuthenticatedCertusIndexImport.update({
 const AuthenticatedAltusIndexRoute = AuthenticatedAltusIndexImport.update({
   id: '/altus/',
   path: '/altus/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+
+const AuthenticatedSiteServicosRoute = AuthenticatedSiteServicosImport.update({
+  id: '/site/servicos',
+  path: '/site/servicos',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 
@@ -320,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventariosDashboardImport
       parentRoute: typeof AuthenticatedImport
     }
+    '/_authenticated/site/servicos': {
+      id: '/_authenticated/site/servicos'
+      path: '/site/servicos'
+      fullPath: '/site/servicos'
+      preLoaderRoute: typeof AuthenticatedSiteServicosImport
+      parentRoute: typeof AuthenticatedImport
+    }
     '/_authenticated/altus/': {
       id: '/_authenticated/altus/'
       path: '/altus'
@@ -389,6 +403,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedInventariosAccessControlRoute: typeof AuthenticatedInventariosAccessControlRoute
   AuthenticatedInventariosAutorizadosRoute: typeof AuthenticatedInventariosAutorizadosRoute
   AuthenticatedInventariosDashboardRoute: typeof AuthenticatedInventariosDashboardRoute
+  AuthenticatedSiteServicosRoute: typeof AuthenticatedSiteServicosRoute
   AuthenticatedAltusIndexRoute: typeof AuthenticatedAltusIndexRoute
   AuthenticatedCertusIndexRoute: typeof AuthenticatedCertusIndexRoute
   AuthenticatedClientesIndexRoute: typeof AuthenticatedClientesIndexRoute
@@ -417,6 +432,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedInventariosAutorizadosRoute,
   AuthenticatedInventariosDashboardRoute:
     AuthenticatedInventariosDashboardRoute,
+  AuthenticatedSiteServicosRoute: AuthenticatedSiteServicosRoute,
   AuthenticatedAltusIndexRoute: AuthenticatedAltusIndexRoute,
   AuthenticatedCertusIndexRoute: AuthenticatedCertusIndexRoute,
   AuthenticatedClientesIndexRoute: AuthenticatedClientesIndexRoute,
@@ -450,6 +466,7 @@ export interface FileRoutesByFullPath {
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
+  '/site/servicos': typeof AuthenticatedSiteServicosRoute
   '/altus': typeof AuthenticatedAltusIndexRoute
   '/certus': typeof AuthenticatedCertusIndexRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
@@ -477,6 +494,7 @@ export interface FileRoutesByTo {
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
+  '/site/servicos': typeof AuthenticatedSiteServicosRoute
   '/altus': typeof AuthenticatedAltusIndexRoute
   '/certus': typeof AuthenticatedCertusIndexRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
@@ -505,6 +523,7 @@ export interface FileRoutesById {
   '/_authenticated/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/_authenticated/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/_authenticated/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
+  '/_authenticated/site/servicos': typeof AuthenticatedSiteServicosRoute
   '/_authenticated/altus/': typeof AuthenticatedAltusIndexRoute
   '/_authenticated/certus/': typeof AuthenticatedCertusIndexRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
@@ -534,6 +553,7 @@ export interface FileRouteTypes {
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
+    | '/site/servicos'
     | '/altus'
     | '/certus'
     | '/clientes'
@@ -560,6 +580,7 @@ export interface FileRouteTypes {
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
+    | '/site/servicos'
     | '/altus'
     | '/certus'
     | '/clientes'
@@ -586,6 +607,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventarios/access-control'
     | '/_authenticated/inventarios/autorizados'
     | '/_authenticated/inventarios/dashboard'
+    | '/_authenticated/site/servicos'
     | '/_authenticated/altus/'
     | '/_authenticated/certus/'
     | '/_authenticated/clientes/'
@@ -643,6 +665,7 @@ export const routeTree = rootRoute
         "/_authenticated/inventarios/access-control",
         "/_authenticated/inventarios/autorizados",
         "/_authenticated/inventarios/dashboard",
+        "/_authenticated/site/servicos",
         "/_authenticated/altus/",
         "/_authenticated/certus/",
         "/_authenticated/clientes/",
@@ -709,6 +732,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/inventarios/dashboard": {
       "filePath": "_authenticated/inventarios/dashboard.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/site/servicos": {
+      "filePath": "_authenticated/site/servicos.tsx",
       "parent": "/_authenticated"
     },
     "/_authenticated/altus/": {

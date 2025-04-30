@@ -154,6 +154,19 @@ export const items = [
     ],
   },
   {
+    title: "Site",
+    icon: "globe-lock",
+    path: "/site",
+    ability: "site",
+    subitems: [
+      {
+        title: "Serviços do Site",
+        icon: "wrench",
+        path: "/site/servicos",
+      },
+    ],
+  },
+  {
     title: "Equipe",
     icon: "users",
     path: "/usuarios",

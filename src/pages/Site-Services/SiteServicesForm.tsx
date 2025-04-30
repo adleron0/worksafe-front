@@ -107,7 +107,29 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const result = Schema.safeParse(dataForm);
+    
+    // Clean up all string fields before submission
+    const cleanedData = { ...dataForm };
+    
+    // Process all string fields
+    Object.keys(cleanedData).forEach(key => {
+      const value = cleanedData[key as keyof FormData];
+      if (typeof value === 'string') {
+        // Apply trim to all string fields
+        const cleanedValue = value.trim();
+        
+        // Update the cleaned data with proper type handling
+        if (key === 'name') {
+          cleanedData.name = cleanedValue;
+        } else if (key === 'features') {
+          cleanedData.features = cleanedValue;
+        } else if (key === 'imageUrl') {
+          cleanedData.imageUrl = cleanedValue;
+        }
+      }
+    });
+    
+    const result = Schema.safeParse(cleanedData);
 
     if (!result.success) {
       // Extract error messages from Zod validation result
@@ -125,9 +147,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     }
 
     if (formData) {
-      updateCustomerMutation(dataForm);
+      updateCustomerMutation(cleanedData);
     } else {
-      registerCustomer(dataForm);
+      registerCustomer(cleanedData);
     }
   };
 

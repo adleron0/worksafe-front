@@ -24,6 +24,7 @@ const List = ({ customerId }: { customerId: number }) => {
     limit: 10,
     page: 0,
     show: ['role'],
+    customerId: customerId,
     'order-name': 'asc',
   });
   const initialFormRef = useRef(searchParams);

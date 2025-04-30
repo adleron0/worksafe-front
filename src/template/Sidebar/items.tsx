@@ -164,6 +164,11 @@ export const items = [
         icon: "wrench",
         path: "/site/servicos",
       },
+      {
+        title: "Produtos do Site",
+        icon: "wrench",
+        path: "/site/produtos",
+      },
     ],
   },
   {

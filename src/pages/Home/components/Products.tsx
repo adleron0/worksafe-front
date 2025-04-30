@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import {
   Plus,
   ChevronRight,
@@ -26,198 +27,207 @@ import TravaQuedasCordaAbs from "../../../assets/images/equipamentos/trava-queda
 import TravaQuedasRetratil from "../../../assets/images/equipamentos/trava-quedas-retratil.webp";
 import Mochila from "../../../assets/images/equipamentos/mochila-equipamentos.webp";
 
-// Produto Destaque Venda
-const featuredProduct = {
-  id: "corda-11-mm",
-  name: "Corda de 11mm Para Trabalho em Altura e Resgate",
-  image: Corda11,
-  price: 0,
-  oldPrice: 0,
-  description:
-    "A corda semi-estática de 11mm é de alta performance, garantindo segurança para trabalho ou esportes em altura. Possui certificações NR 18 e NBR 15986, construída com alma e capa para máxima resistência e durabilidade.",
-  features: [
-    "Diâmetro: 11mm",
-    "Carga Mínima de Ruptura: 36kN",
-    "Alongamento (E): 3,2%",
-    "Peso: 100 g/m (20 kg/200 m)",
-    "Conforme NR 35, ABNT NBR 15986 e EN 1891",
-  ],
-};
-
 // Produtos para Venda
 const products = [
   {
-    id: "ascensor-de-punho",
-    name: "Ascensor de Punho",
-    image: AscensorDePunho,
+    id: 1,
+    featured: true,
+    name: "Corda de 11mm Para Trabalho em Altura e Resgate",
+    imageUrl: Corda11,
     price: 0,
     oldPrice: 0,
     description:
-      "Facilita a ascensão em cordas com bloqueio seguro e manuseio simples.",
-    rating: 4.8,
-    reviews: 47,
-    inStock: true,
+      "A corda semi-estática de 11mm é de alta performance, garantindo segurança para trabalho ou esportes em altura. Possui certificações NR 18 e NBR 15986, construída com alma e capa para máxima resistência e durabilidade.",
+    features: [
+      "Diâmetro: 11mm",
+      "Carga Mínima de Ruptura: 36kN",
+      "Alongamento (E): 3,2%",
+      "Peso: 100 g/m (20 kg/200 m)",
+      "Conforme NR 35, ABNT NBR 15986 e EN 1891",
+    ],
+    active: false,
   },
   {
-    id: "capacete-01",
+    id: 2,
+    featured: false,
+    name: "Ascensor de Punho",
+    imageUrl: AscensorDePunho,
+    price: 100,
+    oldPrice: 110,
+    description:
+      "Facilita a ascensão em cordas com bloqueio seguro e manuseio simples.",
+    features: [
+      "Teste 01",
+      "Teste 02",
+    ],
+    active: false,
+  },
+  {
+    id: 3,
+    featured: false,
     name: "Capacete de Segurança Tipo III  Classe A",
-    image: Capacete,
+    imageUrl: Capacete,
     price: 0,
     oldPrice: 0,
     description:
       "Utilizado como EPI no trabalhos em altura e espaços confinados na construção civil, petroquímica, mineração, agroindústria, dentre outras.",
-    rating: 4.9,
-    reviews: 93,
-    inStock: true,
+    features: [
+      "Teste 01",
+      "Teste 02",
+    ],
+    active: true,
   },
   {
-    id: "cinto-7y",
+    id: 4,
+    featured: false,
     name: "Cinto Paraquedista 7Y",
-    image: Cinto7y,
+    imageUrl: Cinto7y,
     price: 0,
     oldPrice: 0,
     description:
       "Cinto completo com múltiplos pontos de conexão para maior segurança.",
-    rating: 4.7,
-    reviews: 182,
-    inStock: true,
+    features: [],
+    active: true,
   },
   {
-    id: "descensor-autoblocante",
+    id: 5,
+    featured: false,
     name: "Descensor Autoblocante",
-    image: DescensorAutoblocante,
+    imageUrl: DescensorAutoblocante,
     price: 0,
     oldPrice: 0,
     description:
       "Permite descida controlada e bloqueio automático para trabalhos em altura.",
-    rating: 4.8,
-    reviews: 76,
-    inStock: true,
+    features: [],
+    active: true,
   },
   {
-    id: "mochila",
+    id: 6,
+    featured: false,
     name: "Mochila de Equipamentos",
-    image: Mochila,
+    imageUrl: Mochila,
     price: 0,
     oldPrice: 0,
     description:
       "Mochila de equipamentos para armazenamento de materiais e equipamentos.",
-    rating: 4.8,
-    reviews: 76,
-    inStock: true,
+    features: [],
+    active: true,
   },
   {
-    id: "fita-ancoragem",
+    id: 7,
+    featured: false,
     name: "Fita Anelar de Ancoragem",
-    image: FitaAncoragem,
+    imageUrl: FitaAncoragem,
     price: 0,
     oldPrice: 0,
     description:
       "Fita completa com múltiplos pontos de conexão para maior segurança.",
-    rating: 4.6,
-    reviews: 38,
-    inStock: true,
+    features: [],
+    active: true,
   },
   {
-    id: "lory-auto-blocante",
+    id: 8,
+    featured: false,
     name: "Lory Auto Blocante",
-    image: LoryAutoBlocante,
+    imageUrl: LoryAutoBlocante,
     price: 0,
     oldPrice: 0,
     description:
       "Descensor auto-blocante LORY SAFE com função anti-pânico, ideal para atividades em acesso por cordas, rapel e escalada.",
-    rating: 4.9,
-    reviews: 91,
-    inStock: true,
+    features: [],
+    active: true,
   },
   {
-    id: "mosquetao-oval-aco",
+    id: 9,
+    featured: false,
     name: "Mosquetão Oval de Aço",
-    image: MosquetaoOvalAco,
+    imageUrl: MosquetaoOvalAco,
     price: 0,
     oldPrice: 0,
     description:
       "Mosquetão oval em aço para conexões seguras em qualquer situação.",
-    rating: 4.8,
-    reviews: 52,
-    inStock: true,
+    features: [],
+    active: true,
   },
   {
-    id: "olhal-ancoragem-predial",
+    id: 10,
+    featured: false,
     name: "Olhal de Ancoragem",
-    image: OlhalAncoragemPredial,
+    imageUrl: OlhalAncoragemPredial,
     price: 0,
     oldPrice: 0,
     description:
       "Projetado para ancoragens prediais e linhas de vida, resistente e durável.",
-    rating: 4.7,
-    reviews: 63,
-    inStock: true,
+    features: [],
+    active: true,
   },
   {
-    id: "polia-dupla",
+    id: 11,
+    featured: false,
     name: "Polia Dupla",
-    image: PoliaDupla,
+    imageUrl: PoliaDupla,
     price: 0,
     oldPrice: 0,
     description:
       "Ideal para sistemas de redução de força e resgates em altura.",
-    rating: 4.8,
-    reviews: 40,
-    inStock: true,
+    features: [],
+    active: true,
   },
   {
-    id: "polia-simples",
+    id: 12,
+    featured: false,
     name: "Polia Simples",
-    image: PoliaSimples,
+    imageUrl: PoliaSimples,
     price: 0,
     oldPrice: 0,
     description:
       "Polia de uso geral para aplicações de içamento e desvio de carga.",
-    rating: 4.6,
-    reviews: 28,
-    inStock: true,
+    features: [],
+    active: true,
   },
   {
-    id: "talabarte-y",
+    id: 13,
+    featured: false,
     name: "Talabarte em Y",
-    image: TalabarteY,
+    imageUrl: TalabarteY,
     price: 0,
     oldPrice: 0,
     description:
       "Talabarte versátil em Y para movimentação segura em estruturas.",
-    rating: 4.7,
-    reviews: 65,
-    inStock: true,
+    features: [],
+    active: true,
   },
   {
-    id: "trava-quedas-corda-abs",
+    id: 14,
+    featured: false,
     name: "Trava-Quedas para Corda ABS",
-    image: TravaQuedasCordaAbs,
+    imageUrl: TravaQuedasCordaAbs,
     price: 0,
     oldPrice: 0,
     description:
       "Bloqueio automático em cordas, garantindo segurança e praticidade.",
-    rating: 4.8,
-    reviews: 55,
-    inStock: true,
+    features: [],
+    active: true,
   },
   {
-    id: "trava-quedas-retratil",
+    id: 15,
+    featured: false,
     name: "Trava-Quedas Retrátil",
-    image: TravaQuedasRetratil,
+    imageUrl: TravaQuedasRetratil,
     price: 0,
     oldPrice: 0,
     description:
       "Dispositivo retrátil de segurança para total liberdade de movimento.",
-    rating: 4.9,
-    reviews: 112,
-    inStock: true,
+    features: [],
+    active: true,
   },
 ];
 
+// Produto Destaque Venda
+const featuredProduct = products.filter((product) => product.featured)[0];
+
 interface ProductsProps {
-  addToCart: (product: { id: string; name: string }) => void;
+  addToCart: (product: { id: number; name: string }) => void;
   formatCurrency: (value: number) => string | undefined;
 }
 
@@ -260,21 +270,21 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
             <div className="grid grid-cols-1 md:grid-cols-2">
               <div className="relative h-64 md:h-full">
                 <img
-                  src={featuredProduct.image}
+                  src={featuredProduct.imageUrl}
                   alt={featuredProduct.name}
                   className="absolute inset-0 w-full h-full object-cover"
                 />
-                <div className="absolute top-4 left-4 bg-gradient-to-r from-green-400 to-primary-light text-white px-4 py-2 rounded-full font-semibold">
+                <div className="absolute top-4 text-xs md:text-sm left-4 bg-gradient-to-r from-green-400 to-primary-light text-white px-4 py-2 rounded-full font-semibold">
                   Produto em Destaque
                 </div>
               </div>
-              <div className="p-8 flex flex-col justify-center">
+              <div className="p-4 flex flex-col justify-center">
                 <h3 className="text-2xl text-black font-bold mb-4">{featuredProduct.name}</h3>
                 <p className="text-gray-600 mb-6">{featuredProduct.description}</p>
                 <ul className="space-y-3 mb-8">
                   {featuredProduct.features.map((feature, idx) => (
                     <li key={idx} className="flex items-center text-gray-700">
-                      <CheckCircle className="w-5 h-5 text-primary-light mr-2" />
+                      <CheckCircle className="w-5 h-5 text-primary-light mr-2 flex-shrink-0" />
                       {feature}
                     </li>
                   ))}
@@ -301,8 +311,16 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
                     </div>
                   }
                 <div className="flex gap-4">
-                  <Button onClick={() => addToCart(featuredProduct)} size="lg" className="flex-1 bg-primary-light hover:brightness-125 text-white">
-                    Adicionar ao Carrinho
+                  <Button 
+                    onClick={() => addToCart(featuredProduct)} 
+                    disabled={!featuredProduct.active} 
+                    size="lg" 
+                    className={cn(
+                      "flex-1 bg-primary-light hover:brightness-125 text-white",
+                      !featuredProduct.active && "cursor-not-allowed opacity-50 bg-black"
+                    )}
+                  >
+                    {featuredProduct.active ? "Adicionar ao Carrinho" : "Avise-me"}
                   </Button>
                 </div>
               </div>
@@ -311,12 +329,12 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
         </div>
 
         {/* Grid de Produtos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12">
-          {displayedProducts.map((product, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4 mb-12">
+          {displayedProducts.filter((product) => !product.featured).map((product, index) => (
             <Card id={index === 2 ? "grid-produtos" : undefined} key={index} className="h-full flex flex-col overflow-hidden group card-hover border-0 shadow-lg">
               <div className="aspect-square relative overflow-hidden">
                 <img
-                  src={product.image}
+                  src={product.imageUrl}
                   alt={product.name}
                   className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
                   width={400}
@@ -324,9 +342,16 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
                 />
               </div>
               <div className="p-6 flex flex-col flex-grow bg-white">
-                <h3 className="text-xl text-black font-semibold mb-2">{product.name}</h3>
-                <p className="text-gray-600 mb-4">{product.description}</p>
-                
+                <h3 className="text-md md:text-lg text-black font-semibold mb-2">{product.name}</h3>
+                <p className="text-xs md:text-sm text-gray-600 mb-4">{product.description}</p>
+                <ul className="space-y-3 mb-8">
+                  {product.features.map((feature, idx) => (
+                    <li key={idx} className="flex items-center mb-1.5 text-gray-700 text-xs md:text-sm">
+                      <CheckCircle className="w-4 h-4 text-primary-light mr-1 flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
                 <div className="mt-auto">
                   { Number(product.price) > 0 ? 
                     <div className="flex flex-col items-center mb-6">
@@ -340,7 +365,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
                    : 
                     <div className="flex flex-col items-center justify-between mb-4">
                       <div className="flex flex-col items-center text-gray-700">
-                        <span className="text-2xl font-bold text-primary-light">
+                        <span className="text-xl font-bold text-primary-light">
                           Entre em contato
                         </span>
                         <span className="text-center text-xs md:text-sm">
@@ -353,9 +378,9 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
                   <Button
                     className="w-full bg-black hover:bg-primary-light text-white transition-colors"
                     onClick={() => addToCart(product)}
-                    disabled={!product.inStock}
+                    disabled={!product.active}
                   >
-                    {product.inStock ? "Adicionar ao Carrinho" : "Avise-me"}
+                    {product.active ? "Adicionar ao Carrinho" : "Avise-me"}
                   </Button>
                 </div>
               </div>
@@ -367,7 +392,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
         <div className="text-center">
           <Button
             size="lg"
-            className="bg-primary-light hover:brightness-125 text-white text-lg px-8 shadow-lg"
+            className="bg-primary-light hover:brightness-110 ease-in-out duration-200 text-white text-lg px-8 shadow-lg"
             onClick={() => {
               setShowAllProducts((prev) => !prev);
               if (showAllProducts) document.getElementById("grid-produtos")?.scrollIntoView();

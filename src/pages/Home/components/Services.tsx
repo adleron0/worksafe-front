@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   CheckCircle,
 } from "lucide-react";
@@ -104,7 +105,7 @@ const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
 
   const { 
     data, 
-    // isLoading, 
+    isLoading, 
   } = useQuery<Response | undefined, ApiError>({
     queryKey: ["listSiteServices"],
     queryFn: async () => {
@@ -129,7 +130,33 @@ const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {data?.rows?.map((service, index) => (
+          {isLoading ? (
+            // Render skeleton cards
+            Array(3).fill(0).map((_, index) => (
+              <div
+                key={`skeleton-${index}`}
+                className="flex flex-col bg-white rounded-2xl overflow-hidden shadow-lg"
+              >
+                <div className="aspect-[4/3] relative">
+                  <Skeleton className="absolute inset-0 h-full w-full" />
+                </div>
+                <div className="p-6 flex flex-col flex-grow">
+                  <ul className="space-y-3">
+                    {Array(4).fill(0).map((_, idx) => (
+                      <li key={`skeleton-feature-${idx}`} className="flex items-center">
+                        <Skeleton className="w-5 h-5 mr-2 flex-shrink-0 rounded-full" />
+                        <Skeleton className="h-4 w-full" />
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-auto">
+                    <Skeleton className="w-full h-10 mt-6" />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            data?.rows?.map((service, index) => (
             <div
               key={`service-${index}`}
               className="flex flex-col bg-white rounded-2xl overflow-hidden shadow-lg group hover:-translate-y-2 transition-all duration-300"
@@ -168,7 +195,8 @@ const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
                 </div>
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </section>

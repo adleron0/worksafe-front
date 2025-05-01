@@ -1,4 +1,4 @@
-export interface SiteServices {
+export interface SiteProducts {
   id?: number;
   name: string;
   companyId?: number;

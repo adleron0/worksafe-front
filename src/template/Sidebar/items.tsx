@@ -160,13 +160,13 @@ export const items = [
     ability: "site",
     subitems: [
       {
-        title: "Serviços do Site",
+        title: "Serviços",
         icon: "wrench",
         path: "/site/servicos",
       },
       {
-        title: "Produtos do Site",
-        icon: "wrench",
+        title: "Produtos",
+        icon: "package",
         path: "/site/produtos",
       },
     ],

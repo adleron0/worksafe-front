@@ -80,7 +80,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
       {index === 0 && (
         <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
           <div className="w-4/12">Serviço</div>
-          <div className="w-4/12">Descrição</div>
+          <div className="w-4/12">Características</div>
           <div className="w-2/12">Cadastro</div>
           <div className="w-1/12">Status</div>
           <div className="w-1/12">Ações</div>
@@ -89,6 +89,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+        
         {/* Avatar e Nome */}
         <div className="w-full lg:w-4/12 flex items-center space-x-4">
           <Avatar className="border">

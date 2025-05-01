@@ -2,7 +2,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { SiteServices as EntityInterface } from "@/pages/Site-Services/interfaces/site-services.interface";
+import { SiteProducts as EntityInterface } from "@/pages/Site-Products/interfaces/site-products.interface";
 import useVerify from "@/hooks/use-verify";
 import { patch } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -79,9 +79,10 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
       {/* Renderiza o Header apenas no primeiro item */}
       {index === 0 && (
         <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
-          <div className="w-4/12">Serviço</div>
-          <div className="w-4/12">Descrição</div>
-          <div className="w-2/12">Cadastro</div>
+          <div className="w-3/12">Produto</div>
+          <div className="w-3/12">Características</div>
+          <div className="w-2/12">Descrição</div>
+          <div className="w-2/12">Preços</div>
           <div className="w-1/12">Status</div>
           <div className="w-1/12">Ações</div>
         </div>
@@ -89,9 +90,18 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+        {/* Badges */}
+        <div className="absolute -top-1 left-4 flex items-center gap-2">
+          {item.featured && 
+          <Badge variant="outline" className="text-2xs h-4 rounded-sm font-normal text-inverse-foreground bg-primary">
+            <Icon name="star" className="w-2 h-2 mr-0.5" />
+            {item.featured ? "destaque" : ""}
+          </Badge>}
+        </div>
+        
         {/* Avatar e Nome */}
-        <div className="w-full lg:w-4/12 flex items-center space-x-4">
-          <Avatar className="border">
+        <div className="w-full lg:w-3/12 flex items-center space-x-4">
+          <Avatar className="border rounded-md">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
             <AvatarFallback>{item.name[0]}</AvatarFallback>
           </Avatar>
@@ -101,8 +111,8 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         </div>
 
         {/* Características */}
-        <div className="lg:w-4/12 flex items-baseline gap-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Características: </p>
+        <div className="lg:w-3/12 flex items-baseline gap-2">
+          {/* <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Características: </p> */}
           <div className="flex flex-wrap gap-0.5">
             {
               item.features?.split(',').map((feature: string, index: number) => (
@@ -117,12 +127,25 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
           </div>
         </div>
 
-        {/* Data de Criação */}
+        {/* Descrição */}
+        <div className="lg:w-2/12 flex items-baseline gap-2 break-all">
+          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Descrição: </p>
+          <div className="flex flex-wrap gap-0.5 text-xs">
+            <p>{item.description}</p>
+          </div>
+        </div>
+
+        {/* Preços */}
         <div className="lg:w-2/12 flex items-baseline gap-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Cadastro: </p>
-          <p className="text-sm text-muted-foreground dark:text-gray-100">
-            {new Date(item.createdAt || '2024-01-01').toLocaleDateString()}
-          </p>
+          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Preços: </p>
+          <div className="flex flex-col items-start gap-0.5">
+            <p className="text-xs text-muted-foreground dark:text-gray-100">
+              {item.price ? `atual: R$ ${item.price}` : 'Não informado'}
+            </p>
+            <p className="text-xs text-muted-foreground dark:text-gray-100">
+              {item.oldPrice ? `antigo: R$ ${item.oldPrice}` : 'Não informado'}
+            </p>
+          </div>
         </div>
 
         {/* Status */}

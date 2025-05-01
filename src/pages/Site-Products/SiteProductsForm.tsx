@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import Loader from "@/components/general-components/Loader";
-import { SiteServices as EntityInterface } from "@/pages/Site-Services/interfaces/site-services.interface";
+import { SiteProducts as EntityInterface } from "@/pages/Site-Products/interfaces/site-products.interface";
 import DropUpload from "@/components/general-components/DropUpload";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
@@ -25,7 +25,11 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   // Schema
   const Schema = z.object({
     name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
+    featured: z.boolean(),
     features: z.string().optional(),
+    description: z.string().min(10, { message: "Descrição deve ter pelo menos 3 caracteres" }),
+    price: z.number().optional(),
+    oldPrice: z.number().optional(),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
       (value) => value === null || value instanceof File,
@@ -40,6 +44,10 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const [dataForm, setDataForm] = useState<FormData>({
     name: formData?.name || "",
     features: formData?.features || "",
+    featured: formData?.featured || false,
+    description: formData?.description || "",
+    price: Number(formData?.price) || 0,
+    oldPrice: Number(formData?.oldPrice) || 0,
     imageUrl: formData?.imageUrl || "",
     image: formData?.image || null,
   });
@@ -107,29 +115,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("🚀 ~ handleSubmit ~ formData:", formData?.oldPrice)
     
-    // Clean up all string fields before submission
-    const cleanedData = { ...dataForm };
-    
-    // Process all string fields
-    Object.keys(cleanedData).forEach(key => {
-      const value = cleanedData[key as keyof FormData];
-      if (typeof value === 'string') {
-        // Apply trim to all string fields
-        const cleanedValue = value.trim();
-        
-        // Update the cleaned data with proper type handling
-        if (key === 'name') {
-          cleanedData.name = cleanedValue;
-        } else if (key === 'features') {
-          cleanedData.features = cleanedValue;
-        } else if (key === 'imageUrl') {
-          cleanedData.imageUrl = cleanedValue;
-        }
-      }
-    });
-    
-    const result = Schema.safeParse(cleanedData);
+    const result = Schema.safeParse(dataForm);
 
     if (!result.success) {
       // Extract error messages from Zod validation result
@@ -147,9 +135,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     }
 
     if (formData) {
-      updateCustomerMutation(cleanedData);
+      updateCustomerMutation(dataForm);
     } else {
-      registerCustomer(cleanedData);
+      registerCustomer(dataForm);
     }
   };
 
@@ -163,26 +151,77 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       />
       <div>
         <Label htmlFor="name">Nome <span>*</span></Label>
-        <Input
-          id="name"
-          name="name"
-          placeholder="Digite nome do usuário"
-          value={dataForm.name}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
+          <Input
+            id="name"
+            name="name"
+            placeholder="Digite nome do usuário"
+            value={dataForm.name}
+            onValueChange={handleChange}
+            className="mt-1"
+          />
+        {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+      </div>
+
+      <div className="flex gap-2 items-center my-2">
+        <Label htmlFor="featured" className="cursor-pointer">Produto Destaque</Label>
+        <Switch
+          id="featured"
+          name="featured"
+          checked={dataForm.featured}
+          onCheckedChange={() => setDataForm((prev) => ({ ...prev, featured: !prev.featured }))}
           className="mt-1"
         />
-        {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+      </div>
+
+      <div>
+        <Label htmlFor="price">Valor de venda atual</Label>
+        <Input
+          id="price"
+          name="price"
+          value={dataForm.price}
+          onValueChange={handleChange}
+          format="currency"
+          className="mt-1"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="oldPrice">Valor antigo</Label>
+        <p className="text-xs text-muted-foreground font-medium">Para evidenciar quando houver promoções</p>
+        <Input
+          id="oldPrice"
+          name="oldPrice"
+          value={dataForm.oldPrice}
+          onValueChange={handleChange}
+          format="currency"
+          className="mt-1"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="description">Descrição <span>*</span></Label>
+        <Input
+          id="description"
+          name="description"
+          placeholder="Descreva o produto"
+          value={dataForm.description}
+          onValueChange={handleChange}
+          type="textArea"
+          className="mt-1"
+        />
+        {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
       </div>
       
       <div>
         <Label htmlFor="features">Características</Label>
-        <p className="text-xs text-muted-foreground font-medium">Separar características com vírgulas</p>
-        <Textarea
+        <p className="text-xs text-muted-foreground font-medium">Separar características com vírgulas!</p>
+        <Input
           id="features"
           name="features"
           placeholder="Digite as características"
           value={dataForm.features}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
+          onValueChange={handleChange}
+          type="textArea"
           className="mt-1"
         />
       </div>

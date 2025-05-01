@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -163,26 +162,27 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       />
       <div>
         <Label htmlFor="name">Nome <span>*</span></Label>
-        <Input
-          id="name"
-          name="name"
-          placeholder="Digite nome do usuário"
-          value={dataForm.name}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
-          className="mt-1"
-        />
+          <Input
+            id="name"
+            name="name"
+            placeholder="Digite nome do usuário"
+            value={dataForm.name}
+            onValueChange={handleChange}
+            className="mt-1"
+          />
         {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
       </div>
       
       <div>
         <Label htmlFor="features">Características</Label>
         <p className="text-xs text-muted-foreground font-medium">Separar características com vírgulas</p>
-        <Textarea
+        <Input
           id="features"
           name="features"
           placeholder="Digite as características"
           value={dataForm.features}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
+          onValueChange={handleChange}
+          type="textArea"
           className="mt-1"
         />
       </div>

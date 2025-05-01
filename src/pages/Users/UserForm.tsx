@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import Loader from "@/components/general-components/Loader";
-import { formatCPF, unformatCPF } from "@/utils/cpf-mask";
-import { formatPHONE } from "@/utils/phone-mask";
 import { User } from "./interfaces/user.interface";
 import Select from "@/components/general-components/Select";
 import DropUpload from "@/components/general-components/DropUpload";
@@ -164,7 +162,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
                 name="name"
                 placeholder="Digite nome do usuário"
                 value={dataForm.name}
-                onChange={(e) => handleChange(e.target.name, e.target.value)}
+                onValueChange={handleChange}
                 className="mt-1"
               />
               {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
@@ -175,12 +173,9 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
                 id="cpf"
                 name="cpf"
                 placeholder="000.000.000-00"
-                value={formatCPF(dataForm.cpf)}
-                onChange={(e) => {
-                  const rawValue = unformatCPF(e.target.value);
-                  const sanitizedValue = rawValue.slice(0, 11);
-                  handleChange(e.target.name, sanitizedValue);
-                }}
+                format="cpf"
+                value={dataForm.cpf}
+                onValueChange={handleChange}
                 className="mt-1"
               />
               {errors.cpf && <p className="text-red-500 text-sm">{errors.cpf}</p>}
@@ -193,7 +188,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
                 type="email"
                 placeholder="Digite email do usuário"
                 value={dataForm.email}
-                onChange={(e) => handleChange(e.target.name, e.target.value)}
+                onValueChange={handleChange}
                 className="mt-1"
               />
               {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
@@ -204,8 +199,9 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
                 id="phone"
                 name="phone"
                 placeholder="(11) 99999-9999"
-                value={formatPHONE(dataForm.phone)}
-                onChange={(e) => handleChange(e.target.name, e.target.value)}
+                format="phone"
+                value={dataForm.phone}
+                onValueChange={handleChange}
                 className="mt-1"
               />
               {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
@@ -242,7 +238,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
               type="text"
               placeholder="Digite nova senha do usuário"
               value={dataForm.password}
-              onChange={(e) => handleChange(e.target.name, e.target.value)}
+              onValueChange={handleChange}
               className="mt-1"
             />
             {
@@ -265,7 +261,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
               type="text"
               placeholder="Digite nova senha do usuário"
               value={dataForm.password}
-              onChange={(e) => handleChange(e.target.name, e.target.value)}
+              onValueChange={handleChange}
               className="mt-1"
             />
             {

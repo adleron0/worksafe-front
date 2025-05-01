@@ -102,7 +102,7 @@ const faqs = [
 
 // Definindo o tipo do item do carrinho
 type CartItem = {
-  id: string;
+  id: number;
   name: string;
   quantity: number;
 };
@@ -129,12 +129,12 @@ export default function Home() {
   }, [cart]);
 
   // Função para adicionar um item ao carrinho
-  const addToCart = (product: { id: string; name: string }) => {
+  const addToCart = (product: { id: number; name: string }) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
+      const existingItem = prevCart.find((item) => Number(item.id) === Number(product.id));
       if (existingItem) {
         return prevCart.map((item) =>
-          item.id === product.id
+          Number(item.id) === Number(product.id)
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );

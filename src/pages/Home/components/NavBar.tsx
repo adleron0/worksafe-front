@@ -12,7 +12,7 @@ import {
 
 // Define the type for cart items
 type CartItem = {
-  id: string;
+  id: number;
   name: string;
   quantity: number;
 };
@@ -43,26 +43,26 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
   }, [isMenuOpen, isCartOpen]);
 
   // Funções para modificar o carrinho
-  const incrementQuantity = (id: string) => {
+  const incrementQuantity = (id: number) => {
     setCart((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+        Number(item.id) === Number(id) ? { ...item, quantity: item.quantity + 1 } : item
       )
     );
   };
 
-  const decrementQuantity = (id: string) => {
+  const decrementQuantity = (id: number) => {
     setCart((prev) =>
       prev
         .map((item) =>
-          item.id === id ? { ...item, quantity: item.quantity - 1 } : item
+          Number(item.id) === Number(id) ? { ...item, quantity: item.quantity - 1 } : item
         )
         .filter((item) => item.quantity > 0)
     );
   };
 
-  const removeItem = (id: string) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
+  const removeItem = (id: number) => {
+    setCart((prev) => prev.filter((item) => Number(item.id) === Number(id)));
   };
 
   const clearCart = () => {

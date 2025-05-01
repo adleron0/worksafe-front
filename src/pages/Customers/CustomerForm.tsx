@@ -1,16 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import Select from "@/components/general-components/Select";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import Loader from "@/components/general-components/Loader";
-import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
-import { formatPHONE } from "@/utils/phone-mask";
-import { formatCEP } from "@/utils/cep-mask";
 import { Customer as EntityInterface } from "@/pages/Customers/interfaces/customer.interface";
 import DropUpload from "@/components/general-components/DropUpload";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -214,7 +211,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           name="name"
           placeholder="Digite nome do usuário"
           value={dataForm.name}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
+          onValueChange={handleChange}
           className="mt-1"
         />
         {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
@@ -226,7 +223,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           name="corporateName"
           placeholder="Digite a razão social"
           value={dataForm.corporateName}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
+          onValueChange={handleChange}
           className="mt-1"
         />
         {errors.corporateName && <p className="text-red-500 text-sm">{errors.corporateName}</p>}
@@ -237,12 +234,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           id="cnpj"
           name="cnpj"
           placeholder="00.000.000/0000-00"
-          value={formatCNPJ(dataForm.cnpj)}
-          onChange={(e) => {
-            const rawValue = unformatCNPJ(e.target.value);
-            const sanitizedValue = rawValue.slice(0, 14);
-            handleChange(e.target.name, sanitizedValue);
-          }}
+          format="cnpj"
+          value={dataForm.cnpj}
+          onValueChange={handleChange}
           className="mt-1"
         />
         {errors.cnpj && <p className="text-red-500 text-sm">{errors.cnpj}</p>}
@@ -255,7 +249,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           type="email"
           placeholder="Digite email do usuário"
           value={dataForm.email}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
+          onValueChange={handleChange}
           className="mt-1"
         />
         {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
@@ -266,8 +260,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           id="phone"
           name="phone"
           placeholder="(11) 99999-9999"
-          value={formatPHONE(dataForm.phone)}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
+          format="phone"
+          value={dataForm.phone}
+          onValueChange={handleChange}
           className="mt-1"
         />
         {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
@@ -313,11 +308,10 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           id="zipcode"
           name="zipcode"
           placeholder="00000-000"
-          value={formatCEP(dataForm.zipcode)}
-          onChange={(e) => {
-            const raw = e.target.value.replace(/\D/g, ''); // só números
-            handleChange(e.target.name, formatCEP(raw));
-          }}
+          format="cep"
+          unformat={false}
+          value={dataForm.zipcode}
+          onValueChange={handleChange}
           className="mt-1"
         />
       </div>
@@ -329,7 +323,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           name="street"
           placeholder="Digite o nome da rua"
           value={dataForm.street}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
+          onValueChange={handleChange}
           className="mt-1"
         />
       </div>
@@ -342,7 +336,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           type="number"
           placeholder="Digite o número"
           value={dataForm.number || ""}
-          onChange={(e) => handleChange(e.target.name, Number(e.target.value))}
+          onValueChange={(name, value) => handleChange(name, Number(value))}
           className="mt-1"
         />
       </div>
@@ -354,7 +348,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           name="neighborhood"
           placeholder="Digite o bairro"
           value={dataForm.neighborhood}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
+          onValueChange={handleChange}
           className="mt-1"
         />
       </div>
@@ -366,7 +360,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           name="complement"
           placeholder="Digite o complemento"
           value={dataForm.complement}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
+          onValueChange={handleChange}
           className="mt-1"
         />
       </div>
@@ -378,7 +372,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           name="description"
           placeholder="Digite uma descrição"
           value={dataForm.description}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
+          onValueChange={handleChange}
           className="mt-1"
         />
       </div>

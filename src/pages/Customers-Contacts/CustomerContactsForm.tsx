@@ -1,14 +1,13 @@
 import React, { useState, useRef } from "react";
 import Select from "@/components/general-components/Select";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import Loader from "@/components/general-components/Loader";
-import { formatPHONE } from "@/utils/phone-mask";
 import { IEntity } from "./interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
@@ -134,39 +133,40 @@ const Form = ({ formData, openSheet, entity, customerId }: FormProps) => {
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
       <div>
         <Label htmlFor="name">Nome <span>*</span></Label>
-        <Input
-          id="name"
-          name="name"
-          placeholder="Digite nome do usuário"
-          value={dataForm.name}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
-          className="mt-1"
-        />
+          <Input
+            id="name"
+            name="name"
+            placeholder="Digite nome do usuário"
+            value={dataForm.name}
+            onValueChange={handleChange}
+            className="mt-1"
+          />
         {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
       </div>
       <div>
         <Label htmlFor="email">Email <span>*</span></Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="Digite email do usuário"
-          value={dataForm.email}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
-          className="mt-1"
-        />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="Digite email do usuário"
+            value={dataForm.email}
+            onValueChange={handleChange}
+            className="mt-1"
+          />
         {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
       </div>
       <div>
         <Label htmlFor="phone">Telefone <span>*</span></Label>
-        <Input
-          id="phone"
-          name="phone"
-          placeholder="(11) 99999-9999"
-          value={formatPHONE(dataForm.phone)}
-          onChange={(e) => handleChange(e.target.name, e.target.value)}
-          className="mt-1"
-        />
+          <Input
+            id="phone"
+            name="phone"
+            placeholder="(11) 99999-9999"
+            format="phone"
+            value={dataForm.phone}
+            onValueChange={handleChange}
+            className="mt-1"
+          />
         {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
       </div>
       <div>

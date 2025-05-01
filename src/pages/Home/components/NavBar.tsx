@@ -71,12 +71,12 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
 
   // Função para gerar a mensagem do carrinho para o WhatsApp
   const generateCartMessage = () => {
-    if (cart.length === 0) {
+    if (cart?.length === 0) {
       return "Olá, gostaria de solicitar um orçamento.";
     }
     let message =
       "Olá, gostaria de solicitar um orçamento para os seguintes itens:\n\n";
-    cart.forEach((item) => {
+    cart?.forEach((item) => {
       message += `• ${item.name} (Quantidade: ${item.quantity})\n`;
     });
     return message;
@@ -95,7 +95,14 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
       <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-50 shadow-sm">
         <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
           <div className="flex items-center justify-between h-20">
-            <div className="flex gap-1 items-center">
+            <div 
+              className="flex gap-1 items-center cursor-pointer"
+              onClick={() => {
+                navigate({
+                  to: `/`,
+                })
+              }}
+            >
               <Logo colorPath24="black" colorPath25="hsl(var(--primary-light))" className="h-10 w-10" />
               <div className="flex flex-col text-black">
                 <span className="font-black text-2xl">WORKSAFE</span>
@@ -105,32 +112,37 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-4">
               <a
-                href="#servicos"
+                href="/#servicos"
                 className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Serviços
               </a>
               <a
-                href="#produtos"
+                href="/#produtos"
                 className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Produtos
               </a>
               <a
-                href="#aluguel"
+                href="/#aluguel"
                 className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Aluguel
               </a>
               <a
-                href="#treinamentos"
+                href="/#treinamentos"
                 className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Treinamentos
               </a>
               <a
+                onClick={() => {
+                  navigate({
+                    to: `/sobre`,
+                  })
+                }}
                 href="#sobre"
-                className="text-gray-600 hover:text-primary-light transition-colors"
+                className="text-gray-600 cursor-pointer hover:text-primary-light transition-colors"
               >
                 Sobre Nós
               </a>
@@ -150,9 +162,9 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                 onClick={() => setIsCartOpen(true)}
               >
                 <ShoppingCart className="w-6 h-6 text-gray-900" />
-                {cart.length > 0 && (
+                {cart?.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-primary-light text-white rounded-full text-xs w-5 h-5 flex items-center justify-center animate-bounce">
-                    {cart.reduce((acc, item) => acc + item.quantity, 0)}
+                    {cart?.reduce((acc, item) => acc + item.quantity, 0)}
                   </span>
                 )}
               </button>
@@ -165,9 +177,9 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                 onClick={() => setIsCartOpen(true)}
               >
                 <ShoppingCart className="w-6 h-6" />
-                {cart.length > 0 && (
+                {cart?.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-primary-light text-white rounded-full text-xs w-5 h-5 flex items-center justify-center animate-bounce">
-                    {cart.reduce((acc, item) => acc + item.quantity, 0)}
+                    {cart?.reduce((acc, item) => acc + item.quantity, 0)}
                   </span>
                 )}
               </button>
@@ -201,35 +213,40 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
             <div className="md:hidden py-4 border-t">
               <div className="flex flex-col gap-4">
                 <a
+                  className="text-gray-600 cursor-pointer hover:text-primary-light transition-colors"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate({
+                      to: `/sobre`,
+                    })
+                  }}
                   href="#sobre"
-                  className="text-gray-600 hover:text-primary-light transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
                 >
                   Sobre Nós
                 </a>
                 <a
-                  href="#servicos"
+                  href="/#servicos"
                   className="text-gray-600 hover:text-primary-light transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Serviços
                 </a>
                 <a
-                  href="#produtos"
+                  href="/#produtos"
                   className="text-gray-600 hover:text-primary-light transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Produtos
                 </a>
                 <a
-                  href="#aluguel"
+                  href="/#aluguel"
                   className="text-gray-600 hover:text-primary-light transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Aluguel
                 </a>
                 <a
-                  href="#treinamentos"
+                  href="/#treinamentos"
                   className="text-gray-600 hover:text-primary-light transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -285,7 +302,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
 
           {/* Cart Content */}
           <div className="flex-1 overflow-y-auto p-4">
-            {cart.length === 0 ? (
+            {cart?.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <ShoppingCart className="w-16 h-16 text-gray-300 mb-4" />
                 <p className="text-gray-500 mb-2">Seu carrinho está vazio</p>
@@ -295,7 +312,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
               </div>
             ) : (
               <ul className="space-y-6">
-                {cart.map((item) => (
+                {cart?.map((item) => (
                   <li
                     key={item.id}
                     className="flex items-center gap-4 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"

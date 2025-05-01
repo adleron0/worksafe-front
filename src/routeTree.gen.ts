@@ -11,6 +11,7 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as SobreImport } from './routes/sobre'
 import { Route as LoginImport } from './routes/login'
 import { Route as AuthenticatedImport } from './routes/_authenticated'
 import { Route as IndexImport } from './routes/index'
@@ -39,6 +40,12 @@ import { Route as AuthenticatedInventariosAreasIndexImport } from './routes/_aut
 import { Route as AuthenticatedInventariosAreasAreaIdImport } from './routes/_authenticated/inventarios/areas/$areaId'
 
 // Create/Update Routes
+
+const SobreRoute = SobreImport.update({
+  id: '/sobre',
+  path: '/sobre',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const LoginRoute = LoginImport.update({
   id: '/login',
@@ -234,6 +241,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginImport
+      parentRoute: typeof rootRoute
+    }
+    '/sobre': {
+      id: '/sobre'
+      path: '/sobre'
+      fullPath: '/sobre'
+      preLoaderRoute: typeof SobreImport
       parentRoute: typeof rootRoute
     }
     '/_authenticated/building': {
@@ -468,6 +482,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/sobre': typeof SobreRoute
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
   '/altus/access-control': typeof AuthenticatedAltusAccessControlRoute
@@ -497,6 +512,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/sobre': typeof SobreRoute
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
   '/altus/access-control': typeof AuthenticatedAltusAccessControlRoute
@@ -527,6 +543,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/sobre': typeof SobreRoute
   '/_authenticated/building': typeof AuthenticatedBuildingRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/altus/access-control': typeof AuthenticatedAltusAccessControlRoute
@@ -558,6 +575,7 @@ export interface FileRouteTypes {
     | '/'
     | ''
     | '/login'
+    | '/sobre'
     | '/building'
     | '/home'
     | '/altus/access-control'
@@ -586,6 +604,7 @@ export interface FileRouteTypes {
     | '/'
     | ''
     | '/login'
+    | '/sobre'
     | '/building'
     | '/home'
     | '/altus/access-control'
@@ -614,6 +633,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/sobre'
     | '/_authenticated/building'
     | '/_authenticated/home'
     | '/_authenticated/altus/access-control'
@@ -644,12 +664,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  SobreRoute: typeof SobreRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  SobreRoute: SobreRoute,
 }
 
 export const routeTree = rootRoute
@@ -664,7 +686,8 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/_authenticated",
-        "/login"
+        "/login",
+        "/sobre"
       ]
     },
     "/": {
@@ -700,6 +723,9 @@ export const routeTree = rootRoute
     },
     "/login": {
       "filePath": "login.tsx"
+    },
+    "/sobre": {
+      "filePath": "sobre.tsx"
     },
     "/_authenticated/building": {
       "filePath": "_authenticated/building.tsx",

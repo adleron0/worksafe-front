@@ -11,10 +11,12 @@ import {
 } from "lucide-react";
 
 // Define the type for cart items
+// Define the type for cart items (including imageUrl)
 type CartItem = {
   id: number;
   name: string;
   quantity: number;
+  imageUrl?: string; // Add imageUrl
 };
 
 interface NavBarProps {
@@ -95,7 +97,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
       <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-50 shadow-sm">
         <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
           <div className="flex items-center justify-between h-20">
-            <div className="flex gap-1 items-center">
+            <div className="flex gap-1 items-center cursor-pointer" onClick={() => {navigate({to: `/`})}}>
               <Logo colorPath24="black" colorPath25="hsl(var(--primary-light))" className="h-10 w-10" />
               <div className="flex flex-col text-black">
                 <span className="font-black text-2xl">WORKSAFE</span>
@@ -105,30 +107,35 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-4">
               <a
+                onClick={() => {navigate({to: `/`})}}
                 href="#servicos"
                 className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Serviços
               </a>
               <a
+                onClick={() => {navigate({to: `/`})}}
                 href="#produtos"
                 className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Produtos
               </a>
               <a
+                onClick={() => {navigate({to: `/`})}}
                 href="#aluguel"
                 className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Aluguel
               </a>
               <a
+                onClick={() => {navigate({to: `/`})}}
                 href="#treinamentos"
                 className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Treinamentos
               </a>
               <a
+                onClick={() => {navigate({to: `/sobre`})}}
                 href="#sobre"
                 className="text-gray-600 hover:text-primary-light transition-colors"
               >
@@ -201,35 +208,35 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
             <div className="md:hidden py-4 border-t">
               <div className="flex flex-col gap-4">
                 <a
+                  onClick={() => {setIsMenuOpen(false); navigate({to: `/sobre`})}}
                   href="#sobre"
                   className="text-gray-600 hover:text-primary-light transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
                 >
                   Sobre Nós
                 </a>
                 <a
-                  href="#servicos"
+                  href="/#servicos"
                   className="text-gray-600 hover:text-primary-light transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Serviços
                 </a>
                 <a
-                  href="#produtos"
+                  href="/#produtos"
                   className="text-gray-600 hover:text-primary-light transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Produtos
                 </a>
                 <a
-                  href="#aluguel"
+                  href="/#aluguel"
                   className="text-gray-600 hover:text-primary-light transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Aluguel
                 </a>
                 <a
-                  href="#treinamentos"
+                  href="/#treinamentos"
                   className="text-gray-600 hover:text-primary-light transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -298,10 +305,28 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                 {cart.map((item) => (
                   <li
                     key={item.id}
-                    className="flex items-center gap-4 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="flex items-start gap-4 p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors" // Use items-start for better alignment with image
                   >
+                    {/* Product Image */}
+                    <div className="w-14 h-14 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          {/* Placeholder Icon or Text */}
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    {/* Product Details */}
                     <div className="flex-1">
-                      <h3 className="font-medium text-sm text-gray-700">{item.name}</h3>
+                      <h3 className="font-medium text-sm text-gray-700 mb-1">{item.name}</h3> {/* Added margin-bottom */}
                       <p className="text-xs text-gray-500">
                         Quantidade: {item.quantity}
                       </p>

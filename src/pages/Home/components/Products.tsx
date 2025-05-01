@@ -15,7 +15,8 @@ import { get } from "@/services/api";
 import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
 
 interface ProductsProps {
-  addToCart: (product: { id: number; name: string }) => void;
+  // Update addToCart prop type to include imageUrl
+  addToCart: (product: { id: number; name: string; imageUrl?: string }) => void;
   formatCurrency: (value: number) => string | undefined;
 }
 
@@ -156,8 +157,8 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
               }
             <div className="flex gap-4">
               <Button
-                // Ensure id exists before adding to cart
-                onClick={() => featuredProduct.id && addToCart(featuredProduct as { id: number; name: string })}
+                // Ensure id exists before adding to cart and pass imageUrl (convert null to undefined)
+                onClick={() => featuredProduct.id && addToCart({ id: featuredProduct.id, name: featuredProduct.name, imageUrl: featuredProduct.imageUrl ?? undefined })}
                 disabled={!featuredProduct.active || !featuredProduct.id} // Also disable if no id
                 size="lg"
                 className={cn(
@@ -242,8 +243,8 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
 
                     <Button
                       className="w-full bg-black hover:bg-primary-light text-white transition-colors"
-                      // Ensure id exists before adding to cart
-                      onClick={() => product.id && addToCart(product as { id: number; name: string })}
+                      // Ensure id exists before adding to cart and pass imageUrl (convert null to undefined)
+                      onClick={() => product.id && addToCart({ id: product.id, name: product.name, imageUrl: product.imageUrl ?? undefined })}
                       disabled={!product.active || !product.id} // Also disable if no id
                     >
                       {product.active ? "Adicionar ao Carrinho" : "Avise-me"}

@@ -81,8 +81,8 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
           <div className="w-3/12">Produto</div>
           <div className="w-3/12">Características</div>
-          <div className="w-2/12">Descrição</div>
-          <div className="w-2/12">Preços</div>
+          <div className="w-3/12">Descrição</div>
+          <div className="w-1/12">Preços</div>
           <div className="w-1/12">Status</div>
           <div className="w-1/12">Ações</div>
         </div>
@@ -128,7 +128,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         </div>
 
         {/* Descrição */}
-        <div className="lg:w-2/12 flex items-baseline gap-2 break-all">
+        <div className="lg:w-3/12 flex items-baseline gap-2 break-words mr-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Descrição: </p>
           <div className="flex flex-wrap gap-0.5 text-xs">
             <p>{item.description}</p>
@@ -136,7 +136,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         </div>
 
         {/* Preços */}
-        <div className="lg:w-2/12 flex items-baseline gap-2">
+        <div className="lg:w-1/12 flex items-baseline gap-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Preços: </p>
           <div className="flex flex-col items-start gap-0.5">
             <p className="text-xs text-muted-foreground dark:text-gray-100">

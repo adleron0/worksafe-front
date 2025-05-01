@@ -14,8 +14,6 @@ import { SiteProducts as EntityInterface } from "@/pages/Site-Products/interface
 import { get } from "@/services/api";
 import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
 
-// Remove mock image imports as they are replaced by imageUrl from data
-
 interface ProductsProps {
   addToCart: (product: { id: number; name: string }) => void;
   formatCurrency: (value: number) => string | undefined;

@@ -163,7 +163,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
                 disabled={!featuredProduct.active || !featuredProduct.id} // Also disable if no id
                 size="lg"
                 className={cn(
-                  "flex-1 bg-primary-light hover:brightness-125 text-white",
+                  "flex-1 bg-primary-light hover:brightness-110 text-white",
                   !featuredProduct.active && "cursor-not-allowed opacity-50 bg-black"
                 )}
               >

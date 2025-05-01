@@ -6,7 +6,7 @@ const foundationYear = 2019;
 const yearsOfExperience = new Date().getFullYear() - foundationYear;
 
 // Video Treinamento
-const TreinamentoVideo = "/assets/videos/treinamento.mp4";
+const TreinamentoVideo = "../../../assets/videos/treinamento.mp4";
 
 // Imagens do About
 import AboutImage1 from "../../../assets/images/fundador-1.webp";

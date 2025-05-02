@@ -9,7 +9,7 @@ export interface IPayload {
   sub: number;
   companyId: number;
   imageUrl?: string;
-  role: string;
+  profile: string;
   products: string[];
   permissions: string[];
   iat?: number;

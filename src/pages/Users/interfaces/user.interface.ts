@@ -9,11 +9,11 @@ export interface User {
   phone: string;
   cpf: string;
   companyId?: number;
-  roleId?: number;
+  profileId?: number;
   createdAt?: string;
   updatedAt?: string;
   inactiveAt?: string | null;
-  role?: {
+  profile?: {
     name: string;
   };
   permissions?: any;

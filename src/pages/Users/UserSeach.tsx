@@ -15,7 +15,7 @@ const userSearchSchema = z.object({
   searchName: z.string().optional(),
   active: z.boolean().optional(),
   cpf: z.string().optional(),
-  roleId: z.union([z.number(), z.array(z.number())]).optional(),
+  profileId: z.union([z.number(), z.array(z.number())]).optional(),
   createdAt: z.tuple([z.date().optional(), z.date().optional()]).optional(),
 });
 
@@ -38,7 +38,7 @@ const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, open
       searchName: "",
       active: undefined,
       cpf: "",
-      roleId: undefined,
+      profileId: undefined,
       createdAt: undefined,
     },
   });
@@ -80,10 +80,10 @@ const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, open
 
   const handleRoleChange = (_name: string, value: string | string[]) => {
     if (typeof value === 'string') {
-      form.setValue("roleId", Number(value));
+      form.setValue("profileId", Number(value));
     } else if (Array.isArray(value)) {
       // Convert array of strings to array of numbers
-      form.setValue("roleId", value.map(v => Number(v)));
+      form.setValue("profileId", value.map(v => Number(v)));
     }
   };
 
@@ -170,16 +170,16 @@ const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, open
 
         {/* Função (Select com multiple) */}
         <div>
-          <FormLabel htmlFor="roleId">Função</FormLabel>
+          <FormLabel htmlFor="profileId">Função</FormLabel>
           <Select 
-            name="roleId"
+            name="profileId"
             options={roleOptions}
             state={(() => {
-              const roleId = form.watch("roleId");
-              if (roleId && Array.isArray(roleId)) {
-                return roleId.map((id: number) => id.toString());
+              const profileId = form.watch("profileId");
+              if (profileId && Array.isArray(profileId)) {
+                return profileId.map((id: number) => id.toString());
               }
-              return roleId?.toString() || "";
+              return profileId?.toString() || "";
             })()}
             onChange={handleRoleChange}
             placeholder="Selecione a função"

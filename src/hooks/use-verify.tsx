@@ -7,8 +7,8 @@ const useVerify = () => {
     return user?.permissions?.includes(permission) ?? false;
   };
 
-  const is = (role: string): boolean => {
-    return user?.role === role;
+  const is = (prfile: string): boolean => {
+    return user?.profile === prfile;
   };
 
   const has = (product: string): boolean => {

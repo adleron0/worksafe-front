@@ -30,7 +30,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
     password: z.string().optional().or(
       z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" })
     ),
-    roleId: z.number().min(1, { message: "Função deve ser selecionada" }),
+    profileId: z.number().min(1, { message: "Função deve ser selecionada" }),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
       (value) => value === null || value instanceof File,
@@ -56,7 +56,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
     phone: formData?.phone || "",
     cpf: formData?.cpf || "",
     password: formData?.password || "",
-    roleId: formData?.roleId || 3,
+    profileId: formData?.profileId || 3,
     imageUrl: formData?.imageUrl || null,
     image: null,
   });
@@ -209,19 +209,19 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
             {
               !self && 
               <div>
-                <Label htmlFor="roleId">Função <span>*</span></Label>
+                <Label htmlFor="profileId">Função <span>*</span></Label>
                 <Select 
-                  name="roleId"
+                  name="profileId"
                   options={[
                     { id: 1, name: "Admin" },
                     { id: 2, name: "Manager" },
                     { id: 3, name: "User" },
                   ]} 
                   onChange={(name, value) => handleChange(name, Number(value))} 
-                  state={dataForm.roleId !== undefined ? String(dataForm.roleId) : ""}
+                  state={dataForm.profileId !== undefined ? String(dataForm.profileId) : ""}
                   placeholder="Selecione a função"
                 />
-                {errors.roleId && <p className="text-red-500 text-sm">{errors.roleId}</p>}
+                {errors.profileId && <p className="text-red-500 text-sm">{errors.profileId}</p>}
               </div>
             }
           </>

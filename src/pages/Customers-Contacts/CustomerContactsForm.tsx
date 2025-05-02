@@ -27,7 +27,7 @@ const Form = ({ formData, openSheet, entity, customerId }: FormProps) => {
     name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     email: z.string().email({ message: "Email inválido" }),
     phone: z.string().min(10, { message: "Telefone deve ter pelo menos 10 dígitos" }),
-    roleId: z.number().min(1, { message: "Setor deve ser selecionada" }),
+    profileId: z.number().min(1, { message: "Setor deve ser selecionada" }),
     customerId: z.number(),
   })
 
@@ -37,7 +37,7 @@ const Form = ({ formData, openSheet, entity, customerId }: FormProps) => {
     name: formData?.name || "",
     email: formData?.email || "",
     phone: formData?.phone || "",
-    roleId: formData?.roleId || 0,
+    profileId: formData?.profileId || 0,
     customerId: formData?.customerId || customerId,
   });
   const initialFormRef = useRef(dataForm);
@@ -170,15 +170,15 @@ const Form = ({ formData, openSheet, entity, customerId }: FormProps) => {
         {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
       </div>
       <div>
-        <Label htmlFor="roleId">Setor <span>*</span></Label>
+        <Label htmlFor="profileId">Setor <span>*</span></Label>
         <Select 
-          name="roleId"
+          name="profileId"
           options={roles?.rows || []} 
           onChange={(name, value) => handleChange(name, Number(value))} 
-          state={dataForm.roleId !== undefined ? String(dataForm.roleId) : ""}
+          state={dataForm.profileId !== undefined ? String(dataForm.profileId) : ""}
           placeholder="Selecione a classificação"
         />
-        {errors.roleId && <p className="text-red-500 text-sm">{errors.roleId}</p>}
+        {errors.profileId && <p className="text-red-500 text-sm">{errors.profileId}</p>}
       </div>
 
       <Button

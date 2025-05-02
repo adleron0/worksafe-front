@@ -64,7 +64,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
   };
 
   const removeItem = (id: number) => {
-    setCart((prev) => prev.filter((item) => Number(item.id) === Number(id)));
+    setCart((prev) => prev.filter((item) => Number(item.id) !== Number(id))); // Corrected logic here too
   };
 
   const clearCart = () => {
@@ -273,7 +273,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
           isCartOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full"> {/* Inner flex container */}
           {/* Cart Header */}
           <div className="flex justify-between items-center p-6 border-b">
             <div className="flex items-center gap-2">
@@ -357,28 +357,39 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
             )}
           </div>
 
-          {/* Cart Footer a */}
-          <div className="flex flex-col md:flex-row gap-2 p-4 border-t bg-gray-50">
-            <Button
-              onClick={() => {
-                handleWhatsApp(generateCartMessage());
-                setIsCartOpen(false);
-              }}
-              className="w-full bg-primary-light text-white gap-2"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              Solicitar Orçamento
-            </Button>
-            <Button
-              variant="outline"
-              onClick={clearCart}
-              className="border-gray-300 w-full text-gray-600 hover:text-gray-700 bg-gray-50 hover:bg-gray-100"
-            >
-              Limpar Carrinho
-            </Button>
-          </div>
-        </div>
-      </div>
+          {/* Cart Footer */}
+          <div className="p-4 border-t bg-gray-50"> {/* Footer container */}
+            {/* Total Items Display */}
+            {cart.length > 0 && (
+              <div className="mb-4 text-start">
+                <p className="text-sm font-semibold text-gray-700">
+                  Total: {cart.reduce((acc, item) => acc + item.quantity, 0)} {cart.reduce((acc, item) => acc + item.quantity, 0) === 1 ? 'item' : 'itens'}
+                </p>
+              </div>
+            )}
+            {/* Action Buttons */}
+            <div className="flex flex-col md:flex-row gap-2">
+              <Button
+                onClick={() => {
+                  handleWhatsApp(generateCartMessage());
+                  setIsCartOpen(false);
+                }}
+                className="w-full bg-primary-light text-white gap-2"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Solicitar Orçamento
+              </Button>
+              <Button
+                variant="outline"
+                onClick={clearCart}
+                className="border-gray-300 w-full text-gray-600 hover:text-gray-700 bg-gray-50 hover:bg-gray-100"
+              >
+                Limpar Carrinho
+              </Button>
+            </div> {/* Closes Action Buttons div */}
+          </div> {/* Closes Footer container div */}
+        </div> {/* Closes Inner flex container div */}
+      </div> {/* Closes Cart Sidebar div */}
     </>
   );
 }

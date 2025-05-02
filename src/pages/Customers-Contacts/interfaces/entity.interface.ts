@@ -1,7 +1,7 @@
 export interface IEntity {
   id?: number;
   customerId?: number;
-  roleId?: number;
+  profileId?: number;
   name?: string;
   email?: string;
   phone?: string;

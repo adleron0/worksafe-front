@@ -24,7 +24,7 @@ const Users = () => {
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
-    show: ['role', 'permissions'],
+    show: ['profile', 'permissions'],
     'order-active': 'desc',
     'order-name': 'asc',
   });

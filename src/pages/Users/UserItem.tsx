@@ -85,7 +85,7 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
       {index === 0 && (
         <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
           <div className="w-3/12">Usuário</div>
-          <div className="w-2/12">Função</div>
+          <div className="w-2/12">Perfil</div>
           <div className="w-3/12">Contatos</div>
           <div className="w-2/12">Criado em</div>
           <div className="w-1/12">Status</div>
@@ -109,12 +109,12 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
 
         {/* Cargo */}
         <div className="lg:w-2/12 flex items-baseline gap-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Função: </p>
+          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Perfil: </p>
           <Badge
             variant="outline"
             className="rounded dark:border-primary"
           >
-            {user.role?.name}
+            {user.profile?.name}
           </Badge>
         </div>
 

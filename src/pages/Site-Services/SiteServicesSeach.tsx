@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { DateRange } from "react-day-picker";
-import { zodResolver } from "@hookform/resolvers/zod";
+// Template Components
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import Select from "@/components/general-components/Select";
 import CalendarPicker from "@/components/general-components/Calendar";
+// Interfaces and validations
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 const SearchSchema = z.object({
   name: z.string().optional(),

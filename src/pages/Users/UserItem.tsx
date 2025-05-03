@@ -22,7 +22,7 @@ interface UserItemProps {
 }
 
 const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserItemProps) => {
-  const { can } = useVerify();
+  const { can, is } = useVerify();
   const queryClient = useQueryClient();
 
    // Mutation para inativar o usuário
@@ -78,6 +78,9 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
       deactivateUser(user.id);
     }
   };
+
+  // validar se é super e se o usuário é o super
+  const canEdit = user.profile?.name !== 'super' ? true : is('super');
 
   return (
     <>
@@ -155,83 +158,87 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
 
         {/* Ações */}
         <div className="absolute top-2 right-2 lg:static lg:w-1/12">
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <Button
-                className="h-8 w-8 rounded-full p-0 text-gray-700"
-                variant="outline"
-                size="sm">
-                  <Icon name="ellipsis-vertical" className="text-foreground dark:text-primary w-3 h-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
+        {
+          canEdit && (
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  className="h-8 w-8 rounded-full p-0 text-gray-700"
+                  variant="outline"
+                  size="sm">
+                    <Icon name="ellipsis-vertical" className="text-foreground dark:text-primary w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
 
-              { can('update_user') && (
-                  <Button 
-                    variant="ghost" 
-                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
-                    onClick={() => {
-                      setFormData(user);
-                      setFormType("");
-                      setOpenForm(true);
-                    }}
-                  >
-                    <Icon name="edit-3" className="w-3 h-3" /> 
-                    <p>Editar</p>
-                  </Button>
-                )
-              }
+                { can('update_user') && (
+                    <Button 
+                      variant="ghost" 
+                      className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                      onClick={() => {
+                        setFormData(user);
+                        setFormType("");
+                        setOpenForm(true);
+                      }}
+                    >
+                      <Icon name="edit-3" className="w-3 h-3" /> 
+                      <p>Editar</p>
+                    </Button>
+                  )
+                }
 
-              { can('update_user_password') && (
-                  <Button 
-                    variant="ghost" 
-                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
-                    onClick={() => {
-                      setFormData(user);
-                      setFormType("only");
-                      setOpenForm(true);
-                    }}
-                  >
-                    <Icon name="key-square" className="w-3 h-3" /> 
-                    <p>Mudar Senha</p>
-                  </Button>
-                )
-              }
+                { can('update_user_password') && (
+                    <Button 
+                      variant="ghost" 
+                      className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                      onClick={() => {
+                        setFormData(user);
+                        setFormType("only");
+                        setOpenForm(true);
+                      }}
+                    >
+                      <Icon name="key-square" className="w-3 h-3" /> 
+                      <p>Mudar Senha</p>
+                    </Button>
+                  )
+                }
 
-              { can('update_user') && (
-                  <PermissionsForm user={user} />
-                )
-              }
-              
-              {
-                user.active ? (
-                  can('inactive_user') && (
+                { can('update_profile') && (
+                    <PermissionsForm user={user} />
+                  )
+                }
+                
+                {
+                  user.active ? (
+                    can('inactive_user') && (
+                        <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                          <ConfirmDialog
+                            title={`Inativar o usuário ${user.name}?`}
+                            description={`Ao prosseguir, o usuário ${user.name} será inativo e não poderá acessar a plataforma.`}
+                            onConfirm={() => handleConfirmAction("deactivate")}
+                            titleBttn="Inativar"
+                            iconBttn="power-off"
+                          />
+                        </DropdownMenuItem>
+                    )
+                  ) : (
+                    can('activate_user') && (
                       <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
                         <ConfirmDialog
-                          title={`Inativar o usuário ${user.name}?`}
-                          description={`Ao prosseguir, o usuário ${user.name} será inativo e não poderá acessar a plataforma.`}
-                          onConfirm={() => handleConfirmAction("deactivate")}
-                          titleBttn="Inativar"
-                          iconBttn="power-off"
+                          title={`Reativar o usuário ${user.name}?`}
+                          description={`Ao prosseguir, o usuário ${user.name} será reativado e poderá acessar a plataforma.`}
+                          onConfirm={() => handleConfirmAction("activate")}
+                          titleBttn="Reativar"
+                          iconBttn="power"
                         />
                       </DropdownMenuItem>
+                    )
                   )
-                ) : (
-                  can('activate_user') && (
-                    <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                      <ConfirmDialog
-                        title={`Reativar o usuário ${user.name}?`}
-                        description={`Ao prosseguir, o usuário ${user.name} será reativado e poderá acessar a plataforma.`}
-                        onConfirm={() => handleConfirmAction("activate")}
-                        titleBttn="Reativar"
-                        iconBttn="power"
-                      />
-                    </DropdownMenuItem>
-                  )
-                )
-              }
-            </DropdownMenuContent>
-          </DropdownMenu>
+                }
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
+        }
         </div>
       </div>
       {isInactivating && <Loader title={"Inativando..."} />}

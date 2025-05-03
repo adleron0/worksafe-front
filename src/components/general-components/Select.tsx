@@ -27,6 +27,7 @@ interface SelectProps {
     value?: string;
     placeholder?: string;
     multiple?: boolean;
+    disabled?: boolean;
     onChange?: (name: string, value: string | string[]) => void;
 }
 
@@ -38,6 +39,7 @@ const Select = ({
     value = "id",
     placeholder = "Selecione uma opção",
     multiple = false,
+    disabled = false,
     onChange = () => {},
 }: SelectProps) => {
   const isInitialMount = useRef(true);
@@ -113,6 +115,7 @@ const Select = ({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button 
+            disabled={disabled}
             variant="outline" 
             className="w-full justify-between font-normal"
             key={key}
@@ -183,7 +186,7 @@ const Select = ({
       onValueChange={handleValueChange}
       defaultValue={typeof state === 'string' ? state : ''}
     >
-      <SelectTrigger className="w-full">
+      <SelectTrigger className="w-full" disabled={disabled}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

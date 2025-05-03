@@ -8,11 +8,11 @@ import Pagination from "@/components/general-components/Pagination";
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
 import ItemSkeleton from "./Skeletons/ItemSkeleton";
-import ItemList from "./SiteProductsItem";
-import Form from "./SiteProductsForm";
-import SearchForm from "./SiteProductsSeach";
+import ItemList from "./ProfileItem";
+import Form from "./ProfileForm";
+import SearchForm from "./ProfileSeach";
 // Interfaces
-import { Customer as EntityInterface } from "@/pages/Customers/interfaces/customer.interface";
+import { Profile as EntityInterface } from "@/pages/Profiles/interfaces/profile.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
 const List = () => {
@@ -23,16 +23,17 @@ const List = () => {
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
-    'order-name': 'asc',
+    show: ['permissions'],
+    'order-id': 'asc',
   });
   const initialFormRef = useRef(searchParams);
 
   // Define variáveis de entidade
   const entity = {
-    name: "Produtos do Site",
-    pluralName: "Produtos do Site",
-    model: "site-products",
-    ability: "loja_site",
+    name: "Perfil",
+    pluralName: "Perfis",
+    model: "profiles",
+    ability: "profile",
   }
 
   interface Response {

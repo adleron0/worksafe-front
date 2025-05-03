@@ -162,11 +162,13 @@ export const items = [
       {
         title: "Serviços",
         icon: "wrench",
+        ability: "servicos_site",
         path: "/site/servicos",
       },
       {
         title: "Produtos",
         icon: "package",
+        ability: "loja_site",
         path: "/site/produtos",
       },
     ],
@@ -186,6 +188,7 @@ export const items = [
       {
         title: "Perfis",
         icon: "user-pen",
+        ability: "profile",
         path: "/usuarios/perfis",
       },
     ],

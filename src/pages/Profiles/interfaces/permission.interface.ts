@@ -6,9 +6,9 @@ export interface Permission {
   createdAt?: string;
 }
 
-export interface UserPermission {
+export interface ProfilePermission {
   id?: number;
-  userId: number;
+  profileId: number;
   permissionId: number;
   createdAt?: string;
   updatedAt?: string;

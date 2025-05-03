@@ -184,6 +184,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   const { 
     data: cities, 
+    isFetching: isLoadingCities,
   } = useQuery<Response | undefined, ApiError>({
     queryKey: [`listCities`, dataForm.stateId],
     queryFn: async () => {
@@ -294,6 +295,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         <Label htmlFor="cityId">Cidade <span>*</span></Label>
         <Select 
           name="cityId"
+          disabled={isLoadingCities}
           options={cities?.rows || []} 
           onChange={(name, value) => handleChange(name, Number(value))} 
           state={dataForm.cityId ? String(dataForm.cityId) : ""}

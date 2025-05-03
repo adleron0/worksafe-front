@@ -87,12 +87,12 @@ export const AuthProvider: React.FC<{ children: ReactNode; router: any }> = ({ c
             router.navigate({
               to: '/login',
             })
-            toast({
-              title: "Sessão inválida!",
-              description: "Faça login para continuar",
-              variant: "destructive",
-              duration: 5000
-            })
+            // toast({
+            //   title: "Sessão inválida!",
+            //   description: "Faça login para continuar",
+            //   variant: "destructive",
+            //   duration: 5000
+            // })
             return Promise.reject(error);
           }
 

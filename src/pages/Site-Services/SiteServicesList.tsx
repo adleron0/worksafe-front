@@ -12,7 +12,7 @@ import ItemList from "./SiteServicesItem";
 import Form from "./SiteServicesForm";
 import SearchForm from "./SiteServicesSeach";
 // Interfaces
-import { Customer as EntityInterface } from "@/pages/Customers/interfaces/customer.interface";
+import { SiteServices as EntityInterface } from "./interfaces/site-services.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
 const List = () => {
@@ -32,7 +32,7 @@ const List = () => {
     name: "Serviços do Site",
     pluralName: "Serviços do Site",
     model: "site-services",
-    ability: "site",
+    ability: "servicos_site",
   }
 
   interface Response {

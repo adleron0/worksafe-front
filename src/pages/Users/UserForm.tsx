@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { post, put } from "@/services/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { get, post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import Loader from "@/components/general-components/Loader";
 import { User } from "./interfaces/user.interface";
 import Select from "@/components/general-components/Select";
 import DropUpload from "@/components/general-components/DropUpload";
+import { ApiError, Response } from "@/general-interfaces/api.interface";
 
 interface UserFormProps {
   formData?: User;
@@ -146,6 +147,22 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
     }
   };
 
+  // Buscas de valores para variaveis de formulário
+  const { 
+    data: profiles, 
+    isFetching: isFetchingProfiles,
+  } = useQuery<Response | undefined, ApiError>({
+    queryKey: [`listPerfis`],
+    queryFn: async () => {
+      const params = [
+        { key: 'limit', value: 999 },
+        { key: 'order-id', value: 'asc' },
+      ];
+      return get('profiles', '', params);
+    },
+    enabled: !self,
+  });
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
       {
@@ -212,11 +229,8 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
                 <Label htmlFor="profileId">Função <span>*</span></Label>
                 <Select 
                   name="profileId"
-                  options={[
-                    { id: 1, name: "Admin" },
-                    { id: 2, name: "Manager" },
-                    { id: 3, name: "User" },
-                  ]} 
+                  disabled={isFetchingProfiles}
+                  options={profiles?.rows || []}  
                   onChange={(name, value) => handleChange(name, Number(value))} 
                   state={dataForm.profileId !== undefined ? String(dataForm.profileId) : ""}
                   placeholder="Selecione a função"

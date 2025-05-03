@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { listPermissions, grantsPermission, revokesPermission } from "@/services/permissionsService";
+import { listPermissions, grantsProfilePermission, revokesProfilePermission } from "@/services/permissionsService";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -11,12 +11,12 @@ import { DialogDescription } from "@/components/ui/dialog";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { useState } from "react";
 import Loader from "@/components/general-components/Loader";
-import { User } from "./interfaces/user.interface";
-import { Permission, UserPermission } from "./interfaces/permission.interface";
+import { Profile } from "./interfaces/profile.interface";
+import { Permission, ProfilePermission } from "./interfaces/permission.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import Icon from "@/components/general-components/Icon";
 
-const PermissionsForm = ({ user }: { user: User }) => {
+const PermissionsForm = ({ profile }: { profile: Profile }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [description, setDescription] = useState("");
 
@@ -28,17 +28,17 @@ const PermissionsForm = ({ user }: { user: User }) => {
   const errorMessage = (error as ApiError)?.response?.data?.message || "Erro ao carregar permissões.";
 
   const { mutate: grantPermission, isPending: isLoadingGrant } = useMutation({
-    mutationFn: (permissionId: number | undefined) => grantsPermission(permissionId, user.id),
+    mutationFn: (permissionId: number | undefined) => grantsProfilePermission(permissionId, profile.id),
     onSuccess: () => {
       toast({
         title: "Permissão Concedida",
-        description: `${user.name} agora pode ${description}.`,
+        description: `${profile.name} agora pode ${description}.`,
         variant: "success",
         duration: 5000,
       });
       setDescription("");
-      // queryClient.invalidateQueries({ queryKey: ["listPermissions"] });
-      queryClient.invalidateQueries({ queryKey: ["listCompanyUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["listPermissions"] });
+      queryClient.invalidateQueries({ queryKey: ["listPerfis"] });
     },
     onError: (error: unknown) => {
       const err = error as ApiError;
@@ -52,17 +52,17 @@ const PermissionsForm = ({ user }: { user: User }) => {
   });
 
   const { mutate: revokePermission, isPending: isLoadingRevoke } = useMutation({
-    mutationFn: (permissionId: number | undefined) => revokesPermission(permissionId, user.id),
+    mutationFn: (permissionId: number | undefined) => revokesProfilePermission(permissionId, profile.id),
     onSuccess: () => {
       toast({
         title: "Permissão Revogada",
-        description: `${user.name} não pode mais ${description}.`,
+        description: `${profile.name} não pode mais ${description}.`,
         variant: "success",
         duration: 5000,
       });
       setDescription("");
-      // queryClient.invalidateQueries({ queryKey: ["listPermissions"] });
-      queryClient.invalidateQueries({ queryKey: ["listCompanyUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["listPermissions"] });
+      queryClient.invalidateQueries({ queryKey: ["listPerfis"] });
     },
     onError: (error: unknown) => {
       const err = error as ApiError;
@@ -128,7 +128,7 @@ const PermissionsForm = ({ user }: { user: User }) => {
           <SheetTitle>Controle de Permissões</SheetTitle>
           <DialogDescription>
             Selecione as permissões necessárias para
-            <strong className="pl-1">{user.name}</strong>.
+            <strong className="pl-1">{profile.name}</strong>.
           </DialogDescription>
         </SheetHeader>
         {isLoadingPermissions ? (
@@ -154,8 +154,8 @@ const PermissionsForm = ({ user }: { user: User }) => {
                           <PermissionItem
                             key={permission.id}
                             permission={permission}
-                            user={user}
-                            isGranted={user.permissions?.some((p: UserPermission) => p.permissionId === permission.id)}
+                            profile={profile}
+                            isGranted={profile.permissions?.some((p: ProfilePermission) => p.permissionId === permission.id)}
                             onGrant={() => grantPermission(permission.id)}
                             onRevoke={() => revokePermission(permission.id)}
                             setDescription={setDescription}
@@ -174,8 +174,8 @@ const PermissionsForm = ({ user }: { user: User }) => {
                               <PermissionItem
                                 key={permission.id}
                                 permission={permission}
-                                user={user}
-                                isGranted={user.permissions?.some((p: UserPermission) => p.permissionId === permission.id)}
+                                profile={profile}
+                                isGranted={profile.permissions?.some((p: ProfilePermission) => p.permissionId === permission.id)}
                                 onGrant={() => grantPermission(permission.id)}
                                 onRevoke={() => revokePermission(permission.id)}
                                 setDescription={setDescription}
@@ -211,7 +211,7 @@ const PermissionItem = ({
   setDescription,
 }: {
   permission: Permission;
-  user: User;
+  profile: Profile;
   isGranted: boolean;
   onGrant: () => void;
   onRevoke: () => void;

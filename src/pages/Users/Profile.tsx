@@ -21,7 +21,7 @@ interface ProfileProps {
   openChange?: () => void;
 }
 
-const Profile: FC<ProfileProps> = ({ showTrigger = true, open, openChange }) => {
+const Profile: FC<ProfileProps> = ({ showTrigger = true, open = false, openChange }) => {
   const searchParams ={
     limit: 10,
     page: 0,
@@ -38,6 +38,8 @@ const Profile: FC<ProfileProps> = ({ showTrigger = true, open, openChange }) => 
       const params = Object.keys(searchParams).map((key) => ({ key, value: searchParams[key as keyof typeof searchParams] }));
       return get('user', 'self', params);
     },
+    enabled: open,
+    staleTime: 0,
   });
 
   if (isLoadingSelf) {

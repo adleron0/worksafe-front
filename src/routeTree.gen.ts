@@ -22,6 +22,7 @@ import { Route as AuthenticatedInventariosIndexImport } from './routes/_authenti
 import { Route as AuthenticatedClientesIndexImport } from './routes/_authenticated/clientes/index'
 import { Route as AuthenticatedCertusIndexImport } from './routes/_authenticated/certus/index'
 import { Route as AuthenticatedAltusIndexImport } from './routes/_authenticated/altus/index'
+import { Route as AuthenticatedUsuariosPerfisImport } from './routes/_authenticated/usuarios/perfis'
 import { Route as AuthenticatedSiteServicosImport } from './routes/_authenticated/site/servicos'
 import { Route as AuthenticatedSiteProdutosImport } from './routes/_authenticated/site/produtos'
 import { Route as AuthenticatedInventariosDashboardImport } from './routes/_authenticated/inventarios/dashboard'
@@ -110,6 +111,13 @@ const AuthenticatedAltusIndexRoute = AuthenticatedAltusIndexImport.update({
   path: '/altus/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+
+const AuthenticatedUsuariosPerfisRoute =
+  AuthenticatedUsuariosPerfisImport.update({
+    id: '/usuarios/perfis',
+    path: '/usuarios/perfis',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 const AuthenticatedSiteServicosRoute = AuthenticatedSiteServicosImport.update({
   id: '/site/servicos',
@@ -362,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSiteServicosImport
       parentRoute: typeof AuthenticatedImport
     }
+    '/_authenticated/usuarios/perfis': {
+      id: '/_authenticated/usuarios/perfis'
+      path: '/usuarios/perfis'
+      fullPath: '/usuarios/perfis'
+      preLoaderRoute: typeof AuthenticatedUsuariosPerfisImport
+      parentRoute: typeof AuthenticatedImport
+    }
     '/_authenticated/altus/': {
       id: '/_authenticated/altus/'
       path: '/altus'
@@ -433,6 +448,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedInventariosDashboardRoute: typeof AuthenticatedInventariosDashboardRoute
   AuthenticatedSiteProdutosRoute: typeof AuthenticatedSiteProdutosRoute
   AuthenticatedSiteServicosRoute: typeof AuthenticatedSiteServicosRoute
+  AuthenticatedUsuariosPerfisRoute: typeof AuthenticatedUsuariosPerfisRoute
   AuthenticatedAltusIndexRoute: typeof AuthenticatedAltusIndexRoute
   AuthenticatedCertusIndexRoute: typeof AuthenticatedCertusIndexRoute
   AuthenticatedClientesIndexRoute: typeof AuthenticatedClientesIndexRoute
@@ -463,6 +479,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedInventariosDashboardRoute,
   AuthenticatedSiteProdutosRoute: AuthenticatedSiteProdutosRoute,
   AuthenticatedSiteServicosRoute: AuthenticatedSiteServicosRoute,
+  AuthenticatedUsuariosPerfisRoute: AuthenticatedUsuariosPerfisRoute,
   AuthenticatedAltusIndexRoute: AuthenticatedAltusIndexRoute,
   AuthenticatedCertusIndexRoute: AuthenticatedCertusIndexRoute,
   AuthenticatedClientesIndexRoute: AuthenticatedClientesIndexRoute,
@@ -499,6 +516,7 @@ export interface FileRoutesByFullPath {
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/site/produtos': typeof AuthenticatedSiteProdutosRoute
   '/site/servicos': typeof AuthenticatedSiteServicosRoute
+  '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisRoute
   '/altus': typeof AuthenticatedAltusIndexRoute
   '/certus': typeof AuthenticatedCertusIndexRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
@@ -529,6 +547,7 @@ export interface FileRoutesByTo {
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/site/produtos': typeof AuthenticatedSiteProdutosRoute
   '/site/servicos': typeof AuthenticatedSiteServicosRoute
+  '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisRoute
   '/altus': typeof AuthenticatedAltusIndexRoute
   '/certus': typeof AuthenticatedCertusIndexRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
@@ -560,6 +579,7 @@ export interface FileRoutesById {
   '/_authenticated/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/_authenticated/site/produtos': typeof AuthenticatedSiteProdutosRoute
   '/_authenticated/site/servicos': typeof AuthenticatedSiteServicosRoute
+  '/_authenticated/usuarios/perfis': typeof AuthenticatedUsuariosPerfisRoute
   '/_authenticated/altus/': typeof AuthenticatedAltusIndexRoute
   '/_authenticated/certus/': typeof AuthenticatedCertusIndexRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
@@ -592,6 +612,7 @@ export interface FileRouteTypes {
     | '/inventarios/dashboard'
     | '/site/produtos'
     | '/site/servicos'
+    | '/usuarios/perfis'
     | '/altus'
     | '/certus'
     | '/clientes'
@@ -621,6 +642,7 @@ export interface FileRouteTypes {
     | '/inventarios/dashboard'
     | '/site/produtos'
     | '/site/servicos'
+    | '/usuarios/perfis'
     | '/altus'
     | '/certus'
     | '/clientes'
@@ -650,6 +672,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventarios/dashboard'
     | '/_authenticated/site/produtos'
     | '/_authenticated/site/servicos'
+    | '/_authenticated/usuarios/perfis'
     | '/_authenticated/altus/'
     | '/_authenticated/certus/'
     | '/_authenticated/clientes/'
@@ -712,6 +735,7 @@ export const routeTree = rootRoute
         "/_authenticated/inventarios/dashboard",
         "/_authenticated/site/produtos",
         "/_authenticated/site/servicos",
+        "/_authenticated/usuarios/perfis",
         "/_authenticated/altus/",
         "/_authenticated/certus/",
         "/_authenticated/clientes/",
@@ -789,6 +813,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/site/servicos": {
       "filePath": "_authenticated/site/servicos.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/usuarios/perfis": {
+      "filePath": "_authenticated/usuarios/perfis.tsx",
       "parent": "/_authenticated"
     },
     "/_authenticated/altus/": {

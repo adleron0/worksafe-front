@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import Input from "@/components/general-components/Input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
+// Template Components
 import Loader from "@/components/general-components/Loader";
-import { SiteProducts as EntityInterface } from "@/pages/Site-Products/interfaces/site-products.interface";
 import DropUpload from "@/components/general-components/DropUpload";
+import Input from "@/components/general-components/Input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+// Interfaces and validations
+import { SiteProducts as EntityInterface } from "@/pages/Site-Products/interfaces/site-products.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
+import { z } from "zod";
 
 interface FormProps {
   formData?: EntityInterface;
@@ -154,7 +155,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           <Input
             id="name"
             name="name"
-            placeholder="Digite nome do usuário"
+            placeholder={`Digite nome do ${entity.name}`}
             value={dataForm.name}
             onValueChange={handleChange}
             className="mt-1"

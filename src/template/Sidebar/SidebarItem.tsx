@@ -10,9 +10,9 @@ interface SidebarItemProps {
   title: string;
   ability?: string;
   isProduct?: string;
-  icon: any;
+  icon: string; // Changed any to string
   path: string;
-  subitems?: { title: string; path: string; icon: any }[];
+  subitems?: { title: string; path: string; icon: string; ability?: string }[]; // Changed any to string
   className?: string;
   activePath: string | null;
   setActivePath: (path: string | null) => void;
@@ -99,18 +99,24 @@ const SidebarItem = ({
               }`}
             >
               <div className="flex flex-col pl-8 border-y gap-1 py-1">
-                {subitems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
+                {subitems.map((item) => {
+                  // Check ability for subitem if it exists
+                  const canViewSubitem = item.ability ? can(`view_${item.ability}`) : true;
+                  if (!canViewSubitem) return null; // Don't render if cannot view
+
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
                     className={`${className} flex text-sm items-center rounded-s gap-4 px-2.5 py-1 text-muted-foreground ease-in-out duration-100 
                       ${isActive(item.path) ? "bg-primary text-inverse-foreground!" : "hover:text-inverse-foreground hover:bg-primary"}`}
                     onClick={() => handleItemClick(item.path)}
                   >
-                    <Icon name={item.icon} className="h-4 w-4" />
-                    {item.title}
-                  </Link>
-                ))}
+                      <Icon name={item.icon} className="h-4 w-4" />
+                      {item.title}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           )}

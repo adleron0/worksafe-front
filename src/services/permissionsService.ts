@@ -17,7 +17,7 @@ const listPermissions = async () => {
 
 // Grants User Permission
 const grantsPermission = async (permissionId: number | undefined, userId: number | undefined) => {
-  const response = await api.patch(`${BASE_URL}/permissions/active/${userId}/${permissionId}`, {}, {
+  const response = await api.patch(`${BASE_URL}/permissions/user/active/${userId}/${permissionId}`, {}, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -27,7 +27,27 @@ const grantsPermission = async (permissionId: number | undefined, userId: number
 
 // Revokes User Permission
 const revokesPermission = async (permissionId: number | undefined, userId: number | undefined) => {
-  const response = await api.patch(`${BASE_URL}/permissions/inactive/${userId}/${permissionId}`, {}, {
+  const response = await api.patch(`${BASE_URL}/permissions/user/inactive/${userId}/${permissionId}`, {}, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  return response.data;
+};
+
+// Grants Profile Permission
+const grantsProfilePermission = async (permissionId: number | undefined, profileId: number | undefined) => {
+  const response = await api.patch(`${BASE_URL}/permissions/profile/active/${profileId}/${permissionId}`, {}, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  return response.data;
+};
+
+// Revokes Profile Permission
+const revokesProfilePermission = async (permissionId: number | undefined, profileId: number | undefined) => {
+  const response = await api.patch(`${BASE_URL}/permissions/profile/inactive/${profileId}/${permissionId}`, {}, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -39,4 +59,6 @@ export {
   listPermissions,
   grantsPermission,
   revokesPermission,
+  grantsProfilePermission,
+  revokesProfilePermission,
 };

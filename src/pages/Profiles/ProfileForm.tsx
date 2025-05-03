@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 // Template Components
 import Loader from "@/components/general-components/Loader";
-import DropUpload from "@/components/general-components/DropUpload";
 import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 // Interfaces and validations
-import { SiteServices as EntityInterface } from "./interfaces/site-services.interface";
+import { Profile as EntityInterface } from "@/pages/Profiles/interfaces/profile.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { z } from "zod";
@@ -26,37 +25,16 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   // Schema
   const Schema = z.object({
     name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
-    features: z.string().optional(),
-    imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
-    image: z.instanceof(File).nullable().or(z.literal(null)).refine(
-      (value) => value === null || value instanceof File,
-      {
-        message: "Imagem deve ser um arquivo ou nulo.",
-      }
-    ),
   })
 
   type FormData = z.infer<typeof Schema>;
 
   const [dataForm, setDataForm] = useState<FormData>({
     name: formData?.name || "",
-    features: formData?.features || "",
-    imageUrl: formData?.imageUrl || "",
-    image: formData?.image || null,
   });
   const initialFormRef = useRef(dataForm);
 
-  const [preview, setPreview] = useState<string | null>(''); // Preview da imagem quando for editar
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
-  // Efeito para preview de imagem se necessário
-  useEffect(() => {
-    if (formData) {
-      if (formData.imageUrl) {
-        setPreview(formData.imageUrl);
-      }
-    }
-  }, []);
 
   const { mutate: registerCustomer, isPending } = useMutation({
     mutationFn: (newItem: FormData) => post<EntityInterface>(entity.model, '', newItem),
@@ -120,13 +98,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         const cleanedValue = value.trim();
         
         // Update the cleaned data with proper type handling
-        if (key === 'name') {
-          cleanedData.name = cleanedValue;
-        } else if (key === 'features') {
-          cleanedData.features = cleanedValue;
-        } else if (key === 'imageUrl') {
-          cleanedData.imageUrl = cleanedValue;
-        }
+        cleanedData[key as keyof FormData] = cleanedValue;
       }
     });
     
@@ -158,10 +130,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
-      <DropUpload
-        setImage={setDataForm}
-        EditPreview={preview}
-      />
       <div>
         <Label htmlFor="name">Nome <span>*</span></Label>
           <Input
@@ -173,20 +141,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
             className="mt-1"
           />
         {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
-      </div>
-      
-      <div>
-        <Label htmlFor="features">Características</Label>
-        <p className="text-xs text-muted-foreground font-medium">Separar características com vírgulas</p>
-        <Input
-          id="features"
-          name="features"
-          placeholder="Digite as características"
-          value={dataForm.features}
-          onValueChange={handleChange}
-          type="textArea"
-          className="mt-1"
-        />
       </div>
 
       <Button

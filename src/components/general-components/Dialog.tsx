@@ -48,16 +48,13 @@ const Dialog: React.FC<DialogProps> = ({
         )
       }
       <DialogContent className="sm:max-w-[90vw] max-h-[85vh] overflow-y-auto">
-        {
-          showHeader && (
-            <DialogHeader>
-              <DialogTitle>{ title }</DialogTitle>
-              <DialogDescription>
-                { description }
-              </DialogDescription>
-            </DialogHeader>
-          )
-        }
+          <DialogHeader>
+            <DialogTitle className={`${!showHeader && "hidden"}`}>{ title }</DialogTitle>
+            <DialogDescription className={`${!showHeader && "hidden"}`}>
+              { description }
+            </DialogDescription>
+          </DialogHeader>
+
           { children }
       </DialogContent>
     </UiDialog>

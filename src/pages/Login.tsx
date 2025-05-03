@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { postLogin } from "@/services/loginService";
 import { useForm, Controller } from "react-hook-form";
@@ -19,7 +18,6 @@ import Logo from "@/components/general-components/Logo";
 import { ArrowLeft } from "lucide-react";
 
 const Login = () => {
-  const queryClient = useQueryClient();
   const { setAccessTokenState, setIsLogged, reloadUser, accessToken } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();

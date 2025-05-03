@@ -7,6 +7,7 @@ import Loader from "@/components/general-components/Loader";
 import DropUpload from "@/components/general-components/DropUpload";
 import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 // Interfaces and validations
 import { SiteProducts as EntityInterface } from "@/pages/Site-Products/interfaces/site-products.interface";

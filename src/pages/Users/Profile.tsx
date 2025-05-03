@@ -7,13 +7,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
 import Loader from "@/components/general-components/Loader";
 import { get } from "@/services/api";
 import Form from "./UserForm";
 import Icon from "@/components/general-components/Icon";
 import { User } from "./interfaces/user.interface";
-import { FC } from "react";
+import { FC, useState, useEffect } from "react";
 
 interface ProfileProps {
   showTrigger?: boolean;
@@ -22,6 +21,8 @@ interface ProfileProps {
 }
 
 const Profile: FC<ProfileProps> = ({ showTrigger = true, open = false, openChange }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [usersData, setUsersData] = useState<UsersResponse | undefined>();
   const searchParams ={
     limit: 10,
     page: 0,
@@ -32,17 +33,25 @@ const Profile: FC<ProfileProps> = ({ showTrigger = true, open = false, openChang
     total: number;
   }
     
-  const { data: usersData, isLoading: isLoadingSelf } = useQuery({
-    queryKey: ['selfUser', searchParams],
-    queryFn: (): Promise<UsersResponse | undefined> => {
+  const fetchProfile = async () => {
+    try {
+      setIsLoading(true);
       const params = Object.keys(searchParams).map((key) => ({ key, value: searchParams[key as keyof typeof searchParams] }));
-      return get('user', 'self', params);
-    },
-    enabled: open,
-    staleTime: 0,
-  });
+      const response = await get('user', 'self', params);
+      setUsersData(response as UsersResponse);
+    } catch (error) {
+      console.error('Erro ao buscar o perfil:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  if (isLoadingSelf) {
+  useEffect(() => {
+    if (!open) return;
+    fetchProfile();
+  }, [open]);
+
+  if (isLoading) {
     return <Loader title="Carregando perfil..." />;
   }
 

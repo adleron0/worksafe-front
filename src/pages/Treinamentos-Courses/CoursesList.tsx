@@ -10,6 +10,7 @@ import SideForm from "@/components/general-components/SideForm";
 import ItemSkeleton from "./Skeletons/ItemSkeleton";
 import ItemList from "./CoursesItem";
 import Form from "./CoursesForm";
+import ExamForm from "./CoursesExamForm";
 import SearchForm from "./CoursesSeach";
 // Interfaces
 import { Courses as EntityInterface } from "./interfaces/courses.interface";
@@ -57,7 +58,13 @@ const List = () => {
     },
   });
 
-  const handleSearch = async (params: any) => {
+  interface SearchFormData {
+    name?: string;
+    active?: boolean;
+    createdAt?: [Date | undefined, Date | undefined];
+  }
+
+  const handleSearch = async (params: SearchFormData) => {
     setSearchParams((prev) => ({
       ...prev,
       ...params,
@@ -115,13 +122,20 @@ const List = () => {
         openSheet={openForm}
         setOpenSheet={setOpenForm}
         title={formData 
-          ? `Editar ${entity.name} ${formData.name}`
+          ? formData.formType === 'exam'
+            ? `Exame do ${entity.name} ${formData.name}`
+            : `Editar ${entity.name} ${formData.name}`
           : `Cadastrar ${entity.name}`}
         description={formData 
-          ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
+          ? formData.formType === 'exam'
+            ? `Gerencie as questões do exame para o curso ${formData.name}.`
+            : `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
           : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
         side="right"
-        form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} /> }
+        form={formData && formData.formType === 'exam' 
+          ? <ExamForm courseData={formData} openSheet={setOpenForm} entity={entity} />
+          : <Form formData={formData} openSheet={setOpenForm} entity={entity} />
+        }
       />
 
       {/* Listagem de items */}

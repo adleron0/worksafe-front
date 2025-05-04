@@ -16,7 +16,7 @@ interface ItemsProps {
   item: EntityInterface;
   index: number;
   entity: IDefaultEntity;
-  setFormData: (data: any) => void;
+  setFormData: (data: EntityInterface) => void;
   setOpenForm: (open: boolean) => void;
 }
 
@@ -35,7 +35,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
       })
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
     },
-    onError: (error: any) => {
+    onError: (error: { response: { data: { message: string } } }) => {
       toast({
         title: `Erro ao inativar ${entity.name}`,
         description: `${error.response.data.message}`,
@@ -55,7 +55,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
       })
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
     },
-    onError: (error: any) => {
+    onError: (error: { response: { data: { message: string } } }) => {
       toast({
         title: `Erro ao reativar ${entity.name}`,
         description: `${error.response.data.message}`,
@@ -90,8 +90,8 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
         {/* Badges */}
         <div className="absolute -top-1 left-4 flex items-center gap-2">
-          {item.flag?.split('#').map((flag: string) => (
-            <Badge variant="outline" className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary">
+          {item.flag?.split('#').map((flag: string, index: number) => (
+            <Badge key={index} variant="outline" className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary">
               <Icon name="flag" className="w-3 h-3" />
               {flag}
             </Badge>
@@ -158,6 +158,21 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
                   >
                     <Icon name="edit-3" className="w-3 h-3" /> 
                     <p>Editar</p>
+                  </Button>
+                )
+              }
+
+              { can(`update_${entity.ability}`) && (
+                  <Button 
+                    variant="ghost" 
+                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                    onClick={() => {
+                      setFormData({...item, formType: 'exam'});
+                      setOpenForm(true);
+                    }}
+                  >
+                    <Icon name="file-text" className="w-3 h-3" /> 
+                    <p>Exame do Curso</p>
                   </Button>
                 )
               }

@@ -12,14 +12,21 @@ export interface Courses {
   active?: boolean;
   weekly?: boolean;
   weekDays?: string;
-  faq?: any;
-  exam?: any;
+  faq?: string;
+  exam?: {
+    question: string;
+    options: {
+      text: string;
+      isCorrect: boolean;
+    }[];
+  }[] | string;
+  formType?: 'exam' | 'default'; // Used for UI form selection
 
-  certificates?: any;
-  traineesCertificates?: any;
-  reviews?: any;
-  exams?: any;
-  classes?: any;
+  certificates?: unknown[];
+  traineesCertificates?: unknown[];
+  reviews?: unknown[];
+  exams?: unknown[];
+  classes?: unknown[];
 
   createdAt?: string;
   updatedAt?: string | null;

@@ -92,7 +92,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         
         {/* Avatar e Nome */}
         <div className="w-full lg:w-4/12 flex items-center space-x-4">
-          <Avatar className="border">
+          <Avatar className="border rounded-md">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
             <AvatarFallback>{item.name[0]}</AvatarFallback>
           </Avatar>

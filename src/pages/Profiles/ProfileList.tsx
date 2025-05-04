@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 // Serviços
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
+import useWindowSize from "@/hooks/use-windowSize";
 import useVerify from "@/hooks/use-verify";
 import Pagination from "@/components/general-components/Pagination";
 // Template Page list-form
@@ -81,6 +82,8 @@ const List = () => {
   const totalPages = data ? Math.ceil(data.total / searchParams.limit) : 0;
 
   const skeletons = Array(5).fill(null);
+  const { width } = useWindowSize();
+  console.log("🚀 ~ List ~ width:", width)
 
   if (!can(`view_${entity.ability}`)) return null;
 
@@ -121,7 +124,7 @@ const List = () => {
         description={formData 
           ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
           : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
-        side="bottom"
+        side={width && width > 768 ? "right" : "bottom"}
         form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} /> }
       />
 

@@ -36,7 +36,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     weekly: z.boolean(),
     weekDays: z.string().min(1, { message: "Dias da semana deve ter pelo menos 1 caractere" }),
     faq: z.string().min(1, { message: "FAQ deve ter pelo menos 1 caractere" }),
-    exam: z.string().min(1, { message: "Exame deve ter pelo menos 1 caractere" }),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
       (value) => value === null || value instanceof File,
@@ -58,7 +57,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     weekly: formData?.weekly || false,
     weekDays: formData?.weekDays || "",
     faq: formData?.faq || "",
-    exam: formData?.exam || "",
     imageUrl: formData?.imageUrl || "",
     image: formData?.image || null,
   });
@@ -278,16 +276,16 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         <Input
           id="faq"
           name="faq"
-          placeholder="ex: Qual é o objetivo do curso? Como é o curso? Quais são os requisitos para participar?"
+          placeholder="ex: Pergunta 01?r-resposta da pergunta 01, Pergunta 02?r-resposta da pergunta 02, Pergunta 03?r-resposta da pergunta 03"
           value={dataForm.faq}
           onValueChange={handleChange}
           type="textArea"
-          className="mt-1"
+          className="mt-1 h-40"
         />
         {errors.faq && <p className="text-red-500 text-sm">{errors.faq}</p>}
       </div>
       
-      <div className="space-y-2">
+      {/* <div className="space-y-2">
         <Label htmlFor="exam">Exame</Label>
         <p className="text-xs text-muted-foreground font-medium">Informe o exame do curso</p>
         <Input
@@ -299,7 +297,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           className="mt-1"
         />
         {errors.exam && <p className="text-red-500 text-sm">{errors.exam}</p>}
-      </div>
+      </div> */}
 
       <Button
         type="submit"

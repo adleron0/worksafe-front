@@ -19,7 +19,7 @@ import useWindowSize from "@/hooks/use-windowSize";
 interface SideFormProps {
   key?: number;
   title?: string;
-  description?: string;
+  description?: React.ReactNode; // Changed type from string to React.ReactNode
   side?: "top" | "right" | "bottom" | "left";
   trigger?: React.ReactNode;
   form: React.ReactNode;
@@ -28,8 +28,8 @@ interface SideFormProps {
 }
 
 const SideForm = ({ key, title, description, side, trigger, form, openSheet, setOpenSheet }: SideFormProps) => {
-  const size = useWindowSize();
-  const isDesktop = size?.width ? size.width > 768 : true;
+  const { width } = useWindowSize();
+  const isDesktop = width ? width > 768 : true;
   if (isDesktop) {
     return (
       <Sheet open={openSheet} onOpenChange={setOpenSheet} key={`${title}-${key}`}>
@@ -59,7 +59,13 @@ const SideForm = ({ key, title, description, side, trigger, form, openSheet, set
   }
 
   return (
-    <Drawer direction={side} open={openSheet} onOpenChange={setOpenSheet} key={`${title}-${key}`}>
+    <Drawer 
+      direction={side} 
+      open={openSheet} 
+      onOpenChange={setOpenSheet} 
+      key={`${title}-${key}`}
+      shouldScaleBackground={false}
+    >
       {
           trigger && (
             <DrawerTrigger asChild>

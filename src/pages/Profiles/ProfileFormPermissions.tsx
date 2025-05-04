@@ -1,13 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listPermissions, grantsProfilePermission, revokesProfilePermission } from "@/services/permissionsService";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+// import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 // import { toast as sonner } from "sonner";
 import { toast } from "@/hooks/use-toast";
 import { LockKeyholeOpen } from "lucide-react";
-import { DialogDescription } from "@/components/ui/dialog";
+// import { DialogDescription } from "@/components/ui/dialog"; // Keep if used elsewhere, remove if not. Assuming it's not needed directly anymore.
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { useState } from "react";
 import Loader from "@/components/general-components/Loader";
@@ -15,6 +15,7 @@ import { Profile } from "./interfaces/profile.interface";
 import { Permission, ProfilePermission } from "./interfaces/permission.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import Icon from "@/components/general-components/Icon";
+import SideForm from "@/components/general-components/SideForm"; // Import SideForm
 
 const PermissionsForm = ({ profile }: { profile: Profile }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -115,25 +116,20 @@ const PermissionsForm = ({ profile }: { profile: Profile }) => {
     return result;
   };
 
-  return (
-    <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" className={`flex justify-start p-2 items-baseline w-full h-fit`}>
-          <LockKeyholeOpen className="w-3 h-3 mr-2" />
-          <p>Permissões</p>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="w-11/12 md:w-[400px] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Controle de Permissões</SheetTitle>
-          <DialogDescription>
-            Selecione as permissões necessárias para
-            <strong className="pl-1">{profile.name}</strong>.
-          </DialogDescription>
-        </SheetHeader>
-        {isLoadingPermissions ? (
-          <Loader title="Carregando permissões..." />
-        ) : permissionsData?.length > 0 ? (
+  // Define the trigger element
+  const triggerElement = (
+    <Button variant="ghost" className={`flex justify-start p-2 items-baseline w-full h-fit`}>
+      <LockKeyholeOpen className="w-3 h-3 mr-2" />
+      <p>Permissões</p>
+    </Button>
+  );
+
+  // Define the form content
+  const formContent = (
+    <>
+      {isLoadingPermissions ? (
+        <Loader title="Carregando permissões..." />
+      ) : permissionsData?.length > 0 ? (
           <Accordion type="single" className="mt-4">
             {Object.entries(groupedPermissions || {}).map(([groupName, permissions]) => {
               const subgroupedPermissions = getSubgroupedPermissions(permissions as Permission[]);
@@ -195,11 +191,24 @@ const PermissionsForm = ({ profile }: { profile: Profile }) => {
         )}
         {isLoadingGrant && <Loader title="Concedendo permissão..." />}
         {isLoadingRevoke && <Loader title="Revogando permissão..." />}
-        {/* <Button variant="ghost" className="md:hidden" onClick={() => setIsSheetOpen(false)}>
-          <ChevronRight className="fixed -left-2 top-1/2 h-6 w-6 text-primary" />
-        </Button> */}
-      </SheetContent>
-    </Sheet>
+    </>
+  );
+
+  return (
+    <SideForm
+      openSheet={isSheetOpen}
+      setOpenSheet={setIsSheetOpen}
+      trigger={triggerElement}
+      title="Controle de Permissões"
+      description={
+        <>
+          Selecione as permissões necessárias para
+          <strong className="pl-1">{profile.name}</strong>.
+        </>
+      }
+      side="right"
+      form={formContent}
+    />
   );
 };
 

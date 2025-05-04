@@ -2,7 +2,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { SiteServices as EntityInterface } from "@/pages/Site-Services/interfaces/site-services.interface";
+import { Courses as EntityInterface } from "./interfaces/courses.interface";
 import useVerify from "@/hooks/use-verify";
 import { patch } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -79,8 +79,8 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
       {/* Renderiza o Header apenas no primeiro item */}
       {index === 0 && (
         <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
-          <div className="w-4/12">Serviço</div>
-          <div className="w-4/12">Características</div>
+          <div className="w-4/12">Curso</div>
+          <div className="w-4/12">Descrição</div>
           <div className="w-2/12">Cadastro</div>
           <div className="w-1/12">Status</div>
           <div className="w-1/12">Ações</div>
@@ -92,7 +92,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         
         {/* Avatar e Nome */}
         <div className="w-full lg:w-4/12 flex items-center space-x-4">
-          <Avatar className="border">
+          <Avatar className="border rounded-md">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
             <AvatarFallback>{item.name[0]}</AvatarFallback>
           </Avatar>
@@ -105,16 +105,9 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         <div className="lg:w-4/12 flex items-baseline gap-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Características: </p>
           <div className="flex flex-wrap gap-0.5">
-            {
-              item.features?.split(',').map((feature: string, index: number) => (
-                <p 
-                  key={`feature-${index}`} 
-                  className="text-xs text-muted-foreground dark:text-gray-100 border rounded-sm py-1 px-2"
-                >
-                  {feature}
-                </p>
-              ))
-            }
+            <p className="text-xs text-muted-foreground dark:text-gray-100 rounded-sm">
+              {item.description}
+            </p>
           </div>
         </div>
 

@@ -80,15 +80,24 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
       {index === 0 && (
         <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
           <div className="w-4/12">Curso</div>
-          <div className="w-4/12">Descrição</div>
-          <div className="w-3/12">Status</div>
+          <div className="w-5/12">Descrição</div>
+          <div className="w-2/12">Status</div>
           <div className="w-1/12">Ações</div>
         </div>
       )}
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
-        
+        {/* Badges */}
+        <div className="absolute -top-1 left-4 flex items-center gap-2">
+          {item.flag?.split('#').map((flag: string) => (
+            <Badge variant="outline" className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary">
+              <Icon name="flag" className="w-3 h-3" />
+              {flag}
+            </Badge>
+          ))}
+        </div>
+
         {/* Avatar e Nome */}
         <div className="w-full lg:w-4/12 flex items-center space-x-4">
           <Avatar className="border rounded-md">
@@ -100,9 +109,9 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
           </div>
         </div>
 
-        {/* Características */}
-        <div className="lg:w-4/12 flex items-baseline gap-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Características: </p>
+        {/* Descrição */}
+        <div className="lg:w-5/12 flex items-baseline gap-2">
+          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Descrição: </p>
           <div className="flex flex-wrap gap-0.5">
             <p className="text-xs text-muted-foreground dark:text-gray-100 rounded-sm">
               {item.description}
@@ -111,7 +120,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         </div>
 
         {/* Status */}
-        <div className="lg:w-3/12 flex items-baseline gap-2">
+        <div className="lg:w-2/12 flex items-baseline gap-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
           <Badge
             variant="outline"

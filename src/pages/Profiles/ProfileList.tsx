@@ -121,7 +121,7 @@ const List = () => {
         description={formData 
           ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
           : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
-        side="right"
+        side="bottom"
         form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} /> }
       />
 

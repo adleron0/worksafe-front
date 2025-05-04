@@ -78,7 +78,7 @@ const HeaderLists = ({
         {
           can(`create_${ability}`) && (
             <Button onClick={() =>{ openForm(true); setFormData(null); setFormType("both")}} variant="outline" className="flex gap-2 items-center">
-              <Icon name={iconForm || "square-plus"} className="w-3 h-3" />
+              <Icon name={iconForm || "plus"} className="w-3 h-3" />
               <span className="hidden md:block">Novo {entityName}</span>
             </Button>
           )

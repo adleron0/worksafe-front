@@ -104,7 +104,7 @@ const List = () => {
         openForm={setOpenForm}
         setFormData={setFormData} 
         setFormType={() => {}}
-        iconForm="user-plus"
+        iconForm="plus"
       />
 
       {/* Busca avançada */}

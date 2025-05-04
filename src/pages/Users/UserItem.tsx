@@ -104,7 +104,7 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
             <AvatarImage src={user.imageUrl || undefined} alt={user.name} />
             <AvatarFallback>{user.name[0]}</AvatarFallback>
           </Avatar>
-          <div className="break-all">
+          <div className="break-words w-9/12 md:w-full">
             <h2 className="text-sm font-semibold">{user.name}</h2>
             <p className="text-sm text-gray-600 dark:text-gray-100">{formatCPF(user.cpf)}</p>
           </div>

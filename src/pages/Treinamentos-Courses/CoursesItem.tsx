@@ -104,8 +104,9 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
             <AvatarFallback>{item.name[0]}</AvatarFallback>
           </Avatar>
-          <div className="break-words">
+          <div className="break-words w-9/12 md:w-full">
             <h2 className="text-sm font-semibold">{item.name}</h2>
+            <p className="text-xs text-muted-foreground">{item.hoursDuration} horas</p>
           </div>
         </div>
 

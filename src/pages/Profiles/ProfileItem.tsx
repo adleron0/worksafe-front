@@ -91,7 +91,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         
         {/* Avatar e Nome */}
         <div className="w-full lg:w-4/12 flex items-center space-x-4">
-          <div className="break-all">
+          <div className="break-words w-9/12 md:w-full">
             <h2 className="text-sm font-semibold">{item.name}</h2>
           </div>
         </div>

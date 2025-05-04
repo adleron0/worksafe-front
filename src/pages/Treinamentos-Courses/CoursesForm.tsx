@@ -171,7 +171,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="hoursDuration">Carga Horária</Label>
+        <Label htmlFor="hoursDuration">Carga Horária (Horas)</Label>
         <Number
           id="hoursDuration"
           name="hoursDuration"

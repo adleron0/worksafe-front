@@ -29,13 +29,13 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const Schema = z.object({
     name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     hoursDuration: z.number().min(1, { message: "Duração deve ser maior que 0" }),
-    flag: z.string().min(1, { message: "Flag deve ter pelo menos 1 caractere" }),
+    flags: z.string().min(3, { message: "Curso deve ter pelo menos 1 bandeira" }),
     description: z.string().min(10, { message: "Descrição deve ter pelo menos 10 caracteres" }),
     gradeTheory: z.string().min(10, { message: "Grade teórica deve ter pelo menos 10 caracteres" }),
     gradePracticle: z.string().min(10, { message: "Grade prática deve ter pelo menos 10 caracteres" }),
     weekly: z.boolean(),
     weekDays: z.string().optional(),
-    faq: z.string().min(1, { message: "FAQ deve ter pelo menos 1 caractere" }),
+    faq: z.string().optional(),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
       (value) => value === null || value instanceof File,
@@ -50,7 +50,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const [dataForm, setDataForm] = useState<FormData>({
     name: formData?.name || "",
     hoursDuration: formData?.hoursDuration || 1,
-    flag: formData?.flag || "",
+    flags: formData?.flags || "",
     description: formData?.description || "",
     gradeTheory: formData?.gradeTheory || "",
     gradePracticle: formData?.gradePracticle || "",
@@ -184,17 +184,17 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="flag">Bandeiras do curso</Label>
+        <Label htmlFor="flags">Bandeiras do curso</Label>
         <p className="text-xs font-medium text-muted-foreground">Tags ou informações que identificam ou categorizam o curso. Separar por #</p>
         <Input
-          id="flag"
-          name="flag"
+          id="flags"
+          name="flags"
           placeholder="Bandeira do curso"
-          value={dataForm.flag}
+          value={dataForm.flags}
           onValueChange={handleChange}
           className="mt-1"
         />
-        {errors.flag && <p className="text-red-500 text-sm">{errors.flag}</p>}
+        {errors.flags && <p className="text-red-500 text-sm">{errors.flags}</p>}
       </div>
 
       <div className="space-y-2">

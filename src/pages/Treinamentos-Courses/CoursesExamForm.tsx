@@ -106,9 +106,15 @@ const CoursesExamForm = ({ courseData, openSheet, entity }: ExamFormProps) => {
     mutationFn: (updatedExam: ExamFormData) => {
       // Create a minimal course object with just the exam data
       // Convert the exam array to a JSON string to prevent [object Object] issue
+      delete courseData.createdAt;
+      delete courseData.inactiveAt;
+      delete courseData.updatedAt;
+      delete courseData.formType;
+      delete courseData.active;
+
+
       const examUpdateData = {
-        name: courseData.name,
-        imageUrl: courseData.imageUrl,
+        ...courseData,
         exam: JSON.stringify(updatedExam.exam)
       };
       return put<EntityInterface>(entity.model, `${courseData.id}`, examUpdateData);

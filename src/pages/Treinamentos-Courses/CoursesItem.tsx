@@ -90,7 +90,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
         {/* Badges */}
         <div className="absolute -top-1 left-4 flex items-center gap-2">
-          {item.flag?.split('#').map((flag: string, index: number) => (
+          {item.flags?.split('#').map((flag: string, index: number) => (
             <Badge key={index} variant="outline" className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary">
               <Icon name="flag" className="w-3 h-3" />
               {flag}

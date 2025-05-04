@@ -2,7 +2,7 @@ export interface Courses {
   id?: number;
   name: string;
   hoursDuration?: number;
-  flag?: string;
+  flags?: string;
   companyId?: number;
   imageUrl: string | null;
   image?: File | null;

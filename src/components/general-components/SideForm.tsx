@@ -6,7 +6,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-// import { Button } from "../ui/button";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
+import useWindowSize from "@/hooks/use-windowSize";
 
 interface SideFormProps {
   key?: number;
@@ -20,30 +28,71 @@ interface SideFormProps {
 }
 
 const SideForm = ({ key, title, description, side, trigger, form, openSheet, setOpenSheet }: SideFormProps) => {
+  const size = useWindowSize();
+  const isDesktop = size?.width ? size.width > 768 : true;
+  if (isDesktop) {
+    return (
+      <Sheet open={openSheet} onOpenChange={setOpenSheet} key={`${title}-${key}`}>
+        {
+          trigger && (
+            <SheetTrigger asChild>
+              <div>{trigger}</div>
+            </SheetTrigger>
+          )
+        }
+        <SheetContent side={side} className="w-11/12 overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>{title}</SheetTitle>
+            <SheetDescription>
+              {description}
+            </SheetDescription>
+          </SheetHeader>
+          {form}
+          {/* <SheetFooter>
+            <SheetClose asChild>
+              <Button type="submit">Save changes</Button>
+            </SheetClose>
+          </SheetFooter> */}
+        </SheetContent>
+      </Sheet>
+    )
+  }
+
   return (
-    <Sheet open={openSheet} onOpenChange={setOpenSheet} key={`${title}-${key}`}>
+    <Drawer direction={side} open={openSheet} onOpenChange={setOpenSheet} key={`${title}-${key}`}>
       {
-        trigger && (
-          <SheetTrigger asChild>
-            <div>{trigger}</div>
-          </SheetTrigger>
-        )
-      }
-      <SheetContent side={side} className="w-11/12 overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>{title}</SheetTitle>
-          <SheetDescription>
+          trigger && (
+            <DrawerTrigger asChild>
+              <div>{trigger}</div>
+            </DrawerTrigger>
+          )
+        }
+      <DrawerContent className="p-4 pr-0">
+        <DrawerHeader className="p-0 pr-4 text-left">
+          <DrawerTitle>{title}</DrawerTitle>
+          <DrawerDescription>
             {description}
-          </SheetDescription>
-        </SheetHeader>
-        {form}
-        {/* <SheetFooter>
-          <SheetClose asChild>
-            <Button type="submit">Save changes</Button>
-          </SheetClose>
-        </SheetFooter> */}
-      </SheetContent>
-    </Sheet>
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="overflow-y-auto pr-4">
+          {form}
+        </div>
+
+        {/* elemento para sinalizar que pode arrastar para fechar */}
+        {
+          (side === "right" || side === "left") && (
+            <div 
+              className={`fixed top-1/2 ${side.toString() === "right" ? "-left-1" : "-right-1"} z-10 w-1.5 h-20 bg-muted rounded-full`}
+            />
+          )
+        }
+        {/* <DrawerFooter className="pt-2">
+          <DrawerClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DrawerClose>
+        </DrawerFooter> */}
+      </DrawerContent>
+    </Drawer>
   )
 }
 

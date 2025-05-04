@@ -50,7 +50,7 @@ const DropUpload = ({ setImage, EditPreview }: { setImage: any, EditPreview: str
         onDragLeave={handleDragLeave}
         className={`group relative hover:border-primary focus:border-primary border-dashed ${
           isDragging ? "border-primary" : "border-gray-300"
-        } focus:border-primary border-2 max-h-56 aspect-square cursor-pointer p-2 rounded-md text-center`}
+        } focus:border-primary border-2 h-56 cursor-pointer p-2 rounded-md text-center`}
       >
         <input
           type="file"

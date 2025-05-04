@@ -1,5 +1,5 @@
 import { useState } from "react"; // Removed unused useEffect
-import { useCart } from "../../hooks/useCart"; // Import the custom hook
+import { useCart } from "../../hooks/use-cart"; // Import the custom hook
 import {
   MessageCircleMore,
   // Shield,

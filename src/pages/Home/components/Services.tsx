@@ -178,7 +178,7 @@ const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
               </div>
               <div className="p-6 flex flex-col flex-grow">
                 <ul className="space-y-3">
-                  {service.features?.split(',').map((feature, idx) => (
+                  {service.features?.split('#').map((feature, idx) => (
                     <li key={`services-features-${idx}`} className="flex text-xs md:text-sm items-center text-gray-700">
                       <CheckCircle className="w-4 h-4 text-primary-light mr-2 flex-shrink-0" />
                       {feature}

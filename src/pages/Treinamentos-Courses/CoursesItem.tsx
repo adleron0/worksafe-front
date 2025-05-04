@@ -81,8 +81,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
           <div className="w-4/12">Curso</div>
           <div className="w-4/12">Descrição</div>
-          <div className="w-2/12">Cadastro</div>
-          <div className="w-1/12">Status</div>
+          <div className="w-3/12">Status</div>
           <div className="w-1/12">Ações</div>
         </div>
       )}
@@ -96,7 +95,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
             <AvatarFallback>{item.name[0]}</AvatarFallback>
           </Avatar>
-          <div className="break-all">
+          <div className="break-words">
             <h2 className="text-sm font-semibold">{item.name}</h2>
           </div>
         </div>
@@ -111,16 +110,8 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
           </div>
         </div>
 
-        {/* Data de Criação */}
-        <div className="lg:w-2/12 flex items-baseline gap-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Cadastro: </p>
-          <p className="text-sm text-muted-foreground dark:text-gray-100">
-            {new Date(item.createdAt || '2024-01-01').toLocaleDateString()}
-          </p>
-        </div>
-
         {/* Status */}
-        <div className="lg:w-1/12 flex items-baseline gap-2">
+        <div className="lg:w-3/12 flex items-baseline gap-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
           <Badge
             variant="outline"

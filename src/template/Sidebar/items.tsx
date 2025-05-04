@@ -69,7 +69,7 @@ export const items = [
       },
       {
         title: "Turmas",
-        icon: "users-round",
+        icon: "star",
         path: "/treinamentos/turmas",
       },
       {

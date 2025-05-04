@@ -106,7 +106,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Características: </p>
           <div className="flex flex-wrap gap-0.5">
             {
-              item.features?.split(',').map((feature: string, index: number) => (
+              item.features?.split('#').map((feature: string, index: number) => (
                 <p 
                   key={`feature-${index}`} 
                   className="text-xs text-muted-foreground dark:text-gray-100 border rounded-sm py-1 px-2"

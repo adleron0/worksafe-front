@@ -34,7 +34,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     gradeTheory: z.string().min(10, { message: "Grade teórica deve ter pelo menos 10 caracteres" }),
     gradePracticle: z.string().min(10, { message: "Grade prática deve ter pelo menos 10 caracteres" }),
     weekly: z.boolean(),
-    weekDays: z.string().min(1, { message: "Dias da semana deve ter pelo menos 1 caractere" }),
+    weekDays: z.string().optional(),
     faq: z.string().min(1, { message: "FAQ deve ter pelo menos 1 caractere" }),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
@@ -50,7 +50,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const [dataForm, setDataForm] = useState<FormData>({
     name: formData?.name || "",
     hoursDuration: formData?.hoursDuration || 1,
-    flag: formData?.flag || "WORKSAFE",
+    flag: formData?.flag || "",
     description: formData?.description || "",
     gradeTheory: formData?.gradeTheory || "",
     gradePracticle: formData?.gradePracticle || "",
@@ -184,8 +184,8 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="flag">Bandeira do curso</Label>
-        <p className="text-xs font-medium text-muted-foreground">instituição fornecedora do curso</p>
+        <Label htmlFor="flag">Bandeiras do curso</Label>
+        <p className="text-xs font-medium text-muted-foreground">Tags ou informações que identificam ou categorizam o curso. Separar por #</p>
         <Input
           id="flag"
           name="flag"
@@ -213,7 +213,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
       <div className="space-y-2">
         <Label htmlFor="gradeTheory">Grade curricular teórica</Label>
-        <p className="text-xs text-muted-foreground font-medium">Separar com vírgulas</p>
+        <p className="text-xs text-muted-foreground font-medium">Separar com #</p>
         <Input
           id="gradeTheory"
           name="gradeTheory"
@@ -228,7 +228,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
       <div className="space-y-2">
         <Label htmlFor="gradePracticle">Grade curricular prática</Label>
-        <p className="text-xs text-muted-foreground font-medium">Separar com vírgulas</p>
+        <p className="text-xs text-muted-foreground font-medium">Separar com #</p>
         <Input
           id="gradePracticle"
           name="gradePracticle"
@@ -272,11 +272,11 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
       <div className="space-y-2">
         <Label htmlFor="faq">Perguntas frequentes</Label>
-        <p className="text-xs text-muted-foreground font-medium">Separar as perguntas frequentes com vírgulas</p>
+        <p className="text-xs text-muted-foreground font-medium">Separar as perguntas e respostas com #, por ? ao final de cada pergunta e usar a flag r- nas respostas</p>
         <Input
           id="faq"
           name="faq"
-          placeholder="ex: Pergunta 01?r-resposta da pergunta 01, Pergunta 02?r-resposta da pergunta 02, Pergunta 03?r-resposta da pergunta 03"
+          placeholder="ex: Pergunta 01?r-resposta da pergunta 01# Pergunta 02?r-resposta da pergunta 02# Pergunta 03?r-resposta da pergunta 03"
           value={dataForm.faq}
           onValueChange={handleChange}
           type="textArea"

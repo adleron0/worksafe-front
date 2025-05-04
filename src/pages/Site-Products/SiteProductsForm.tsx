@@ -216,7 +216,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       
       <div>
         <Label htmlFor="features">Características</Label>
-        <p className="text-xs text-muted-foreground font-medium">Separar características com vírgulas!</p>
+        <p className="text-xs text-muted-foreground font-medium">Separar características com #!</p>
         <Input
           id="features"
           name="features"

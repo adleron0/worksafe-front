@@ -125,7 +125,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
             <p className="text-gray-600 mb-6">{featuredProduct.description}</p>
             <ul className="space-y-3 mb-8">
               {/* Split features string */}
-              {featuredProduct.features?.split(',').map((feature: string, idx: number) => ( // Add types
+              {featuredProduct.features?.split('#').map((feature: string, idx: number) => ( // Add types
                 <li key={idx} className="flex items-center text-gray-700">
                   <CheckCircle className="w-5 h-5 text-primary-light mr-2 flex-shrink-0" />
                   {feature.trim()} {/* Trim whitespace */}
@@ -209,7 +209,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
                   <p className="text-xs md:text-sm text-gray-600 mb-4">{product.description}</p>
                   <ul className="space-y-3 mb-8">
                     {/* Split features string */}
-                    {product.features?.split(',').map((feature: string, idx: number) => ( // Add types
+                    {product.features?.split('#').map((feature: string, idx: number) => ( // Add types
                       <li key={idx} className="flex items-center mb-1.5 text-gray-700 text-xs md:text-sm">
                         <CheckCircle className="w-4 h-4 text-primary-light mr-1 flex-shrink-0" />
                         {feature.trim()} {/* Trim whitespace */}

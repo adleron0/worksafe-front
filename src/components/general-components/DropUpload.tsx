@@ -31,19 +31,28 @@ const DropUpload = <T extends object>({
   
   // Função para atualizar a prévia da imagem
   const handleImageChange = (file: File | null) => {
-    // Basic validation based on the acceptedFiles prop if needed,
-    // but the 'accept' attribute handles browser-level filtering.
-    // For more robust validation, you might check file.type against acceptedFiles pattern here.
-    if (file) { // Simplified check, relying on 'accept' attribute primarily
+    if (file) {
+      // Validate file type
+      if (acceptedFiles !== "image/*" && !acceptedFiles.split(',').map(type => type.trim()).includes(file.type)) {
+        setErrorFile(`Tipo de arquivo inválido. Aceitos: ${acceptedFiles}`);
+        setTimeout(() => {
+          setErrorFile(null);
+        }, 3000);
+        // Clear the file input if it's invalid
+        const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+        return;
+      }
+
       // Update state by merging the new file into the previous state object
-      setImage((prev: T) => ({ ...prev, [itemFormData]: file })); 
+      setImage((prev: T) => ({ ...prev, [itemFormData]: file }));
 
       const reader = new FileReader();
       reader.onloadend = () => setPreview(reader.result as string);
       reader.readAsDataURL(file);
       setErrorFile(null); // Clear any previous error
     } else {
-      setErrorFile("Arquivo inválido ou nenhum arquivo selecionado.");
+      setErrorFile("Nenhum arquivo selecionado.");
       setTimeout(() => {
         setErrorFile(null);
       }, 3000);

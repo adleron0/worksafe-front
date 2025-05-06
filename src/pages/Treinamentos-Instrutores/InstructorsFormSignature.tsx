@@ -60,7 +60,6 @@ const SignatureForm = ({ formData, openSheet, entity }: FormProps) => {
   const initialFormRef = useRef(dataForm);
 
   const [preview, setPreview] = useState<string | null>(''); // Preview da imagem quando for editar
-  const [_errors, setErrors] = useState<{ [key: string]: string }>({});
 
   // Efeito para preview de imagem se necessário
   useEffect(() => {
@@ -129,8 +128,9 @@ const SignatureForm = ({ formData, openSheet, entity }: FormProps) => {
           newErrors[path] = error.message;
         }
       });
-      
-      setErrors(newErrors);
+      // TODO: Display errors to the user, for example, using toast notifications or inline messages.
+      // For now, we'll log them to the console.
+      console.error("Validation errors:", newErrors);
       return;
     }
 
@@ -147,6 +147,7 @@ const SignatureForm = ({ formData, openSheet, entity }: FormProps) => {
         EditPreview={preview}
         itemFormData="signature"
         cover={false}
+        acceptedFiles="image/png"
       />
 
       <Button

@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 // Serviços
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
+import useWindowSize from "@/hooks/use-windowSize";
 import useVerify from "@/hooks/use-verify";
 import Pagination from "@/components/general-components/Pagination";
 // Template Page list-form
@@ -80,6 +81,7 @@ const Users = () => {
   const totalPages = usersData ? Math.ceil(usersData.total / searchParams.limit) : 0;
 
   const skeletons = Array(5).fill(null);
+  const { width } = useWindowSize();
 
   if (!can('view_user')) return null;
 
@@ -124,7 +126,7 @@ const Users = () => {
             ? `Atenção com a ação a seguir, ela irá alterar a senha do ${entityName} ${formData.name}.`
             : `Atenção com a ação a seguir, ela irá alterar os dados do ${entityName} ${formData.name}.`
           : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entityName}.`}
-        side="right"
+        side={formType === 'only' ? (width && width > 768 ? "right" : "bottom") : "right"}
         form={ <Form openSheet={setOpenForm} formData={formData} onlyPassword={formType}/> }
       />
 

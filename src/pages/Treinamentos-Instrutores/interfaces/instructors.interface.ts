@@ -4,6 +4,8 @@ export interface Instructors {
   companyId?: number;
   imageUrl: string | null;
   image?: File | null;
+  signatureUrl?: string | null;
+  signature?: File | null;
   email: string;
   cpf: string;
   phone?: string;

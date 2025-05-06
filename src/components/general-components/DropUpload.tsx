@@ -1,9 +1,24 @@
-import { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect } from "react"; // Keep this one
 import { Label } from "../ui/label";
 import { ImageUp, X } from "lucide-react";
 import { Button } from "../ui/button";
 
-const DropUpload = ({ setImage, EditPreview }: { setImage: any, EditPreview: string | null }) => {
+// Define the generic props interface
+interface DropUploadProps<T> {
+  setImage: React.Dispatch<React.SetStateAction<T>>; // Use standard React state setter type
+  EditPreview: string | null;
+  acceptedFiles?: string; // Add optional acceptedFiles prop
+  itemFormData?: string;
+  cover?: boolean;
+}
+
+const DropUpload = <T extends object>({ 
+  setImage, 
+  EditPreview, 
+  acceptedFiles = "image/*",
+  itemFormData = "image",
+  cover = true,
+}: DropUploadProps<T>) => { // Make component generic
   const [preview, setPreview] = useState<string | null>(null);
   const [errorFile, setErrorFile] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -16,14 +31,19 @@ const DropUpload = ({ setImage, EditPreview }: { setImage: any, EditPreview: str
   
   // Função para atualizar a prévia da imagem
   const handleImageChange = (file: File | null) => {
-    if (file && file.type.startsWith("image/")) {
-      setImage((prev: any) => ({ ...prev, image: file }));
+    // Basic validation based on the acceptedFiles prop if needed,
+    // but the 'accept' attribute handles browser-level filtering.
+    // For more robust validation, you might check file.type against acceptedFiles pattern here.
+    if (file) { // Simplified check, relying on 'accept' attribute primarily
+      // Update state by merging the new file into the previous state object
+      setImage((prev: T) => ({ ...prev, [itemFormData]: file })); 
 
       const reader = new FileReader();
       reader.onloadend = () => setPreview(reader.result as string);
       reader.readAsDataURL(file);
+      setErrorFile(null); // Clear any previous error
     } else {
-      setErrorFile("Arquivo inválido");
+      setErrorFile("Arquivo inválido ou nenhum arquivo selecionado.");
       setTimeout(() => {
         setErrorFile(null);
       }, 3000);
@@ -36,9 +56,10 @@ const DropUpload = ({ setImage, EditPreview }: { setImage: any, EditPreview: str
     setIsDragging(false);
     const file = event.dataTransfer.files[0];
     if (file) {
+      // You might add validation here based on acceptedFiles if needed
       handleImageChange(file);
     }
-  }, []);
+  }, [acceptedFiles]); // Add acceptedFiles to dependency array if validation logic uses it
 
   const handleDragLeave = () => setIsDragging(false);
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {event.preventDefault(); setIsDragging(true)};
@@ -54,7 +75,7 @@ const DropUpload = ({ setImage, EditPreview }: { setImage: any, EditPreview: str
       >
         <input
           type="file"
-          accept="image/*"
+          accept={acceptedFiles} // Use the acceptedFiles prop here
           onChange={(e) => handleImageChange(e.target.files ? e.target.files[0] : null)}
           className="hidden"
           id="fileInput"
@@ -66,7 +87,7 @@ const DropUpload = ({ setImage, EditPreview }: { setImage: any, EditPreview: str
              >
               <div 
                 style={{ backgroundImage: `url(${preview})` }}
-                className="w-full h-51 mx-auto rounded-md bg-cover bg-center bg-no-repeat group-hover/image:blur-xs"
+                className={`w-full h-51 mx-auto rounded-md ${cover ? "bg-cover" : "bg-contain"} bg-center bg-no-repeat group-hover/image:blur-xs`}
               />
               <div className="absolute top-0 bottom-0 left-0 right-0 flex flex-col items-center justify-center text-white text-sm rounded-md bg-black/45 opacity-0 hover:opacity-100 transition-opacity duration-200">
                 <ImageUp/>
@@ -90,7 +111,11 @@ const DropUpload = ({ setImage, EditPreview }: { setImage: any, EditPreview: str
           <Button
             onClick={() => {
               setPreview(null);
-              setImage((prev: any) => ({ ...prev, imageUrl: null }))}
+              // Reset the input field value if needed
+              const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+              if (fileInput) fileInput.value = '';
+              // Update state by merging null values into the previous state object
+              setImage((prev: T) => ({ ...prev, image: null, imageUrl: null }))} 
             }
             size="mini"
             variant="destructive"

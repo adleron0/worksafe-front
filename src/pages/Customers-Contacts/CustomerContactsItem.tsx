@@ -88,15 +88,16 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+        
         {/* Nome */}
-        <div className="w-full lg:w-4/12 flex items-center space-x-4">
+        <div className="w-full lg:w-4/12 flex items-center space-x-4 md:pr-2">
           <div className="break-all">
             <h2 className="text-sm font-semibold">{item.name}</h2>
           </div>
         </div>
 
         {/* Setor */}
-        <div className="lg:w-2/12 flex items-baseline gap-2">
+        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Endereço: </p>
           <div className="break-all">
             <h2 className="text-sm font-semibold">{item?.role?.name}</h2>
@@ -104,7 +105,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         </div>
 
         {/* Contatos */}
-        <div className="lg:w-3/12 flex flex-col">
+        <div className="lg:w-3/12 flex flex-col md:pr-2">
           <div className="flex gap-2">
             <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Telefone: </p>
             <p className="text-sm text-gray-600 dark:text-gray-100">{item.phone}</p>
@@ -116,7 +117,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         </div>
 
         {/* Status */}
-        <div className="lg:w-2/12 flex items-baseline gap-2">
+        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
           <Badge
             variant="outline"

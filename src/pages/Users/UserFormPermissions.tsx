@@ -1,16 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listPermissions, grantsPermission, revokesPermission } from "@/services/permissionsService";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 // import { toast as sonner } from "sonner";
 import { toast } from "@/hooks/use-toast";
 import { LockKeyholeOpen } from "lucide-react";
-import { DialogDescription } from "@/components/ui/dialog";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { useState } from "react";
 import Loader from "@/components/general-components/Loader";
+import SideForm from "@/components/general-components/SideForm"; // Import SideForm
 import { User } from "./interfaces/user.interface";
 import { Permission, UserPermission } from "./interfaces/permission.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
@@ -115,91 +114,99 @@ const PermissionsForm = ({ user }: { user: User }) => {
     return result;
   };
 
+  const triggerButton = (
+    <Button variant="ghost" className={`flex justify-start p-2 items-baseline w-full h-fit`}>
+      <LockKeyholeOpen className="w-3 h-3 mr-2" />
+      <p>Permissões</p>
+    </Button>
+  );
+
+  const formContent = (
+    <>
+      {isLoadingPermissions ? (
+        <Loader title="Carregando permissões..." />
+      ) : permissionsData?.length > 0 ? (
+        <Accordion type="single" className="mt-4">
+          {Object.entries(groupedPermissions || {}).map(([groupName, permissions]) => {
+            const subgroupedPermissions = getSubgroupedPermissions(permissions as Permission[]);
+            
+            return (
+              <AccordionItem key={groupName} value={groupName}>
+                <AccordionTrigger className="cursor-pointer text-xs uppercase">
+                  <div className="flex items-center gap-2">
+                    <Icon name="lock" className="w-3 h-3" /> 
+                    {groupName}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  {Object.entries(subgroupedPermissions).length === 1 ? (
+                    // If there's only one subgroup, don't show the subgroup heading
+                    <ul className="grid grid-cols-2 gap-2">
+                      {Object.values(subgroupedPermissions)[0].map((permission: Permission) => (
+                        <PermissionItem
+                          key={permission.id}
+                          permission={permission}
+                          user={user}
+                          isGranted={user.permissions?.some((p: UserPermission) => p.permissionId === permission.id)}
+                          onGrant={() => grantPermission(permission.id)}
+                          onRevoke={() => revokePermission(permission.id)}
+                          setDescription={setDescription}
+                        />
+                      ))}
+                    </ul>
+                  ) : (
+                    // If there are multiple subgroups, show each with its heading
+                    Object.entries(subgroupedPermissions).map(([target, targetPermissions]) => (
+                      <div key={`${groupName}-${target}`} className="mb-6">
+                        <h4 className="text-sm font-semibold mb-2 text-muted-foreground border-b pb-1">
+                          {target.charAt(0).toUpperCase() + target.slice(1)}
+                        </h4>
+                        <ul className="grid grid-cols-2 gap-2">
+                          {targetPermissions.map((permission: Permission) => (
+                            <PermissionItem
+                              key={permission.id}
+                              permission={permission}
+                              user={user}
+                              isGranted={user.permissions?.some((p: UserPermission) => p.permissionId === permission.id)}
+                              onGrant={() => grantPermission(permission.id)}
+                              onRevoke={() => revokePermission(permission.id)}
+                              setDescription={setDescription}
+                            />
+                          ))}
+                        </ul>
+                      </div>
+                    ))
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      ) : isError && (
+        <p className="text-red-500 my-4">Erro ao carregar permissões: {errorMessage}</p>
+      )}
+      {isLoadingGrant && <Loader title="Concedendo permissão..." />}
+      {isLoadingRevoke && <Loader title="Revogando permissão..." />}
+    </>
+  );
+
+  const formDescription = (
+    <>
+      Selecione as permissões necessárias para
+      <strong className="pl-1">{user.name}</strong>.
+    </>
+  );
+
   return (
-    <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" className={`flex justify-start p-2 items-baseline w-full h-fit`}>
-          <LockKeyholeOpen className="w-3 h-3 mr-2" />
-          <p>Permissões</p>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="w-11/12 md:w-[400px] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Controle de Permissões</SheetTitle>
-          <DialogDescription>
-            Selecione as permissões necessárias para
-            <strong className="pl-1">{user.name}</strong>.
-          </DialogDescription>
-        </SheetHeader>
-        {isLoadingPermissions ? (
-          <Loader title="Carregando permissões..." />
-        ) : permissionsData?.length > 0 ? (
-          <Accordion type="single" className="mt-4">
-            {Object.entries(groupedPermissions || {}).map(([groupName, permissions]) => {
-              const subgroupedPermissions = getSubgroupedPermissions(permissions as Permission[]);
-              
-              return (
-                <AccordionItem key={groupName} value={groupName}>
-                  <AccordionTrigger className="cursor-pointer text-xs uppercase">
-                    <div className="flex items-center gap-2">
-                      <Icon name="lock" className="w-3 h-3" /> 
-                      {groupName}
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    {Object.entries(subgroupedPermissions).length === 1 ? (
-                      // If there's only one subgroup, don't show the subgroup heading
-                      <ul className="grid grid-cols-2 gap-2">
-                        {Object.values(subgroupedPermissions)[0].map((permission: Permission) => (
-                          <PermissionItem
-                            key={permission.id}
-                            permission={permission}
-                            user={user}
-                            isGranted={user.permissions?.some((p: UserPermission) => p.permissionId === permission.id)}
-                            onGrant={() => grantPermission(permission.id)}
-                            onRevoke={() => revokePermission(permission.id)}
-                            setDescription={setDescription}
-                          />
-                        ))}
-                      </ul>
-                    ) : (
-                      // If there are multiple subgroups, show each with its heading
-                      Object.entries(subgroupedPermissions).map(([target, targetPermissions]) => (
-                        <div key={`${groupName}-${target}`} className="mb-6">
-                          <h4 className="text-sm font-semibold mb-2 text-muted-foreground border-b pb-1">
-                            {target.charAt(0).toUpperCase() + target.slice(1)}
-                          </h4>
-                          <ul className="grid grid-cols-2 gap-2">
-                            {targetPermissions.map((permission: Permission) => (
-                              <PermissionItem
-                                key={permission.id}
-                                permission={permission}
-                                user={user}
-                                isGranted={user.permissions?.some((p: UserPermission) => p.permissionId === permission.id)}
-                                onGrant={() => grantPermission(permission.id)}
-                                onRevoke={() => revokePermission(permission.id)}
-                                setDescription={setDescription}
-                              />
-                            ))}
-                          </ul>
-                        </div>
-                      ))
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-              );
-            })}
-          </Accordion>
-        ) : isError && (
-          <p className="text-red-500 my-4">Erro ao carregar permissões: {errorMessage}</p>
-        )}
-        {isLoadingGrant && <Loader title="Concedendo permissão..." />}
-        {isLoadingRevoke && <Loader title="Revogando permissão..." />}
-        {/* <Button variant="ghost" className="md:hidden" onClick={() => setIsSheetOpen(false)}>
-          <ChevronRight className="fixed -left-2 top-1/2 h-6 w-6 text-primary" />
-        </Button> */}
-      </SheetContent>
-    </Sheet>
+    <SideForm
+      trigger={triggerButton}
+      title="Controle de Permissões"
+      description={formDescription}
+      form={formContent}
+      side="right"
+      openSheet={isSheetOpen}
+      setOpenSheet={setIsSheetOpen}
+    />
   );
 };
 

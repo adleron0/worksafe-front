@@ -63,17 +63,18 @@ export const items = [
     subitems: [
       {
         title: "Cursos",
-        ability: "courses",
-        icon: "atom",
+        ability: "treinamentos",
+        icon: "square-library",
         path: "/treinamentos/cursos",
       },
       {
         title: "Turmas",
-        icon: "star",
+        icon: "clipboard-list",
         path: "/treinamentos/turmas",
       },
       {
         title: "Instrutores",
+        ability: "instrutores",
         icon: "contact",
         path: "/treinamentos/instrutores",
       },

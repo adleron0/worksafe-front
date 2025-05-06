@@ -83,7 +83,6 @@ const List = () => {
 
   const skeletons = Array(5).fill(null);
   const { width } = useWindowSize();
-  console.log("🚀 ~ List ~ width:", width)
 
   if (!can(`view_${entity.ability}`)) return null;
 

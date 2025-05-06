@@ -11,6 +11,7 @@ import ItemSkeleton from "./Skeletons/ItemSkeleton";
 import ItemList from "./InstructorsItem";
 import Form from "./InstructorsForm";
 import SearchForm from "./InstructorsSeach";
+import SignatureForm from "./InstructorsFormSignature";
 // Interfaces
 import { Instructors as EntityInterface } from "./interfaces/instructors.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
@@ -19,6 +20,7 @@ const List = () => {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
+  const [openSignatureForm, setOpenSignatureForm] = useState(false);
   const [formData, setFormData] = useState<EntityInterface>();
   const [searchParams, setSearchParams] = useState({
     limit: 10,
@@ -32,7 +34,7 @@ const List = () => {
     name: "Instrutor",
     pluralName: "Instrutores",
     model: "instructors",
-    ability: "instructors",
+    ability: "instrutores",
   }
 
   interface Response {
@@ -124,6 +126,16 @@ const List = () => {
         form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} /> }
       />
 
+      {/* Formulário de assinatura */}
+      <SideForm
+        openSheet={openSignatureForm}
+        setOpenSheet={setOpenSignatureForm}
+        title={`Assinatura do ${entity.name}`}
+        description={`Carregue a assinatura do ${entity.name} ${formData?.name}.`}
+        side="right"
+        form={ <SignatureForm formData={formData} openSheet={setOpenSignatureForm} entity={entity} /> }
+      />
+
       {/* Listagem de items */}
       <div className="space-y-2 mt-4">
         {isLoading
@@ -141,6 +153,7 @@ const List = () => {
                 index={i} 
                 setFormData={setFormData} 
                 setOpenForm={setOpenForm}
+                setOpenSignatureForm={setOpenSignatureForm}
               />
             ))
           : (

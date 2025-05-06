@@ -99,7 +99,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         </div>
 
         {/* Avatar e Nome */}
-        <div className="w-full lg:w-4/12 flex items-center space-x-4">
+        <div className="w-full lg:w-4/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border rounded-md">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
             <AvatarFallback>{item.name[0]}</AvatarFallback>
@@ -111,7 +111,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         </div>
 
         {/* Descrição */}
-        <div className="lg:w-5/12 flex items-baseline gap-2">
+        <div className="lg:w-5/12 flex items-baseline gap-2 md:pr-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Descrição: </p>
           <div className="flex flex-wrap gap-0.5">
             <p className="text-xs text-muted-foreground dark:text-gray-100 rounded-sm">
@@ -121,7 +121,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         </div>
 
         {/* Status */}
-        <div className="lg:w-2/12 flex items-baseline gap-2">
+        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
           <Badge
             variant="outline"

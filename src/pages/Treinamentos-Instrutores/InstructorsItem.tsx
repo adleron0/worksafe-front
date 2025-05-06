@@ -21,9 +21,10 @@ interface ItemsProps {
   entity: IDefaultEntity;
   setFormData: (data: EntityInterface) => void;
   setOpenForm: (open: boolean) => void;
+  setOpenSignatureForm: (open: boolean) => void;
 }
 
-const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => {
+const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, setOpenSignatureForm }: ItemsProps) => {
   const { can } = useVerify();
   const queryClient = useQueryClient();
 
@@ -85,8 +86,8 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
           <div className="w-3/12">Instrutor</div>
           <div className="w-3/12">Curriculo</div>
           <div className="w-3/12">Formação</div>
-          <div className="w-1/12">Status</div>
-          <div className="w-2/12">Ações</div>
+          <div className="w-2/12">Status</div>
+          <div className="w-1/12">Ações</div>
         </div>
       )}
 
@@ -102,7 +103,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         </div>
 
         {/* Avatar e Nome */}
-        <div className="w-full lg:w-3/12 flex items-center space-x-4">
+        <div className="w-full lg:w-3/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border rounded-md">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
             <AvatarFallback>{item.name[0]}</AvatarFallback>
@@ -116,7 +117,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         </div>
 
         {/* Curriculo */}
-        <div className="lg:w-3/12 flex items-baseline gap-2">
+        <div className="lg:w-3/12 flex items-baseline gap-2 md:pr-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Currículo: </p>
           <div className="flex flex-wrap gap-0.5">
             {
@@ -133,7 +134,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         </div>
 
         {/* Informações de Formação */}
-        <div className="lg:w-3/12 flex flex-col">
+        <div className="lg:w-3/12 flex flex-col md:pr-2">
           <div className="flex items-baseline gap-2">
             <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Formação: </p>
             <p className="text-xs text-muted-foreground dark:text-gray-100">{item.formation}</p>
@@ -147,7 +148,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         </div>
 
         {/* Status */}
-        <div className="lg:w-1/12 flex items-baseline gap-2">
+        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
           <Badge
             variant="outline"
@@ -162,7 +163,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-2/12">
+        <div className="absolute top-2 right-2 lg:static lg:w-1/12">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
@@ -185,6 +186,21 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
                   >
                     <Icon name="edit-3" className="w-3 h-3" /> 
                     <p>Editar</p>
+                  </Button>
+                )
+              }
+
+              { can(`update_${entity.ability}`) && (
+                  <Button 
+                    variant="ghost" 
+                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                    onClick={() => {
+                      setFormData(item);
+                      setOpenSignatureForm(true);
+                    }}
+                  >
+                    <Icon name="signature" className="w-3 h-3" /> 
+                    <p>Assinatura</p>
                   </Button>
                 )
               }

@@ -93,7 +93,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
         {/* Avatar e Nome */}
-        <div className="w-full lg:w-3/12 flex items-center space-x-4">
+        <div className="w-full lg:w-3/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
             <AvatarFallback>{item.name[0]}</AvatarFallback>
@@ -105,7 +105,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
         </div>
 
         {/* Endereço */}
-        <div className="lg:w-2/12 flex items-baseline gap-2">
+        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Endereço: </p>
           <div className="break-all">
             <h2 className="text-sm font-semibold">{item?.state?.name}</h2>
@@ -114,7 +114,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
         </div>
 
         {/* Contatos */}
-        <div className="lg:w-3/12 flex flex-col">
+        <div className="lg:w-3/12 flex flex-col md:pr-2">
           <div className="flex gap-2">
             <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Telefone: </p>
             <p className="text-sm text-gray-600 dark:text-gray-100">{item.phone}</p>
@@ -126,7 +126,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
         </div>
 
         {/* Data de Criação */}
-        <div className="lg:w-2/12 flex items-baseline gap-2">
+        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Cadastro: </p>
           <p className="text-sm text-gray-600 dark:text-gray-100">
             {new Date(item.createdAt || '2024-01-01').toLocaleDateString()}
@@ -134,7 +134,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
         </div>
 
         {/* Status */}
-        <div className="lg:w-1/12 flex items-baseline gap-2">
+        <div className="lg:w-1/12 flex items-baseline gap-2 md:pr-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
           <Badge
             variant="outline"

@@ -33,7 +33,7 @@ const List = () => {
     name: "Curso",
     pluralName: "Cursos",
     model: "courses",
-    ability: "courses",
+    ability: "treinamentos",
   }
 
   interface Response {

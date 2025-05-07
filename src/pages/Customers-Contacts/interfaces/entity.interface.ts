@@ -6,7 +6,7 @@ export interface IEntity {
   email?: string;
   phone?: string;
   createdAt?: string;
-  inactivedAt?: string;
+  inactiveAt?: string;
   role?: {
     id?: number;
     name?: string;

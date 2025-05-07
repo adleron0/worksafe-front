@@ -6,27 +6,41 @@ import useVerify from "@/hooks/use-verify";
 import { patch } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
-import Loader from "@/components/general-components/Loader";
+import { useLoader } from "@/context/GeneralContext";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
+
+// Define a type for API error responses
+interface ApiErrorResponse {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
 
 interface ItemsProps {
   item: IEntity;
   index: number;
   entity: IDefaultEntity;
-  setFormData: (data: any) => void;
+  setFormData: (data: IEntity) => void;
   setOpenForm: (open: boolean) => void;
 }
 
 const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => {
   const { can } = useVerify();
   const queryClient = useQueryClient();
+  const { showLoader, hideLoader } = useLoader();
 
    // Mutation para inativar
-  const { mutate: deactivate, isPending: isInactivating } = useMutation({
-    mutationFn: (id: number) => patch<IEntity>(entity.model, `inactive/${id}`),
+  const { mutate: deactivate } = useMutation({
+    mutationFn: (id: number) => {
+      showLoader(`Inativando ${entity.name}...`);
+      return patch<IEntity>(entity.model, `inactive/${id}`);
+    },
     onSuccess: () => {
+      hideLoader();
       toast({
         title: `${entity.name} ${item.name} inativado!`,
         description: `${entity.name} inativado com sucesso.`,
@@ -34,19 +48,28 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
       })
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      hideLoader();
       toast({
         title: `Erro ao inativar ${entity.name}`,
-        description: `${error.response.data.message}`,
+        description: error instanceof Error 
+          ? error.message 
+          : typeof error === 'object' && error !== null && 'response' in error 
+            ? ((error as ApiErrorResponse).response?.data?.message || `Erro ao inativar ${entity.name}`)
+            : `Erro ao inativar ${entity.name}`,
         variant: "destructive",
       })
     }
   });
 
   // Mutation para ativar
-  const { mutate: activate, isPending: isActivating } = useMutation({
-    mutationFn: (id: number) => patch<IEntity>(entity.model, `active/${id}`),
+  const { mutate: activate } = useMutation({
+    mutationFn: (id: number) => {
+      showLoader(`Ativando ${entity.name}...`);
+      return patch<IEntity>(entity.model, `active/${id}`);
+    },
     onSuccess: () => {
+      hideLoader();
       toast({
         title: `${entity.name} ${item.name} reativado!`,
         description: `O ${entity.name} foi reativado com sucesso.`,
@@ -54,10 +77,15 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
       })
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      hideLoader();
       toast({
         title: `Erro ao reativar ${entity.name}`,
-        description: `${error.response.data.message}`,
+        description: error instanceof Error 
+          ? error.message 
+          : typeof error === 'object' && error !== null && 'response' in error 
+            ? ((error as ApiErrorResponse).response?.data?.message || `Erro ao reativar ${entity.name}`)
+            : `Erro ao reativar ${entity.name}`,
         variant: "destructive",
       })
     }
@@ -87,7 +115,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
       )}
 
       {/* Conteúdo do item */}
-      <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+      <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
         
         {/* Nome */}
         <div className="w-full lg:w-4/12 flex items-center space-x-4 md:pr-2">
@@ -122,18 +150,18 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
           <Badge
             variant="outline"
             className={`${
-              !item.inactivedAt
+              !item.inactiveAt
               ? "bg-green-200 text-green-900 dark:bg-green-900 dark:text-green-200"
               : "bg-red-200 text-red-900 dark:bg-red-900 dark:text-red-200"
             } rounded-full px-2 py-1 text-xs`}
           >
-            {!item.inactivedAt ? "Ativo" : "Inativo"}
+            {!item.inactiveAt ? "Ativo" : "Inativo"}
           </Badge>
         </div>
 
         {/* Ações */}
         <div className="absolute top-2 right-2 lg:static lg:w-1/12">
-          <DropdownMenu modal={false}>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 className="h-8 w-8 rounded-full p-0 text-gray-700"
@@ -160,7 +188,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
               }
               
               {
-                !item.inactivedAt ? (
+                !item.inactiveAt ? (
                   can(`inactive_${entity.ability}`) && (
                       <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
                         <ConfirmDialog
@@ -190,8 +218,6 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
           </DropdownMenu>
         </div>
       </div>
-      {isInactivating && <Loader title={"Inativando..."} />}
-      {isActivating && <Loader title={"Ativando..."} />}
     </>
   )
 };

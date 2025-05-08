@@ -6,8 +6,8 @@ import Icon from "../general-components/Icon";
 
 interface HeaderListsProps {
   // Propriedades
-  titlePage: string;
-  descriptionPage: string;
+  titlePage?: string;
+  descriptionPage?: string;
   entityName: string;
   ability: string;
   limit: number;
@@ -43,8 +43,8 @@ const HeaderLists = ({
     <>
       <div className="flex flex-col md:flex-row mb-4 items-start justify-between md:items-center">
         <div>
-          <h1 className="text-xl font-bold">{titlePage}</h1>
-          <span className="text-gray-600 dark:text-gray-100">{descriptionPage}</span>
+          <h1 className={`${!titlePage && "hidden"} text-xl font-bold`}>{titlePage}</h1>
+          <span className={`${!descriptionPage && "hidden"} text-gray-600 dark:text-gray-100`}>{descriptionPage}</span>
         </div>
       </div>
       <div className="flex my-2 gap-2 items-start justify-between md:items-center">

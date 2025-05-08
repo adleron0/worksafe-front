@@ -88,8 +88,8 @@ const List = ({ customerId }: { customerId: number }) => {
   return (
     <>
       <HeaderLists
-        titlePage={`${entity.pluralName}`}
-        descriptionPage={`Administrar ${entity.pluralName}`}
+        // titlePage={`${entity.pluralName}`}
+        // descriptionPage={`Administrar ${entity.pluralName}`}
         entityName={entity.name}
         ability={entity.ability}
         limit={data?.total || 0}

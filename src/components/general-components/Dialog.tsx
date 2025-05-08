@@ -47,15 +47,16 @@ const Dialog: React.FC<DialogProps> = ({
           </DialogTrigger>
         )
       }
-      <DialogContent className="sm:max-w-[90vw] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[90vw] max-h-[85vh] pr-0">
           <DialogHeader>
             <DialogTitle className={`${!showHeader && "hidden"}`}>{ title }</DialogTitle>
             <DialogDescription className={`${!showHeader && "hidden"}`}>
               { description }
             </DialogDescription>
           </DialogHeader>
-
-          { children }
+          <div className="h-[60vh] overflow-y-auto pr-4">
+            { children }
+          </div>
       </DialogContent>
     </UiDialog>
   )

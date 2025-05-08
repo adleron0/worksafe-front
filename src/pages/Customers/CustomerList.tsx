@@ -162,7 +162,7 @@ const List = () => {
         open={openContactModal}
         onOpenChange={setOpenContactModal}
         showBttn={false}
-        showHeader={false}
+        showHeader={true}
         title="Contato"
         description="Gestão de contatos do cliente."
       >

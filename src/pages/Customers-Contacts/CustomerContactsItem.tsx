@@ -10,6 +10,7 @@ import { useLoader } from "@/context/GeneralContext";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
+import { formatPHONE } from "@/utils/phone-mask";
 
 // Define a type for API error responses
 interface ApiErrorResponse {
@@ -115,7 +116,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
       )}
 
       {/* Conteúdo do item */}
-      <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+      <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} relative shadow-sm rounded gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
         
         {/* Nome */}
         <div className="w-full lg:w-4/12 flex items-center space-x-4 md:pr-2">
@@ -127,7 +128,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         {/* Setor */}
         <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Endereço: </p>
-          <div className="break-all">
+          <div className="break-words">
             <h2 className="text-sm font-semibold">{item?.role?.name}</h2>
           </div>
         </div>
@@ -136,7 +137,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         <div className="lg:w-3/12 flex flex-col md:pr-2">
           <div className="flex gap-2">
             <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Telefone: </p>
-            <p className="text-sm text-gray-600 dark:text-gray-100">{item.phone}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-100">{formatPHONE(item.phone)}</p>
           </div>
           <div className="flex gap-2 break-all">
             <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Email: </p>

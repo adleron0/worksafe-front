@@ -64,7 +64,7 @@ const HeaderLists = ({
                 <SelectItem value="30">30</SelectItem>
                 <SelectItem value="50">50</SelectItem>
                 <SelectItem value="100">100</SelectItem>
-                <SelectItem value={`${limit || 0}`}>{limit || 0}</SelectItem>
+                <SelectItem value={`${limit > 100 ? limit : 200}`}>{limit > 100 ? limit : 200}</SelectItem>
               </SelectContent>
             </Select>
           </div>

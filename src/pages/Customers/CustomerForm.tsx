@@ -36,7 +36,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     zipcode: z.string().optional(),
     street: z.string().optional(),
     number: z.number().optional(),
-    rankId: z.number().optional(),
+    rankId: z.number().min(1, { message: "Classificação deve ser selecionada" }),
     description: z.string().optional(),
     complement: z.string().optional(),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
@@ -280,7 +280,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
       </div>
       <div>
-        <Label htmlFor="rankId">Classificação</Label>
+        <Label htmlFor="rankId">Classificação <span>*</span></Label>
         <Select 
           name="rankId"
           options={ranks?.rows || []} 

@@ -118,7 +118,7 @@ const InstructorsItem = ({ item, index, entity, setFormData, setOpenForm, setOpe
         <div className="absolute -top-1 left-4 flex items-center gap-2">
           {item.highlight && 
           <Badge variant="outline" className="text-2xs h-4 rounded-sm font-normal text-inverse-foreground bg-primary">
-            <Icon name="star" className="w-2 h-2 mr-0.5" />
+            <Icon name="asterisk" className="w-4 h-4 mr-0.5" />
             {item.highlight}
           </Badge>}
         </div>

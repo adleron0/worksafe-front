@@ -4,6 +4,7 @@ import { patch } from "@/services/api";
 import { useLoader } from "@/context/GeneralContext";
 import { toast } from "@/hooks/use-toast";
 import { formatCNPJ } from "@/utils/cpnj-mask";
+import { formatPHONE } from "@/utils/phone-mask";
 import useVerify from "@/hooks/use-verify";
 // Template Page
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -140,7 +141,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
         <div className="lg:w-3/12 flex flex-col md:pr-2">
           <div className="flex gap-2">
             <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Telefone: </p>
-            <p className="text-sm text-gray-600 dark:text-gray-100">{item.phone}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-100">{formatPHONE(item.phone)}</p>
           </div>
           <div className="flex gap-2 break-all">
             <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Email: </p>

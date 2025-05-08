@@ -1,15 +1,19 @@
+// React and external libraries
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import { DateRange } from "react-day-picker";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
+import { DateRange } from "react-day-picker";
+
+// UI Components
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import Select from "@/components/general-components/Select";
+import { Input } from "@/components/ui/input";
 import CalendarPicker from "@/components/general-components/Calendar";
+import Select from "@/components/general-components/Select";
+
+// Utils
 import { formatCPF, unformatCPF } from "@/utils/cpf-mask";
-import { Controller } from "react-hook-form";
 
 const userSearchSchema = z.object({
   searchName: z.string().optional(),
@@ -25,7 +29,7 @@ interface UserSearchFormProps {
   onSubmit: (data: UserSearchFormData) => void;
   onClear: () => void;
   openSheet: (open: boolean) => void;
-  params: Record<string, any>;
+  params: Record<string, unknown>;
 }
 
 const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, openSheet, params }) => {
@@ -45,23 +49,28 @@ const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, open
 
   useEffect(() => {
     Object.keys(params).forEach((key) => {
-      const paramValue = params[key as keyof typeof params];
-      // Check if the key is a valid key of UserSearchFormData
-      if (key in form.getValues()) {
-        if (key === 'createdAt' && Array.isArray(paramValue) && paramValue.length === 2) {
-          // Handle date range specifically
-          const [start, end] = paramValue as [Date | undefined, Date | undefined];
+      const paramKey = key as keyof UserSearchFormData;
+      const value = params[key];
+      
+      // Type checking for each field
+      if (paramKey === 'active' && (typeof value === 'boolean' || value === undefined)) {
+        form.setValue(paramKey, value);
+      } else if (paramKey === 'searchName' && (typeof value === 'string' || value === undefined)) {
+        form.setValue(paramKey, value);
+      } else if (paramKey === 'cpf' && (typeof value === 'string' || value === undefined)) {
+        form.setValue(paramKey, value);
+      } else if (paramKey === 'profileId' && 
+                (typeof value === 'number' || 
+                 (Array.isArray(value) && value.every(item => typeof item === 'number')) || 
+                 value === undefined)) {
+        form.setValue(paramKey, value);
+      } else if (paramKey === 'createdAt' && (Array.isArray(value) || value === undefined)) {
+        if (Array.isArray(value) && value.length === 2) {
+          const [start, end] = value as [Date | undefined, Date | undefined];
           setStartDate(start);
           setEndDate(end);
-          // Also set the form value if needed, though CalendarPicker uses startDate/endDate props
-          form.setValue('createdAt', paramValue as [Date | undefined, Date | undefined]); 
-        } else {
-          // Handle other form fields
-          form.setValue(
-            key as keyof UserSearchFormData,
-            paramValue
-          );
         }
+        form.setValue(paramKey, value as [Date | undefined, Date | undefined] | undefined);
       }
     });
   }, [params, form]); // Add form to dependency array as setValue is used

@@ -1,15 +1,19 @@
+// React and external libraries
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import { DateRange } from "react-day-picker";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
+import { DateRange } from "react-day-picker";
+
+// UI Components
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import Select from "@/components/general-components/Select";
-import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
-import { Controller } from "react-hook-form";
+import { Input } from "@/components/ui/input";
 import CalendarPicker from "@/components/general-components/Calendar";
+import Select from "@/components/general-components/Select";
+
+// Utils
+import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
 
 const SearchSchema = z.object({
   searchName: z.string().optional(),

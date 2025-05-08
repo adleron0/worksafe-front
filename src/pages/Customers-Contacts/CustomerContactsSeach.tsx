@@ -1,10 +1,13 @@
+// React and external libraries
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
+
+// UI Components
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const SearchSchema = z.object({
@@ -18,7 +21,7 @@ interface SearchFormProps {
   onSubmit: (data: SearchFormData) => void;
   onClear: () => void;
   openSheet: (open: boolean) => void;
-  params: any;
+  params: Record<string, unknown>;
 }
 
 const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, params }) => {
@@ -33,7 +36,15 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
 
   useEffect(() => {
     Object.keys(params).forEach((key) => {
-      form.setValue(key as keyof SearchFormData, params[key]);
+      const paramKey = key as keyof SearchFormData;
+      const value = params[key];
+      
+      // Type checking for each field
+      if (paramKey === 'active' && (typeof value === 'boolean' || value === undefined)) {
+        form.setValue(paramKey, value);
+      } else if (paramKey === 'name' && (typeof value === 'string' || value === undefined)) {
+        form.setValue(paramKey, value);
+      }
     });
   }, []);
 

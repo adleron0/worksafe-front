@@ -217,7 +217,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           value={dataForm.description}
           onValueChange={handleChange}
           type="textArea"
-          className="mt-1"
+          className="mt-1 h-40"
         />
         {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
       </div>
@@ -232,7 +232,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           value={dataForm.gradeTheory}
           onValueChange={handleChange}
           type="textArea"
-          className="mt-1"
+          className="mt-1 h-40"
         />
         {errors.gradeTheory && <p className="text-red-500 text-sm">{errors.gradeTheory}</p>}
       </div>
@@ -247,7 +247,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           value={dataForm.gradePracticle}
           onValueChange={handleChange}
           type="textArea"
-          className="mt-1"
+          className="mt-1 h-40"
         />
         {errors.gradePracticle && <p className="text-red-500 text-sm">{errors.gradePracticle}</p>}
       </div>

@@ -117,7 +117,7 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm }: Ite
         <div className="w-full lg:w-4/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border rounded-md">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
-            <AvatarFallback>{item.name[0]}</AvatarFallback>
+            <AvatarFallback className="rounded-md">{item.name[0]}</AvatarFallback>
           </Avatar>
           <div className="break-words w-9/12 md:w-full">
             <h2 className="text-sm font-semibold">{item.name}</h2>

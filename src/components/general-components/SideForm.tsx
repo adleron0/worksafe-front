@@ -65,6 +65,7 @@ const SideForm = ({ key, title, description, side, trigger, form, openSheet, set
       onOpenChange={setOpenSheet} 
       key={`${title}-${key}`}
       shouldScaleBackground={false}
+      autoFocus={openSheet}
     >
       {
           trigger && (

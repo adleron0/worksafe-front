@@ -124,7 +124,7 @@ const CalendarPicker = ({
   };
 
   return (
-    <Popover>
+    <Popover modal={true}>
       <PopoverTrigger asChild>
         <Button
           variant={buttonVariant}
@@ -139,7 +139,7 @@ const CalendarPicker = ({
           {getDisplayText()}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0">
+      <PopoverContent onOpenAutoFocus={(e) => e.preventDefault()} className="w-auto p-0">
         {renderCalendar()}
       </PopoverContent>
     </Popover>

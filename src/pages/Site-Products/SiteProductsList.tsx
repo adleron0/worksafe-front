@@ -12,7 +12,7 @@ import ItemList from "./SiteProductsItem";
 import Form from "./SiteProductsForm";
 import SearchForm from "./SiteProductsSeach";
 // Interfaces
-import { Customer as EntityInterface } from "@/pages/Customers/interfaces/customer.interface";
+import { SiteProducts as EntityInterface } from "@/pages/Site-Products/interfaces/site-products.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
 const List = () => {
@@ -57,7 +57,11 @@ const List = () => {
     },
   });
 
-  const handleSearch = async (params: any) => {
+  const handleSearch = async (params: {
+    name?: string;
+    active?: boolean;
+    createdAt?: [Date | undefined, Date | undefined];
+  }) => {
     setSearchParams((prev) => ({
       ...prev,
       ...params,

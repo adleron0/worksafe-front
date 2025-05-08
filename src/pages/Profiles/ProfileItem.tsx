@@ -1,33 +1,42 @@
+// Serviços
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { patch } from "@/services/api";
+import { useLoader } from "@/context/GeneralContext";
+import { toast } from "@/hooks/use-toast";
+import useVerify from "@/hooks/use-verify";
+// Template Page
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Profile as EntityInterface } from "@/pages/Profiles/interfaces/profile.interface";
-import useVerify from "@/hooks/use-verify";
-import { patch } from "@/services/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "@/hooks/use-toast";
-import Loader from "@/components/general-components/Loader";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
-import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import PermissionsForm from "./ProfileFormPermissions";
+// Interfaces
+import { Profile as EntityInterface } from "@/pages/Profiles/interfaces/profile.interface";
+import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
+import { ApiError } from "@/general-interfaces/api.interface";
 
 interface ItemsProps {
   item: EntityInterface;
   index: number;
   entity: IDefaultEntity;
-  setFormData: (data: any) => void;
+  setFormData: (data: EntityInterface) => void;
   setOpenForm: (open: boolean) => void;
 }
 
-const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => {
+const ProfileItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => {
   const { can } = useVerify();
   const queryClient = useQueryClient();
+  const { showLoader, hideLoader } = useLoader();
 
    // Mutation para inativar
-  const { mutate: deactivate, isPending: isInactivating } = useMutation({
-    mutationFn: (id: number) => patch<EntityInterface>(entity.model, `inactive/${id}`),
+  const { mutate: deactivate } = useMutation({
+    mutationFn: (id: number) => {
+      showLoader(`Inativando ${entity.name}...`);
+      return patch<EntityInterface>(entity.model, `inactive/${id}`);
+    },
     onSuccess: () => {
+      hideLoader();
       toast({
         title: `${entity.name} ${item.name} inativado!`,
         description: `${entity.name} inativado com sucesso.`,
@@ -35,19 +44,28 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
       })
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      hideLoader();
       toast({
         title: `Erro ao inativar ${entity.name}`,
-        description: `${error.response.data.message}`,
+        description: error instanceof Error 
+          ? error.message 
+          : typeof error === 'object' && error !== null && 'response' in error 
+            ? ((error as ApiError).response?.data?.message || `Erro ao inativar ${entity.name}`)
+            : `Erro ao inativar ${entity.name}`,
         variant: "destructive",
       })
     }
   });
 
   // Mutation para ativar
-  const { mutate: activate, isPending: isActivating } = useMutation({
-    mutationFn: (id: number) => patch<EntityInterface>(entity.model, `active/${id}`),
+  const { mutate: activate } = useMutation({
+    mutationFn: (id: number) => {
+      showLoader(`Ativando ${entity.name}...`);
+      return patch<EntityInterface>(entity.model, `active/${id}`);
+    },
     onSuccess: () => {
+      hideLoader();
       toast({
         title: `${entity.name} ${item.name} reativado!`,
         description: `O ${entity.name} foi reativado com sucesso.`,
@@ -55,10 +73,15 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
       })
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      hideLoader();
       toast({
         title: `Erro ao reativar ${entity.name}`,
-        description: `${error.response.data.message}`,
+        description: error instanceof Error 
+          ? error.message 
+          : typeof error === 'object' && error !== null && 'response' in error 
+            ? ((error as ApiError).response?.data?.message || `Erro ao reativar ${entity.name}`)
+            : `Erro ao reativar ${entity.name}`,
         variant: "destructive",
       })
     }
@@ -185,10 +208,8 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         )}
         </div>
       </div>
-      {isInactivating && <Loader title={"Inativando..."} />}
-      {isActivating && <Loader title={"Ativando..."} />}
     </>
   )
 };
 
-export default CustomerItem;
+export default ProfileItem;

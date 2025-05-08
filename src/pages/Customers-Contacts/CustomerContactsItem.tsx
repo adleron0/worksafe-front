@@ -1,26 +1,20 @@
-import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { IEntity } from "./interfaces/entity.interface";
-import useVerify from "@/hooks/use-verify";
-import { patch } from "@/services/api";
+// Serviços
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "@/hooks/use-toast";
+import { patch } from "@/services/api";
 import { useLoader } from "@/context/GeneralContext";
+import { toast } from "@/hooks/use-toast";
+import { formatPHONE } from "@/utils/phone-mask";
+import useVerify from "@/hooks/use-verify";
+// Template Page
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+// Interfaces
+import { IEntity } from "./interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
-import { formatPHONE } from "@/utils/phone-mask";
-
-// Define a type for API error responses
-interface ApiErrorResponse {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-}
-
+import { ApiError } from "@/general-interfaces/api.interface";
 interface ItemsProps {
   item: IEntity;
   index: number;
@@ -56,7 +50,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         description: error instanceof Error 
           ? error.message 
           : typeof error === 'object' && error !== null && 'response' in error 
-            ? ((error as ApiErrorResponse).response?.data?.message || `Erro ao inativar ${entity.name}`)
+            ? ((error as ApiError).response?.data?.message || `Erro ao inativar ${entity.name}`)
             : `Erro ao inativar ${entity.name}`,
         variant: "destructive",
       })
@@ -85,7 +79,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
         description: error instanceof Error 
           ? error.message 
           : typeof error === 'object' && error !== null && 'response' in error 
-            ? ((error as ApiErrorResponse).response?.data?.message || `Erro ao reativar ${entity.name}`)
+            ? ((error as ApiError).response?.data?.message || `Erro ao reativar ${entity.name}`)
             : `Erro ao reativar ${entity.name}`,
         variant: "destructive",
       })

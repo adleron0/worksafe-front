@@ -1,22 +1,26 @@
+// Serviços
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { patch } from "@/services/api";
+import { useLoader } from "@/context/GeneralContext";
+import { toast } from "@/hooks/use-toast";
+import useVerify from "@/hooks/use-verify";
+import { formatCPF } from "@/utils/cpf-mask";
+// Template Page
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { User } from "./interfaces/user.interface";
-import useVerify from "@/hooks/use-verify";
-import { patch } from "@/services/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "@/hooks/use-toast";
-import Loader from "@/components/general-components/Loader";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import PermissionsForm from "./UserFormPermissions";
-import { formatCPF } from "@/utils/cpf-mask";
+// Interfaces
+import { User } from "./interfaces/user.interface";
+import { ApiError } from "@/general-interfaces/api.interface";
 
 interface UserItemProps {
   user: User;
   index: number;
-  setFormData: (data: any) => void;
+  setFormData: (data: User) => void;
   setFormType: (type: string) => void;
   setOpenForm: (open: boolean) => void;
 }
@@ -24,11 +28,16 @@ interface UserItemProps {
 const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserItemProps) => {
   const { can, is } = useVerify();
   const queryClient = useQueryClient();
+  const { showLoader, hideLoader } = useLoader();
 
    // Mutation para inativar o usuário
-  const { mutate: deactivateUser, isPending: isInactivating } = useMutation({
-    mutationFn: (userId: number) => patch<User>('user', `inactive/${userId}`),
+  const { mutate: deactivateUser } = useMutation({
+    mutationFn: (userId: number) => {
+      showLoader(`Inativando usuário ${user.name}...`);
+      return patch<User>('user', `inactive/${userId}`);
+    },
     onSuccess: () => {
+      hideLoader();
       toast({
         title: `Usuário ${user.name} inativado!`,
         description: "Usuário inativado com sucesso",
@@ -37,10 +46,15 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
       })
       queryClient.invalidateQueries({ queryKey: ['listCompanyUsers'] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      hideLoader();
       toast({
         title: "Erro ao inativar o usuário!",
-        description: `${error.response.data.message}`,
+        description: error instanceof Error 
+          ? error.message 
+          : typeof error === 'object' && error !== null && 'response' in error 
+            ? ((error as ApiError).response?.data?.message || "Erro ao inativar o usuário!")
+            : "Erro ao inativar o usuário!",
         variant: "destructive",
         duration: 5000
       })
@@ -48,9 +62,13 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
   });
 
   // Mutation para ativar o usuário
-  const { mutate: activateUser, isPending: isActivating } = useMutation({
-    mutationFn: (userId: number) => patch<User>('user', `active/${userId}`),
+  const { mutate: activateUser } = useMutation({
+    mutationFn: (userId: number) => {
+      showLoader(`Ativando usuário ${user.name}...`);
+      return patch<User>('user', `active/${userId}`);
+    },
     onSuccess: () => {
+      hideLoader();
       toast({
         title: `Usuário ${user.name} reativado!`,
         description: "Usuário foi reativado com sucesso",
@@ -59,10 +77,15 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
       })
       queryClient.invalidateQueries({ queryKey: ['listCompanyUsers'] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      hideLoader();
       toast({
         title: "Erro ao reativar o usuário!",
-        description: `${error.response.data.message}`,
+        description: error instanceof Error 
+          ? error.message 
+          : typeof error === 'object' && error !== null && 'response' in error 
+            ? ((error as ApiError).response?.data?.message || "Erro ao reativar o usuário!")
+            : "Erro ao reativar o usuário!",
         variant: "destructive",
         duration: 5000
       })
@@ -241,8 +264,6 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
         }
         </div>
       </div>
-      {isInactivating && <Loader title={"Inativando..."} />}
-      {isActivating && <Loader title={"Ativando..."} />}
     </>
   )
 };

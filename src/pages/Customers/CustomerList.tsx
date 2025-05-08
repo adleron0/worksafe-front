@@ -1,11 +1,11 @@
+// Serviçosç
 import { useRef, useState } from "react";
-// Serviços
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
 import Pagination from "@/components/general-components/Pagination";
 import Dialog from "@/components/general-components/Dialog";
-// Template Page list-form
+// Template Page
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
 import ItemSkeleton from "./Skeletons/userItemSkeleton";

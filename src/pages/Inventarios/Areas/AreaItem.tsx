@@ -1,19 +1,21 @@
-import { Badge } from "@/components/ui/badge";
-// import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Area } from "./interfaces/area.interface";
-import useVerify from "@/hooks/use-verify";
-import { inactiveArea, activeArea } from "@/services/areaService";
+// Serviços
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { inactiveArea, activeArea } from "@/services/areaService";
+import { useLoader } from "@/context/GeneralContext";
 import { toast } from "@/hooks/use-toast";
-import Loader from "@/components/general-components/Loader";
+import useVerify from "@/hooks/use-verify";
+import { useNavigate } from "@tanstack/react-router";
+// Template Page
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import AreaForm from "./AreaForm";
-import { ApiError } from "@/general-interfaces/api.interface";
 import { Separator } from "@/components/ui/separator";
 import { SendHorizontal } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
 import Icon from "@/components/general-components/Icon";
+// Interfaces
+import { Area } from "./interfaces/area.interface";
+import { ApiError } from "@/general-interfaces/api.interface";
 
 interface AreaItemProps {
   area: Area;
@@ -22,11 +24,16 @@ interface AreaItemProps {
 const AreaItem = ({ area }: AreaItemProps) => {
   const { can } = useVerify();
   const queryClient = useQueryClient();
+  const { showLoader, hideLoader } = useLoader();
 
-   // Mutation para inativar o usuário
-  const { mutate: deactivateArea, isPending: isInactivating } = useMutation({
-    mutationFn: (areaId: number) => inactiveArea(areaId),
+   // Mutation para inativar a área
+  const { mutate: deactivateArea } = useMutation({
+    mutationFn: (areaId: number) => {
+      showLoader(`Inativando área ${area.name}...`);
+      return inactiveArea(areaId);
+    },
     onSuccess: () => {
+      hideLoader();
       toast({
         title: "Área inativada!",
         description: `Área ${area.name} inativada com sucesso`,
@@ -35,20 +42,29 @@ const AreaItem = ({ area }: AreaItemProps) => {
       })
       queryClient.invalidateQueries({ queryKey: ['listAreasCompany'] });
     },
-    onError: (error: ApiError) => {
+    onError: (error: unknown) => {
+      hideLoader();
       toast({
         title: "Erro ao inativar o área!",
-        description: error.response?.data?.message || "Erro desconhecido.",
+        description: error instanceof Error 
+          ? error.message 
+          : typeof error === 'object' && error !== null && 'response' in error 
+            ? ((error as ApiError).response?.data?.message || "Erro ao inativar a área!")
+            : "Erro ao inativar a área!",
         variant: "destructive",
         duration: 5000
       })
     }
   });
 
-  // Mutation para ativar o usuário
-  const { mutate: activateArea, isPending: isActivating } = useMutation({
-    mutationFn: (areaId: number) => activeArea(areaId),
+  // Mutation para ativar a área
+  const { mutate: activateArea } = useMutation({
+    mutationFn: (areaId: number) => {
+      showLoader(`Ativando área ${area.name}...`);
+      return activeArea(areaId);
+    },
     onSuccess: () => {
+      hideLoader();
       toast({
         title: "Área Reativado!",
         description: `Área ${area.name} foi reativada com sucesso`,	
@@ -57,10 +73,15 @@ const AreaItem = ({ area }: AreaItemProps) => {
       })
       queryClient.invalidateQueries({ queryKey: ['listAreasCompany'] });
     },
-    onError: (error: ApiError) => {
+    onError: (error: unknown) => {
+      hideLoader();
       toast({
         title: "Erro ao reativar o área!",
-        description: error.response?.data?.message || "Erro desconhecido.",
+        description: error instanceof Error 
+          ? error.message 
+          : typeof error === 'object' && error !== null && 'response' in error 
+            ? ((error as ApiError).response?.data?.message || "Erro ao reativar a área!")
+            : "Erro ao reativar a área!",
         variant: "destructive",
         duration: 5000
       })
@@ -188,8 +209,6 @@ const AreaItem = ({ area }: AreaItemProps) => {
         </div>
       </div>
 
-      {isInactivating && <Loader title={"Inativando..."} />}
-      {isActivating && <Loader title={"Ativando..."} />}
     </>
   )
 };

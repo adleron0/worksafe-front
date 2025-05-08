@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 // Template Components
-import Loader from "@/components/general-components/Loader";
+import { useLoader } from "@/context/GeneralContext";
 import DropUpload from "@/components/general-components/DropUpload";
 import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ interface FormProps {
 
 const Form = ({ formData, openSheet, entity }: FormProps) => {
   const queryClient = useQueryClient();
+  const { showLoader, hideLoader } = useLoader();
 
   // Schema
   const Schema = z.object({
@@ -59,8 +60,12 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   }, []);
 
   const { mutate: registerCustomer, isPending } = useMutation({
-    mutationFn: (newItem: FormData) => post<EntityInterface>(entity.model, '', newItem),
+    mutationFn: (newItem: FormData) => {
+      showLoader(`Registrando ${entity.name}...`);
+      return post<EntityInterface>(entity.model, '', newItem);
+    },
     onSuccess: () => {
+      hideLoader();
       toast({
         title: `${entity.name} cadastrado!`,
         description: `Novo ${entity.name} cadastrado com sucesso.`,
@@ -72,6 +77,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       openSheet(false);
     },
     onError: (error: ApiError) => {
+      hideLoader();
       toast({
         title: `Erro ao cadastrar ${entity.name}`,
         description: error.response?.data?.message || "Erro desconhecido.",
@@ -81,8 +87,12 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   });
 
   const { mutate: updateCustomerMutation, isPending: isPendingUpdate } = useMutation({
-    mutationFn: (updatedItem: FormData) => put<EntityInterface>(entity.model, `${formData?.id}`, updatedItem),
+    mutationFn: (updatedItem: FormData) => {
+      showLoader(`Atualizando ${entity.name}...`);
+      return put<EntityInterface>(entity.model, `${formData?.id}`, updatedItem);
+    },
     onSuccess: () => {
+      hideLoader();
       toast({
         title: `${entity.name} atualizado!`,
         description: `${entity.name} atualizado com sucesso.`,
@@ -94,6 +104,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       openSheet(false);
     },
     onError: (error: ApiError) => {
+      hideLoader();
       toast({
         title: `Erro ao atualizar ${entity.name}`,
         description: error.response?.data?.message || "Erro desconhecido.",
@@ -202,9 +213,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           ? `Atualizar ${entity.name}`
           : `Registrar ${entity.name}`}
       </Button>
-      {(isPending || isPendingUpdate) && (
-        <Loader title={formData ? `Atualizando ${entity.name}...` : `Registrando ${entity.name}...`} />
-      )}
     </form>
   );
 };

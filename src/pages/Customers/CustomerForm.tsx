@@ -288,6 +288,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           state={dataForm.rankId ? String(dataForm.rankId) : ""}
           placeholder="Selecione a classificação"
         />
+        {errors.rankId && <p className="text-red-500 text-sm">{errors.rankId}</p>}
       </div>
       
       <div>

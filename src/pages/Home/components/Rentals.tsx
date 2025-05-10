@@ -106,7 +106,7 @@ const Rentals: React.FC<RentalsProps> = ({ handleWhatsApp, formatCurrency }) => 
     <section id="aluguel" className="py-20 bg-white">
       <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
         <div className="text-center mb-16">
-          <h2 className="section-title text-gray-700 text-3xl md:text-5xl font-bold mb-6 pb-4">
+          <h2 className="section-title text-gray-700 text-3xl md:text-5xl font-bold pb-4">
             Aluguel de Equipamentos
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">

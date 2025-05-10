@@ -70,9 +70,6 @@ export default function Sobre() {
       <main className="min-h-screen pt-20">
         <Hero yearsOfExperience={yearsOfExperience} />
 
-        {/* Clients Section */}
-        <Clients />
-
         {/* About Section */}
         <About />
 
@@ -84,6 +81,9 @@ export default function Sobre() {
           whatsAppMessage="Olá! Gostaria de solicitar um orçamento para serviços de segurança do trabalho."
           handleWhatsApp={handleWhatsApp}
         />
+
+        {/* Clients Section */}
+        <Clients />
 
         <Footer />
 

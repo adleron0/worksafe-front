@@ -1,3 +1,5 @@
+import { FaqItem } from "../../Treinamentos-Courses/interfaces/courses.interface";
+
 export interface Turmas {
   id?: number;
   name: string;
@@ -12,13 +14,14 @@ export interface Turmas {
   openClass?: boolean;
   gifts?: string | null;
   description?: string | null;
-  curriculum?: string | null;
+  gradeTheory?: string;
+  gradePracticle?: string;
   videoUrl?: string | null;
   videoTitle?: string | null;
   videoSubtitle?: string | null;
   videoDescription?: string | null;
   active?: boolean | null;
-  faq?: string | null;
+  faq?: string | FaqItem[] | null;
   initialDate?: string | null;
   finalDate?: string | null;
   landingPagesDates?: string | null;
@@ -31,4 +34,6 @@ export interface Turmas {
   createdAt?: string;
   updatedAt?: string | null;
   inactiveAt?: string | null;
+  minimumQuorum?: number | null;
+  maxSubscriptions?: number | null;
 }

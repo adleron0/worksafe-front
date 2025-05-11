@@ -1,3 +1,8 @@
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
 export interface Courses {
   id?: number;
   name: string;
@@ -12,7 +17,7 @@ export interface Courses {
   active?: boolean;
   weekly?: boolean;
   weekDays?: string;
-  faq?: string;
+  faq?: string | FaqItem[];
   exam?: {
     question: string;
     options: {

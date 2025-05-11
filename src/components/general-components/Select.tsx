@@ -29,6 +29,7 @@ interface SelectProps {
     multiple?: boolean;
     disabled?: boolean;
     onChange?: (name: string, value: string | string[]) => void;
+    callBacks?: ((name: string, value: string | string[]) => void)[];
     modal?: boolean;
 }
 
@@ -42,6 +43,7 @@ const Select = ({
     multiple = false,
     disabled = false,
     onChange = () => {},
+    callBacks = [],
     modal = true,
 }: SelectProps) => {
   const isInitialMount = useRef(true);
@@ -70,6 +72,8 @@ const Select = ({
 
   const handleValueChange = (newValue: string) => {
     onChange(name, newValue);
+    // Execute all callback functions after onChange
+    callBacks.forEach(callback => callback(name, newValue));
   };
 
   const handleMultipleValueChange = (itemValue: string) => {
@@ -79,6 +83,8 @@ const Select = ({
     
     setSelectedItems(newSelectedItems);
     onChange(name, newSelectedItems);
+    // Execute all callback functions after onChange
+    callBacks.forEach(callback => callback(name, newSelectedItems));
   };
 
   const handleSelectAll = () => {
@@ -89,12 +95,16 @@ const Select = ({
     const newSelectedItems = allSelected ? [] : allOptionValues;
     setSelectedItems(newSelectedItems);
     onChange(name, newSelectedItems);
+    // Execute all callback functions after onChange
+    callBacks.forEach(callback => callback(name, newSelectedItems));
   };
 
   const handleClearAll = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent dropdown from opening/closing
     setSelectedItems([]);
     onChange(name, []);
+    // Execute all callback functions after onChange
+    callBacks.forEach(callback => callback(name, []));
   };
 
   const getSelectedLabels = () => {

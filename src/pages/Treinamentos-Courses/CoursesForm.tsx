@@ -15,6 +15,8 @@ import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { z } from "zod";
 import { Switch } from "@/components/ui/switch";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { PlusCircle, Trash2 } from "lucide-react";
 
 interface FormProps {
   formData?: EntityInterface;
@@ -26,6 +28,12 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
 
+  // Define FAQ item interface
+  interface FaqItem {
+    question: string;
+    answer: string;
+  }
+
   // Schema
   const Schema = z.object({
     name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
@@ -36,7 +44,12 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     gradePracticle: z.string().min(10, { message: "Grade prática deve ter pelo menos 10 caracteres" }),
     weekly: z.boolean(),
     weekDays: z.string().optional(),
-    faq: z.string().optional(),
+    faq: z.array(
+      z.object({
+        question: z.string().min(3, { message: "Pergunta deve ter pelo menos 3 caracteres" }),
+        answer: z.string().min(3, { message: "Resposta deve ter pelo menos 3 caracteres" })
+      })
+    ).optional(),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
       (value) => value === null || value instanceof File,
@@ -48,6 +61,50 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   type FormData = z.infer<typeof Schema>;
 
+  // Function to parse existing FAQ string into array of FaqItem objects
+  const parseFaqString = (faqData: string | FaqItem[] | undefined): FaqItem[] => {
+    if (!faqData) return [];
+    
+    // If it's already an array of FaqItems, return it
+    if (Array.isArray(faqData)) {
+      return faqData;
+    }
+    
+    try {
+      // First check if it's a JSON string
+      try {
+        const parsed = JSON.parse(faqData);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      } catch {
+        // Not JSON, continue with string parsing
+      }
+      
+      // Parse the old format: "Pergunta 01?r-resposta da pergunta 01# Pergunta 02?r-resposta da pergunta 02"
+      const faqItems: FaqItem[] = [];
+      const items = faqData.split('#');
+      
+      items.forEach(item => {
+        const trimmedItem = item.trim();
+        if (!trimmedItem) return;
+        
+        const parts = trimmedItem.split('?r-');
+        if (parts.length === 2) {
+          faqItems.push({
+            question: parts[0].trim(),
+            answer: parts[1].trim()
+          });
+        }
+      });
+      
+      return faqItems;
+    } catch (error) {
+      console.error("Error parsing FAQ string:", error);
+      return [];
+    }
+  };
+
   const [dataForm, setDataForm] = useState<FormData>({
     name: formData?.name || "",
     hoursDuration: formData?.hoursDuration || 1,
@@ -57,7 +114,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     gradePracticle: formData?.gradePracticle || "",
     weekly: formData?.weekly || false,
     weekDays: formData?.weekDays || "",
-    faq: formData?.faq || "",
+    faq: parseFaqString(formData?.faq),
     imageUrl: formData?.imageUrl || "",
     image: formData?.image || null,
   });
@@ -65,6 +122,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   const [preview, setPreview] = useState<string | null>(''); // Preview da imagem quando for editar
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   // Efeito para preview de imagem se necessário
   useEffect(() => {
@@ -133,31 +191,160 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     setDataForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     
-    const result = Schema.safeParse(dataForm);
-
-    if (!result.success) {
-      // Extract error messages from Zod validation result
-      const newErrors: { [key: string]: string } = {};
+    // Pre-validate FAQ items to ensure they meet minimum requirements
+    let faqHasErrors = false;
+    const newErrors: { [key: string]: string } = {};
+    
+    // Check if FAQ items exist and validate each one
+    if (dataForm.faq && dataForm.faq.length > 0) {
+      dataForm.faq.forEach((item, index) => {
+        // Check question length
+        if (item.question.trim().length < 3) {
+          newErrors[`faq.${index}.question`] = "Pergunta deve ter pelo menos 3 caracteres";
+          faqHasErrors = true;
+        }
+        
+        // Check answer length
+        if (item.answer.trim().length < 3) {
+          newErrors[`faq.${index}.answer`] = "Resposta deve ter pelo menos 3 caracteres";
+          faqHasErrors = true;
+          console.log(`FAQ answer at index ${index} is invalid. Length: ${item.answer.trim().length}, Value: "${item.answer}"`);
+        }
+      });
       
+      // If FAQ validation failed, set errors, expand items with errors, and return
+      if (faqHasErrors) {
+        setErrors(prev => ({ ...prev, ...newErrors }));
+        
+        // Auto-expand items with errors
+        const itemsWithErrors = Object.keys(newErrors)
+          .filter(key => key.startsWith('faq.'))
+          .map(key => {
+            const match = key.match(/faq\.(\d+)\./);
+            return match ? `item-${match[1]}` : null;
+          })
+          .filter(Boolean) as string[];
+        
+        // Add items with errors to expanded items without duplicates
+        setExpandedItems(prev => {
+          const uniqueItems = new Set([...prev, ...itemsWithErrors]);
+          return Array.from(uniqueItems);
+        });
+        
+        return;
+      }
+    }
+    
+    // Proceed with Zod schema validation
+    const result = Schema.safeParse(dataForm);
+    
+    if (!result.success) {
       result.error.errors.forEach((error) => {
         const path = error.path.join('.');
         if (path) {
           newErrors[path] = error.message;
+          console.log("🚀 ~ result.error.errors.forEach ~ path:", path);
+          console.log("🚀 ~ result.error.errors.forEach ~ error.message:", error.message);
         }
       });
       
-      setErrors(newErrors);
+      setErrors(prev => ({ ...prev, ...newErrors }));
       return;
     }
 
+    // Create a copy of the data form with faq converted to JSON string
+    const submissionData = {
+      ...dataForm,
+      faq: JSON.stringify(dataForm.faq || [])
+    } as unknown as FormData;
+
     if (formData) {
-      updateCustomerMutation(dataForm);
+      updateCustomerMutation(submissionData);
     } else {
-      registerCustomer(dataForm);
+      registerCustomer(submissionData);
     }
+  };
+
+  // FAQ management functions
+  const addFaqItem = () => {
+    const newFaq = [...(dataForm.faq || []), { question: '', answer: '' }];
+    const newIndex = newFaq.length - 1;
+    
+    // Update the form data with the new FAQ item
+    setDataForm(prev => ({
+      ...prev,
+      faq: newFaq
+    }));
+    
+    // Auto-expand the newly added FAQ item
+    setExpandedItems(prev => [...prev, `item-${newIndex}`]);
+  };
+
+  const updateFaqItem = (index: number, field: 'question' | 'answer', value: string) => {
+    // Ensure the value is a string and not empty or undefined
+    const processedValue = String(value || '');
+    
+    setDataForm(prev => {
+      const updatedFaq = [...(prev.faq || [])];
+      
+      updatedFaq[index] = {
+        ...updatedFaq[index],
+        [field]: processedValue
+      };
+      
+      // Clear any existing error for this specific field
+      if (errors[`faq.${index}.${field}`]) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors[`faq.${index}.${field}`];
+          return newErrors;
+        });
+      }
+      
+      return { ...prev, faq: updatedFaq };
+    });
+    
+    // Log the updated value for debugging
+    console.log(`Updated FAQ ${field} at index ${index} with value:`, value);
+    console.log(`- Length:`, value ? value.length : 0);
+    console.log(`- Trimmed length:`, value ? value.trim().length : 0);
+  };
+
+  const removeFaqItem = (index: number) => {
+    // Update the form data by removing the FAQ item
+    setDataForm(prev => {
+      const updatedFaq = [...(prev.faq || [])];
+      updatedFaq.splice(index, 1);
+      return { ...prev, faq: updatedFaq };
+    });
+    
+    // Update the expanded items state to remove the deleted item and adjust indices
+    setExpandedItems(prev => {
+      const itemToRemove = `item-${index}`;
+      const newExpandedItems = prev.filter(item => item !== itemToRemove);
+      
+      // Adjust indices for items that come after the removed item
+      return newExpandedItems.map(item => {
+        const itemParts = item.split('-');
+        const itemIndex = parseInt(itemParts[1], 10);
+        
+        if (itemIndex > index) {
+          return `item-${itemIndex - 1}`;
+        }
+        return item;
+      });
+    });
+    
+    // Clear any errors related to the removed item
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[`faq.${index}.question`];
+      delete newErrors[`faq.${index}.answer`];
+      return newErrors;
+    });
   };
 
   // Buscas de valores para variaveis de formulário
@@ -281,19 +468,113 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         )
       }
 
-      <div className="space-y-2">
-        <Label htmlFor="faq">Perguntas frequentes</Label>
-        <p className="text-xs text-muted-foreground font-medium">Separar as perguntas e respostas com #, por ? ao final de cada pergunta e usar a flag r- nas respostas</p>
-        <Input
-          id="faq"
-          name="faq"
-          placeholder="ex: Pergunta 01?r-resposta da pergunta 01# Pergunta 02?r-resposta da pergunta 02# Pergunta 03?r-resposta da pergunta 03"
-          value={dataForm.faq}
-          onValueChange={handleChange}
-          type="textArea"
-          className="mt-1 h-40"
-        />
-        {errors.faq && <p className="text-red-500 text-sm">{errors.faq}</p>}
+      <div className="border-2 border-primary/20 rounded-lg p-4 mt-6 mb-6 bg-primary/5">
+        <h3 className="text-base font-semibold mb-4 text-primary">Perguntas Frequentes (FAQ)</h3>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <Label htmlFor="faq" className="text-xs">Gerenciar perguntas e respostas</Label>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={addFaqItem}
+              className="flex items-center gap-1 bg-primary/10 hover:bg-primary/20"
+            >
+              <PlusCircle size={16} />
+              Adicionar
+            </Button>
+          </div>
+          
+          {dataForm.faq && dataForm.faq.length > 0 ? (
+            <Accordion 
+              type="multiple" 
+              value={expandedItems}
+              onValueChange={setExpandedItems}
+              className="w-full"
+            >
+              {dataForm.faq.map((faqItem, index) => (
+                <AccordionItem 
+                  value={`item-${index}`} 
+                  key={index} 
+                  className={`border ${
+                    errors[`faq.${index}.question`] || errors[`faq.${index}.answer`] 
+                      ? 'border-red-500' 
+                      : 'border-primary/20'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <AccordionTrigger 
+                      className={`flex-1 hover:bg-primary/5 p-2 cursor-pointer ${
+                        errors[`faq.${index}.question`] || errors[`faq.${index}.answer`] 
+                          ? 'text-red-500 font-medium' 
+                          : ''
+                      }`}
+                    >
+                      {faqItem.question || `Pergunta ${index + 1}`}
+                      {(errors[`faq.${index}.question`] || errors[`faq.${index}.answer`]) && 
+                        <span className="ml-2 text-xs">(Erro de validação)</span>
+                      }
+                    </AccordionTrigger>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => removeFaqItem(index)}
+                      className="mr-2"
+                    >
+                      <Trash2 size={16} className="text-red-500" />
+                    </Button>
+                  </div>
+                  <AccordionContent className="bg-white">
+                    <div className="space-y-4 p-3">
+                      <div>
+                        <Label htmlFor={`faq-question-${index}`}>Pergunta</Label>
+                        <Input
+                          id={`faq-question-${index}`}
+                          value={faqItem.question}
+                          onValueChange={(_, value) => updateFaqItem(index, 'question', value as string)}
+                          placeholder="Digite a pergunta"
+                          className="mt-1"
+                        />
+                        {errors[`faq.${index}.question`] && (
+                          <p className="text-red-500 text-sm">{errors[`faq.${index}.question`]}</p>
+                        )}
+                      </div>
+                      <div>
+                        <Label htmlFor={`faq-answer-${index}`}>Resposta</Label>
+                        <Input
+                          id={`faq-answer-${index}`}
+                          value={faqItem.answer}
+                          onValueChange={(_, value) => updateFaqItem(index, 'answer', value as string)}
+                          placeholder="Digite a resposta"
+                          type="textArea"
+                          className="mt-1"
+                        />
+                        {errors[`faq.${index}.answer`] && (
+                          <p className="text-red-500 text-sm">{errors[`faq.${index}.answer`]}</p>
+                        )}
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          ) : (
+            <div className="bg-white p-6 rounded-md text-center border border-primary/20">
+              <p className="text-muted-foreground text-xs mb-3">Nenhuma pergunta frequente adicionada</p>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                onClick={addFaqItem}
+                className="bg-primary/10 hover:bg-primary/20"
+              >
+                Adicionar pergunta
+              </Button>
+            </div>
+          )}
+          {errors.faq && <p className="text-red-500 text-sm">{errors.faq}</p>}
+        </div>
       </div>
       
       {/* <div className="space-y-2">

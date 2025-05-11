@@ -1,13 +1,5 @@
-import { useState } from "react"; // Removed unused useEffect
 import { useCart } from "../../hooks/use-cart"; // Import the custom hook
-import {
-  MessageCircleMore,
-  // Shield,
-  // Award,
-  // Clock,
-  // Users,
-  ChevronDown,
-} from "lucide-react";
+import { MessageCircleMore } from "lucide-react";
 import Training from "./components/Training";
 import NavBar from "./components/NavBar";
 import Hero from "./components/Hero";
@@ -18,10 +10,35 @@ import Products from "./components/Products";
 // import Rentals from "./components/Rentals";
 import Cta from "./components/Cta";
 import Footer from "./components/Footer";
+import Faq from "./components/Faq";
 
 // Calcula anos
 const foundationYear = 2018;
 const yearsOfExperience = new Date().getFullYear() - foundationYear;
+
+// Features teste
+// const features = [
+//   {
+//     icon: Shield,
+//     title: "Segurança Garantida",
+//     description: "Equipamentos certificados e profissionais qualificados",
+//   },
+//   {
+//     icon: Award,
+//     title: "Certificações",
+//     description: "Credenciamento em diversas normas técnicas",
+//   },
+//   {
+//     icon: Clock,
+//     title: "Atendimento 24/7",
+//     description: "Atendimento emergencial disponível 24h",
+//   },
+//   {
+//     icon: Users,
+//     title: "Equipe Especializada",
+//     description: "Profissionais com vasta experiência no setor",
+//   },
+// ];
 
 // FAQ treinamentos
 const faqs = [
@@ -72,30 +89,6 @@ const faqs = [
   },
 ];
 
-// Features
-// const features = [
-//   {
-//     icon: Shield,
-//     title: "Segurança Garantida",
-//     description: "Equipamentos certificados e profissionais qualificados",
-//   },
-//   {
-//     icon: Award,
-//     title: "Certificações",
-//     description: "Credenciamento em diversas normas técnicas",
-//   },
-//   {
-//     icon: Clock,
-//     title: "Atendimento 24/7",
-//     description: "Atendimento emergencial disponível 24h",
-//   },
-//   {
-//     icon: Users,
-//     title: "Equipe Especializada",
-//     description: "Profissionais com vasta experiência no setor",
-//   },
-// ];
-
 /* =======================
    FUNCIONALIDADE DO CARRINHO
 =========================== */
@@ -104,11 +97,6 @@ const faqs = [
 
 export default function Home() {
   const { cart, setCart, addToCart, clearCart } = useCart(); // Use the custom hook
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-
-  const toggleFaq = (index: number) => {
-    setActiveIndex(activeIndex === index ? null : index);
-  };
 
   // Cart state and localStorage logic are now handled by useCart hook.
   // Remove local addToCart and clearCart functions.
@@ -141,9 +129,6 @@ export default function Home() {
       <main className="min-h-screen pt-20">
         <Hero yearsOfExperience={yearsOfExperience} />
 
-        {/* Clients Section */}
-        <Clients />
-
         {/* Services Section */}
         <Services handleWhatsApp={handleWhatsApp} />
 
@@ -171,50 +156,10 @@ export default function Home() {
 
         <Training formatCurrency={formatCurrency} />
 
-        <section id="faq" className="py-20 bg-gradient-to-b from-white to-gray-50">
-          <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
-            <div className="text-center mb-16">
-              <h2 className="section-title text-gray-700 text-3xl md:text-5xl font-bold mb-6 pb-4">
-                Perguntas Frequentes
-              </h2>
-              <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                Encontre respostas para as dúvidas mais comuns sobre os nossos cursos.
-              </p>
-            </div>
-            <div className="max-w-3xl mx-auto space-y-4">
-              {faqs.map((faq, index) => (
-                <div 
-                  key={index} 
-                  className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-all duration-200"
-                >
-                  <button
-                    onClick={() => toggleFaq(index)}
-                    className="w-full flex justify-between items-center p-6 focus:outline-none"
-                  >
-                    <span className="text-left text-lg font-medium text-gray-800 flex items-center gap-3">
-                      <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-orange-100 text-orange-600">
-                        <MessageCircleMore size={18} />
-                      </span>
-                      {faq.question}
-                    </span>
-                    <span className={`text-blue-500 transition-transform duration-300 ${activeIndex === index ? 'rotate-180' : ''}`}>
-                      <ChevronDown size={20} />
-                    </span>
-                  </button>
-                  <div 
-                    className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                      activeIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                    }`}
-                  >
-                    <div className="p-6 pt-0 text-gray-600 leading-relaxed">
-                      {faq.answer}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <Faq  faqData={faqs} />
+
+        {/* Clients Section */}
+        <Clients />
 
         <Footer />
 

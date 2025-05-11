@@ -56,7 +56,7 @@ const Hero: React.FC<HeroProps> = () => {
                 'Formações NR33 e NR35',
                 'Consultoria em SST'
               ]}
-              mainClassName="px-4 py-2 sm:py-2.5 text-2xl sm:text-3xl md:text-5xl font-bold bg-primary-light border border-primary-light text-white rounded-lg shadow-lg"
+              mainClassName="px-4 py-2 sm:py-2.5 text-2xl sm:text-3xl md:text-5xl font-bold pb-4 bg-primary-light border border-primary-light text-white rounded-lg shadow-lg"
               staggerFrom="last"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}

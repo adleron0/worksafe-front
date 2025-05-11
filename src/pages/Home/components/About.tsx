@@ -29,7 +29,7 @@ const About = () => {
       <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="section-title text-gray-700 w-full text-center text-3xl md:text-5xl font-bold mb-8 pb-4">
+            <h2 className="section-title text-gray-700 w-full text-center text-3xl md:text-5xl font-bold pb-4 mb-8 pb-4">
               Sobre Nós
             </h2>
             <p className="text-gray-600 text-lg mb-8 leading-relaxed">

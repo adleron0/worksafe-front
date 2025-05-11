@@ -20,7 +20,6 @@ import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { z } from "zod";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PlusCircle, Trash2 } from "lucide-react";
-import { min } from "date-fns";
 
 interface FormProps {
   formData?: EntityInterface;
@@ -412,7 +411,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     });
 
   // Special handler for FAQ from course
-  const updateFaqFromCourse = (selectedName: string, selectedValue: string | string[]) => {
+  const updateFaqFromCourse = (selectedValue: string | string[]) => {
     const courseId = typeof selectedValue === 'string' ? parseInt(selectedValue, 10) : null;
     if (courseId === null) return;
     

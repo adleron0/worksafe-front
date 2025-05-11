@@ -16,7 +16,7 @@ import Faq from "./components/Faq";
 const foundationYear = 2018;
 const yearsOfExperience = new Date().getFullYear() - foundationYear;
 
-// Features
+// Features teste
 // const features = [
 //   {
 //     icon: Shield,

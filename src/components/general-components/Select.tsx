@@ -29,6 +29,7 @@ interface SelectProps {
     multiple?: boolean;
     disabled?: boolean;
     onChange?: (name: string, value: string | string[]) => void;
+    modal?: boolean;
 }
 
 const Select = ({ 
@@ -41,6 +42,7 @@ const Select = ({
     multiple = false,
     disabled = false,
     onChange = () => {},
+    modal = true,
 }: SelectProps) => {
   const isInitialMount = useRef(true);
   const [key, setKey] = useState(0); // Usado para forçar a re-renderização
@@ -63,7 +65,7 @@ const Select = ({
       setSelectedItems(Array.isArray(state) ? state : state ? [state] : []);
     }
     
-    console.log(`Select ${name} - state: ${state}, options count: ${options.length}`);
+    // console.log(`Select ${name} - state: ${state}, options count: ${options.length}`);
   }, [options, state, name, multiple]);
 
   const handleValueChange = (newValue: string) => {
@@ -112,7 +114,7 @@ const Select = ({
   // Renderiza o componente de seleção múltipla
   if (multiple) {
     return (
-      <DropdownMenu>
+      <DropdownMenu modal={modal}>
         <DropdownMenuTrigger asChild>
           <Button 
             disabled={disabled}
@@ -158,7 +160,7 @@ const Select = ({
               >
                 {options.map((option) => (
                 <DropdownMenuCheckboxItem
-                  className="cursor-pointer"
+                  className="cursor-pointer hover:bg-muted"
                   key={option[value]}
                   checked={selectedItems.includes(String(option[value]))}
                   onCheckedChange={() => handleMultipleValueChange(String(option[value]))}

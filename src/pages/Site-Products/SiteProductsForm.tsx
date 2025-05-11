@@ -128,7 +128,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("🚀 ~ handleSubmit ~ formData:", formData?.oldPrice)
     
     const result = Schema.safeParse(dataForm);
 

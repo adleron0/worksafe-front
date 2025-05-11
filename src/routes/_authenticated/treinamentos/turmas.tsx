@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
+import Turmas from '@/pages/Treinamentos-Turmas/TurmasList'
 
 export const Route = createFileRoute('/_authenticated/treinamentos/turmas')({
-  component: () => <div>Hello /_authenticated/quiron/turmas!</div>
+  component: () => <Turmas />
 })

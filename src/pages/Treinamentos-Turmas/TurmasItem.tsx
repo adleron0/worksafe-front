@@ -103,7 +103,7 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm }: Ite
       {index === 0 && (
         <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
           <div className="w-4/12">Serviço</div>
-          <div className="w-4/12">Características</div>
+          <div className="w-4/12">Brindes</div>
           <div className="w-2/12">Cadastro</div>
           <div className="w-1/12">Status</div>
           <div className="w-1/12">Ações</div>
@@ -126,10 +126,10 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm }: Ite
 
         {/* Características */}
         <div className="lg:w-4/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Características: </p>
+          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Brindes: </p>
           <div className="flex flex-wrap gap-0.5">
             {
-              item.features?.split('#').map((feature: string, index: number) => (
+              item.gifts?.split('#').map((feature: string, index: number) => (
                 <p 
                   key={`feature-${index}`} 
                   className="text-xs text-muted-foreground dark:text-gray-100 border rounded-sm py-1 px-2"

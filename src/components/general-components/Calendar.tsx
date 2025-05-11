@@ -13,9 +13,13 @@ import { DateRange } from "react-day-picker";
 
 interface CalendarPickerProps {
   mode?: "single" | "range" | "multiple";
-  startDate?: Date | null;
-  endDate?: Date | null;
-  onDateChange?: (dates: DateRange | Date | Date[] | undefined) => void;
+  name: string;
+  value?: string | null;
+  onValueChange?: (name: string, value: string | null) => void;
+  // Form integration props
+  formField?: string; // The name of the field in the form to update
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  form?: { setValue: (name: any, value: any) => void }; // The form object from react-hook-form (using any to accommodate different form libraries)
   placeholder?: string;
   className?: string;
   numberOfMonths?: number;
@@ -25,51 +29,140 @@ interface CalendarPickerProps {
 
 const CalendarPicker = ({
   mode = "single",
-  startDate = null,
-  endDate = null,
-  onDateChange,
+  name,
+  value = null,
+  onValueChange,
+  formField,
+  form,
   placeholder = "Selecione uma data",
   className,
   numberOfMonths = 1,
   disabled = false,
   buttonVariant = "outline",
 }: CalendarPickerProps) => {
-  const [date, setDate] = useState<Date | undefined>(
-    startDate ? new Date(startDate) : undefined
-  );
+  // Parse the string date value to Date object
+  const parseDate = (dateStr: string | null | undefined): Date | undefined => {
+    if (!dateStr) return undefined;
+    try {
+      return new Date(dateStr);
+    } catch {
+      console.error("Invalid date format:", dateStr);
+      return undefined;
+    }
+  };
+
+  // For single mode
+  const [date, setDate] = useState<Date | undefined>(parseDate(value));
+  
+  // For range mode - we'll need to parse the value differently
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: startDate ? new Date(startDate) : undefined,
-    to: endDate ? new Date(endDate) : undefined,
+    from: undefined,
+    to: undefined,
   });
 
-  useEffect(() => {
-    if (mode === "single" && startDate) {
-      setDate(new Date(startDate));
-    } else if (mode === "range") {
-      setDateRange({
-        from: startDate ? new Date(startDate) : undefined,
-        to: endDate ? new Date(endDate) : undefined,
-      });
-    }
-  }, [startDate, endDate, mode]);
+  // For multiple mode
+  const [dates, setDates] = useState<Date[]>([]);
 
-  // Separate handlers for each mode to ensure type safety
-  const handleSingleDateSelect = (value: Date | undefined) => {
-    setDate(value);
-    onDateChange?.(value);
+  // Update internal state when value prop changes
+  useEffect(() => {
+    if (mode === "single") {
+      setDate(parseDate(value));
+    } else if (mode === "range" && value) {
+      try {
+        // Expect value to be in format "startDate|endDate"
+        const [startStr, endStr] = value.split('|');
+        setDateRange({
+          from: startStr ? new Date(startStr) : undefined,
+          to: endStr ? new Date(endStr) : undefined,
+        });
+      } catch {
+        console.error("Invalid date range format:", value);
+      }
+    } else if (mode === "multiple" && value) {
+      try {
+        // Expect value to be in format "date1,date2,date3"
+        const dateStrings = value.split(',');
+        const parsedDates = dateStrings
+          .map(d => {
+            try { return new Date(d); } 
+            catch { return null; }
+          })
+          .filter((d): d is Date => d !== null);
+        setDates(parsedDates);
+      } catch {
+        console.error("Invalid multiple dates format:", value);
+      }
+    }
+  }, [value, mode]);
+
+  // Handlers for each mode
+  const handleSingleDateSelect = (selectedDate: Date | undefined) => {
+    setDate(selectedDate);
+    
+    // Update via onValueChange callback
+    if (onValueChange) {
+      onValueChange(name, selectedDate ? selectedDate.toISOString() : null);
+    }
+    
+    // Update form directly if form and formField are provided
+    if (form && formField) {
+      form.setValue(formField, selectedDate);
+    }
   };
 
-  const handleRangeDateSelect = (value: DateRange | undefined) => {
-    if (value) {
-      setDateRange(value);
+  const handleRangeDateSelect = (range: DateRange | undefined) => {
+    if (range) {
+      setDateRange(range);
+      
+      // Update via onValueChange callback
+      if (onValueChange) {
+        const rangeStr = `${range.from ? range.from.toISOString() : ''}|${range.to ? range.to.toISOString() : ''}`;
+        onValueChange(name, rangeStr);
+      }
+      
+      // Update form directly if form and formField are provided
+      if (form && formField) {
+        // For range mode, we expect the form field to be an array of two dates
+        form.setValue(formField, [range.from, range.to]);
+      }
     } else {
       setDateRange({ from: undefined, to: undefined });
+      
+      if (onValueChange) {
+        onValueChange(name, null);
+      }
+      
+      if (form && formField) {
+        form.setValue(formField, undefined);
+      }
     }
-    onDateChange?.(value);
   };
 
-  const handleMultipleDateSelect = (value: Date[] | undefined) => {
-    onDateChange?.(value);
+  const handleMultipleDateSelect = (selectedDates: Date[] | undefined) => {
+    if (selectedDates) {
+      setDates(selectedDates);
+      
+      // Update via onValueChange callback
+      if (onValueChange) {
+        const datesStr = selectedDates.map(d => d.toISOString()).join(',');
+        onValueChange(name, datesStr || null);
+      }
+      
+      // Update form directly if form and formField are provided
+      if (form && formField) {
+        form.setValue(formField, selectedDates);
+      }
+    } else {
+      setDates([]);
+      
+      if (onValueChange) {
+        onValueChange(name, null);
+      }
+      
+      if (form && formField) {
+        form.setValue(formField, undefined);
+      }
+    }
   };
 
   const getDisplayText = () => {
@@ -81,6 +174,10 @@ const CalendarPicker = ({
       } else if (dateRange.from) {
         return format(dateRange.from, "dd/MM/yyyy");
       }
+    } else if (mode === "multiple" && dates.length > 0) {
+      return dates.length === 1 
+        ? format(dates[0], "dd/MM/yyyy")
+        : `${dates.length} datas selecionadas`;
     }
     return placeholder;
   };
@@ -112,7 +209,7 @@ const CalendarPicker = ({
       return (
         <Calendar
           mode="multiple"
-          selected={[]}
+          selected={dates}
           onSelect={handleMultipleDateSelect}
           numberOfMonths={numberOfMonths}
           initialFocus
@@ -130,7 +227,7 @@ const CalendarPicker = ({
           variant={buttonVariant}
           className={cn(
             "w-full justify-start text-left font-normal",
-            !date && !dateRange.from && !dateRange.to && "text-muted-foreground",
+            !date && !dateRange.from && !dateRange.to && dates.length === 0 && "text-muted-foreground",
             className
           )}
           disabled={disabled}

@@ -1,116 +1,121 @@
 // React and external libraries
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-
+import React, { useState, useEffect } from "react";
 // UI Components
 import { Button } from "@/components/ui/button";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import Input from "@/components/general-components/Input";
+import Select from "@/components/general-components/Select";
 
-const SearchSchema = z.object({
-  name: z.string().optional(),
-  active: z.boolean().optional(),
-});
-
-type SearchFormData = z.infer<typeof SearchSchema>;
+interface SearchData {
+  searchName: string;
+  active?: boolean;
+}
 
 interface SearchFormProps {
-  onSubmit: (data: SearchFormData) => void;
+  onSubmit: (data: SearchData) => void;
   onClear: () => void;
   openSheet: (open: boolean) => void;
   params: Record<string, unknown>;
 }
 
 const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, params }) => {
-
-  const form = useForm<SearchFormData>({
-    resolver: zodResolver(SearchSchema),
-    defaultValues: {
-      name: "",
-      active: undefined,
-    },
+  // Form state
+  const [searchData, setSearchData] = useState<SearchData>({
+    searchName: "",
+    active: undefined as boolean | undefined,
   });
 
+  // Load params into form state
   useEffect(() => {
+    const newSearchData = { ...searchData };
+    
     Object.keys(params).forEach((key) => {
-      const paramKey = key as keyof SearchFormData;
+      const paramKey = key as keyof typeof searchData;
       const value = params[key];
       
       // Type checking for each field
       if (paramKey === 'active' && (typeof value === 'boolean' || value === undefined)) {
-        form.setValue(paramKey, value);
-      } else if (paramKey === 'name' && (typeof value === 'string' || value === undefined)) {
-        form.setValue(paramKey, value);
+        newSearchData.active = value as boolean | undefined;
+      } else if (paramKey === 'searchName' && (typeof value === 'string' || value === undefined)) {
+        newSearchData.searchName = value as string;
       }
     });
-  }, []);
+    
+    setSearchData(newSearchData);
+  }, [params]);
 
-  const handleStatusChange = (value: string) => {
-    form.setValue("active",  value === "true" ? true : false);
+  const handleChange = (name: string, value: string | number | null) => {
+    setSearchData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleStatusChange = (_name: string, value: string | string[]) => {
+    if (typeof value === 'string') {
+      setSearchData(prev => ({ ...prev, active: value === "true" ? true : false }));
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(searchData);
+    openSheet(false);
+  };
+
+  const handleClear = () => {
+    setSearchData({
+      searchName: "",
+      active: undefined,
+    });
+    onClear();
+    openSheet(false);
+  };
+
+  // Options for selects
+  const statusOptions = [
+    { id: "true", name: "Ativo" },
+    { id: "false", name: "Inativo" }
+  ];
+
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit((data) => {
-          onSubmit({ ...data });
-          openSheet(false);
-        })}
-        className="space-y-4"
-      >
-        
-        {/* Status */}
-        <div>
-          <FormLabel htmlFor="active">Status</FormLabel>
-          <Select onValueChange={handleStatusChange} value={form.watch("active")?.toString() || ""}>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Selecione status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="true">Ativo</SelectItem>
-              <SelectItem value="false">Inativo</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Nome */}
-        <FormField
-          name="name"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome</FormLabel>
-              <FormControl>
-                <Input placeholder="Digite o nome" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Status */}
+      <div>
+        <Label htmlFor="active">Status</Label>
+        <Select 
+          name="active"
+          options={statusOptions}
+          state={searchData.active?.toString() || ""}
+          onChange={handleStatusChange}
+          placeholder="Selecione status"
         />
+      </div>
 
-        {/* Botões */}
-        <div className="flex w-full space-x-2">
-          <Button className="w-1/2" type="submit">
-            Buscar
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-1/2"
-            onClick={() => {
-              form.reset();
-              onClear();
-              openSheet(false);
-            }}
-          >
-            Limpar
-          </Button>
-        </div>
-      </form>
-    </Form>
+      {/* Nome */}
+      <div>
+        <Label htmlFor="searchName">Nome</Label>
+        <Input
+          id="searchName"
+          name="searchName"
+          placeholder="Digite o nome"
+          value={searchData.searchName}
+          onValueChange={handleChange}
+        />
+      </div>
+
+      {/* Botões */}
+      <div className="flex w-full space-x-2">
+        <Button className="w-1/2" type="submit">
+          Buscar
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-1/2"
+          onClick={handleClear}
+        >
+          Limpar
+        </Button>
+      </div>
+    </form>
   );
 };
 

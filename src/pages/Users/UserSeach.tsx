@@ -1,79 +1,130 @@
 // React and external libraries
-import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { DateRange } from "react-day-picker";
-
+import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { get } from "@/services/api";
 // UI Components
 import { Button } from "@/components/ui/button";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Input from "@/components/general-components/Input";
 import CalendarPicker from "@/components/general-components/Calendar";
 import Select from "@/components/general-components/Select";
+// Interfaces and validations
+import { ApiError, Response } from "@/general-interfaces/api.interface";
 
-// Utils
-import { formatCPF, unformatCPF } from "@/utils/cpf-mask";
+interface SearchData {
+  searchName: string;
+  active?: boolean;
+  cpf: string;
+  profileId?: number | number[];
+  createdAt?: [Date | undefined, Date | undefined];
+}
 
-const userSearchSchema = z.object({
-  searchName: z.string().optional(),
-  active: z.boolean().optional(),
-  cpf: z.string().optional(),
-  profileId: z.union([z.number(), z.array(z.number())]).optional(),
-  createdAt: z.tuple([z.date().optional(), z.date().optional()]).optional(),
-});
-
-type UserSearchFormData = z.infer<typeof userSearchSchema>;
-
-interface UserSearchFormProps {
-  onSubmit: (data: UserSearchFormData) => void;
+interface SearchFormProps {
+  onSubmit: (data: SearchData) => void;
   onClear: () => void;
   openSheet: (open: boolean) => void;
   params: Record<string, unknown>;
 }
 
-const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, openSheet, params }) => {
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, params }) => {
+  // Form state
+  const [searchData, setSearchData] = useState<SearchData>({
+    searchName: "",
+    active: undefined as boolean | undefined,
+    cpf: "",
+    profileId: undefined as number | number[] | undefined,
+    createdAt: undefined as [Date | undefined, Date | undefined] | undefined,
+  });
 
-  const form = useForm<UserSearchFormData>({
-    resolver: zodResolver(userSearchSchema),
-    defaultValues: {
+  // Load params into form state
+  useEffect(() => {
+    const newSearchData = { ...searchData };
+    
+    Object.keys(params).forEach((key) => {
+      const paramKey = key as keyof typeof searchData;
+      const value = params[key];
+      
+      // Type checking for each field
+      if (paramKey === 'active' && (typeof value === 'boolean' || value === undefined)) {
+        newSearchData.active = value as boolean | undefined;
+      } else if (paramKey === 'searchName' && (typeof value === 'string' || value === undefined)) {
+        newSearchData.searchName = value as string;
+      } else if (paramKey === 'cpf' && (typeof value === 'string' || value === undefined)) {
+        newSearchData.cpf = value as string;
+      } else if (paramKey === 'profileId' && 
+                (typeof value === 'number' || 
+                 (Array.isArray(value) && value.every(item => typeof item === 'number')) || 
+                 value === undefined)) {
+        newSearchData.profileId = value as number | number[] | undefined;
+      } else if (paramKey === 'createdAt' && (Array.isArray(value) || value === undefined)) {
+        newSearchData.createdAt = value as [Date | undefined, Date | undefined] | undefined;
+      }
+    });
+    
+    setSearchData(newSearchData);
+  }, [params]);
+
+  const handleChange = (name: string, value: string | number | null) => {
+    setSearchData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleStatusChange = (_name: string, value: string | string[]) => {
+    if (typeof value === 'string') {
+      setSearchData(prev => ({ ...prev, active: value === "true" ? true : false }));
+    }
+  };
+
+  const handleRoleChange = (_name: string, value: string | string[]) => {
+    if (typeof value === 'string') {
+      setSearchData(prev => ({ ...prev, profileId: Number(value) }));
+    } else if (Array.isArray(value)) {
+      // Convert array of strings to array of numbers
+      setSearchData(prev => ({ ...prev, profileId: value.map(v => Number(v)) }));
+    }
+  };
+
+  const handleDateChange = (_name: string, value: string | null) => {
+    if (value) {
+      const [startStr, endStr] = value.split('|');
+      const startDate = startStr ? new Date(startStr) : undefined;
+      const endDate = endStr ? new Date(endStr) : undefined;
+      
+      if (startDate && endDate) {
+        setSearchData(prev => ({ ...prev, createdAt: [startDate, endDate] }));
+      } else {
+        setSearchData(prev => ({ ...prev, createdAt: undefined }));
+      }
+    } else {
+      setSearchData(prev => ({ ...prev, createdAt: undefined }));
+    }
+  };
+
+  // Convert createdAt to string format for CalendarPicker
+  const getDateRangeValue = () => {
+    const { createdAt } = searchData;
+    if (createdAt && createdAt[0] && createdAt[1]) {
+      return `${createdAt[0].toISOString()}|${createdAt[1].toISOString()}`;
+    }
+    return null;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(searchData);
+    openSheet(false);
+  };
+
+  const handleClear = () => {
+    setSearchData({
       searchName: "",
       active: undefined,
       cpf: "",
       profileId: undefined,
       createdAt: undefined,
-    },
-  });
-
-  useEffect(() => {
-    Object.keys(params).forEach((key) => {
-      const paramKey = key as keyof UserSearchFormData;
-      const value = params[key];
-      
-      // Type checking for each field
-      if (paramKey === 'active' && (typeof value === 'boolean' || value === undefined)) {
-        form.setValue(paramKey, value);
-      } else if (paramKey === 'searchName' && (typeof value === 'string' || value === undefined)) {
-        form.setValue(paramKey, value);
-      } else if (paramKey === 'cpf' && (typeof value === 'string' || value === undefined)) {
-        form.setValue(paramKey, value);
-      } else if (paramKey === 'profileId' && 
-                (typeof value === 'number' || 
-                 (Array.isArray(value) && value.every(item => typeof item === 'number')) || 
-                 value === undefined)) {
-        form.setValue(paramKey, value);
-      } else if (paramKey === 'createdAt' && (Array.isArray(value) || value === undefined)) {
-        if (Array.isArray(value) && value.length === 2) {
-          const [start, end] = value as [Date | undefined, Date | undefined];
-          setStartDate(start);
-          setEndDate(end);
-        }
-        form.setValue(paramKey, value as [Date | undefined, Date | undefined] | undefined);
-      }
     });
-  }, [params, form]); // Add form to dependency array as setValue is used
+    onClear();
+    openSheet(false);
+  };
 
   // Options for selects
   const statusOptions = [
@@ -81,163 +132,109 @@ const UserSearchForm: React.FC<UserSearchFormProps> = ({ onSubmit, onClear, open
     { id: "false", name: "Inativo" }
   ];
 
-  const roleOptions = [
-    { id: "1", name: "Admin" },
-    { id: "2", name: "Manager" },
-    { id: "3", name: "User" },
-  ];
-
-  const handleRoleChange = (_name: string, value: string | string[]) => {
-    if (typeof value === 'string') {
-      form.setValue("profileId", Number(value));
-    } else if (Array.isArray(value)) {
-      // Convert array of strings to array of numbers
-      form.setValue("profileId", value.map(v => Number(v)));
-    }
-  };
-
-  const handleStatusChange = (_name: string, value: string | string[]) => {
-    if (typeof value === 'string') {
-      form.setValue("active", value === "true" ? true : false);
-    }
-  };
-
-  const handleDateSelect = (value: DateRange | Date | Date[] | undefined) => {
-    if (value && !Array.isArray(value) && !(value instanceof Date) && 'from' in value) {
-      setStartDate(value.from);
-      setEndDate(value.to);
-    }
-  };
+  // Buscas de valores para variaveis de formulário
+  const { 
+    data: roleOptions, 
+    isFetching: isFetchingProfiles,
+  } = useQuery<Response | undefined, ApiError>({
+    queryKey: [`listPerfis`],
+    queryFn: async () => {
+      const params = [
+        { key: 'limit', value: 999 },
+        { key: 'order-id', value: 'asc' },
+      ];
+      return get('profiles', '', params);
+    },
+  });
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit((data) => {
-          const createdAt: [Date | undefined, Date | undefined] | undefined =
-            startDate && endDate ? [startDate, endDate] : undefined;
-        
-          onSubmit({ ...data, ...(createdAt ? { createdAt } : {}) });
-          openSheet(false);
-        })}
-        className="space-y-4"
-      >
-        
-        {/* Status */}
-        <div>
-          <FormLabel htmlFor="active">Status</FormLabel>
-          <Select 
-            name="active"
-            options={statusOptions}
-            state={form.watch("active")?.toString() || ""}
-            onChange={handleStatusChange}
-            placeholder="Selecione status"
-          />
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Status */}
+      <div>
+        <Label htmlFor="active">Status</Label>
+        <Select 
+          name="active"
+          options={statusOptions}
+          state={searchData.active?.toString() || ""}
+          onChange={handleStatusChange}
+          placeholder="Selecione status"
+        />
+      </div>
 
-        {/* Nome */}
-        <FormField
+      {/* Nome */}
+      <div>
+        <Label htmlFor="searchName">Nome</Label>
+        <Input
+          id="searchName"
           name="searchName"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome</FormLabel>
-              <FormControl>
-                <Input placeholder="Digite o nome" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          placeholder="Digite o nome"
+          value={searchData.searchName}
+          onValueChange={handleChange}
         />
+      </div>
 
-        {/* CPF */}
-        <Controller
+      {/* CPF */}
+      <div>
+        <Label htmlFor="cpf">CPF</Label>
+        <Input
+          id="cpf"
           name="cpf"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>CPF</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Digite o CPF"
-                  value={field.value ? formatCPF(field.value) : ""}
-                  onChange={(e) => {
-                    const unformatted = unformatCPF(e.target.value);
-                    field.onChange(unformatted);
-                  }}
-                  onBlur={() => {
-                    // Opcional: Garantir que o CPF esteja desformatado ao perder o foco
-                    if (field.value) {
-                      form.setValue("cpf", unformatCPF(field.value));
-                    }
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          placeholder="Digite o CPF"
+          format="cpf"
+          value={searchData.cpf}
+          onValueChange={handleChange}
         />
+      </div>
 
-        {/* Função (Select com multiple) */}
-        <div>
-          <FormLabel htmlFor="profileId">Função</FormLabel>
-          <Select 
-            name="profileId"
-            options={roleOptions}
-            state={(() => {
-              const profileId = form.watch("profileId");
-              if (profileId && Array.isArray(profileId)) {
-                return profileId.map((id: number) => id.toString());
-              }
-              return profileId?.toString() || "";
-            })()}
-            onChange={handleRoleChange}
-            placeholder="Selecione a função"
-            multiple
-          />
-        </div>
-
-        {/* Data de Criação (Range Picker) */}
-        <FormField
-          name="createdAt"
-          control={form.control}
-          render={() => (
-            <FormItem>
-              <FormLabel>Data de Criação</FormLabel>
-              <CalendarPicker
-                mode="range"
-                startDate={startDate}
-                endDate={endDate}
-                onDateChange={handleDateSelect}
-                placeholder="Selecione uma data"
-                numberOfMonths={1}
-              />
-            </FormItem>
-          )}
+      {/* Função (Select com multiple) */}
+      <div>
+        <Label htmlFor="profileId">Função</Label>
+        <Select 
+          name="profileId"
+          disabled={isFetchingProfiles}
+          options={roleOptions?.rows || []}
+          state={(() => {
+            const { profileId } = searchData;
+            if (profileId && Array.isArray(profileId)) {
+              return profileId.map((id: number) => id.toString());
+            }
+            return profileId?.toString() || "";
+          })()}
+          onChange={handleRoleChange}
+          placeholder="Selecione a função"
+          multiple
         />
+      </div>
 
-          {/* Botões */}
-          <div className="flex w-full space-x-2">
-          <Button className="w-1/2" type="submit">
-            Buscar
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-1/2"
-            onClick={() => {
-              form.reset();
-              setStartDate(undefined);
-              setEndDate(undefined);
-              onClear();
-              openSheet(false);
-            }}
-          >
-            Limpar
-          </Button>
-        </div>
-      </form>
-    </Form>
+      {/* Data de Criação (Range Picker) */}
+      <div>
+        <Label htmlFor="createdAt">Data de Criação</Label>
+        <CalendarPicker
+          mode="range"
+          name="dateRange"
+          value={getDateRangeValue()}
+          onValueChange={handleDateChange}
+          placeholder="Selecione uma data"
+          numberOfMonths={1}
+        />
+      </div>
+
+      {/* Botões */}
+      <div className="flex w-full space-x-2">
+        <Button className="w-1/2" type="submit">
+          Buscar
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-1/2"
+          onClick={handleClear}
+        >
+          Limpar
+        </Button>
+      </div>
+    </form>
   );
 };
 
-export default UserSearchForm;
+export default SearchForm;

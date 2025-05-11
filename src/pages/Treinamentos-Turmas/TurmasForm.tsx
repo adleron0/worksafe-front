@@ -5,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 // Template Components
 import { useLoader } from "@/context/GeneralContext";
 import DropUpload from "@/components/general-components/DropUpload";
+import CalendarPicker from "@/components/general-components/Calendar";
 import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import Select from "@/components/general-components/Select";
 // Interfaces and validations
 import { Turmas as EntityInterface } from "./interfaces/turmas.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
-import { ApiError } from "@/general-interfaces/api.interface";
+import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { z } from "zod";
 
 interface FormProps {
@@ -154,7 +155,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     },
   });
 
-  const handleChange = (name: string, value: string | number) => {
+  const handleChange = (name: string, value: string | number | null) => {
     setDataForm((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -186,7 +187,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   };
 
   // Buscas de valores para variaveis de formulário
-
   const { 
       data: courses, 
     } = useQuery<Response | undefined, ApiError>({
@@ -230,9 +230,50 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         />
         {errors.courseId && <p className="text-red-500 text-sm">{errors.courseId}</p>}
       </div>
+
+      <div>
+        <Label htmlFor="hoursDuration">Carga Horária (Horas)</Label>
+        <Number
+          id="hoursDuration"
+          name="hoursDuration"
+          min={1}
+          max={1000}
+          value={dataForm.hoursDuration}
+          onValueChange={handleChange}
+        />
+        {errors.hoursDuration && <p className="text-red-500 text-sm">{errors.hoursDuration}</p>}
+      </div>
+
+      <div>
+        <Label htmlFor="initialDate">Data de Início</Label>
+        <CalendarPicker
+          mode="single"
+          name="initialDate"
+          value={dataForm.initialDate}
+          onValueChange={(name, value) => handleChange(name, value)}
+          formField="initialDate"
+          placeholder="Selecione a data de início"
+          className="mt-1"
+        />
+        {errors.initialDate && <p className="text-red-500 text-sm">{errors.initialDate}</p>}
+      </div>
+
+      <div>
+        <Label htmlFor="finalDate">Data de Fim</Label>
+        <CalendarPicker
+          mode="single"
+          name="finalDate"
+          value={dataForm.finalDate}
+          onValueChange={(name, value) => handleChange(name, value)}
+          formField="finalDate"
+          placeholder="Selecione a data de fim"
+          className="mt-1"
+        />
+        {errors.finalDate && <p className="text-red-500 text-sm">{errors.finalDate}</p>}
+      </div>
       
       <div>
-        <Label htmlFor="price">Valor de venda atual</Label>
+        <Label htmlFor="price">Valor atual</Label>
         <Input
           id="price"
           name="price"
@@ -258,18 +299,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {errors.oldPrice && <p className="text-red-500 text-sm">{errors.oldPrice}</p>}
       </div>
 
-      <div>
-        <Label htmlFor="hoursDuration">Horas de Duração</Label>
-        <Number
-          id="hoursDuration"
-          name="hoursDuration"
-          min={1}
-          max={1000}
-          value={dataForm.hoursDuration}
-          onValueChange={handleChange}
-        />
-        {errors.hoursDuration && <p className="text-red-500 text-sm">{errors.hoursDuration}</p>}
-      </div>
 
       <div className="mt-4 flex justify-between">
         <Label htmlFor="openClass">Turma aberta?</Label>
@@ -283,7 +312,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
 
       <div className="mt-4 flex justify-between">
-        <Label htmlFor="allowExam">Tem teste?</Label>
+        <Label htmlFor="allowExam">Tem Prova?</Label>
         <Switch
           id="allowExam"
           name="allowExam"
@@ -294,7 +323,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
 
       <div className="mt-4 flex justify-between">
-        <Label htmlFor="allowReview">Tem correção?</Label>
+        <Label htmlFor="allowReview">Tem Avaliação?</Label>
         <Switch
           id="allowReview"
           name="allowReview"
@@ -305,8 +334,8 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
 
       <div>
-        <Label htmlFor="gifts">Presentes</Label>
-        <p className="text-xs text-muted-foreground font-medium">Separar presentes com #</p>
+        <Label htmlFor="gifts">Brindes</Label>
+        <p className="text-xs text-muted-foreground font-medium">Separar brindes com #</p>
         <Input
           id="gifts"
           name="gifts"

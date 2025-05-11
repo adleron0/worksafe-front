@@ -4,6 +4,7 @@ import Training from "./components/Training";
 import NavBar from "./components/NavBar";
 import Hero from "./components/Hero";
 // import Feature from "./components/Feature";
+import Parceiros from "./components/Parceiros";
 import Clients from "./components/Clients";
 import Services from "./components/Services";
 import Products from "./components/Products";
@@ -128,6 +129,9 @@ export default function Home() {
 
       <main className="min-h-screen pt-20">
         <Hero yearsOfExperience={yearsOfExperience} />
+
+        {/* Partners Section */}
+        <Parceiros />
 
         {/* Services Section */}
         <Services handleWhatsApp={handleWhatsApp} />

@@ -58,7 +58,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     ).optional(),
     initialDate: z.string().optional().nullable(),
     finalDate: z.string().optional().nullable(),
-    landingPagesDates: z.string().optional().nullable(),
+    landingPagesDates: z.string().min(3, { message: "Datas de divulgação devem ter pelo menos 3 caracteres" }),
     allowExam: z.boolean().optional().nullable(),
     allowReview: z.boolean().optional(),
     minimumQuorum: z.number().optional(),
@@ -138,7 +138,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     faq: parseFaqString(formData?.faq),
     initialDate: formData?.initialDate || null,
     finalDate: formData?.finalDate || null,
-    landingPagesDates: formData?.landingPagesDates || null,
+    landingPagesDates: formData?.landingPagesDates || "",
     allowExam: formData?.allowExam || true,
     allowReview: formData?.allowReview || true,
     minimumQuorum: formData?.minimumQuorum || 0,
@@ -273,8 +273,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         const path = error.path.join('.');
         if (path) {
           newErrors[path] = error.message;
-          console.log("🚀 ~ result.error.errors.forEach ~ path:", path);
-          console.log("🚀 ~ result.error.errors.forEach ~ error.message:", error.message);
         }
       });
       
@@ -471,7 +469,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
 
       <div>
-        <Label htmlFor="name">Nome a Turma <span>*</span></Label>
+        <Label htmlFor="name">Nome da Turma <span>*</span></Label>
           <Input
             id="name"
             name="name"
@@ -522,6 +520,19 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           className="mt-1"
         />
         {errors.finalDate && <p className="text-red-500 text-sm">{errors.finalDate}</p>}
+      </div>
+
+      <div>
+        <Label htmlFor="landingPagesDates">Datas Exatas para Divulgação <span>*</span></Label>
+        <Input
+          id="landingPagesDates"
+          name="landingPagesDates"
+          placeholder="Ex: 12, 13 e 14 de janeiro"
+          value={dataForm.landingPagesDates ?? ''}
+          onValueChange={handleChange}
+          className="mt-1"
+        />
+        {errors.landingPagesDates && <p className="text-red-500 text-sm">{errors.landingPagesDates}</p>}
       </div>
       
       <div>
@@ -657,7 +668,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
 
       <div>
-        <Label htmlFor="gifts">Brindes</Label>
+        <Label htmlFor="gifts">Brindes do Curso</Label>
         <p className="text-xs text-muted-foreground font-medium">Separar brindes com #</p>
         <Input
           id="gifts"

@@ -102,9 +102,9 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm }: Ite
       {/* Renderiza o Header apenas no primeiro item */}
       {index === 0 && (
         <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
-          <div className="w-4/12">Serviço</div>
-          <div className="w-4/12">Brindes</div>
-          <div className="w-2/12">Cadastro</div>
+          <div className="w-4/12">Turma</div>
+          <div className="w-4/12">Detlhes</div>
+          <div className="w-2/12">Período</div>
           <div className="w-1/12">Status</div>
           <div className="w-1/12">Ações</div>
         </div>
@@ -112,7 +112,30 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm }: Ite
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
-        
+        {/* Badges */}
+        <div className="absolute -top-1 left-4 flex items-center gap-2">
+            <Badge variant="outline" className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary">
+              <Icon name="asterisk" className="w-4 h-4" />
+              {item.openClass ? "Turma aberta" : "InCompany"}
+            </Badge>
+
+            { item.minimumQuorum && (
+              <Badge variant="outline" className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary">
+                <Icon name="arrow-big-down-dash" className="w-3 h-3" />
+                {`Mín: ${item.minimumQuorum}`}
+              </Badge>
+              )
+            }
+
+            { item.maxSubscriptions && (
+              <Badge variant="outline" className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary">
+                <Icon name="arrow-big-up-dash" className="w-3 h-3" />
+                {`Máx: ${item.maxSubscriptions}`}
+              </Badge>
+              )
+            }
+        </div>
+
         {/* Avatar e Nome */}
         <div className="w-full lg:w-4/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border rounded-md">
@@ -121,32 +144,51 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm }: Ite
           </Avatar>
           <div className="break-words w-9/12 md:w-full">
             <h2 className="text-sm font-semibold">{item.name}</h2>
+            <p className="text-xs text-muted-foreground dark:text-gray-100">
+              {item.hoursDuration} horas
+            </p>
+            <p className="text-xs text-muted-foreground dark:text-gray-100">
+              {item.landingPagesDates}
+            </p>
           </div>
         </div>
 
-        {/* Características */}
+        {/* Detalhes */}
         <div className="lg:w-4/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Brindes: </p>
-          <div className="flex flex-wrap gap-0.5">
-            {
-              item.gifts?.split('#').map((feature: string, index: number) => (
-                <p 
-                  key={`feature-${index}`} 
-                  className="text-xs text-muted-foreground dark:text-gray-100 border rounded-sm py-1 px-2"
-                >
-                  {feature}
-                </p>
-              ))
-            }
+          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Detalhes: </p>
+          <div className="flex flex-col items-start gap-0.5">
+            <p className="text-xs text-muted-foreground dark:text-gray-100">
+              {item.price ? `valor atual: R$ ${item.price}` : 'Não informado'}
+            </p>
+            <p className="text-xs text-muted-foreground dark:text-gray-100">
+              {item.oldPrice ? `valor antigo: R$ ${item.oldPrice}` : 'Não informado'}
+            </p>
+            <div className="flex flex-wrap gap-0.5">
+              {
+                item.gifts?.split('#').map((feature: string, index: number) => (
+                  <p 
+                    key={`feature-${index}`} 
+                    className="text-xs text-muted-foreground dark:text-gray-100 border rounded-sm py-1 px-2"
+                  >
+                    {feature}
+                  </p>
+                ))
+              }
+            </div>
           </div>
         </div>
 
-        {/* Data de Criação */}
+        {/* Período */}
         <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Cadastro: </p>
-          <p className="text-sm text-muted-foreground dark:text-gray-100">
-            {new Date(item.createdAt || '2024-01-01').toLocaleDateString()}
-          </p>
+          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Período: </p>
+          <div>
+            <p className="text-sm text-muted-foreground dark:text-gray-100">
+              {new Date(item.initialDate || '2024-01-01').toLocaleDateString()}
+            </p>
+            <p className="text-sm text-muted-foreground dark:text-gray-100">
+              {new Date(item.finalDate || '2024-01-01').toLocaleDateString()}
+            </p>
+          </div>
         </div>
 
         {/* Status */}

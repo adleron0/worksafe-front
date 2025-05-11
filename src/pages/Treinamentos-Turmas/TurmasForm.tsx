@@ -282,6 +282,28 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         />
       </div>
 
+      <div className="mt-4 flex justify-between">
+        <Label htmlFor="allowExam">Tem teste?</Label>
+        <Switch
+          id="allowExam"
+          name="allowExam"
+          checked={dataForm.allowExam ? true : false}
+          onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowExam: !prev.allowExam }))}
+          className="mt-1"
+        />
+      </div>
+
+      <div className="mt-4 flex justify-between">
+        <Label htmlFor="allowReview">Tem correção?</Label>
+        <Switch
+          id="allowReview"
+          name="allowReview"
+          checked={dataForm.allowReview ? true : false}
+          onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowReview: !prev.allowReview }))}
+          className="mt-1"
+        />
+      </div>
+
       <div>
         <Label htmlFor="gifts">Presentes</Label>
         <p className="text-xs text-muted-foreground font-medium">Separar presentes com #</p>

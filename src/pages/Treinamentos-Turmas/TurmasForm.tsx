@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { post, put } from "@/services/api";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { post, put, get } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 // Template Components
 import { useLoader } from "@/context/GeneralContext";
 import DropUpload from "@/components/general-components/DropUpload";
 import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import {Switch} from "@/components/ui/switch";
+import Number from "@/components/general-components/Number";
+import Select from "@/components/general-components/Select";
 // Interfaces and validations
-import { SiteProducts as EntityInterface } from "@/pages/Site-Products/interfaces/site-products.interface";
+import { Turmas as EntityInterface } from "./interfaces/turmas.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { z } from "zod";
@@ -28,12 +30,27 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   // Schema
   const Schema = z.object({
     name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
-    featured: z.boolean(),
-    features: z.string().optional(),
-    description: z.string().min(10, { message: "Descrição deve ter pelo menos 3 caracteres" }),
-    price: z.number().optional(),
-    oldPrice: z.number().optional(),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
+    customerId: z.number().optional().nullable(),
+    courseId: z.number().min(1, { message: "Id do curso é obrigatório" }),
+    price: z.number().min(0, { message: "Valor de venda é obrigatório" }),
+    oldPrice: z.number(),
+    hoursDuration: z.number().min(1, { message: "Duração é obrigatório" }),
+    openClass: z.boolean(),
+    gifts: z.string().optional().nullable(),
+    description: z.string().optional().nullable(),
+    curriculum: z.string().optional().nullable(),
+    videoUrl: z.string().optional().nullable(),
+    videoTitle: z.string().optional().nullable(),
+    videoSubtitle: z.string().optional().nullable(),
+    videoDescription: z.string().optional().nullable(),
+    active: z.boolean().optional().nullable(),
+    faq: z.string().optional().nullable(),
+    initialDate: z.string().optional().nullable(),
+    finalDate: z.string().optional().nullable(),
+    landingPagesDates: z.string().optional().nullable(),
+    allowExam: z.boolean().optional().nullable(),
+    allowReview: z.boolean().optional().nullable(),
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
       (value) => value === null || value instanceof File,
       {
@@ -45,13 +62,28 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   type FormData = z.infer<typeof Schema>;
 
   const [dataForm, setDataForm] = useState<FormData>({
-    name: formData?.name || "",
-    features: formData?.features || "",
-    featured: formData?.featured || false,
-    description: formData?.description || "",
-    price: Number(formData?.price) || 0,
-    oldPrice: Number(formData?.oldPrice) || 0,
-    imageUrl: formData?.imageUrl || "",
+    name: formData?.name || '',
+    imageUrl: formData?.imageUrl || '',
+    customerId: formData?.customerId || null,
+    courseId: formData?.courseId || 1,
+    price: formData?.price ?? 0,
+    oldPrice: formData?.oldPrice ?? 0,
+    hoursDuration: formData?.hoursDuration || 1,
+    openClass: formData?.openClass || false,
+    gifts: formData?.gifts || '',
+    description: formData?.description || null,
+    curriculum: formData?.curriculum || null,
+    videoUrl: formData?.videoUrl || null,
+    videoTitle: formData?.videoTitle || null,
+    videoSubtitle: formData?.videoSubtitle || null,
+    videoDescription: formData?.videoDescription || null,
+    active: formData?.active || null,
+    faq: formData?.faq || null,
+    initialDate: formData?.initialDate || null,
+    finalDate: formData?.finalDate || null,
+    landingPagesDates: formData?.landingPagesDates || null,
+    allowExam: formData?.allowExam || null,
+    allowReview: formData?.allowReview || null,
     image: formData?.image || null,
   });
   const initialFormRef = useRef(dataForm);
@@ -130,9 +162,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     e.preventDefault();
     
     const result = Schema.safeParse(dataForm);
-
+    console.log(160, result);
+    
     if (!result.success) {
-      // Extract error messages from Zod validation result
       const newErrors: { [key: string]: string } = {};
       
       result.error.errors.forEach((error) => {
@@ -155,6 +187,19 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   // Buscas de valores para variaveis de formulário
 
+  const { 
+      data: courses, 
+    } = useQuery<Response | undefined, ApiError>({
+      queryKey: [`listCursos`],
+      queryFn: async () => {
+        const params = [
+          { key: 'limit', value: 999 },
+          { key: 'order-name', value: 'asc' },
+        ];
+        return get('courses', '', params);
+      },
+    });
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
       <DropUpload
@@ -174,17 +219,18 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
       </div>
 
-      <div className="flex gap-2 items-center my-2">
-        <Label htmlFor="featured" className="cursor-pointer">Produto Destaque</Label>
-        <Switch
-          id="featured"
-          name="featured"
-          checked={dataForm.featured}
-          onCheckedChange={() => setDataForm((prev) => ({ ...prev, featured: !prev.featured }))}
-          className="mt-1"
+      <div>
+        <Label htmlFor="courseId">Curso<span>*</span></Label>
+        <Select 
+          name="courseId"
+          options={courses?.rows || []}
+          onChange={(name, value) => handleChange(name, +value)} 
+          state={dataForm.courseId ? String(dataForm.courseId) : ""}
+          placeholder="Selecione o estado"
         />
+        {errors.courseId && <p className="text-red-500 text-sm">{errors.courseId}</p>}
       </div>
-
+      
       <div>
         <Label htmlFor="price">Valor de venda atual</Label>
         <Input
@@ -195,6 +241,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           format="currency"
           className="mt-1"
         />
+        {errors.price && <p className="text-red-500 text-sm">{errors.price}</p>}
       </div>
 
       <div>
@@ -208,34 +255,45 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           format="currency"
           className="mt-1"
         />
+        {errors.oldPrice && <p className="text-red-500 text-sm">{errors.oldPrice}</p>}
       </div>
 
       <div>
-        <Label htmlFor="description">Descrição <span>*</span></Label>
-        <Input
-          id="description"
-          name="description"
-          placeholder="Descreva o produto"
-          value={dataForm.description}
+        <Label htmlFor="hoursDuration">Horas de Duração</Label>
+        <Number
+          id="hoursDuration"
+          name="hoursDuration"
+          min={1}
+          max={1000}
+          value={dataForm.hoursDuration}
           onValueChange={handleChange}
-          type="textArea"
-          className="mt-1"
         />
-        {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+        {errors.hoursDuration && <p className="text-red-500 text-sm">{errors.hoursDuration}</p>}
       </div>
-      
-      <div>
-        <Label htmlFor="features">Características</Label>
-        <p className="text-xs text-muted-foreground font-medium">Separar características com #!</p>
-        <Input
-          id="features"
-          name="features"
-          placeholder="Digite as características"
-          value={dataForm.features}
-          onValueChange={handleChange}
-          type="textArea"
+
+      <div className="mt-4 flex justify-between">
+        <Label htmlFor="openClass">Turma aberta?</Label>
+        <Switch
+          id="openClass"
+          name="openClass"
+          checked={dataForm.openClass ? true : false}
+          onCheckedChange={() => setDataForm((prev) => ({ ...prev, openClass: !prev.openClass }))}
           className="mt-1"
         />
+      </div>
+
+      <div>
+        <Label htmlFor="gifts">Presentes</Label>
+        <p className="text-xs text-muted-foreground font-medium">Separar presentes com #</p>
+        <Input
+          id="gifts"
+          name="gifts"
+          placeholder="Presentes"
+          value={dataForm.gifts ?? ''}
+          onValueChange={handleChange}
+          className="mt-1"
+        />
+        {errors.hoursDuration && <p className="text-red-500 text-sm">{errors.gifts}</p>}
       </div>
 
       <Button

@@ -525,7 +525,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
                       <Trash2 size={16} className="text-red-500" />
                     </Button>
                   </div>
-                  <AccordionContent className="bg-white">
+                  <AccordionContent className="bg-background/10">
                     <div className="space-y-4 p-3">
                       <div>
                         <Label htmlFor={`faq-question-${index}`}>Pergunta</Label>
@@ -560,7 +560,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
               ))}
             </Accordion>
           ) : (
-            <div className="bg-white p-6 rounded-md text-center border border-primary/20">
+            <div className="bg-background/10 p-6 rounded-md text-center border border-primary/20">
               <p className="text-muted-foreground text-xs mb-3">Nenhuma pergunta frequente adicionada</p>
               <Button 
                 type="button" 

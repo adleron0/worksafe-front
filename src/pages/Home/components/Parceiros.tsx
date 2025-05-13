@@ -3,12 +3,35 @@ import parceiro1 from "../../../assets/images/parceiros/1.png";
 import parceiro2 from "../../../assets/images/parceiros/2.png";
 import parceiro3 from "../../../assets/images/parceiros/3.png";
 import parceiro4 from "../../../assets/images/parceiros/4.png";
+import { useEffect, useState } from "react";
 
 export default function Parceiros() {
   // Array of client images
   const clientImages = [
     parceiro1, parceiro2, parceiro3, parceiro4,
   ];
+  
+  // State to track if images are loaded
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  
+  // Preload images to fix Safari mobile issue
+  useEffect(() => {
+    const preloadImages = async () => {
+      const promises = clientImages.map((src) => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.src = src;
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(false);
+        });
+      });
+      
+      await Promise.all(promises);
+      setImagesLoaded(true);
+    };
+    
+    preloadImages();
+  }, []);
 
   return (
     <section id="clientes" className="py-10 bg-gray-100 overflow-hidden">
@@ -23,19 +46,26 @@ export default function Parceiros() {
           </p>
         </div>
 
-        {/* First slider - Left to Right */}
+        {/* Slider - Left to Right */}
         <div className="relative overflow-hidden">
           {/* Fade effect - left side */}
           <div className="absolute left-0 top-0 h-full w-24 bg-gradient-to-r from-gray-100 to-transparent z-10"></div>
           
           <div className="flex overflow-hidden whitespace-nowrap">
-            <div className="flex space-x-8 py-4 animate-marquee">
+            <div 
+              className="flex space-x-8 py-4 animate-marquee" 
+              style={{ 
+                animationDuration: "20s", 
+                visibility: imagesLoaded ? "visible" : "hidden" 
+              }}
+            >
               {clientImages.map((src, index) => (
                 <div key={`slider1-${index}`} className="flex-shrink-0 h-24 w-auto">
                   <img 
                     src={src} 
-                    alt={`Cliente ${index + 1}`} 
-                    className="h-full w-auto object-contain rounded-md border border-primary-light/30 grayscale hover:grayscale-0 transition-all duration-300"
+                    alt={`Parceiro ${index + 1}`} 
+                    className="h-full w-auto object-contain rounded-md grayscale hover:grayscale-0 transition-all duration-300"
+                    loading="eager"
                   />
                 </div>
               ))}
@@ -44,8 +74,9 @@ export default function Parceiros() {
                 <div key={`slider1-dup-${index}`} className="flex-shrink-0 h-24 w-auto">
                   <img 
                     src={src} 
-                    alt={`Cliente ${index + 1}`} 
-                    className="h-full w-auto object-contain rounded-md border border-primary-light/30 grayscale hover:grayscale-0 transition-all duration-300"
+                    alt={`Parceiro ${index + 1}`} 
+                    className="h-full w-auto object-contain rounded-md grayscale hover:grayscale-0 transition-all duration-300"
+                    loading="eager"
                   />
                 </div>
               ))}

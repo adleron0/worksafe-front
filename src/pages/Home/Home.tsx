@@ -1,9 +1,9 @@
 import { useCart } from "../../hooks/use-cart"; // Import the custom hook
-import { MessageCircleMore } from "lucide-react";
+import { Award, Clock, MessageCircleMore, Shield, Users } from "lucide-react";
 import Training from "./components/Training";
 import NavBar from "./components/NavBar";
 import Hero from "./components/Hero";
-// import Feature from "./components/Feature";
+import Feature from "./components/Feature";
 import Parceiros from "./components/Parceiros";
 import Clients from "./components/Clients";
 import Services from "./components/Services";
@@ -18,28 +18,28 @@ const foundationYear = 2018;
 const yearsOfExperience = new Date().getFullYear() - foundationYear;
 
 // Features teste
-// const features = [
-//   {
-//     icon: Shield,
-//     title: "Segurança Garantida",
-//     description: "Equipamentos certificados e profissionais qualificados",
-//   },
-//   {
-//     icon: Award,
-//     title: "Certificações",
-//     description: "Credenciamento em diversas normas técnicas",
-//   },
-//   {
-//     icon: Clock,
-//     title: "Atendimento 24/7",
-//     description: "Atendimento emergencial disponível 24h",
-//   },
-//   {
-//     icon: Users,
-//     title: "Equipe Especializada",
-//     description: "Profissionais com vasta experiência no setor",
-//   },
-// ];
+const features = [
+  {
+    icon: Shield,
+    title: "Segurança Garantida",
+    description: "Equipamentos e profissionais certificados",
+  },
+  {
+    icon: Award,
+    title: "Certificações",
+    description: "Credenciamento em diversas normas técnicas",
+  },
+  {
+    icon: Clock,
+    title: "Atendimento 24/7",
+    description: "Atendimento emergencial disponível 24h",
+  },
+  {
+    icon: Users,
+    title: "Equipe Especializada",
+    description: "Profissionais com vasta experiência no setor",
+  },
+];
 
 // FAQ treinamentos
 const faqs = [
@@ -135,6 +135,26 @@ export default function Home() {
 
         {/* Services Section */}
         <Services handleWhatsApp={handleWhatsApp} />
+
+        {/* Features Section */}
+        <div className="bg-gray-50 py-10">
+          <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
+            <div className="text-center mb-10 md:mb-16">
+              <h2 className="section-title text-gray-800 text-3xl md:text-5xl font-bold md:pb-4">
+                Vantagens de Trabalhar Conosco
+              </h2>
+              <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto">
+                Nossa missão é garantir a segurança e saúde de todos os trabalhadores, oferecendo serviços de qualidade e excelência.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+              {features.map((feature) => (
+                <Feature key={feature.title} {...feature} />
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* Products Section */}
         <Cta

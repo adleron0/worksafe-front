@@ -119,17 +119,17 @@ const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
   });
 
   return (
-    <section className="py-20 bg-gray-50" id="servicos">
-      <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
-        <div className="text-center mb-16">
-          <h2 className="section-title text-gray-700 text-3xl md:text-5xl font-bold pb-4">
+    <section className="py-15 md:py-20 bg-gray-50" id="servicos">
+      <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
+        <div className="text-center mb-10 md:mb-16">
+          <h2 className="section-title text-gray-800 text-3xl md:text-5xl font-bold md:pb-4">
             Nossos Serviços
           </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto">
             Soluções especializadas para trabalhos em altura, espaços confinados e resgate.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-8">
           {isLoading ? (
             // Render skeleton cards
             Array(3).fill(0).map((_, index) => (
@@ -140,7 +140,7 @@ const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
                 <div className="aspect-[4/3] relative">
                   <Skeleton className="absolute inset-0 h-full w-full" />
                 </div>
-                <div className="p-6 flex flex-col flex-grow">
+                <div className="p-2 md:p-6 flex flex-col flex-grow">
                   <ul className="space-y-3">
                     {Array(4).fill(0).map((_, idx) => (
                       <li key={`skeleton-feature-${idx}`} className="flex items-center">
@@ -172,22 +172,22 @@ const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
                   />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent duration-500 group-hover:scale-110" />
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                  <h3 className="text-2xl font-bold mb-2">{service.name}</h3>
+                <div className="absolute bottom-0 left-0 right-0 p-2 md:p-6 text-white">
+                  <h3 className="text-sm md:text-2xl font-bold mb-2">{service.name}</h3>
                 </div>
               </div>
-              <div className="p-6 flex flex-col flex-grow">
-                <ul className="space-y-3">
+              <div className="p-2 md:p-6 flex flex-col flex-grow">
+                <ul className="space-y-1 md:space-y-2">
                   {service.features?.split('#').map((feature, idx) => (
-                    <li key={`services-features-${idx}`} className="flex text-xs md:text-sm items-center text-gray-700">
-                      <CheckCircle className="w-4 h-4 text-primary-light mr-2 flex-shrink-0" />
+                    <li key={`services-features-${idx}`} className="flex text-xs md:text-sm items-start md:items-center text-gray-700">
+                      <CheckCircle className="w-2.5 md:w-4 h-2.5 md:h-4 text-primary-light mr-2 mt-1 flex-shrink-0" />
                       {feature}
                     </li>
                   ))}
                 </ul>
                 <div className="mt-auto">
                   <Button
-                    className="w-full mt-6 bg-black hover:bg-primary-light text-white transition-colors"
+                    className="w-full text-xs md:text-base mt-6 bg-black hover:bg-primary-light text-white transition-colors"
                     onClick={() => handleWhatsApp()}
                   >
                     Solicitar Orçamento

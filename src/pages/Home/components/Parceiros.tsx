@@ -34,15 +34,15 @@ export default function Parceiros() {
   }, []);
 
   return (
-    <section id="clientes" className="py-10 bg-gray-100 overflow-hidden">
-      <div className="flex flex-col md:flex-row mt-8 items-center justify-between gap-4 mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
-        <div className="text-center md:text-start mb-8">
-          <h2 className="flex items-center justify-center md:justify-start section-title text-primary-light text-3xl md:text-5xl font-bold pb-4">
+    <section id="clientes" className="py-4 bg-gray-100 overflow-hidden">
+      <div className="flex flex-col md:flex-row my-4 items-center justify-between gap-4 mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
+        <div className="text-start">
+          {/* <h2 className="flex items-center justify-center md:justify-start section-title text-primary-light text-3xl md:text-5xl font-bold pb-4">
             <Icon name="asterisk" className="inline-block w-8 h-8 md:w-12 md:h-12" />
             Parceiros
-          </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Parcerias com grandes marcas para oferecer o melhor e mais moderno em segurança do trabalho.
+          </h2> */}
+          <p className="text-gray-600 font-medium text-base md:text-lg max-w-2xl mx-auto">
+            <strong className="text-primary-light underline">Parcerias</strong> com grandes Nomes para oferecer o de Melhor e mais Moderno em Segurança do Trabalho.
           </p>
         </div>
 
@@ -53,7 +53,7 @@ export default function Parceiros() {
           
           <div className="flex overflow-hidden whitespace-nowrap">
             <div 
-              className="flex space-x-8 py-4 animate-marquee" 
+              className="flex space-x-4 py-4 animate-marquee" 
               style={{ 
                 animationDuration: "20s", 
                 visibility: imagesLoaded ? "visible" : "hidden" 

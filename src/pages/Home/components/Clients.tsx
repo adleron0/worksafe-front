@@ -38,10 +38,10 @@ export default function Clients() {
     <section id="clientes" className="py-10 bg-gray-50 overflow-hidden">
       <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
         <div className="text-center mb-8">
-          <h2 className="section-title text-gray-700 text-3xl md:text-5xl font-bold pb-4">
+          <h2 className="section-title text-gray-800 text-3xl md:text-5xl font-bold md:pb-4">
             Faça como grandes marcas
           </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto">
             Experimente nossos serviços e veja como nossos profissionais podem ajudar você a alcançar seus objetivos.
           </p>
         </div>

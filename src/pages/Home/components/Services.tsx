@@ -166,7 +166,7 @@ const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
                   <img
                     src={service.imageUrl || ""}
                     alt={service.name}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform ease-in-out duration-500 grayscale group-hover:grayscale-0 group-hover:scale-110"
                     width={400}
                     height={400}
                   />

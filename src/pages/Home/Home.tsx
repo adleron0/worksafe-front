@@ -1,17 +1,19 @@
 import { useCart } from "../../hooks/use-cart"; // Import the custom hook
 import { Award, Clock, MessageCircleMore, Shield, Users } from "lucide-react";
-import Training from "./components/Training";
+// import Training from "./components/Training";
 import NavBar from "./components/NavBar";
 import Hero from "./components/Hero";
 import Feature from "./components/Feature";
 import Parceiros from "./components/Parceiros";
 import Clients from "./components/Clients";
-import Services from "./components/Services";
+// import Services from "./components/Services";
+import Services2 from "./components/Services2";
 import Products from "./components/Products";
 // import Rentals from "./components/Rentals";
 import Cta from "./components/Cta";
 import Footer from "./components/Footer";
 import Faq from "./components/Faq";
+// import About from "./components/About";
 
 // Calcula anos
 const foundationYear = 2018;
@@ -134,17 +136,21 @@ export default function Home() {
         <Parceiros />
 
         {/* Services Section */}
-        <Services handleWhatsApp={handleWhatsApp} />
+        {/* Original Services Component */}
+        {/* <Services handleWhatsApp={handleWhatsApp} /> */}
+        
+        {/* New Services2 Component */}
+        <Services2 handleWhatsApp={handleWhatsApp} />
 
         {/* Features Section */}
-        <div className="bg-gray-50 py-10">
+        <div className="bg-gray-100 py-10">
           <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
             <div className="text-center mb-10 md:mb-16">
-              <h2 className="section-title text-gray-800 text-3xl md:text-5xl font-bold md:pb-4">
-                Vantagens de Trabalhar Conosco
+              <h2 className="section-title text-primary-light text-3xl md:text-5xl font-bold md:pb-4">
+                Não Vendemos Segurança!
               </h2>
               <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto">
-                Nossa missão é garantir a segurança e saúde de todos os trabalhadores, oferecendo serviços de qualidade e excelência.
+                Nossa missão é garantir a segurança e saúde de todos os trabalhadores, oferecendo serviços de qualidade e excelência. Por tanto, Não Vendemos Segurança, Nós a Praticamos!
               </p>
             </div>
 
@@ -155,6 +161,9 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* About Section */}
+        {/* <About /> */}
 
         {/* Products Section */}
         <Cta
@@ -172,13 +181,13 @@ export default function Home() {
         {/* CTA Section 2 */}
         <Cta
           title="Precisa de Treinamento para sua Equipe?"
-          subtitle="Oferecemos treinamentos in-company personalizados para sua Empresa. Capacite sua equipe com os melhores profissionais do mercado."
+          subtitle="Oferecemos treinamentos in-company personalizados para sua Empresa."
           buttonText="Agendar Consultoria"
           whatsAppMessage="Olá, gostaria de agendar um treinamento para minha equipe!"
           handleWhatsApp={handleWhatsApp}
         />
 
-        <Training formatCurrency={formatCurrency} />
+        {/* <Training formatCurrency={formatCurrency} /> */}
 
         <Faq  faqData={faqs} />
 

@@ -14,10 +14,10 @@ const Cta: React.FC<CtaProps> = ({ title, subtitle, buttonText, whatsAppMessage,
     <section className="py-10 bg-gradient-to-r from-green-400 to-primary-light">
       <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
         <div className="text-center">
-          <h2 className="text-xl md:text-4xl font-bold md:pb-4 text-white md:mb-6">
+          <h2 className="text-xl md:text-4xl font-bold text-white md:mb-2">
             {title}
           </h2>
-          <p className="text-white/90 text-md md:text-xl mb-8 max-w-2xl mx-auto">
+          <p className="text-white/90 text-md md:text-xl mb-4 max-w-2xl mx-auto">
             {subtitle}
           </p>
           <Button

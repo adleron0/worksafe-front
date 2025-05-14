@@ -1,4 +1,4 @@
-import Icon from "@/components/general-components/Icon";
+// import Icon from "@/components/general-components/Icon";
 import parceiro1 from "../../../assets/images/parceiros/1.png";
 import parceiro2 from "../../../assets/images/parceiros/2.png";
 import parceiro3 from "../../../assets/images/parceiros/3.png";

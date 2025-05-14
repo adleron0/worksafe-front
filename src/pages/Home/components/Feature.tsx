@@ -13,7 +13,7 @@ const Feature: React.FC<FeatureProps> = ({ icon: Icon, title, description }) => 
       <div className="inline-flex items-center justify-center w-16 h-16 rounded-lg mb-2 bg-gradient-to-r from-green-400 to-primary-light text-white">
         <Icon size={32} />
       </div>
-      <h3 className="text-base md:text-lg font-semibold">{title}</h3>
+      <h3 className="text-gray-700 leading-tight text-base md:text-lg font-semibold">{title}</h3>
       <p className="text-gray-600 text-xs md:text-sm">{description}</p>
     </div>
   );

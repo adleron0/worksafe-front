@@ -27,9 +27,41 @@ const About = () => {
   return (
     <section id="sobre" className="py-20 bg-gray-50">
       <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50 px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 className="section-title text-gray-700 w-full text-center text-3xl md:text-5xl font-bold pb-4 mb-8 pb-4">
+        <div className="flex flex-col-reverse md:flex-row gap-12 items-center">
+          <div className="space-y-6 md:w-1/2">
+            <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl">
+              <img
+                src={AboutImage2}
+                alt="Fundador 1"
+                width={1080}
+                height={1080}
+                className="object-cover w-full h-full object-top"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              <video
+                className="w-full rounded-xl z-10 cursor-default"
+                autoPlay
+                muted
+                loop
+                playsInline
+              >
+                <source src={TreinamentoVideo} type="video/mp4" />
+                Seu navegador não suporta a tag de vídeo.
+              </video>
+              <div className="relative rounded-xl overflow-hidden shadow-lg h-full">
+                <img
+                  src={AboutImage1}
+                  alt="Fundador 2"
+                  width={1080}
+                  height={1080}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="md:w-1/2">
+            <h2 className="section-title text-gray-800 w-full text-start text-3xl md:text-5xl font-bold md:mb-8 pb-4">
               Sobre Nós
             </h2>
             <p className="text-gray-600 text-lg mb-8 leading-relaxed">
@@ -66,38 +98,7 @@ const About = () => {
               Entre em Contato <Phone className="ml-2" />
             </Button>
           </div>
-          <div className="space-y-6">
-            <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl">
-              <img
-                src={AboutImage2}
-                alt="Fundador 1"
-                width={1080}
-                height={1080}
-                className="object-cover w-full h-full object-top"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-6">
-              <video
-                className="w-full rounded-xl z-10 cursor-default"
-                autoPlay
-                muted
-                loop
-                playsInline
-              >
-                <source src={TreinamentoVideo} type="video/mp4" />
-                Seu navegador não suporta a tag de vídeo.
-              </video>
-              <div className="relative rounded-xl overflow-hidden shadow-lg h-full">
-                <img
-                  src={AboutImage1}
-                  alt="Fundador 2"
-                  width={1080}
-                  height={1080}
-                  className="object-cover w-full h-full"
-                />
-              </div>
-            </div>
-          </div>
+          
         </div>
       </div>
     </section>

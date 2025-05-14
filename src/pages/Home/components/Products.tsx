@@ -205,7 +205,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
                   />
                 </div>
                 <div className="p-2 md:p-6 flex flex-col flex-grow bg-white">
-                  <h3 className="text-base md:text-lg text-black font-semibold md:mb-2">{product.name}</h3>
+                  <h3 className="text-base md:text-lg leading-tight text-black font-semibold mb-2">{product.name}</h3>
                   <p className="text-xs md:text-sm text-gray-600 mb-4">{product.description}</p>
                   <ul className="space-y-1 md:space-y-2 mb-4 md:mb-8">
                     {/* Split features string */}

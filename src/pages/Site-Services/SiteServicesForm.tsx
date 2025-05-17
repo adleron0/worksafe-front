@@ -9,13 +9,13 @@ import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 // Interfaces and validations
-import { SiteServices as EntityInterface } from "./interfaces/site-services.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { z } from "zod";
 
 interface FormProps {
-  formData?: EntityInterface;
+  formData?: IEntity;
   openSheet: (open: boolean) => void;
   entity: IDefaultEntity;
 }
@@ -62,7 +62,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const { mutate: registerCustomer, isPending } = useMutation({
     mutationFn: (newItem: FormData) => {
       showLoader(`Registrando ${entity.name}...`);
-      return post<EntityInterface>(entity.model, '', newItem);
+      return post<IEntity>(entity.model, '', newItem);
     },
     onSuccess: () => {
       hideLoader();
@@ -89,7 +89,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const { mutate: updateCustomerMutation, isPending: isPendingUpdate } = useMutation({
     mutationFn: (updatedItem: FormData) => {
       showLoader(`Atualizando ${entity.name}...`);
-      return put<EntityInterface>(entity.model, `${formData?.id}`, updatedItem);
+      return put<IEntity>(entity.model, `${formData?.id}`, updatedItem);
     },
     onSuccess: () => {
       hideLoader();

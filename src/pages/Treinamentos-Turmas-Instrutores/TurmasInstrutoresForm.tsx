@@ -1,37 +1,38 @@
 import React, { useState, useRef } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { post, put } from "@/services/api";
-import { toast } from "@/hooks/use-toast";
-// Template Components
-import { useLoader } from "@/context/GeneralContext";
-import Input from "@/components/general-components/Input";
-import { Label } from "@/components/ui/label";
+import Select from "@/components/general-components/Select";
 import { Button } from "@/components/ui/button";
-// Interfaces and validations
-import { IEntity } from "@/pages/Profiles/interfaces/entity.interface";
-import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
-import { ApiError } from "@/general-interfaces/api.interface";
+import { Label } from "@/components/ui/label";
 import { z } from "zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { get, post, put } from "@/services/api";
+import { toast } from "@/hooks/use-toast";
+import { useLoader } from "@/context/GeneralContext";
+import { IEntity } from "./interfaces/entity.interface";
+import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
+import { ApiError, Response } from "@/general-interfaces/api.interface";
 
 interface FormProps {
   formData?: IEntity;
   openSheet: (open: boolean) => void;
   entity: IDefaultEntity;
+  classId: number;
 }
 
-const Form = ({ formData, openSheet, entity }: FormProps) => {
+const Form = ({ formData, openSheet, entity, classId }: FormProps) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
 
   // Schema
   const Schema = z.object({
-    name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
+    instructorId: z.number().min(1, { message: "Instrutor deve ser selecionado" }),
+    classId: z.number(),
   })
 
   type FormData = z.infer<typeof Schema>;
 
   const [dataForm, setDataForm] = useState<FormData>({
-    name: formData?.name || "",
+    instructorId: formData?.instructorId || 0,
+    classId: formData?.classId || classId,
   });
   const initialFormRef = useRef(dataForm);
 
@@ -39,14 +40,14 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   const { mutate: registerCustomer, isPending } = useMutation({
     mutationFn: (newItem: FormData) => {
-      showLoader(`Registrando ${entity.name}...`);
+      showLoader(`Vinculando ${entity.name}...`);
       return post<IEntity>(entity.model, '', newItem);
     },
     onSuccess: () => {
       hideLoader();
       toast({
-        title: `${entity.name} cadastrado!`,
-        description: `Novo ${entity.name} cadastrado com sucesso.`,
+        title: `${entity.name} vinculado!`,
+        description: `Novo ${entity.name} vinculado com sucesso.`,
         variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
@@ -97,61 +98,53 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Clean up all string fields before submission
-    const cleanedData = { ...dataForm };
-    
-    // Process all string fields
-    Object.keys(cleanedData).forEach(key => {
-      const value = cleanedData[key as keyof FormData];
-      if (typeof value === 'string') {
-        // Apply trim to all string fields
-        const cleanedValue = value.trim();
-        
-        // Update the cleaned data with proper type handling
-        cleanedData[key as keyof FormData] = cleanedValue;
-      }
-    });
-    
-    const result = Schema.safeParse(cleanedData);
+    const result = Schema.safeParse(dataForm);
 
     if (!result.success) {
-      // Extract error messages from Zod validation result
+      const formattedErrors: any = result.error.format();
       const newErrors: { [key: string]: string } = {};
-      
-      result.error.errors.forEach((error) => {
-        const path = error.path.join('.');
-        if (path) {
-          newErrors[path] = error.message;
+      for (const key in formattedErrors) {
+        if (key !== "_errors") {
+          newErrors[key] = formattedErrors[key]?._errors[0] || "";
         }
-      });
-      
+      }
       setErrors(newErrors);
       return;
     }
 
     if (formData) {
-      updateCustomerMutation(cleanedData);
+      updateCustomerMutation(dataForm);
     } else {
-      registerCustomer(cleanedData);
+      registerCustomer(dataForm);
     }
   };
 
   // Buscas de valores para variaveis de formulário
+  const { 
+    data: instructors, 
+  } = useQuery<Response | undefined, ApiError>({
+    queryKey: [`listInstructors`],
+    queryFn: async () => {
+      const params = [
+        { key: 'limit', value: 999 },
+        { key: 'order-id', value: 'asc' },
+      ];
+      return get('instructors', '', params);
+    },
+  });
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
       <div>
-        <Label htmlFor="name">Nome <span>*</span></Label>
-          <Input
-            id="name"
-            name="name"
-            placeholder={`Digite nome do ${entity.name}`}
-            value={dataForm.name}
-            onValueChange={handleChange}
-            className="mt-1"
-          />
-        {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+        <Label htmlFor="instructorId">Setor <span>*</span></Label>
+        <Select 
+          name="instructorId"
+          options={instructors?.rows || []} 
+          onChange={(name, value) => handleChange(name, Number(value))} 
+          state={dataForm.instructorId !== undefined ? String(dataForm.instructorId) : ""}
+          placeholder="Selecione a classificação"
+        />
+        {errors.instructorId && <p className="text-red-500 text-sm">{errors.instructorId}</p>}
       </div>
 
       <Button

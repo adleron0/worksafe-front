@@ -8,13 +8,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import { useLoader } from "@/context/GeneralContext";
-import { Customer as EntityInterface } from "@/pages/Customers/interfaces/customer.interface";
+import { IEntity } from "@/pages/Customers/interfaces/entity.interface";
 import DropUpload from "@/components/general-components/DropUpload";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 
 interface FormProps {
-  formData?: EntityInterface;
+  formData?: IEntity;
   openSheet: (open: boolean) => void;
   entity: IDefaultEntity;
 }
@@ -85,7 +85,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const { mutate: registerCustomer, isPending } = useMutation({
     mutationFn: (newItem: FormData) => {
       showLoader(`Registrando ${entity.name}...`);
-      return post<EntityInterface>(entity.model, '', newItem);
+      return post<IEntity>(entity.model, '', newItem);
     },
     onSuccess: () => {
       hideLoader();
@@ -112,7 +112,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const { mutate: updateCustomerMutation, isPending: isPendingUpdate } = useMutation({
     mutationFn: (updatedItem: FormData) => {
       showLoader(`Atualizando ${entity.name}...`);
-      return put<EntityInterface>(entity.model, `${formData?.id}`, updatedItem);
+      return put<IEntity>(entity.model, `${formData?.id}`, updatedItem);
     },
     onSuccess: () => {
       hideLoader();

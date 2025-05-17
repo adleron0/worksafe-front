@@ -3,7 +3,7 @@ export interface FaqItem {
   answer: string;
 }
 
-export interface Courses {
+export interface IEntity {
   id?: number;
   name: string;
   hoursDuration?: number;

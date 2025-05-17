@@ -14,14 +14,14 @@ import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 // Interfaces
-import { Instructors as EntityInterface } from "./interfaces/instructors.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 interface ItemsProps {
-  item: EntityInterface;
+  item: IEntity;
   index: number;
   entity: IDefaultEntity;
-  setFormData: (data: EntityInterface) => void;
+  setFormData: (data: IEntity) => void;
   setOpenForm: (open: boolean) => void;
   setOpenSignatureForm: (open: boolean) => void;
 }
@@ -35,7 +35,7 @@ const InstructorsItem = ({ item, index, entity, setFormData, setOpenForm, setOpe
   const { mutate: deactivate } = useMutation({
     mutationFn: (id: number) => {
       showLoader(`Inativando ${entity.name}...`);
-      return patch<EntityInterface>(entity.model, `inactive/${id}`);
+      return patch<IEntity>(entity.model, `inactive/${id}`);
     },
     onSuccess: () => {
       hideLoader();
@@ -64,7 +64,7 @@ const InstructorsItem = ({ item, index, entity, setFormData, setOpenForm, setOpe
   const { mutate: activate } = useMutation({
     mutationFn: (id: number) => {
       showLoader(`Ativando ${entity.name}...`);
-      return patch<EntityInterface>(entity.model, `active/${id}`);
+      return patch<IEntity>(entity.model, `active/${id}`);
     },
     onSuccess: () => {
       hideLoader();

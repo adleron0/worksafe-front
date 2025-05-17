@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "@/general-interfaces/api.interface";
-import { SiteServices as EntityInterface } from "@/pages/Site-Services/interfaces/site-services.interface";
+import { IEntity } from "@/pages/Site-Services/interfaces/entity.interface";
 import { get } from "@/services/api";
 
 // Imagens Serviços
@@ -99,7 +99,7 @@ interface ServicesProps {
 
 const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
   interface Response {
-    rows: EntityInterface[];
+    rows: IEntity[];
     total: number;
   }
 

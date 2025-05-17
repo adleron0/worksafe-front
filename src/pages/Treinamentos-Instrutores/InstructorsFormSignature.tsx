@@ -8,13 +8,13 @@ import DropUpload from "@/components/general-components/DropUpload";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 // Interfaces and validations
-import { Instructors as EntityInterface } from "./interfaces/instructors.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { z } from "zod";
 
 interface FormProps {
-  formData?: EntityInterface;
+  formData?: IEntity;
   openSheet: (open: boolean) => void;
   entity: IDefaultEntity;
 }
@@ -71,7 +71,7 @@ const SignatureForm = ({ formData, openSheet, entity }: FormProps) => {
   }, []);
 
   const { mutate: updateCustomerMutation, isPending: isPendingUpdate } = useMutation({
-    mutationFn: (updatedItem: FormData) => put<EntityInterface>(entity.model, `${formData?.id}/signature`, updatedItem),
+    mutationFn: (updatedItem: FormData) => put<IEntity>(entity.model, `${formData?.id}/signature`, updatedItem),
     onSuccess: () => {
       toast({
         title: `${entity.name} atualizado!`,

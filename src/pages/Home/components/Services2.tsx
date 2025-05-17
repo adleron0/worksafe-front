@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "@/general-interfaces/api.interface";
-import { SiteServices as EntityInterface } from "@/pages/Site-Services/interfaces/site-services.interface";
+import { IEntity } from "@/pages/Site-Services/interfaces/entity.interface";
 import { get } from "@/services/api";
 import { Wrench } from "lucide-react";
 
@@ -12,7 +12,7 @@ interface Services2Props {
 
 const Services2: React.FC<Services2Props> = ({ handleWhatsApp }) => {
   interface Response {
-    rows: EntityInterface[];
+    rows: IEntity[];
     total: number;
   }
 

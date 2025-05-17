@@ -1,6 +1,6 @@
-import { FaqItem } from "../../Treinamentos-Courses/interfaces/courses.interface";
+import { FaqItem } from "../../Treinamentos-Courses/interfaces/entity.interface";
 
-export interface Turmas {
+export interface IEntity {
   id?: number;
   name: string;
   imageUrl: string | null;

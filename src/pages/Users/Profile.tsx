@@ -11,7 +11,7 @@ import Loader from "@/components/general-components/Loader";
 import { get } from "@/services/api";
 import Form from "./UserForm";
 import Icon from "@/components/general-components/Icon";
-import { User } from "./interfaces/user.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import { FC, useState, useEffect } from "react";
 
 interface ProfileProps {
@@ -29,7 +29,7 @@ const Profile: FC<ProfileProps> = ({ showTrigger = true, open = false, openChang
   };
 
   interface UsersResponse {
-    rows: User[];
+    rows: IEntity[];
     total: number;
   }
     

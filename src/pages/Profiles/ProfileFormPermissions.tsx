@@ -11,13 +11,13 @@ import { LockKeyholeOpen } from "lucide-react";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { useState } from "react";
 import Loader from "@/components/general-components/Loader";
-import { Profile } from "./interfaces/profile.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import { Permission, ProfilePermission } from "./interfaces/permission.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import Icon from "@/components/general-components/Icon";
 import SideForm from "@/components/general-components/SideForm"; // Import SideForm
 
-const PermissionsForm = ({ profile }: { profile: Profile }) => {
+const PermissionsForm = ({ profile }: { profile: IEntity }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [description, setDescription] = useState("");
 
@@ -220,7 +220,7 @@ const PermissionItem = ({
   setDescription,
 }: {
   permission: Permission;
-  profile: Profile;
+  profile: IEntity;
   isGranted: boolean;
   onGrant: () => void;
   onRevoke: () => void;

@@ -1,4 +1,4 @@
-export interface Profile {
+export interface IEntity {
   id?: number;
   name: string;
   companyId?: number;

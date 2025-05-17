@@ -7,7 +7,7 @@ import Pagination from "@/components/general-components/Pagination";
 // Template Page list-form
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
-import ItemSkeleton from "./Skeletons/userItemSkeleton";
+import ItemSkeleton from "./Skeletons/ItemSkeleton";
 import ItemList from "./CustomerContactsItem";
 import Form from "./CustomerContactsForm";
 import SearchForm from "./CustomerContactsSeach";

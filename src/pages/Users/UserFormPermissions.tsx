@@ -10,12 +10,12 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { useState } from "react";
 import Loader from "@/components/general-components/Loader";
 import SideForm from "@/components/general-components/SideForm"; // Import SideForm
-import { User } from "./interfaces/user.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import { Permission, UserPermission } from "./interfaces/permission.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import Icon from "@/components/general-components/Icon";
 
-const PermissionsForm = ({ user }: { user: User }) => {
+const PermissionsForm = ({ user }: { user: IEntity }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [description, setDescription] = useState("");
 
@@ -218,7 +218,7 @@ const PermissionItem = ({
   setDescription,
 }: {
   permission: Permission;
-  user: User;
+  user: IEntity;
   isGranted: boolean;
   onGrant: () => void;
   onRevoke: () => void;

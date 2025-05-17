@@ -14,13 +14,13 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import PermissionsForm from "./UserFormPermissions";
 // Interfaces
-import { User } from "./interfaces/user.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
 interface UserItemProps {
-  user: User;
+  user: IEntity;
   index: number;
-  setFormData: (data: User) => void;
+  setFormData: (data: IEntity) => void;
   setFormType: (type: string) => void;
   setOpenForm: (open: boolean) => void;
 }
@@ -34,7 +34,7 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
   const { mutate: deactivateUser } = useMutation({
     mutationFn: (userId: number) => {
       showLoader(`Inativando usuário ${user.name}...`);
-      return patch<User>('user', `inactive/${userId}`);
+      return patch<IEntity>('user', `inactive/${userId}`);
     },
     onSuccess: () => {
       hideLoader();
@@ -65,7 +65,7 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
   const { mutate: activateUser } = useMutation({
     mutationFn: (userId: number) => {
       showLoader(`Ativando usuário ${user.name}...`);
-      return patch<User>('user', `active/${userId}`);
+      return patch<IEntity>('user', `active/${userId}`);
     },
     onSuccess: () => {
       hideLoader();

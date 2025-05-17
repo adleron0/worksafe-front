@@ -8,19 +8,19 @@ import Pagination from "@/components/general-components/Pagination";
 // Template Page list-form
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
-import ItemSkeleton from "./Skeletons/userItemSkeleton";
+import ItemSkeleton from "./Skeletons/ItemSkeleton";
 import ItemList from "./UserItem";
 import Form from "./UserForm";
 import SearchForm from "./UserSeach";
 // Interfaces
-import { User } from "./interfaces/user.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
 const Users = () => {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
-  const [formData, setFormData] = useState<User>();
+  const [formData, setFormData] = useState<IEntity>();
   const [formType, setFormType] = useState("both");
   const [searchParams, setSearchParams] = useState({
     limit: 10,
@@ -37,7 +37,7 @@ const Users = () => {
   const ability = "user";
 
   interface UsersResponse {
-    rows: User[];
+    rows: IEntity[];
     total: number;
   }
 
@@ -139,7 +139,7 @@ const Users = () => {
               <p>Erro: {error?.response?.data?.message}</p>
             </div>
           : usersData?.rows && usersData.rows.length > 0 
-          ? usersData.rows.map((user: User, i: number) => (
+          ? usersData.rows.map((user: IEntity, i: number) => (
               <ItemList 
                 key={user.id} 
                 user={user} 

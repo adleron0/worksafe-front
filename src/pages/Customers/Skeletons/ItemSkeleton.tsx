@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-const UserItemSkeleton = ({ index }: { index: number }) => {
+const ItemSkeleton = ({ index }: { index: number }) => {
   return (
     <>
       {/* Header para o primeiro item */}
@@ -56,4 +56,4 @@ const UserItemSkeleton = ({ index }: { index: number }) => {
   );
 }
 
-export default UserItemSkeleton;
+export default ItemSkeleton;

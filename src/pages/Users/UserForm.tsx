@@ -7,13 +7,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import Loader from "@/components/general-components/Loader";
-import { User } from "./interfaces/user.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import Select from "@/components/general-components/Select";
 import DropUpload from "@/components/general-components/DropUpload";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 
 interface UserFormProps {
-  formData?: User;
+  formData?: IEntity;
   onlyPassword?: string;
   openSheet: (open: boolean) => void;
   self?: boolean;
@@ -76,7 +76,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
   }, []);
 
   const { mutate: registerUser, isPending } = useMutation({
-    mutationFn: (newUser: UserFormData) => post<User>('user', '', newUser),
+    mutationFn: (newUser: UserFormData) => post<IEntity>('user', '', newUser),
     onSuccess: () => {
       toast({
         title: "Usuário registrado!",
@@ -98,7 +98,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
   });
 
   const { mutate: updateUserMutation, isPending: isPendingUpdate } = useMutation({
-    mutationFn: (updatedUser: UserFormData) => put<User>('user', `${self ? 'self' : formData?.id}`, updatedUser),
+    mutationFn: (updatedUser: UserFormData) => put<IEntity>('user', `${self ? 'self' : formData?.id}`, updatedUser),
     onSuccess: () => {
       toast({
         title: "Usuário atualizado!",

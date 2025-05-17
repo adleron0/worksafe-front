@@ -1,4 +1,4 @@
-export interface Customer {
+export interface IEntity {
   id?: number;
   name: string;
   corporateName: string;

@@ -8,13 +8,13 @@ import Dialog from "@/components/general-components/Dialog";
 // Template Page
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
-import ItemSkeleton from "./Skeletons/userItemSkeleton";
+import ItemSkeleton from "./Skeletons/ItemSkeleton";
 import ItemList from "./CustomerItem";
 import Form from "./CustomerForm";
 import SearchForm from "./CustomerSeach";
 import CustomerContacts from "@/pages/Customers-Contacts/CustomerContactsList";
 // Interfaces
-import { Customer as EntityInterface } from "@/pages/Customers/interfaces/customer.interface";
+import { IEntity } from "@/pages/Customers/interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
 const List = () => {
@@ -22,7 +22,7 @@ const List = () => {
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [openContactModal, setOpenContactModal] = useState(false);
-  const [formData, setFormData] = useState<EntityInterface>();
+  const [formData, setFormData] = useState<IEntity>();
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
@@ -41,7 +41,7 @@ const List = () => {
   }
 
   interface Response {
-    rows: EntityInterface[];
+    rows: IEntity[];
     total: number;
   }
 
@@ -138,7 +138,7 @@ const List = () => {
               <p>Erro: {error?.response?.data?.message}</p>
             </div>
           : data?.rows && data.rows.length > 0 
-          ? data.rows.map((item: EntityInterface, i: number) => (
+          ? data.rows.map((item: IEntity, i: number) => (
               <ItemList 
                 key={item.id} 
                 item={item} 

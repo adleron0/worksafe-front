@@ -1,4 +1,4 @@
-export interface User {
+export interface IEntity {
   id?: number;
   name: string;
   active?: boolean;

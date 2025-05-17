@@ -1,4 +1,4 @@
-export interface Instructors {
+export interface IEntity {
   id?: number;
   name: string;
   companyId?: number;

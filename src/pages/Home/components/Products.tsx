@@ -10,7 +10,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { ApiError, Response } from "@/general-interfaces/api.interface"; // Use Response instead of ApiResponse
 // Assuming an interface exists for SiteProduct, adjust if necessary
-import { SiteProducts as EntityInterface } from "@/pages/Site-Products/interfaces/site-products.interface"; // Use SiteProducts
+import { IEntity } from "@/pages/Site-Products/interfaces/entity.interface"; // Use SiteProducts
 import { get } from "@/services/api";
 import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
 
@@ -42,8 +42,8 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
   });
 
   // Process products from data
-  const products: EntityInterface[] = data?.rows || []; // Add type annotation
-  const featuredProduct = products.find((product: EntityInterface) => product.featured); // Add type
+  const products: IEntity[] = data?.rows || []; // Add type annotation
+  const featuredProduct = products.find((product: IEntity) => product.featured); // Add type
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -62,7 +62,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
   }
 
   // Filter out the featured product for the grid display
-  const nonFeaturedProducts = products.filter((product: EntityInterface) => !product.featured); // Add type
+  const nonFeaturedProducts = products.filter((product: IEntity) => !product.featured); // Add type
   const displayedProducts = showAllProducts ? nonFeaturedProducts : nonFeaturedProducts.slice(0, initialCount);
 
   // --- Loading State ---
@@ -193,7 +193,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
         {/* Grid de Produtos */}
         {nonFeaturedProducts.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 mb-12">
-            {displayedProducts.map((product: EntityInterface) => ( // Add type
+            {displayedProducts.map((product: IEntity) => ( // Add type
               <Card id={product.id === products[2]?.id ? "grid-produtos" : undefined} key={product.id} className="h-full flex flex-col overflow-hidden group card-hover border-0 shadow-lg"> {/* Use product.id for key and adjust scroll target logic */}
                 <div className="aspect-square relative overflow-hidden">
                   <img

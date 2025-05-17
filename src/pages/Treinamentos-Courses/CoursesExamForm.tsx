@@ -8,14 +8,14 @@ import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Courses as EntityInterface } from "./interfaces/courses.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { z } from "zod";
 import Icon from "@/components/general-components/Icon";
 
 interface ExamFormProps {
-  courseData: EntityInterface;
+  courseData: IEntity;
   openSheet: (open: boolean) => void;
   entity: IDefaultEntity;
 }
@@ -117,7 +117,7 @@ const CoursesExamForm = ({ courseData, openSheet, entity }: ExamFormProps) => {
         ...courseData,
         exam: JSON.stringify(updatedExam.exam)
       };
-      return put<EntityInterface>(entity.model, `${courseData.id}`, examUpdateData);
+      return put<IEntity>(entity.model, `${courseData.id}`, examUpdateData);
     },
     onSuccess: () => {
       toast({

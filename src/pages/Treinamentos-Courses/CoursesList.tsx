@@ -13,14 +13,14 @@ import Form from "./CoursesForm";
 import ExamForm from "./CoursesExamForm";
 import SearchForm from "./CoursesSeach";
 // Interfaces
-import { Courses as EntityInterface } from "./interfaces/courses.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
 const List = () => {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
-  const [formData, setFormData] = useState<EntityInterface>();
+  const [formData, setFormData] = useState<IEntity>();
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
@@ -37,7 +37,7 @@ const List = () => {
   }
 
   interface Response {
-    rows: EntityInterface[];
+    rows: IEntity[];
     total: number;
   }
 
@@ -147,7 +147,7 @@ const List = () => {
               <p>Erro: {error?.response?.data?.message}</p>
             </div>
           : data?.rows && data.rows.length > 0 
-          ? data.rows.map((item: EntityInterface, i: number) => (
+          ? data.rows.map((item: IEntity, i: number) => (
               <ItemList 
                 key={item.id} 
                 item={item} 

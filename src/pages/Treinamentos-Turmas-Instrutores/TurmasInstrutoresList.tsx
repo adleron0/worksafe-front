@@ -4,37 +4,36 @@ import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
 import Pagination from "@/components/general-components/Pagination";
-import Dialog from "@/components/general-components/Dialog";
 // Template Page list-form
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
 import ItemSkeleton from "./Skeletons/ItemSkeleton";
-import ItemList from "./TurmasItem";
-import Form from "./TurmasForm";
-import SearchForm from "./TurmaSeach";
-import TurmasInstrutoresList from "@/pages/Treinamentos-Turmas-Instrutores/TurmasInstrutoresList";
+import ItemList from "./TurmasInstrutoresItem";
+import Form from "./TurmasInstrutoresForm";
+import SearchForm from "./TurmasInstrutoresSearch";
 // Interfaces
 import { IEntity } from "./interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
-const List = () => {
+const List = ({ classId }: { classId: number }) => {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
-  const [openInstrutoresModal, setOpenInstrutoresModal] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
-    'order-name': 'asc',
+    show: ['class', 'instructor'],
+    classId: classId,
+    'order-id': 'desc',
   });
   const initialFormRef = useRef(searchParams);
 
   // Define variáveis de entidade
   const entity = {
-    name: "Turma",
-    pluralName: "Turmas",
-    model: "classes",
+    name: "Instrutor da Turma",
+    pluralName: "Instrutores da Turma",
+    model: "class-instructors",
     ability: "classes",
   }
 
@@ -89,9 +88,10 @@ const List = () => {
   return (
     <>
       <HeaderLists
-        titlePage={`${entity.pluralName}`}
-        descriptionPage={`Administrar nossos ${entity.pluralName}`}
+        // titlePage={`${entity.pluralName}`}
+        // descriptionPage={`Administrar ${entity.pluralName}`}
         entityName={entity.name}
+        addButtonName="Vincular"
         ability={entity.ability}
         limit={data?.total || 0}
         searchParams={searchParams}
@@ -118,13 +118,13 @@ const List = () => {
         openSheet={openForm}
         setOpenSheet={setOpenForm}
         title={formData 
-          ? `Editar ${entity.name} ${formData.name}`
-          : `Cadastrar ${entity.name}`}
+          ? `Editar ${entity.name}`
+          : `Vincular ${entity.name}`}
         description={formData 
-          ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
-          : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
+          ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name}.`
+          : `Por favor, preencha com atenção todas as informações necessárias para vincular ${entity.name}.`}
         side="right"
-        form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} /> }
+        form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} classId={classId} /> }
       />
 
       {/* Listagem de items */}
@@ -144,7 +144,6 @@ const List = () => {
                 index={i} 
                 setFormData={setFormData} 
                 setOpenForm={setOpenForm}
-                openInstructorsModal={setOpenInstrutoresModal}
               />
             ))
           : (
@@ -154,18 +153,6 @@ const List = () => {
           )
         }
       </div>
-
-      {/* Modal de instrutores */}
-      <Dialog 
-        open={openInstrutoresModal}
-        onOpenChange={setOpenInstrutoresModal}
-        showBttn={false}
-        showHeader={true}
-        title={`Instrutores da Turma ${formData?.name}`}
-        description="Gestão de instrutores da turma."
-      >
-        <TurmasInstrutoresList classId={formData?.id || 0} />
-      </Dialog>
 
       {/* Paginação */}
       <div className="mt-4">

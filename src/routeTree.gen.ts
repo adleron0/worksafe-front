@@ -12,6 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as SobreImport } from './routes/sobre'
+import { Route as LojaImport } from './routes/loja'
 import { Route as LoginImport } from './routes/login'
 import { Route as AuthenticatedImport } from './routes/_authenticated'
 import { Route as IndexImport } from './routes/index'
@@ -41,6 +42,12 @@ import { Route as AuthenticatedInventariosAreasAreaIdImport } from './routes/_au
 const SobreRoute = SobreImport.update({
   id: '/sobre',
   path: '/sobre',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const LojaRoute = LojaImport.update({
+  id: '/loja',
+  path: '/loja',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -222,6 +229,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginImport
+      parentRoute: typeof rootRoute
+    }
+    '/loja': {
+      id: '/loja'
+      path: '/loja'
+      fullPath: '/loja'
+      preLoaderRoute: typeof LojaImport
       parentRoute: typeof rootRoute
     }
     '/sobre': {
@@ -437,6 +451,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/loja': typeof LojaRoute
   '/sobre': typeof SobreRoute
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
@@ -464,6 +479,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/loja': typeof LojaRoute
   '/sobre': typeof SobreRoute
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
@@ -492,6 +508,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/loja': typeof LojaRoute
   '/sobre': typeof SobreRoute
   '/_authenticated/building': typeof AuthenticatedBuildingRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
@@ -521,6 +538,7 @@ export interface FileRouteTypes {
     | '/'
     | ''
     | '/login'
+    | '/loja'
     | '/sobre'
     | '/building'
     | '/home'
@@ -547,6 +565,7 @@ export interface FileRouteTypes {
     | '/'
     | ''
     | '/login'
+    | '/loja'
     | '/sobre'
     | '/building'
     | '/home'
@@ -573,6 +592,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/loja'
     | '/sobre'
     | '/_authenticated/building'
     | '/_authenticated/home'
@@ -601,6 +621,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  LojaRoute: typeof LojaRoute
   SobreRoute: typeof SobreRoute
 }
 
@@ -608,6 +629,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  LojaRoute: LojaRoute,
   SobreRoute: SobreRoute,
 }
 
@@ -624,6 +646,7 @@ export const routeTree = rootRoute
         "/",
         "/_authenticated",
         "/login",
+        "/loja",
         "/sobre"
       ]
     },
@@ -657,6 +680,9 @@ export const routeTree = rootRoute
     },
     "/login": {
       "filePath": "login.tsx"
+    },
+    "/loja": {
+      "filePath": "loja.tsx"
     },
     "/sobre": {
       "filePath": "sobre.tsx"

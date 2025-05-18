@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -84,6 +85,7 @@ interface ProductsProps {
 const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
   const [showAllProducts, setShowAllProducts] = useState(false);
   const [windowWidth, setWindowWidth] = useState(1024);
+  const navigate = useNavigate();
 
   const {
     data,
@@ -93,7 +95,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
     queryKey: ["listSiteProducts"],
     queryFn: async () => {
       const params = [
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 5 },
         { key: 'active', value: true },
         { key: 'show', value: 'images' },
         { key: 'order-name', value: 'asc' },
@@ -116,9 +118,9 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
 
   let initialCount;
   if (windowWidth < 768) {
-    initialCount = 3;
+    initialCount = 4;
   } else if (windowWidth < 1024) {
-    initialCount = 2;
+    initialCount = 4;
   } else {
     initialCount = 4; // Keep initial count logic
   }
@@ -314,7 +316,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
 
         {/* Botão "Ver Mais" / "Ocultar" - Only show if there are more products than initially displayed */}
         {nonFeaturedProducts.length > initialCount && (
-          <div className="text-center">
+          <div className="text-center mb-8">
             <Button
               size="lg"
               className="bg-primary-light hover:brightness-110 ease-in-out duration-200 text-white text-lg px-8 shadow-lg"
@@ -340,6 +342,18 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
             </Button>
           </div>
         )}
+        
+        {/* Botão para a página da loja */}
+        <div className="text-center mt-8">
+          <a onClick={() => {navigate({to: `/loja`})}} href="#produtos">
+            <Button
+              size="lg"
+              className="bg-primary-light hover:bg-primary-light/80 ease-in-out duration-200 text-white text-lg px-8 shadow-lg"
+            >
+              Visitar Nossa Loja Completa <ChevronRight className="ml-2" />
+            </Button>
+          </a>
+        </div>
       </div>
     </section>
   );

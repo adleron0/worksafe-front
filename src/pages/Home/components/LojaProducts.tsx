@@ -106,7 +106,7 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
     'order-name': string;
     name: string;
     'max-price'?: number;
-    // 'min-price'?: number;
+    'min-price'?: number;
     featured?: boolean | null;
     showActiveOnly?: boolean;
   }
@@ -120,7 +120,7 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
     'order-name': 'asc',
     name: "",
     'max-price': 5000,
-    // 'min-price': 0,
+    'min-price': 0,
     featured: null,
     // showActiveOnly: true
   });
@@ -252,10 +252,10 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Price Range Filter */}
-              <div>
+              <div className="space-y-4">
                 <div>
                   <Label className="text-sm font-medium mb-2 block text-gray-900">Preço Máximo: R$ {searchParams['max-price'] || 5000}</Label>
-                  <div className="mt-6 px-2">
+                  <div className="mt-1 px-2">
                     <Slider
                       defaultValue={[5000]}
                       max={20000}
@@ -271,12 +271,12 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
                   </div>
                 </div>
 
-                {/* <div>
+                <div>
                   <Label className="text-sm font-medium mb-2 block text-gray-900">Preço Mínimo: R$ {searchParams['min-price'] || 0}</Label>
-                  <div className="mt-6 px-2">
+                  <div className="mt-1 px-2">
                     <Slider
                       defaultValue={[0]}
-                      max={20000}
+                      max={searchParams['max-price']}
                       step={100}
                       value={[searchParams['min-price'] || 0]}
                       onValueChange={(value) => setSearchParams(prev => ({ ...prev, 'min-price': value[0] }))}
@@ -284,10 +284,10 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
                     />
                     <div className="flex justify-between text-sm text-gray-500 mt-2">
                       <span>R$ 0</span>
-                      <span>R$ 20.000</span>
+                      <span>R$ {searchParams['max-price']}</span>
                     </div>
                   </div>
-                </div> */}
+                </div>
               </div>
               
               {/* Categories Filter (UI only) */}
@@ -428,7 +428,7 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
                         <span className="text-sm text-gray-500 line-through">
                           { Number(product.oldPrice || 0) > 0 ? `${formatCurrency(product.oldPrice || 0)}` : '' }
                         </span>
-                        <span className="text-3xl font-bold bg-primary-light bg-clip-text text-transparent">
+                        <span className="text-base md:text-lg font-bold bg-primary-light bg-clip-text text-transparent">
                           { formatCurrency(product.price || 0) }
                         </span>
                       </div>

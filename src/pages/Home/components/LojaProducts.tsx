@@ -106,7 +106,7 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
     'order-name': string;
     name: string;
     maxPrice?: number;
-    showFeaturedOnly?: boolean;
+    featured?: boolean | null;
     showActiveOnly?: boolean;
   }
   
@@ -119,7 +119,7 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
     'order-name': 'asc',
     name: "",
     // maxPrice: 5000,
-    // showFeaturedOnly: false,
+    featured: null,
     // showActiveOnly: true
   });
   
@@ -311,8 +311,8 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
                   <div className="flex items-center space-x-2">
                     <Switch 
                       id="featured-only"
-                      checked={searchParams.showFeaturedOnly || false}
-                      onCheckedChange={(checked) => setSearchParams(prev => ({ ...prev, showFeaturedOnly: checked }))}
+                      checked={searchParams.featured || false}
+                      onCheckedChange={(checked) => setSearchParams(prev => ({ ...prev, featured: checked }))}
                       className="data-[state=checked]:bg-primary-light"
                     />
                     <Label htmlFor="featured-only" className="text-sm text-gray-700">
@@ -374,7 +374,7 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
                 <div className="relative">
                   <ProductCarousel product={product} />
                   {product.featured && (
-                    <div className="absolute top-4 text-2xs md:text-sm left-4 bg-gradient-to-r from-green-400 to-primary-light text-white px-2 md:px-4 py-1 md:py-2 rounded-full font-semibold z-10">
+                    <div className="absolute top-4 text-2xs md:text-xs left-4 bg-gradient-to-r from-green-400 to-primary-light text-white px-2 md:px-4 py-1 md:py-2 rounded-full font-semibold z-10">
                       Produto Destaque
                     </div>
                   )}

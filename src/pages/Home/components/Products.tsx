@@ -1,18 +1,79 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import {
   Plus,
   ChevronRight,
   CheckCircle,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { ApiError, Response } from "@/general-interfaces/api.interface"; // Use Response instead of ApiResponse
-// Assuming an interface exists for SiteProduct, adjust if necessary
-import { IEntity } from "@/pages/Site-Products/interfaces/entity.interface"; // Use SiteProducts
+import { cn } from "@/lib/utils";
 import { get } from "@/services/api";
-import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
+import { ApiError, Response } from "@/general-interfaces/api.interface";
+import { IEntity } from "@/pages/Site-Products/interfaces/entity.interface";
+
+// Product Carousel Component
+interface ProductCarouselProps {
+  product: IEntity;
+}
+
+const ProductCarousel: React.FC<ProductCarouselProps> = ({ product }) => {
+  // Create an array of all images (main image + additional images)
+  const allImages = [
+    { id: 0, imageUrl: product.imageUrl || '', name: product.name },
+    ...(product.images || [])
+  ].filter(img => img.imageUrl); // Filter out any empty URLs
+
+  // If there's only one image, just return a regular image
+  if (allImages.length <= 1) {
+    return (
+      <div className="aspect-square relative overflow-hidden">
+        <img
+          src={product.imageUrl || ''}
+          alt={product.name}
+          className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
+          width={400}
+          height={400}
+        />
+      </div>
+    );
+  }
+
+  // Otherwise, return a carousel
+  return (
+    <div className="aspect-square relative overflow-hidden">
+      <Carousel className="w-full h-full">
+        <CarouselContent className="h-full">
+          {allImages.map((image, index) => (
+            <CarouselItem key={index} className="h-full">
+              <div className="h-full">
+                <CardContent className="flex items-center justify-center p-0 h-full">
+                  <img
+                    src={image.imageUrl}
+                    alt={image.name || product.name}
+                    className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
+                    width={400}
+                    height={400}
+                  />
+                </CardContent>
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="absolute left-2 top-1/2 bg-primary-light border-0 text-xs h-6 w-6 -translate-y-1/2" />
+        <CarouselNext className="absolute right-2 top-1/2 bg-primary-light border-0 text-xs h-6 w-6 -translate-y-1/2" />
+      </Carousel>
+    </div>
+  );
+};
 
 interface ProductsProps {
   // Update addToCart prop type to include imageUrl
@@ -34,6 +95,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
       const params = [
         { key: 'limit', value: 999 },
         { key: 'active', value: true },
+        { key: 'show', value: 'images' },
         { key: 'order-name', value: 'asc' },
       ];
       // Ensure the get function returns the expected Response structure
@@ -111,12 +173,10 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
       <div className="bg-white rounded-2xl overflow-hidden shadow-xl">
         <div className="grid grid-cols-1 md:grid-cols-2">
           <div className="relative h-64 md:h-full">
-            <img
-              src={featuredProduct.imageUrl || ''} // Handle null imageUrl
-              alt={featuredProduct.name}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            <div className="absolute top-4 text-2xs md:text-sm left-4 bg-gradient-to-r from-green-400 to-primary-light text-white px-2 md:px-4 py-1 md:py-2 rounded-full font-semibold">
+            <div className="absolute inset-0">
+              <ProductCarousel product={featuredProduct} />
+            </div>
+            <div className="absolute top-4 text-2xs md:text-sm left-4 bg-gradient-to-r from-green-400 to-primary-light text-white px-2 md:px-4 py-1 md:py-2 rounded-full font-semibold z-10">
               Produto Destaque
             </div>
           </div>
@@ -195,15 +255,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 mb-12">
             {displayedProducts.map((product: IEntity) => ( // Add type
               <Card id={product.id === products[2]?.id ? "grid-produtos" : undefined} key={product.id} className="h-full flex flex-col overflow-hidden group card-hover border-0 shadow-lg"> {/* Use product.id for key and adjust scroll target logic */}
-                <div className="aspect-square relative overflow-hidden">
-                  <img
-                    src={product.imageUrl || ''} // Handle null imageUrl
-                    alt={product.name}
-                    className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
-                    width={400}
-                    height={400}
-                  />
-                </div>
+                <ProductCarousel product={product} />
                 <div className="p-2 md:p-6 flex flex-col flex-grow bg-white">
                   <h3 className="text-base md:text-lg leading-tight text-black font-semibold mb-2">{product.name}</h3>
                   <p className="text-xs md:text-sm text-gray-600 mb-4">{product.description}</p>

@@ -113,12 +113,19 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
               >
                 Serviços
               </a>
-              <a
+              {/* <a
                 onClick={() => {navigate({to: `/`})}}
                 href="#produtos"
                 className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Produtos
+              </a> */}
+              <a
+                onClick={() => {navigate({to: `/loja`})}}
+                href="#produtos"
+                className="text-gray-600 hover:text-primary-light transition-colors"
+              >
+                Loja
               </a>
               <a
                 onClick={() => {navigate({to: `/`})}}
@@ -227,6 +234,12 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Produtos
+                </a>
+                <a
+                  className="text-gray-600 hover:text-primary-light transition-colors"
+                  onClick={() => {setIsMenuOpen(false); navigate({to: `/loja`})}}
+                >
+                  Loja
                 </a>
                 <a
                   href="/#aluguel"

@@ -1,0 +1,27 @@
+/* Override pagination styles with fixed colors */
+.pagination-fixed a {
+  color: #4b5563 !important; /* text-gray-600 */
+  border-color: #d1d5db !important; /* border-gray-300 */
+  background-color: white !important;
+}
+
+.pagination-fixed a:hover {
+  background-color: #f3f4f6 !important; /* bg-gray-100 */
+  color: #1f2937 !important; /* text-gray-800 */
+}
+
+.pagination-fixed a[aria-current="page"] {
+  border-color: #d1d5db !important; /* border-gray-300 */
+  background-color: #f3f4f6 !important; /* bg-gray-100 */
+  color: #1f2937 !important; /* text-gray-800 */
+}
+
+.pagination-fixed a[disabled] {
+  color: #9ca3af !important; /* text-gray-400 */
+  background-color: #f9fafb !important; /* bg-gray-50 */
+  cursor: not-allowed !important;
+}
+
+.pagination-fixed span {
+  color: #6b7280 !important; /* text-gray-500 */
+}

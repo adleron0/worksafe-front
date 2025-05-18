@@ -30,7 +30,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     featured: z.boolean(),
     features: z.string().optional(),
-    description: z.string().min(10, { message: "Descrição deve ter pelo menos 3 caracteres" }),
+    description: z.string().min(10, { message: "Descrição deve ter pelo menos 10 caracteres" }),
     price: z.number().optional(),
     oldPrice: z.number().optional(),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null

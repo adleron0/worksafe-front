@@ -105,7 +105,8 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
     show: string;
     'order-name': string;
     name: string;
-    maxPrice?: number;
+    'max-price'?: number;
+    'min-price'?: number;
     featured?: boolean | null;
     showActiveOnly?: boolean;
   }
@@ -118,7 +119,8 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
     show: 'images',
     'order-name': 'asc',
     name: "",
-    // maxPrice: 5000,
+    'max-price': 5000,
+    'min-price': 0,
     featured: null,
     // showActiveOnly: true
   });
@@ -187,6 +189,14 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
     </div>
   );
 
+  // --- Empty State ---
+  const renderEmptyState = () => (
+    <div className="text-center">
+      <h2 className="text-2xl text-gray-600 font-bold mb-4">Nenhum produto encontrado</h2>
+      <p className="text-gray-500">Tente ajustar os filtros ou buscar por outro termo.</p>
+    </div>
+  );
+
   return (
     <section id="produtos" className="py-20 bg-gray-50">
       <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
@@ -223,7 +233,7 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
             
             <Button 
               variant="outline" 
-              className="flex items-center gap-2 border-gray-300 text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+              className="flex items-center gap-2 border-muted bg-black text-gray-100 hover:text-gray-900 hover:bg-gray-100 duration-200 ease-in-out"
               onClick={() => setShowFilters(!showFilters)}
             >
               <SlidersHorizontal className="h-4 w-4" />
@@ -242,20 +252,40 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Price Range Filter */}
-              <div>
-                <Label className="text-sm font-medium mb-2 block text-gray-900">Preço Máximo: R$ {searchParams.maxPrice || 5000}</Label>
-                <div className="mt-6 px-2">
-                  <Slider
-                    defaultValue={[5000]}
-                    max={10000}
-                    step={100}
-                    value={[searchParams.maxPrice || 5000]}
-                    onValueChange={(value) => setSearchParams(prev => ({ ...prev, maxPrice: value[0] }))}
-                    className={cn("w-full data-[disabled]:opacity-50")}
-                  />
-                  <div className="flex justify-between text-sm text-gray-500 mt-2">
-                    <span>R$ 0</span>
-                    <span>R$ 10.000</span>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium mb-2 block text-gray-900">Preço Máximo: R$ {searchParams['max-price'] || 5000}</Label>
+                  <div className="mt-1 px-2">
+                    <Slider
+                      defaultValue={[5000]}
+                      max={20000}
+                      step={100}
+                      value={[searchParams['max-price'] || 5000]}
+                      onValueChange={(value) => setSearchParams(prev => ({ ...prev, 'max-price': value[0] }))}
+                      className={cn("w-full data-[disabled]:opacity-50")}
+                    />
+                    <div className="flex justify-between text-sm text-gray-500 mt-2">
+                      <span>R$ 0</span>
+                      <span>R$ 20.000</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium mb-2 block text-gray-900">Preço Mínimo: R$ {searchParams['min-price'] || 0}</Label>
+                  <div className="mt-1 px-2">
+                    <Slider
+                      defaultValue={[0]}
+                      max={searchParams['max-price']}
+                      step={100}
+                      value={[searchParams['min-price'] || 0]}
+                      onValueChange={(value) => setSearchParams(prev => ({ ...prev, 'min-price': value[0] }))}
+                      className={cn("w-full data-[disabled]:opacity-50")}
+                    />
+                    <div className="flex justify-between text-sm text-gray-500 mt-2">
+                      <span>R$ 0</span>
+                      <span>R$ {searchParams['max-price']}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -313,7 +343,7 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
                       id="featured-only"
                       checked={searchParams.featured || false}
                       onCheckedChange={(checked) => setSearchParams(prev => ({ ...prev, featured: checked }))}
-                      className="data-[state=checked]:bg-primary-light"
+                      className="data-[state=unchecked]:bg-gray-200 data-[state=checked]:bg-primary-light"
                     />
                     <Label htmlFor="featured-only" className="text-sm text-gray-700">
                       Apenas Produtos Destaque
@@ -324,7 +354,7 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
                       id="active-only"
                       checked={searchParams.showActiveOnly || true}
                       onCheckedChange={(checked) => setSearchParams(prev => ({ ...prev, showActiveOnly: checked }))}
-                      className="data-[state=checked]:bg-primary-light"
+                      className="data-[state=unchecked]:bg-gray-200 data-[state=checked]:bg-primary-light"
                     />
                     <Label htmlFor="active-only" className="text-sm text-gray-700">
                       Apenas Produtos Disponíveis
@@ -365,9 +395,11 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
         {/* Grid de Produtos */}
         {isLoading ? (
           renderSkeletonGrid()
-        ) : isError || !data?.rows.length ? (
+        ) : isError ? (
           renderErrorState()
-        ) : data?.rows.length > 0 ? (
+        ) : data?.rows?.length === 0 ? (
+          renderEmptyState()
+        ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 mb-8">
             {data?.rows.map((product: IEntity) => (
               <Card key={product.id} className="h-full flex flex-col overflow-hidden group card-hover border-0 shadow-lg">
@@ -396,7 +428,7 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
                         <span className="text-sm text-gray-500 line-through">
                           { Number(product.oldPrice || 0) > 0 ? `${formatCurrency(product.oldPrice || 0)}` : '' }
                         </span>
-                        <span className="text-3xl font-bold bg-primary-light bg-clip-text text-transparent">
+                        <span className="text-base md:text-lg font-bold bg-primary-light bg-clip-text text-transparent">
                           { formatCurrency(product.price || 0) }
                         </span>
                       </div>
@@ -425,8 +457,6 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
               </Card>
             ))}
           </div>
-        ) : (
-          <p className="text-center text-gray-600 mb-12">Nenhum produto disponível no momento.</p>
         )}
 
         {/* Pagination */}

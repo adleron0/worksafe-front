@@ -144,6 +144,9 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
             <AvatarFallback className="rounded-md">{item.name[0]}</AvatarFallback>
           </Avatar>
           <div className="break-words w-9/12 md:w-full">
+            <p className="text-xs text-muted-foreground dark:text-gray-100">
+              Turma: #{item.id}
+            </p>
             <h2 className="text-sm font-semibold">{item.name}</h2>
             <p className="text-xs text-muted-foreground dark:text-gray-100">
               {item.hoursDuration} horas

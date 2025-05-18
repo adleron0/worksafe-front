@@ -12,6 +12,7 @@ interface HeaderListsProps {
   ability: string;
   limit: number;
   searchParams?: any;
+  showSearch?: boolean;
   iconForm?: string;
   addButtonName?: string;
   // Funções
@@ -30,6 +31,7 @@ const HeaderLists = ({
   ability,
   limit,
   searchParams,
+  showSearch = true,
   iconForm,
   addButtonName = "Novo",
   // Funções
@@ -71,10 +73,12 @@ const HeaderLists = ({
             </Select>
           </div>
 
-          <Button onClick={() => openSearch(true)} variant="default" className="text-muted h-9 bg-primary flex items-center">
-            <Icon name="sliders-horizontal" className="w-3 h-3 md:mr-2" />
-            <span className="hidden md:block">Filtro Avançado</span>
-          </Button>
+          {showSearch && (
+            <Button onClick={() => openSearch(true)} variant="default" className="text-muted h-9 bg-primary flex items-center">
+              <Icon name="sliders-horizontal" className="w-3 h-3 md:mr-2" />
+              <span className="hidden md:block">Filtro Avançado</span>
+            </Button>
+          )}
          
         </div>
         {

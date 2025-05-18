@@ -95,6 +95,7 @@ const List = ({ classId }: { classId: number }) => {
         ability={entity.ability}
         limit={data?.total || 0}
         searchParams={searchParams}
+        showSearch={false}
         onlimitChange={handleLimitChange}
         openSearch={setOpenSearch}
         openForm={setOpenForm}

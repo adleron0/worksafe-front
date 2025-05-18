@@ -4,6 +4,13 @@ import parceiro2 from "../../../assets/images/parceiros/2.png";
 import parceiro3 from "../../../assets/images/parceiros/3.png";
 import parceiro4 from "../../../assets/images/parceiros/4.png";
 import { useEffect, useState } from "react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
+import { Card, CardContent } from "@/components/ui/card";
+import Autoplay from 'embla-carousel-autoplay';
 
 export default function Parceiros() {
   // Array of client images
@@ -46,45 +53,67 @@ export default function Parceiros() {
           </p>
         </div>
 
-        {/* Slider - Left to Right */}
-        <div className="relative overflow-hidden">
+        {/* Carousel using shadcn/ui */}
+        <div className="relative w-full max-w-xl">
           {/* Fade effect - left side */}
-          <div className="absolute left-0 top-0 h-full w-24 bg-gradient-to-r from-gray-100 to-transparent z-10"></div>
+          <div className="absolute left-0 top-0 h-full w-12 bg-gradient-to-r from-gray-100 to-transparent z-10"></div>
           
-          <div className="flex overflow-hidden whitespace-nowrap">
-            <div 
-              className="flex space-x-4 py-4 animate-marquee" 
-              style={{ 
-                animationDuration: "20s", 
-                visibility: imagesLoaded ? "visible" : "hidden" 
-              }}
-            >
-              {clientImages.map((src, index) => (
-                <div key={`slider1-${index}`} className="flex-shrink-0 h-24 w-auto">
-                  <img 
-                    src={src} 
-                    alt={`Parceiro ${index + 1}`} 
-                    className="h-full w-auto object-contain rounded-md grayscale hover:grayscale-0 transition-all duration-300"
-                    loading="eager"
-                  />
-                </div>
-              ))}
-              {/* Duplicate images for seamless loop */}
-              {clientImages.map((src, index) => (
-                <div key={`slider1-dup-${index}`} className="flex-shrink-0 h-24 w-auto">
-                  <img 
-                    src={src} 
-                    alt={`Parceiro ${index + 1}`} 
-                    className="h-full w-auto object-contain rounded-md grayscale hover:grayscale-0 transition-all duration-300"
-                    loading="eager"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+          <Carousel
+            className="w-full"
+            plugins={[
+              Autoplay({
+                delay: 2000,
+                jump: false,
+              }),
+            ]}
+            opts={{
+              align: "start",
+              loop: true,
+              dragFree: true,
+            }}
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {imagesLoaded ? (
+                <>
+                  {clientImages.map((src, index) => (
+                    <CarouselItem key={`carousel-${index}`} className="pl-0.5 md:pl-1 basis-1/3 md:basis-1/4">
+                      <Card className="border-none shadow-none bg-transparent">
+                        <CardContent className="flex items-center justify-center p-1">
+                          <img 
+                            src={src} 
+                            alt={`Parceiro ${index + 1}`} 
+                            className="h-24 w-auto object-contain rounded-md grayscale hover:grayscale-0 transition-all duration-300"
+                            loading="eager"
+                          />
+                        </CardContent>
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                  {/* Duplicate images for better looping experience */}
+                  {clientImages.map((src, index) => (
+                    <CarouselItem key={`carousel-dup-${index}`} className="pl-0.5 md:pl-1 basis-1/3 md:basis-1/4">
+                      <Card className="border-none shadow-none bg-transparent">
+                        <CardContent className="flex items-center justify-center p-1">
+                          <img 
+                            src={src} 
+                            alt={`Parceiro ${index + 1}`} 
+                            className="h-24 w-auto object-contain rounded-md grayscale hover:grayscale-0 transition-all duration-300"
+                            loading="eager"
+                          />
+                        </CardContent>
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                </>
+              ) : (
+                <div className="h-24 w-full"></div>
+              )}
+            </CarouselContent>
+            {/* No navigation arrows as requested */}
+          </Carousel>
           
           {/* Fade effect - right side */}
-          <div className="absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-gray-100 to-transparent z-10"></div>
+          <div className="absolute right-0 top-0 h-full w-12 bg-gradient-to-l from-gray-100 to-transparent z-10"></div>
         </div>
       </div>
     </section>

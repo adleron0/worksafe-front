@@ -4,37 +4,36 @@ import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
 import Pagination from "@/components/general-components/Pagination";
-import Dialog from "@/components/general-components/Dialog";
 // Template Page list-form
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
 import ItemSkeleton from "./Skeletons/ItemSkeleton";
-import ItemList from "./SiteProductsItem";
-import Form from "./SiteProductsForm";
-import SearchForm from "./SiteProductsSeach";
-import SiteProductsImagesList from "@/pages/Site-Products-Images/SiteProductsImagesList";
+import ItemList from "./SiteProductsImagesItem";
+import Form from "./SiteProductsImagesForm";
+import SearchForm from "./SiteProductsImagesSearch";
 // Interfaces
-import { IEntity } from "@/pages/Site-Products/interfaces/entity.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
-const List = () => {
+const List = ({ productId }: { productId: number }) => {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
-  const [openImageModal, setOpenImageModal] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
-    'order-name': 'asc',
+    show: ['product'],
+    productId: productId,
+    'order-id': 'desc',
   });
   const initialFormRef = useRef(searchParams);
 
   // Define variáveis de entidade
   const entity = {
-    name: "Produtos do Site",
-    pluralName: "Produtos do Site",
-    model: "site-products",
+    name: "Imagem do Produto",
+    pluralName: "Imagens do Produto",
+    model: "site_productsimages",
     ability: "loja_site",
   }
 
@@ -60,11 +59,7 @@ const List = () => {
     },
   });
 
-  const handleSearch = async (params: {
-    name?: string;
-    active?: boolean;
-    createdAt?: [Date | undefined, Date | undefined];
-  }) => {
+  const handleSearch = async (params: any) => {
     setSearchParams((prev) => ({
       ...prev,
       ...params,
@@ -93,12 +88,14 @@ const List = () => {
   return (
     <>
       <HeaderLists
-        titlePage={`${entity.pluralName}`}
-        descriptionPage={`Administrar nossos ${entity.pluralName}`}
+        // titlePage={`${entity.pluralName}`}
+        // descriptionPage={`Administrar ${entity.pluralName}`}
         entityName={entity.name}
+        addButtonName="Vincular"
         ability={entity.ability}
         limit={data?.total || 0}
         searchParams={searchParams}
+        showSearch={false}
         onlimitChange={handleLimitChange}
         openSearch={setOpenSearch}
         openForm={setOpenForm}
@@ -122,13 +119,13 @@ const List = () => {
         openSheet={openForm}
         setOpenSheet={setOpenForm}
         title={formData 
-          ? `Editar ${entity.name} ${formData.name}`
-          : `Cadastrar ${entity.name}`}
+          ? `Editar ${entity.name}`
+          : `Vincular ${entity.name}`}
         description={formData 
-          ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
-          : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
+          ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name}.`
+          : `Por favor, preencha com atenção todas as informações necessárias para vincular ${entity.name}.`}
         side="right"
-        form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} /> }
+        form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} productId={productId} /> }
       />
 
       {/* Listagem de items */}
@@ -148,7 +145,6 @@ const List = () => {
                 index={i} 
                 setFormData={setFormData} 
                 setOpenForm={setOpenForm}
-                openImageModal={setOpenImageModal}
               />
             ))
           : (
@@ -158,18 +154,6 @@ const List = () => {
           )
         }
       </div>
-
-       {/* Modal de contato */}
-      <Dialog 
-        open={openImageModal}
-        onOpenChange={setOpenImageModal}
-        showBttn={false}
-        showHeader={true}
-        title={`Imagens do ${entity.name} ${formData?.name}`}
-        description="Gestão de imagens do produto."
-      >
-        <SiteProductsImagesList productId={formData?.id || 0} />
-      </Dialog>
 
       {/* Paginação */}
       <div className="mt-4">

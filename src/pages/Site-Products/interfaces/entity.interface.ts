@@ -1,3 +1,9 @@
+export interface IProductImage {
+  id: number;
+  imageUrl: string;
+  name: string;
+}
+
 export interface IEntity {
   id?: number;
   name: string;
@@ -13,4 +19,5 @@ export interface IEntity {
   createdAt?: string;
   updatedAt?: string | null;
   inactiveAt?: string | null;
+  images?: IProductImage[];
 }

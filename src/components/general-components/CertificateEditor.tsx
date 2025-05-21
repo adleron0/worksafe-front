@@ -8,6 +8,15 @@ import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import jsPDF from 'jspdf'
+import FontFaceObserver from 'fontfaceobserver'
+import '@/assets/fonts/local-fonts.css'
+
+// Declaração de tipo para FontFaceObserver
+declare global {
+  interface Window {
+    FontFaceObserver: typeof FontFaceObserver;
+  }
+}
 import {
   LayoutTemplate,
   Type,
@@ -54,6 +63,7 @@ interface FabricObjectWithData extends fabric.Object {
   data?: {
     type: string;
   };
+  isEditing?: boolean;
 }
 
 // Google Font interface
@@ -78,9 +88,9 @@ const CertificateEditor: React.FC<CertificateEditorProps> = ({ onSave }) => {
   const [canvas, setCanvas] = useState<fabric.Canvas | null>(null);
   const [pages, setPages] = useState<CertificatePage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
-    const [selectedObject, setSelectedObject] = useState<fabric.Object | null>(null);
+    const [selectedObject, setSelectedObject] = useState<FabricObjectWithData | null>(null);
   const [textOptions, setTextOptions] = useState({
-    fontFamily: 'Arial',
+    fontFamily: 'Bebas Neue',
     fontSize: 20,
     fontWeight: 'normal',
     fontStyle: 'normal',
@@ -90,7 +100,7 @@ const CertificateEditor: React.FC<CertificateEditorProps> = ({ onSave }) => {
   const [zoom, setZoom] = useState(100);
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
   const [googleFonts, setGoogleFonts] = useState<GoogleFont[]>([]);
-  const [loadedFonts, setLoadedFonts] = useState<string[]>(['Arial', 'Times New Roman', 'Courier New', 'Georgia', 'Verdana']);
+  const [loadedFonts, setLoadedFonts] = useState<string[]>(['Bebas Neue']);
   const [isLoadingFonts, setIsLoadingFonts] = useState(false);
 
   // Delete selected object
@@ -120,145 +130,166 @@ const CertificateEditor: React.FC<CertificateEditorProps> = ({ onSave }) => {
     };
   }, [deleteSelectedObject]);
 
-  // Fetch Google Fonts
-  const fetchGoogleFonts = async () => {
+  // Inicializar fontes locais
+  const initLocalFonts = () => {
     try {
       setIsLoadingFonts(true);
-      // Google Fonts API key - in a real app, this should be stored securely
-      const apiKey = 'AIzaSyAOES8EmKhuJEnsn9kS1XKBpxxp-TgN8Jc';
-      const response = await fetch(`https://www.googleapis.com/webfonts/v1/webfonts?key=${apiKey}&sort=popularity`);
-      const data = await response.json();
-
-      if (data.items && Array.isArray(data.items)) {
-        // Get the top 10 popular fonts
-        const popularFonts = data.items.slice(0, 10);
-        
-        // Pré-carregue as fontes mais populares para melhorar a experiência do usuário
-        const preloadFonts = popularFonts.slice(0, 5);
-        preloadFonts.forEach((font: GoogleFont) => {
-          // Adicione um link para pré-carregar a fonte
-          const link = document.createElement('link');
-          link.rel = 'preload';
-          link.href = `https://fonts.googleapis.com/css2?family=${font.family.replace(/ /g, '+')}&display=swap`;
-          link.as = 'style';
-          document.head.appendChild(link);
-          
-          // Adicione um link para carregar a fonte
-          const styleLink = document.createElement('link');
-          styleLink.rel = 'stylesheet';
-          styleLink.href = `https://fonts.googleapis.com/css2?family=${font.family.replace(/ /g, '+')}&display=swap`;
-          document.head.appendChild(styleLink);
-          
-          // Adicione à lista de fontes carregadas
-          setLoadedFonts(prev => [...prev, font.family]);
-        });
-        
-        setGoogleFonts(popularFonts);
-      }
+      
+      // Lista de fontes locais disponíveis
+      const localFonts: GoogleFont[] = [
+        { family: 'Bebas Neue', variants: ['regular'], category: 'sans-serif' },
+        { family: 'Inconsolata', variants: ['regular', 'bold'], category: 'monospace' },
+        { family: 'Josefin Sans', variants: ['regular', 'bold', 'italic'], category: 'sans-serif' },
+        { family: 'Karla', variants: ['regular', 'bold'], category: 'sans-serif' },
+        { family: 'Lato', variants: ['regular', 'bold', 'italic'], category: 'sans-serif' },
+        { family: 'Merriweather', variants: ['regular', 'bold'], category: 'serif' },
+        { family: 'Merriweather Sans', variants: ['regular', 'bold'], category: 'sans-serif' },
+        { family: 'Montserrat', variants: ['regular', 'bold'], category: 'sans-serif' },
+        { family: 'Nunito', variants: ['regular', 'bold'], category: 'sans-serif' },
+        { family: 'Open Sans', variants: ['regular', 'bold'], category: 'sans-serif' },
+        { family: 'Oswald', variants: ['regular', 'bold'], category: 'sans-serif' },
+        { family: 'PT Sans', variants: ['regular', 'bold'], category: 'sans-serif' },
+        { family: 'Playfair Display', variants: ['regular', 'bold'], category: 'serif' },
+        { family: 'Quicksand', variants: ['regular', 'bold'], category: 'sans-serif' },
+        { family: 'Raleway', variants: ['regular', 'bold'], category: 'sans-serif' },
+        { family: 'Roboto', variants: ['regular', 'bold', 'italic'], category: 'sans-serif' },
+        { family: 'Source Code Pro', variants: ['regular', 'bold'], category: 'monospace' },
+        { family: 'Ubuntu', variants: ['regular', 'bold'], category: 'sans-serif' },
+        { family: 'Work Sans', variants: ['regular', 'bold'], category: 'sans-serif' }
+      ];
+      
+      // Atualizar estado com apenas as fontes locais
+      setGoogleFonts(localFonts);
+      
+      // Adicionar todas as fontes à lista de fontes carregadas
+      const fontFamilies = localFonts.map(font => font.family);
+      setLoadedFonts(fontFamilies);
+      
+      // Criar um elemento de estilo para pré-carregar todas as fontes
+      const styleElement = document.createElement('style');
+      styleElement.textContent = fontFamilies.map(font => `
+        @font-face {
+          font-family: '${font}';
+          src: local('${font}');
+          font-display: block;
+        }
+      `).join('\n');
+      document.head.appendChild(styleElement);
+      
+      // Criar elementos de teste para cada fonte para forçar o carregamento
+      const testDiv = document.createElement('div');
+      testDiv.style.position = 'absolute';
+      testDiv.style.visibility = 'hidden';
+      testDiv.style.pointerEvents = 'none';
+      testDiv.style.height = '0';
+      testDiv.style.width = '0';
+      testDiv.style.overflow = 'hidden';
+      
+      // Adicionar um span para cada fonte
+      fontFamilies.forEach(font => {
+        const span = document.createElement('span');
+        span.style.fontFamily = font;
+        span.textContent = 'Teste de carregamento de fonte';
+        testDiv.appendChild(span);
+      });
+      
+      // Adicionar ao documento
+      document.body.appendChild(testDiv);
+      
+      // Remover após um tempo para não poluir o DOM
+      setTimeout(() => {
+        document.body.removeChild(testDiv);
+      }, 3000);
+      
+      // Pré-carregar as fontes mais comuns com FontFaceObserver
+      const commonFonts = ['Bebas Neue', 'Lato', 'Roboto', 'Open Sans', 'Montserrat'];
+      commonFonts.forEach(font => {
+        const observer = new FontFaceObserver(font);
+        observer.load(null, 3000)
+          .then(() => console.log(`Fonte ${font} pré-carregada com sucesso`))
+          .catch(err => console.warn(`Erro ao pré-carregar fonte ${font}:`, err));
+      });
+      
     } catch (error) {
-      console.error('Error fetching Google Fonts:', error);
+      console.error('Error initializing local fonts:', error);
     } finally {
       setIsLoadingFonts(false);
     }
   };
 
-  // Load a Google Font
-  const loadGoogleFont = (fontFamily: string) => {
+  // Adicionar fonte à lista de fontes carregadas e garantir que o fabric.js a reconheça
+  const loadLocalFont = (fontFamily: string) => {
     if (loadedFonts.includes(fontFamily)) {
-      return; // Font already loaded
+      // console.log(`Fonte ${fontFamily} já está na lista de fontes carregadas, aplicando diretamente`);
+      
+      // Se a fonte já está carregada, aplicar diretamente sem tentar recarregar
+      if (canvas && selectedObject && (selectedObject.type === 'text' || selectedObject.type === 'i-text')) {
+        const textObj = selectedObject as fabric.IText;
+        textObj.set({ fontFamily: fontFamily });
+        canvas.renderAll();
+      }
+      return;
     }
 
     try {
-      // Find the font in our googleFonts array to get its available variants
-      const googleFont = googleFonts.find(font => font.family === fontFamily);
-      
-      if (googleFont) {
-        console.log(`Loading font ${fontFamily} with variants:`, googleFont.variants);
-        
-        // Mapeamento de variantes para pesos e estilos
-        const weightMap: Record<string, string> = {
-          '100': 'wght@100',
-          '200': 'wght@200',
-          '300': 'wght@300',
-          'light': 'wght@300',
-          '400': 'wght@400',
-          'regular': 'wght@400',
-          '500': 'wght@500',
-          '600': 'wght@600',
-          '700': 'wght@700',
-          'bold': 'wght@700',
-          '800': 'wght@800',
-          'extrabold': 'wght@800',
-          '900': 'wght@900',
-        };
-        
-        // Processar variantes disponíveis
-        let axisValues: string[] = [];
-        
-        // Adicionar pesos
-        googleFont.variants.forEach(variant => {
-          // Tratar variantes de peso
-          if (weightMap[variant]) {
-            axisValues.push(weightMap[variant]);
-          }
-          
-          // Tratar variantes de estilo (itálico)
-          if (variant.includes('italic')) {
-            // Se já tiver um peso, adicione o itálico
-            if (variant !== 'italic') {
-              const weight = variant.replace('italic', '');
-              const weightValue = weight || '400';
-              axisValues.push(`wght@${weightValue};ital,1`);
-            } else {
-              // Apenas itálico
-              axisValues.push('ital,1');
-            }
-          }
-        });
-        
-        // Se não encontrou nenhuma variante específica, use o padrão
-        if (axisValues.length === 0) {
-          axisValues.push('wght@400');
-        }
-        
-        // Remover duplicatas
-        axisValues = [...new Set(axisValues)];
-        
-        // Criar a URL da fonte usando o formato mais recente da API Google Fonts com variantes específicas
-        let fontUrl = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, '+')}`;
-        
-        // Adicionar as variantes à URL
-        if (axisValues.length > 0) {
-          fontUrl += `:${axisValues.join(';')}`;
-        }
-        
-        fontUrl += '&display=swap';
-        
-        // Create a link element for the Google Font
-        const link = document.createElement('link');
-        link.href = fontUrl;
-        link.rel = 'stylesheet';
-        document.head.appendChild(link);
-        
-        console.log(`Font URL: ${link.href}`);
-      } else {
-        // If not a Google Font, just add a basic link
-        const link = document.createElement('link');
-        link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, '+')}&display=swap`;
-        link.rel = 'stylesheet';
-        document.head.appendChild(link);
+      // Verificar se a fonte existe na lista de fontes disponíveis
+      const fontExists = googleFonts.some(font => font.family === fontFamily);
+      if (!fontExists) {
+        console.warn(`Fonte ${fontFamily} não encontrada na lista de fontes disponíveis`);
+        return;
       }
 
-      // Add to loaded fonts
+      // Adicionar à lista de fontes carregadas
       setLoadedFonts(prev => [...prev, fontFamily]);
+      
+      // Criar um elemento de teste para verificar se a fonte está realmente disponível
+      const testElement = document.createElement('span');
+      testElement.style.fontFamily = fontFamily;
+      testElement.style.fontSize = '0px';
+      testElement.textContent = 'Teste de fonte';
+      document.body.appendChild(testElement);
+      
+      // Aplicar a fonte diretamente sem esperar pelo FontFaceObserver
+      if (canvas && selectedObject && (selectedObject.type === 'text' || selectedObject.type === 'i-text')) {
+        const textObj = selectedObject as fabric.IText;
+        textObj.set({ fontFamily: fontFamily });
+        canvas.renderAll();
+      }
+      
+      // Usar FontFaceObserver apenas para registro, não para bloquear a aplicação da fonte
+      const observer = new FontFaceObserver(fontFamily);
+      observer.load(null, 5000)
+        .then(() => {
+          console.log(`Fonte ${fontFamily} carregada com sucesso via FontFaceObserver`);
+          // Remover o elemento de teste
+          if (document.body.contains(testElement)) {
+            document.body.removeChild(testElement);
+          }
+        })
+        .catch((err: Error) => {
+          // Ignorar o erro de rede, já que a fonte local provavelmente já está disponível
+          console.log(`Aviso ao verificar fonte ${fontFamily}: ${err.message} - Isso é normal para fontes locais`);
+          
+          // Remover o elemento de teste
+          if (document.body.contains(testElement)) {
+            document.body.removeChild(testElement);
+          }
+          
+          // Garantir que o canvas seja renderizado mesmo com o erro
+          if (canvas) {
+            canvas.renderAll();
+          }
+        });
+      
+      console.log(`Fonte local aplicada: ${fontFamily}`);
     } catch (error) {
-      console.error(`Error loading font ${fontFamily}:`, error);
+      console.error(`Erro ao aplicar fonte ${fontFamily}:`, error);
     }
   };
 
-  // Fetch Google Fonts on component mount
+  // Inicializar fontes locais ao montar o componente
   useEffect(() => {
-    fetchGoogleFonts();
+    initLocalFonts();
   }, []);
 
   // Initialize canvas
@@ -272,9 +303,42 @@ const CertificateEditor: React.FC<CertificateEditorProps> = ({ onSave }) => {
         height: format === 'portrait' ? A4_HEIGHT : A4_WIDTH,
       });
 
+      // Define um tipo para os eventos de seleção do fabric.js
+      type FabricSelectionEvent = {
+        selected: FabricObjectWithData[];
+        target?: FabricObjectWithData;
+      };
+      
+      // Função para atualizar as opções de texto com base no objeto selecionado
+      const updateTextOptionsFromObject = (obj: FabricObjectWithData) => {
+        if (obj && (obj.type === 'text' || obj.type === 'i-text')) {
+          const textObj = obj as fabric.IText;
+          setTextOptions({
+            fontFamily: textObj.fontFamily || 'Bebas Neue',
+            fontSize: textObj.fontSize || 20,
+            fontWeight: String(textObj.fontWeight || 'normal'),
+            fontStyle: textObj.fontStyle as 'normal' | 'italic',
+            textAlign: textObj.textAlign as 'left' | 'center' | 'right',
+            color: textObj.fill?.toString() || '#000000'
+          });
+        }
+      };
+      
       // Set up event listeners
-      fabricCanvas.on('selection:created', handleSelectionChange);
-      fabricCanvas.on('selection:updated', handleSelectionChange);
+      fabricCanvas.on('selection:created', (e: FabricSelectionEvent) => {
+        if (e.selected && e.selected.length > 0) {
+          const selectedObj = e.selected[0];
+          setSelectedObject(selectedObj);
+          updateTextOptionsFromObject(selectedObj);
+        }
+      });
+      fabricCanvas.on('selection:updated', (e: FabricSelectionEvent) => {
+        if (e.selected && e.selected.length > 0) {
+          const selectedObj = e.selected[0];
+          setSelectedObject(selectedObj);
+          updateTextOptionsFromObject(selectedObj);
+        }
+      });
       fabricCanvas.on('selection:cleared', () => setSelectedObject(null));
 
       setCanvas(fabricCanvas);
@@ -352,24 +416,7 @@ const CertificateEditor: React.FC<CertificateEditorProps> = ({ onSave }) => {
     }
   }, [currentPageIndex, pages, canvas, backgroundColor]);
 
-  // Handle selection change
-  const handleSelectionChange = (e: { selected: FabricObjectWithData[] }) => {
-    const selectedObject = e.selected[0];
-    setSelectedObject(selectedObject);
-
-    // Update text options if text is selected
-    if (selectedObject && (selectedObject.type === 'text' || selectedObject.type === 'i-text')) {
-      const textObj = selectedObject as fabric.IText;
-      setTextOptions({
-        fontFamily: textObj.fontFamily || 'Arial',
-        fontSize: textObj.fontSize || 20,
-        fontWeight: String(textObj.fontWeight || 'normal'),
-        fontStyle: textObj.fontStyle as 'normal' | 'italic',
-        textAlign: textObj.textAlign as 'left' | 'center' | 'right',
-        color: textObj.fill?.toString() || '#000000'
-      });
-    }
-  };
+  // Esta função foi substituída pela função updateTextOptionsFromObject
 
   // Generate unique ID
   const generateId = () => {
@@ -501,58 +548,83 @@ const CertificateEditor: React.FC<CertificateEditorProps> = ({ onSave }) => {
       switch (property) {
         case 'fontFamily':
           if (typeof value === 'string') {
-            // Load the font if it's a Google Font
-            const googleFont = googleFonts.find(font => font.family === value);
-            if (googleFont) {
-              loadGoogleFont(value);
-            }
-
-            textObj.set({ fontFamily: value });
+            console.log(`Alterando fonte para: ${value}`);
+            
+            // Atualizar o estado
             setTextOptions({ ...textOptions, fontFamily: value });
+            
+            // Verificar se a fonte já está na lista de fontes carregadas
+            if (loadedFonts.includes(value)) {
+              console.log(`Fonte ${value} já está carregada, aplicando diretamente`);
+              
+              // Aplicar a fonte diretamente
+              textObj.set({ fontFamily: value });
+              canvas.renderAll();
+            } else {
+              // Se a fonte não estiver carregada, carregá-la
+              console.log(`Carregando fonte ${value}`);
+              
+              // Aplicar temporariamente uma fonte padrão para forçar a atualização
+              textObj.set({ fontFamily: 'Arial' });
+              canvas.renderAll();
+              
+              // Usar a função loadLocalFont para carregar e aplicar a fonte
+              loadLocalFont(value);
+            }
           }
           break;
         case 'fontSize':
           if (typeof value === 'number') {
             textObj.set({ fontSize: value });
             setTextOptions({ ...textOptions, fontSize: value });
+            canvas.renderAll();
           }
           break;
         case 'fontWeight':
           if (typeof value === 'string') {
-            // Quando o peso da fonte é alterado, recarregue a fonte para garantir que a variante esteja disponível
-            const googleFont = googleFonts.find(font => font.family === textObj.fontFamily);
-            if (googleFont) {
-              // Remova a fonte da lista de fontes carregadas para forçar o recarregamento
-              setLoadedFonts(prev => prev.filter(font => font !== textObj.fontFamily));
-              // Recarregue a fonte
-              loadGoogleFont(textObj.fontFamily as string);
-            }
-            
+            // Primeiro atualize o estado e a interface
             textObj.set({ fontWeight: value });
             setTextOptions({ ...textOptions, fontWeight: value });
+            canvas.renderAll();
+            
+            // Depois recarregue a fonte para garantir que a variante esteja disponível
+            const fontFamily = textObj.fontFamily as string;
+            const googleFont = googleFonts.find((font: GoogleFont) => font.family === fontFamily);
+            if (googleFont) {
+              // Remova a fonte da lista de fontes carregadas para forçar o recarregamento
+              setLoadedFonts(prev => prev.filter(font => font !== fontFamily));
+              
+              // Recarregue a fonte com um pequeno atraso
+              setTimeout(() => {
+                loadLocalFont(fontFamily);
+                // Renderize novamente após carregar a fonte
+                canvas.renderAll();
+              }, 100);
+            }
           }
           break;
         case 'fontStyle':
           if (typeof value === 'string') {
             textObj.set({ fontStyle: value as 'normal' | 'italic' });
             setTextOptions({ ...textOptions, fontStyle: value as 'normal' | 'italic' });
+            canvas.renderAll();
           }
           break;
         case 'textAlign':
           if (typeof value === 'string') {
             textObj.set({ textAlign: value as 'left' | 'center' | 'right' });
             setTextOptions({ ...textOptions, textAlign: value as 'left' | 'center' | 'right' });
+            canvas.renderAll();
           }
           break;
         case 'color':
           if (typeof value === 'string') {
             textObj.set({ fill: value });
             setTextOptions({ ...textOptions, color: value });
+            canvas.renderAll();
           }
           break;
       }
-
-      canvas.renderAll();
     }
   };
 
@@ -720,7 +792,7 @@ const CertificateEditor: React.FC<CertificateEditorProps> = ({ onSave }) => {
       const text = new fabric.Text('Signature', {
         left: 160,
         top: 430,
-        fontFamily: 'Arial',
+        fontFamily: 'Bebas Neue',
         fontSize: 16,
         fill: '#999'
       });
@@ -904,19 +976,13 @@ const CertificateEditor: React.FC<CertificateEditorProps> = ({ onSave }) => {
                       name="fontFamily"
                       state={textOptions.fontFamily}
                       onChange={(_, value) => updateTextProperties('fontFamily', value)}
-                      options={[
-                        // Standard fonts
-                        { id: 'Arial', name: 'Arial' },
-                        { id: 'Times New Roman', name: 'Times New Roman' },
-                        { id: 'Courier New', name: 'Courier New' },
-                        { id: 'Georgia', name: 'Georgia' },
-                        { id: 'Verdana', name: 'Verdana' },
-                        // Google Fonts
-                        ...googleFonts.map(font => ({
+                      options={
+                        // Apenas fontes locais
+                        googleFonts.map(font => ({
                           id: font.family,
                           name: font.family
                         }))
-                      ]}
+                      }
                       placeholder="Select font"
                     />
                   )}
@@ -945,15 +1011,17 @@ const CertificateEditor: React.FC<CertificateEditorProps> = ({ onSave }) => {
                       onChange={(e) => updateTextProperties('fontSize', parseInt(e.target.value))}
                       min={8}
                       max={72}
+                      className="w-20"
                     />
-                    <Slider
-                      value={[textOptions.fontSize as number]}
-                      min={8}
-                      max={72}
-                      step={1}
-                      className="flex-1"
-                      onValueChange={(value) => updateTextProperties('fontSize', value[0])}
-                    />
+                    <div className="flex-1">
+                      <Slider
+                        value={[textOptions.fontSize as number]}
+                        min={8}
+                        max={72}
+                        step={1}
+                        onValueChange={(value) => updateTextProperties('fontSize', value[0])}
+                      />
+                    </div>
                   </div>
                 </div>
 

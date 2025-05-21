@@ -1,0 +1,298 @@
+/* Bebas Neue */
+@font-face {
+  font-family: 'Bebas Neue';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Bebas_Neue/BebasNeue-Regular.ttf') format('truetype');
+}
+
+/* Inconsolata */
+@font-face {
+  font-family: 'Inconsolata';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Inconsolata/static/Inconsolata-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Inconsolata';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Inconsolata/static/Inconsolata-Bold.ttf') format('truetype');
+}
+
+/* Josefin Sans */
+@font-face {
+  font-family: 'Josefin Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Josefin_Sans/static/JosefinSans-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Josefin Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Josefin_Sans/static/JosefinSans-Bold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Josefin Sans';
+  font-style: italic;
+  font-weight: 400;
+  src: url('./Josefin_Sans/static/JosefinSans-Italic.ttf') format('truetype');
+}
+
+/* Karla */
+@font-face {
+  font-family: 'Karla';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Karla/static/Karla-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Karla';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Karla/static/Karla-Bold.ttf') format('truetype');
+}
+
+/* Lato */
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Lato/Lato-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Lato/Lato-Bold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Lato';
+  font-style: italic;
+  font-weight: 400;
+  src: url('./Lato/Lato-Italic.ttf') format('truetype');
+}
+
+/* Merriweather */
+@font-face {
+  font-family: 'Merriweather';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Merriweather/static/Merriweather_24pt-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Merriweather/static/Merriweather_24pt-Bold.ttf') format('truetype');
+}
+
+/* Merriweather Sans */
+@font-face {
+  font-family: 'Merriweather Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Merriweather_Sans/static/MerriweatherSans-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Merriweather Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Merriweather_Sans/static/MerriweatherSans-Bold.ttf') format('truetype');
+}
+
+/* Montserrat */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Montserrat/static/Montserrat-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Montserrat/static/Montserrat-Bold.ttf') format('truetype');
+}
+
+/* Nunito */
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Nunito/static/Nunito-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Nunito/static/Nunito-Bold.ttf') format('truetype');
+}
+
+/* Open Sans */
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Open_Sans/static/OpenSans-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Open_Sans/static/OpenSans-Bold.ttf') format('truetype');
+}
+
+/* Oswald */
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Oswald/static/Oswald-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Oswald/static/Oswald-Bold.ttf') format('truetype');
+}
+
+/* PT Sans */
+@font-face {
+  font-family: 'PT Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./PT_Sans/PTSans-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'PT Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./PT_Sans/PTSans-Bold.ttf') format('truetype');
+}
+
+/* Playfair Display */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Playfair_Display/static/PlayfairDisplay-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Playfair_Display/static/PlayfairDisplay-Bold.ttf') format('truetype');
+}
+
+/* Quicksand */
+@font-face {
+  font-family: 'Quicksand';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Quicksand/static/Quicksand-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Quicksand';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Quicksand/static/Quicksand-Bold.ttf') format('truetype');
+}
+
+/* Raleway */
+@font-face {
+  font-family: 'Raleway';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Raleway/static/Raleway-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Raleway';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Raleway/static/Raleway-Bold.ttf') format('truetype');
+}
+
+/* Roboto */
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Roboto/static/Roboto-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Roboto/static/Roboto-Bold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Roboto';
+  font-style: italic;
+  font-weight: 400;
+  src: url('./Roboto/static/Roboto-Italic.ttf') format('truetype');
+}
+
+/* Source Code Pro */
+@font-face {
+  font-family: 'Source Code Pro';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Source_Code_Pro/static/SourceCodePro-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Source Code Pro';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Source_Code_Pro/static/SourceCodePro-Bold.ttf') format('truetype');
+}
+
+/* Ubuntu */
+@font-face {
+  font-family: 'Ubuntu';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Ubuntu/Ubuntu-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Ubuntu';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Ubuntu/Ubuntu-Bold.ttf') format('truetype');
+}
+
+/* Work Sans */
+@font-face {
+  font-family: 'Work Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./Work_Sans/static/WorkSans-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Work Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./Work_Sans/static/WorkSans-Bold.ttf') format('truetype');
+}

@@ -6,16 +6,17 @@ import { IEntity } from "@/pages/Site-Services/interfaces/entity.interface";
 import { get } from "@/services/api";
 import { Wrench } from "lucide-react";
 
-interface Services2Props {
-  handleWhatsApp: (message?: string) => void;
+interface Response {
+  rows: IEntity[];
+  total: number;
 }
 
-const Services2: React.FC<Services2Props> = ({ handleWhatsApp }) => {
-  interface Response {
-    rows: IEntity[];
-    total: number;
-  }
+interface Services2Props {
+  handleWhatsApp: (message?: string) => void;
+  preloadedData?: Response;
+}
 
+const Services2: React.FC<Services2Props> = ({ handleWhatsApp, preloadedData }) => {
   const { 
     data, 
     isLoading, 
@@ -29,6 +30,8 @@ const Services2: React.FC<Services2Props> = ({ handleWhatsApp }) => {
       ]
       return get('site-services', '', params);
     },
+    initialData: preloadedData,
+    enabled: !preloadedData, // Only fetch if no preloaded data
   });
 
   return (

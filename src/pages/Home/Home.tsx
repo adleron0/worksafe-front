@@ -14,6 +14,16 @@ import Cta from "./components/Cta";
 import Footer from "./components/Footer";
 import Faq from "./components/Faq";
 // import About from "./components/About";
+import { IEntity } from "@/pages/Site-Services/interfaces/entity.interface";
+
+interface ServicesResponse {
+  rows: IEntity[];
+  total: number;
+}
+
+interface HomeProps {
+  preloadedServices?: ServicesResponse;
+}
 
 // Calcula anos
 const foundationYear = 2018;
@@ -98,7 +108,7 @@ const faqs = [
 
 // CartItem type is now defined in useCart.ts, no need to redefine here.
 
-export default function Home() {
+export default function Home({ preloadedServices }: HomeProps) {
   const { cart, setCart, addToCart, clearCart } = useCart(); // Use the custom hook
 
   // Cart state and localStorage logic are now handled by useCart hook.
@@ -140,7 +150,7 @@ export default function Home() {
         {/* <Services handleWhatsApp={handleWhatsApp} /> */}
         
         {/* New Services2 Component */}
-        <Services2 handleWhatsApp={handleWhatsApp} />
+        <Services2 handleWhatsApp={handleWhatsApp} preloadedData={preloadedServices} />
 
         {/* Features Section */}
         <div className="bg-gray-100 py-10">

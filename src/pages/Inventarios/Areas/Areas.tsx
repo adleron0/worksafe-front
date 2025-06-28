@@ -91,7 +91,7 @@ const Areas = () => {
               </SelectContent>
             </Select>
           </div>
-          <AreasSearchForm onSubmit={handleSearch} onClear={handleClear} />
+          <AreasSearchForm onSubmit={handleSearch} onClear={handleClear} params={searchParams} />
         </div>
         
         <AreaForm />

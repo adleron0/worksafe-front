@@ -9,7 +9,7 @@ import Select from "@/components/general-components/Select";
 
 
 interface SearchData {
-  searchName: string;
+  'like-name': string;
   active?: boolean;
   cnpj: string;
   createdAt?: [Date | undefined, Date | undefined];
@@ -25,7 +25,7 @@ interface SearchFormProps {
 const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, params }) => {
   // Form state
   const [searchData, setSearchData] = useState<SearchData>({
-    searchName: "",
+    'like-name': "",
     active: undefined as boolean | undefined,
     cnpj: "",
     createdAt: undefined as [Date | undefined, Date | undefined] | undefined,
@@ -42,8 +42,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
       // Type checking for each field
       if (paramKey === 'active' && (typeof value === 'boolean' || value === undefined)) {
         newSearchData.active = value as boolean | undefined;
-      } else if (paramKey === 'searchName' && (typeof value === 'string' || value === undefined)) {
-        newSearchData.searchName = value as string;
+      } else if (paramKey === 'like-name' && (typeof value === 'string' || value === undefined)) {
+        newSearchData['like-name'] = value as string;
       } else if (paramKey === 'cnpj' && (typeof value === 'string' || value === undefined)) {
         newSearchData.cnpj = value as string;
       } else if (paramKey === 'createdAt' && (Array.isArray(value) || value === undefined)) {
@@ -98,7 +98,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
 
   const handleClear = () => {
     setSearchData({
-      searchName: "",
+      'like-name': "",
       active: undefined,
       cnpj: "",
       createdAt: undefined,
@@ -129,12 +129,12 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
 
       {/* Nome */}
       <div>
-        <Label htmlFor="searchName">Nome</Label>
+        <Label htmlFor="like-name">Nome</Label>
         <Input
-          id="searchName"
-          name="searchName"
+          id="like-name"
+          name="like-name"
           placeholder="Digite o nome"
-          value={searchData.searchName}
+          value={searchData['like-name']}
           onValueChange={handleChange}
         />
       </div>

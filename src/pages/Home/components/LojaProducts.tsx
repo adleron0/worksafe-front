@@ -104,7 +104,7 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
     active: boolean;
     show: string;
     'order-name': string;
-    name: string;
+    'like-name': string;
     'lte-price'?: number;
     'gte-price'?: number;
     featured?: boolean | null;
@@ -118,7 +118,7 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
     active: true,
     show: 'images',
     'order-name': 'asc',
-    name: "",
+    'like-name': "",
     'lte-price': 5000,
     'gte-price': 0,
     featured: null,
@@ -168,7 +168,7 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
     setSearchParams({
       ...initialFormRef.current,
       page: 0,
-      name: "",
+      'like-name': "",
     });
   };
 
@@ -216,14 +216,14 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
               <Input
                 type="text"
                 placeholder="Buscar produtos..."
-                value={searchParams.name}
-                onChange={(e) => setSearchParams(prev => ({ ...prev, name: e.target.value }))}
+                value={searchParams['like-name']}
+                onChange={(e) => setSearchParams(prev => ({ ...prev, 'like-name': e.target.value }))}
                 className="pl-10 pr-4 py-2 w-full border-gray-300 text-gray-900 focus:border-primary-light focus:ring-primary-light"
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              {searchParams.name && (
+              {searchParams['like-name'] && (
                 <button 
-                  onClick={() => setSearchParams(prev => ({ ...prev, name: "" }))}
+                  onClick={() => setSearchParams(prev => ({ ...prev, 'like-name': "" }))}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   <X className="h-4 w-4" />

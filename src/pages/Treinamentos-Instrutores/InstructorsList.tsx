@@ -46,8 +46,7 @@ const List = () => {
     data, 
     isLoading, 
     isError, 
-    error,
-    refetch 
+    error, 
   } = useQuery<Response | undefined, ApiError>({
     queryKey: [`list${entity.pluralName}`, searchParams],
     queryFn: async () => {
@@ -64,7 +63,6 @@ const List = () => {
       ...prev,
       ...params,
     }));
-    refetch();
   };
 
   const handleClear = () => {

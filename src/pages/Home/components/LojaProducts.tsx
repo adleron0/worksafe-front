@@ -104,9 +104,9 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
     active: boolean;
     show: string;
     'order-name': string;
-    name: string;
-    'max-price'?: number;
-    'min-price'?: number;
+    'like-name': string;
+    'lte-price'?: number;
+    'gte-price'?: number;
     featured?: boolean | null;
     showActiveOnly?: boolean;
   }
@@ -118,9 +118,9 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
     active: true,
     show: 'images',
     'order-name': 'asc',
-    name: "",
-    'max-price': 5000,
-    'min-price': 0,
+    'like-name': "",
+    'lte-price': 5000,
+    'gte-price': 0,
     featured: null,
     // showActiveOnly: true
   });
@@ -168,7 +168,7 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
     setSearchParams({
       ...initialFormRef.current,
       page: 0,
-      name: "",
+      'like-name': "",
     });
   };
 
@@ -216,14 +216,14 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
               <Input
                 type="text"
                 placeholder="Buscar produtos..."
-                value={searchParams.name}
-                onChange={(e) => setSearchParams(prev => ({ ...prev, name: e.target.value }))}
+                value={searchParams['like-name']}
+                onChange={(e) => setSearchParams(prev => ({ ...prev, 'like-name': e.target.value }))}
                 className="pl-10 pr-4 py-2 w-full border-gray-300 text-gray-900 focus:border-primary-light focus:ring-primary-light"
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              {searchParams.name && (
+              {searchParams['like-name'] && (
                 <button 
-                  onClick={() => setSearchParams(prev => ({ ...prev, name: "" }))}
+                  onClick={() => setSearchParams(prev => ({ ...prev, 'like-name': "" }))}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   <X className="h-4 w-4" />
@@ -254,14 +254,14 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
               {/* Price Range Filter */}
               <div className="space-y-4">
                 <div>
-                  <Label className="text-sm font-medium mb-2 block text-gray-900">Preço Máximo: R$ {searchParams['max-price'] || 5000}</Label>
+                  <Label className="text-sm font-medium mb-2 block text-gray-900">Preço Máximo: R$ {searchParams['lte-price'] || 5000}</Label>
                   <div className="mt-1 px-2">
                     <Slider
                       defaultValue={[5000]}
                       max={20000}
                       step={100}
-                      value={[searchParams['max-price'] || 5000]}
-                      onValueChange={(value) => setSearchParams(prev => ({ ...prev, 'max-price': value[0] }))}
+                      value={[searchParams['lte-price'] || 5000]}
+                      onValueChange={(value) => setSearchParams(prev => ({ ...prev, 'lte-price': value[0] }))}
                       className={cn("w-full data-[disabled]:opacity-50")}
                     />
                     <div className="flex justify-between text-sm text-gray-500 mt-2">
@@ -272,19 +272,19 @@ const LojaProducts: React.FC<LojaProductsProps> = ({ addToCart, formatCurrency }
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium mb-2 block text-gray-900">Preço Mínimo: R$ {searchParams['min-price'] || 0}</Label>
+                  <Label className="text-sm font-medium mb-2 block text-gray-900">Preço Mínimo: R$ {searchParams['gte-price'] || 0}</Label>
                   <div className="mt-1 px-2">
                     <Slider
                       defaultValue={[0]}
-                      max={searchParams['max-price']}
+                      max={searchParams['lte-price']}
                       step={100}
-                      value={[searchParams['min-price'] || 0]}
-                      onValueChange={(value) => setSearchParams(prev => ({ ...prev, 'min-price': value[0] }))}
+                      value={[searchParams['gte-price'] || 0]}
+                      onValueChange={(value) => setSearchParams(prev => ({ ...prev, 'gte-price': value[0] }))}
                       className={cn("w-full data-[disabled]:opacity-50")}
                     />
                     <div className="flex justify-between text-sm text-gray-500 mt-2">
                       <span>R$ 0</span>
-                      <span>R$ {searchParams['max-price']}</span>
+                      <span>R$ {searchParams['lte-price']}</span>
                     </div>
                   </div>
                 </div>

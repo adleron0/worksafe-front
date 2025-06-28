@@ -12,10 +12,10 @@ import Select from "@/components/general-components/Select";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 
 interface SearchData {
-  searchName: string;
+  'like-name': string;
   active?: boolean;
   cpf: string;
-  profileId?: number | number[];
+  'in-profileId'?: number | number[];
   createdAt?: [Date | undefined, Date | undefined];
 }
 
@@ -29,10 +29,10 @@ interface SearchFormProps {
 const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, params }) => {
   // Form state
   const [searchData, setSearchData] = useState<SearchData>({
-    searchName: "",
+    'like-name': "",
     active: undefined as boolean | undefined,
     cpf: "",
-    profileId: undefined as number | number[] | undefined,
+    'in-profileId': undefined as number | number[] | undefined,
     createdAt: undefined as [Date | undefined, Date | undefined] | undefined,
   });
 
@@ -47,15 +47,15 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
       // Type checking for each field
       if (paramKey === 'active' && (typeof value === 'boolean' || value === undefined)) {
         newSearchData.active = value as boolean | undefined;
-      } else if (paramKey === 'searchName' && (typeof value === 'string' || value === undefined)) {
-        newSearchData.searchName = value as string;
+      } else if (paramKey === 'like-name' && (typeof value === 'string' || value === undefined)) {
+        newSearchData['like-name'] = value as string;
       } else if (paramKey === 'cpf' && (typeof value === 'string' || value === undefined)) {
         newSearchData.cpf = value as string;
-      } else if (paramKey === 'profileId' && 
+      } else if (paramKey === 'in-profileId' && 
                 (typeof value === 'number' || 
                  (Array.isArray(value) && value.every(item => typeof item === 'number')) || 
                  value === undefined)) {
-        newSearchData.profileId = value as number | number[] | undefined;
+        newSearchData['in-profileId'] = value as number | number[] | undefined;
       } else if (paramKey === 'createdAt' && (Array.isArray(value) || value === undefined)) {
         newSearchData.createdAt = value as [Date | undefined, Date | undefined] | undefined;
       }
@@ -76,10 +76,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
 
   const handleRoleChange = (_name: string, value: string | string[]) => {
     if (typeof value === 'string') {
-      setSearchData(prev => ({ ...prev, profileId: Number(value) }));
+      setSearchData(prev => ({ ...prev, 'in-profileId': Number(value) }));
     } else if (Array.isArray(value)) {
       // Convert array of strings to array of numbers
-      setSearchData(prev => ({ ...prev, profileId: value.map(v => Number(v)) }));
+      setSearchData(prev => ({ ...prev, 'in-profileId': value.map(v => Number(v)) }));
     }
   };
 
@@ -116,10 +116,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
 
   const handleClear = () => {
     setSearchData({
-      searchName: "",
+      'like-name': "",
       active: undefined,
       cpf: "",
-      profileId: undefined,
+      'in-profileId': undefined,
       createdAt: undefined,
     });
     onClear();
@@ -163,12 +163,12 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
 
       {/* Nome */}
       <div>
-        <Label htmlFor="searchName">Nome</Label>
+        <Label htmlFor="like-name">Nome</Label>
         <Input
-          id="searchName"
-          name="searchName"
+          id="like-name"
+          name="like-name"
           placeholder="Digite o nome"
-          value={searchData.searchName}
+          value={searchData['like-name']}
           onValueChange={handleChange}
         />
       </div>
@@ -188,14 +188,14 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
 
       {/* Função (Select com multiple) */}
       <div>
-        <Label htmlFor="profileId">Função</Label>
+        <Label htmlFor="in-profileId">Função</Label>
         <Select 
-          name="profileId"
+          name="in-profileId"
           disabled={isFetchingProfiles}
           options={roleOptions?.rows || []}
           state={(() => {
-            const { profileId } = searchData;
-            if (profileId && Array.isArray(profileId)) {
+            const profileId = searchData['in-profileId'];
+            if (Array.isArray(profileId)) {
               return profileId.map((id: number) => id.toString());
             }
             return profileId?.toString() || "";

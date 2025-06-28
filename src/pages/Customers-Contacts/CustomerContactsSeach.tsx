@@ -7,7 +7,7 @@ import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 
 interface SearchData {
-  searchName: string;
+  'like-name': string;
   active?: boolean;
 }
 
@@ -21,7 +21,7 @@ interface SearchFormProps {
 const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, params }) => {
   // Form state
   const [searchData, setSearchData] = useState<SearchData>({
-    searchName: "",
+    'like-name': "",
     active: undefined as boolean | undefined,
   });
 
@@ -36,8 +36,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
       // Type checking for each field
       if (paramKey === 'active' && (typeof value === 'boolean' || value === undefined)) {
         newSearchData.active = value as boolean | undefined;
-      } else if (paramKey === 'searchName' && (typeof value === 'string' || value === undefined)) {
-        newSearchData.searchName = value as string;
+      } else if (paramKey === 'like-name' && (typeof value === 'string' || value === undefined)) {
+        newSearchData['like-name'] = value as string;
       }
     });
     
@@ -62,7 +62,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
 
   const handleClear = () => {
     setSearchData({
-      searchName: "",
+      'like-name': "",
       active: undefined,
     });
     onClear();
@@ -91,12 +91,12 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
 
       {/* Nome */}
       <div>
-        <Label htmlFor="searchName">Nome</Label>
+        <Label htmlFor="like-name">Nome</Label>
         <Input
-          id="searchName"
-          name="searchName"
+          id="like-name"
+          name="like-name"
           placeholder="Digite o nome"
-          value={searchData.searchName}
+          value={searchData['like-name']}
           onValueChange={handleChange}
         />
       </div>

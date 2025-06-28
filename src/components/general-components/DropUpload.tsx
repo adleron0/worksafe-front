@@ -74,8 +74,16 @@ const DropUpload = <T extends object>({
   const handleDragLeave = () => setIsDragging(false);
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {event.preventDefault(); setIsDragging(true)};
 
+  const handleClick = () => {
+    const fileInput = document.getElementById(inputId) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
+  };
+
   return (
       <div
+        onClick={handleClick}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

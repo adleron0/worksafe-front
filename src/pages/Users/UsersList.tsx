@@ -46,7 +46,6 @@ const Users = () => {
     isLoading, 
     isError, 
     error,
-    refetch 
   } = useQuery<UsersResponse | undefined, ApiError>({
     queryKey: ['listCompanyUsers', searchParams],
     queryFn: async () => {
@@ -63,7 +62,6 @@ const Users = () => {
       ...prev,
       ...params,
     }));
-    refetch();
   };
 
   const handleClear = () => {

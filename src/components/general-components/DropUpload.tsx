@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect, useId } from "react"; // Keep this one
+import React, { useCallback, useState, useEffect } from "react"; // Keep this one
 import { Label } from "../ui/label";
 import { ImageUp, X } from "lucide-react";
 import { Button } from "../ui/button";
@@ -22,7 +22,6 @@ const DropUpload = <T extends object>({
   const [preview, setPreview] = useState<string | null>(null);
   const [errorFile, setErrorFile] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const inputId = useId(); // id único para cada instância
 
   useEffect(() => {
     if (EditPreview) {
@@ -40,7 +39,7 @@ const DropUpload = <T extends object>({
           setErrorFile(null);
         }, 3000);
         // Clear the file input if it's invalid
-        const fileInput = document.getElementById(inputId) as HTMLInputElement;
+        const fileInput = document.getElementById('fileInput') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
         return;
       }
@@ -74,16 +73,8 @@ const DropUpload = <T extends object>({
   const handleDragLeave = () => setIsDragging(false);
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {event.preventDefault(); setIsDragging(true)};
 
-  const handleClick = () => {
-    const fileInput = document.getElementById(inputId) as HTMLInputElement;
-    if (fileInput) {
-      fileInput.click();
-    }
-  };
-
   return (
       <div
-        onClick={handleClick}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -96,9 +87,9 @@ const DropUpload = <T extends object>({
           accept={acceptedFiles} // Use the acceptedFiles prop here
           onChange={(e) => handleImageChange(e.target.files ? e.target.files[0] : null)}
           className="hidden"
-          id={inputId} // id dinâmico
+          id="fileInput"
         />
-        <Label htmlFor={inputId} className="cursor-pointer">
+        <Label htmlFor="fileInput" className="cursor-pointer">
           {preview ? (
             <div
               className="w-full group/image"
@@ -107,7 +98,7 @@ const DropUpload = <T extends object>({
                 style={{ backgroundImage: `url(${preview})` }}
                 className={`w-full h-51 mx-auto rounded-md ${cover ? "bg-cover" : "bg-contain"} bg-center bg-no-repeat group-hover/image:blur-xs`}
               />
-              <div style={{ pointerEvents: 'none' }} className="absolute top-0 bottom-0 left-0 right-0 flex flex-col items-center justify-center text-white text-sm rounded-md bg-black/45 opacity-0 hover:opacity-100 transition-opacity duration-200">
+              <div className="absolute top-0 bottom-0 left-0 right-0 flex flex-col items-center justify-center text-white text-sm rounded-md bg-black/45 opacity-0 hover:opacity-100 transition-opacity duration-200">
                 <ImageUp/>
                 <p>Arraste uma imagem aqui ou</p>
                 <p>clique para selecionar</p>
@@ -130,7 +121,7 @@ const DropUpload = <T extends object>({
             onClick={() => {
               setPreview(null);
               // Reset the input field value if needed
-              const fileInput = document.getElementById(inputId) as HTMLInputElement;
+              const fileInput = document.getElementById('fileInput') as HTMLInputElement;
               if (fileInput) fileInput.value = '';
               // Update state by merging null values into the previous state object
               setImage((prev: T) => ({ ...prev, image: null, imageUrl: null }))} 

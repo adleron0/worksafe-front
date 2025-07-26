@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useNavigate } from '@tanstack/react-router';
-import Profile from "@/pages/Users/Profile";
+import Profile from "@/pages/_authenticated/usuarios/_usuarios/-components/Profile";
 import {
   DropdownMenu,
   DropdownMenuContent,

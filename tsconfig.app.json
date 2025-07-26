@@ -26,5 +26,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "src/routes/_authenticated/confinus/areas/$areaId.tsx"]
+  "include": ["src", "src/pages/_authenticated/confinus/areas/$areaId.tsx"]
 }

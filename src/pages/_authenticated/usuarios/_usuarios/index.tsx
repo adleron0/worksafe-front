@@ -17,7 +17,7 @@ import SearchForm from "./-components/UserSearch";
 import { IEntity } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
-export const Route = createFileRoute('/_authenticated/usuarios/_usuarios/usuarios')({
+export const Route = createFileRoute('/_authenticated/usuarios/_usuarios/')({
   component: List,
 })
 

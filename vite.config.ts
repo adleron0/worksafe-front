@@ -7,7 +7,9 @@ import { defineConfig } from "vite";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 
 export default defineConfig({
-  plugins: [TanStackRouterVite(), react()],
+  plugins: [TanStackRouterVite({
+    routesDirectory: "src/pages", // Diretório onde estão os arquivos de rotas
+  }), react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

@@ -1,5 +1,5 @@
 import api from './api';
-import { Area } from '@/pages/Inventarios/Areas/interfaces/area.interface';
+import { Area } from '@/pages/_authenticated/inventarios/areas/-interfaces/area.interface';
 
 // URL base da API
 const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:3000";

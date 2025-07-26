@@ -10,61 +10,61 @@
 
 // Import Routes
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as SobreImport } from './routes/sobre'
-import { Route as LojaImport } from './routes/loja'
-import { Route as LoginImport } from './routes/login'
-import { Route as AuthenticatedImport } from './routes/_authenticated'
-import { Route as IndexImport } from './routes/index'
-import { Route as AuthenticatedHomeImport } from './routes/_authenticated/home'
-import { Route as AuthenticatedBuildingImport } from './routes/_authenticated/building'
-import { Route as AuthenticatedUsuariosIndexImport } from './routes/_authenticated/usuarios/index'
-import { Route as AuthenticatedTreinamentosIndexImport } from './routes/_authenticated/treinamentos/index'
-import { Route as AuthenticatedInventariosIndexImport } from './routes/_authenticated/inventarios/index'
-import { Route as AuthenticatedClientesIndexImport } from './routes/_authenticated/clientes/index'
-import { Route as AuthenticatedUsuariosPerfisImport } from './routes/_authenticated/usuarios/perfis'
-import { Route as AuthenticatedTreinamentosTurmasImport } from './routes/_authenticated/treinamentos/turmas'
-import { Route as AuthenticatedTreinamentosProvasImport } from './routes/_authenticated/treinamentos/provas'
-import { Route as AuthenticatedTreinamentosInstrutoresImport } from './routes/_authenticated/treinamentos/instrutores'
-import { Route as AuthenticatedTreinamentosCursosImport } from './routes/_authenticated/treinamentos/cursos'
-import { Route as AuthenticatedTreinamentosCertificadosImport } from './routes/_authenticated/treinamentos/certificados'
-import { Route as AuthenticatedTreinamentosAlunosImport } from './routes/_authenticated/treinamentos/alunos'
-import { Route as AuthenticatedSiteServicosImport } from './routes/_authenticated/site/servicos'
-import { Route as AuthenticatedSiteProdutosImport } from './routes/_authenticated/site/produtos'
-import { Route as AuthenticatedInventariosDashboardImport } from './routes/_authenticated/inventarios/dashboard'
-import { Route as AuthenticatedInventariosAutorizadosImport } from './routes/_authenticated/inventarios/autorizados'
-import { Route as AuthenticatedInventariosAccessControlImport } from './routes/_authenticated/inventarios/access-control'
-import { Route as AuthenticatedInventariosAreasIndexImport } from './routes/_authenticated/inventarios/areas/index'
-import { Route as AuthenticatedInventariosAreasAreaIdImport } from './routes/_authenticated/inventarios/areas/$areaId'
+import { Route as rootRoute } from './pages/__root'
+import { Route as AuthenticatedImport } from './pages/_authenticated'
+import { Route as IndexIndexImport } from './pages/_index/index'
+import { Route as IndexSobreImport } from './pages/_index/sobre'
+import { Route as IndexLojaImport } from './pages/_index/loja'
+import { Route as IndexLoginImport } from './pages/_index/login'
+import { Route as AuthenticatedHomeImport } from './pages/_authenticated/home'
+import { Route as AuthenticatedBuildingImport } from './pages/_authenticated/building'
+import { Route as AuthenticatedTreinamentosIndexImport } from './pages/_authenticated/treinamentos/index'
+import { Route as AuthenticatedInventariosIndexImport } from './pages/_authenticated/inventarios/index'
+import { Route as AuthenticatedTreinamentosProvasImport } from './pages/_authenticated/treinamentos/provas'
+import { Route as AuthenticatedTreinamentosCertificadosImport } from './pages/_authenticated/treinamentos/certificados'
+import { Route as AuthenticatedTreinamentosAlunosImport } from './pages/_authenticated/treinamentos/alunos'
+import { Route as AuthenticatedInventariosDashboardImport } from './pages/_authenticated/inventarios/dashboard'
+import { Route as AuthenticatedInventariosAutorizadosImport } from './pages/_authenticated/inventarios/autorizados'
+import { Route as AuthenticatedInventariosAccessControlImport } from './pages/_authenticated/inventarios/access-control'
+import { Route as AuthenticatedClientesClientesImport } from './pages/_authenticated/clientes/clientes'
+import { Route as AuthenticatedInventariosAreasIndexImport } from './pages/_authenticated/inventarios/areas/index'
+import { Route as AuthenticatedUsuariosUsuariosUsuariosImport } from './pages/_authenticated/usuarios/_usuarios/usuarios'
+import { Route as AuthenticatedUsuariosPerfisPerfisImport } from './pages/_authenticated/usuarios/_perfis/perfis'
+import { Route as AuthenticatedTreinamentosTurmasTurmasImport } from './pages/_authenticated/treinamentos/_turmas/turmas'
+import { Route as AuthenticatedTreinamentosInstrutoresInstrutoresImport } from './pages/_authenticated/treinamentos/_instrutores/instrutores'
+import { Route as AuthenticatedTreinamentosCursosCursosImport } from './pages/_authenticated/treinamentos/_cursos/cursos'
+import { Route as AuthenticatedSiteServicosServicosImport } from './pages/_authenticated/site/_servicos/servicos'
+import { Route as AuthenticatedSiteProdutosProdutosImport } from './pages/_authenticated/site/_produtos/produtos'
+import { Route as AuthenticatedInventariosAreasAreaIdImport } from './pages/_authenticated/inventarios/areas/$areaId'
 
 // Create/Update Routes
-
-const SobreRoute = SobreImport.update({
-  id: '/sobre',
-  path: '/sobre',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const LojaRoute = LojaImport.update({
-  id: '/loja',
-  path: '/loja',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const LoginRoute = LoginImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRoute,
-} as any)
 
 const AuthenticatedRoute = AuthenticatedImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRoute,
 } as any)
 
-const IndexRoute = IndexImport.update({
-  id: '/',
+const IndexIndexRoute = IndexIndexImport.update({
+  id: '/_index/',
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const IndexSobreRoute = IndexSobreImport.update({
+  id: '/_index/sobre',
+  path: '/sobre',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const IndexLojaRoute = IndexLojaImport.update({
+  id: '/_index/loja',
+  path: '/loja',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const IndexLoginRoute = IndexLoginImport.update({
+  id: '/_index/login',
+  path: '/login',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -80,14 +80,6 @@ const AuthenticatedBuildingRoute = AuthenticatedBuildingImport.update({
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 
-const AuthenticatedUsuariosIndexRoute = AuthenticatedUsuariosIndexImport.update(
-  {
-    id: '/usuarios/',
-    path: '/usuarios/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any,
-)
-
 const AuthenticatedTreinamentosIndexRoute =
   AuthenticatedTreinamentosIndexImport.update({
     id: '/treinamentos/',
@@ -102,46 +94,10 @@ const AuthenticatedInventariosIndexRoute =
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
-const AuthenticatedClientesIndexRoute = AuthenticatedClientesIndexImport.update(
-  {
-    id: '/clientes/',
-    path: '/clientes/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any,
-)
-
-const AuthenticatedUsuariosPerfisRoute =
-  AuthenticatedUsuariosPerfisImport.update({
-    id: '/usuarios/perfis',
-    path: '/usuarios/perfis',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-
-const AuthenticatedTreinamentosTurmasRoute =
-  AuthenticatedTreinamentosTurmasImport.update({
-    id: '/treinamentos/turmas',
-    path: '/treinamentos/turmas',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-
 const AuthenticatedTreinamentosProvasRoute =
   AuthenticatedTreinamentosProvasImport.update({
     id: '/treinamentos/provas',
     path: '/treinamentos/provas',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-
-const AuthenticatedTreinamentosInstrutoresRoute =
-  AuthenticatedTreinamentosInstrutoresImport.update({
-    id: '/treinamentos/instrutores',
-    path: '/treinamentos/instrutores',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-
-const AuthenticatedTreinamentosCursosRoute =
-  AuthenticatedTreinamentosCursosImport.update({
-    id: '/treinamentos/cursos',
-    path: '/treinamentos/cursos',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
@@ -158,18 +114,6 @@ const AuthenticatedTreinamentosAlunosRoute =
     path: '/treinamentos/alunos',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-
-const AuthenticatedSiteServicosRoute = AuthenticatedSiteServicosImport.update({
-  id: '/site/servicos',
-  path: '/site/servicos',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-
-const AuthenticatedSiteProdutosRoute = AuthenticatedSiteProdutosImport.update({
-  id: '/site/produtos',
-  path: '/site/produtos',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 
 const AuthenticatedInventariosDashboardRoute =
   AuthenticatedInventariosDashboardImport.update({
@@ -192,10 +136,66 @@ const AuthenticatedInventariosAccessControlRoute =
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
+const AuthenticatedClientesClientesRoute =
+  AuthenticatedClientesClientesImport.update({
+    id: '/clientes/clientes',
+    path: '/clientes/clientes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+
 const AuthenticatedInventariosAreasIndexRoute =
   AuthenticatedInventariosAreasIndexImport.update({
     id: '/inventarios/areas/',
     path: '/inventarios/areas/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+
+const AuthenticatedUsuariosUsuariosUsuariosRoute =
+  AuthenticatedUsuariosUsuariosUsuariosImport.update({
+    id: '/usuarios/_usuarios/usuarios',
+    path: '/usuarios/usuarios',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+
+const AuthenticatedUsuariosPerfisPerfisRoute =
+  AuthenticatedUsuariosPerfisPerfisImport.update({
+    id: '/usuarios/_perfis/perfis',
+    path: '/usuarios/perfis',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+
+const AuthenticatedTreinamentosTurmasTurmasRoute =
+  AuthenticatedTreinamentosTurmasTurmasImport.update({
+    id: '/treinamentos/_turmas/turmas',
+    path: '/treinamentos/turmas',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+
+const AuthenticatedTreinamentosInstrutoresInstrutoresRoute =
+  AuthenticatedTreinamentosInstrutoresInstrutoresImport.update({
+    id: '/treinamentos/_instrutores/instrutores',
+    path: '/treinamentos/instrutores',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+
+const AuthenticatedTreinamentosCursosCursosRoute =
+  AuthenticatedTreinamentosCursosCursosImport.update({
+    id: '/treinamentos/_cursos/cursos',
+    path: '/treinamentos/cursos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+
+const AuthenticatedSiteServicosServicosRoute =
+  AuthenticatedSiteServicosServicosImport.update({
+    id: '/site/_servicos/servicos',
+    path: '/site/servicos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+
+const AuthenticatedSiteProdutosProdutosRoute =
+  AuthenticatedSiteProdutosProdutosImport.update({
+    id: '/site/_produtos/produtos',
+    path: '/site/produtos',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
@@ -210,39 +210,11 @@ const AuthenticatedInventariosAreasAreaIdRoute =
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AuthenticatedImport
-      parentRoute: typeof rootRoute
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginImport
-      parentRoute: typeof rootRoute
-    }
-    '/loja': {
-      id: '/loja'
-      path: '/loja'
-      fullPath: '/loja'
-      preLoaderRoute: typeof LojaImport
-      parentRoute: typeof rootRoute
-    }
-    '/sobre': {
-      id: '/sobre'
-      path: '/sobre'
-      fullPath: '/sobre'
-      preLoaderRoute: typeof SobreImport
       parentRoute: typeof rootRoute
     }
     '/_authenticated/building': {
@@ -257,6 +229,41 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof AuthenticatedHomeImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_index/login': {
+      id: '/_index/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof IndexLoginImport
+      parentRoute: typeof rootRoute
+    }
+    '/_index/loja': {
+      id: '/_index/loja'
+      path: '/loja'
+      fullPath: '/loja'
+      preLoaderRoute: typeof IndexLojaImport
+      parentRoute: typeof rootRoute
+    }
+    '/_index/sobre': {
+      id: '/_index/sobre'
+      path: '/sobre'
+      fullPath: '/sobre'
+      preLoaderRoute: typeof IndexSobreImport
+      parentRoute: typeof rootRoute
+    }
+    '/_index/': {
+      id: '/_index/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexIndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/_authenticated/clientes/clientes': {
+      id: '/_authenticated/clientes/clientes'
+      path: '/clientes/clientes'
+      fullPath: '/clientes/clientes'
+      preLoaderRoute: typeof AuthenticatedClientesClientesImport
       parentRoute: typeof AuthenticatedImport
     }
     '/_authenticated/inventarios/access-control': {
@@ -280,20 +287,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventariosDashboardImport
       parentRoute: typeof AuthenticatedImport
     }
-    '/_authenticated/site/produtos': {
-      id: '/_authenticated/site/produtos'
-      path: '/site/produtos'
-      fullPath: '/site/produtos'
-      preLoaderRoute: typeof AuthenticatedSiteProdutosImport
-      parentRoute: typeof AuthenticatedImport
-    }
-    '/_authenticated/site/servicos': {
-      id: '/_authenticated/site/servicos'
-      path: '/site/servicos'
-      fullPath: '/site/servicos'
-      preLoaderRoute: typeof AuthenticatedSiteServicosImport
-      parentRoute: typeof AuthenticatedImport
-    }
     '/_authenticated/treinamentos/alunos': {
       id: '/_authenticated/treinamentos/alunos'
       path: '/treinamentos/alunos'
@@ -308,46 +301,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTreinamentosCertificadosImport
       parentRoute: typeof AuthenticatedImport
     }
-    '/_authenticated/treinamentos/cursos': {
-      id: '/_authenticated/treinamentos/cursos'
-      path: '/treinamentos/cursos'
-      fullPath: '/treinamentos/cursos'
-      preLoaderRoute: typeof AuthenticatedTreinamentosCursosImport
-      parentRoute: typeof AuthenticatedImport
-    }
-    '/_authenticated/treinamentos/instrutores': {
-      id: '/_authenticated/treinamentos/instrutores'
-      path: '/treinamentos/instrutores'
-      fullPath: '/treinamentos/instrutores'
-      preLoaderRoute: typeof AuthenticatedTreinamentosInstrutoresImport
-      parentRoute: typeof AuthenticatedImport
-    }
     '/_authenticated/treinamentos/provas': {
       id: '/_authenticated/treinamentos/provas'
       path: '/treinamentos/provas'
       fullPath: '/treinamentos/provas'
       preLoaderRoute: typeof AuthenticatedTreinamentosProvasImport
-      parentRoute: typeof AuthenticatedImport
-    }
-    '/_authenticated/treinamentos/turmas': {
-      id: '/_authenticated/treinamentos/turmas'
-      path: '/treinamentos/turmas'
-      fullPath: '/treinamentos/turmas'
-      preLoaderRoute: typeof AuthenticatedTreinamentosTurmasImport
-      parentRoute: typeof AuthenticatedImport
-    }
-    '/_authenticated/usuarios/perfis': {
-      id: '/_authenticated/usuarios/perfis'
-      path: '/usuarios/perfis'
-      fullPath: '/usuarios/perfis'
-      preLoaderRoute: typeof AuthenticatedUsuariosPerfisImport
-      parentRoute: typeof AuthenticatedImport
-    }
-    '/_authenticated/clientes/': {
-      id: '/_authenticated/clientes/'
-      path: '/clientes'
-      fullPath: '/clientes'
-      preLoaderRoute: typeof AuthenticatedClientesIndexImport
       parentRoute: typeof AuthenticatedImport
     }
     '/_authenticated/inventarios/': {
@@ -364,18 +322,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTreinamentosIndexImport
       parentRoute: typeof AuthenticatedImport
     }
-    '/_authenticated/usuarios/': {
-      id: '/_authenticated/usuarios/'
-      path: '/usuarios'
-      fullPath: '/usuarios'
-      preLoaderRoute: typeof AuthenticatedUsuariosIndexImport
-      parentRoute: typeof AuthenticatedImport
-    }
     '/_authenticated/inventarios/areas/$areaId': {
       id: '/_authenticated/inventarios/areas/$areaId'
       path: '/inventarios/areas/$areaId'
       fullPath: '/inventarios/areas/$areaId'
       preLoaderRoute: typeof AuthenticatedInventariosAreasAreaIdImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/site/_produtos/produtos': {
+      id: '/_authenticated/site/_produtos/produtos'
+      path: '/site/produtos'
+      fullPath: '/site/produtos'
+      preLoaderRoute: typeof AuthenticatedSiteProdutosProdutosImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/site/_servicos/servicos': {
+      id: '/_authenticated/site/_servicos/servicos'
+      path: '/site/servicos'
+      fullPath: '/site/servicos'
+      preLoaderRoute: typeof AuthenticatedSiteServicosServicosImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/treinamentos/_cursos/cursos': {
+      id: '/_authenticated/treinamentos/_cursos/cursos'
+      path: '/treinamentos/cursos'
+      fullPath: '/treinamentos/cursos'
+      preLoaderRoute: typeof AuthenticatedTreinamentosCursosCursosImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/treinamentos/_instrutores/instrutores': {
+      id: '/_authenticated/treinamentos/_instrutores/instrutores'
+      path: '/treinamentos/instrutores'
+      fullPath: '/treinamentos/instrutores'
+      preLoaderRoute: typeof AuthenticatedTreinamentosInstrutoresInstrutoresImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/treinamentos/_turmas/turmas': {
+      id: '/_authenticated/treinamentos/_turmas/turmas'
+      path: '/treinamentos/turmas'
+      fullPath: '/treinamentos/turmas'
+      preLoaderRoute: typeof AuthenticatedTreinamentosTurmasTurmasImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/usuarios/_perfis/perfis': {
+      id: '/_authenticated/usuarios/_perfis/perfis'
+      path: '/usuarios/perfis'
+      fullPath: '/usuarios/perfis'
+      preLoaderRoute: typeof AuthenticatedUsuariosPerfisPerfisImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/usuarios/_usuarios/usuarios': {
+      id: '/_authenticated/usuarios/_usuarios/usuarios'
+      path: '/usuarios/usuarios'
+      fullPath: '/usuarios/usuarios'
+      preLoaderRoute: typeof AuthenticatedUsuariosUsuariosUsuariosImport
       parentRoute: typeof AuthenticatedImport
     }
     '/_authenticated/inventarios/areas/': {
@@ -393,52 +393,58 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedBuildingRoute: typeof AuthenticatedBuildingRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedClientesClientesRoute: typeof AuthenticatedClientesClientesRoute
   AuthenticatedInventariosAccessControlRoute: typeof AuthenticatedInventariosAccessControlRoute
   AuthenticatedInventariosAutorizadosRoute: typeof AuthenticatedInventariosAutorizadosRoute
   AuthenticatedInventariosDashboardRoute: typeof AuthenticatedInventariosDashboardRoute
-  AuthenticatedSiteProdutosRoute: typeof AuthenticatedSiteProdutosRoute
-  AuthenticatedSiteServicosRoute: typeof AuthenticatedSiteServicosRoute
   AuthenticatedTreinamentosAlunosRoute: typeof AuthenticatedTreinamentosAlunosRoute
   AuthenticatedTreinamentosCertificadosRoute: typeof AuthenticatedTreinamentosCertificadosRoute
-  AuthenticatedTreinamentosCursosRoute: typeof AuthenticatedTreinamentosCursosRoute
-  AuthenticatedTreinamentosInstrutoresRoute: typeof AuthenticatedTreinamentosInstrutoresRoute
   AuthenticatedTreinamentosProvasRoute: typeof AuthenticatedTreinamentosProvasRoute
-  AuthenticatedTreinamentosTurmasRoute: typeof AuthenticatedTreinamentosTurmasRoute
-  AuthenticatedUsuariosPerfisRoute: typeof AuthenticatedUsuariosPerfisRoute
-  AuthenticatedClientesIndexRoute: typeof AuthenticatedClientesIndexRoute
   AuthenticatedInventariosIndexRoute: typeof AuthenticatedInventariosIndexRoute
   AuthenticatedTreinamentosIndexRoute: typeof AuthenticatedTreinamentosIndexRoute
-  AuthenticatedUsuariosIndexRoute: typeof AuthenticatedUsuariosIndexRoute
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
+  AuthenticatedSiteProdutosProdutosRoute: typeof AuthenticatedSiteProdutosProdutosRoute
+  AuthenticatedSiteServicosServicosRoute: typeof AuthenticatedSiteServicosServicosRoute
+  AuthenticatedTreinamentosCursosCursosRoute: typeof AuthenticatedTreinamentosCursosCursosRoute
+  AuthenticatedTreinamentosInstrutoresInstrutoresRoute: typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
+  AuthenticatedTreinamentosTurmasTurmasRoute: typeof AuthenticatedTreinamentosTurmasTurmasRoute
+  AuthenticatedUsuariosPerfisPerfisRoute: typeof AuthenticatedUsuariosPerfisPerfisRoute
+  AuthenticatedUsuariosUsuariosUsuariosRoute: typeof AuthenticatedUsuariosUsuariosUsuariosRoute
   AuthenticatedInventariosAreasIndexRoute: typeof AuthenticatedInventariosAreasIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBuildingRoute: AuthenticatedBuildingRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
+  AuthenticatedClientesClientesRoute: AuthenticatedClientesClientesRoute,
   AuthenticatedInventariosAccessControlRoute:
     AuthenticatedInventariosAccessControlRoute,
   AuthenticatedInventariosAutorizadosRoute:
     AuthenticatedInventariosAutorizadosRoute,
   AuthenticatedInventariosDashboardRoute:
     AuthenticatedInventariosDashboardRoute,
-  AuthenticatedSiteProdutosRoute: AuthenticatedSiteProdutosRoute,
-  AuthenticatedSiteServicosRoute: AuthenticatedSiteServicosRoute,
   AuthenticatedTreinamentosAlunosRoute: AuthenticatedTreinamentosAlunosRoute,
   AuthenticatedTreinamentosCertificadosRoute:
     AuthenticatedTreinamentosCertificadosRoute,
-  AuthenticatedTreinamentosCursosRoute: AuthenticatedTreinamentosCursosRoute,
-  AuthenticatedTreinamentosInstrutoresRoute:
-    AuthenticatedTreinamentosInstrutoresRoute,
   AuthenticatedTreinamentosProvasRoute: AuthenticatedTreinamentosProvasRoute,
-  AuthenticatedTreinamentosTurmasRoute: AuthenticatedTreinamentosTurmasRoute,
-  AuthenticatedUsuariosPerfisRoute: AuthenticatedUsuariosPerfisRoute,
-  AuthenticatedClientesIndexRoute: AuthenticatedClientesIndexRoute,
   AuthenticatedInventariosIndexRoute: AuthenticatedInventariosIndexRoute,
   AuthenticatedTreinamentosIndexRoute: AuthenticatedTreinamentosIndexRoute,
-  AuthenticatedUsuariosIndexRoute: AuthenticatedUsuariosIndexRoute,
   AuthenticatedInventariosAreasAreaIdRoute:
     AuthenticatedInventariosAreasAreaIdRoute,
+  AuthenticatedSiteProdutosProdutosRoute:
+    AuthenticatedSiteProdutosProdutosRoute,
+  AuthenticatedSiteServicosServicosRoute:
+    AuthenticatedSiteServicosServicosRoute,
+  AuthenticatedTreinamentosCursosCursosRoute:
+    AuthenticatedTreinamentosCursosCursosRoute,
+  AuthenticatedTreinamentosInstrutoresInstrutoresRoute:
+    AuthenticatedTreinamentosInstrutoresInstrutoresRoute,
+  AuthenticatedTreinamentosTurmasTurmasRoute:
+    AuthenticatedTreinamentosTurmasTurmasRoute,
+  AuthenticatedUsuariosPerfisPerfisRoute:
+    AuthenticatedUsuariosPerfisPerfisRoute,
+  AuthenticatedUsuariosUsuariosUsuariosRoute:
+    AuthenticatedUsuariosUsuariosUsuariosRoute,
   AuthenticatedInventariosAreasIndexRoute:
     AuthenticatedInventariosAreasIndexRoute,
 }
@@ -448,189 +454,189 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '': typeof AuthenticatedRouteWithChildren
-  '/login': typeof LoginRoute
-  '/loja': typeof LojaRoute
-  '/sobre': typeof SobreRoute
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/login': typeof IndexLoginRoute
+  '/loja': typeof IndexLojaRoute
+  '/sobre': typeof IndexSobreRoute
+  '/': typeof IndexIndexRoute
+  '/clientes/clientes': typeof AuthenticatedClientesClientesRoute
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
-  '/site/produtos': typeof AuthenticatedSiteProdutosRoute
-  '/site/servicos': typeof AuthenticatedSiteServicosRoute
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosRoute
   '/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosRoute
-  '/treinamentos/cursos': typeof AuthenticatedTreinamentosCursosRoute
-  '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresRoute
   '/treinamentos/provas': typeof AuthenticatedTreinamentosProvasRoute
-  '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasRoute
-  '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisRoute
-  '/clientes': typeof AuthenticatedClientesIndexRoute
   '/inventarios': typeof AuthenticatedInventariosIndexRoute
   '/treinamentos': typeof AuthenticatedTreinamentosIndexRoute
-  '/usuarios': typeof AuthenticatedUsuariosIndexRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/site/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
+  '/site/servicos': typeof AuthenticatedSiteServicosServicosRoute
+  '/treinamentos/cursos': typeof AuthenticatedTreinamentosCursosCursosRoute
+  '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
+  '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
+  '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/usuarios/usuarios': typeof AuthenticatedUsuariosUsuariosUsuariosRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
 }
 
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '': typeof AuthenticatedRouteWithChildren
-  '/login': typeof LoginRoute
-  '/loja': typeof LojaRoute
-  '/sobre': typeof SobreRoute
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/login': typeof IndexLoginRoute
+  '/loja': typeof IndexLojaRoute
+  '/sobre': typeof IndexSobreRoute
+  '/': typeof IndexIndexRoute
+  '/clientes/clientes': typeof AuthenticatedClientesClientesRoute
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
-  '/site/produtos': typeof AuthenticatedSiteProdutosRoute
-  '/site/servicos': typeof AuthenticatedSiteServicosRoute
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosRoute
   '/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosRoute
-  '/treinamentos/cursos': typeof AuthenticatedTreinamentosCursosRoute
-  '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresRoute
   '/treinamentos/provas': typeof AuthenticatedTreinamentosProvasRoute
-  '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasRoute
-  '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisRoute
-  '/clientes': typeof AuthenticatedClientesIndexRoute
   '/inventarios': typeof AuthenticatedInventariosIndexRoute
   '/treinamentos': typeof AuthenticatedTreinamentosIndexRoute
-  '/usuarios': typeof AuthenticatedUsuariosIndexRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/site/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
+  '/site/servicos': typeof AuthenticatedSiteServicosServicosRoute
+  '/treinamentos/cursos': typeof AuthenticatedTreinamentosCursosCursosRoute
+  '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
+  '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
+  '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/usuarios/usuarios': typeof AuthenticatedUsuariosUsuariosUsuariosRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
-  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/login': typeof LoginRoute
-  '/loja': typeof LojaRoute
-  '/sobre': typeof SobreRoute
   '/_authenticated/building': typeof AuthenticatedBuildingRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/_index/login': typeof IndexLoginRoute
+  '/_index/loja': typeof IndexLojaRoute
+  '/_index/sobre': typeof IndexSobreRoute
+  '/_index/': typeof IndexIndexRoute
+  '/_authenticated/clientes/clientes': typeof AuthenticatedClientesClientesRoute
   '/_authenticated/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/_authenticated/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/_authenticated/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
-  '/_authenticated/site/produtos': typeof AuthenticatedSiteProdutosRoute
-  '/_authenticated/site/servicos': typeof AuthenticatedSiteServicosRoute
   '/_authenticated/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosRoute
   '/_authenticated/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosRoute
-  '/_authenticated/treinamentos/cursos': typeof AuthenticatedTreinamentosCursosRoute
-  '/_authenticated/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresRoute
   '/_authenticated/treinamentos/provas': typeof AuthenticatedTreinamentosProvasRoute
-  '/_authenticated/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasRoute
-  '/_authenticated/usuarios/perfis': typeof AuthenticatedUsuariosPerfisRoute
-  '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
   '/_authenticated/inventarios/': typeof AuthenticatedInventariosIndexRoute
   '/_authenticated/treinamentos/': typeof AuthenticatedTreinamentosIndexRoute
-  '/_authenticated/usuarios/': typeof AuthenticatedUsuariosIndexRoute
   '/_authenticated/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/_authenticated/site/_produtos/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
+  '/_authenticated/site/_servicos/servicos': typeof AuthenticatedSiteServicosServicosRoute
+  '/_authenticated/treinamentos/_cursos/cursos': typeof AuthenticatedTreinamentosCursosCursosRoute
+  '/_authenticated/treinamentos/_instrutores/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
+  '/_authenticated/treinamentos/_turmas/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
+  '/_authenticated/usuarios/_perfis/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/_authenticated/usuarios/_usuarios/usuarios': typeof AuthenticatedUsuariosUsuariosUsuariosRoute
   '/_authenticated/inventarios/areas/': typeof AuthenticatedInventariosAreasIndexRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | ''
+    | '/building'
+    | '/home'
     | '/login'
     | '/loja'
     | '/sobre'
-    | '/building'
-    | '/home'
+    | '/'
+    | '/clientes/clientes'
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
-    | '/site/produtos'
-    | '/site/servicos'
     | '/treinamentos/alunos'
     | '/treinamentos/certificados'
-    | '/treinamentos/cursos'
-    | '/treinamentos/instrutores'
     | '/treinamentos/provas'
-    | '/treinamentos/turmas'
-    | '/usuarios/perfis'
-    | '/clientes'
     | '/inventarios'
     | '/treinamentos'
-    | '/usuarios'
     | '/inventarios/areas/$areaId'
+    | '/site/produtos'
+    | '/site/servicos'
+    | '/treinamentos/cursos'
+    | '/treinamentos/instrutores'
+    | '/treinamentos/turmas'
+    | '/usuarios/perfis'
+    | '/usuarios/usuarios'
     | '/inventarios/areas'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | ''
+    | '/building'
+    | '/home'
     | '/login'
     | '/loja'
     | '/sobre'
-    | '/building'
-    | '/home'
+    | '/'
+    | '/clientes/clientes'
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
-    | '/site/produtos'
-    | '/site/servicos'
     | '/treinamentos/alunos'
     | '/treinamentos/certificados'
-    | '/treinamentos/cursos'
-    | '/treinamentos/instrutores'
     | '/treinamentos/provas'
-    | '/treinamentos/turmas'
-    | '/usuarios/perfis'
-    | '/clientes'
     | '/inventarios'
     | '/treinamentos'
-    | '/usuarios'
     | '/inventarios/areas/$areaId'
+    | '/site/produtos'
+    | '/site/servicos'
+    | '/treinamentos/cursos'
+    | '/treinamentos/instrutores'
+    | '/treinamentos/turmas'
+    | '/usuarios/perfis'
+    | '/usuarios/usuarios'
     | '/inventarios/areas'
   id:
     | '__root__'
-    | '/'
     | '/_authenticated'
-    | '/login'
-    | '/loja'
-    | '/sobre'
     | '/_authenticated/building'
     | '/_authenticated/home'
+    | '/_index/login'
+    | '/_index/loja'
+    | '/_index/sobre'
+    | '/_index/'
+    | '/_authenticated/clientes/clientes'
     | '/_authenticated/inventarios/access-control'
     | '/_authenticated/inventarios/autorizados'
     | '/_authenticated/inventarios/dashboard'
-    | '/_authenticated/site/produtos'
-    | '/_authenticated/site/servicos'
     | '/_authenticated/treinamentos/alunos'
     | '/_authenticated/treinamentos/certificados'
-    | '/_authenticated/treinamentos/cursos'
-    | '/_authenticated/treinamentos/instrutores'
     | '/_authenticated/treinamentos/provas'
-    | '/_authenticated/treinamentos/turmas'
-    | '/_authenticated/usuarios/perfis'
-    | '/_authenticated/clientes/'
     | '/_authenticated/inventarios/'
     | '/_authenticated/treinamentos/'
-    | '/_authenticated/usuarios/'
     | '/_authenticated/inventarios/areas/$areaId'
+    | '/_authenticated/site/_produtos/produtos'
+    | '/_authenticated/site/_servicos/servicos'
+    | '/_authenticated/treinamentos/_cursos/cursos'
+    | '/_authenticated/treinamentos/_instrutores/instrutores'
+    | '/_authenticated/treinamentos/_turmas/turmas'
+    | '/_authenticated/usuarios/_perfis/perfis'
+    | '/_authenticated/usuarios/_usuarios/usuarios'
     | '/_authenticated/inventarios/areas/'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  LoginRoute: typeof LoginRoute
-  LojaRoute: typeof LojaRoute
-  SobreRoute: typeof SobreRoute
+  IndexLoginRoute: typeof IndexLoginRoute
+  IndexLojaRoute: typeof IndexLojaRoute
+  IndexSobreRoute: typeof IndexSobreRoute
+  IndexIndexRoute: typeof IndexIndexRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  LoginRoute: LoginRoute,
-  LojaRoute: LojaRoute,
-  SobreRoute: SobreRoute,
+  IndexLoginRoute: IndexLoginRoute,
+  IndexLojaRoute: IndexLojaRoute,
+  IndexSobreRoute: IndexSobreRoute,
+  IndexIndexRoute: IndexIndexRoute,
 }
 
 export const routeTree = rootRoute
@@ -643,49 +649,37 @@ export const routeTree = rootRoute
     "__root__": {
       "filePath": "__root.tsx",
       "children": [
-        "/",
         "/_authenticated",
-        "/login",
-        "/loja",
-        "/sobre"
+        "/_index/login",
+        "/_index/loja",
+        "/_index/sobre",
+        "/_index/"
       ]
-    },
-    "/": {
-      "filePath": "index.tsx"
     },
     "/_authenticated": {
       "filePath": "_authenticated.tsx",
       "children": [
         "/_authenticated/building",
         "/_authenticated/home",
+        "/_authenticated/clientes/clientes",
         "/_authenticated/inventarios/access-control",
         "/_authenticated/inventarios/autorizados",
         "/_authenticated/inventarios/dashboard",
-        "/_authenticated/site/produtos",
-        "/_authenticated/site/servicos",
         "/_authenticated/treinamentos/alunos",
         "/_authenticated/treinamentos/certificados",
-        "/_authenticated/treinamentos/cursos",
-        "/_authenticated/treinamentos/instrutores",
         "/_authenticated/treinamentos/provas",
-        "/_authenticated/treinamentos/turmas",
-        "/_authenticated/usuarios/perfis",
-        "/_authenticated/clientes/",
         "/_authenticated/inventarios/",
         "/_authenticated/treinamentos/",
-        "/_authenticated/usuarios/",
         "/_authenticated/inventarios/areas/$areaId",
+        "/_authenticated/site/_produtos/produtos",
+        "/_authenticated/site/_servicos/servicos",
+        "/_authenticated/treinamentos/_cursos/cursos",
+        "/_authenticated/treinamentos/_instrutores/instrutores",
+        "/_authenticated/treinamentos/_turmas/turmas",
+        "/_authenticated/usuarios/_perfis/perfis",
+        "/_authenticated/usuarios/_usuarios/usuarios",
         "/_authenticated/inventarios/areas/"
       ]
-    },
-    "/login": {
-      "filePath": "login.tsx"
-    },
-    "/loja": {
-      "filePath": "loja.tsx"
-    },
-    "/sobre": {
-      "filePath": "sobre.tsx"
     },
     "/_authenticated/building": {
       "filePath": "_authenticated/building.tsx",
@@ -693,6 +687,22 @@ export const routeTree = rootRoute
     },
     "/_authenticated/home": {
       "filePath": "_authenticated/home.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_index/login": {
+      "filePath": "_index/login.tsx"
+    },
+    "/_index/loja": {
+      "filePath": "_index/loja.tsx"
+    },
+    "/_index/sobre": {
+      "filePath": "_index/sobre.tsx"
+    },
+    "/_index/": {
+      "filePath": "_index/index.tsx"
+    },
+    "/_authenticated/clientes/clientes": {
+      "filePath": "_authenticated/clientes/clientes.tsx",
       "parent": "/_authenticated"
     },
     "/_authenticated/inventarios/access-control": {
@@ -707,14 +717,6 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/inventarios/dashboard.tsx",
       "parent": "/_authenticated"
     },
-    "/_authenticated/site/produtos": {
-      "filePath": "_authenticated/site/produtos.tsx",
-      "parent": "/_authenticated"
-    },
-    "/_authenticated/site/servicos": {
-      "filePath": "_authenticated/site/servicos.tsx",
-      "parent": "/_authenticated"
-    },
     "/_authenticated/treinamentos/alunos": {
       "filePath": "_authenticated/treinamentos/alunos.tsx",
       "parent": "/_authenticated"
@@ -723,28 +725,8 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/treinamentos/certificados.tsx",
       "parent": "/_authenticated"
     },
-    "/_authenticated/treinamentos/cursos": {
-      "filePath": "_authenticated/treinamentos/cursos.tsx",
-      "parent": "/_authenticated"
-    },
-    "/_authenticated/treinamentos/instrutores": {
-      "filePath": "_authenticated/treinamentos/instrutores.tsx",
-      "parent": "/_authenticated"
-    },
     "/_authenticated/treinamentos/provas": {
       "filePath": "_authenticated/treinamentos/provas.tsx",
-      "parent": "/_authenticated"
-    },
-    "/_authenticated/treinamentos/turmas": {
-      "filePath": "_authenticated/treinamentos/turmas.tsx",
-      "parent": "/_authenticated"
-    },
-    "/_authenticated/usuarios/perfis": {
-      "filePath": "_authenticated/usuarios/perfis.tsx",
-      "parent": "/_authenticated"
-    },
-    "/_authenticated/clientes/": {
-      "filePath": "_authenticated/clientes/index.tsx",
       "parent": "/_authenticated"
     },
     "/_authenticated/inventarios/": {
@@ -755,12 +737,36 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/treinamentos/index.tsx",
       "parent": "/_authenticated"
     },
-    "/_authenticated/usuarios/": {
-      "filePath": "_authenticated/usuarios/index.tsx",
-      "parent": "/_authenticated"
-    },
     "/_authenticated/inventarios/areas/$areaId": {
       "filePath": "_authenticated/inventarios/areas/$areaId.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/site/_produtos/produtos": {
+      "filePath": "_authenticated/site/_produtos/produtos.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/site/_servicos/servicos": {
+      "filePath": "_authenticated/site/_servicos/servicos.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/treinamentos/_cursos/cursos": {
+      "filePath": "_authenticated/treinamentos/_cursos/cursos.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/treinamentos/_instrutores/instrutores": {
+      "filePath": "_authenticated/treinamentos/_instrutores/instrutores.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/treinamentos/_turmas/turmas": {
+      "filePath": "_authenticated/treinamentos/_turmas/turmas.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/usuarios/_perfis/perfis": {
+      "filePath": "_authenticated/usuarios/_perfis/perfis.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/usuarios/_usuarios/usuarios": {
+      "filePath": "_authenticated/usuarios/_usuarios/usuarios.tsx",
       "parent": "/_authenticated"
     },
     "/_authenticated/inventarios/areas/": {

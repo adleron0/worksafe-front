@@ -18,7 +18,7 @@ import CustomerContacts from "@/pages/_authenticated/clientes/-clientes-contatos
 import { IEntity } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
-export const Route = createFileRoute('/_authenticated/clientes/clientes')({
+export const Route = createFileRoute('/_authenticated/clientes/')({
   component: List,
 })
 

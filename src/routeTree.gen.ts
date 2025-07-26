@@ -20,15 +20,15 @@ import { Route as AuthenticatedHomeImport } from './pages/_authenticated/home'
 import { Route as AuthenticatedBuildingImport } from './pages/_authenticated/building'
 import { Route as AuthenticatedTreinamentosIndexImport } from './pages/_authenticated/treinamentos/index'
 import { Route as AuthenticatedInventariosIndexImport } from './pages/_authenticated/inventarios/index'
+import { Route as AuthenticatedClientesIndexImport } from './pages/_authenticated/clientes/index'
 import { Route as AuthenticatedTreinamentosProvasImport } from './pages/_authenticated/treinamentos/provas'
 import { Route as AuthenticatedTreinamentosCertificadosImport } from './pages/_authenticated/treinamentos/certificados'
 import { Route as AuthenticatedTreinamentosAlunosImport } from './pages/_authenticated/treinamentos/alunos'
 import { Route as AuthenticatedInventariosDashboardImport } from './pages/_authenticated/inventarios/dashboard'
 import { Route as AuthenticatedInventariosAutorizadosImport } from './pages/_authenticated/inventarios/autorizados'
 import { Route as AuthenticatedInventariosAccessControlImport } from './pages/_authenticated/inventarios/access-control'
-import { Route as AuthenticatedClientesClientesImport } from './pages/_authenticated/clientes/clientes'
+import { Route as AuthenticatedUsuariosUsuariosIndexImport } from './pages/_authenticated/usuarios/_usuarios/index'
 import { Route as AuthenticatedInventariosAreasIndexImport } from './pages/_authenticated/inventarios/areas/index'
-import { Route as AuthenticatedUsuariosUsuariosUsuariosImport } from './pages/_authenticated/usuarios/_usuarios/usuarios'
 import { Route as AuthenticatedUsuariosPerfisPerfisImport } from './pages/_authenticated/usuarios/_perfis/perfis'
 import { Route as AuthenticatedTreinamentosTurmasTurmasImport } from './pages/_authenticated/treinamentos/_turmas/turmas'
 import { Route as AuthenticatedTreinamentosInstrutoresInstrutoresImport } from './pages/_authenticated/treinamentos/_instrutores/instrutores'
@@ -94,6 +94,14 @@ const AuthenticatedInventariosIndexRoute =
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
+const AuthenticatedClientesIndexRoute = AuthenticatedClientesIndexImport.update(
+  {
+    id: '/clientes/',
+    path: '/clientes/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any,
+)
+
 const AuthenticatedTreinamentosProvasRoute =
   AuthenticatedTreinamentosProvasImport.update({
     id: '/treinamentos/provas',
@@ -136,10 +144,10 @@ const AuthenticatedInventariosAccessControlRoute =
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
-const AuthenticatedClientesClientesRoute =
-  AuthenticatedClientesClientesImport.update({
-    id: '/clientes/clientes',
-    path: '/clientes/clientes',
+const AuthenticatedUsuariosUsuariosIndexRoute =
+  AuthenticatedUsuariosUsuariosIndexImport.update({
+    id: '/usuarios/_usuarios/',
+    path: '/usuarios/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
@@ -147,13 +155,6 @@ const AuthenticatedInventariosAreasIndexRoute =
   AuthenticatedInventariosAreasIndexImport.update({
     id: '/inventarios/areas/',
     path: '/inventarios/areas/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-
-const AuthenticatedUsuariosUsuariosUsuariosRoute =
-  AuthenticatedUsuariosUsuariosUsuariosImport.update({
-    id: '/usuarios/_usuarios/usuarios',
-    path: '/usuarios/usuarios',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
@@ -259,13 +260,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexIndexImport
       parentRoute: typeof rootRoute
     }
-    '/_authenticated/clientes/clientes': {
-      id: '/_authenticated/clientes/clientes'
-      path: '/clientes/clientes'
-      fullPath: '/clientes/clientes'
-      preLoaderRoute: typeof AuthenticatedClientesClientesImport
-      parentRoute: typeof AuthenticatedImport
-    }
     '/_authenticated/inventarios/access-control': {
       id: '/_authenticated/inventarios/access-control'
       path: '/inventarios/access-control'
@@ -306,6 +300,13 @@ declare module '@tanstack/react-router' {
       path: '/treinamentos/provas'
       fullPath: '/treinamentos/provas'
       preLoaderRoute: typeof AuthenticatedTreinamentosProvasImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/clientes/': {
+      id: '/_authenticated/clientes/'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof AuthenticatedClientesIndexImport
       parentRoute: typeof AuthenticatedImport
     }
     '/_authenticated/inventarios/': {
@@ -371,18 +372,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsuariosPerfisPerfisImport
       parentRoute: typeof AuthenticatedImport
     }
-    '/_authenticated/usuarios/_usuarios/usuarios': {
-      id: '/_authenticated/usuarios/_usuarios/usuarios'
-      path: '/usuarios/usuarios'
-      fullPath: '/usuarios/usuarios'
-      preLoaderRoute: typeof AuthenticatedUsuariosUsuariosUsuariosImport
-      parentRoute: typeof AuthenticatedImport
-    }
     '/_authenticated/inventarios/areas/': {
       id: '/_authenticated/inventarios/areas/'
       path: '/inventarios/areas'
       fullPath: '/inventarios/areas'
       preLoaderRoute: typeof AuthenticatedInventariosAreasIndexImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/usuarios/_usuarios/': {
+      id: '/_authenticated/usuarios/_usuarios/'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof AuthenticatedUsuariosUsuariosIndexImport
       parentRoute: typeof AuthenticatedImport
     }
   }
@@ -393,13 +394,13 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedBuildingRoute: typeof AuthenticatedBuildingRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
-  AuthenticatedClientesClientesRoute: typeof AuthenticatedClientesClientesRoute
   AuthenticatedInventariosAccessControlRoute: typeof AuthenticatedInventariosAccessControlRoute
   AuthenticatedInventariosAutorizadosRoute: typeof AuthenticatedInventariosAutorizadosRoute
   AuthenticatedInventariosDashboardRoute: typeof AuthenticatedInventariosDashboardRoute
   AuthenticatedTreinamentosAlunosRoute: typeof AuthenticatedTreinamentosAlunosRoute
   AuthenticatedTreinamentosCertificadosRoute: typeof AuthenticatedTreinamentosCertificadosRoute
   AuthenticatedTreinamentosProvasRoute: typeof AuthenticatedTreinamentosProvasRoute
+  AuthenticatedClientesIndexRoute: typeof AuthenticatedClientesIndexRoute
   AuthenticatedInventariosIndexRoute: typeof AuthenticatedInventariosIndexRoute
   AuthenticatedTreinamentosIndexRoute: typeof AuthenticatedTreinamentosIndexRoute
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
@@ -409,14 +410,13 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTreinamentosInstrutoresInstrutoresRoute: typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   AuthenticatedTreinamentosTurmasTurmasRoute: typeof AuthenticatedTreinamentosTurmasTurmasRoute
   AuthenticatedUsuariosPerfisPerfisRoute: typeof AuthenticatedUsuariosPerfisPerfisRoute
-  AuthenticatedUsuariosUsuariosUsuariosRoute: typeof AuthenticatedUsuariosUsuariosUsuariosRoute
   AuthenticatedInventariosAreasIndexRoute: typeof AuthenticatedInventariosAreasIndexRoute
+  AuthenticatedUsuariosUsuariosIndexRoute: typeof AuthenticatedUsuariosUsuariosIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBuildingRoute: AuthenticatedBuildingRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
-  AuthenticatedClientesClientesRoute: AuthenticatedClientesClientesRoute,
   AuthenticatedInventariosAccessControlRoute:
     AuthenticatedInventariosAccessControlRoute,
   AuthenticatedInventariosAutorizadosRoute:
@@ -427,6 +427,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedTreinamentosCertificadosRoute:
     AuthenticatedTreinamentosCertificadosRoute,
   AuthenticatedTreinamentosProvasRoute: AuthenticatedTreinamentosProvasRoute,
+  AuthenticatedClientesIndexRoute: AuthenticatedClientesIndexRoute,
   AuthenticatedInventariosIndexRoute: AuthenticatedInventariosIndexRoute,
   AuthenticatedTreinamentosIndexRoute: AuthenticatedTreinamentosIndexRoute,
   AuthenticatedInventariosAreasAreaIdRoute:
@@ -443,10 +444,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedTreinamentosTurmasTurmasRoute,
   AuthenticatedUsuariosPerfisPerfisRoute:
     AuthenticatedUsuariosPerfisPerfisRoute,
-  AuthenticatedUsuariosUsuariosUsuariosRoute:
-    AuthenticatedUsuariosUsuariosUsuariosRoute,
   AuthenticatedInventariosAreasIndexRoute:
     AuthenticatedInventariosAreasIndexRoute,
+  AuthenticatedUsuariosUsuariosIndexRoute:
+    AuthenticatedUsuariosUsuariosIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -461,13 +462,13 @@ export interface FileRoutesByFullPath {
   '/loja': typeof IndexLojaRoute
   '/sobre': typeof IndexSobreRoute
   '/': typeof IndexIndexRoute
-  '/clientes/clientes': typeof AuthenticatedClientesClientesRoute
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosRoute
   '/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosRoute
   '/treinamentos/provas': typeof AuthenticatedTreinamentosProvasRoute
+  '/clientes': typeof AuthenticatedClientesIndexRoute
   '/inventarios': typeof AuthenticatedInventariosIndexRoute
   '/treinamentos': typeof AuthenticatedTreinamentosIndexRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
@@ -477,8 +478,8 @@ export interface FileRoutesByFullPath {
   '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
-  '/usuarios/usuarios': typeof AuthenticatedUsuariosUsuariosUsuariosRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
+  '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
 }
 
 export interface FileRoutesByTo {
@@ -489,13 +490,13 @@ export interface FileRoutesByTo {
   '/loja': typeof IndexLojaRoute
   '/sobre': typeof IndexSobreRoute
   '/': typeof IndexIndexRoute
-  '/clientes/clientes': typeof AuthenticatedClientesClientesRoute
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosRoute
   '/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosRoute
   '/treinamentos/provas': typeof AuthenticatedTreinamentosProvasRoute
+  '/clientes': typeof AuthenticatedClientesIndexRoute
   '/inventarios': typeof AuthenticatedInventariosIndexRoute
   '/treinamentos': typeof AuthenticatedTreinamentosIndexRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
@@ -505,8 +506,8 @@ export interface FileRoutesByTo {
   '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
-  '/usuarios/usuarios': typeof AuthenticatedUsuariosUsuariosUsuariosRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
+  '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
 }
 
 export interface FileRoutesById {
@@ -518,13 +519,13 @@ export interface FileRoutesById {
   '/_index/loja': typeof IndexLojaRoute
   '/_index/sobre': typeof IndexSobreRoute
   '/_index/': typeof IndexIndexRoute
-  '/_authenticated/clientes/clientes': typeof AuthenticatedClientesClientesRoute
   '/_authenticated/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/_authenticated/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/_authenticated/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/_authenticated/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosRoute
   '/_authenticated/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosRoute
   '/_authenticated/treinamentos/provas': typeof AuthenticatedTreinamentosProvasRoute
+  '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
   '/_authenticated/inventarios/': typeof AuthenticatedInventariosIndexRoute
   '/_authenticated/treinamentos/': typeof AuthenticatedTreinamentosIndexRoute
   '/_authenticated/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
@@ -534,8 +535,8 @@ export interface FileRoutesById {
   '/_authenticated/treinamentos/_instrutores/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/_authenticated/treinamentos/_turmas/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/_authenticated/usuarios/_perfis/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
-  '/_authenticated/usuarios/_usuarios/usuarios': typeof AuthenticatedUsuariosUsuariosUsuariosRoute
   '/_authenticated/inventarios/areas/': typeof AuthenticatedInventariosAreasIndexRoute
+  '/_authenticated/usuarios/_usuarios/': typeof AuthenticatedUsuariosUsuariosIndexRoute
 }
 
 export interface FileRouteTypes {
@@ -548,13 +549,13 @@ export interface FileRouteTypes {
     | '/loja'
     | '/sobre'
     | '/'
-    | '/clientes/clientes'
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
     | '/treinamentos/alunos'
     | '/treinamentos/certificados'
     | '/treinamentos/provas'
+    | '/clientes'
     | '/inventarios'
     | '/treinamentos'
     | '/inventarios/areas/$areaId'
@@ -564,8 +565,8 @@ export interface FileRouteTypes {
     | '/treinamentos/instrutores'
     | '/treinamentos/turmas'
     | '/usuarios/perfis'
-    | '/usuarios/usuarios'
     | '/inventarios/areas'
+    | '/usuarios'
   fileRoutesByTo: FileRoutesByTo
   to:
     | ''
@@ -575,13 +576,13 @@ export interface FileRouteTypes {
     | '/loja'
     | '/sobre'
     | '/'
-    | '/clientes/clientes'
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
     | '/treinamentos/alunos'
     | '/treinamentos/certificados'
     | '/treinamentos/provas'
+    | '/clientes'
     | '/inventarios'
     | '/treinamentos'
     | '/inventarios/areas/$areaId'
@@ -591,8 +592,8 @@ export interface FileRouteTypes {
     | '/treinamentos/instrutores'
     | '/treinamentos/turmas'
     | '/usuarios/perfis'
-    | '/usuarios/usuarios'
     | '/inventarios/areas'
+    | '/usuarios'
   id:
     | '__root__'
     | '/_authenticated'
@@ -602,13 +603,13 @@ export interface FileRouteTypes {
     | '/_index/loja'
     | '/_index/sobre'
     | '/_index/'
-    | '/_authenticated/clientes/clientes'
     | '/_authenticated/inventarios/access-control'
     | '/_authenticated/inventarios/autorizados'
     | '/_authenticated/inventarios/dashboard'
     | '/_authenticated/treinamentos/alunos'
     | '/_authenticated/treinamentos/certificados'
     | '/_authenticated/treinamentos/provas'
+    | '/_authenticated/clientes/'
     | '/_authenticated/inventarios/'
     | '/_authenticated/treinamentos/'
     | '/_authenticated/inventarios/areas/$areaId'
@@ -618,8 +619,8 @@ export interface FileRouteTypes {
     | '/_authenticated/treinamentos/_instrutores/instrutores'
     | '/_authenticated/treinamentos/_turmas/turmas'
     | '/_authenticated/usuarios/_perfis/perfis'
-    | '/_authenticated/usuarios/_usuarios/usuarios'
     | '/_authenticated/inventarios/areas/'
+    | '/_authenticated/usuarios/_usuarios/'
   fileRoutesById: FileRoutesById
 }
 
@@ -661,13 +662,13 @@ export const routeTree = rootRoute
       "children": [
         "/_authenticated/building",
         "/_authenticated/home",
-        "/_authenticated/clientes/clientes",
         "/_authenticated/inventarios/access-control",
         "/_authenticated/inventarios/autorizados",
         "/_authenticated/inventarios/dashboard",
         "/_authenticated/treinamentos/alunos",
         "/_authenticated/treinamentos/certificados",
         "/_authenticated/treinamentos/provas",
+        "/_authenticated/clientes/",
         "/_authenticated/inventarios/",
         "/_authenticated/treinamentos/",
         "/_authenticated/inventarios/areas/$areaId",
@@ -677,8 +678,8 @@ export const routeTree = rootRoute
         "/_authenticated/treinamentos/_instrutores/instrutores",
         "/_authenticated/treinamentos/_turmas/turmas",
         "/_authenticated/usuarios/_perfis/perfis",
-        "/_authenticated/usuarios/_usuarios/usuarios",
-        "/_authenticated/inventarios/areas/"
+        "/_authenticated/inventarios/areas/",
+        "/_authenticated/usuarios/_usuarios/"
       ]
     },
     "/_authenticated/building": {
@@ -700,10 +701,6 @@ export const routeTree = rootRoute
     },
     "/_index/": {
       "filePath": "_index/index.tsx"
-    },
-    "/_authenticated/clientes/clientes": {
-      "filePath": "_authenticated/clientes/clientes.tsx",
-      "parent": "/_authenticated"
     },
     "/_authenticated/inventarios/access-control": {
       "filePath": "_authenticated/inventarios/access-control.tsx",
@@ -727,6 +724,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/treinamentos/provas": {
       "filePath": "_authenticated/treinamentos/provas.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/clientes/": {
+      "filePath": "_authenticated/clientes/index.tsx",
       "parent": "/_authenticated"
     },
     "/_authenticated/inventarios/": {
@@ -765,12 +766,12 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/usuarios/_perfis/perfis.tsx",
       "parent": "/_authenticated"
     },
-    "/_authenticated/usuarios/_usuarios/usuarios": {
-      "filePath": "_authenticated/usuarios/_usuarios/usuarios.tsx",
-      "parent": "/_authenticated"
-    },
     "/_authenticated/inventarios/areas/": {
       "filePath": "_authenticated/inventarios/areas/index.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/usuarios/_usuarios/": {
+      "filePath": "_authenticated/usuarios/_usuarios/index.tsx",
       "parent": "/_authenticated"
     }
   }

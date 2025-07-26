@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "@/general-interfaces/api.interface";
-import { IEntity } from "@/pages/_authenticated/site/servicos/-interfaces/entity.interface";
+import { IEntity } from "@/pages/_authenticated/site/_servicos/-interfaces/entity.interface";
 import { get } from "@/services/api";
 
 // Imagens Serviços
@@ -178,7 +178,7 @@ const Services: React.FC<ServicesProps> = ({ handleWhatsApp }) => {
               </div>
               <div className="p-2 md:p-6 flex flex-col flex-grow">
                 <ul className="space-y-1 md:space-y-2">
-                  {service.features?.split('#').map((feature, idx) => (
+                  {service.features?.split('#').map((feature: string, idx: number) => (
                     <li key={`services-features-${idx}`} className="flex text-xs md:text-sm items-start md:items-center text-gray-700">
                       <CheckCircle className="w-2.5 md:w-4 h-2.5 md:h-4 text-primary-light mr-2 mt-1 flex-shrink-0" />
                       {feature}

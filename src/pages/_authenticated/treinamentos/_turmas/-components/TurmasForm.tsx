@@ -14,7 +14,7 @@ import NumberInput from "@/components/general-components/Number";
 import Select from "@/components/general-components/Select";
 // Interfaces and validations
 import { IEntity } from "../-interfaces/entity.interface";
-import { IEntity as Course, FaqItem } from "@/old-pages/Treinamentos-Courses/interfaces/entity.interface";
+import { IEntity as Course, FaqItem } from "../../_cursos/-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { z } from "zod";

@@ -14,7 +14,7 @@ import ItemList from "./-components/ProfileItem";
 import Form from "./-components/ProfileForm";
 import SearchForm from "./-components/ProfileSeach";
 // Interfaces
-import { IEntity } from "@/old-pages/Profiles/interfaces/entity.interface";
+import { IEntity } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
 export const Route = createFileRoute('/_authenticated/usuarios/_perfis/perfis')({

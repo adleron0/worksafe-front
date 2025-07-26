@@ -1,4 +1,4 @@
-import { FaqItem } from "../../Treinamentos-Courses/interfaces/entity.interface";
+import { FaqItem } from "../../_cursos/-interfaces/entity.interface";
 
 export interface IEntity {
   id?: number;

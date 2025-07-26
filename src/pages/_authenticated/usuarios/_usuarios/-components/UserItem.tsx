@@ -14,7 +14,7 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import PermissionsForm from "./UserFormPermissions";
 // Interfaces
-import { IEntity } from "./interfaces/entity.interface";
+import { IEntity } from "../-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
 interface UserItemProps {

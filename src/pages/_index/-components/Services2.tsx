@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "@/general-interfaces/api.interface";
-import { IEntity } from "@/pages/_authenticated/site/servicos/-interfaces/entity.interface";
+import { IEntity } from "@/pages/_authenticated/site/_servicos/-interfaces/entity.interface";
 import { get } from "@/services/api";
 import { Wrench } from "lucide-react";
 

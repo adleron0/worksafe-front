@@ -12,7 +12,7 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import PermissionsForm from "./ProfileFormPermissions";
 // Interfaces
-import { IEntity } from "@/old-pages/Profiles/interfaces/entity.interface";
+import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 

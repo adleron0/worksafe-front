@@ -8,7 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import { useLoader } from "@/context/GeneralContext";
-import { IEntity } from "@/old-pages/Customers/interfaces/entity.interface";
+import { IEntity } from "../-interfaces/entity.interface";
 import DropUpload from "@/components/general-components/DropUpload";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError, Response } from "@/general-interfaces/api.interface";

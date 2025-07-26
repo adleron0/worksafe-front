@@ -11,7 +11,7 @@ import Loader from "@/components/general-components/Loader";
 import { get } from "@/services/api";
 import Form from "./UserForm";
 import Icon from "@/components/general-components/Icon";
-import { IEntity } from "./interfaces/entity.interface";
+import { IEntity } from "../-interfaces/entity.interface";
 import { FC, useState, useEffect } from "react";
 
 interface ProfileProps {

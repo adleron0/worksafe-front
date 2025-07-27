@@ -13,7 +13,6 @@ import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { z } from "zod";
-import Icon from "@/components/general-components/Icon";
 import { PlusCircle, Trash2 } from "lucide-react";
 
 interface ExamFormProps {

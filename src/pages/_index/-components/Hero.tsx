@@ -23,7 +23,7 @@ const Hero: React.FC<HeroProps> = () => {
   };
 
   return (
-    <section className="relative h-[calc(100vh-5rem)] overflow-hidden">
+    <section className="relative h-100 overflow-hidden">
       {/* Video background */}
       <video
         className="absolute inset-0 w-full h-full object-cover"

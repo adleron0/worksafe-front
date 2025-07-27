@@ -7,6 +7,7 @@ import { useLoader } from "@/context/GeneralContext";
 import DropUpload from "@/components/general-components/DropUpload";
 import CalendarPicker from "@/components/general-components/Calendar";
 import Input from "@/components/general-components/Input";
+import TagInput from "@/components/general-components/TagInput";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {Switch} from "@/components/ui/switch";
@@ -578,30 +579,26 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
       <div className="space-y-2">
         <Label htmlFor="gradeTheory">Grade curricular teórica</Label>
-        <p className="text-xs text-muted-foreground font-medium">Separar com #</p>
-        <Input
-          id="gradeTheory"
-          name="gradeTheory"
-          placeholder="Digite a grade teórica"
+        <p className="text-xs text-muted-foreground font-medium">Adicione os itens da grade curricular teórica</p>
+        <TagInput
           value={dataForm.gradeTheory}
-          onValueChange={handleChange}
-          type="textArea"
-          className="mt-1 h-40"
+          onChange={(value) => handleChange('gradeTheory', value)}
+          separator="#"
+          placeholder="Digite um item da grade e pressione Enter"
+          className="mt-1"
         />
         {errors.gradeTheory && <p className="text-red-500 text-sm">{errors.gradeTheory}</p>}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="gradePracticle">Grade curricular prática</Label>
-        <p className="text-xs text-muted-foreground font-medium">Separar com #</p>
-        <Input
-          id="gradePracticle"
-          name="gradePracticle"
-          placeholder="Digite o grade prática"
+        <p className="text-xs text-muted-foreground font-medium">Adicione os itens da grade curricular prática</p>
+        <TagInput
           value={dataForm.gradePracticle}
-          onValueChange={handleChange}
-          type="textArea"
-          className="mt-1 h-40"
+          onChange={(value) => handleChange('gradePracticle', value)}
+          separator="#"
+          placeholder="Digite um item da grade e pressione Enter"
+          className="mt-1"
         />
         {errors.gradePracticle && <p className="text-red-500 text-sm">{errors.gradePracticle}</p>}
       </div>
@@ -669,13 +666,12 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
       <div>
         <Label htmlFor="gifts">Brindes do Curso</Label>
-        <p className="text-xs text-muted-foreground font-medium">Separar brindes com #</p>
-        <Input
-          id="gifts"
-          name="gifts"
-          placeholder="Presentes"
+        <p className="text-xs text-muted-foreground font-medium">Adicione os brindes oferecidos no curso</p>
+        <TagInput
           value={dataForm.gifts ?? ''}
-          onValueChange={handleChange}
+          onChange={(value) => handleChange('gifts', value)}
+          separator="#"
+          placeholder="Digite um brinde e pressione Enter"
           className="mt-1"
         />
         {errors.gifts && <p className="text-red-500 text-sm">{errors.gifts}</p>}
@@ -734,89 +730,92 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {errors.videoDescription && <p className="text-red-500 text-sm">{errors.videoDescription}</p>}
       </div>
 
-      <div className="border-2 border-primary/20 rounded-lg p-4 mt-6 mb-6 bg-primary/5">
-        <h3 className="text-base font-semibold mb-4 text-primary">Perguntas Frequentes (FAQ)</h3>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <Label htmlFor="faq" className="text-xs">Gerenciar perguntas e respostas</Label>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              onClick={addFaqItem}
-              className="flex items-center gap-1 bg-primary/10 hover:bg-primary/20"
-            >
-              <PlusCircle size={16} />
-              Adicionar
-            </Button>
-          </div>
-          
-          {dataForm.faq && dataForm.faq.length > 0 ? (
+      <div className="space-y-2 mt-6">
+        <div>
+          <h3 className="text-lg font-semibold">Perguntas Frequentes (FAQ)</h3>
+          <p className="text-sm text-muted-foreground mb-4">Adicione perguntas e respostas comuns sobre o curso</p>
+        </div>
+        
+        {dataForm.faq && dataForm.faq.length > 0 ? (
+          <>
             <Accordion 
               type="multiple" 
               value={expandedItems}
               onValueChange={setExpandedItems}
-              className="w-full"
+              className="w-full space-y-2"
             >
               {dataForm.faq.map((faqItem, index) => (
                 <AccordionItem 
                   value={`item-${index}`} 
                   key={index} 
-                  className={`border ${
+                  className={`border rounded-lg ${
                     errors[`faq.${index}.question`] || errors[`faq.${index}.answer`] 
-                      ? 'border-red-500' 
-                      : 'border-primary/20'
+                      ? 'border-red-500/50' 
+                      : ''
                   }`}
                 >
-                  <div className="flex items-center">
-                    <AccordionTrigger 
-                      className={`flex-1 hover:bg-primary/5 p-2 cursor-pointer ${
-                        errors[`faq.${index}.question`] || errors[`faq.${index}.answer`] 
-                          ? 'text-red-500 font-medium' 
-                          : ''
-                      }`}
-                    >
-                      {`Pergunta ${index + 1}`}
-                      {(errors[`faq.${index}.question`] || errors[`faq.${index}.answer`]) && 
-                        <span className="ml-2 text-xs">(Erro de validação)</span>
-                      }
-                    </AccordionTrigger>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => removeFaqItem(index)}
-                      className="mr-2"
-                    >
-                      <Trash2 size={16} className="text-red-500" />
-                    </Button>
-                  </div>
-                  <AccordionContent className="bg-background/10">
-                    <div className="space-y-4 p-3">
+                  <AccordionTrigger 
+                    className={`group flex items-center justify-between w-full px-4 py-3 hover:no-underline [&>svg]:ml-2 ${
+                      errors[`faq.${index}.question`] || errors[`faq.${index}.answer`] 
+                        ? 'text-red-500' 
+                        : ''
+                    }`}
+                  >
+                    <div className="text-left flex-1">
+                      <span className="font-medium">
+                        Pergunta {String(index + 1).padStart(2, '0')}
+                      </span>
+                      {(errors[`faq.${index}.question`] || errors[`faq.${index}.answer`]) && (
+                        <span className="ml-2 text-xs text-red-500">(Erro de validação)</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFaqItem(index);
+                        }}
+                        className="h-8 w-8 p-0 hover:bg-destructive/10"
+                      >
+                        <Trash2 size={16} className="text-destructive" />
+                      </Button>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="space-y-4">
                       <div>
-                        <Label htmlFor={`faq-question-${index}`}>Pergunta</Label>
-                        <textarea
+                        <Label htmlFor={`faq-question-${index}`} className="text-sm font-medium">
+                          Pergunta <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
                           id={`faq-question-${index}`}
                           value={faqItem.question || ''}
-                          onChange={(e) => updateFaqItem(index, 'question', e.target.value)}
-                          placeholder="Digite a pergunta"
-                          className="w-full min-h-[60px] p-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                          onValueChange={(_, value) => updateFaqItem(index, 'question', value as string)}
+                          placeholder="Ex: Qual é a carga horária do curso?"
+                          className={`mt-1 ${errors[`faq.${index}.question`] ? 'border-red-500' : ''}`}
                         />
                         {errors[`faq.${index}.question`] && (
-                          <p className="text-red-500 text-sm">{errors[`faq.${index}.question`]}</p>
+                          <p className="text-red-500 text-xs mt-1">{errors[`faq.${index}.question`]}</p>
                         )}
                       </div>
+                      
                       <div>
-                        <Label htmlFor={`faq-answer-${index}`}>Resposta</Label>
-                        <textarea
+                        <Label htmlFor={`faq-answer-${index}`} className="text-sm font-medium">
+                          Resposta <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
                           id={`faq-answer-${index}`}
                           value={faqItem.answer || ''}
-                          onChange={(e) => updateFaqItem(index, 'answer', e.target.value)}
-                          placeholder="Digite a resposta"
-                          className="w-full min-h-[100px] p-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                          onValueChange={(_, value) => updateFaqItem(index, 'answer', value as string)}
+                          placeholder="Ex: O curso tem duração total de 40 horas, distribuídas em..."
+                          type="textArea"
+                          className={`mt-1 min-h-[80px] ${errors[`faq.${index}.answer`] ? 'border-red-500' : ''}`}
                         />
                         {errors[`faq.${index}.answer`] && (
-                          <p className="text-red-500 text-sm">{errors[`faq.${index}.answer`]}</p>
+                          <p className="text-red-500 text-xs mt-1">{errors[`faq.${index}.answer`]}</p>
                         )}
                       </div>
                     </div>
@@ -824,22 +823,35 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
                 </AccordionItem>
               ))}
             </Accordion>
-          ) : (
-            <div className="bg-background/10 p-6 rounded-md text-center border border-primary/20">
-              <p className="text-muted-foreground mb-3 text-xs">Nenhuma pergunta frequente adicionada</p>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm" 
-                onClick={addFaqItem}
-                className="bg-primary/10 hover:bg-primary/20"
-              >
-                Adicionar pergunta
-              </Button>
+            
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={addFaqItem}
+              className="w-full mt-3 flex items-center justify-center gap-2"
+            >
+              <PlusCircle size={16} />
+              Adicionar Nova Pergunta
+            </Button>
+          </>
+        ) : (
+          <div className="border-2 border-dashed rounded-lg p-8 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+              <PlusCircle size={20} className="text-muted-foreground" />
             </div>
-          )}
-          {errors.faq && <p className="text-red-500 text-sm">{errors.faq}</p>}
-        </div>
+            <p className="text-sm text-muted-foreground mb-3">Nenhuma pergunta frequente adicionada</p>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={addFaqItem}
+            >
+              Adicionar primeira pergunta
+            </Button>
+          </div>
+        )}
+        {errors.faq && <p className="text-red-500 text-xs mt-2">{errors.faq}</p>}
       </div>
 
       <Button

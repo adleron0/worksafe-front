@@ -6,6 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { useLoader } from "@/context/GeneralContext";
 import DropUpload from "@/components/general-components/DropUpload";
 import Input from "@/components/general-components/Input";
+import TagInput from "@/components/general-components/TagInput";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 // Interfaces and validations
@@ -253,14 +254,12 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
       <div>
         <Label htmlFor="curriculum">Currículo <span>*</span></Label>
-        <p className="text-xs text-muted-foreground font-medium">Separar currículo com #</p>
-        <Input
-          id="curriculum"
-          name="curriculum"
-          placeholder="Digite o currículo do instrutor"
+        <p className="text-xs text-muted-foreground font-medium">Adicione os itens do currículo do instrutor</p>
+        <TagInput
           value={dataForm.curriculum}
-          onValueChange={handleChange}
-          type="textArea"
+          onChange={(value) => handleChange('curriculum', value)}
+          separator="#"
+          placeholder="Digite um item do currículo e pressione Enter"
           className="mt-1"
         />
         {errors.curriculum && <p className="text-red-500 text-sm">{errors.curriculum}</p>}

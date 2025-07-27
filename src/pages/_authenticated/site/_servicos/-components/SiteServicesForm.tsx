@@ -6,6 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { useLoader } from "@/context/GeneralContext";
 import DropUpload from "@/components/general-components/DropUpload";
 import Input from "@/components/general-components/Input";
+import TagInput from "@/components/general-components/TagInput";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 // Interfaces and validations
@@ -188,14 +189,12 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       
       <div>
         <Label htmlFor="features">Características</Label>
-        <p className="text-xs text-muted-foreground font-medium">Separar características com #</p>
-        <Input
-          id="features"
-          name="features"
-          placeholder="Digite as características"
-          value={dataForm.features}
-          onValueChange={handleChange}
-          type="textArea"
+        <p className="text-xs text-muted-foreground font-medium">Adicione as características do serviço</p>
+        <TagInput
+          value={dataForm.features || ''}
+          onChange={(value) => handleChange('features', value)}
+          separator="#"
+          placeholder="Digite uma característica e pressione Enter"
           className="mt-1"
         />
       </div>

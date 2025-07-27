@@ -8,11 +8,12 @@ import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { z } from "zod";
-import Icon from "@/components/general-components/Icon";
+import { PlusCircle, Trash2 } from "lucide-react";
 
 interface ExamFormProps {
   courseData: IEntity;
@@ -88,6 +89,7 @@ const CoursesExamForm = ({ courseData, openSheet, entity }: ExamFormProps) => {
   const [examData, setExamData] = useState<Question[]>(initializeExamData());
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [selectedCorrectOptions, setSelectedCorrectOptions] = useState<{ [key: number]: number }>({});
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   // Initialize selected correct options based on existing data
   useEffect(() => {
@@ -169,6 +171,8 @@ const CoursesExamForm = ({ courseData, openSheet, entity }: ExamFormProps) => {
 
   // Add a new question
   const addQuestion = () => {
+    const newQuestionIndex = examData.length;
+    
     setExamData([
       ...examData,
       {
@@ -183,8 +187,11 @@ const CoursesExamForm = ({ courseData, openSheet, entity }: ExamFormProps) => {
     // Set the first option as correct for the new question
     setSelectedCorrectOptions({
       ...selectedCorrectOptions,
-      [examData.length]: 0
+      [newQuestionIndex]: 0
     });
+    
+    // Auto-expand the newly added question
+    setExpandedItems(prev => [...prev, `item-${newQuestionIndex}`]);
   };
 
   // Remove a question
@@ -192,7 +199,7 @@ const CoursesExamForm = ({ courseData, openSheet, entity }: ExamFormProps) => {
     if (examData.length <= 1) {
       toast({
         title: "Não é possível remover",
-        description: "Deve haver pelo menos uma pergunta no exame.",
+        description: "Deve haver pelo menos uma questão no exame.",
         variant: "destructive",
       });
       return;
@@ -212,6 +219,23 @@ const CoursesExamForm = ({ courseData, openSheet, entity }: ExamFormProps) => {
       }
     });
     setSelectedCorrectOptions(updatedSelectedOptions);
+    
+    // Update expanded items to remove the deleted item and adjust indices
+    setExpandedItems(prev => {
+      const itemToRemove = `item-${questionIndex}`;
+      const newExpandedItems = prev.filter(item => item !== itemToRemove);
+      
+      // Adjust indices for items that come after the removed item
+      return newExpandedItems.map(item => {
+        const itemParts = item.split('-');
+        const itemIndex = parseInt(itemParts[1], 10);
+        
+        if (itemIndex > questionIndex) {
+          return `item-${itemIndex - 1}`;
+        }
+        return item;
+      });
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -244,85 +268,150 @@ const CoursesExamForm = ({ courseData, openSheet, entity }: ExamFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full mt-4">
       
-      <div className="space-y-6">
-        {examData.map((question, questionIndex) => (
-          <div key={questionIndex} className="p-4 border rounded-lg bg-background/50 shadow-sm">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-md font-medium">Pergunta {questionIndex + 1}</h3>
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => removeQuestion(questionIndex)}
-                className="h-8 w-8 p-0 text-destructive"
-              >
-                <Icon name="trash-2" className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            <div className="space-y-2 mb-4">
-              <Label htmlFor={`question-${questionIndex}`}>Texto da Pergunta</Label>
-              <Input
-                id={`question-${questionIndex}`}
-                name={`question-${questionIndex}`}
-                placeholder="Digite a pergunta"
-                value={question.question}
-                onValueChange={(_name, value) => handleQuestionChange(questionIndex, value)}
-                type="textArea"
-                className="mt-1"
-              />
-              {errors[`exam.${questionIndex}.question`] && (
-                <p className="text-red-500 text-sm">{errors[`exam.${questionIndex}.question`]}</p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Opções de Resposta</Label>
-              <p className="text-xs text-muted-foreground font-medium">Selecione a opção correta</p>
-              
-              <RadioGroup 
-                value={(selectedCorrectOptions[questionIndex] || 0).toString()} 
-                onValueChange={(value: string) => handleCorrectOptionChange(questionIndex, parseInt(value))}
-                className="space-y-3"
-              >
-                {question.options.map((option, optionIndex) => (
-                  <div key={optionIndex} className="flex items-center space-x-2">
-                    <RadioGroupItem 
-                      value={optionIndex.toString()} 
-                      id={`option-${questionIndex}-${optionIndex}`} 
-                      className="mt-1"
-                    />
-                    <div className="flex-1">
-                      <Input
-                        id={`option-text-${questionIndex}-${optionIndex}`}
-                        name={`option-text-${questionIndex}-${optionIndex}`}
-                        placeholder={`Opção ${optionIndex + 1}`}
-                        value={option.text}
-                        onValueChange={(_name, value) => handleOptionChange(questionIndex, optionIndex, value)}
-                        className="mt-1"
-                      />
+      <div className="space-y-2">
+        <div>
+          <h3 className="text-lg font-semibold">Questões do Exame</h3>
+          <p className="text-sm text-muted-foreground mb-4">Gerencie as questões e respostas do exame</p>
+        </div>
+        
+        {examData.length > 0 ? (
+          <>
+            <Accordion 
+              type="multiple" 
+              value={expandedItems}
+              onValueChange={setExpandedItems}
+              className="w-full space-y-2"
+            >
+              {examData.map((question, questionIndex) => (
+                <AccordionItem 
+                  value={`item-${questionIndex}`} 
+                  key={questionIndex} 
+                  className={`border rounded-lg ${
+                    errors[`exam.${questionIndex}.question`] || errors[`exam.${questionIndex}.options`] 
+                      ? 'border-red-500/50' 
+                      : ''
+                  }`}
+                >
+                  <AccordionTrigger 
+                    className={`group flex items-center justify-between w-full px-4 py-3 hover:no-underline [&>svg]:ml-2 ${
+                      errors[`exam.${questionIndex}.question`] || errors[`exam.${questionIndex}.options`] 
+                        ? 'text-red-500' 
+                        : ''
+                    }`}
+                  >
+                    <div className="text-left flex-1">
+                      <span className="font-medium">
+                        Questão {String(questionIndex + 1).padStart(2, '0')}
+                      </span>
+                      {(errors[`exam.${questionIndex}.question`] || errors[`exam.${questionIndex}.options`]) && (
+                        <span className="ml-2 text-xs text-red-500">(Erro de validação)</span>
+                      )}
                     </div>
-                  </div>
-                ))}
-              </RadioGroup>
-              
-              {errors[`exam.${questionIndex}.options`] && (
-                <p className="text-red-500 text-sm">{errors[`exam.${questionIndex}.options`]}</p>
-              )}
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeQuestion(questionIndex);
+                        }}
+                        className="h-8 w-8 p-0 hover:bg-destructive/10"
+                      >
+                        <Trash2 size={16} className="text-destructive" />
+                      </Button>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor={`question-${questionIndex}`} className="text-sm font-medium">
+                          Texto da Questão <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id={`question-${questionIndex}`}
+                          name={`question-${questionIndex}`}
+                          placeholder="Digite a questão"
+                          value={question.question}
+                          onValueChange={(_name, value) => handleQuestionChange(questionIndex, value)}
+                          type="textArea"
+                          className={`mt-1 min-h-[80px] ${errors[`exam.${questionIndex}.question`] ? 'border-red-500' : ''}`}
+                        />
+                        {errors[`exam.${questionIndex}.question`] && (
+                          <p className="text-red-500 text-xs mt-1">{errors[`exam.${questionIndex}.question`]}</p>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">
+                          Opções de Resposta <span className="text-red-500">*</span>
+                        </Label>
+                        <p className="text-xs text-muted-foreground">Selecione a opção correta</p>
+                        
+                        <RadioGroup 
+                          value={(selectedCorrectOptions[questionIndex] || 0).toString()} 
+                          onValueChange={(value: string) => handleCorrectOptionChange(questionIndex, parseInt(value))}
+                          className="space-y-2"
+                        >
+                          {question.options.map((option, optionIndex) => (
+                            <div key={optionIndex} className="flex items-center space-x-2">
+                              <RadioGroupItem 
+                                value={optionIndex.toString()} 
+                                id={`option-${questionIndex}-${optionIndex}`} 
+                                className="mt-1"
+                              />
+                              <div className="flex-1">
+                                <Input
+                                  id={`option-text-${questionIndex}-${optionIndex}`}
+                                  name={`option-text-${questionIndex}-${optionIndex}`}
+                                  placeholder={`Opção ${optionIndex + 1}`}
+                                  value={option.text}
+                                  onValueChange={(_name, value) => handleOptionChange(questionIndex, optionIndex, value)}
+                                  className="mt-1"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                        
+                        {errors[`exam.${questionIndex}.options`] && (
+                          <p className="text-red-500 text-xs mt-1">{errors[`exam.${questionIndex}.options`]}</p>
+                        )}
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+            
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={addQuestion}
+              className="w-full mt-3 flex items-center justify-center gap-2"
+            >
+              <PlusCircle size={16} />
+              Adicionar Nova Questão
+            </Button>
+          </>
+        ) : (
+          <div className="border-2 border-dashed rounded-lg p-8 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+              <PlusCircle size={20} className="text-muted-foreground" />
             </div>
+            <p className="text-sm text-muted-foreground mb-3">Nenhuma questão adicionada</p>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={addQuestion}
+            >
+              Adicionar primeira questão
+            </Button>
           </div>
-        ))}
+        )}
       </div>
-      
-      <Button 
-        type="button" 
-        variant="outline" 
-        onClick={addQuestion}
-        className="mt-2"
-      >
-        <Icon name="plus" className="w-4 h-4 mr-2" />
-        Adicionar Nova Pergunta
-      </Button>
       
       <Button
         type="submit"

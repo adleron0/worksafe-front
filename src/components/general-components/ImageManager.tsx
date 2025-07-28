@@ -317,7 +317,12 @@ const ImageManager: React.FC = () => {
         e.stopPropagation();
         
         const mouseEvent = e as MouseEvent;
-        console.log('Context menu event triggered');
+        console.log('Context menu event triggered at:', mouseEvent.clientX, mouseEvent.clientY);
+        
+        if (!fabricCanvasRef.current) {
+          console.log('Canvas ref not available');
+          return false;
+        }
         
         const pointer = canvas.getPointer(mouseEvent as any);
         const objects = canvas.getObjects();
@@ -335,14 +340,19 @@ const ImageManager: React.FC = () => {
         console.log('Target found:', target);
         
         if (target) {
-          setContextMenu({
-            x: mouseEvent.clientX,
-            y: mouseEvent.clientY,
-            target: target
-          });
-          setShowContextMenu(true);
-          canvas.setActiveObject(target);
-          canvas.renderAll();
+          // Force state update
+          setShowContextMenu(false);
+          setTimeout(() => {
+            setContextMenu({
+              x: mouseEvent.clientX,
+              y: mouseEvent.clientY,
+              target: target
+            });
+            setShowContextMenu(true);
+            canvas.setActiveObject(target);
+            canvas.renderAll();
+            console.log('Context menu should be visible now');
+          }, 10);
         } else {
           setShowContextMenu(false);
         }
@@ -1191,13 +1201,17 @@ const ImageManager: React.FC = () => {
       
       {/* Context Menu */}
       {showContextMenu && (() => {
+        console.log('Rendering context menu, showContextMenu:', showContextMenu);
         const menuData = getContextMenuItems();
+        console.log('Menu data:', menuData);
         return (
           <div
-            className="context-menu fixed z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
+            className="context-menu fixed min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
             style={{
               left: `${contextMenu.x - 10}px`,
               top: `${contextMenu.y - 10}px`,
+              zIndex: 9999,
+              display: 'block'
             }}
             onMouseDown={(e) => e.stopPropagation()}
           >

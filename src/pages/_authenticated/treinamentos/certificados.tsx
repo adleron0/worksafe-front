@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import Dialog from '@/components/general-components/Dialog'
-import ImageManager from '@/components/general-components/ImageManager'
+import ImageManager from '@/components/general-components/geradorCertificados/gerador'
 
 function CertificadosPage() {
   const [dialogOpen, setDialogOpen] = useState(false)

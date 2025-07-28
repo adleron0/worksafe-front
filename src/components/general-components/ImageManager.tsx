@@ -53,12 +53,13 @@ const ImageManager: React.FC = () => {
   
   // Shape control states
   const [shapeSettings, setShapeSettings] = useState({
-    fill: '#3b82f6',
-    stroke: '#1e40af',
-    strokeWidth: 2,
+    fill: '#000000',
+    stroke: '#000000',
+    strokeWidth: 0,
     opacity: 100,
     cornerRadius: 0
   });
+  const [selectedShape, setSelectedShape] = useState<fabric.Object | null>(null);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
@@ -155,6 +156,44 @@ const ImageManager: React.FC = () => {
     orientationRef.current = canvasOrientation;
   }, [canvasOrientation]);
   
+  // Function to apply settings to shape immediately
+  const updateShapeSettings = (newSettings: Partial<typeof shapeSettings>) => {
+    setShapeSettings(prev => ({ ...prev, ...newSettings }));
+    
+    if (selectedShape && fabricCanvasRef.current) {
+      const shape = selectedShape;
+      const shapeWithName = shape as fabric.Object & { name?: string };
+      const mergedSettings = { ...shapeSettings, ...newSettings };
+      
+      console.log('Applying settings to shape immediately:', mergedSettings);
+      
+      if (shapeWithName.name === 'line' || shape.type === 'line') {
+        shape.set({
+          stroke: mergedSettings.stroke,
+          strokeWidth: mergedSettings.strokeWidth,
+          opacity: mergedSettings.opacity / 100
+        });
+      } else {
+        shape.set({
+          fill: mergedSettings.fill,
+          stroke: mergedSettings.stroke,
+          strokeWidth: mergedSettings.strokeWidth,
+          opacity: mergedSettings.opacity / 100
+        });
+        
+        if (shapeWithName.name === 'rectangle' && shape.type === 'rect') {
+          (shape as fabric.Rect).set({
+            rx: mergedSettings.cornerRadius,
+            ry: mergedSettings.cornerRadius
+          });
+        }
+      }
+      
+      shape.setCoords();
+      fabricCanvasRef.current.requestRenderAll();
+    }
+  };
+  
 
 
   // Close context menu when clicking outside
@@ -209,7 +248,7 @@ const ImageManager: React.FC = () => {
     }
     
     // Update background rectangle if it exists
-    const bgRect = canvas.getObjects().find(obj => obj.name === 'backgroundRect');
+    const bgRect = canvas.getObjects().find(obj => (obj as fabric.Object & { name?: string }).name === 'backgroundRect');
     if (bgRect) {
       bgRect.set({
         width: canvas.width,
@@ -250,16 +289,27 @@ const ImageManager: React.FC = () => {
       
       // Add keyboard event listener for delete
       const handleKeyDown = (e: KeyboardEvent) => {
+        console.log('Key pressed:', e.key);
         if ((e.key === 'Delete' || e.key === 'Backspace') && fabricCanvasRef.current) {
+          e.preventDefault(); // Prevent default behavior
           const activeObject = fabricCanvasRef.current.getActiveObject();
-          if (activeObject && (activeObject as any).name !== 'backgroundRect') {
-            fabricCanvasRef.current.remove(activeObject);
-            fabricCanvasRef.current.renderAll();
+          console.log('Active object:', activeObject);
+          
+          if (activeObject) {
+            const objWithName = activeObject as fabric.Object & { name?: string };
+            if (objWithName.name !== 'backgroundRect') {
+              fabricCanvasRef.current.remove(activeObject);
+              fabricCanvasRef.current.discardActiveObject();
+              fabricCanvasRef.current.requestRenderAll();
+              setSelectedShape(null); // Clear selected shape if it's a shape
+              console.log('Object deleted');
+            }
           }
         }
       };
       
-      document.addEventListener('keydown', handleKeyDown);
+      // Attach to window for better event capture
+      window.addEventListener('keydown', handleKeyDown);
       
       // Handle right-click via native event on canvas element
       const handleContextMenu = (e: Event) => {
@@ -276,7 +326,7 @@ const ImageManager: React.FC = () => {
         // Find object at pointer position
         for (let i = objects.length - 1; i >= 0; i--) {
           const obj = objects[i];
-          if (obj.containsPoint(pointer) && (obj as any).name !== 'backgroundRect') {
+          if (obj.containsPoint(pointer) && (obj as fabric.Object & { name?: string }).name !== 'backgroundRect') {
             target = obj;
             break;
           }
@@ -301,17 +351,26 @@ const ImageManager: React.FC = () => {
       };
       
       // Ensure event listeners are properly attached
-      setTimeout(() => {
+      const attachContextMenuListeners = () => {
         // Add listeners to both canvas elements
-        canvas.upperCanvasEl.addEventListener('contextmenu', handleContextMenu);
-        canvas.lowerCanvasEl.addEventListener('contextmenu', handleContextMenu);
+        if (canvas.upperCanvasEl) {
+          canvas.upperCanvasEl.addEventListener('contextmenu', handleContextMenu);
+        }
+        if (canvas.lowerCanvasEl) {
+          canvas.lowerCanvasEl.addEventListener('contextmenu', handleContextMenu);
+        }
         
         // Also add to the wrapper element as a fallback
         const wrapperEl = canvas.wrapperEl;
         if (wrapperEl) {
           wrapperEl.addEventListener('contextmenu', handleContextMenu);
         }
-      }, 100);
+        console.log('Context menu listeners attached');
+      };
+      
+      // Try to attach immediately and also with a delay
+      attachContextMenuListeners();
+      setTimeout(attachContextMenuListeners, 100);
       
       // Add mouse wheel zoom to resize canvas
       const handleWheel = (opt: fabric.TEvent<WheelEvent>) => {
@@ -334,12 +393,69 @@ const ImageManager: React.FC = () => {
       
       canvas.on('mouse:wheel', handleWheel);
       
+      // Add selection event to track selected shapes
+      const handleShapeSelection = (obj: fabric.Object) => {
+        const objWithName = obj as fabric.Object & { name?: string };
+        const objName = objWithName.name;
+        if (['rectangle', 'circle', 'triangle', 'line', 'rect'].includes(objName || obj.type || '')) {
+          setSelectedShape(obj);
+          
+          // Get current shape settings
+          const fill = obj.fill as string || '#000000';
+          const stroke = obj.stroke as string || '#000000';
+          const strokeWidth = obj.strokeWidth || 0;
+          const opacity = (obj.opacity || 1) * 100;
+          
+          // Get corner radius for rectangles
+          let cornerRadius = 0;
+          if (obj.type === 'rect') {
+            const rect = obj as fabric.Rect;
+            cornerRadius = rect.rx || 0;
+          }
+          
+          // Update settings to match selected shape
+          setShapeSettings({
+            fill,
+            stroke,
+            strokeWidth,
+            opacity,
+            cornerRadius
+          });
+        } else {
+          setSelectedShape(null);
+        }
+      };
+      
+      canvas.on('selection:created', (e) => {
+        if (e.selected && e.selected[0]) {
+          handleShapeSelection(e.selected[0]);
+        }
+      });
+      
+      canvas.on('selection:updated', (e) => {
+        if (e.selected && e.selected[0]) {
+          handleShapeSelection(e.selected[0]);
+        }
+      });
+      
+      canvas.on('selection:cleared', () => {
+        setSelectedShape(null);
+      });
+      
       return () => {
-        document.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keydown', handleKeyDown);
+        canvas.off('mouse:wheel', handleWheel);
+        canvas.off('selection:created');
+        canvas.off('selection:updated');
+        canvas.off('selection:cleared');
         // Remove with timeout to match the addition
         setTimeout(() => {
-          canvas.upperCanvasEl.removeEventListener('contextmenu', handleContextMenu);
-          canvas.lowerCanvasEl.removeEventListener('contextmenu', handleContextMenu);
+          if (canvas.upperCanvasEl) {
+            canvas.upperCanvasEl.removeEventListener('contextmenu', handleContextMenu);
+          }
+          if (canvas.lowerCanvasEl) {
+            canvas.lowerCanvasEl.removeEventListener('contextmenu', handleContextMenu);
+          }
           const wrapperEl = canvas.wrapperEl;
           if (wrapperEl) {
             wrapperEl.removeEventListener('contextmenu', handleContextMenu);
@@ -426,7 +542,7 @@ const ImageManager: React.FC = () => {
   const getContextMenuItems = () => {
     if (!contextMenu.target) return { title: '', items: [] };
     
-    const target = contextMenu.target as any;
+    const target = contextMenu.target as fabric.Object & { name?: string; constructor: { name: string } };
     // In Fabric.js v6, check the class type
     const isImage = target.constructor.name === 'FabricImage' || target.type === 'image';
     
@@ -452,7 +568,8 @@ const ImageManager: React.FC = () => {
     }
     
     // Check if it's a shape
-    const isShape = ['rectangle', 'circle', 'triangle', 'line', 'rect'].includes(target.name || target.type || '');
+    const targetName = target.name || target.type || '';
+    const isShape = ['rectangle', 'circle', 'triangle', 'line', 'rect'].includes(targetName);
     if (isShape) {
       return {
         title: 'Ações Rápidas - Forma',
@@ -489,6 +606,9 @@ const ImageManager: React.FC = () => {
     
     let shape: fabric.Object;
     
+    // For lines, ensure strokeWidth is at least 2
+    const strokeWidth = shapeType === 'line' ? Math.max(2, shapeSettings.strokeWidth) : shapeSettings.strokeWidth;
+    
     const baseProps = {
       left: centerX,
       top: centerY,
@@ -496,7 +616,7 @@ const ImageManager: React.FC = () => {
       originY: 'center' as const,
       fill: shapeSettings.fill,
       stroke: shapeSettings.stroke,
-      strokeWidth: shapeSettings.strokeWidth,
+      strokeWidth: strokeWidth,
       opacity: shapeSettings.opacity / 100,
       name: shapeType
     };
@@ -850,7 +970,14 @@ const ImageManager: React.FC = () => {
               {/* Shape settings */}
               <Card>
                 <div className="p-4 space-y-4">
-                  <h3 className="text-sm font-semibold">Configurações</h3>
+                  <h3 className="text-sm font-semibold">
+                    {selectedShape ? 'Editando Forma' : 'Configurações'}
+                  </h3>
+                  {selectedShape && (
+                    <p className="text-xs text-muted-foreground">
+                      Altere as propriedades da forma selecionada
+                    </p>
+                  )}
                   
                   {/* Fill color */}
                   <div>
@@ -859,7 +986,10 @@ const ImageManager: React.FC = () => {
                       <input
                         type="color"
                         value={shapeSettings.fill}
-                        onChange={(e) => setShapeSettings({ ...shapeSettings, fill: e.target.value })}
+                        onChange={(e) => {
+                          console.log('Changing fill color to:', e.target.value);
+                          updateShapeSettings({ fill: e.target.value });
+                        }}
                         className="w-full h-8 rounded cursor-pointer"
                       />
                     </div>
@@ -871,7 +1001,10 @@ const ImageManager: React.FC = () => {
                     <input
                       type="color"
                       value={shapeSettings.stroke}
-                      onChange={(e) => setShapeSettings({ ...shapeSettings, stroke: e.target.value })}
+                      onChange={(e) => {
+                        console.log('Changing stroke color to:', e.target.value);
+                        updateShapeSettings({ stroke: e.target.value });
+                      }}
                       className="w-full h-8 rounded cursor-pointer"
                     />
                   </div>
@@ -883,7 +1016,10 @@ const ImageManager: React.FC = () => {
                     </label>
                     <Slider
                       value={[shapeSettings.strokeWidth]}
-                      onValueChange={(value) => setShapeSettings({ ...shapeSettings, strokeWidth: value[0] })}
+                      onValueChange={(value) => {
+                        console.log('Changing stroke width to:', value[0]);
+                        updateShapeSettings({ strokeWidth: value[0] });
+                      }}
                       min={0}
                       max={20}
                       step={1}
@@ -898,7 +1034,10 @@ const ImageManager: React.FC = () => {
                     </label>
                     <Slider
                       value={[shapeSettings.opacity]}
-                      onValueChange={(value) => setShapeSettings({ ...shapeSettings, opacity: value[0] })}
+                      onValueChange={(value) => {
+                        console.log('Changing opacity to:', value[0]);
+                        updateShapeSettings({ opacity: value[0] });
+                      }}
                       min={0}
                       max={100}
                       step={5}
@@ -913,7 +1052,10 @@ const ImageManager: React.FC = () => {
                     </label>
                     <Slider
                       value={[shapeSettings.cornerRadius]}
-                      onValueChange={(value) => setShapeSettings({ ...shapeSettings, cornerRadius: value[0] })}
+                      onValueChange={(value) => {
+                        console.log('Changing corner radius to:', value[0]);
+                        updateShapeSettings({ cornerRadius: value[0] });
+                      }}
                       min={0}
                       max={50}
                       step={1}

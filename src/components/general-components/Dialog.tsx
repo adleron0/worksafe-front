@@ -54,7 +54,7 @@ const Dialog: React.FC<DialogProps> = ({
               { description }
             </DialogDescription>
           </DialogHeader>
-          <div className="h-[60vh] overflow-y-auto pr-4">
+          <div className="h-[80vh] overflow-y-auto pr-4">
             { children }
           </div>
       </DialogContent>

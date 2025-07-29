@@ -74,6 +74,12 @@ export const useCanvas = () => {
     canvasRef.current.addShapeToCanvas(shapeType, shapeSettings);
   }, []);
 
+  const addTextToCanvas = useCallback((text: string, textSettings: any) => {
+    if (!canvasRef.current) return;
+    
+    canvasRef.current.addTextToCanvas(text, textSettings);
+  }, []);
+
   return {
     canvasRef,
     canvasOrientation,
@@ -86,6 +92,7 @@ export const useCanvas = () => {
     handleApplyAsBackground,
     handleDeleteFromCanvas,
     addImageToCanvas,
-    addShapeToCanvas
+    addShapeToCanvas,
+    addTextToCanvas
   };
 };

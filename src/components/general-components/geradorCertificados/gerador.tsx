@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { get, del } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Image as ImageIcon, Loader2, Shapes, Frame, Trash2 } from 'lucide-react';
+import { Image as ImageIcon, Loader2, Shapes, Frame, Trash2, Type, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import * as fabric from 'fabric';
 
@@ -11,8 +11,10 @@ import * as fabric from 'fabric';
 import ImageUploadForm from './components/ImageUploadForm';
 import ImageGrid from './components/ImageGrid';
 import ShapesPanel from './components/ShapesPanel';
+import TextPanel from './components/TextPanel';
 import CanvasEditor from './components/CanvasEditor';
 import ContextMenu from './components/ContextMenu';
+import LayersPanel from './components/LayersPanel';
 
 // Hooks
 import { useCanvas } from './hooks/useCanvas';
@@ -38,6 +40,7 @@ const GeradorCertificados: React.FC = () => {
   });
   const [selectedShape, setSelectedShape] = useState<fabric.Object | null>(null);
   const selectedShapeRef = useRef<fabric.Object | null>(null);
+  const [selectedText, setSelectedText] = useState<fabric.Textbox | null>(null);
   
   const queryClient = useQueryClient();
   
@@ -54,7 +57,8 @@ const GeradorCertificados: React.FC = () => {
     handleApplyAsBackground,
     handleDeleteFromCanvas,
     addImageToCanvas,
-    addShapeToCanvas
+    addShapeToCanvas,
+    addTextToCanvas
   } = useCanvas();
 
   // Query for fetching images
@@ -168,36 +172,49 @@ const GeradorCertificados: React.FC = () => {
 
   const handleObjectSelected = (obj: fabric.Object) => {
     console.log('Object selected:', obj);
-    setSelectedShape(obj);
-    selectedShapeRef.current = obj;
+    console.log('Object ID:', (obj as any).__uniqueID);
+    console.log('Object text:', (obj as any).text);
     
-    // Get current shape settings
-    const fill = obj.fill as string || '#000000';
-    const stroke = obj.stroke as string || '#000000';
-    const strokeWidth = obj.strokeWidth || 0;
-    const opacity = (obj.opacity || 1) * 100;
-    
-    // Get corner radius for rectangles
-    let cornerRadius = 0;
-    if (obj.type === 'rect') {
-      const rect = obj as fabric.Rect;
-      cornerRadius = rect.rx || 0;
+    // Check if it's a text object
+    if (obj.type === 'i-text' || obj.type === 'textbox') {
+      console.log('Atualizando selectedText para:', (obj as any).__uniqueID);
+      setSelectedText(obj as fabric.Textbox);
+      setSelectedShape(null);
+      selectedShapeRef.current = null;
+    } else {
+      setSelectedShape(obj);
+      selectedShapeRef.current = obj;
+      setSelectedText(null);
+      
+      // Get current shape settings
+      const fill = obj.fill as string || '#000000';
+      const stroke = obj.stroke as string || '#000000';
+      const strokeWidth = obj.strokeWidth || 0;
+      const opacity = (obj.opacity || 1) * 100;
+      
+      // Get corner radius for rectangles
+      let cornerRadius = 0;
+      if (obj.type === 'rect') {
+        const rect = obj as fabric.Rect;
+        cornerRadius = rect.rx || 0;
+      }
+      
+      // Update settings to match selected shape
+      setShapeSettings({
+        fill,
+        stroke,
+        strokeWidth,
+        opacity,
+        cornerRadius
+      });
     }
-    
-    // Update settings to match selected shape
-    setShapeSettings({
-      fill,
-      stroke,
-      strokeWidth,
-      opacity,
-      cornerRadius
-    });
   };
 
   const handleSelectionCleared = () => {
     console.log('Selection cleared');
     setSelectedShape(null);
     selectedShapeRef.current = null;
+    setSelectedText(null);
   };
 
   const handleContextMenu = (e: MouseEvent, target: fabric.Object | null) => {
@@ -279,21 +296,85 @@ const GeradorCertificados: React.FC = () => {
     setIsDragging(true);
   };
 
+  const handleAddText = (text: string, settings: any) => {
+    addTextToCanvas(text, settings);
+  };
+
+  const handleUpdateText = (settings: Partial<any>) => {
+    const canvas = canvasRef.current?.getCanvas();
+    if (canvas) {
+      // Pegar o objeto atualmente selecionado no canvas
+      const activeObject = canvas.getActiveObject();
+      console.log('Objeto ativo no canvas:', activeObject);
+      
+      if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
+        const textObj = activeObject as any;
+        console.log('Atualizando texto:', textObj.__uniqueID);
+        console.log('Settings:', settings);
+        
+        // Check if it's a ListTextbox
+        if (textObj.updateListProperties) {
+          // Update list-specific properties
+          const listProps: any = {};
+          if ('listType' in settings) listProps.listType = settings.listType;
+          if ('listIndent' in settings) listProps.listIndent = settings.listIndent;
+          if ('listItemSpacing' in settings) listProps.listItemSpacing = settings.listItemSpacing;
+          
+          if (Object.keys(listProps).length > 0) {
+            textObj.updateListProperties(listProps);
+          }
+        }
+        
+        // Update text properties
+        Object.entries(settings).forEach(([key, value]) => {
+          if (key === 'letterSpacing') {
+            textObj.set('charSpacing', value);
+          } else if (key === 'text') {
+            textObj.set('text', value);
+          } else if (!['listType', 'listIndent', 'listItemSpacing'].includes(key)) {
+            textObj.set(key as keyof fabric.Textbox, value);
+          }
+        });
+        
+        textObj.setCoords();
+        canvas.renderAll();
+      } else {
+        console.log('Nenhum texto ativo no canvas');
+      }
+    } else {
+      console.log('Canvas não encontrado');
+    }
+  };
+
   const menuData = getContextMenuItems();
 
   return (
     <div className="flex gap-6 h-full pt-1 pb-4">
       {/* Left column - Tabs and content */}
       <div className="flex flex-col h-full w-64 border-r pr-2 flex-shrink-0">
-        <Tabs defaultValue="images" className="w-full flex flex-col h-full">
+        <Tabs defaultValue="layers" className="w-full flex flex-col h-full">
           <TabsList className="flex gap-2 w-fit bg-transparent p-0 flex-shrink-0">
+            <TabsTrigger value="layers" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
+              <Layers className="w-4 h-4" />
+            </TabsTrigger>
             <TabsTrigger value="images" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
               <ImageIcon className="w-4 h-4" />
             </TabsTrigger>
             <TabsTrigger value="shapes" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
               <Shapes className="w-4 h-4" />
             </TabsTrigger>
+            <TabsTrigger value="text" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
+              <Type className="w-4 h-4" />
+            </TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="layers" className="mt-4 flex-1 overflow-y-auto pr-2">
+            <LayersPanel
+              canvas={canvasRef.current?.getCanvas() || null}
+              onDeleteObject={handleDeleteFromCanvas}
+              onSelectObject={handleObjectSelected}
+            />
+          </TabsContent>
           
           <TabsContent value="images" className="mt-4 flex-1 overflow-y-auto pr-2">
             <div className="space-y-6">
@@ -359,6 +440,14 @@ const GeradorCertificados: React.FC = () => {
               onUpdateSettings={updateShapeSettings}
               onDragStart={handleShapeDragStart}
               onDragEnd={() => setIsDragging(false)}
+            />
+          </TabsContent>
+          
+          <TabsContent value="text" className="mt-4 flex-1 overflow-y-auto pr-2">
+            <TextPanel
+              selectedText={selectedText}
+              onAddText={handleAddText}
+              onUpdateText={handleUpdateText}
             />
           </TabsContent>
         </Tabs>

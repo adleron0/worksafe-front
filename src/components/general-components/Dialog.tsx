@@ -47,7 +47,11 @@ const Dialog: React.FC<DialogProps> = ({
           </DialogTrigger>
         )
       }
-      <DialogContent className="sm:max-w-[90vw] max-h-[85vh] pr-0">
+      <DialogContent 
+        className="sm:max-w-[90vw] max-h-[85vh] pr-0"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
           <DialogHeader>
             <DialogTitle className={`${!showHeader && "hidden"}`}>{ title }</DialogTitle>
             <DialogDescription className={`${!showHeader && "hidden"}`}>

@@ -1,9 +1,19 @@
 import * as fabric from 'fabric';
 
-export interface ListTextboxOptions extends fabric.ITextboxOptions {
+export interface ListTextboxOptions extends Partial<fabric.TextboxProps> {
   listType?: 'none' | 'bullet' | 'arrow' | 'numbered';
   listIndent?: number;
   listItemSpacing?: number;
+  name?: string;
+  editable?: boolean;
+  cursorWidth?: number;
+  cursorColor?: string;
+  cursorDelay?: number;
+  cursorDuration?: number;
+  selectionColor?: string;
+  editingBorderColor?: string;
+  hasControls?: boolean;
+  lockScalingFlip?: boolean;
 }
 
 // Função helper para limpar texto de marcadores de lista
@@ -175,8 +185,8 @@ export function createListTextbox(text: string, options: ListTextboxOptions): fa
   // Aplicar espaçamento inicial se necessário
   const extendedTextbox = textbox as any;
   if (extendedTextbox.listType !== 'none' && extendedTextbox.listItemSpacing > 0) {
-    const baseLineHeight = options.lineHeight || 1.16;
-    const additionalSpacing = extendedTextbox.listItemSpacing / (options.fontSize || 24);
+    const baseLineHeight = (options as any).lineHeight || 1.16;
+    const additionalSpacing = extendedTextbox.listItemSpacing / ((options as any).fontSize || 24);
     textbox.set('lineHeight', baseLineHeight + additionalSpacing);
   }
   

@@ -168,7 +168,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
   };
 
   // Drag and Drop handlers
-  const handleDragStart = (e: React.DragEvent, layer: LayerItem, index: number) => {
+  const handleDragStart = (e: React.DragEvent, layer: LayerItem) => {
     setDraggedItem(layer);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', ''); // Firefox requires this
@@ -185,7 +185,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
     dragCounter.current++;
   };
 
-  const handleDragLeave = (e: React.DragEvent) => {
+  const handleDragLeave = () => {
     dragCounter.current--;
     if (dragCounter.current === 0) {
       setDragOverIndex(null);
@@ -256,7 +256,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
                       ${dragOverIndex === index ? 'border-t-2 border-primary' : ''}
                     `}
                     draggable
-                    onDragStart={(e) => handleDragStart(e, layer, index)}
+                    onDragStart={(e) => handleDragStart(e, layer)}
                     onDragOver={(e) => handleDragOver(e, index)}
                     onDragEnter={handleDragEnter}
                     onDragLeave={handleDragLeave}

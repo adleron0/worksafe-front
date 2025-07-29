@@ -61,27 +61,39 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
     const a4Width = 842;
     const a4Height = 595;
 
+    // Calcular as dimensões base do canvas (sem zoom)
+    let baseWidth: number;
+    let baseHeight: number;
+    
     if (orient === 'landscape') {
-      canvas.setDimensions({
-        width: a4Width * finalScale,
-        height: a4Height * finalScale
-      });
+      baseWidth = a4Width;
+      baseHeight = a4Height;
     } else {
-      canvas.setDimensions({
-        width: a4Height * finalScale,
-        height: a4Width * finalScale
-      });
+      baseWidth = a4Height;
+      baseHeight = a4Width;
     }
     
+    // Aplicar o zoom ao canvas
+    canvas.setZoom(finalScale);
+    
+    // Definir as dimensões do canvas considerando o zoom
+    canvas.setDimensions({
+      width: baseWidth * finalScale,
+      height: baseHeight * finalScale
+    });
+    
+    // Atualizar o background para corresponder às dimensões base (sem zoom)
     const bgRect = canvas.getObjects().find(obj => (obj as fabric.Object & { name?: string }).name === 'backgroundRect');
     if (bgRect) {
       bgRect.set({
-        width: canvas.width,
-        height: canvas.height
+        width: baseWidth,
+        height: baseHeight,
+        scaleX: 1,
+        scaleY: 1
       });
+      bgRect.setCoords();
     }
     
-    canvas.setZoom(1);
     canvas.renderAll();
   };
 
@@ -123,6 +135,9 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
     const centerX = canvas.width! / 2;
     const centerY = canvas.height! / 2;
     const size = 100;
+    
+    // Criar ID único para a forma
+    const uniqueId = `${shapeType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     let shape: fabric.Object;
     
@@ -187,6 +202,10 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
         return;
     }
     
+    // Adicionar ID único ao objeto
+    (shape as any).__uniqueID = uniqueId;
+    (shape as any).id = uniqueId;
+    
     canvas.add(shape);
     canvas.setActiveObject(shape);
     canvas.renderAll();
@@ -236,6 +255,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
     
     // Adicionar ID único ao objeto
     (fabricText as any).__uniqueID = uniqueId;
+    (fabricText as any).id = uniqueId;
     
     canvas.add(fabricText);
     canvas.setActiveObject(fabricText);
@@ -308,8 +328,8 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       const bgRect = new fabric.Rect({
         left: 0,
         top: 0,
-        width: canvas.width || 842 * 0.6,
-        height: canvas.height || 595 * 0.6,
+        width: 842, // Tamanho base A4 landscape
+        height: 595,
         fill: 'white',
         selectable: false,
         evented: false,
@@ -320,7 +340,20 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       updateCanvasSize('landscape');
       
       const handleKeyDown = (e: KeyboardEvent) => {
-        console.log('Key pressed:', e.key);
+        console.log('Key pressed:', e.key, 'Ctrl:', e.ctrlKey, 'Meta:', e.metaKey);
+        
+        // Prevenir comportamento padrão para atalhos com Ctrl/Cmd
+        if (e.ctrlKey || e.metaKey) {
+          switch(e.key.toLowerCase()) {
+            case 'd':
+            case 'b':
+            case 'i':
+            case 'u':
+              e.preventDefault();
+              e.stopPropagation();
+              break;
+          }
+        }
         
         if ((e.key === 'Delete' || e.key === 'Backspace') && fabricCanvasRef.current) {
           const activeObject = fabricCanvasRef.current.getActiveObject();
@@ -346,6 +379,69 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
               selectedShapeRef.current = null;
             }
           }
+        } else if ((e.ctrlKey || e.metaKey) && fabricCanvasRef.current) {
+          const activeObject = fabricCanvasRef.current.getActiveObject();
+          
+          if (activeObject) {
+            switch(e.key.toLowerCase()) {
+              case 'd': // Duplicar
+                e.preventDefault();
+                e.stopPropagation();
+                activeObject.clone().then((cloned: fabric.Object) => {
+                  fabricCanvasRef.current!.discardActiveObject();
+                  cloned.set({
+                    left: (cloned.left || 0) + 10,
+                    top: (cloned.top || 0) + 10,
+                    evented: true,
+                  });
+                  if (cloned.type === 'activeSelection') {
+                    (cloned as fabric.ActiveSelection).canvas = fabricCanvasRef.current!;
+                    (cloned as fabric.ActiveSelection).forEachObject((obj: fabric.Object) => {
+                      fabricCanvasRef.current!.add(obj);
+                    });
+                    cloned.setCoords();
+                  } else {
+                    fabricCanvasRef.current!.add(cloned);
+                  }
+                  fabricCanvasRef.current!.setActiveObject(cloned);
+                  fabricCanvasRef.current!.requestRenderAll();
+                });
+                break;
+                
+              case 'b': // Bold
+                e.preventDefault();
+                e.stopPropagation();
+                if (activeObject.type === 'i-text' || activeObject.type === 'textbox') {
+                  const textObj = activeObject as fabric.Textbox;
+                  const currentWeight = textObj.get('fontWeight') as string || 'normal';
+                  textObj.set('fontWeight', currentWeight === 'bold' ? 'normal' : 'bold');
+                  fabricCanvasRef.current!.renderAll();
+                }
+                break;
+                
+              case 'i': // Italic
+                e.preventDefault();
+                e.stopPropagation();
+                if (activeObject.type === 'i-text' || activeObject.type === 'textbox') {
+                  const textObj = activeObject as fabric.Textbox;
+                  const currentStyle = textObj.get('fontStyle') as string || 'normal';
+                  textObj.set('fontStyle', currentStyle === 'italic' ? 'normal' : 'italic');
+                  fabricCanvasRef.current!.renderAll();
+                }
+                break;
+                
+              case 'u': // Underline
+                e.preventDefault();
+                e.stopPropagation();
+                if (activeObject.type === 'i-text' || activeObject.type === 'textbox') {
+                  const textObj = activeObject as fabric.Textbox;
+                  const currentUnderline = textObj.get('underline') as boolean || false;
+                  textObj.set('underline', !currentUnderline);
+                  fabricCanvasRef.current!.renderAll();
+                }
+                break;
+            }
+          }
         }
       };
       
@@ -359,10 +455,12 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
         const currentCanvas = fabricCanvasRef.current;
         if (!currentCanvas) return false;
         
+        // Usar getPointer com o evento original para considerar o zoom
         const pointer = currentCanvas.getPointer(mouseEvent);
         const objects = currentCanvas.getObjects();
         let target = null;
         
+        // Verificar se algum objeto está sob o ponteiro
         for (let i = objects.length - 1; i >= 0; i--) {
           const obj = objects[i];
           if (obj.containsPoint(pointer) && (obj as fabric.Object & { name?: string }).name !== 'backgroundRect') {
@@ -486,12 +584,29 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       // Variável para rastrear cliques
       let clickCount = 0;
       let clickTimer: NodeJS.Timeout | null = null;
+      // @ts-ignore - Used in event handlers
       let currentEditingText: fabric.Textbox | null = null;
       
-      // Adicionar evento de clique para detectar duplo clique manualmente
+      // Adicionar evento de clique direito
       canvas.on('mouse:down', (opt) => {
         const target = opt.target;
         console.log('Mouse down em:', target);
+        
+        // Verificar se é clique direito
+        if ('button' in opt.e && (opt.e as MouseEvent).button === 2) {
+          opt.e.preventDefault();
+          opt.e.stopPropagation();
+          
+          // Selecionar o objeto se houver um sob o cursor
+          if (target && (target as fabric.Object & { name?: string }).name !== 'backgroundRect') {
+            canvas.setActiveObject(target);
+            canvas.renderAll();
+          }
+          
+          // Chamar o menu de contexto
+          onContextMenu(opt.e as MouseEvent, target || null);
+          return;
+        }
         
         if (target && (target.type === 'i-text' || target.type === 'textbox')) {
           clickCount++;
@@ -893,7 +1008,6 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
                 const cleanLines = cleanText.split('\n');
                 
                 // Encontrar em qual linha limpa estamos
-                let charCount = 0;
                 let cleanLineIndex = 0;
                 let posInCleanLine = 0;
                 

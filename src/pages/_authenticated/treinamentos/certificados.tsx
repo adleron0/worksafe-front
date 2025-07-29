@@ -12,7 +12,7 @@ function CertificadosPage() {
       <h1 className="text-2xl font-bold mb-4">Certificados</h1>
       
       <Button onClick={() => setDialogOpen(true)}>
-        Gerenciar Imagens
+        Gerador de Certificados
       </Button>
 
       <Dialog

@@ -100,14 +100,14 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   const addImageToCanvas = (imageUrl: string, imageName: string) => {
     if (!fabricCanvasRef.current) return;
 
-    fabric.FabricImage.fromURL(imageUrl, {
-      crossOrigin: 'anonymous'
-    }).then((fabricImage) => {
-      if (!fabricCanvasRef.current) return;
-      
-      fabricImage.set({
-        left: fabricCanvasRef.current.width! / 2,
-        top: fabricCanvasRef.current.height! / 2,
+    // Create an image element to handle CORS properly
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      const fabricImage = new fabric.FabricImage(img, {
+        left: fabricCanvasRef.current!.width! / 2,
+        top: fabricCanvasRef.current!.height! / 2,
         originX: 'center',
         originY: 'center',
         name: imageName
@@ -120,12 +120,48 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
         fabricImage.scaleToHeight(maxSize);
       }
       
-      fabricCanvasRef.current.add(fabricImage);
-      fabricCanvasRef.current.setActiveObject(fabricImage);
-      fabricCanvasRef.current.renderAll();
-    }).catch((error) => {
+      fabricCanvasRef.current!.add(fabricImage);
+      fabricCanvasRef.current!.setActiveObject(fabricImage);
+      fabricCanvasRef.current!.renderAll();
+    };
+    
+    img.onerror = (error) => {
       console.error('Error loading image:', error);
-    });
+      console.error('Image URL:', imageUrl);
+      
+      // Fallback: Try loading without CORS if it fails
+      fabric.FabricImage.fromURL(imageUrl, {
+        crossOrigin: null
+      }).then((fabricImage) => {
+        if (!fabricCanvasRef.current) return;
+        
+        fabricImage.set({
+          left: fabricCanvasRef.current.width! / 2,
+          top: fabricCanvasRef.current.height! / 2,
+          originX: 'center',
+          originY: 'center',
+          name: imageName
+        });
+        
+        const maxSize = 200;
+        if (fabricImage.width! > fabricImage.height!) {
+          fabricImage.scaleToWidth(maxSize);
+        } else {
+          fabricImage.scaleToHeight(maxSize);
+        }
+        
+        fabricCanvasRef.current.add(fabricImage);
+        fabricCanvasRef.current.setActiveObject(fabricImage);
+        fabricCanvasRef.current.renderAll();
+        
+        console.warn('Image loaded without CORS. Some features may be limited.');
+      }).catch((fallbackError) => {
+        console.error('Fallback also failed:', fallbackError);
+        alert('Erro ao carregar imagem. Verifique se a imagem está acessível.');
+      });
+    };
+    
+    img.src = imageUrl;
   };
 
   const addShapeToCanvas = (shapeType: 'rectangle' | 'circle' | 'triangle' | 'line', shapeSettings: any) => {

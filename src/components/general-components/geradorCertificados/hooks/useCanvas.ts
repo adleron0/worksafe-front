@@ -2,17 +2,47 @@ import { useRef, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import * as fabric from 'fabric';
 
+interface CanvasPage {
+  id: string;
+  orientation: 'landscape' | 'portrait';
+  zoomLevel: number;
+  canvasRef: any;
+}
+
 export const useCanvas = () => {
-  const [canvasOrientation, setCanvasOrientation] = useState<'landscape' | 'portrait'>('landscape');
-  const [zoomLevel, setZoomLevel] = useState(100);
+  const [pages, setPages] = useState<CanvasPage[]>([
+    {
+      id: 'page-1',
+      orientation: 'landscape',
+      zoomLevel: 100,
+      canvasRef: null
+    }
+  ]);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [isLoadingCanvas, setIsLoadingCanvas] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const canvasRef = useRef<any>(null);
+  const canvasRefs = useRef<Map<string, any>>(new Map());
+
+  const getCurrentPage = useCallback(() => {
+    return pages[currentPageIndex];
+  }, [pages, currentPageIndex]);
+
+  const getCurrentCanvasRef = useCallback(() => {
+    const currentPage = getCurrentPage();
+    const ref = canvasRefs.current.get(currentPage.id);
+    console.log('getCurrentCanvasRef - Page ID:', currentPage.id, 'Ref:', ref);
+    return ref;
+  }, [getCurrentPage]);
 
   const handleApplyAsBackground = useCallback(async (target: fabric.Object) => {
-    if (!canvasRef.current) return;
+    console.log('handleApplyAsBackground called, current page index:', currentPageIndex);
+    const canvasRef = getCurrentCanvasRef();
+    if (!canvasRef) {
+      console.error('No canvas ref found for current page');
+      return;
+    }
     
-    const canvas = canvasRef.current.getCanvas();
+    const canvas = canvasRef.getCanvas();
     if (!canvas) return;
 
     const image = target as fabric.FabricImage;
@@ -46,46 +76,124 @@ export const useCanvas = () => {
         toast.error('Erro ao aplicar imagem como fundo');
       }
     }
-  }, []);
+  }, [getCurrentCanvasRef, currentPageIndex]);
 
   const handleDeleteFromCanvas = useCallback((target: fabric.Object) => {
-    if (!canvasRef.current) return;
+    const canvasRef = getCurrentCanvasRef();
+    if (!canvasRef) return;
     
-    const canvas = canvasRef.current.getCanvas();
+    const canvas = canvasRef.getCanvas();
     if (!canvas) return;
 
     canvas.remove(target);
     canvas.renderAll();
-  }, []);
+  }, [getCurrentCanvasRef]);
 
   const addImageToCanvas = useCallback((imageUrl: string, imageName: string) => {
-    if (!canvasRef.current) return;
+    console.log('addImageToCanvas called, current page index:', currentPageIndex);
+    const canvasRef = getCurrentCanvasRef();
+    if (!canvasRef) {
+      console.error('No canvas ref found for current page');
+      return;
+    }
     
     setIsLoadingCanvas(true);
-    canvasRef.current.addImageToCanvas(imageUrl, imageName);
+    canvasRef.addImageToCanvas(imageUrl, imageName);
     
     // Reset loading state after a delay
     setTimeout(() => setIsLoadingCanvas(false), 1000);
-  }, []);
+  }, [getCurrentCanvasRef, currentPageIndex]);
 
   const addShapeToCanvas = useCallback((shapeType: 'rectangle' | 'circle' | 'triangle' | 'line', shapeSettings: any) => {
-    if (!canvasRef.current) return;
+    console.log('addShapeToCanvas called, current page index:', currentPageIndex);
+    const canvasRef = getCurrentCanvasRef();
+    if (!canvasRef) {
+      console.error('No canvas ref found for current page');
+      return;
+    }
     
-    canvasRef.current.addShapeToCanvas(shapeType, shapeSettings);
-  }, []);
+    canvasRef.addShapeToCanvas(shapeType, shapeSettings);
+  }, [getCurrentCanvasRef, currentPageIndex]);
 
   const addTextToCanvas = useCallback((text: string, textSettings: any) => {
-    if (!canvasRef.current) return;
+    console.log('addTextToCanvas called, current page index:', currentPageIndex);
+    const canvasRef = getCurrentCanvasRef();
+    if (!canvasRef) {
+      console.error('No canvas ref found for current page');
+      return;
+    }
     
-    canvasRef.current.addTextToCanvas(text, textSettings);
+    canvasRef.addTextToCanvas(text, textSettings);
+  }, [getCurrentCanvasRef, currentPageIndex]);
+
+  const addPage = useCallback(() => {
+    if (pages.length >= 2) return;
+    
+    const newPage: CanvasPage = {
+      id: `page-${Date.now()}`,
+      orientation: 'landscape',
+      zoomLevel: 100,
+      canvasRef: null
+    };
+    
+    setPages([...pages, newPage]);
+    setCurrentPageIndex(pages.length);
+  }, [pages]);
+
+  const removePage = useCallback((index: number) => {
+    if (pages.length <= 1) return;
+    
+    const pageId = pages[index].id;
+    canvasRefs.current.delete(pageId);
+    
+    const newPages = pages.filter((_, i) => i !== index);
+    setPages(newPages);
+    
+    if (currentPageIndex >= newPages.length) {
+      setCurrentPageIndex(newPages.length - 1);
+    }
+  }, [pages, currentPageIndex]);
+
+  const setPageOrientation = useCallback((orientation: 'landscape' | 'portrait') => {
+    setPages(prevPages => {
+      const newPages = [...prevPages];
+      newPages[currentPageIndex] = {
+        ...newPages[currentPageIndex],
+        orientation
+      };
+      return newPages;
+    });
+  }, [currentPageIndex]);
+
+  const setPageZoomLevel = useCallback((zoomLevel: number) => {
+    setPages(prevPages => {
+      const newPages = [...prevPages];
+      newPages[currentPageIndex] = {
+        ...newPages[currentPageIndex],
+        zoomLevel
+      };
+      return newPages;
+    });
+  }, [currentPageIndex]);
+
+  const registerCanvasRef = useCallback((pageId: string, ref: any) => {
+    console.log('Registering canvas ref for page:', pageId, ref);
+    canvasRefs.current.set(pageId, ref);
   }, []);
 
   return {
-    canvasRef,
-    canvasOrientation,
-    setCanvasOrientation,
-    zoomLevel,
-    setZoomLevel,
+    pages,
+    currentPageIndex,
+    setCurrentPageIndex,
+    addPage,
+    removePage,
+    canvasRefs,
+    registerCanvasRef,
+    getCurrentCanvasRef,
+    canvasOrientation: getCurrentPage()?.orientation || 'landscape',
+    setCanvasOrientation: setPageOrientation,
+    zoomLevel: getCurrentPage()?.zoomLevel || 100,
+    setZoomLevel: setPageZoomLevel,
     isLoadingCanvas,
     isDragging,
     setIsDragging,

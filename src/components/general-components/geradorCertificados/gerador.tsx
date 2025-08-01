@@ -464,18 +464,8 @@ const GeradorCertificados: React.FC = () => {
 
       {/* Right column - Canvas and Page Controls */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Page Controls */}
-        <PageControls
-          pages={pages.map(p => ({ id: p.id, name: `Página ${pages.indexOf(p) + 1}` }))}
-          currentPageIndex={currentPageIndex}
-          onPageSelect={setCurrentPageIndex}
-          onPageAdd={addPage}
-          onPageRemove={removePage}
-          maxPages={2}
-        />
-        
         {/* Canvas for each page */}
-        <div className="flex-1 relative mt-4 overflow-hidden">
+        <div className="flex-1 relative overflow-hidden">
           {pages.map((page, index) => (
             <div
               key={page.id}
@@ -503,6 +493,18 @@ const GeradorCertificados: React.FC = () => {
               />
             </div>
           ))}
+        </div>
+        
+        {/* Page Controls - Now at the bottom */}
+        <div className="mt-4">
+          <PageControls
+            pages={pages.map(p => ({ id: p.id, name: `Página ${pages.indexOf(p) + 1}` }))}
+            currentPageIndex={currentPageIndex}
+            onPageSelect={setCurrentPageIndex}
+            onPageAdd={addPage}
+            onPageRemove={removePage}
+            maxPages={2}
+          />
         </div>
       </div>
       

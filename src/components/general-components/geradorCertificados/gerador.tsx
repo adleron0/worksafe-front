@@ -65,7 +65,8 @@ const GeradorCertificados: React.FC = () => {
     addImageToCanvas,
     addShapeToCanvas,
     addTextToCanvas,
-    addPlaceholderToCanvas
+    addPlaceholderToCanvas,
+    exportToPDF
   } = useCanvas();
 
   // Query for fetching images
@@ -514,6 +515,7 @@ const GeradorCertificados: React.FC = () => {
             onPageSelect={setCurrentPageIndex}
             onPageAdd={addPage}
             onPageRemove={removePage}
+            onExportPDF={exportToPDF}
             maxPages={2}
           />
         </div>

@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import * as fabric from 'fabric';
+import jsPDF from 'jspdf';
 
 interface CanvasPage {
   id: string;
@@ -52,25 +53,56 @@ export const useCanvas = () => {
       try {
         const imgElement = image.getElement();
         
-        const pattern = new fabric.Pattern({
-          source: imgElement,
-          repeat: 'no-repeat'
-        });
+        // Create a new image element with CORS enabled
+        const corsImage = new Image();
+        corsImage.crossOrigin = 'anonymous';
         
-        const scaleX = bgRect.width! / image.width!;
-        const scaleY = bgRect.height! / image.height!;
-        const scale = Math.min(scaleX, scaleY);
+        corsImage.onload = () => {
+          const pattern = new fabric.Pattern({
+            source: corsImage,
+            repeat: 'no-repeat'
+          });
+          
+          const scaleX = bgRect.width! / image.width!;
+          const scaleY = bgRect.height! / image.height!;
+          const scale = Math.min(scaleX, scaleY);
+          
+          const offsetX = (bgRect.width! - (image.width! * scale)) / 2;
+          const offsetY = (bgRect.height! - (image.height! * scale)) / 2;
+          
+          pattern.patternTransform = [scale, 0, 0, scale, offsetX, offsetY];
+          
+          bgRect.set('fill', pattern);
+          canvas.remove(image);
+          canvas.renderAll();
+          
+          toast.success('Imagem aplicada ao fundo!');
+        };
         
-        const offsetX = (bgRect.width! - (image.width! * scale)) / 2;
-        const offsetY = (bgRect.height! - (image.height! * scale)) / 2;
+        corsImage.onerror = () => {
+          // Fallback: use original image if CORS fails
+          const pattern = new fabric.Pattern({
+            source: imgElement,
+            repeat: 'no-repeat'
+          });
+          
+          const scaleX = bgRect.width! / image.width!;
+          const scaleY = bgRect.height! / image.height!;
+          const scale = Math.min(scaleX, scaleY);
+          
+          const offsetX = (bgRect.width! - (image.width! * scale)) / 2;
+          const offsetY = (bgRect.height! - (image.height! * scale)) / 2;
+          
+          pattern.patternTransform = [scale, 0, 0, scale, offsetX, offsetY];
+          
+          bgRect.set('fill', pattern);
+          canvas.remove(image);
+          canvas.renderAll();
+          
+          toast.warning('Imagem aplicada ao fundo, mas pode não ser exportada no PDF devido a restrições CORS');
+        };
         
-        pattern.patternTransform = [scale, 0, 0, scale, offsetX, offsetY];
-        
-        bgRect.set('fill', pattern);
-        canvas.remove(image);
-        canvas.renderAll();
-        
-        toast.success('Imagem aplicada ao fundo!');
+        corsImage.src = (imgElement as HTMLImageElement).src;
       } catch (error) {
         console.error('Error applying background:', error);
         toast.error('Erro ao aplicar imagem como fundo');
@@ -140,9 +172,12 @@ export const useCanvas = () => {
   const addPage = useCallback(() => {
     if (pages.length >= 2) return;
     
+    // Use the same orientation as the first page
+    const firstPageOrientation = pages[0]?.orientation || 'landscape';
+    
     const newPage: CanvasPage = {
       id: `page-${Date.now()}`,
-      orientation: 'landscape',
+      orientation: firstPageOrientation,
       zoomLevel: 100,
       canvasRef: null
     };
@@ -167,12 +202,21 @@ export const useCanvas = () => {
 
   const setPageOrientation = useCallback((orientation: 'landscape' | 'portrait') => {
     setPages(prevPages => {
-      const newPages = [...prevPages];
-      newPages[currentPageIndex] = {
-        ...newPages[currentPageIndex],
-        orientation
-      };
-      return newPages;
+      // If there's more than one page, update all pages to have the same orientation
+      if (prevPages.length > 1) {
+        return prevPages.map(page => ({
+          ...page,
+          orientation
+        }));
+      } else {
+        // Single page - just update the current page
+        const newPages = [...prevPages];
+        newPages[currentPageIndex] = {
+          ...newPages[currentPageIndex],
+          orientation
+        };
+        return newPages;
+      }
     });
   }, [currentPageIndex]);
 
@@ -191,6 +235,381 @@ export const useCanvas = () => {
     console.log('Registering canvas ref for page:', pageId, ref);
     canvasRefs.current.set(pageId, ref);
   }, []);
+
+  const exportToPDF = useCallback(async () => {
+    try {
+      // Get the first page to determine dimensions
+      const firstPage = pages[0];
+      const firstCanvasRef = canvasRefs.current.get(firstPage.id);
+      if (!firstCanvasRef) {
+        throw new Error('No canvas found');
+      }
+      
+      // A4 is 210x297mm (portrait) or 297x210mm (landscape)
+      const isLandscape = firstPage.orientation === 'landscape';
+      
+      // Create PDF with exact A4 dimensions
+      const pdf = new jsPDF({
+        orientation: isLandscape ? 'landscape' : 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Process each page
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        const canvasRef = canvasRefs.current.get(page.id);
+        
+        if (!canvasRef) {
+          console.error(`No canvas ref found for page ${i + 1}`);
+          continue;
+        }
+
+        const canvas = canvasRef.getCanvas();
+        if (!canvas) {
+          console.error(`No canvas found for page ${i + 1}`);
+          continue;
+        }
+
+        // Add new page if not the first page
+        if (i > 0) {
+          pdf.addPage();
+        }
+
+        try {
+          // Create a temporary canvas for rendering
+          const tempCanvas = document.createElement('canvas');
+          const tempCtx = tempCanvas.getContext('2d');
+          
+          if (!tempCtx) {
+            throw new Error('Could not get 2D context');
+          }
+
+          // Set dimensions based on the original canvas
+          const zoom = canvas.getZoom();
+          const originalWidth = canvas.getWidth() / zoom;
+          const originalHeight = canvas.getHeight() / zoom;
+          
+          // Use a high resolution multiplier for better quality
+          const multiplier = 2;
+          tempCanvas.width = originalWidth * multiplier;
+          tempCanvas.height = originalHeight * multiplier;
+          
+          // Scale the context for high resolution
+          tempCtx.scale(multiplier, multiplier);
+          
+          // Fill with white background
+          tempCtx.fillStyle = 'white';
+          tempCtx.fillRect(0, 0, originalWidth, originalHeight);
+          
+          // Render each object manually to avoid CORS issues
+          const objects = canvas.getObjects();
+          
+          for (const obj of objects) {
+            tempCtx.save();
+            
+            // Get object properties
+            const left = obj.left || 0;
+            const top = obj.top || 0;
+            const angle = obj.angle || 0;
+            const scaleX = obj.scaleX || 1;
+            const scaleY = obj.scaleY || 1;
+            const opacity = obj.opacity || 1;
+            const originX = obj.originX || 'left';
+            const originY = obj.originY || 'top';
+            
+            // Calculate offset based on origin
+            let offsetX = 0;
+            let offsetY = 0;
+            
+            if (originX === 'center') {
+              offsetX = -(obj.width || 0) * scaleX / 2;
+            } else if (originX === 'right') {
+              offsetX = -(obj.width || 0) * scaleX;
+            }
+            
+            if (originY === 'center') {
+              offsetY = -(obj.height || 0) * scaleY / 2;
+            } else if (originY === 'bottom') {
+              offsetY = -(obj.height || 0) * scaleY;
+            }
+            
+            // Apply transformations
+            tempCtx.globalAlpha = opacity;
+            tempCtx.translate(left, top);
+            tempCtx.rotate((angle * Math.PI) / 180);
+            
+            // Render based on object type
+            if (obj.type === 'image') {
+              // Handle images
+              const img = obj as fabric.FabricImage;
+              const imgElement = img.getElement();
+              
+              try {
+                tempCtx.drawImage(
+                  imgElement,
+                  offsetX,
+                  offsetY,
+                  (img.width || 0) * scaleX,
+                  (img.height || 0) * scaleY
+                );
+              } catch (error) {
+                console.error('Error drawing image:', error);
+                // Draw placeholder rectangle
+                tempCtx.fillStyle = '#f0f0f0';
+                tempCtx.fillRect(
+                  offsetX,
+                  offsetY,
+                  (img.width || 0) * scaleX,
+                  (img.height || 0) * scaleY
+                );
+                tempCtx.strokeStyle = '#ccc';
+                tempCtx.strokeRect(
+                  offsetX,
+                  offsetY,
+                  (img.width || 0) * scaleX,
+                  (img.height || 0) * scaleY
+                );
+              }
+            } else if (obj.type === 'rect') {
+              const rect = obj as fabric.Rect;
+              
+              // Check if it's the background rect with a pattern
+              if ((rect as any).name === 'backgroundRect' && rect.fill && typeof rect.fill === 'object') {
+                // Try to render pattern inside the rectangle bounds
+                const pattern = rect.fill as fabric.Pattern;
+                if (pattern.source) {
+                  try {
+                    const patternImg = pattern.source as HTMLImageElement;
+                    const transform = pattern.patternTransform || [1, 0, 0, 1, 0, 0];
+                    
+                    // Create clipping path for the rectangle
+                    tempCtx.save();
+                    tempCtx.beginPath();
+                    tempCtx.rect(0, 0, rect.width || 0, rect.height || 0);
+                    tempCtx.clip();
+                    
+                    // Apply pattern transform and draw image
+                    const scaleFactorX = transform[0];
+                    const scaleFactorY = transform[3];
+                    const offsetX = transform[4];
+                    const offsetY = transform[5];
+                    
+                    tempCtx.drawImage(
+                      patternImg,
+                      offsetX,
+                      offsetY,
+                      patternImg.width * scaleFactorX,
+                      patternImg.height * scaleFactorY
+                    );
+                    
+                    tempCtx.restore();
+                  } catch (error) {
+                    console.error('Error drawing pattern:', error);
+                    tempCtx.fillStyle = 'white';
+                    tempCtx.fillRect(0, 0, rect.width || 0, rect.height || 0);
+                  }
+                } else {
+                  tempCtx.fillStyle = 'white';
+                  tempCtx.fillRect(0, 0, rect.width || 0, rect.height || 0);
+                }
+              } else {
+                tempCtx.fillStyle = rect.fill as string || 'black';
+                
+                const width = rect.width || 0;
+                const height = rect.height || 0;
+                const rx = rect.rx || 0;
+                const ry = rect.ry || 0;
+                
+                tempCtx.scale(scaleX, scaleY);
+                
+                // Draw rounded rectangle if needed
+                if (rx || ry) {
+                  tempCtx.beginPath();
+                  tempCtx.moveTo(offsetX / scaleX + rx, offsetY / scaleY);
+                  tempCtx.lineTo(offsetX / scaleX + width - rx, offsetY / scaleY);
+                  tempCtx.quadraticCurveTo(offsetX / scaleX + width, offsetY / scaleY, offsetX / scaleX + width, offsetY / scaleY + ry);
+                  tempCtx.lineTo(offsetX / scaleX + width, offsetY / scaleY + height - ry);
+                  tempCtx.quadraticCurveTo(offsetX / scaleX + width, offsetY / scaleY + height, offsetX / scaleX + width - rx, offsetY / scaleY + height);
+                  tempCtx.lineTo(offsetX / scaleX + rx, offsetY / scaleY + height);
+                  tempCtx.quadraticCurveTo(offsetX / scaleX, offsetY / scaleY + height, offsetX / scaleX, offsetY / scaleY + height - ry);
+                  tempCtx.lineTo(offsetX / scaleX, offsetY / scaleY + ry);
+                  tempCtx.quadraticCurveTo(offsetX / scaleX, offsetY / scaleY, offsetX / scaleX + rx, offsetY / scaleY);
+                  tempCtx.closePath();
+                  tempCtx.fill();
+                } else {
+                  tempCtx.fillRect(offsetX / scaleX, offsetY / scaleY, width, height);
+                }
+                
+                // Draw stroke if exists
+                if (rect.stroke && rect.strokeWidth) {
+                  tempCtx.strokeStyle = rect.stroke as string;
+                  tempCtx.lineWidth = rect.strokeWidth;
+                  if (rx || ry) {
+                    tempCtx.stroke();
+                  } else {
+                    tempCtx.strokeRect(offsetX / scaleX, offsetY / scaleY, width, height);
+                  }
+                }
+              }
+            } else if (obj.type === 'circle') {
+              const circle = obj as fabric.Circle;
+              tempCtx.scale(scaleX, scaleY);
+              tempCtx.fillStyle = circle.fill as string || 'black';
+              tempCtx.beginPath();
+              tempCtx.arc(offsetX / scaleX + (circle.radius || 0), offsetY / scaleY + (circle.radius || 0), circle.radius || 0, 0, 2 * Math.PI);
+              tempCtx.fill();
+              
+              if (circle.stroke && circle.strokeWidth) {
+                tempCtx.strokeStyle = circle.stroke as string;
+                tempCtx.lineWidth = circle.strokeWidth;
+                tempCtx.stroke();
+              }
+            } else if (obj.type === 'triangle') {
+              const triangle = obj as fabric.Triangle;
+              const width = triangle.width || 0;
+              const height = triangle.height || 0;
+              
+              tempCtx.scale(scaleX, scaleY);
+              tempCtx.fillStyle = triangle.fill as string || 'black';
+              tempCtx.beginPath();
+              tempCtx.moveTo(offsetX / scaleX + width/2, offsetY / scaleY);
+              tempCtx.lineTo(offsetX / scaleX, offsetY / scaleY + height);
+              tempCtx.lineTo(offsetX / scaleX + width, offsetY / scaleY + height);
+              tempCtx.closePath();
+              tempCtx.fill();
+              
+              if (triangle.stroke && triangle.strokeWidth) {
+                tempCtx.strokeStyle = triangle.stroke as string;
+                tempCtx.lineWidth = triangle.strokeWidth;
+                tempCtx.stroke();
+              }
+            } else if (obj.type === 'line') {
+              const line = obj as fabric.Line;
+              const x1 = line.x1 || 0;
+              const y1 = line.y1 || 0;
+              const x2 = line.x2 || 0;
+              const y2 = line.y2 || 0;
+              
+              tempCtx.strokeStyle = line.stroke as string || 'black';
+              tempCtx.lineWidth = line.strokeWidth || 1;
+              tempCtx.beginPath();
+              tempCtx.moveTo(x1 - left, y1 - top);
+              tempCtx.lineTo(x2 - left, y2 - top);
+              tempCtx.stroke();
+            } else if (obj.type === 'textbox' || obj.type === 'i-text') {
+              const text = obj as fabric.Textbox;
+              tempCtx.scale(scaleX, scaleY);
+              tempCtx.fillStyle = text.fill as string || 'black';
+              tempCtx.font = `${text.fontStyle || 'normal'} ${text.fontWeight || 'normal'} ${text.fontSize || 16}px ${text.fontFamily || 'Arial'}`;
+              
+              // Handle text alignment
+              let textAlign: CanvasTextAlign = 'left';
+              if (text.textAlign === 'center') {
+                textAlign = 'center';
+              } else if (text.textAlign === 'right') {
+                textAlign = 'right';
+              }
+              tempCtx.textAlign = textAlign;
+              tempCtx.textBaseline = 'top';
+              
+              const lines = (text.text || '').split('\n');
+              const lineHeight = (text.fontSize || 16) * (text.lineHeight || 1);
+              
+              // Calculate starting position based on origin
+              let startX = offsetX / scaleX;
+              let startY = offsetY / scaleY;
+              
+              // Adjust X position based on text alignment and width
+              if (textAlign === 'center') {
+                startX += (text.width || 0) / 2;
+              } else if (textAlign === 'right') {
+                startX += (text.width || 0);
+              }
+              
+              lines.forEach((line, index) => {
+                const y = startY + (index * lineHeight);
+                
+                // Apply character spacing if set
+                if (text.charSpacing && text.charSpacing > 0) {
+                  const chars = line.split('');
+                  let currentX = startX;
+                  
+                  chars.forEach((char) => {
+                    tempCtx.fillText(char, currentX, y);
+                    const charWidth = tempCtx.measureText(char).width;
+                    currentX += charWidth + (text.charSpacing || 0) / 10;
+                  });
+                } else {
+                  tempCtx.fillText(line, startX, y);
+                }
+                
+                // Draw underline if needed
+                if (text.underline) {
+                  const metrics = tempCtx.measureText(line);
+                  tempCtx.strokeStyle = text.fill as string || 'black';
+                  tempCtx.lineWidth = 1;
+                  tempCtx.beginPath();
+                  
+                  let underlineX = startX;
+                  if (textAlign === 'center') {
+                    underlineX -= metrics.width / 2;
+                  } else if (textAlign === 'right') {
+                    underlineX -= metrics.width;
+                  }
+                  
+                  tempCtx.moveTo(underlineX, y + lineHeight * 0.9);
+                  tempCtx.lineTo(underlineX + metrics.width, y + lineHeight * 0.9);
+                  tempCtx.stroke();
+                }
+              });
+            }
+            
+            tempCtx.restore();
+          }
+          
+          // Convert the temporary canvas to data URL
+          const dataURL = tempCanvas.toDataURL('image/png', 1);
+          
+          // Get PDF page dimensions
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+          
+          // Add image to PDF filling the entire page (no margins)
+          // The canvas is already A4 sized, so we fill the entire PDF page
+          pdf.addImage(dataURL, 'PNG', 0, 0, pageWidth, pageHeight);
+          
+        } catch (fallbackError) {
+          console.error('Error in fallback rendering:', fallbackError);
+          
+          // Last resort: try to export anyway
+          try {
+            const dataURL = canvas.toDataURL({
+              format: 'png',
+              quality: 1,
+              multiplier: 2
+            });
+            
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            
+            // Add image filling the entire page
+            pdf.addImage(dataURL, 'PNG', 0, 0, pageWidth, pageHeight);
+          } catch (lastError) {
+            console.error('Final export attempt failed:', lastError);
+            toast.error(`Erro ao exportar página ${i + 1}: Verifique se as imagens têm permissão CORS`);
+          }
+        }
+      }
+
+      // Save the PDF
+      pdf.save('certificado.pdf');
+      toast.success('PDF exportado com sucesso!');
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      toast.error('Erro ao exportar PDF. Tente remover imagens externas que podem estar bloqueando a exportação.');
+    }
+  }, [pages]);
 
   return {
     pages,
@@ -213,6 +632,7 @@ export const useCanvas = () => {
     addImageToCanvas,
     addShapeToCanvas,
     addTextToCanvas,
-    addPlaceholderToCanvas
+    addPlaceholderToCanvas,
+    exportToPDF
   };
 };

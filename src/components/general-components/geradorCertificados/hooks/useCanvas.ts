@@ -53,56 +53,26 @@ export const useCanvas = () => {
       try {
         const imgElement = image.getElement();
         
-        // Create a new image element with CORS enabled
-        const corsImage = new Image();
-        corsImage.crossOrigin = 'anonymous';
+        // Use the image directly without CORS for S3 images
+        const pattern = new fabric.Pattern({
+          source: imgElement,
+          repeat: 'no-repeat'
+        });
         
-        corsImage.onload = () => {
-          const pattern = new fabric.Pattern({
-            source: corsImage,
-            repeat: 'no-repeat'
-          });
-          
-          const scaleX = bgRect.width! / image.width!;
-          const scaleY = bgRect.height! / image.height!;
-          const scale = Math.min(scaleX, scaleY);
-          
-          const offsetX = (bgRect.width! - (image.width! * scale)) / 2;
-          const offsetY = (bgRect.height! - (image.height! * scale)) / 2;
-          
-          pattern.patternTransform = [scale, 0, 0, scale, offsetX, offsetY];
-          
-          bgRect.set('fill', pattern);
-          canvas.remove(image);
-          canvas.renderAll();
-          
-          toast.success('Imagem aplicada ao fundo!');
-        };
+        const scaleX = bgRect.width! / image.width!;
+        const scaleY = bgRect.height! / image.height!;
+        const scale = Math.min(scaleX, scaleY);
         
-        corsImage.onerror = () => {
-          // Fallback: use original image if CORS fails
-          const pattern = new fabric.Pattern({
-            source: imgElement,
-            repeat: 'no-repeat'
-          });
-          
-          const scaleX = bgRect.width! / image.width!;
-          const scaleY = bgRect.height! / image.height!;
-          const scale = Math.min(scaleX, scaleY);
-          
-          const offsetX = (bgRect.width! - (image.width! * scale)) / 2;
-          const offsetY = (bgRect.height! - (image.height! * scale)) / 2;
-          
-          pattern.patternTransform = [scale, 0, 0, scale, offsetX, offsetY];
-          
-          bgRect.set('fill', pattern);
-          canvas.remove(image);
-          canvas.renderAll();
-          
-          toast.warning('Imagem aplicada ao fundo, mas pode não ser exportada no PDF devido a restrições CORS');
-        };
+        const offsetX = (bgRect.width! - (image.width! * scale)) / 2;
+        const offsetY = (bgRect.height! - (image.height! * scale)) / 2;
         
-        corsImage.src = (imgElement as HTMLImageElement).src;
+        pattern.patternTransform = [scale, 0, 0, scale, offsetX, offsetY];
+        
+        bgRect.set('fill', pattern);
+        canvas.remove(image);
+        canvas.renderAll();
+        
+        toast.success('Imagem aplicada ao fundo!');
       } catch (error) {
         console.error('Error applying background:', error);
         toast.error('Erro ao aplicar imagem como fundo');
@@ -248,11 +218,13 @@ export const useCanvas = () => {
       // A4 is 210x297mm (portrait) or 297x210mm (landscape)
       const isLandscape = firstPage.orientation === 'landscape';
       
-      // Create PDF with exact A4 dimensions
+      // Create PDF with exact A4 dimensions and high quality settings
       const pdf = new jsPDF({
         orientation: isLandscape ? 'landscape' : 'portrait',
         unit: 'mm',
-        format: 'a4'
+        format: 'a4',
+        compress: false, // Disable compression for better quality
+        precision: 16 // Higher precision for better quality
       });
 
       // Process each page
@@ -276,31 +248,40 @@ export const useCanvas = () => {
           pdf.addPage();
         }
 
-        try {
-          // Create a temporary canvas for rendering
-          const tempCanvas = document.createElement('canvas');
-          const tempCtx = tempCanvas.getContext('2d');
-          
-          if (!tempCtx) {
-            throw new Error('Could not get 2D context');
-          }
+        // Check if canvas has S3 images
+        const hasS3Images = canvas.getObjects().some((obj: any) => obj._isS3Image === true);
+        
+        if (hasS3Images) {
+          // Use manual rendering for canvases with S3 images
+          try {
+            // Create a temporary canvas for rendering
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            if (!tempCtx) {
+              throw new Error('Could not get 2D context');
+            }
 
-          // Set dimensions based on the original canvas
-          const zoom = canvas.getZoom();
-          const originalWidth = canvas.getWidth() / zoom;
-          const originalHeight = canvas.getHeight() / zoom;
-          
-          // Use a high resolution multiplier for better quality
-          const multiplier = 2;
-          tempCanvas.width = originalWidth * multiplier;
-          tempCanvas.height = originalHeight * multiplier;
-          
-          // Scale the context for high resolution
-          tempCtx.scale(multiplier, multiplier);
-          
-          // Fill with white background
-          tempCtx.fillStyle = 'white';
-          tempCtx.fillRect(0, 0, originalWidth, originalHeight);
+            // Set dimensions based on the original canvas
+            const zoom = canvas.getZoom();
+            const originalWidth = canvas.getWidth() / zoom;
+            const originalHeight = canvas.getHeight() / zoom;
+            
+            // Use a high resolution multiplier for better quality
+            const multiplier = 4; // Increased from 2 to 4 for higher quality
+            tempCanvas.width = originalWidth * multiplier;
+            tempCanvas.height = originalHeight * multiplier;
+            
+            // Scale the context for high resolution
+            tempCtx.scale(multiplier, multiplier);
+            
+            // Enable high-quality rendering
+            tempCtx.imageSmoothingEnabled = true;
+            tempCtx.imageSmoothingQuality = 'high';
+            
+            // Fill with white background
+            tempCtx.fillStyle = 'white';
+            tempCtx.fillRect(0, 0, originalWidth, originalHeight);
           
           // Render each object manually to avoid CORS issues
           const objects = canvas.getObjects();
@@ -569,35 +550,37 @@ export const useCanvas = () => {
           }
           
           // Convert the temporary canvas to data URL
-          const dataURL = tempCanvas.toDataURL('image/png', 1);
+          // Convert the temporary canvas to data URL with maximum quality
+          const dataURL = tempCanvas.toDataURL('image/png', 1.0);
           
           // Get PDF page dimensions
           const pageWidth = pdf.internal.pageSize.getWidth();
           const pageHeight = pdf.internal.pageSize.getHeight();
           
-          // Add image to PDF filling the entire page (no margins)
-          // The canvas is already A4 sized, so we fill the entire PDF page
-          pdf.addImage(dataURL, 'PNG', 0, 0, pageWidth, pageHeight);
-          
-        } catch (fallbackError) {
-          console.error('Error in fallback rendering:', fallbackError);
-          
-          // Last resort: try to export anyway
+            // Add image to PDF filling the entire page (no margins) with high quality
+            // The canvas is already A4 sized, so we fill the entire PDF page
+            pdf.addImage(dataURL, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'NONE');
+            
+          } catch (fallbackError) {
+            console.error('Error in manual rendering:', fallbackError);
+            toast.error(`Erro ao exportar página ${i + 1} com imagens S3`);
+          }
+        } else {
+          // No S3 images - use direct canvas export
           try {
             const dataURL = canvas.toDataURL({
               format: 'png',
-              quality: 1,
-              multiplier: 2
+              quality: 1.0,
+              multiplier: 4 // Increased from 2 to 4 for higher quality
             });
             
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
             
-            // Add image filling the entire page
-            pdf.addImage(dataURL, 'PNG', 0, 0, pageWidth, pageHeight);
-          } catch (lastError) {
-            console.error('Final export attempt failed:', lastError);
-            toast.error(`Erro ao exportar página ${i + 1}: Verifique se as imagens têm permissão CORS`);
+            pdf.addImage(dataURL, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'NONE');
+          } catch (error) {
+            console.error('Error exporting canvas:', error);
+            toast.error(`Erro ao exportar página ${i + 1}: ${error}`);
           }
         }
       }

@@ -15,6 +15,7 @@ import TextPanel from './components/TextPanel';
 import CanvasEditor from './components/CanvasEditor';
 import ContextMenu from './components/ContextMenu';
 import LayersPanel from './components/LayersPanel';
+import PageControls from './components/PageControls';
 
 // Hooks
 import { useCanvas } from './hooks/useCanvas';
@@ -46,10 +47,14 @@ const GeradorCertificados: React.FC = () => {
   
   // Canvas hook
   const {
-    canvasRef,
-    canvasOrientation,
+    pages,
+    currentPageIndex,
+    setCurrentPageIndex,
+    addPage,
+    removePage,
+    registerCanvasRef,
+    getCurrentCanvasRef,
     setCanvasOrientation,
-    zoomLevel,
     setZoomLevel,
     isLoadingCanvas,
     isDragging,
@@ -95,6 +100,7 @@ const GeradorCertificados: React.FC = () => {
 
   // Update shape ref when selection changes
   useEffect(() => {
+    console.log('selectedShape changed to:', selectedShape);
     selectedShapeRef.current = selectedShape;
   }, [selectedShape]);
 
@@ -108,7 +114,8 @@ const GeradorCertificados: React.FC = () => {
     
     // Apply to shape using ref
     const shape = selectedShapeRef.current;
-    const canvas = canvasRef.current?.getCanvas();
+    const canvasRef = getCurrentCanvasRef();
+    const canvas = canvasRef?.getCanvas();
     
     if (shape && canvas) {
       const mergedSettings = { ...shapeSettings, ...newSettings };
@@ -172,8 +179,9 @@ const GeradorCertificados: React.FC = () => {
 
   const handleObjectSelected = (obj: fabric.Object) => {
     console.log('Object selected:', obj);
+    console.log('Object type:', obj.type);
     console.log('Object ID:', (obj as any).__uniqueID);
-    console.log('Object text:', (obj as any).text);
+    console.log('Object name:', (obj as any).name);
     
     // Check if it's a text object
     if (obj.type === 'i-text' || obj.type === 'textbox') {
@@ -301,7 +309,8 @@ const GeradorCertificados: React.FC = () => {
   };
 
   const handleUpdateText = (settings: Partial<any>) => {
-    const canvas = canvasRef.current?.getCanvas();
+    const canvasRef = getCurrentCanvasRef();
+    const canvas = canvasRef?.getCanvas();
     if (canvas) {
       // Pegar o objeto atualmente selecionado no canvas
       const activeObject = canvas.getActiveObject();
@@ -349,7 +358,7 @@ const GeradorCertificados: React.FC = () => {
   const menuData = getContextMenuItems();
 
   return (
-    <div className="flex gap-6 h-full pt-1 pb-4">
+    <div className="flex gap-6 h-full pt-1 pb-4 overflow-hidden">
       {/* Left column - Tabs and content */}
       <div className="flex flex-col h-full w-64 border-r pr-2 flex-shrink-0">
         <Tabs defaultValue="layers" className="w-full flex flex-col h-full">
@@ -370,7 +379,7 @@ const GeradorCertificados: React.FC = () => {
           
           <TabsContent value="layers" className="mt-4 flex-1 overflow-y-auto pr-2">
             <LayersPanel
-              canvas={canvasRef.current?.getCanvas() || null}
+              canvas={getCurrentCanvasRef()?.getCanvas() || null}
               onDeleteObject={handleDeleteFromCanvas}
               onSelectObject={handleObjectSelected}
             />
@@ -453,20 +462,49 @@ const GeradorCertificados: React.FC = () => {
         </Tabs>
       </div>
 
-      {/* Right column - Canvas */}
-      <CanvasEditor
-        ref={canvasRef}
-        orientation={canvasOrientation}
-        zoomLevel={zoomLevel}
-        isDragging={isDragging}
-        isLoadingCanvas={isLoadingCanvas}
-        onOrientationChange={setCanvasOrientation}
-        onZoomChange={setZoomLevel}
-        onObjectSelected={handleObjectSelected}
-        onSelectionCleared={handleSelectionCleared}
-        onContextMenu={handleContextMenu}
-        selectedShapeRef={selectedShapeRef}
-      />
+      {/* Right column - Canvas and Page Controls */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Page Controls */}
+        <PageControls
+          pages={pages.map(p => ({ id: p.id, name: `Página ${pages.indexOf(p) + 1}` }))}
+          currentPageIndex={currentPageIndex}
+          onPageSelect={setCurrentPageIndex}
+          onPageAdd={addPage}
+          onPageRemove={removePage}
+          maxPages={2}
+        />
+        
+        {/* Canvas for each page */}
+        <div className="flex-1 relative mt-4 overflow-hidden">
+          {pages.map((page, index) => (
+            <div
+              key={page.id}
+              className={`${index === currentPageIndex ? 'block' : 'hidden'} h-full w-full`}
+            >
+              <CanvasEditor
+                ref={(ref) => {
+                  if (ref) {
+                    registerCanvasRef(page.id, ref);
+                  }
+                }}
+                pageId={page.id}
+                pageIndex={index}
+                orientation={page.orientation}
+                zoomLevel={page.zoomLevel}
+                isDragging={isDragging}
+                isLoadingCanvas={isLoadingCanvas && index === currentPageIndex}
+                onOrientationChange={setCanvasOrientation}
+                onZoomChange={setZoomLevel}
+                onObjectSelected={handleObjectSelected}
+                onSelectionCleared={handleSelectionCleared}
+                onContextMenu={handleContextMenu}
+                selectedShapeRef={selectedShapeRef}
+                isActive={index === currentPageIndex}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
       
       {/* Context Menu */}
       <ContextMenu

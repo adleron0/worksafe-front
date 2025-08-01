@@ -186,14 +186,101 @@ canvas.setDimensions({
 4. **Teste em diferentes níveis de zoom** ao implementar novas funcionalidades
 5. **Mantenha o estado sincronizado** entre React e Fabric.js
 
+## Sistema de Múltiplas Páginas (Novo!)
+
+### Visão Geral
+O Gerador de Certificados agora suporta até 2 páginas independentes, permitindo criar certificados frente e verso ou documentos de múltiplas páginas.
+
+### Componentes Adicionados
+
+#### PageControls (`components/PageControls.tsx`)
+Controle visual para gerenciar páginas:
+- Adicionar nova página (máximo 2)
+- Alternar entre páginas
+- Remover páginas (mantendo mínimo 1)
+- Indicador visual da página ativa
+
+### Hook Modificado
+
+#### useCanvas (`hooks/useCanvas.ts`)
+Agora gerencia múltiplas instâncias de canvas:
+```typescript
+interface CanvasPage {
+  id: string;
+  orientation: 'landscape' | 'portrait';
+  zoomLevel: number;
+  canvasRef: any;
+}
+```
+
+**Novos recursos:**
+- Array de páginas com estados independentes
+- Gerenciamento de referências para múltiplos canvas
+- Métodos para adicionar/remover páginas
+- Estados isolados por página (zoom, orientação)
+
+### Alterações no CanvasEditor
+
+O componente agora aceita:
+- `pageId`: Identificador único da página
+- `pageIndex`: Índice da página (0 ou 1)
+- `isActive`: Se a página está ativa para receber eventos
+
+**Comportamento:**
+- Apenas a página ativa processa eventos de teclado
+- Canvas inativos ficam ocultos mas mantêm seu estado
+- Cada página tem seu próprio conjunto de objetos
+
+### Como Usar
+
+1. **Adicionar Segunda Página**
+   - Clique no botão "+" no controle de páginas
+   
+2. **Alternar Entre Páginas**
+   - Clique nos botões numerados (1 ou 2)
+   - A página ativa fica destacada
+   
+3. **Remover Página**
+   - Passe o mouse sobre o botão da página
+   - Clique no ícone de lixeira (apenas se houver mais de 1 página)
+
+### Arquitetura de Múltiplas Páginas
+
+```
+GeradorCertificados
+├── PageControls (gerencia páginas)
+└── Múltiplos CanvasEditor
+    ├── Página 1 (canvas independente)
+    └── Página 2 (canvas independente)
+```
+
+### Correções de Problemas
+
+#### 1. CORS com Imagens S3
+**Problema**: Imagens do S3 bloqueadas por CORS
+**Solução**: Alterada ordem de tentativa - primeiro sem CORS, depois com fallback
+
+#### 2. Layout do Canvas
+**Problema**: Canvas aparecia pequeno/estreito
+**Solução**: Ajustados containers com flex layout apropriado e `min-h-0`
+
+#### 3. Itens Indo para Página Errada
+**Problema**: Formas e textos sempre iam para primeira página
+**Solução**: Adicionadas dependências corretas nos callbacks do hook
+
+#### 4. Editor de Formas Não Funcionando
+**Problema**: Mudanças de cor/opacidade não eram aplicadas
+**Solução**: Corrigido acesso ao canvas usando `getCurrentCanvasRef()`
+
 ## Futuras Melhorias Sugeridas
 
 1. **Undo/Redo**: Implementar histórico de ações
 2. **Templates**: Sistema de templates pré-definidos
-3. **Export**: Adicionar opções de export (PDF, PNG em alta resolução)
-4. **Guias de Alinhamento**: Snap to grid e smart guides
-5. **Camadas Bloqueadas**: Melhorar o sistema de bloqueio de objetos
-6. **Performance**: Otimizar renderização para muitos objetos
+3. **Export Individual**: Exportar páginas separadamente ou juntas
+4. **Navegação por Teclado**: Atalhos para trocar de página (ex: Ctrl+1, Ctrl+2)
+5. **Copiar Entre Páginas**: Permitir copiar objetos de uma página para outra
+6. **Preview de Impressão**: Ver como ficará o certificado impresso frente e verso
+7. **Mais Páginas**: Expandir para suportar mais de 2 páginas se necessário
 
 ## Debugging
 

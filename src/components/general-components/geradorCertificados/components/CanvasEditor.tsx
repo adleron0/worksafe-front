@@ -13,6 +13,8 @@ export interface CanvasEditorRef {
 }
 
 interface CanvasEditorProps {
+  pageId: string;
+  pageIndex: number;
   orientation: 'landscape' | 'portrait';
   zoomLevel: number;
   isDragging: boolean;
@@ -23,9 +25,12 @@ interface CanvasEditorProps {
   onSelectionCleared: () => void;
   onContextMenu: (e: MouseEvent, target: fabric.Object | null) => void;
   selectedShapeRef: React.MutableRefObject<fabric.Object | null>;
+  isActive: boolean;
 }
 
 const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
+  pageId,
+  pageIndex,
   orientation,
   zoomLevel,
   isDragging,
@@ -35,12 +40,14 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   onObjectSelected,
   onSelectionCleared,
   onContextMenu,
-  selectedShapeRef
+  selectedShapeRef,
+  isActive
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const zoomLevelRef = useRef(zoomLevel);
   const orientationRef = useRef(orientation);
+  const isActiveRef = useRef(isActive);
 
   useEffect(() => {
     zoomLevelRef.current = zoomLevel;
@@ -49,6 +56,10 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   useEffect(() => {
     orientationRef.current = orientation;
   }, [orientation]);
+
+  useEffect(() => {
+    isActiveRef.current = isActive;
+  }, [isActive]);
 
   const updateCanvasSize = (orient: 'landscape' | 'portrait', customZoom?: number) => {
     if (!fabricCanvasRef.current) return;
@@ -100,14 +111,15 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   const addImageToCanvas = (imageUrl: string, imageName: string) => {
     if (!fabricCanvasRef.current) return;
 
-    // Create an image element to handle CORS properly
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    img.onload = () => {
-      const fabricImage = new fabric.FabricImage(img, {
-        left: fabricCanvasRef.current!.width! / 2,
-        top: fabricCanvasRef.current!.height! / 2,
+    // Tentar primeiro sem CORS para evitar problemas com S3
+    fabric.FabricImage.fromURL(imageUrl, {
+      crossOrigin: null
+    }).then((fabricImage) => {
+      if (!fabricCanvasRef.current) return;
+      
+      fabricImage.set({
+        left: fabricCanvasRef.current.width! / 2,
+        top: fabricCanvasRef.current.height! / 2,
         originX: 'center',
         originY: 'center',
         name: imageName
@@ -120,24 +132,20 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
         fabricImage.scaleToHeight(maxSize);
       }
       
-      fabricCanvasRef.current!.add(fabricImage);
-      fabricCanvasRef.current!.setActiveObject(fabricImage);
-      fabricCanvasRef.current!.renderAll();
-    };
-    
-    img.onerror = (error) => {
-      console.error('Error loading image:', error);
-      console.error('Image URL:', imageUrl);
+      fabricCanvasRef.current.add(fabricImage);
+      fabricCanvasRef.current.setActiveObject(fabricImage);
+      fabricCanvasRef.current.renderAll();
+    }).catch((error) => {
+      console.error('Erro ao carregar imagem:', error);
       
-      // Fallback: Try loading without CORS if it fails
-      fabric.FabricImage.fromURL(imageUrl, {
-        crossOrigin: null
-      }).then((fabricImage) => {
-        if (!fabricCanvasRef.current) return;
-        
-        fabricImage.set({
-          left: fabricCanvasRef.current.width! / 2,
-          top: fabricCanvasRef.current.height! / 2,
+      // Fallback: tentar com CORS anonymous
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = () => {
+        const fabricImage = new fabric.FabricImage(img, {
+          left: fabricCanvasRef.current!.width! / 2,
+          top: fabricCanvasRef.current!.height! / 2,
           originX: 'center',
           originY: 'center',
           name: imageName
@@ -150,18 +158,18 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
           fabricImage.scaleToHeight(maxSize);
         }
         
-        fabricCanvasRef.current.add(fabricImage);
-        fabricCanvasRef.current.setActiveObject(fabricImage);
-        fabricCanvasRef.current.renderAll();
-        
-        console.warn('Image loaded without CORS. Some features may be limited.');
-      }).catch((fallbackError) => {
-        console.error('Fallback also failed:', fallbackError);
+        fabricCanvasRef.current!.add(fabricImage);
+        fabricCanvasRef.current!.setActiveObject(fabricImage);
+        fabricCanvasRef.current!.renderAll();
+      };
+      
+      img.onerror = () => {
+        console.error('Não foi possível carregar a imagem:', imageUrl);
         alert('Erro ao carregar imagem. Verifique se a imagem está acessível.');
-      });
-    };
-    
-    img.src = imageUrl;
+      };
+      
+      img.src = imageUrl;
+    });
   };
 
   const addShapeToCanvas = (shapeType: 'rectangle' | 'circle' | 'triangle' | 'line', shapeSettings: any) => {
@@ -373,10 +381,13 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       });
       
       canvas.add(bgRect);
-      updateCanvasSize('landscape');
+      updateCanvasSize(orientation);
       
       const handleKeyDown = (e: KeyboardEvent) => {
-        console.log('Key pressed:', e.key, 'Ctrl:', e.ctrlKey, 'Meta:', e.metaKey);
+        // Só processar eventos de teclado se esta página estiver ativa
+        if (!isActiveRef.current) return;
+        
+        console.log(`Key pressed on page ${pageIndex + 1}:`, e.key, 'Ctrl:', e.ctrlKey, 'Meta:', e.metaKey);
         
         // Prevenir comportamento padrão para atalhos com Ctrl/Cmd
         if (e.ctrlKey || e.metaKey) {
@@ -823,6 +834,8 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       // Adicionar listener de teclado direto no canvas wrapper
       const canvasWrapper = canvas.wrapperEl;
       if (canvasWrapper) {
+        // Adicionar identificação única para cada canvas
+        canvasWrapper.setAttribute('data-page-id', pageId);
         canvasWrapper.tabIndex = 1; // Tornar focável
         
         // Criar um input oculto para capturar caracteres compostos
@@ -1225,7 +1238,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-w-0">
+    <div className="h-full flex flex-col">
       {/* Controls */}
       <div className="mb-4 flex items-center justify-between gap-4 flex-shrink-0">
         {/* Orientation toggle */}
@@ -1284,9 +1297,10 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       
       {/* Canvas container */}
       <div 
-        className={`flex-1 border rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-hidden relative transition-colors ${
+        className={`flex-1 min-h-0 border rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-auto relative transition-colors ${
           isDragging ? 'border-primary border-2' : ''
-        }`}
+        } ${!isActive ? 'opacity-0 pointer-events-none' : ''}`}
+        data-page-active={isActive}
         onContextMenu={(e) => {
           e.preventDefault();
           return false;
@@ -1307,7 +1321,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
           e.stopPropagation();
         }}
       >
-        <div className="absolute inset-4 flex items-center justify-center overflow-hidden">
+        <div className="w-full h-full flex items-center justify-center">
           <div className="relative">
             <canvas 
               ref={canvasRef}

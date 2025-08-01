@@ -328,40 +328,8 @@ export const useCanvas = () => {
               const imgElement = img.getElement();
               
               try {
-                // For S3 images in production, draw placeholder
-                if ((img as any)._isS3Image || (isProduction && hasImages)) {
-                  try {
-                    // For immediate rendering, draw a placeholder
-                    tempCtx.fillStyle = '#f9f9f9';
-                    tempCtx.fillRect(
-                      offsetX,
-                      offsetY,
-                      (img.width || 0) * scaleX,
-                      (img.height || 0) * scaleY
-                    );
-                    tempCtx.strokeStyle = '#ddd';
-                    tempCtx.lineWidth = 2;
-                    tempCtx.strokeRect(
-                      offsetX,
-                      offsetY,
-                      (img.width || 0) * scaleX,
-                      (img.height || 0) * scaleY
-                    );
-                    
-                    // Add text to indicate image
-                    tempCtx.fillStyle = '#999';
-                    tempCtx.font = '14px Arial';
-                    tempCtx.textAlign = 'center';
-                    tempCtx.fillText(
-                      'Imagem',
-                      offsetX + ((img.width || 0) * scaleX) / 2,
-                      offsetY + ((img.height || 0) * scaleY) / 2
-                    );
-                  } catch (placeholderError) {
-                    console.error('Error drawing placeholder:', placeholderError);
-                  }
-                } else {
-                  // Normal image rendering
+                // Try to render the image first
+                try {
                   tempCtx.drawImage(
                     imgElement,
                     offsetX,
@@ -369,6 +337,37 @@ export const useCanvas = () => {
                     (img.width || 0) * scaleX,
                     (img.height || 0) * scaleY
                   );
+                } catch (imageError) {
+                  console.error('Failed to draw image, using placeholder:', imageError);
+                  // If image fails, draw a placeholder
+                  tempCtx.fillStyle = '#f9f9f9';
+                  tempCtx.fillRect(
+                    offsetX,
+                    offsetY,
+                    (img.width || 0) * scaleX,
+                    (img.height || 0) * scaleY
+                  );
+                  tempCtx.strokeStyle = '#ddd';
+                  tempCtx.lineWidth = 2;
+                  tempCtx.strokeRect(
+                    offsetX,
+                    offsetY,
+                    (img.width || 0) * scaleX,
+                    (img.height || 0) * scaleY
+                  );
+                  
+                  // Add text to indicate image
+                  tempCtx.save();
+                  tempCtx.fillStyle = '#999';
+                  tempCtx.font = '14px Arial';
+                  tempCtx.textAlign = 'center';
+                  tempCtx.textBaseline = 'middle';
+                  tempCtx.fillText(
+                    'Imagem',
+                    offsetX + ((img.width || 0) * scaleX) / 2,
+                    offsetY + ((img.height || 0) * scaleY) / 2
+                  );
+                  tempCtx.restore();
                 }
               } catch (error) {
                 console.error('Error drawing image:', error);
@@ -393,48 +392,42 @@ export const useCanvas = () => {
               
               // Check if it's the background rect with a pattern
               if ((rect as any).name === 'backgroundRect' && rect.fill && typeof rect.fill === 'object') {
-                // For production with images, just draw a white background
-                if (isProduction && hasImages) {
-                  tempCtx.fillStyle = 'white';
-                  tempCtx.fillRect(0, 0, rect.width || 0, rect.height || 0);
-                } else {
-                  // Try to render pattern inside the rectangle bounds
-                  const pattern = rect.fill as fabric.Pattern;
-                  if (pattern.source) {
-                    try {
-                      const patternImg = pattern.source as HTMLImageElement;
-                      const transform = pattern.patternTransform || [1, 0, 0, 1, 0, 0];
-                      
-                      // Create clipping path for the rectangle
-                      tempCtx.save();
-                      tempCtx.beginPath();
-                      tempCtx.rect(0, 0, rect.width || 0, rect.height || 0);
-                      tempCtx.clip();
-                      
-                      // Apply pattern transform and draw image
-                      const scaleFactorX = transform[0];
-                      const scaleFactorY = transform[3];
-                      const offsetX = transform[4];
-                      const offsetY = transform[5];
-                      
-                      tempCtx.drawImage(
-                        patternImg,
-                        offsetX,
-                        offsetY,
-                        patternImg.width * scaleFactorX,
-                        patternImg.height * scaleFactorY
-                      );
-                      
-                      tempCtx.restore();
-                    } catch (error) {
-                      console.error('Error drawing pattern:', error);
-                      tempCtx.fillStyle = 'white';
-                      tempCtx.fillRect(0, 0, rect.width || 0, rect.height || 0);
-                    }
-                  } else {
+                // Try to render pattern inside the rectangle bounds
+                const pattern = rect.fill as fabric.Pattern;
+                if (pattern.source) {
+                  try {
+                    const patternImg = pattern.source as HTMLImageElement;
+                    const transform = pattern.patternTransform || [1, 0, 0, 1, 0, 0];
+                    
+                    // Create clipping path for the rectangle
+                    tempCtx.save();
+                    tempCtx.beginPath();
+                    tempCtx.rect(0, 0, rect.width || 0, rect.height || 0);
+                    tempCtx.clip();
+                    
+                    // Apply pattern transform and draw image
+                    const scaleFactorX = transform[0];
+                    const scaleFactorY = transform[3];
+                    const offsetX = transform[4];
+                    const offsetY = transform[5];
+                    
+                    tempCtx.drawImage(
+                      patternImg,
+                      offsetX,
+                      offsetY,
+                      patternImg.width * scaleFactorX,
+                      patternImg.height * scaleFactorY
+                    );
+                    
+                    tempCtx.restore();
+                  } catch (error) {
+                    console.error('Error drawing pattern, using white background:', error);
                     tempCtx.fillStyle = 'white';
                     tempCtx.fillRect(0, 0, rect.width || 0, rect.height || 0);
                   }
+                } else {
+                  tempCtx.fillStyle = 'white';
+                  tempCtx.fillRect(0, 0, rect.width || 0, rect.height || 0);
                 }
               } else {
                 tempCtx.fillStyle = rect.fill as string || 'black';

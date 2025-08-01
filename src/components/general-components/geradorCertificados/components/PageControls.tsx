@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, FileText, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 interface PageControlsProps {
   pages: Array<{ id: string; name: string }>;
@@ -23,20 +23,19 @@ const PageControls: React.FC<PageControlsProps> = ({
   const canRemovePage = pages.length > 1;
 
   return (
-    <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-lg border">
+    <div className="flex items-center justify-center gap-4">
       <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Páginas:</span>
       
       <div className="flex items-center gap-1">
         {pages.map((page, index) => (
           <div key={page.id} className="relative group">
             <Button
-              variant={currentPageIndex === index ? 'default' : 'outline'}
+              variant={currentPageIndex === index ? 'default' : 'ghost'}
               size="sm"
               onClick={() => onPageSelect(index)}
-              className="relative h-8 px-3"
+              className="relative h-9 w-9 p-0"
             >
-              <FileText className="w-3 h-3 mr-1" />
-              <span className="text-xs">{index + 1}</span>
+              <span className="text-sm font-medium">{index + 1}</span>
             </Button>
             
             {canRemovePage && (
@@ -58,13 +57,13 @@ const PageControls: React.FC<PageControlsProps> = ({
         
         {canAddPage && (
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={onPageAdd}
-            className="h-8 px-3"
+            className="h-9 w-9 p-0"
             title="Adicionar página"
           >
-            <Plus className="w-3 h-3" />
+            <Plus className="w-4 h-4" />
           </Button>
         )}
       </div>

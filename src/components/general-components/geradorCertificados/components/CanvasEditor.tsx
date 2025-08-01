@@ -4,11 +4,13 @@ import { Slider } from '@/components/ui/slider';
 import { RectangleHorizontal, RectangleVertical, ZoomIn, ZoomOut, Loader2 } from 'lucide-react';
 import * as fabric from 'fabric';
 import { createListTextbox, cleanListMarkers } from '../utils/ListTextbox';
+import { createImagePlaceholder } from '../utils/PlaceholderImage';
 
 export interface CanvasEditorRef {
   addImageToCanvas: (imageUrl: string, imageName: string) => void;
   addShapeToCanvas: (shapeType: 'rectangle' | 'circle' | 'triangle' | 'line', shapeSettings: any) => void;
   addTextToCanvas: (text: string, textSettings: any) => void;
+  addPlaceholderToCanvas: (placeholderName: string) => void;
   getCanvas: () => fabric.Canvas | null;
 }
 
@@ -111,9 +113,9 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   const addImageToCanvas = (imageUrl: string, imageName: string) => {
     if (!fabricCanvasRef.current) return;
 
-    // Tentar primeiro sem CORS para evitar problemas com S3
+    // Always use CORS anonymous to ensure canvas can be exported
     fabric.FabricImage.fromURL(imageUrl, {
-      crossOrigin: null
+      crossOrigin: 'anonymous'
     }).then((fabricImage) => {
       if (!fabricCanvasRef.current) return;
       
@@ -136,9 +138,9 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       fabricCanvasRef.current.setActiveObject(fabricImage);
       fabricCanvasRef.current.renderAll();
     }).catch((error) => {
-      console.error('Erro ao carregar imagem:', error);
+      console.error('Erro ao carregar imagem com CORS:', error);
       
-      // Fallback: tentar com CORS anonymous
+      // Try alternative approach with manual image loading
       const img = new Image();
       img.crossOrigin = 'anonymous';
       
@@ -165,7 +167,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       
       img.onerror = () => {
         console.error('Não foi possível carregar a imagem:', imageUrl);
-        alert('Erro ao carregar imagem. Verifique se a imagem está acessível.');
+        alert('Erro ao carregar imagem. A imagem pode não permitir CORS ou não estar acessível.');
       };
       
       img.src = imageUrl;
@@ -343,10 +345,33 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
     }, 200);
   };
 
+  const addPlaceholderToCanvas = (placeholderName: string) => {
+    if (!fabricCanvasRef.current) return;
+    
+    const canvas = fabricCanvasRef.current;
+    const centerX = canvas.width! / 2;
+    const centerY = canvas.height! / 2;
+    
+    const placeholder = createImagePlaceholder({
+      name: placeholderName,
+      left: centerX - 100,
+      top: centerY - 50,
+      width: 200,
+      height: 100
+    });
+    
+    canvas.add(placeholder);
+    canvas.setActiveObject(placeholder);
+    canvas.renderAll();
+    
+    onObjectSelected(placeholder);
+  };
+
   useImperativeHandle(ref, () => ({
     addImageToCanvas,
     addShapeToCanvas,
     addTextToCanvas,
+    addPlaceholderToCanvas,
     getCanvas: () => fabricCanvasRef.current
   }));
 

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { get, del } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Image as ImageIcon, Loader2, Shapes, Frame, Trash2, Type, Layers } from 'lucide-react';
+import { Image as ImageIcon, Loader2, Shapes, Frame, Trash2, Type, Layers, ImagePlus } from 'lucide-react';
 import { toast } from 'sonner';
 import * as fabric from 'fabric';
 
@@ -16,6 +16,7 @@ import CanvasEditor from './components/CanvasEditor';
 import ContextMenu from './components/ContextMenu';
 import LayersPanel from './components/LayersPanel';
 import PageControls from './components/PageControls';
+import PlaceholderPanel from './components/PlaceholderPanel';
 
 // Hooks
 import { useCanvas } from './hooks/useCanvas';
@@ -63,7 +64,9 @@ const GeradorCertificados: React.FC = () => {
     handleDeleteFromCanvas,
     addImageToCanvas,
     addShapeToCanvas,
-    addTextToCanvas
+    addTextToCanvas,
+    addPlaceholderToCanvas,
+    exportToPDF
   } = useCanvas();
 
   // Query for fetching images
@@ -375,6 +378,9 @@ const GeradorCertificados: React.FC = () => {
             <TabsTrigger value="text" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
               <Type className="w-4 h-4" />
             </TabsTrigger>
+            <TabsTrigger value="placeholder" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
+              <ImagePlus className="w-4 h-4" />
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="layers" className="mt-4 flex-1 overflow-y-auto pr-2">
@@ -459,6 +465,12 @@ const GeradorCertificados: React.FC = () => {
               onUpdateText={handleUpdateText}
             />
           </TabsContent>
+          
+          <TabsContent value="placeholder" className="mt-4 flex-1 overflow-y-auto pr-2">
+            <PlaceholderPanel
+              onAddPlaceholder={addPlaceholderToCanvas}
+            />
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -503,6 +515,7 @@ const GeradorCertificados: React.FC = () => {
             onPageSelect={setCurrentPageIndex}
             onPageAdd={addPage}
             onPageRemove={removePage}
+            onExportPDF={exportToPDF}
             maxPages={2}
           />
         </div>

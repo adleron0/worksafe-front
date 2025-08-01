@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Plus, List, ListOrdered, ChevronRight, IndentDecrease, IndentIncrease } from 'lucide-react';
+import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Plus, List, ListOrdered, ChevronRight, IndentDecrease, IndentIncrease, Info } from 'lucide-react';
 import * as fabric from 'fabric';
 
 interface TextPanelProps {
@@ -377,6 +377,26 @@ const TextPanel: React.FC<TextPanelProps> = ({
           </div>
         </div>
       </Card>
+      
+      {/* Info sobre variáveis - bem discreto */}
+      <div className="px-4 py-2 bg-muted/30 rounded-md">
+        <div className="flex items-start gap-2">
+          <Info className="w-3 h-3 mt-0.5 text-muted-foreground flex-shrink-0" />
+          <div className="text-xs text-muted-foreground">
+            <p className="font-medium mb-1">Dica: Use variáveis dinâmicas</p>
+            <p>Digite <code className="text-primary">{'{{nome_aluno}}'}</code> para inserir dados que serão substituídos na geração.</p>
+            <details className="mt-1">
+              <summary className="cursor-pointer hover:text-foreground">Ver exemplos</summary>
+              <div className="mt-2 space-y-1 text-xs">
+                <p><code>{'{{nome_aluno}}'}</code> - Nome do aluno</p>
+                <p><code>{'{{nome_curso}}'}</code> - Nome do curso</p>
+                <p><code>{'{{data_inicio}}'}</code> - Data de início</p>
+                <p><code>{'{{carga_horaria}}'}</code> - Carga horária</p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

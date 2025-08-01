@@ -248,28 +248,11 @@ export const useCanvas = () => {
           pdf.addPage();
         }
 
-        // Check if canvas is tainted (has images without CORS)
-        let canvasTainted = false;
-        try {
-          // Try to export a small portion to test if canvas is tainted
-          canvas.toDataURL({
-            format: 'png',
-            quality: 0.1,
-            multiplier: 0.1,
-            left: 0,
-            top: 0,
-            width: 1,
-            height: 1
-          });
-        } catch (error) {
-          canvasTainted = true;
-          console.log('Canvas is tainted, using manual rendering');
-        }
+        // Always use manual rendering in production for S3 images
+        const isProduction = window.location.hostname !== 'localhost';
+        const hasImages = canvas.getObjects().some((obj: any) => obj.type === 'image');
         
-        // Check if canvas has S3 images or is tainted
-        const hasS3Images = canvas.getObjects().some((obj: any) => obj._isS3Image === true);
-        
-        if (hasS3Images || canvasTainted) {
+        if (isProduction && hasImages) {
           // Use manual rendering for canvases with S3 images
           try {
             // Create a temporary canvas for rendering
@@ -345,8 +328,8 @@ export const useCanvas = () => {
               const imgElement = img.getElement();
               
               try {
-                // For tainted images, try to create a clean version
-                if ((img as any)._isS3Image || canvasTainted) {
+                // For S3 images in production, draw placeholder
+                if ((img as any)._isS3Image || (isProduction && hasImages)) {
                   try {
                     // For immediate rendering, draw a placeholder
                     tempCtx.fillStyle = '#f9f9f9';
@@ -410,8 +393,8 @@ export const useCanvas = () => {
               
               // Check if it's the background rect with a pattern
               if ((rect as any).name === 'backgroundRect' && rect.fill && typeof rect.fill === 'object') {
-                // For tainted canvases, just draw a white background
-                if (canvasTainted) {
+                // For production with images, just draw a white background
+                if (isProduction && hasImages) {
                   tempCtx.fillStyle = 'white';
                   tempCtx.fillRect(0, 0, rect.width || 0, rect.height || 0);
                 } else {
@@ -608,17 +591,27 @@ export const useCanvas = () => {
             tempCtx.restore();
           }
           
-          // Convert the temporary canvas to data URL
-          // Convert the temporary canvas to data URL with maximum quality
-          const dataURL = tempCanvas.toDataURL('image/png', 1.0);
-          
           // Get PDF page dimensions
           const pageWidth = pdf.internal.pageSize.getWidth();
           const pageHeight = pdf.internal.pageSize.getHeight();
           
+          // Add canvas directly to PDF without using toDataURL
+          // This avoids the tainted canvas issue
+          const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+          
+          // Create a new clean canvas for the image data
+          const cleanCanvas = document.createElement('canvas');
+          cleanCanvas.width = tempCanvas.width;
+          cleanCanvas.height = tempCanvas.height;
+          const cleanCtx = cleanCanvas.getContext('2d');
+          
+          if (cleanCtx) {
+            cleanCtx.putImageData(imageData, 0, 0);
+            const dataURL = cleanCanvas.toDataURL('image/png', 1.0);
+            
             // Add image to PDF filling the entire page (no margins) with high quality
-            // The canvas is already A4 sized, so we fill the entire PDF page
             pdf.addImage(dataURL, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'NONE');
+          }
             
           } catch (fallbackError) {
             console.error('Error in manual rendering:', fallbackError);

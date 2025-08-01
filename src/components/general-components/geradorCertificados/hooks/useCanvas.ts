@@ -126,6 +126,17 @@ export const useCanvas = () => {
     canvasRef.addTextToCanvas(text, textSettings);
   }, [getCurrentCanvasRef, currentPageIndex]);
 
+  const addPlaceholderToCanvas = useCallback((placeholderName: string) => {
+    console.log('addPlaceholderToCanvas called, current page index:', currentPageIndex);
+    const canvasRef = getCurrentCanvasRef();
+    if (!canvasRef) {
+      console.error('No canvas ref found for current page');
+      return;
+    }
+    
+    canvasRef.addPlaceholderToCanvas(placeholderName);
+  }, [getCurrentCanvasRef, currentPageIndex]);
+
   const addPage = useCallback(() => {
     if (pages.length >= 2) return;
     
@@ -201,6 +212,7 @@ export const useCanvas = () => {
     handleDeleteFromCanvas,
     addImageToCanvas,
     addShapeToCanvas,
-    addTextToCanvas
+    addTextToCanvas,
+    addPlaceholderToCanvas
   };
 };

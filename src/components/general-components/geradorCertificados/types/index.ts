@@ -38,3 +38,16 @@ export interface ContextMenuData {
   y: number;
   target: fabric.Object | null;
 }
+
+export interface CertificateVariable {
+  name: string;
+  description: string;
+  type: 'text' | 'image';
+  source: string;
+  required: boolean;
+  placeholder: string;
+}
+
+export interface AvailableVariables {
+  [key: string]: CertificateVariable;
+}

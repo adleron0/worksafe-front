@@ -4,11 +4,13 @@ import { Slider } from '@/components/ui/slider';
 import { RectangleHorizontal, RectangleVertical, ZoomIn, ZoomOut, Loader2 } from 'lucide-react';
 import * as fabric from 'fabric';
 import { createListTextbox, cleanListMarkers } from '../utils/ListTextbox';
+import { createImagePlaceholder } from '../utils/PlaceholderImage';
 
 export interface CanvasEditorRef {
   addImageToCanvas: (imageUrl: string, imageName: string) => void;
   addShapeToCanvas: (shapeType: 'rectangle' | 'circle' | 'triangle' | 'line', shapeSettings: any) => void;
   addTextToCanvas: (text: string, textSettings: any) => void;
+  addPlaceholderToCanvas: (placeholderName: string) => void;
   getCanvas: () => fabric.Canvas | null;
 }
 
@@ -343,10 +345,33 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
     }, 200);
   };
 
+  const addPlaceholderToCanvas = (placeholderName: string) => {
+    if (!fabricCanvasRef.current) return;
+    
+    const canvas = fabricCanvasRef.current;
+    const centerX = canvas.width! / 2;
+    const centerY = canvas.height! / 2;
+    
+    const placeholder = createImagePlaceholder({
+      name: placeholderName,
+      left: centerX - 100,
+      top: centerY - 50,
+      width: 200,
+      height: 100
+    });
+    
+    canvas.add(placeholder);
+    canvas.setActiveObject(placeholder);
+    canvas.renderAll();
+    
+    onObjectSelected(placeholder);
+  };
+
   useImperativeHandle(ref, () => ({
     addImageToCanvas,
     addShapeToCanvas,
     addTextToCanvas,
+    addPlaceholderToCanvas,
     getCanvas: () => fabricCanvasRef.current
   }));
 

@@ -113,41 +113,19 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   const addImageToCanvas = (imageUrl: string, imageName: string) => {
     if (!fabricCanvasRef.current) return;
 
-    // Always use CORS anonymous to ensure canvas can be exported
-    fabric.FabricImage.fromURL(imageUrl, {
-      crossOrigin: 'anonymous'
-    }).then((fabricImage) => {
-      if (!fabricCanvasRef.current) return;
-      
-      fabricImage.set({
-        left: fabricCanvasRef.current.width! / 2,
-        top: fabricCanvasRef.current.height! / 2,
-        originX: 'center',
-        originY: 'center',
-        name: imageName
-      });
-      
-      const maxSize = 200;
-      if (fabricImage.width! > fabricImage.height!) {
-        fabricImage.scaleToWidth(maxSize);
-      } else {
-        fabricImage.scaleToHeight(maxSize);
-      }
-      
-      fabricCanvasRef.current.add(fabricImage);
-      fabricCanvasRef.current.setActiveObject(fabricImage);
-      fabricCanvasRef.current.renderAll();
-    }).catch((error) => {
-      console.error('Erro ao carregar imagem com CORS:', error);
-      
-      // Try alternative approach with manual image loading
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      
-      img.onload = () => {
-        const fabricImage = new fabric.FabricImage(img, {
-          left: fabricCanvasRef.current!.width! / 2,
-          top: fabricCanvasRef.current!.height! / 2,
+    // Check if it's an S3 URL
+    const isS3Url = imageUrl.includes('s3.') && imageUrl.includes('amazonaws.com');
+    
+    // For S3 images in production, we need to load without CORS but warn about PDF export
+    if (isS3Url && window.location.hostname !== 'localhost') {
+      fabric.FabricImage.fromURL(imageUrl, {
+        crossOrigin: null
+      }).then((fabricImage) => {
+        if (!fabricCanvasRef.current) return;
+        
+        fabricImage.set({
+          left: fabricCanvasRef.current.width! / 2,
+          top: fabricCanvasRef.current.height! / 2,
           originX: 'center',
           originY: 'center',
           name: imageName
@@ -160,18 +138,51 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
           fabricImage.scaleToHeight(maxSize);
         }
         
-        fabricCanvasRef.current!.add(fabricImage);
-        fabricCanvasRef.current!.setActiveObject(fabricImage);
-        fabricCanvasRef.current!.renderAll();
-      };
-      
-      img.onerror = () => {
-        console.error('Não foi possível carregar a imagem:', imageUrl);
-        alert('Erro ao carregar imagem. A imagem pode não permitir CORS ou não estar acessível.');
-      };
-      
-      img.src = imageUrl;
-    });
+        // Mark as S3 image for PDF export handling
+        (fabricImage as any)._isS3Image = true;
+        (fabricImage as any)._originalUrl = imageUrl;
+        
+        fabricCanvasRef.current.add(fabricImage);
+        fabricCanvasRef.current.setActiveObject(fabricImage);
+        fabricCanvasRef.current.renderAll();
+        
+        console.warn('Imagem S3 carregada. Pode haver limitações na exportação para PDF.');
+      }).catch((error) => {
+        console.error('Erro ao carregar imagem S3:', error);
+        alert('Erro ao carregar imagem do S3.');
+      });
+    } else {
+      // For local development or non-S3 images, use CORS
+      fabric.FabricImage.fromURL(imageUrl, {
+        crossOrigin: 'anonymous'
+      }).then((fabricImage) => {
+        if (!fabricCanvasRef.current) return;
+        
+        fabricImage.set({
+          left: fabricCanvasRef.current.width! / 2,
+          top: fabricCanvasRef.current.height! / 2,
+          originX: 'center',
+          originY: 'center',
+          name: imageName
+        });
+        
+        const maxSize = 200;
+        if (fabricImage.width! > fabricImage.height!) {
+          fabricImage.scaleToWidth(maxSize);
+        } else {
+          fabricImage.scaleToHeight(maxSize);
+        }
+        
+        (fabricImage as any)._originalUrl = imageUrl;
+        
+        fabricCanvasRef.current.add(fabricImage);
+        fabricCanvasRef.current.setActiveObject(fabricImage);
+        fabricCanvasRef.current.renderAll();
+      }).catch((error) => {
+        console.error('Erro ao carregar imagem com CORS:', error);
+        alert('Erro ao carregar imagem. Verifique se a imagem está acessível.');
+      });
+    }
   };
 
   const addShapeToCanvas = (shapeType: 'rectangle' | 'circle' | 'triangle' | 'line', shapeSettings: any) => {

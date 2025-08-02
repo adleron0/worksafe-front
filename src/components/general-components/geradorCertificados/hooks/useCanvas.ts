@@ -91,19 +91,29 @@ export const useCanvas = () => {
     canvas.renderAll();
   }, [getCurrentCanvasRef]);
 
-  const addImageToCanvas = useCallback((imageUrl: string, imageName: string) => {
+  const addImageToCanvas = useCallback((imageUrl: string, imageName: string): Promise<void> => {
     console.log('addImageToCanvas called, current page index:', currentPageIndex);
     const canvasRef = getCurrentCanvasRef();
     if (!canvasRef) {
       console.error('No canvas ref found for current page');
-      return;
+      return Promise.reject('No canvas ref found');
     }
     
     setIsLoadingCanvas(true);
-    canvasRef.addImageToCanvas(imageUrl, imageName);
     
-    // Reset loading state after a delay
-    setTimeout(() => setIsLoadingCanvas(false), 1000);
+    return new Promise((resolve, reject) => {
+      try {
+        canvasRef.addImageToCanvas(imageUrl, imageName);
+        // Aguardar um pouco para garantir que a imagem foi adicionada
+        setTimeout(() => {
+          setIsLoadingCanvas(false);
+          resolve();
+        }, 300);
+      } catch (error) {
+        setIsLoadingCanvas(false);
+        reject(error);
+      }
+    });
   }, [getCurrentCanvasRef, currentPageIndex]);
 
   const addShapeToCanvas = useCallback((shapeType: 'rectangle' | 'circle' | 'triangle' | 'line', shapeSettings: any) => {

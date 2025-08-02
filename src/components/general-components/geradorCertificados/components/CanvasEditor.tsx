@@ -113,47 +113,42 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   const addImageToCanvas = (imageUrl: string, imageName: string) => {
     if (!fabricCanvasRef.current) return;
 
-    // Check if it's an S3 URL
-    const isS3Url = imageUrl.includes('s3.') && imageUrl.includes('amazonaws.com');
-    
-    // For S3 images in production, we need to load without CORS but warn about PDF export
-    if (isS3Url && window.location.hostname !== 'localhost') {
-      fabric.FabricImage.fromURL(imageUrl, {
-        crossOrigin: null
-      }).then((fabricImage) => {
-        if (!fabricCanvasRef.current) return;
-        
-        fabricImage.set({
-          left: fabricCanvasRef.current.width! / 2,
-          top: fabricCanvasRef.current.height! / 2,
-          originX: 'center',
-          originY: 'center',
-          name: imageName
-        });
-        
-        const maxSize = 200;
-        if (fabricImage.width! > fabricImage.height!) {
-          fabricImage.scaleToWidth(maxSize);
-        } else {
-          fabricImage.scaleToHeight(maxSize);
-        }
-        
-        // Mark as S3 image for PDF export handling
-        (fabricImage as any)._isS3Image = true;
-        (fabricImage as any)._originalUrl = imageUrl;
-        
-        fabricCanvasRef.current.add(fabricImage);
-        fabricCanvasRef.current.setActiveObject(fabricImage);
-        fabricCanvasRef.current.renderAll();
-        
-        console.warn('Imagem S3 carregada. Pode haver limitações na exportação para PDF.');
-      }).catch((error) => {
-        console.error('Erro ao carregar imagem S3:', error);
-        alert('Erro ao carregar imagem do S3.');
+    // SEMPRE usar crossOrigin='anonymous' para todas as imagens
+    // Isso é necessário para permitir exportação para PDF
+    fabric.FabricImage.fromURL(imageUrl, {
+      crossOrigin: 'anonymous'
+    }).then((fabricImage) => {
+      if (!fabricCanvasRef.current) return;
+      
+      fabricImage.set({
+        left: fabricCanvasRef.current.width! / 2,
+        top: fabricCanvasRef.current.height! / 2,
+        originX: 'center',
+        originY: 'center',
+        name: imageName
       });
-    } else {
-      // For local development or non-S3 images, use CORS
-      fabric.FabricImage.fromURL(imageUrl, {
+      
+      const maxSize = 200;
+      if (fabricImage.width! > fabricImage.height!) {
+        fabricImage.scaleToWidth(maxSize);
+      } else {
+        fabricImage.scaleToHeight(maxSize);
+      }
+      
+      (fabricImage as any)._originalUrl = imageUrl;
+      
+      fabricCanvasRef.current.add(fabricImage);
+      fabricCanvasRef.current.setActiveObject(fabricImage);
+      fabricCanvasRef.current.renderAll();
+    }).catch((error) => {
+      console.error('Erro ao carregar imagem:', error);
+      
+      // Se falhar com CORS, tentar adicionar timestamp para forçar novo carregamento
+      const urlWithTimestamp = imageUrl.includes('?') 
+        ? `${imageUrl}&t=${Date.now()}`
+        : `${imageUrl}?t=${Date.now()}`;
+      
+      fabric.FabricImage.fromURL(urlWithTimestamp, {
         crossOrigin: 'anonymous'
       }).then((fabricImage) => {
         if (!fabricCanvasRef.current) return;
@@ -178,11 +173,11 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
         fabricCanvasRef.current.add(fabricImage);
         fabricCanvasRef.current.setActiveObject(fabricImage);
         fabricCanvasRef.current.renderAll();
-      }).catch((error) => {
-        console.error('Erro ao carregar imagem com CORS:', error);
-        alert('Erro ao carregar imagem. Verifique se a imagem está acessível.');
+      }).catch((secondError) => {
+        console.error('Erro ao carregar imagem mesmo com timestamp:', secondError);
+        alert('Erro ao carregar imagem. Verifique se o CORS está configurado corretamente no servidor.');
       });
-    }
+    });
   };
 
   const addShapeToCanvas = (shapeType: 'rectangle' | 'circle' | 'triangle' | 'line', shapeSettings: any) => {

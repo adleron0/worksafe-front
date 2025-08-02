@@ -76,7 +76,8 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
 
     objects.forEach((obj, index) => {
       const objWithName = obj as fabric.Object & { name?: string };
-      if (objWithName.name === 'backgroundRect') return; // Ignorar o retângulo de fundo
+      // Ignorar o retângulo de fundo branco e a imagem de background
+      if (objWithName.name === 'backgroundRect' || objWithName.name === 'backgroundImage') return;
 
       // Determinar o tipo para contagem
       let elementType = '';

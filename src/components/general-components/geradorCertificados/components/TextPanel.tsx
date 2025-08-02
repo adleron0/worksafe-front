@@ -80,26 +80,23 @@ const TextPanel: React.FC<TextPanelProps> = ({
   // Atualizar configurações quando um texto for selecionado
   useEffect(() => {
     if (selectedText) {
-      console.log('TextPanel - selectedText mudou:', (selectedText as any).__uniqueID);
-      console.log('TextPanel - texto:', selectedText.text);
-      
-      setTextSettings({
+      const newSettings = {
         text: selectedText.text || '',
         fontFamily: selectedText.fontFamily || 'Arial',
         fontSize: selectedText.fontSize || 24,
-        fontWeight: selectedText.fontWeight === 'bold' ? 'bold' : 'normal',
-        fontStyle: selectedText.fontStyle === 'italic' ? 'italic' : 'normal',
+        fontWeight: selectedText.fontWeight === 'bold' ? 'bold' : 'normal' as 'normal' | 'bold',
+        fontStyle: selectedText.fontStyle === 'italic' ? 'italic' : 'normal' as 'normal' | 'italic',
         underline: selectedText.underline || false,
         fill: selectedText.fill as string || '#000000',
         textAlign: (selectedText.textAlign || 'left') as 'left' | 'center' | 'right',
         lineHeight: selectedText.lineHeight || 1.16,
-        letterSpacing: selectedText.charSpacing || 0,
+        letterSpacing: (selectedText as any).charSpacing || 0,
         listType: (selectedText as any).listType || 'none',
         listIndent: (selectedText as any).listIndent || 0,
         listItemSpacing: (selectedText as any).listItemSpacing || 8
-      });
-    } else {
-      console.log('TextPanel - nenhum texto selecionado');
+      };
+      
+      setTextSettings(newSettings);
     }
   }, [selectedText]);
 

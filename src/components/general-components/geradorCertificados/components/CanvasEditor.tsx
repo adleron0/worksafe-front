@@ -449,12 +449,15 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
           
           if (activeObject) {
             const objWithName = activeObject as fabric.Object & { name?: string };
-            if (objWithName.name !== 'backgroundRect') {
+            // Não permitir deletar o retângulo branco de background nem a imagem de background
+            if (objWithName.name !== 'backgroundRect' && objWithName.name !== 'backgroundImage') {
               fabricCanvasRef.current.remove(activeObject);
               fabricCanvasRef.current.discardActiveObject();
               fabricCanvasRef.current.requestRenderAll();
               onSelectionCleared();
               selectedShapeRef.current = null;
+            } else {
+              console.log('Não é permitido deletar o background');
             }
           }
         } else if ((e.ctrlKey || e.metaKey) && fabricCanvasRef.current) {
@@ -606,12 +609,9 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
           if (textObj.isEditing) {
             textObj.exitEditing();
           }
-        }
-        
-        if (['rectangle', 'circle', 'triangle', 'line', 'rect'].includes(objName || obj.type || '')) {
           onObjectSelected(obj);
           selectedShapeRef.current = obj;
-        } else if (obj.type === 'textbox' || obj.type === 'i-text') {
+        } else if (['rectangle', 'circle', 'triangle', 'line', 'rect'].includes(objName || obj.type || '')) {
           onObjectSelected(obj);
           selectedShapeRef.current = obj;
         } else {
@@ -668,7 +668,6 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       // Adicionar evento de clique direito
       canvas.on('mouse:down', (opt) => {
         const target = opt.target;
-        console.log('Mouse down em:', target);
         
         // Verificar se é clique direito
         if ('button' in opt.e && (opt.e as MouseEvent).button === 2) {

@@ -206,6 +206,39 @@ export const useCanvas = () => {
     canvasRefs.current.set(pageId, ref);
   }, []);
 
+  const checkCanvasTainted = useCallback(() => {
+    const canvasRef = getCurrentCanvasRef();
+    if (!canvasRef) {
+      console.log('No canvas ref found');
+      return false;
+    }
+    
+    const canvas = canvasRef.getCanvas();
+    if (!canvas) {
+      console.log('No canvas found');
+      return false;
+    }
+
+    try {
+      // Tentar acessar o contexto 2D do canvas
+      const canvasElement = canvas.lowerCanvasEl;
+      const ctx = canvasElement.getContext('2d');
+      if (!ctx) {
+        console.log('No 2D context found');
+        return false;
+      }
+      
+      // Tentar obter dados de imagem - isso falhará se o canvas estiver tainted
+      ctx.getImageData(0, 0, 1, 1);
+      console.log('✅ Canvas NÃO está tainted - exportação PDF funcionará');
+      return false;
+    } catch (e) {
+      console.error('❌ Canvas está tainted - exportação PDF falhará:', e);
+      console.error('Verifique se todas as imagens foram carregadas com crossOrigin="anonymous"');
+      return true;
+    }
+  }, [getCurrentCanvasRef]);
+
   const exportToPDF = useCallback(async () => {
     try {
       // Get the first page to determine dimensions
@@ -248,383 +281,25 @@ export const useCanvas = () => {
           pdf.addPage();
         }
 
-        // Always use manual rendering in production for S3 images
-        const isProduction = window.location.hostname !== 'localhost';
-        const hasImages = canvas.getObjects().some((obj: any) => obj.type === 'image');
-        
-        if (isProduction && hasImages) {
-          // Use manual rendering for canvases with S3 images
-          try {
-            // Create a temporary canvas for rendering
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            if (!tempCtx) {
-              throw new Error('Could not get 2D context');
-            }
-
-            // Set dimensions based on the original canvas
-            const zoom = canvas.getZoom();
-            const originalWidth = canvas.getWidth() / zoom;
-            const originalHeight = canvas.getHeight() / zoom;
-            
-            // Use a high resolution multiplier for better quality
-            const multiplier = 4; // Increased from 2 to 4 for higher quality
-            tempCanvas.width = originalWidth * multiplier;
-            tempCanvas.height = originalHeight * multiplier;
-            
-            // Scale the context for high resolution
-            tempCtx.scale(multiplier, multiplier);
-            
-            // Enable high-quality rendering
-            tempCtx.imageSmoothingEnabled = true;
-            tempCtx.imageSmoothingQuality = 'high';
-            
-            // Fill with white background
-            tempCtx.fillStyle = 'white';
-            tempCtx.fillRect(0, 0, originalWidth, originalHeight);
+        // Sempre usar o método direto do Fabric.js quando as imagens têm CORS configurado
+        try {
+          const dataURL = canvas.toDataURL({
+            format: 'png',
+            quality: 1.0,
+            multiplier: 4 // Alta qualidade
+          });
           
-          // Render each object manually to avoid CORS issues
-          const objects = canvas.getObjects();
-          
-          for (const obj of objects) {
-            tempCtx.save();
-            
-            // Get object properties
-            const left = obj.left || 0;
-            const top = obj.top || 0;
-            const angle = obj.angle || 0;
-            const scaleX = obj.scaleX || 1;
-            const scaleY = obj.scaleY || 1;
-            const opacity = obj.opacity || 1;
-            const originX = obj.originX || 'left';
-            const originY = obj.originY || 'top';
-            
-            // Calculate offset based on origin
-            let offsetX = 0;
-            let offsetY = 0;
-            
-            if (originX === 'center') {
-              offsetX = -(obj.width || 0) * scaleX / 2;
-            } else if (originX === 'right') {
-              offsetX = -(obj.width || 0) * scaleX;
-            }
-            
-            if (originY === 'center') {
-              offsetY = -(obj.height || 0) * scaleY / 2;
-            } else if (originY === 'bottom') {
-              offsetY = -(obj.height || 0) * scaleY;
-            }
-            
-            // Apply transformations
-            tempCtx.globalAlpha = opacity;
-            tempCtx.translate(left, top);
-            tempCtx.rotate((angle * Math.PI) / 180);
-            
-            // Render based on object type
-            if (obj.type === 'image') {
-              // Handle images
-              const img = obj as fabric.FabricImage;
-              const imgElement = img.getElement();
-              
-              try {
-                // Try to render the image first
-                try {
-                  tempCtx.drawImage(
-                    imgElement,
-                    offsetX,
-                    offsetY,
-                    (img.width || 0) * scaleX,
-                    (img.height || 0) * scaleY
-                  );
-                } catch (imageError) {
-                  console.error('Failed to draw image, using placeholder:', imageError);
-                  // If image fails, draw a placeholder
-                  tempCtx.fillStyle = '#f9f9f9';
-                  tempCtx.fillRect(
-                    offsetX,
-                    offsetY,
-                    (img.width || 0) * scaleX,
-                    (img.height || 0) * scaleY
-                  );
-                  tempCtx.strokeStyle = '#ddd';
-                  tempCtx.lineWidth = 2;
-                  tempCtx.strokeRect(
-                    offsetX,
-                    offsetY,
-                    (img.width || 0) * scaleX,
-                    (img.height || 0) * scaleY
-                  );
-                  
-                  // Add text to indicate image
-                  tempCtx.save();
-                  tempCtx.fillStyle = '#999';
-                  tempCtx.font = '14px Arial';
-                  tempCtx.textAlign = 'center';
-                  tempCtx.textBaseline = 'middle';
-                  tempCtx.fillText(
-                    'Imagem',
-                    offsetX + ((img.width || 0) * scaleX) / 2,
-                    offsetY + ((img.height || 0) * scaleY) / 2
-                  );
-                  tempCtx.restore();
-                }
-              } catch (error) {
-                console.error('Error drawing image:', error);
-                // Draw placeholder rectangle
-                tempCtx.fillStyle = '#f0f0f0';
-                tempCtx.fillRect(
-                  offsetX,
-                  offsetY,
-                  (img.width || 0) * scaleX,
-                  (img.height || 0) * scaleY
-                );
-                tempCtx.strokeStyle = '#ccc';
-                tempCtx.strokeRect(
-                  offsetX,
-                  offsetY,
-                  (img.width || 0) * scaleX,
-                  (img.height || 0) * scaleY
-                );
-              }
-            } else if (obj.type === 'rect') {
-              const rect = obj as fabric.Rect;
-              
-              // Check if it's the background rect with a pattern
-              if ((rect as any).name === 'backgroundRect' && rect.fill && typeof rect.fill === 'object') {
-                // Try to render pattern inside the rectangle bounds
-                const pattern = rect.fill as fabric.Pattern;
-                if (pattern.source) {
-                  try {
-                    const patternImg = pattern.source as HTMLImageElement;
-                    const transform = pattern.patternTransform || [1, 0, 0, 1, 0, 0];
-                    
-                    // Create clipping path for the rectangle
-                    tempCtx.save();
-                    tempCtx.beginPath();
-                    tempCtx.rect(0, 0, rect.width || 0, rect.height || 0);
-                    tempCtx.clip();
-                    
-                    // Apply pattern transform and draw image
-                    const scaleFactorX = transform[0];
-                    const scaleFactorY = transform[3];
-                    const offsetX = transform[4];
-                    const offsetY = transform[5];
-                    
-                    tempCtx.drawImage(
-                      patternImg,
-                      offsetX,
-                      offsetY,
-                      patternImg.width * scaleFactorX,
-                      patternImg.height * scaleFactorY
-                    );
-                    
-                    tempCtx.restore();
-                  } catch (error) {
-                    console.error('Error drawing pattern, using white background:', error);
-                    tempCtx.fillStyle = 'white';
-                    tempCtx.fillRect(0, 0, rect.width || 0, rect.height || 0);
-                  }
-                } else {
-                  tempCtx.fillStyle = 'white';
-                  tempCtx.fillRect(0, 0, rect.width || 0, rect.height || 0);
-                }
-              } else {
-                tempCtx.fillStyle = rect.fill as string || 'black';
-                
-                const width = rect.width || 0;
-                const height = rect.height || 0;
-                const rx = rect.rx || 0;
-                const ry = rect.ry || 0;
-                
-                tempCtx.scale(scaleX, scaleY);
-                
-                // Draw rounded rectangle if needed
-                if (rx || ry) {
-                  tempCtx.beginPath();
-                  tempCtx.moveTo(offsetX / scaleX + rx, offsetY / scaleY);
-                  tempCtx.lineTo(offsetX / scaleX + width - rx, offsetY / scaleY);
-                  tempCtx.quadraticCurveTo(offsetX / scaleX + width, offsetY / scaleY, offsetX / scaleX + width, offsetY / scaleY + ry);
-                  tempCtx.lineTo(offsetX / scaleX + width, offsetY / scaleY + height - ry);
-                  tempCtx.quadraticCurveTo(offsetX / scaleX + width, offsetY / scaleY + height, offsetX / scaleX + width - rx, offsetY / scaleY + height);
-                  tempCtx.lineTo(offsetX / scaleX + rx, offsetY / scaleY + height);
-                  tempCtx.quadraticCurveTo(offsetX / scaleX, offsetY / scaleY + height, offsetX / scaleX, offsetY / scaleY + height - ry);
-                  tempCtx.lineTo(offsetX / scaleX, offsetY / scaleY + ry);
-                  tempCtx.quadraticCurveTo(offsetX / scaleX, offsetY / scaleY, offsetX / scaleX + rx, offsetY / scaleY);
-                  tempCtx.closePath();
-                  tempCtx.fill();
-                } else {
-                  tempCtx.fillRect(offsetX / scaleX, offsetY / scaleY, width, height);
-                }
-                
-                // Draw stroke if exists
-                if (rect.stroke && rect.strokeWidth) {
-                  tempCtx.strokeStyle = rect.stroke as string;
-                  tempCtx.lineWidth = rect.strokeWidth;
-                  if (rx || ry) {
-                    tempCtx.stroke();
-                  } else {
-                    tempCtx.strokeRect(offsetX / scaleX, offsetY / scaleY, width, height);
-                  }
-                }
-              }
-            } else if (obj.type === 'circle') {
-              const circle = obj as fabric.Circle;
-              tempCtx.scale(scaleX, scaleY);
-              tempCtx.fillStyle = circle.fill as string || 'black';
-              tempCtx.beginPath();
-              tempCtx.arc(offsetX / scaleX + (circle.radius || 0), offsetY / scaleY + (circle.radius || 0), circle.radius || 0, 0, 2 * Math.PI);
-              tempCtx.fill();
-              
-              if (circle.stroke && circle.strokeWidth) {
-                tempCtx.strokeStyle = circle.stroke as string;
-                tempCtx.lineWidth = circle.strokeWidth;
-                tempCtx.stroke();
-              }
-            } else if (obj.type === 'triangle') {
-              const triangle = obj as fabric.Triangle;
-              const width = triangle.width || 0;
-              const height = triangle.height || 0;
-              
-              tempCtx.scale(scaleX, scaleY);
-              tempCtx.fillStyle = triangle.fill as string || 'black';
-              tempCtx.beginPath();
-              tempCtx.moveTo(offsetX / scaleX + width/2, offsetY / scaleY);
-              tempCtx.lineTo(offsetX / scaleX, offsetY / scaleY + height);
-              tempCtx.lineTo(offsetX / scaleX + width, offsetY / scaleY + height);
-              tempCtx.closePath();
-              tempCtx.fill();
-              
-              if (triangle.stroke && triangle.strokeWidth) {
-                tempCtx.strokeStyle = triangle.stroke as string;
-                tempCtx.lineWidth = triangle.strokeWidth;
-                tempCtx.stroke();
-              }
-            } else if (obj.type === 'line') {
-              const line = obj as fabric.Line;
-              const x1 = line.x1 || 0;
-              const y1 = line.y1 || 0;
-              const x2 = line.x2 || 0;
-              const y2 = line.y2 || 0;
-              
-              tempCtx.strokeStyle = line.stroke as string || 'black';
-              tempCtx.lineWidth = line.strokeWidth || 1;
-              tempCtx.beginPath();
-              tempCtx.moveTo(x1 - left, y1 - top);
-              tempCtx.lineTo(x2 - left, y2 - top);
-              tempCtx.stroke();
-            } else if (obj.type === 'textbox' || obj.type === 'i-text') {
-              const text = obj as fabric.Textbox;
-              tempCtx.scale(scaleX, scaleY);
-              tempCtx.fillStyle = text.fill as string || 'black';
-              tempCtx.font = `${text.fontStyle || 'normal'} ${text.fontWeight || 'normal'} ${text.fontSize || 16}px ${text.fontFamily || 'Arial'}`;
-              
-              // Handle text alignment
-              let textAlign: CanvasTextAlign = 'left';
-              if (text.textAlign === 'center') {
-                textAlign = 'center';
-              } else if (text.textAlign === 'right') {
-                textAlign = 'right';
-              }
-              tempCtx.textAlign = textAlign;
-              tempCtx.textBaseline = 'top';
-              
-              const lines = (text.text || '').split('\n');
-              const lineHeight = (text.fontSize || 16) * (text.lineHeight || 1);
-              
-              // Calculate starting position based on origin
-              let startX = offsetX / scaleX;
-              let startY = offsetY / scaleY;
-              
-              // Adjust X position based on text alignment and width
-              if (textAlign === 'center') {
-                startX += (text.width || 0) / 2;
-              } else if (textAlign === 'right') {
-                startX += (text.width || 0);
-              }
-              
-              lines.forEach((line, index) => {
-                const y = startY + (index * lineHeight);
-                
-                // Apply character spacing if set
-                if (text.charSpacing && text.charSpacing > 0) {
-                  const chars = line.split('');
-                  let currentX = startX;
-                  
-                  chars.forEach((char) => {
-                    tempCtx.fillText(char, currentX, y);
-                    const charWidth = tempCtx.measureText(char).width;
-                    currentX += charWidth + (text.charSpacing || 0) / 10;
-                  });
-                } else {
-                  tempCtx.fillText(line, startX, y);
-                }
-                
-                // Draw underline if needed
-                if (text.underline) {
-                  const metrics = tempCtx.measureText(line);
-                  tempCtx.strokeStyle = text.fill as string || 'black';
-                  tempCtx.lineWidth = 1;
-                  tempCtx.beginPath();
-                  
-                  let underlineX = startX;
-                  if (textAlign === 'center') {
-                    underlineX -= metrics.width / 2;
-                  } else if (textAlign === 'right') {
-                    underlineX -= metrics.width;
-                  }
-                  
-                  tempCtx.moveTo(underlineX, y + lineHeight * 0.9);
-                  tempCtx.lineTo(underlineX + metrics.width, y + lineHeight * 0.9);
-                  tempCtx.stroke();
-                }
-              });
-            }
-            
-            tempCtx.restore();
-          }
-          
-          // Get PDF page dimensions
           const pageWidth = pdf.internal.pageSize.getWidth();
           const pageHeight = pdf.internal.pageSize.getHeight();
           
-          // Add canvas directly to PDF without using toDataURL
-          // This avoids the tainted canvas issue
-          const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+          pdf.addImage(dataURL, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'NONE');
+        } catch (error) {
+          console.error('Erro ao exportar canvas:', error);
           
-          // Create a new clean canvas for the image data
-          const cleanCanvas = document.createElement('canvas');
-          cleanCanvas.width = tempCanvas.width;
-          cleanCanvas.height = tempCanvas.height;
-          const cleanCtx = cleanCanvas.getContext('2d');
-          
-          if (cleanCtx) {
-            cleanCtx.putImageData(imageData, 0, 0);
-            const dataURL = cleanCanvas.toDataURL('image/png', 1.0);
-            
-            // Add image to PDF filling the entire page (no margins) with high quality
-            pdf.addImage(dataURL, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'NONE');
-          }
-            
-          } catch (fallbackError) {
-            console.error('Error in manual rendering:', fallbackError);
-            toast.error(`Erro ao exportar página ${i + 1} com imagens S3`);
-          }
-        } else {
-          // No S3 images - use direct canvas export
-          try {
-            const dataURL = canvas.toDataURL({
-              format: 'png',
-              quality: 1.0,
-              multiplier: 4 // Increased from 2 to 4 for higher quality
-            });
-            
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            
-            pdf.addImage(dataURL, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'NONE');
-          } catch (error) {
-            console.error('Error exporting canvas:', error);
+          // Se falhar, verificar se é problema de CORS
+          if (error instanceof DOMException && error.name === 'SecurityError') {
+            toast.error(`Erro de CORS na página ${i + 1}. Verifique se todas as imagens foram carregadas com crossOrigin="anonymous"`);
+          } else {
             toast.error(`Erro ao exportar página ${i + 1}: ${error}`);
           }
         }
@@ -661,6 +336,7 @@ export const useCanvas = () => {
     addShapeToCanvas,
     addTextToCanvas,
     addPlaceholderToCanvas,
-    exportToPDF
+    exportToPDF,
+    checkCanvasTainted
   };
 };

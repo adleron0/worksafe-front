@@ -276,6 +276,12 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
     // Criar ID único para o texto
     const uniqueId = `text_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
+    // Correção específica para Bebas Neue
+    const isBebas = textSettings.fontFamily && textSettings.fontFamily.toLowerCase().includes('bebas');
+    const adjustedCharSpacing = isBebas ? 0 : textSettings.letterSpacing;
+    // Bebas Neue não deve usar bold (já é bold por natureza)
+    const adjustedFontWeight = isBebas ? 'normal' : textSettings.fontWeight;
+    
     const fabricText = createListTextbox(text, {
       left: centerX,
       top: centerY,
@@ -283,13 +289,13 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       originY: 'center',
       fontFamily: textSettings.fontFamily,
       fontSize: textSettings.fontSize,
-      fontWeight: textSettings.fontWeight,
+      fontWeight: adjustedFontWeight,
       fontStyle: textSettings.fontStyle,
       underline: textSettings.underline,
       fill: textSettings.fill,
       textAlign: textSettings.textAlign,
       lineHeight: textSettings.lineHeight,
-      charSpacing: textSettings.letterSpacing,
+      charSpacing: adjustedCharSpacing,
       listType: textSettings.listType || 'none',
       listIndent: textSettings.listIndent || 0,
       listItemSpacing: textSettings.listItemSpacing || 8,
@@ -308,6 +314,17 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
     // Adicionar ID único ao objeto
     (fabricText as any).__uniqueID = uniqueId;
     (fabricText as any).id = uniqueId;
+    
+    // Correção específica para Bebas Neue após criação
+    if (isBebas) {
+      (fabricText as any).splitByGrapheme = false;
+      fabricText._clearCache();
+      fabricText.initDimensions();
+      
+      // Definir width fixo para evitar espaços extras
+      (fabricText as any).fixedWidth = false;
+      (fabricText as any).dynamicMinWidth = 2;
+    }
     
     canvas.add(fabricText);
     canvas.setActiveObject(fabricText);
@@ -764,6 +781,63 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
         console.log('Texto modificado:', e);
         const target = e.target;
         if (target && (target.type === 'i-text' || target.type === 'textbox')) {
+          const textObj = target as fabric.Textbox;
+          
+          // Correção específica para Bebas Neue durante digitação
+          if (textObj.fontFamily && textObj.fontFamily.toLowerCase().includes('bebas')) {
+            console.log('🔧 Aplicando correção Bebas Neue durante digitação');
+            
+            // Forçar configurações corretas
+            (textObj as any).splitByGrapheme = false;
+            (textObj as any).charSpacing = 0;
+            
+            // Correção específica para Bebas Neue + Bold
+            // Bebas Neue já é uma fonte bold por natureza, aplicar bold causa problemas
+            if (textObj.fontWeight === 'bold' || textObj.fontWeight === 700 || textObj.fontWeight === '700') {
+              console.log('⚠️ Bebas Neue com bold detectado - aplicando correção');
+              // Para Bebas Neue, usar normal mesmo quando bold é solicitado
+              // pois a fonte já é naturalmente bold
+              textObj.set('fontWeight', 'normal');
+            }
+            
+            // Limpar texto de caracteres invisíveis e espaços extras
+            let currentText = textObj.text || '';
+            
+            // Remover caracteres de largura zero e espaços não-quebráveis
+            currentText = currentText
+              .replace(/\u200B/g, '') // Zero-width space
+              .replace(/\u200C/g, '') // Zero-width non-joiner
+              .replace(/\u200D/g, '') // Zero-width joiner
+              .replace(/\uFEFF/g, '') // Zero-width no-break space
+              .replace(/\u00A0/g, ' '); // Non-breaking space para espaço normal
+            
+            // Se o texto mudou, atualizar
+            if (currentText !== textObj.text) {
+              console.log(`Limpando caracteres invisíveis: "${textObj.text}" -> "${currentText}"`);
+              textObj.set('text', currentText);
+            }
+            
+            // Forçar width correto baseado no texto visível
+            const ctx = canvas.getContext();
+            ctx.save();
+            ctx.font = `${textObj.fontSize}px ${textObj.fontFamily}`;
+            const measuredWidth = ctx.measureText(currentText).width;
+            ctx.restore();
+            
+            // Ajustar width se necessário
+            if (Math.abs(textObj.width - measuredWidth) > 5) {
+              console.log(`Ajustando width: ${textObj.width} -> ${measuredWidth}`);
+              textObj.set('width', measuredWidth + 10); // +10 para pequena margem
+            }
+            
+            // Recalcular dimensões
+            textObj._clearCache();
+            textObj.initDimensions();
+            
+            // Forçar atualização visual
+            canvas.renderAll();
+          }
+          
           onObjectSelected(target);
           
           // Para listas, atualizar marcadores após mudanças
@@ -806,6 +880,21 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
         console.log('Entrou em modo de edição:', e);
         const target = e.target as fabric.Textbox;
         if (target) {
+          // Correção específica para Bebas Neue ao entrar em edição
+          if (target.fontFamily && target.fontFamily.toLowerCase().includes('bebas')) {
+            console.log('🔧 Configurando Bebas Neue para edição');
+            (target as any).splitByGrapheme = false;
+            (target as any).charSpacing = 0;
+            
+            // Corrigir bold para Bebas Neue
+            if (target.fontWeight === 'bold' || target.fontWeight === 700 || target.fontWeight === '700') {
+              console.log('⚠️ Removendo bold de Bebas Neue ao entrar em edição');
+              target.set('fontWeight', 'normal');
+            }
+            
+            target._clearCache();
+          }
+          
           // Atualizar referência do texto em edição
           currentEditingText = target;
           console.log('Texto em edição atualizado:', (target as any).__uniqueID);

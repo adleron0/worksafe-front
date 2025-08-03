@@ -567,26 +567,149 @@ export const useCanvas = () => {
       // Limpar e carregar o canvas da frente
       frontCanvas.clear();
       await new Promise<void>((resolve, reject) => {
+        // Preparar para preservar fontes
+        const fontsToPreserve = new Map<string, string>();
+        
+        // Extrair fontes do JSON antes de carregar
+        if (data.fabricJsonFront.objects) {
+          data.fabricJsonFront.objects.forEach((objData: any, index: number) => {
+            if ((objData.type === 'textbox' || objData.type === 'i-text') && objData.fontFamily) {
+              const tempId = `temp_${index}_${objData.text?.substring(0, 10)}`;
+              fontsToPreserve.set(tempId, objData.fontFamily);
+              console.log(`Fonte a preservar [${tempId}]: ${objData.fontFamily}`);
+            }
+          });
+        }
+        
         frontCanvas.loadFromJSON(data.fabricJsonFront, async () => {
           // Adicionar IDs únicos aos objetos carregados se não tiverem
           let idCounter = 0;
-          frontCanvas.getObjects().forEach((obj: fabric.Object) => {
+          const textObjects: fabric.Textbox[] = [];
+          
+          frontCanvas.getObjects().forEach((obj: fabric.Object, index: number) => {
             const type = obj.type || 'object';
             const timestamp = Date.now();
             const uniqueId = `${type}_${timestamp}_${idCounter++}_${Math.random().toString(36).substring(2, 11)}`;
             (obj as any).__uniqueID = uniqueId;
             (obj as any).id = uniqueId;
+            
+            // Coletar objetos de texto
+            if (obj.type === 'textbox' || obj.type === 'i-text') {
+              const textObj = obj as fabric.Textbox;
+              
+              // Limpar texto de espaços extras que podem ter vindo do JSON
+              const originalText = textObj.text || '';
+              const cleanText = originalText.trim();
+              if (originalText !== cleanText) {
+                textObj.set('text', cleanText);
+                console.log(`🧹 Texto limpo: "${originalText}" -> "${cleanText}"`);
+              }
+              
+              // Verificar e corrigir charSpacing se estiver com valor errado
+              const currentCharSpacing = (textObj as any).charSpacing || 0;
+              if (currentCharSpacing > 100 || currentCharSpacing < -50) {
+                console.log(`⚠️ CharSpacing anormal detectado: ${currentCharSpacing}. Resetando para 0`);
+                textObj.set('charSpacing' as keyof fabric.Textbox, 0 as any);
+              }
+              
+              // Correção específica para Bebas Neue
+              const fontFamily = textObj.fontFamily;
+              if (fontFamily && fontFamily.toLowerCase().includes('bebas')) {
+                console.log(`🔧 Aplicando correção específica para Bebas Neue`);
+                // Bebas Neue precisa de charSpacing 0 e splitByGrapheme false
+                textObj.set('charSpacing' as keyof fabric.Textbox, 0 as any);
+                (textObj as any).splitByGrapheme = false;
+                
+                // Bebas Neue + Bold = problemas de espaçamento
+                if (textObj.fontWeight === 'bold' || textObj.fontWeight === 700 || textObj.fontWeight === '700') {
+                  console.log('⚠️ Removendo bold de Bebas Neue durante carregamento do JSON');
+                  textObj.set('fontWeight', 'normal');
+                }
+                
+                // Forçar atualização das métricas de texto
+                textObj._clearCache();
+              }
+              
+              // Recalcular dimensões do textbox baseado no texto real
+              // Isso previne espaços em branco extras na renderização
+              textObj.initDimensions();
+              
+              const tempId = `temp_${index}_${textObj.text?.substring(0, 10)}`;
+              const originalFont = fontsToPreserve.get(tempId);
+              
+              if (originalFont) {
+                console.log(`📝 Preparando fonte ${originalFont} para texto: "${textObj.text?.substring(0, 20)}..."`);
+                // Armazenar a fonte desejada para aplicação posterior
+                (textObj as any)._targetFontFamily = originalFont;
+                textObjects.push(textObj);
+              }
+            }
           });
           
-          // Forçar renderização e atualização dos eventos
-          frontCanvas.renderAll();
-          frontCanvas.calcOffset();
+          // Função para aplicar fontes com verificação robusta
+          const applyFontsWithRetry = async (attempts = 0, maxAttempts = 5) => {
+            console.log(`🔄 Tentativa ${attempts + 1} de aplicação de fontes`);
+            
+            let fontsApplied = 0;
+            let fontsTotal = textObjects.length;
+            
+            for (const textObj of textObjects) {
+              const targetFont = (textObj as any)._targetFontFamily;
+              if (!targetFont) continue;
+              
+              // Verificar se a fonte está disponível
+              const isFontAvailable = document.fonts.check(`12px "${targetFont}"`);
+              
+              if (isFontAvailable) {
+                // Estratégia robusta de aplicação de fonte
+                console.log(`✅ Aplicando fonte ${targetFont} ao texto`);
+                
+                // 1. Forçar fallback temporário
+                textObj.set('fontFamily', 'Arial');
+                frontCanvas.renderAll();
+                
+                // 2. Aguardar frame para garantir que o fallback foi aplicado
+                await new Promise(resolve => requestAnimationFrame(resolve));
+                
+                // 3. Aplicar a fonte desejada
+                textObj.set('fontFamily', targetFont);
+                textObj.dirty = true;
+                
+                // 4. Forçar recálculo de dimensões
+                textObj._clearCache();
+                textObj.setCoords();
+                
+                fontsApplied++;
+              } else {
+                console.warn(`⚠️ Fonte ${targetFont} não disponível ainda`);
+              }
+            }
+            
+            // Renderizar após todas as mudanças
+            frontCanvas.renderAll();
+            frontCanvas.requestRenderAll();
+            
+            console.log(`📊 Fontes aplicadas: ${fontsApplied}/${fontsTotal}`);
+            
+            // Se nem todas as fontes foram aplicadas e ainda temos tentativas
+            if (fontsApplied < fontsTotal && attempts < maxAttempts - 1) {
+              console.log(`⏳ Aguardando 200ms antes da próxima tentativa...`);
+              setTimeout(() => applyFontsWithRetry(attempts + 1, maxAttempts), 200);
+            } else if (fontsApplied === fontsTotal) {
+              console.log(`🎉 Todas as fontes foram aplicadas com sucesso!`);
+            } else {
+              console.warn(`⚠️ Nem todas as fontes puderam ser aplicadas após ${maxAttempts} tentativas`);
+            }
+          };
+          
+          // Iniciar aplicação de fontes após um breve delay para garantir que o canvas está estável
+          setTimeout(() => applyFontsWithRetry(), 100);
           
           // Re-emitir evento de canvas modificado para garantir que os listeners sejam atualizados
           frontCanvas.fire('path:created', {});
           
-          // Aguardar um momento para garantir que todos os objetos sejam carregados
-          setTimeout(async () => {
+          // Configurar objetos de background após as fontes estarem corretas
+          setTimeout(() => {
             // Primeiro, garantir que existe um retângulo branco de background
             const objects = frontCanvas.getObjects();
             let whiteRect = objects.find((obj: fabric.Object) => 

@@ -46,9 +46,11 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
   const [deletingImageId, setDeletingImageId] = useState<number | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuData>({ x: 0, y: 0, target: null });
   const [showContextMenu, setShowContextMenu] = useState(false);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
   
   // Certificate management states
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
   const [certificateInfo, setCertificateInfo] = useState<{
     id?: number;
     name?: string;
@@ -63,6 +65,8 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
     isModified: false
   } : {});
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isLoadingTemplate, setIsLoadingTemplate] = useState(false); // Loading state for template
+  const [shouldShowSkeleton, setShouldShowSkeleton] = useState(!!editingData); // Skeleton display state
   
   // Shape control states
   const [shapeSettings, setShapeSettings] = useState<ShapeSettings>({
@@ -79,6 +83,172 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
   const [activeTab, setActiveTab] = useState<string>('layers');
   
   const queryClient = useQueryClient();
+
+  // Carregar fontes do Google no início
+  useEffect(() => {
+    const loadGoogleFonts = async () => {
+      try {
+        // Lista de fontes para carregar
+        const fontsToLoad = [
+          'Bebas Neue',
+          'Roboto',
+          'Open Sans', 
+          'Lato',
+          'Montserrat',
+          'Poppins',
+          'Raleway',
+          'Inter',
+          'Playfair Display',
+          'Oswald',
+          'Merriweather'
+        ];
+
+        // Adicionar estilos CSS para garantir importação das fontes
+        const styleId = 'google-fonts-import-styles';
+        if (!document.getElementById(styleId)) {
+          const style = document.createElement('style');
+          style.id = styleId;
+          style.textContent = `
+            @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Inter:wght@400;700&family=Playfair+Display:wght@400;700&family=Oswald:wght@400;700&family=Merriweather:wght@400;700&display=swap');
+            
+            /* Teste específico para Bebas Neue */
+            .bebas-neue-test {
+              font-family: 'Bebas Neue', sans-serif !important;
+            }
+          `;
+          document.head.appendChild(style);
+          console.log('🎨 Estilos de importação de fontes adicionados');
+        }
+
+        // Verificar se já existe o link das fontes
+        let link = document.querySelector('link[href*="fonts.googleapis.com"]') as HTMLLinkElement;
+        
+        if (!link) {
+          // Criar link para as fontes
+          link = document.createElement('link');
+          // Importante: Bebas+Neue com + para espaço e display=swap para carregamento mais rápido
+          link.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Inter:wght@400;700&family=Playfair+Display:wght@400;700&family=Oswald:wght@400;700&family=Merriweather:wght@400;700&display=swap';
+          link.rel = 'stylesheet';
+          link.crossOrigin = 'anonymous'; // Adicionar crossOrigin para evitar problemas de CORS
+          document.head.appendChild(link);
+          console.log('📝 Link de fontes do Google adicionado ao documento');
+        } else {
+          console.log('🔗 Link de fontes já existe no documento');
+        }
+
+        // Aguardar o carregamento usando Font Loading API
+        if ('fonts' in document) {
+          console.log('Aguardando carregamento de fontes...');
+          
+          // Aguardar que o documento esteja pronto para fontes
+          await document.fonts.ready;
+          
+          // Verificar individualmente cada fonte
+          const fontPromises = fontsToLoad.map(async (fontFamily) => {
+            try {
+              // Criar uma string de teste para verificação
+              const testString = `12px "${fontFamily}"`;
+              console.log(`🔍 Verificando fonte: ${testString}`);
+              
+              // Tentar carregar a fonte explicitamente primeiro
+              try {
+                await document.fonts.load(testString, 'Test');
+                console.log(`📥 Fonte ${fontFamily} carregada via fonts.load()`);
+              } catch (loadError) {
+                console.warn(`⚠️ Não foi possível carregar ${fontFamily} via fonts.load():`, loadError);
+              }
+              
+              // Verificar se a fonte está disponível
+              if (document.fonts.check(testString, 'Test')) {
+                console.log(`✅ Fonte ${fontFamily} confirmada como disponível`);
+                return true;
+              }
+
+              // Se não estiver disponível, aguardar um pouco mais
+              return new Promise<boolean>((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 30; // 3 segundos
+                
+                const checkFont = () => {
+                  attempts++;
+                  if (document.fonts.check(testString, 'Test')) {
+                    console.log(`✅ Fonte ${fontFamily} carregada após ${attempts} tentativas`);
+                    resolve(true);
+                  } else if (attempts >= maxAttempts) {
+                    console.warn(`⚠️ Timeout ao carregar fonte ${fontFamily} após ${attempts} tentativas`);
+                    // Ainda assim retornar true para não bloquear o resto
+                    resolve(true);
+                  } else {
+                    setTimeout(checkFont, 100);
+                  }
+                };
+                checkFont();
+              });
+            } catch (error) {
+              console.warn(`⚠️ Erro ao verificar fonte ${fontFamily}:`, error);
+              return true; // Não bloquear por erro
+            }
+          });
+
+          // Aguardar todas as fontes ou timeout
+          await Promise.allSettled(fontPromises);
+          
+          // Testar especificamente a Bebas Neue
+          const testBebasNeue = () => {
+            const testDiv = document.createElement('div');
+            testDiv.style.position = 'absolute';
+            testDiv.style.left = '-9999px';
+            testDiv.style.fontFamily = 'monospace';
+            testDiv.textContent = 'TestWidthMeasure';
+            document.body.appendChild(testDiv);
+            const monoWidth = testDiv.offsetWidth;
+            
+            testDiv.style.fontFamily = '"Bebas Neue", monospace';
+            const bebasWidth = testDiv.offsetWidth;
+            
+            document.body.removeChild(testDiv);
+            
+            const isLoaded = monoWidth !== bebasWidth;
+            console.log(`🔍 Teste Bebas Neue: ${isLoaded ? '✅ Carregada' : '❌ Não carregada'} (mono: ${monoWidth}px, bebas: ${bebasWidth}px)`);
+            return isLoaded;
+          };
+          
+          // Tentar algumas vezes até a fonte carregar
+          let bebasLoaded = false;
+          for (let i = 0; i < 5; i++) {
+            bebasLoaded = testBebasNeue();
+            if (bebasLoaded) break;
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+          
+          if (!bebasLoaded) {
+            console.warn('⚠️ Bebas Neue não carregou pelo método padrão. Verificando disponibilidade...');
+            
+            // Verificar se a fonte está na lista de fontes disponíveis
+            if ('fonts' in document) {
+              const availableFonts: string[] = [];
+              for (const font of document.fonts) {
+                availableFonts.push((font as FontFace).family);
+              }
+              console.log('📋 Fontes disponíveis no documento:', availableFonts);
+            }
+          }
+          
+          // Aguardar um pouco adicional para garantir estabilidade
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          console.log('✅ Processo de carregamento de fontes concluído');
+        }
+        
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error('Erro no carregamento de fontes:', error);
+        setFontsLoaded(true); // Continuar mesmo com erro
+      }
+    };
+
+    loadGoogleFonts();
+  }, []);
   
   // Canvas hook
   const {
@@ -541,7 +711,49 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         textObj.set('fontSize', settings.fontSize);
       }
       if ('fontFamily' in settings) {
-        textObj.set('fontFamily', settings.fontFamily);
+        const newFont = settings.fontFamily;
+        const currentFont = textObj.fontFamily;
+        
+        console.log(`🔄 Mudando fonte de "${currentFont}" para "${newFont}"`);
+        
+        // Aplicar estratégia robusta sempre
+        const applyFontChange = async () => {
+          // Verificar se a fonte está disponível
+          const isFontAvailable = document.fonts.check(`12px "${newFont}"`);
+          
+          if (!isFontAvailable) {
+            console.warn(`⚠️ Fonte ${newFont} não disponível, aguardando...`);
+            // Aguardar um pouco para a fonte carregar
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+          
+          // 1. Aplicar fallback temporário
+          textObj.set('fontFamily', 'Arial');
+          textObj.dirty = true;
+          canvas.renderAll();
+          
+          // 2. Aguardar frame
+          await new Promise(resolve => requestAnimationFrame(resolve));
+          
+          // 3. Aplicar nova fonte
+          textObj.set('fontFamily', newFont);
+          textObj.dirty = true;
+          
+          // 4. Forçar limpeza de cache se disponível
+          if ('_clearCache' in textObj && typeof textObj['_clearCache' as keyof typeof textObj] === 'function') {
+            const clearCacheMethod = textObj['_clearCache' as keyof typeof textObj] as () => void;
+            clearCacheMethod.call(textObj);
+          }
+          textObj.setCoords();
+          
+          // 5. Renderizar
+          canvas.renderAll();
+          canvas.requestRenderAll();
+          
+          console.log(`✅ Fonte ${newFont} aplicada`);
+        };
+        
+        applyFontChange();
       }
       if ('underline' in settings) {
         textObj.set('underline', settings.underline);
@@ -578,11 +790,17 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
     }
   };
 
-  // Carregar dados de edição quando o componente montar
+  // Carregar dados de edição quando o componente montar e as fontes estiverem carregadas
   useEffect(() => {
-    if (editingData && isInitialLoad) {
+    if (editingData && isInitialLoad && fontsLoaded) {
       const loadEditingData = async () => {
         try {
+          setIsLoadingTemplate(true); // Start loading
+          setShouldShowSkeleton(false); // Hide skeleton to allow canvas to render
+          
+          // Aguardar o canvas estar pronto
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
           // Parse do JSON se for string
           const fabricJsonFront = typeof editingData.fabricJsonFront === 'string' 
             ? JSON.parse(editingData.fabricJsonFront) 
@@ -610,22 +828,89 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
               const canvas = canvasRef.getCanvas();
               const objects = canvas.getObjects();
               
+              // Primeiro, configurar propriedades básicas
               objects.forEach((obj: fabric.Object) => {
-                // Garantir que objetos de texto tenham propriedades corretas
                 if (obj.type === 'textbox' || obj.type === 'i-text') {
                   const textObj = obj as fabric.Textbox;
+                  
+                  // Salvar o texto original e limpar espaços extras
+                  const originalText = textObj.text || '';
+                  const cleanText = originalText.trim();
+                  
+                  // Se o texto tem espaços extras, limpar
+                  if (originalText !== cleanText) {
+                    textObj.set('text', cleanText);
+                    console.log(`Texto limpo: "${originalText}" -> "${cleanText}"`);
+                  }
+                  
+                  // Verificar charSpacing - o problema dos espaços entre letras
+                  const currentCharSpacing = (textObj as any).charSpacing || 0;
+                  console.log(`CharSpacing atual para "${cleanText}": ${currentCharSpacing}`);
+                  
+                  // Se charSpacing estiver muito alto, resetar para 0
+                  if (currentCharSpacing !== 0) {
+                    console.log(`⚠️ Resetando charSpacing de ${currentCharSpacing} para 0`);
+                    (textObj as any).charSpacing = 0;
+                    textObj.set('charSpacing' as keyof fabric.Textbox, 0 as any);
+                  }
+                  
+                  // Correção específica para Bebas Neue
+                  const fontFamily = textObj.fontFamily;
+                  if (fontFamily && fontFamily.toLowerCase().includes('bebas')) {
+                    console.log(`🔧 Aplicando correção específica para Bebas Neue no carregamento`);
+                    // Bebas Neue tem problemas com splitByGrapheme
+                    (textObj as any).splitByGrapheme = false;
+                    // Forçar charSpacing 0
+                    (textObj as any).charSpacing = 0;
+                    
+                    // Bebas Neue + Bold = problemas de espaçamento
+                    if (textObj.fontWeight === 'bold' || textObj.fontWeight === 700 || textObj.fontWeight === '700') {
+                      console.log('⚠️ Removendo bold de Bebas Neue no carregamento');
+                      textObj.set('fontWeight', 'normal');
+                    }
+                    
+                    // Limpar cache para forçar recálculo
+                    if ('_clearCache' in textObj && typeof (textObj as any)._clearCache === 'function') {
+                      (textObj as any)._clearCache();
+                    }
+                  }
+                  
+                  // Configurar propriedades
                   textObj.set({
                     editable: true,
                     selectable: true,
                     hasControls: true,
                     hasBorders: true
                   });
+                  
+                  // Recalcular o width baseado no texto real
+                  // Isso corrige o problema de espaços em branco extras
+                  textObj.initDimensions();
+                  textObj.setCoords();
                 }
               });
               
               // Forçar atualização do canvas
               canvas.renderAll();
               canvas.requestRenderAll();
+              
+              // Depois de um delay, verificar e corrigir fontes se necessário
+              setTimeout(() => {
+                objects.forEach((obj: fabric.Object) => {
+                  if (obj.type === 'textbox' || obj.type === 'i-text') {
+                    const textObj = obj as fabric.Textbox;
+                    const currentFont = textObj.fontFamily || 'Arial';
+                    
+                    // Apenas logar para debug
+                    console.log(`Texto "${textObj.text}" com fonte: ${currentFont}`);
+                    
+                    // Marcar como dirty para garantir renderização
+                    textObj.dirty = true;
+                  }
+                });
+                
+                canvas.renderAll();
+              }, 800);
             }
             
             setIsInitialLoad(false);
@@ -634,12 +919,17 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
           console.error('Erro ao carregar dados do certificado:', error);
           toast.error('Erro ao carregar modelo de certificado');
           setIsInitialLoad(false);
+        } finally {
+          // Aguardar um pouco para a renderização final antes de remover o loading
+          setTimeout(() => {
+            setIsLoadingTemplate(false);
+          }, 1500);
         }
       };
       
       loadEditingData();
     }
-  }, [editingData, loadCanvasData, isInitialLoad, getCurrentCanvasRef]);
+  }, [editingData, loadCanvasData, isInitialLoad, getCurrentCanvasRef, fontsLoaded]);
 
   // Marcar como modificado quando houver mudanças no canvas
   useEffect(() => {
@@ -703,6 +993,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
             companyId: result.companyId,
             isModified: false
           });
+          setLastSavedTime(new Date());
         }
       } else {
         // Criar novo certificado
@@ -716,14 +1007,23 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
             companyId: result.companyId,
             isModified: false
           });
+          setLastSavedTime(new Date());
         }
       }
       
-      setShowSaveModal(false);
-      
-      // Se houver callback onClose, chamar após salvar com sucesso
-      if (onClose) {
-        setTimeout(onClose, 500); // Pequeno delay para permitir que o toast apareça
+      // Só fechar o modal automaticamente se for criação de novo certificado
+      // Em modo de edição, manter aberto para permitir múltiplas edições
+      if (!certificateInfo.id) {
+        setShowSaveModal(false);
+        
+        // Se houver callback onClose, chamar após salvar com sucesso
+        if (onClose) {
+          setTimeout(onClose, 500); // Pequeno delay para permitir que o toast apareça
+        }
+      }
+      // Se for edição, manter o modal aberto mas mostrar feedback
+      else {
+        toast.success('Certificado atualizado com sucesso!');
       }
     } catch (error) {
       console.error('Erro ao salvar certificado:', error);
@@ -733,6 +1033,52 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
 
 
   const menuData = getContextMenuItems();
+
+  // Loading skeleton component - only show before canvas is ready
+  if (shouldShowSkeleton) {
+    return (
+      <div className="flex flex-col h-full">
+        {/* Toolbar Skeleton */}
+        <div className="h-14 border-b bg-background flex items-center px-4">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-24 bg-muted animate-pulse rounded" />
+            <div className="h-8 w-32 bg-muted animate-pulse rounded" />
+          </div>
+        </div>
+        
+        <div className="flex gap-6 flex-1 pt-1 pb-4 overflow-hidden">
+          {/* Left Panel Skeleton */}
+          <div className="flex flex-col h-full w-64 border-r pr-2 flex-shrink-0">
+            <div className="flex gap-2 mb-4">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="w-10 h-10 bg-muted animate-pulse rounded-lg" />
+              ))}
+            </div>
+            <div className="space-y-3 flex-1">
+              <div className="h-20 bg-muted animate-pulse rounded" />
+              <div className="h-20 bg-muted animate-pulse rounded" />
+              <div className="h-20 bg-muted animate-pulse rounded" />
+            </div>
+          </div>
+          
+          {/* Canvas Area Skeleton */}
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <div className="flex-1 relative overflow-hidden bg-gray-50 dark:bg-gray-900">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <Loader2 className="w-12 h-12 animate-spin mx-auto text-muted-foreground mb-4" />
+                  <p className="text-sm text-muted-foreground">Carregando template...</p>
+                  <p className="text-xs text-muted-foreground mt-1">Preparando fontes e elementos</p>
+                </div>
+              </div>
+            </div>
+            {/* Page Controls Skeleton */}
+            <div className="mt-4 h-12 bg-muted animate-pulse rounded" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -860,6 +1206,17 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Canvas for each page */}
         <div className="flex-1 relative overflow-hidden">
+          {/* Loading overlay - shows on top of canvas while loading */}
+          {isLoadingTemplate && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+              <div className="text-center">
+                <Loader2 className="w-10 h-10 animate-spin mx-auto text-primary mb-3" />
+                <p className="text-sm font-medium">Carregando template...</p>
+                <p className="text-xs text-muted-foreground mt-1">Por favor, aguarde</p>
+              </div>
+            </div>
+          )}
+          
           {pages.map((page, index) => (
             <div
               key={page.id}
@@ -924,6 +1281,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
           courseId: certificateInfo.courseId
         }}
         mode={certificateInfo.id ? 'update' : 'create'}
+        lastSaved={lastSavedTime}
       />
       
     </div>

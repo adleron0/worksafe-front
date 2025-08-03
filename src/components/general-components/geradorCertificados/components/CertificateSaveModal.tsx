@@ -22,6 +22,7 @@ interface CertificateSaveModalProps {
     courseId?: number;
   };
   mode?: 'create' | 'update';
+  lastSaved?: Date | null;
 }
 
 interface Course {
@@ -40,7 +41,8 @@ export const CertificateSaveModal: React.FC<CertificateSaveModalProps> = ({
   onSave,
   isLoading = false,
   defaultValues = {},
-  mode = 'create'
+  mode = 'create',
+  lastSaved = null
 }) => {
   const [name, setName] = useState(defaultValues.name || '');
   const [courseId, setCourseId] = useState<number | null>(defaultValues.courseId || null);
@@ -90,6 +92,11 @@ export const CertificateSaveModal: React.FC<CertificateSaveModalProps> = ({
           </DialogTitle>
           <DialogDescription>
             Preencha as informações abaixo para {mode === 'create' ? 'salvar' : 'atualizar'} o modelo de certificado.
+            {mode === 'update' && lastSaved && (
+              <span className="block mt-2 text-green-600 dark:text-green-400 text-sm">
+                ✓ Última atualização: {new Date(lastSaved).toLocaleTimeString('pt-BR')}
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -144,7 +151,7 @@ export const CertificateSaveModal: React.FC<CertificateSaveModalProps> = ({
             onClick={onClose}
             disabled={isLoading}
           >
-            Cancelar
+            {mode === 'update' ? 'Fechar' : 'Cancelar'}
           </Button>
           <Button
             onClick={handleSave}

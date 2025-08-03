@@ -30,18 +30,18 @@ export interface TextSettings {
 
 // Lista de fontes do Google Fonts populares e Bebas Neue
 const googleFonts = [
-  { name: 'Arial', value: 'Arial' },
-  { name: 'Bebas Neue', value: 'Bebas Neue' },
-  { name: 'Roboto', value: 'Roboto' },
-  { name: 'Open Sans', value: 'Open Sans' },
-  { name: 'Lato', value: 'Lato' },
-  { name: 'Montserrat', value: 'Montserrat' },
-  { name: 'Poppins', value: 'Poppins' },
-  { name: 'Raleway', value: 'Raleway' },
-  { name: 'Inter', value: 'Inter' },
-  { name: 'Playfair Display', value: 'Playfair Display' },
-  { name: 'Oswald', value: 'Oswald' },
-  { name: 'Merriweather', value: 'Merriweather' },
+  { name: 'Arial', value: 'Arial', fallback: 'Arial, sans-serif' },
+  { name: 'Bebas Neue', value: 'Bebas Neue', fallback: '"Bebas Neue", sans-serif' },
+  { name: 'Roboto', value: 'Roboto', fallback: 'Roboto, sans-serif' },
+  { name: 'Open Sans', value: 'Open Sans', fallback: '"Open Sans", sans-serif' },
+  { name: 'Lato', value: 'Lato', fallback: 'Lato, sans-serif' },
+  { name: 'Montserrat', value: 'Montserrat', fallback: 'Montserrat, sans-serif' },
+  { name: 'Poppins', value: 'Poppins', fallback: 'Poppins, sans-serif' },
+  { name: 'Raleway', value: 'Raleway', fallback: 'Raleway, sans-serif' },
+  { name: 'Inter', value: 'Inter', fallback: 'Inter, sans-serif' },
+  { name: 'Playfair Display', value: 'Playfair Display', fallback: '"Playfair Display", serif' },
+  { name: 'Oswald', value: 'Oswald', fallback: 'Oswald, sans-serif' },
+  { name: 'Merriweather', value: 'Merriweather', fallback: 'Merriweather, serif' },
 ];
 
 const TextPanel: React.FC<TextPanelProps> = ({
@@ -65,24 +65,16 @@ const TextPanel: React.FC<TextPanelProps> = ({
     listItemSpacing: 8
   });
 
-  // Carregar fontes do Google quando o componente montar
-  useEffect(() => {
-    const loadGoogleFonts = () => {
-      const link = document.createElement('link');
-      link.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Inter:wght@400;700&family=Playfair+Display:wght@400;700&family=Oswald:wght@400;700&family=Merriweather:wght@400;700&display=swap';
-      link.rel = 'stylesheet';
-      document.head.appendChild(link);
-    };
-
-    loadGoogleFonts();
-  }, []);
+  // As fontes do Google são carregadas centralmente no componente pai (gerador.tsx)
+  // Este useEffect foi removido para evitar carregamento duplicado
 
   // Atualizar configurações quando um texto for selecionado
   useEffect(() => {
     if (selectedText) {
+      const actualFontFamily = selectedText.fontFamily || 'Arial';
       const newSettings = {
         text: selectedText.text || '',
-        fontFamily: selectedText.fontFamily || 'Arial',
+        fontFamily: actualFontFamily,
         fontSize: selectedText.fontSize || 24,
         fontWeight: selectedText.fontWeight === 'bold' ? 'bold' : 'normal' as 'normal' | 'bold',
         fontStyle: selectedText.fontStyle === 'italic' ? 'italic' : 'normal' as 'normal' | 'italic',
@@ -97,8 +89,10 @@ const TextPanel: React.FC<TextPanelProps> = ({
       };
       
       setTextSettings(newSettings);
+      
+      // Não forçar sincronização automática aqui pois pode conflitar com o carregamento
     }
-  }, [selectedText]);
+  }, [selectedText, onUpdateText]);
 
   const handleAddText = () => {
     onAddText('Clique para editar', textSettings);
@@ -109,7 +103,64 @@ const TextPanel: React.FC<TextPanelProps> = ({
     setTextSettings(newSettings);
     
     if (selectedText) {
+      // Aplicar mudança diretamente
       onUpdateText({ [key]: value });
+      
+      // Para fontes, aplicar com estratégia robusta
+      if (key === 'fontFamily') {
+        const applyFontRobustly = async (targetFont: string) => {
+          if (!selectedText || !selectedText.canvas) return;
+          
+          const canvas = selectedText.canvas;
+          
+          // Verificar se a fonte está disponível
+          const isFontAvailable = document.fonts.check(`12px "${targetFont}"`);
+          
+          if (!isFontAvailable) {
+            console.warn(`⚠️ Fonte ${targetFont} não está disponível ainda`);
+            // Tentar aguardar que a fonte carregue
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+          
+          // Estratégia de aplicação robusta
+          console.log(`🔄 Aplicando fonte ${targetFont} com estratégia robusta`);
+          
+          // 1. Aplicar fallback temporário para forçar re-renderização
+          selectedText.set('fontFamily', 'Arial');
+          canvas.renderAll();
+          
+          // 2. Aguardar frame
+          await new Promise(resolve => requestAnimationFrame(resolve));
+          
+          // 3. Aplicar a fonte desejada
+          selectedText.set('fontFamily', targetFont);
+          selectedText.dirty = true;
+          
+          // 4. Forçar limpeza de cache e recálculo
+          if ('_clearCache' in selectedText) {
+            (selectedText as any)._clearCache();
+          }
+          selectedText.setCoords();
+          
+          // 5. Renderizar
+          canvas.renderAll();
+          canvas.requestRenderAll();
+          
+          // 6. Verificação final após um delay
+          setTimeout(() => {
+            if (selectedText.fontFamily !== targetFont) {
+              console.warn(`⚠️ Fonte ${targetFont} ainda não aplicada, tentando novamente...`);
+              selectedText.set('fontFamily', targetFont);
+              selectedText.dirty = true;
+              canvas.renderAll();
+            } else {
+              console.log(`✅ Fonte ${targetFont} aplicada com sucesso`);
+            }
+          }, 150);
+        };
+        
+        applyFontRobustly(value);
+      }
     }
   };
 
@@ -169,7 +220,7 @@ const TextPanel: React.FC<TextPanelProps> = ({
                   <SelectItem 
                     key={font.value} 
                     value={font.value}
-                    style={{ fontFamily: font.value }}
+                    style={{ fontFamily: font.fallback || font.value }}
                   >
                     {font.name}
                   </SelectItem>

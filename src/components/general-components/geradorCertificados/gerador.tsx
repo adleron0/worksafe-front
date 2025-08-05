@@ -19,6 +19,7 @@ import PageControls from './components/PageControls';
 import PlaceholderPanel from './components/PlaceholderPanel';
 import { CertificateToolbar } from './components/CertificateToolbar';
 import { CertificateSaveModal } from './components/CertificateSaveModal';
+// import TestProxyImage from './components/TestProxyImage'; // Componente de teste do proxy
 
 // Hooks
 import { useCanvas } from './hooks/useCanvas';
@@ -388,6 +389,26 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
     }
   }, [activeTab, getCurrentCanvasRef, selectedTextId, selectedText]);
 
+  // Helper function para usar o proxy de imagens
+  const getProxiedImageUrl = (imageUrl: string): string => {
+    // Se a URL já estiver usando o proxy, retornar como está
+    if (imageUrl.includes('/images/proxy')) {
+      return imageUrl;
+    }
+    
+    // Se for uma URL absoluta (http ou https), usar o proxy
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      // Codificar a URL para passar como parâmetro
+      const encodedUrl = encodeURIComponent(imageUrl);
+      // Usar a URL base da API
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      return `${apiBaseUrl}/images/proxy?url=${encodedUrl}`;
+    }
+    
+    // Se for uma URL relativa, assumir que já está correta
+    return imageUrl;
+  };
+
   // Query for fetching images
   const { data: imagesData, isLoading } = useQuery({
     queryKey: ['images', currentPage, selectedType],
@@ -399,6 +420,16 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
       
       const response = await get<ImageListResponse>('images', '', params);
       console.log('Images API response:', response);
+      
+      // Processar as URLs das imagens para usar o proxy
+      if (response && response.rows) {
+        response.rows = response.rows.map(image => ({
+          ...image,
+          imageUrl: getProxiedImageUrl(image.imageUrl)
+        }));
+        console.log('Images with proxy URLs:', response.rows);
+      }
+      
       return response;
     }
   });
@@ -1082,6 +1113,16 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
 
   return (
     <div className="flex flex-col h-full">
+      {/* Componente de teste do proxy - DESCOMENTAR PARA TESTAR */}
+      {/* <div className="bg-yellow-50 border-b border-yellow-200 p-2">
+        <details className="cursor-pointer">
+          <summary className="text-sm font-medium text-yellow-800">🧪 Teste do Proxy de Imagens (clique para expandir)</summary>
+          <div className="mt-2">
+            <TestProxyImage />
+          </div>
+        </details>
+      </div> */}
+      
       {/* Toolbar */}
       <CertificateToolbar
         onSaveClick={() => setShowSaveModal(true)}

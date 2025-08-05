@@ -135,8 +135,8 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                 Aluguel
               </a> */}
               <a
-                onClick={() => {navigate({to: `/`})}}
-                href="#treinamentos"
+                onClick={() => {navigate({to: `/treinamento`})}}
+                href="#treinamento"
                 className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Treinamentos
@@ -250,9 +250,9 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                   Aluguel
                 </a> */}
                 <a
-                  href="/#treinamentos"
+                  href="#treinamento"
                   className="text-gray-600 hover:text-primary-light transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => {setIsMenuOpen(false); navigate({to: `/treinamento`})}}
                 >
                   Treinamentos
                 </a>

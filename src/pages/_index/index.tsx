@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useCart } from "../../hooks/use-cart"; // Import the custom hook
 import { Award, Clock, MessageCircleMore, Shield, Users } from "lucide-react";
-import TrainingSchedule from "./-components/TrainingSchedule";
+import TrainingSummary from "./-components/TrainingSummary";
 import CourseBadges from "./-components/CourseBadges";
 import NavBar from "./-components/NavBar";
 import TexturaBackground from "../../assets/textura.jpg";
@@ -156,7 +156,7 @@ function Index() {
         <CourseBadges />
 
         {/* Training Section */}
-        <TrainingSchedule handleWhatsApp={handleWhatsApp} />
+        <TrainingSummary handleWhatsApp={handleWhatsApp} />
 
         {/* Services Section */}
         {/* Original Services Component */}

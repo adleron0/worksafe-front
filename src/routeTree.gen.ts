@@ -13,6 +13,7 @@
 import { Route as rootRoute } from './pages/__root'
 import { Route as AuthenticatedImport } from './pages/_authenticated'
 import { Route as IndexIndexImport } from './pages/_index/index'
+import { Route as IndexTreinamentoImport } from './pages/_index/treinamento'
 import { Route as IndexSobreImport } from './pages/_index/sobre'
 import { Route as IndexLojaImport } from './pages/_index/loja'
 import { Route as IndexLoginImport } from './pages/_index/login'
@@ -47,6 +48,12 @@ const AuthenticatedRoute = AuthenticatedImport.update({
 const IndexIndexRoute = IndexIndexImport.update({
   id: '/_index/',
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const IndexTreinamentoRoute = IndexTreinamentoImport.update({
+  id: '/_index/treinamento',
+  path: '/treinamento',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -251,6 +258,13 @@ declare module '@tanstack/react-router' {
       path: '/sobre'
       fullPath: '/sobre'
       preLoaderRoute: typeof IndexSobreImport
+      parentRoute: typeof rootRoute
+    }
+    '/_index/treinamento': {
+      id: '/_index/treinamento'
+      path: '/treinamento'
+      fullPath: '/treinamento'
+      preLoaderRoute: typeof IndexTreinamentoImport
       parentRoute: typeof rootRoute
     }
     '/_index/': {
@@ -461,6 +475,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof IndexLoginRoute
   '/loja': typeof IndexLojaRoute
   '/sobre': typeof IndexSobreRoute
+  '/treinamento': typeof IndexTreinamentoRoute
   '/': typeof IndexIndexRoute
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
@@ -489,6 +504,7 @@ export interface FileRoutesByTo {
   '/login': typeof IndexLoginRoute
   '/loja': typeof IndexLojaRoute
   '/sobre': typeof IndexSobreRoute
+  '/treinamento': typeof IndexTreinamentoRoute
   '/': typeof IndexIndexRoute
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
@@ -518,6 +534,7 @@ export interface FileRoutesById {
   '/_index/login': typeof IndexLoginRoute
   '/_index/loja': typeof IndexLojaRoute
   '/_index/sobre': typeof IndexSobreRoute
+  '/_index/treinamento': typeof IndexTreinamentoRoute
   '/_index/': typeof IndexIndexRoute
   '/_authenticated/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/_authenticated/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
@@ -548,6 +565,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/loja'
     | '/sobre'
+    | '/treinamento'
     | '/'
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
@@ -575,6 +593,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/loja'
     | '/sobre'
+    | '/treinamento'
     | '/'
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
@@ -602,6 +621,7 @@ export interface FileRouteTypes {
     | '/_index/login'
     | '/_index/loja'
     | '/_index/sobre'
+    | '/_index/treinamento'
     | '/_index/'
     | '/_authenticated/inventarios/access-control'
     | '/_authenticated/inventarios/autorizados'
@@ -629,6 +649,7 @@ export interface RootRouteChildren {
   IndexLoginRoute: typeof IndexLoginRoute
   IndexLojaRoute: typeof IndexLojaRoute
   IndexSobreRoute: typeof IndexSobreRoute
+  IndexTreinamentoRoute: typeof IndexTreinamentoRoute
   IndexIndexRoute: typeof IndexIndexRoute
 }
 
@@ -637,6 +658,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexLoginRoute: IndexLoginRoute,
   IndexLojaRoute: IndexLojaRoute,
   IndexSobreRoute: IndexSobreRoute,
+  IndexTreinamentoRoute: IndexTreinamentoRoute,
   IndexIndexRoute: IndexIndexRoute,
 }
 
@@ -654,6 +676,7 @@ export const routeTree = rootRoute
         "/_index/login",
         "/_index/loja",
         "/_index/sobre",
+        "/_index/treinamento",
         "/_index/"
       ]
     },
@@ -698,6 +721,9 @@ export const routeTree = rootRoute
     },
     "/_index/sobre": {
       "filePath": "_index/sobre.tsx"
+    },
+    "/_index/treinamento": {
+      "filePath": "_index/treinamento.tsx"
     },
     "/_index/": {
       "filePath": "_index/index.tsx"

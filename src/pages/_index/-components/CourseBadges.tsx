@@ -10,18 +10,18 @@ import {
 } from "lucide-react";
 
 const courses = [
-  { name: "NR-35", icon: Mountain, color: "bg-slate-100 text-slate-800 border-slate-200" },
-  { name: "NR-33", icon: Package, color: "bg-zinc-100 text-zinc-800 border-zinc-200" },
-  { name: "NR-10", icon: Zap, color: "bg-amber-100 text-amber-900 border-amber-200" },
-  { name: "NR-12", icon: Settings, color: "bg-gray-100 text-gray-800 border-gray-200" },
-  { name: "NR-18", icon: Building2, color: "bg-stone-100 text-stone-800 border-stone-200" },
-  { name: "NR-20", icon: Flame, color: "bg-red-100 text-red-900 border-red-200" },
-  { name: "Alpinismo N1", icon: Mountain, color: "bg-emerald-100 text-emerald-900 border-emerald-200" },
-  { name: "Alpinismo N2", icon: Mountain, color: "bg-emerald-100 text-emerald-900 border-emerald-200" },
-  { name: "Alpinismo N3", icon: Mountain, color: "bg-emerald-100 text-emerald-900 border-emerald-200" },
-  { name: "Resgate", icon: Heart, color: "bg-rose-100 text-rose-900 border-rose-200" },
-  { name: "Brigada", icon: Flame, color: "bg-orange-100 text-orange-900 border-orange-200" },
-  { name: "Primeiros Socorros", icon: Heart, color: "bg-cyan-100 text-cyan-900 border-cyan-200" },
+  { name: "NR-35", icon: Mountain, color: "bg-black/5 text-slate-800 border-black/20" },
+  { name: "NR-33", icon: Package, color: "bg-black/5 text-zinc-800 border-black/20" },
+  { name: "NR-10", icon: Zap, color: "bg-black/5 text-amber-900 border-black/20" },
+  { name: "NR-12", icon: Settings, color: "bg-black/5 text-gray-800 border-black/20" },
+  { name: "NR-18", icon: Building2, color: "bg-black/5 text-stone-800 border-black/20" },
+  { name: "NR-20", icon: Flame, color: "bg-black/5 text-red-900 border-black/20" },
+  { name: "Alpinismo N1", icon: Mountain, color: "bg-black/5 text-emerald-900 border-black/20" },
+  { name: "Alpinismo N2", icon: Mountain, color: "bg-black/5 text-emerald-900 border-black/20" },
+  { name: "Alpinismo N3", icon: Mountain, color: "bg-black/5 text-emerald-900 border-black/20" },
+  { name: "Resgate", icon: Heart, color: "bg-black/5 text-rose-900 border-black/20" },
+  { name: "Brigada", icon: Flame, color: "bg-black/5 text-orange-900 border-black/20" },
+  { name: "Primeiros Socorros", icon: Heart, color: "bg-black/5 text-cyan-900 border-black/20" },
 ];
 
 const CourseBadges: React.FC = () => {

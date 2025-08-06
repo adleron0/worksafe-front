@@ -15,6 +15,7 @@ import {
   Plus,
   ChevronRight,
   CheckCircle,
+  ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { get } from "@/services/api";
@@ -348,9 +349,10 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
           <a onClick={() => {navigate({to: `/loja`})}} href="#produtos">
             <Button
               size="lg"
-              className="bg-primary-light hover:bg-primary-light/80 ease-in-out duration-200 text-white text-lg px-8 shadow-lg"
+              className="bg-black hover:bg-black/90 text-white font-normal text-base px-6 py-2.5 shadow-md hover:shadow-lg transition-all duration-200 group"
             >
-              Visitar Nossa Loja Completa <ChevronRight className="ml-2" />
+              Visitar Nossa Loja Completa 
+              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
           </a>
         </div>

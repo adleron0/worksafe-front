@@ -1,8 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useCart } from "../../hooks/use-cart"; // Import the custom hook
 import { Award, Clock, MessageCircleMore, Shield, Users } from "lucide-react";
-// import Training from "./components/Training";
+// import TrainingSummary from "./-components/TrainingSummary";
+import CourseBadges from "./-components/CourseBadges";
 import NavBar from "./-components/NavBar";
+import TexturaBackground from "../../assets/textura.jpg";
 import Hero from "./-components/Hero";
 import Feature from "./-components/Feature";
 import Parceiros from "./-components/Parceiros";
@@ -113,7 +115,8 @@ export const Route = createFileRoute('/_index/')({
   component: Index,
 })
 
-function Index() {const { cart, setCart, addToCart, clearCart } = useCart(); // Use the custom hook
+function Index() {
+  const { cart, setCart, addToCart, clearCart } = useCart(); // Use the custom hook
 
   // Cart state and localStorage logic are now handled by useCart hook.
   // Remove local addToCart and clearCart functions.
@@ -149,6 +152,12 @@ function Index() {const { cart, setCart, addToCart, clearCart } = useCart(); // 
         {/* Partners Section */}
         <Parceiros />
 
+        {/* Course Badges */}
+        <CourseBadges />
+
+        {/* Training Section */}
+        {/* <TrainingSummary handleWhatsApp={handleWhatsApp} /> */}
+
         {/* Services Section */}
         {/* Original Services Component */}
         <Services handleWhatsApp={handleWhatsApp} />
@@ -157,8 +166,20 @@ function Index() {const { cart, setCart, addToCart, clearCart } = useCart(); // 
         {/* <Services2 handleWhatsApp={handleWhatsApp} preloadedData={servicesData} /> */}
 
         {/* Features Section */}
-        <div className="bg-gray-100 py-10">
-          <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
+        <div 
+          className="relative py-10 bg-white"
+          style={{
+            backgroundImage: `url(${TexturaBackground})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed'
+          }}
+        >
+          {/* White overlay for extra subtlety */}
+          <div className="absolute inset-0 bg-white/[0.98]" />
+          
+          <div className="relative mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
             <div className="text-center mb-10 md:mb-16">
               <h2 className="section-title text-primary-light text-3xl md:text-5xl font-bold md:pb-4">
                 Não Vendemos Segurança!
@@ -179,20 +200,7 @@ function Index() {const { cart, setCart, addToCart, clearCart } = useCart(); // 
         {/* About Section */}
         {/* <About /> */}
 
-        {/* Products Section */}
-        <Cta
-          title="Precisando de Equipamentos com Urgência?"
-          subtitle="Entre em contato agora mesmo e receba uma cotação!"
-          buttonText="Solicitar Cotação"
-          whatsAppMessage="Olá, gostaria de solicitar um orçamento."
-          handleWhatsApp={handleWhatsApp}
-        />
-        <Products addToCart={addToCart} formatCurrency={formatCurrency} />
-
-        {/* Rentals Section */}
-        {/* <Rentals handleWhatsApp={handleWhatsApp} formatCurrency={formatCurrency} /> */}
-
-        {/* CTA Section 2 */}
+        {/* CTA Section 1 */}
         <Cta
           title="Precisa de Treinamento para sua Equipe?"
           subtitle="Oferecemos treinamentos in-company personalizados para sua Empresa."
@@ -201,7 +209,20 @@ function Index() {const { cart, setCart, addToCart, clearCart } = useCart(); // 
           handleWhatsApp={handleWhatsApp}
         />
 
-        {/* <Training formatCurrency={formatCurrency} /> */}
+        {/* Products Section */}
+        <Products addToCart={addToCart} formatCurrency={formatCurrency} />
+
+        {/* Rentals Section */}
+        {/* <Rentals handleWhatsApp={handleWhatsApp} formatCurrency={formatCurrency} /> */}
+
+        {/* CTA Section 2 */}
+        <Cta
+          title="Precisando de Equipamentos com Urgência?"
+          subtitle="Entre em contato agora mesmo e receba uma cotação!"
+          buttonText="Solicitar Cotação"
+          whatsAppMessage="Olá, gostaria de solicitar um orçamento."
+          handleWhatsApp={handleWhatsApp}
+        />
 
         <Faq  faqData={faqs} />
 

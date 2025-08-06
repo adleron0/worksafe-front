@@ -80,7 +80,7 @@ export default function Footer() {
                 </a>
               </li> */}
               <li>
-                <a href="/#treinamentos" className="text-gray-400 cursor-pointer hover:text-primary-light">
+                <a onClick={() => { navigate({to: `/treinamento`})}} href="#treinamento" className="text-gray-400 cursor-pointer hover:text-primary-light">
                   Treinamentos
                 </a>
               </li>

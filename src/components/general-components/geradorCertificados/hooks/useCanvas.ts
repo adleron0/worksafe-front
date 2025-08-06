@@ -17,6 +17,72 @@ export interface CanvasData {
   canvasHeight: number;
 }
 
+// Função helper para processar imagens no JSON e aplicar proxy
+const processImagesInJSON = (jsonData: any): any => {
+  console.log('🔍 processImagesInJSON called with:', typeof jsonData);
+  
+  // Se for string, fazer parse
+  const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+  
+  console.log('📊 JSON structure:', {
+    hasObjects: !!data.objects,
+    objectsLength: data.objects ? data.objects.length : 0,
+    keys: Object.keys(data)
+  });
+  
+  // Debug: mostrar tipos de objetos no JSON
+  if (data.objects && Array.isArray(data.objects)) {
+    const objectTypes = data.objects.map((obj: any) => obj.type);
+    console.log('📋 Object types in JSON:', objectTypes);
+    
+    // Procurar por todos os campos que podem conter URLs de imagem
+    data.objects.forEach((obj: any, index: number) => {
+      // Verificar tanto 'image' quanto 'Image' (case insensitive)
+      if (obj.type && obj.type.toLowerCase() === 'image') {
+        console.log(`🔍 Image object [${index}]:`, {
+          type: obj.type,
+          src: obj.src,
+          _element: obj._element,
+          crossOrigin: obj.crossOrigin,
+          allKeys: Object.keys(obj)
+        });
+      }
+    });
+  }
+  
+  // Se houver objetos no JSON
+  if (data.objects && Array.isArray(data.objects)) {
+    let imageCount = 0;
+    data.objects = data.objects.map((obj: any) => {
+      // Se for uma imagem (verificar case insensitive)
+      if (obj.type && obj.type.toLowerCase() === 'image') {
+        console.log(`🖼️ Processing image object:`, obj);
+        
+        if (obj.src && (obj.src.startsWith('http://') || obj.src.startsWith('https://'))) {
+          // Aplicar proxy na URL
+          const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
+          const originalSrc = obj.src;
+          obj.src = `${BASE_URL}/images/proxy?url=${encodeURIComponent(originalSrc)}`;
+          // Guardar URL original para referência
+          obj._originalUrl = originalSrc;
+          imageCount++;
+          console.log(`✅ [${imageCount}] Processed image in JSON:`);
+          console.log('   Original:', originalSrc);
+          console.log('   Proxy:', obj.src);
+        } else {
+          console.log('⚠️ Image does not have external src:', obj.src);
+        }
+      }
+      return obj;
+    });
+    console.log(`📝 Total images processed: ${imageCount}`);
+  } else {
+    console.log('⚠️ No objects found in JSON data');
+  }
+  
+  return data;
+};
+
 export const useCanvas = () => {
   const [pages, setPages] = useState<CanvasPage[]>([
     {
@@ -581,10 +647,52 @@ export const useCanvas = () => {
           });
         }
         
-        frontCanvas.loadFromJSON(data.fabricJsonFront, async () => {
+        // Processar as imagens para usar o proxy antes de carregar
+        console.log('🎯 About to process fabricJsonFront');
+        const processedJsonFront = processImagesInJSON(data.fabricJsonFront);
+        
+        console.log('🎯 Loading processed JSON into front canvas');
+        
+        // IMPORTANTE: Configurar o Fabric.js para usar o proxy ANTES de carregar o JSON
+        const originalFromURL = fabric.FabricImage.fromURL;
+        fabric.FabricImage.fromURL = function(url: string, ...args: any[]) {
+          let processedUrl = url;
+          if (url && (url.startsWith('http://') || url.startsWith('https://')) && !url.includes('/images/proxy')) {
+            const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
+            // Adicionar timestamp para evitar cache
+            const timestamp = Date.now();
+            processedUrl = `${BASE_URL}/images/proxy?url=${encodeURIComponent(url)}&t=${timestamp}`;
+            console.log('🔄 Intercepting Fabric.js image load:');
+            console.log('   Original:', url);
+            console.log('   Proxy:', processedUrl);
+          }
+          // Garantir crossOrigin anonymous
+          if (args[0] && typeof args[0] === 'object') {
+            args[0].crossOrigin = 'anonymous';
+          } else if (args[0] && typeof args[0] === 'function') {
+            // Se o primeiro arg for callback, adicionar options como segundo
+            args.splice(1, 0, { crossOrigin: 'anonymous' });
+          }
+          return originalFromURL.call(this, processedUrl, ...args);
+        };
+        
+        frontCanvas.loadFromJSON(processedJsonFront, async () => {
+          console.log('✅ Front canvas loaded from JSON');
+          
+          // Restaurar o método original após carregar
+          fabric.FabricImage.fromURL = originalFromURL;
+          
+          // Adicionar listener para verificar quando imagens são carregadas
+          frontCanvas.on('after:render', () => {
+            console.log('🎨 Canvas renderizado - imagens devem estar visíveis agora');
+          });
+          
           // Adicionar IDs únicos aos objetos carregados se não tiverem
           let idCounter = 0;
           const textObjects: fabric.Textbox[] = [];
+          
+          // Verificar as imagens carregadas
+          console.log('🔍 Checking loaded objects:');
           
           frontCanvas.getObjects().forEach((obj: fabric.Object, index: number) => {
             const type = obj.type || 'object';
@@ -592,6 +700,66 @@ export const useCanvas = () => {
             const uniqueId = `${type}_${timestamp}_${idCounter++}_${Math.random().toString(36).substring(2, 11)}`;
             (obj as any).__uniqueID = uniqueId;
             (obj as any).id = uniqueId;
+            
+            // Verificar se é uma imagem e qual URL está usando (case insensitive)
+            if (obj.type && obj.type.toLowerCase() === 'image') {
+              const imageObj = obj as fabric.FabricImage;
+              let src = (imageObj as any).src || imageObj.getSrc();
+              
+              console.log(`🖼️ Loaded image [${index}]:`, {
+                src: src,
+                hasProxy: src ? src.includes('/images/proxy') : false,
+                originalUrl: (imageObj as any)._originalUrl
+              });
+              
+              // FORÇAR o uso do proxy se a URL for externa e não estiver usando proxy
+              if (src && (src.startsWith('http://') || src.startsWith('https://')) && !src.includes('/images/proxy')) {
+                const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
+                const proxiedUrl = `${BASE_URL}/images/proxy?url=${encodeURIComponent(src)}`;
+                
+                console.log('⚠️ Image not using proxy, recreating with proxy URL:');
+                console.log('   From:', src);
+                console.log('   To:', proxiedUrl);
+                
+                // Guardar propriedades da imagem atual
+                const props = {
+                  left: imageObj.left,
+                  top: imageObj.top,
+                  angle: imageObj.angle,
+                  opacity: imageObj.opacity,
+                  scaleX: imageObj.scaleX,
+                  scaleY: imageObj.scaleY,
+                  flipX: imageObj.flipX,
+                  flipY: imageObj.flipY,
+                  selectable: imageObj.selectable,
+                  evented: imageObj.evented,
+                  name: (imageObj as any).name,
+                  _originalUrl: src
+                };
+                
+                // Remover imagem antiga
+                frontCanvas.remove(imageObj);
+                
+                // Criar nova imagem com proxy
+                fabric.FabricImage.fromURL(proxiedUrl, {
+                  crossOrigin: 'anonymous'
+                }).then((newImage) => {
+                  // Aplicar propriedades salvas
+                  newImage.set(props);
+                  (newImage as any).__uniqueID = (imageObj as any).__uniqueID;
+                  (newImage as any).id = (imageObj as any).id;
+                  
+                  // Adicionar ao canvas na mesma posição
+                  frontCanvas.insertAt(newImage, index);
+                  frontCanvas.renderAll();
+                  console.log('✅ Image recreated with proxy URL');
+                }).catch(error => {
+                  console.error('❌ Error loading image with proxy:', error);
+                  // Re-adicionar imagem original em caso de erro
+                  frontCanvas.insertAt(imageObj, index);
+                });
+              }
+            }
             
             // Coletar objetos de texto
             if (obj.type === 'textbox' || obj.type === 'i-text') {
@@ -836,15 +1004,80 @@ export const useCanvas = () => {
             if (backCanvas) {
               backCanvas.clear();
               await new Promise<void>((resolve, reject) => {
-                backCanvas.loadFromJSON(data.fabricJsonBack, async () => {
+                // Processar as imagens para usar o proxy antes de carregar
+              const processedJsonBack = processImagesInJSON(data.fabricJsonBack);
+              
+              // Interceptar carregamento de imagens do verso também
+              const originalFromURLBack = fabric.FabricImage.fromURL;
+              fabric.FabricImage.fromURL = function(url: string, ...args: any[]) {
+                let processedUrl = url;
+                if (url && (url.startsWith('http://') || url.startsWith('https://')) && !url.includes('/images/proxy')) {
+                  const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
+                  const timestamp = Date.now();
+                  processedUrl = `${BASE_URL}/images/proxy?url=${encodeURIComponent(url)}&t=${timestamp}`;
+                  console.log('🔄 [Back] Intercepting Fabric.js image load:', url, '->', processedUrl);
+                }
+                // Garantir crossOrigin anonymous
+                if (args[0] && typeof args[0] === 'object') {
+                  args[0].crossOrigin = 'anonymous';
+                } else if (args[0] && typeof args[0] === 'function') {
+                  args.splice(1, 0, { crossOrigin: 'anonymous' });
+                }
+                return originalFromURLBack.call(this, processedUrl, ...args);
+              };
+              
+              backCanvas.loadFromJSON(processedJsonBack, async () => {
+                // Restaurar o método original
+                fabric.FabricImage.fromURL = originalFromURLBack;
                   // Adicionar IDs únicos aos objetos carregados se não tiverem
                   let backIdCounter = 0;
-                  backCanvas.getObjects().forEach((obj: fabric.Object) => {
+                  backCanvas.getObjects().forEach((obj: fabric.Object, objIndex: number) => {
                     const type = obj.type || 'object';
                     const timestamp = Date.now();
                     const uniqueId = `${type}_${timestamp}_back_${backIdCounter++}_${Math.random().toString(36).substring(2, 11)}`;
                     (obj as any).__uniqueID = uniqueId;
                     (obj as any).id = uniqueId;
+                    
+                    // Aplicar proxy em imagens do verso também (case insensitive)
+                    if (obj.type && obj.type.toLowerCase() === 'image') {
+                      const imageObj = obj as fabric.FabricImage;
+                      let src = (imageObj as any).src || imageObj.getSrc();
+                      
+                      if (src && (src.startsWith('http://') || src.startsWith('https://')) && !src.includes('/images/proxy')) {
+                        const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
+                        const proxiedUrl = `${BASE_URL}/images/proxy?url=${encodeURIComponent(src)}`;
+                        
+                        console.log('⚠️ [Back] Image not using proxy, recreating:', src);
+                        
+                        const props = {
+                          left: imageObj.left,
+                          top: imageObj.top,
+                          angle: imageObj.angle,
+                          opacity: imageObj.opacity,
+                          scaleX: imageObj.scaleX,
+                          scaleY: imageObj.scaleY,
+                          flipX: imageObj.flipX,
+                          flipY: imageObj.flipY,
+                          selectable: imageObj.selectable,
+                          evented: imageObj.evented,
+                          name: (imageObj as any).name,
+                          _originalUrl: src
+                        };
+                        
+                        backCanvas.remove(imageObj);
+                        
+                        fabric.FabricImage.fromURL(proxiedUrl, {
+                          crossOrigin: 'anonymous'
+                        }).then((newImage) => {
+                          newImage.set(props);
+                          (newImage as any).__uniqueID = uniqueId;
+                          (newImage as any).id = uniqueId;
+                          backCanvas.insertAt(newImage, objIndex);
+                          backCanvas.renderAll();
+                          console.log('✅ [Back] Image recreated with proxy');
+                        });
+                      }
+                    }
                   });
                   
                   // Aguardar um momento para garantir que todos os objetos sejam carregados

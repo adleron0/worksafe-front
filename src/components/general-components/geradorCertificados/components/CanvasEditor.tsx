@@ -113,10 +113,21 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   const addImageToCanvas = (imageUrl: string, imageName: string) => {
     if (!fabricCanvasRef.current) return;
 
-    // SEMPRE usar crossOrigin='anonymous' para todas as imagens
-    // Isso é necessário para permitir exportação para PDF
-    fabric.FabricImage.fromURL(imageUrl, {
-      crossOrigin: 'anonymous'
+    let processedUrl = imageUrl;
+    
+    // Se for URL externa (S3 ou outra), usar o proxy
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      // Construir URL do proxy diretamente
+      const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
+      processedUrl = `${BASE_URL}/images/proxy?url=${encodeURIComponent(imageUrl)}`;
+      console.log('🖼️ Using proxy URL:', processedUrl);
+      console.log('📍 Original URL:', imageUrl);
+    }
+
+    // Usar Fabric.js para carregar a imagem
+    // O proxy retorna a imagem binária com CORS correto
+    fabric.FabricImage.fromURL(processedUrl, {
+      crossOrigin: 'anonymous' // Importante para permitir exportação para PDF
     }).then((fabricImage) => {
       if (!fabricCanvasRef.current) return;
       
@@ -135,48 +146,55 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
         fabricImage.scaleToHeight(maxSize);
       }
       
+      // Guardar URL original para referência
       (fabricImage as any)._originalUrl = imageUrl;
       
       fabricCanvasRef.current.add(fabricImage);
       fabricCanvasRef.current.setActiveObject(fabricImage);
       fabricCanvasRef.current.renderAll();
+      
+      console.log('✅ Imagem adicionada ao canvas com sucesso');
     }).catch((error) => {
-      console.error('Erro ao carregar imagem:', error);
+      console.error('❌ Erro ao carregar imagem:', error);
       
-      // Se falhar com CORS, tentar adicionar timestamp para forçar novo carregamento
-      const urlWithTimestamp = imageUrl.includes('?') 
-        ? `${imageUrl}&t=${Date.now()}`
-        : `${imageUrl}?t=${Date.now()}`;
-      
-      fabric.FabricImage.fromURL(urlWithTimestamp, {
-        crossOrigin: 'anonymous'
-      }).then((fabricImage) => {
-        if (!fabricCanvasRef.current) return;
+      // Se falhar com proxy, tentar URL original (fallback)
+      if (processedUrl !== imageUrl) {
+        console.log('🔄 Tentando sem proxy:', imageUrl);
         
-        fabricImage.set({
-          left: fabricCanvasRef.current.width! / 2,
-          top: fabricCanvasRef.current.height! / 2,
-          originX: 'center',
-          originY: 'center',
-          name: imageName
+        fabric.FabricImage.fromURL(imageUrl, {
+          crossOrigin: 'anonymous'
+        }).then((fabricImage) => {
+          if (!fabricCanvasRef.current) return;
+          
+          fabricImage.set({
+            left: fabricCanvasRef.current.width! / 2,
+            top: fabricCanvasRef.current.height! / 2,
+            originX: 'center',
+            originY: 'center',
+            name: imageName
+          });
+          
+          const maxSize = 200;
+          if (fabricImage.width! > fabricImage.height!) {
+            fabricImage.scaleToWidth(maxSize);
+          } else {
+            fabricImage.scaleToHeight(maxSize);
+          }
+          
+          (fabricImage as any)._originalUrl = imageUrl;
+          
+          fabricCanvasRef.current.add(fabricImage);
+          fabricCanvasRef.current.setActiveObject(fabricImage);
+          fabricCanvasRef.current.renderAll();
+          
+          console.log('✅ Imagem adicionada sem proxy');
+        }).catch((fallbackError) => {
+          console.error('❌ Erro ao carregar imagem sem proxy:', fallbackError);
+          alert('Erro ao carregar imagem. Verifique se a URL está acessível.');
         });
-        
-        const maxSize = 200;
-        if (fabricImage.width! > fabricImage.height!) {
-          fabricImage.scaleToWidth(maxSize);
-        } else {
-          fabricImage.scaleToHeight(maxSize);
-        }
-        
-        (fabricImage as any)._originalUrl = imageUrl;
-        
-        fabricCanvasRef.current.add(fabricImage);
-        fabricCanvasRef.current.setActiveObject(fabricImage);
-        fabricCanvasRef.current.renderAll();
-      }).catch((secondError) => {
-        console.error('Erro ao carregar imagem mesmo com timestamp:', secondError);
-        alert('Erro ao carregar imagem. Verifique se o CORS está configurado corretamente no servidor.');
-      });
+      } else {
+        alert('Erro ao carregar imagem local.');
+      }
     });
   };
 
@@ -1338,6 +1356,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
     const imageUrl = e.dataTransfer.getData('imageUrl');
     const imageName = e.dataTransfer.getData('imageName');
     if (imageUrl) {
+      // addImageToCanvas já vai aplicar o proxy internamente
       addImageToCanvas(imageUrl, imageName);
       return;
     }

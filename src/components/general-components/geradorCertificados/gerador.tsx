@@ -195,31 +195,48 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
           await Promise.allSettled(fontPromises);
           
           // Testar especificamente a Bebas Neue
-          const testBebasNeue = () => {
+          const testBebasNeue = async () => {
+            // Forçar carregamento da fonte antes do teste
+            if ('fonts' in document) {
+              try {
+                await document.fonts.load('400 50px "Bebas Neue"');
+                await document.fonts.load('700 50px "Bebas Neue"');
+              } catch (e) {
+                console.log('Tentativa adicional de carregar Bebas Neue:', e);
+              }
+            }
+            
+            // Pequeno delay para garantir aplicação da fonte
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
             const testDiv = document.createElement('div');
             testDiv.style.position = 'absolute';
             testDiv.style.left = '-9999px';
+            testDiv.style.fontSize = '50px'; // Tamanho maior para melhor detecção
             testDiv.style.fontFamily = 'monospace';
-            testDiv.textContent = 'TestWidthMeasure';
+            testDiv.textContent = 'IIIIIIIIII'; // Bebas Neue tem letras estreitas
             document.body.appendChild(testDiv);
             const monoWidth = testDiv.offsetWidth;
             
             testDiv.style.fontFamily = '"Bebas Neue", monospace';
+            // Forçar recálculo do layout
+            testDiv.offsetHeight;
             const bebasWidth = testDiv.offsetWidth;
             
             document.body.removeChild(testDiv);
             
-            const isLoaded = monoWidth !== bebasWidth;
-            console.log(`🔍 Teste Bebas Neue: ${isLoaded ? '✅ Carregada' : '❌ Não carregada'} (mono: ${monoWidth}px, bebas: ${bebasWidth}px)`);
+            // Bebas Neue é condensada, deve ser significativamente mais estreita
+            const isLoaded = bebasWidth < monoWidth * 0.8; // Deve ser pelo menos 20% mais estreita
+            console.log(`🔍 Teste Bebas Neue: ${isLoaded ? '✅ Carregada' : '❌ Não carregada'} (mono: ${monoWidth}px, bebas: ${bebasWidth}px, ratio: ${(bebasWidth/monoWidth).toFixed(2)})`);
             return isLoaded;
           };
           
-          // Tentar algumas vezes até a fonte carregar
+          // Tentar algumas vezes até a fonte carregar corretamente
           let bebasLoaded = false;
-          for (let i = 0; i < 5; i++) {
-            bebasLoaded = testBebasNeue();
+          for (let i = 0; i < 8; i++) { // Aumentar tentativas
+            bebasLoaded = await testBebasNeue();
             if (bebasLoaded) break;
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 400)); // Aumentar delay entre tentativas
           }
           
           if (!bebasLoaded) {
@@ -849,6 +866,23 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
           setIsLoadingTemplate(true); // Start loading
           setShouldShowSkeleton(false); // Hide skeleton to allow canvas to render
           
+          // Garantir que a fonte Bebas Neue está completamente carregada antes de prosseguir
+          if ('fonts' in document) {
+            const bebasCheck = document.fonts.check('12px "Bebas Neue"');
+            if (!bebasCheck) {
+              console.log('⏳ Aguardando Bebas Neue estar completamente pronta...');
+              try {
+                await document.fonts.load('400 12px "Bebas Neue"');
+                await document.fonts.load('700 12px "Bebas Neue"');
+                // Aguardar um momento adicional para garantir aplicação
+                await new Promise(resolve => setTimeout(resolve, 200));
+                console.log('✅ Bebas Neue confirmada como pronta');
+              } catch (e) {
+                console.warn('Aviso ao confirmar Bebas Neue:', e);
+              }
+            }
+          }
+          
           // Aguardar o canvas estar pronto
           await new Promise(resolve => setTimeout(resolve, 300));
           
@@ -909,6 +943,22 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
                   const fontFamily = textObj.fontFamily;
                   if (fontFamily && fontFamily.toLowerCase().includes('bebas')) {
                     console.log(`🔧 Aplicando correção específica para Bebas Neue no carregamento`);
+                    
+                    // Forçar recarregamento da fonte para garantir que está disponível
+                    if ('fonts' in document && !document.fonts.check('12px "Bebas Neue"')) {
+                      console.log('⚠️ Bebas Neue ainda não está carregada, forçando carregamento...');
+                      document.fonts.load('400 12px "Bebas Neue"').then(() => {
+                        console.log('✅ Bebas Neue carregada com sucesso');
+                        // Aplicar correções após carregamento
+                        (textObj as any).splitByGrapheme = false;
+                        (textObj as any).charSpacing = 0;
+                        textObj.dirty = true;
+                        canvas.renderAll();
+                      }).catch(err => {
+                        console.error('Erro ao carregar Bebas Neue:', err);
+                      });
+                    }
+                    
                     // Bebas Neue tem problemas com splitByGrapheme
                     (textObj as any).splitByGrapheme = false;
                     // Forçar charSpacing 0
@@ -924,6 +974,10 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
                     if ('_clearCache' in textObj && typeof (textObj as any)._clearCache === 'function') {
                       (textObj as any)._clearCache();
                     }
+                    
+                    // Forçar atualização do texto
+                    textObj.initDimensions();
+                    textObj.setCoords();
                   }
                   
                   // Configurar propriedades

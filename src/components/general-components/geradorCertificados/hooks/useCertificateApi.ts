@@ -72,6 +72,7 @@ export const useCertificateApi = () => {
       toast.success('Modelo de certificado salvo com sucesso!');
       // Invalidar queries relacionadas
       queryClient.invalidateQueries({ queryKey: ['certificate'] });
+      queryClient.invalidateQueries({ queryKey: ['list_Certificados'] });
       if (data?.courseId) {
         queryClient.invalidateQueries({ queryKey: ['certificate', 'course', data.courseId] });
       }
@@ -92,6 +93,7 @@ export const useCertificateApi = () => {
       toast.success('Modelo de certificado atualizado com sucesso!');
       // Invalidar queries relacionadas
       queryClient.invalidateQueries({ queryKey: ['certificate'] });
+      queryClient.invalidateQueries({ queryKey: ['list_Certificados'] });
       if (data?.id) {
         queryClient.invalidateQueries({ queryKey: ['certificate', data.id] });
       }

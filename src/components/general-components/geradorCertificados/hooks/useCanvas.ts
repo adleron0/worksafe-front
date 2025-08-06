@@ -58,10 +58,27 @@ const processImagesInJSON = (jsonData: any): any => {
       if (obj.type && obj.type.toLowerCase() === 'image') {
         console.log(`🖼️ Processing image object:`, obj);
         
-        if (obj.src && (obj.src.startsWith('http://') || obj.src.startsWith('https://'))) {
-          // Aplicar proxy na URL
+        let originalSrc = obj.src;
+        
+        // IMPORTANTE: Detectar se a URL já tem proxy e extrair a URL original
+        if (obj.src && obj.src.includes('/images/proxy')) {
+          try {
+            // Criar URL completa se necessário
+            const fullUrl = obj.src.startsWith('http') ? obj.src : `${window.location.origin}${obj.src}`;
+            const urlObj = new URL(fullUrl);
+            const encodedOriginal = urlObj.searchParams.get('url');
+            if (encodedOriginal) {
+              originalSrc = decodeURIComponent(encodedOriginal);
+              console.log(`🔍 Extracted original URL from proxy:`, originalSrc);
+            }
+          } catch (e) {
+            console.error('Error extracting original URL:', e);
+          }
+        }
+        
+        // Aplicar proxy apenas se for URL externa e não tiver proxy
+        if (originalSrc && (originalSrc.startsWith('http://') || originalSrc.startsWith('https://'))) {
           const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
-          const originalSrc = obj.src;
           obj.src = `${BASE_URL}/images/proxy?url=${encodeURIComponent(originalSrc)}`;
           // Guardar URL original para referência
           obj._originalUrl = originalSrc;
@@ -70,7 +87,7 @@ const processImagesInJSON = (jsonData: any): any => {
           console.log('   Original:', originalSrc);
           console.log('   Proxy:', obj.src);
         } else {
-          console.log('⚠️ Image does not have external src:', obj.src);
+          console.log('⚠️ Image does not have external src:', originalSrc);
         }
       }
       return obj;
@@ -517,14 +534,40 @@ export const useCanvas = () => {
       
       // Serializar o canvas
       // No Fabric.js v6, precisamos adicionar a propriedade ao objeto antes de serializar
-      const canvasJSON = frontCanvas.toObject(['name']);
+      const canvasJSON = frontCanvas.toObject(['name', '_originalUrl']);
       
-      // Adicionar manualmente a propriedade name aos objetos no JSON
+      // Processar objetos no JSON para garantir URLs originais
       if (canvasJSON.objects) {
         canvasJSON.objects.forEach((objData: any, index: number) => {
           const originalObj = objectsWithNames[index];
+          
+          // Adicionar propriedade name
           if ((originalObj as any).name) {
             objData.name = (originalObj as any).name;
+          }
+          
+          // IMPORTANTE: Se for imagem e tiver _originalUrl, usar como src
+          if (objData.type && objData.type.toLowerCase() === 'image') {
+            // Se tiver _originalUrl, usar ela
+            if ((originalObj as any)._originalUrl) {
+              objData.src = (originalObj as any)._originalUrl;
+              console.log(`🔄 Restored original URL for image:`, objData.src);
+            } 
+            // Se a src já tem proxy, extrair URL original
+            else if (objData.src && objData.src.includes('/images/proxy')) {
+              try {
+                const fullUrl = objData.src.startsWith('http') ? objData.src : `${window.location.origin}${objData.src}`;
+                const urlObj = new URL(fullUrl);
+                const encodedOriginal = urlObj.searchParams.get('url');
+                if (encodedOriginal) {
+                  const originalUrl = decodeURIComponent(encodedOriginal);
+                  objData.src = originalUrl;
+                  console.log(`🔍 Extracted original URL from proxy:`, originalUrl);
+                }
+              } catch (e) {
+                console.error('Error extracting original URL:', e);
+              }
+            }
           }
         });
       }
@@ -570,14 +613,40 @@ export const useCanvas = () => {
             
             // Serializar o canvas do verso
             const backObjectsWithNames = backCanvas.getObjects();
-            const backCanvasJSON = backCanvas.toObject(['name']);
+            const backCanvasJSON = backCanvas.toObject(['name', '_originalUrl']);
             
-            // Adicionar manualmente a propriedade name aos objetos
+            // Processar objetos no JSON para garantir URLs originais
             if (backCanvasJSON.objects) {
               backCanvasJSON.objects.forEach((objData: any, index: number) => {
                 const originalObj = backObjectsWithNames[index];
+                
+                // Adicionar propriedade name
                 if ((originalObj as any).name) {
                   objData.name = (originalObj as any).name;
+                }
+                
+                // IMPORTANTE: Se for imagem e tiver _originalUrl, usar como src
+                if (objData.type && objData.type.toLowerCase() === 'image') {
+                  // Se tiver _originalUrl, usar ela
+                  if ((originalObj as any)._originalUrl) {
+                    objData.src = (originalObj as any)._originalUrl;
+                    console.log(`🔄 [Back] Restored original URL for image:`, objData.src);
+                  } 
+                  // Se a src já tem proxy, extrair URL original
+                  else if (objData.src && objData.src.includes('/images/proxy')) {
+                    try {
+                      const fullUrl = objData.src.startsWith('http') ? objData.src : `${window.location.origin}${objData.src}`;
+                      const urlObj = new URL(fullUrl);
+                      const encodedOriginal = urlObj.searchParams.get('url');
+                      if (encodedOriginal) {
+                        const originalUrl = decodeURIComponent(encodedOriginal);
+                        objData.src = originalUrl;
+                        console.log(`🔍 [Back] Extracted original URL from proxy:`, originalUrl);
+                      }
+                    } catch (e) {
+                      console.error('[Back] Error extracting original URL:', e);
+                    }
+                  }
                 }
               });
             }
@@ -657,6 +726,8 @@ export const useCanvas = () => {
         const originalFromURL = fabric.FabricImage.fromURL;
         fabric.FabricImage.fromURL = function(url: string, ...args: any[]) {
           let processedUrl = url;
+          const originalUrl = url; // Sempre salvar URL original
+          
           if (url && (url.startsWith('http://') || url.startsWith('https://')) && !url.includes('/images/proxy')) {
             const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
             // Adicionar timestamp para evitar cache
@@ -666,6 +737,7 @@ export const useCanvas = () => {
             console.log('   Original:', url);
             console.log('   Proxy:', processedUrl);
           }
+          
           // Garantir crossOrigin anonymous
           if (args[0] && typeof args[0] === 'object') {
             args[0].crossOrigin = 'anonymous';
@@ -673,7 +745,21 @@ export const useCanvas = () => {
             // Se o primeiro arg for callback, adicionar options como segundo
             args.splice(1, 0, { crossOrigin: 'anonymous' });
           }
-          return originalFromURL.call(this, processedUrl, ...args);
+          
+          // Chamar método original e depois preservar URL original
+          return originalFromURL.call(this, processedUrl, ...args).then((img: any) => {
+            if (img) {
+              // IMPORTANTE: Preservar URL original para não salvar proxy no JSON
+              img._originalUrl = originalUrl;
+              // Sobrescrever o src para manter URL original
+              Object.defineProperty(img, 'src', {
+                get: function() { return originalUrl; },
+                set: function() { /* ignorar mudanças */ },
+                configurable: true
+              });
+            }
+            return img;
+          });
         };
         
         frontCanvas.loadFromJSON(processedJsonFront, async () => {
@@ -1011,19 +1097,36 @@ export const useCanvas = () => {
               const originalFromURLBack = fabric.FabricImage.fromURL;
               fabric.FabricImage.fromURL = function(url: string, ...args: any[]) {
                 let processedUrl = url;
+                const originalUrl = url; // Sempre salvar URL original
+                
                 if (url && (url.startsWith('http://') || url.startsWith('https://')) && !url.includes('/images/proxy')) {
                   const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
                   const timestamp = Date.now();
                   processedUrl = `${BASE_URL}/images/proxy?url=${encodeURIComponent(url)}&t=${timestamp}`;
                   console.log('🔄 [Back] Intercepting Fabric.js image load:', url, '->', processedUrl);
                 }
+                
                 // Garantir crossOrigin anonymous
                 if (args[0] && typeof args[0] === 'object') {
                   args[0].crossOrigin = 'anonymous';
                 } else if (args[0] && typeof args[0] === 'function') {
                   args.splice(1, 0, { crossOrigin: 'anonymous' });
                 }
-                return originalFromURLBack.call(this, processedUrl, ...args);
+                
+                // Chamar método original e depois preservar URL original
+                return originalFromURLBack.call(this, processedUrl, ...args).then((img: any) => {
+                  if (img) {
+                    // IMPORTANTE: Preservar URL original para não salvar proxy no JSON
+                    img._originalUrl = originalUrl;
+                    // Sobrescrever o src para manter URL original
+                    Object.defineProperty(img, 'src', {
+                      get: function() { return originalUrl; },
+                      set: function() { /* ignorar mudanças */ },
+                      configurable: true
+                    });
+                  }
+                  return img;
+                });
               };
               
               backCanvas.loadFromJSON(processedJsonBack, async () => {

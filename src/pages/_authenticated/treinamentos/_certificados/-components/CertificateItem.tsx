@@ -42,7 +42,7 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm }: Prop
         description: `${entity.name} inativado com sucesso.`,
         variant: "success",
       })
-      queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
+      queryClient.invalidateQueries({ queryKey: [`list_${entity.pluralName}`] });
     },
     onError: (error: unknown) => {
       hideLoader();
@@ -71,7 +71,7 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm }: Prop
         description: `O ${entity.name} foi reativado com sucesso.`,
         variant: "success",
       })
-      queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
+      queryClient.invalidateQueries({ queryKey: [`list_${entity.pluralName}`] });
     },
     onError: (error: unknown) => {
       hideLoader();

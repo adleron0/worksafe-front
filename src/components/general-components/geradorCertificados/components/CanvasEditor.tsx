@@ -146,8 +146,15 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
         fabricImage.scaleToHeight(maxSize);
       }
       
-      // Guardar URL original para referência
+      // IMPORTANTE: Preservar URL original para não salvar proxy no JSON
       (fabricImage as any)._originalUrl = imageUrl;
+      
+      // Sobrescrever o src para manter URL original ao salvar
+      Object.defineProperty(fabricImage, 'src', {
+        get: function() { return imageUrl; },
+        set: function() { /* ignorar mudanças */ },
+        configurable: true
+      });
       
       fabricCanvasRef.current.add(fabricImage);
       fabricCanvasRef.current.setActiveObject(fabricImage);

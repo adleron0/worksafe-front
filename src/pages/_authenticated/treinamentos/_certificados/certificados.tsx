@@ -28,6 +28,7 @@ function CertificadosPage() {
     limit: 10,
     page: 0,
     'order-name': 'asc',
+    active: 'true',
   });
   const initialFormRef = useRef(searchParams);
 
@@ -48,7 +49,7 @@ function CertificadosPage() {
     data, 
     isLoading,
   } = useQuery<Response | undefined, ApiError>({
-    queryKey: [`listCertificates`, searchParams],
+    queryKey: [`list_${entity.pluralName}`, searchParams],
     queryFn: async () => {
       const params = Object.keys(searchParams).map((key) => ({
         key,
@@ -180,7 +181,7 @@ function CertificadosPage() {
             setOpenEditor(false);
             setEditingCertificate(undefined);
             // Recarregar lista após salvar
-            queryClient.invalidateQueries({ queryKey: ['listCertificates'] });
+            queryClient.invalidateQueries({ queryKey: [`list_${entity.pluralName}`] });
           }}
         />
       </Dialog>

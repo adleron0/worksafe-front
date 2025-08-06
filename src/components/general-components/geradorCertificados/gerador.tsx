@@ -389,25 +389,6 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
     }
   }, [activeTab, getCurrentCanvasRef, selectedTextId, selectedText]);
 
-  // Helper function para usar o proxy de imagens
-  const getProxiedImageUrl = (imageUrl: string): string => {
-    // Se a URL já estiver usando o proxy, retornar como está
-    if (imageUrl.includes('/images/proxy')) {
-      return imageUrl;
-    }
-    
-    // Se for uma URL absoluta (http ou https), usar o proxy
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      // Codificar a URL para passar como parâmetro
-      const encodedUrl = encodeURIComponent(imageUrl);
-      // Usar a URL base da API
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      return `${apiBaseUrl}/images/proxy?url=${encodedUrl}`;
-    }
-    
-    // Se for uma URL relativa, assumir que já está correta
-    return imageUrl;
-  };
 
   // Query for fetching images
   const { data: imagesData, isLoading } = useQuery({
@@ -419,18 +400,57 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
       ];
       
       const response = await get<ImageListResponse>('images', '', params);
-      console.log('Images API response:', response);
+      console.log('Images API raw response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response is array?:', Array.isArray(response));
       
-      // Processar as URLs das imagens para usar o proxy
-      if (response && response.rows) {
-        response.rows = response.rows.map(image => ({
-          ...image,
-          imageUrl: getProxiedImageUrl(image.imageUrl)
-        }));
-        console.log('Images with proxy URLs:', response.rows);
+      // Verificar se a resposta é um array direto (sem wrapper)
+      let processedResponse: ImageListResponse;
+      
+      if (Array.isArray(response)) {
+        // Se for um array direto, criar a estrutura esperada
+        processedResponse = {
+          total: (response as any).length,
+          rows: response as any
+        };
+        console.log('Response was array, converted to:', processedResponse);
+      } else if (response && 'rows' in response) {
+        // Se já tem a estrutura esperada
+        processedResponse = response;
+        console.log('Response has expected structure');
+      } else if (response && typeof response === 'object') {
+        // Tentar encontrar os dados em outras propriedades
+        const possibleDataKeys = ['data', 'items', 'results', 'images'];
+        let foundData = null;
+        
+        for (const key of possibleDataKeys) {
+          if (key in response && Array.isArray((response as any)[key])) {
+            foundData = (response as any)[key];
+            break;
+          }
+        }
+        
+        if (foundData) {
+          processedResponse = {
+            total: foundData.length,
+            rows: foundData
+          };
+          console.log('Found data in alternative structure:', processedResponse);
+        } else {
+          // Se não encontrar, assumir estrutura vazia
+          processedResponse = { total: 0, rows: [] };
+          console.log('Could not find data, using empty structure');
+        }
+      } else {
+        // Fallback para estrutura vazia
+        processedResponse = { total: 0, rows: [] };
+        console.log('Unknown response format, using empty structure');
       }
       
-      return response;
+      // NÃO processar URLs aqui para manter as imagens aparecendo na galeria
+      // O proxy será aplicado apenas quando adicionar ao canvas
+      console.log('Returning response (proxy will be applied on canvas):', processedResponse);
+      return processedResponse;
     }
   });
 

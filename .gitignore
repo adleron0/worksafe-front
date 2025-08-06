@@ -31,3 +31,4 @@ package-lock.json
 
 # Arquivos temporários do sistema operacional
 Thumbs.db
+tsconfig.app.tsbuildinfo

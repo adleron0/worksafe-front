@@ -17,7 +17,7 @@ const TestProxyImage: React.FC = () => {
     
     // Criar URL do proxy
     const encodedUrl = encodeURIComponent(testImageUrl);
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const apiBaseUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
     const proxiedUrl = `${apiBaseUrl}/images/proxy?url=${encodedUrl}`;
     setProxyUrl(proxiedUrl);
     

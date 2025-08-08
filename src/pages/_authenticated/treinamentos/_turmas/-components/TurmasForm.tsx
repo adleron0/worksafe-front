@@ -46,7 +46,23 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     description: z.string().min(10, { message: "Descrição deve ter pelo menos 10 caracteres" }),
     gradeTheory: z.string().min(10, { message: "Grade teórica deve ter pelo menos 10 caracteres" }),
     gradePracticle: z.string().min(10, { message: "Grade prática deve ter pelo menos 10 caracteres" }),
-    videoUrl: z.string().url({ message: "URL do vídeo deve ser uma URL válida" }).optional(),
+    videoUrl: z.string()
+    .optional()
+    .nullable()
+    .refine((value) => {
+      // Se não há valor ou tem 1 caractere ou menos, passa na validação
+      if (!value || value.length <= 1) return true;
+      
+      // Se tem mais de 1 caractere, valida se é URL válida
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        return false;
+      }
+    }, {
+      message: "URL do vídeo deve ser uma URL válida"
+    }),
     videoTitle: z.string().optional(),
     videoSubtitle: z.string().optional(),
     videoDescription: z.string().optional(),

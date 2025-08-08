@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,200 +15,133 @@ import {
   Clock,
   Users,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { get } from "@/services/api";
 
 interface Course {
   id: number;
   name: string;
-  category: string;
-  date: string;
-  time: string;
-  duration: string;
-  spotsAvailable: number;
-  price: number;
-  color: string;
-  imageUrl?: string;
+  courseId: number;
+  price: string;
+  oldPrice: string | null;
+  hoursDuration: number;
+  openClass: boolean;
+  description: string;
+  imageUrl: string;
+  initialDate: string;
+  finalDate: string;
+  landingPagesDates: string;
+  minimumQuorum: number | null;
+  maxSubscriptions: number | null;
+  active: boolean;
 }
 
-const upcomingCourses: Course[] = [
-  {
-    id: 1,
-    name: "NR-33 - Espaço Confinado",
-    category: "Trabalhador e Vigia",
-    date: "8 de Agosto",
-    time: "08:00 - 18:00",
-    duration: "16 horas",
-    spotsAvailable: 8,
-    price: 450,
-    color: "bg-purple-100 text-purple-700",
-    imageUrl: "https://worksafe-brasil.s3.us-east-1.amazonaws.com/classes-image/1747003173138_Forma%C3%A7%C3%A3o_Trabalho_em_Espa%C3%A7os_Confinados",
-  },
-  {
-    id: 2,
-    name: "Alpinismo Industrial N1",
-    category: "Acesso por Corda",
-    date: "12 de Agosto",
-    time: "08:00 - 17:00",
-    duration: "48 horas",
-    spotsAvailable: 3,
-    price: 2600,
-    color: "bg-green-100 text-green-700",
-    imageUrl: "https://worksafe-brasil.s3.us-east-1.amazonaws.com/classes-image/1747003173138_Forma%C3%A7%C3%A3o_Trabalho_em_Espa%C3%A7os_Confinados",
-  },
-  {
-    id: 3,
-    name: "NR-35 - Trabalho em Altura",
-    category: "Trabalhador",
-    date: "19 de Agosto",
-    time: "08:00 - 17:00",
-    duration: "8 horas",
-    spotsAvailable: 12,
-    price: 350,
-    color: "bg-blue-100 text-blue-700",
-    imageUrl: "https://worksafe-brasil.s3.us-east-1.amazonaws.com/classes-image/1747003173138_Forma%C3%A7%C3%A3o_Trabalho_em_Espa%C3%A7os_Confinados",
-  },
-  {
-    id: 4,
-    name: "Resgate Técnico Industrial",
-    category: "RTI",
-    date: "22 de Agosto",
-    time: "08:00 - 17:00",
-    duration: "24 horas",
-    spotsAvailable: 10,
-    price: 650,
-    color: "bg-red-100 text-red-700",
-    imageUrl: "https://worksafe-brasil.s3.us-east-1.amazonaws.com/classes-image/1747003173138_Forma%C3%A7%C3%A3o_Trabalho_em_Espa%C3%A7os_Confinados",
-  },
-  {
-    id: 5,
-    name: "NR-10 - Segurança em Eletricidade",
-    category: "Básico",
-    date: "26 de Agosto",
-    time: "08:00 - 17:00",
-    duration: "40 horas",
-    spotsAvailable: 5,
-    price: 680,
-    color: "bg-yellow-100 text-yellow-700",
-    imageUrl: "https://worksafe-brasil.s3.us-east-1.amazonaws.com/classes-image/1747003173138_Forma%C3%A7%C3%A3o_Trabalho_em_Espa%C3%A7os_Confinados",
-  },
-  {
-    id: 6,
-    name: "NR-35 - Supervisor",
-    category: "Supervisor de Altura",
-    date: "2 de Setembro",
-    time: "08:00 - 17:00",
-    duration: "40 horas",
-    spotsAvailable: 12,
-    price: 850,
-    color: "bg-orange-100 text-orange-700",
-    imageUrl: "https://worksafe-brasil.s3.us-east-1.amazonaws.com/classes-image/1747003173138_Forma%C3%A7%C3%A3o_Trabalho_em_Espa%C3%A7os_Confinados",
-  },
-  {
-    id: 7,
-    name: "Brigada de Incêndio",
-    category: "Emergência",
-    date: "9 de Setembro",
-    time: "08:00 - 17:00",
-    duration: "40 horas",
-    spotsAvailable: 15,
-    price: 950,
-    color: "bg-amber-100 text-amber-700",
-    imageUrl: "https://worksafe-brasil.s3.us-east-1.amazonaws.com/classes-image/1747003173138_Forma%C3%A7%C3%A3o_Trabalho_em_Espa%C3%A7os_Confinados",
-  },
-  {
-    id: 8,
-    name: "NR-18 - Construção Civil",
-    category: "Segurança",
-    date: "16 de Setembro",
-    time: "08:00 - 17:00",
-    duration: "8 horas",
-    spotsAvailable: 20,
-    price: 320,
-    color: "bg-gray-100 text-gray-700",
-    imageUrl: "https://worksafe-brasil.s3.us-east-1.amazonaws.com/classes-image/1747003173138_Forma%C3%A7%C3%A3o_Trabalho_em_Espa%C3%A7os_Confinados",
-  },
-  {
-    id: 9,
-    name: "NR-12 - Máquinas e Equipamentos",
-    category: "Operador",
-    date: "23 de Setembro",
-    time: "08:00 - 17:00",
-    duration: "8 horas",
-    spotsAvailable: 7,
-    price: 380,
-    color: "bg-indigo-100 text-indigo-700",
-    imageUrl: "https://worksafe-brasil.s3.us-east-1.amazonaws.com/classes-image/1747003173138_Forma%C3%A7%C3%A3o_Trabalho_em_Espa%C3%A7os_Confinados",
-  },
-  {
-    id: 10,
-    name: "Primeiros Socorros",
-    category: "Emergência",
-    date: "30 de Setembro",
-    time: "08:00 - 17:00",
-    duration: "16 horas",
-    spotsAvailable: 25,
-    price: 280,
-    color: "bg-rose-100 text-rose-700",
-    imageUrl: "https://worksafe-brasil.s3.us-east-1.amazonaws.com/classes-image/1747003173138_Forma%C3%A7%C3%A3o_Trabalho_em_Espa%C3%A7os_Confinados",
-  },
-];
+interface ApiResponse {
+  total: number;
+  rows: Course[];
+}
+
+const entity = {
+  name: "Turma",
+  pluralName: "Turmas",
+  model: "classes",
+};
 
 interface TrainingSummaryProps {
   handleWhatsApp?: (message?: string) => void;
 }
 
 const TrainingSummary: React.FC<TrainingSummaryProps> = ({ handleWhatsApp }) => {
+  // Defina como true para iniciar com a imagem, false para iniciar com as informações
+  const START_WITH_IMAGE = true;
+  
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
-  const [animatingCards, setAnimatingCards] = useState<Set<number>>(new Set());
+  
+  const searchParams = { active: true };
+  
+  const { 
+    data, 
+    isLoading, 
+    isError, 
+  } = useQuery<ApiResponse | undefined>({
+    queryKey: [`list${entity.pluralName}`, searchParams],
+    queryFn: async () => {
+      const params = Object.keys(searchParams).map((key) => ({
+        key,
+        value: searchParams[key as keyof typeof searchParams]
+      }));
+      return get(entity.model, '', params);
+    },
+  });
+  
+  const upcomingCourses = data?.rows?.filter(course => course.active) || [];
 
-  const formatCurrency = (value: number) => {
+  useEffect(() => {
+    const handleResize = () => {
+      // Limpa os cards flipados ao mudar de mobile para desktop
+      if (window.innerWidth > 768) {
+        setFlippedCards(new Set());
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const formatCurrency = (value: string | number) => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
     return new Intl.NumberFormat('pt-BR', { 
       style: 'currency', 
       currency: 'BRL' 
-    }).format(value);
+    }).format(numValue);
+  };
+
+  const getCourseCategory = (name: string) => {
+    if (name.includes('NR33') || name.includes('NR-33')) return 'Espaço Confinado';
+    if (name.includes('NR35') || name.includes('NR-35')) return 'Trabalho em Altura';
+    if (name.includes('NR10') || name.includes('NR-10')) return 'Segurança Elétrica';
+    if (name.includes('NR18') || name.includes('NR-18')) return 'Construção Civil';
+    if (name.includes('NR12') || name.includes('NR-12')) return 'Máquinas e Equipamentos';
+    return 'Segurança do Trabalho';
+  };
+
+  const getCourseColor = (courseId: number) => {
+    const colors = [
+      'bg-purple-100 text-purple-700',
+      'bg-green-100 text-green-700',
+      'bg-blue-100 text-blue-700',
+      'bg-red-100 text-red-700',
+      'bg-yellow-100 text-yellow-700',
+      'bg-orange-100 text-orange-700',
+    ];
+    return colors[courseId % colors.length];
   };
 
   const handleEnrollment = (course: Course) => {
-    const message = `Olá! Gostaria de me inscrever no curso ${course.name} - ${course.date}`;
+    const message = `Olá! Gostaria de me inscrever no curso ${course.name} - ${course.landingPagesDates}`;
     if (handleWhatsApp) {
       handleWhatsApp(message);
     }
   };
 
-  const handleMouseEnter = (courseId: number) => {
-    if (!animatingCards.has(courseId)) {
-      setAnimatingCards(prev => new Set(prev).add(courseId));
-      setFlippedCards(prev => new Set(prev).add(courseId));
-      
-      // Após a animação, remove do animating
-      setTimeout(() => {
-        setAnimatingCards(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(courseId);
-          return newSet;
-        });
-      }, 600);
-    }
-  };
-
-  const handleMouseLeave = (courseId: number) => {
-    if (!animatingCards.has(courseId)) {
-      setAnimatingCards(prev => new Set(prev).add(courseId));
-      setFlippedCards(prev => {
-        const newSet = new Set(prev);
+  const handleCardClick = (e: React.MouseEvent, courseId: number) => {
+    e.stopPropagation();
+    
+    // Previne conflito com hover no desktop
+    if (window.innerWidth <= 768) {
+      if (flippedCards.has(courseId)) {
+        const newSet = new Set(flippedCards);
         newSet.delete(courseId);
-        return newSet;
-      });
-      
-      // Remove do animating após a animação completar
-      setTimeout(() => {
-        setAnimatingCards(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(courseId);
-          return newSet;
-        });
-      }, 600);
+        setFlippedCards(newSet);
+      } else {
+        const newSet = new Set(flippedCards);
+        newSet.add(courseId);
+        setFlippedCards(newSet);
+      }
     }
   };
 
@@ -225,41 +158,59 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = ({ handleWhatsApp }) => 
           </p>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary-light" />
+          </div>
+        )}
+        
+        {/* Error State */}
+        {isError && (
+          <div className="text-center py-20">
+            <p className="text-gray-600">Erro ao carregar os treinamentos. Por favor, tente novamente.</p>
+          </div>
+        )}
+        
         {/* Course Carousel */}
-        <div className="mb-12">
+        {!isLoading && !isError && upcomingCourses.length > 0 && (
+        <div className="mb-12 py-4">
           <Carousel 
-            className="w-full"
+            className="w-full overflow-visible"
             opts={{
               align: "start",
               loop: true,
             }}
           >
-            <CarouselContent className="-ml-4">
+            <CarouselContent className="-ml-4 py-2">
               {upcomingCourses.map((course) => (
                 <CarouselItem key={course.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
                   <div 
-                    className="relative h-[420px] [perspective:1000px]"
-                    onMouseEnter={() => handleMouseEnter(course.id)}
-                    onMouseLeave={() => handleMouseLeave(course.id)}
+                    className={`relative h-[420px] ${course.imageUrl ? '[perspective:1000px] md:cursor-pointer' : ''}`}
+                    onMouseEnter={() => course.imageUrl && window.innerWidth > 768 && setHoveredCard(course.id)}
+                    onMouseLeave={() => course.imageUrl && window.innerWidth > 768 && setHoveredCard(null)}
+                    onClick={(e) => course.imageUrl && handleCardClick(e, course.id)}
                   >
                     <div 
-                      className={`relative w-full h-full transition-transform duration-[600ms] ease-in-out [transform-style:preserve-3d] ${
-                        flippedCards.has(course.id) ? '[transform:rotateY(180deg)]' : ''
-                      }`}
-                      style={{ transformStyle: 'preserve-3d' }}
+                      className="relative w-full h-full transition-transform duration-700 ease-in-out [transform-style:preserve-3d]"
+                      style={{ 
+                        transformStyle: 'preserve-3d',
+                        transform: course.imageUrl 
+                          ? `rotateY(${
+                              START_WITH_IMAGE 
+                                ? (hoveredCard === course.id || flippedCards.has(course.id)) ? 0 : 180
+                                : (hoveredCard === course.id || flippedCards.has(course.id)) ? 180 : 0
+                            }deg)`
+                          : 'rotateY(0deg)'
+                      }}
                     >
                       {/* Front side */}
                       <Card className="absolute inset-0 bg-white border border-gray-100 shadow-sm hover:shadow-md [backface-visibility:hidden] w-full h-full">
                         <div className="p-5 h-full flex flex-col">
                           <div className="flex items-start justify-between mb-3">
-                            <Badge className={`${course.color} border-0 text-xs font-medium`}>
-                              {course.category}
+                            <Badge className={`${getCourseColor(course.courseId)} border-0 text-xs font-medium`}>
+                              {getCourseCategory(course.name)}
                             </Badge>
-                            {course.spotsAvailable <= 5 && (
-                              <span className="text-xs text-orange-600 font-semibold">
-                                Últimas vagas!
-                              </span>
-                            )}
                           </div>
                           
                           <h3 className="text-lg font-semibold text-gray-800 mb-3">
@@ -269,26 +220,37 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = ({ handleWhatsApp }) => 
                           <div className="space-y-2 text-sm text-gray-600 mb-4 flex-grow">
                             <div className="flex items-center gap-2">
                               <Calendar className="w-4 h-4 text-gray-400" />
-                              <span>{course.date}</span>
+                              <span>{course.landingPagesDates}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <Clock className="w-4 h-4 text-gray-400" />
-                              <span>{course.duration}</span>
+                              <span>{course.hoursDuration} horas</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Users className="w-4 h-4 text-gray-400" />
-                              <span>{course.spotsAvailable} vagas disponíveis</span>
-                            </div>
+                            {course.maxSubscriptions && (
+                              <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 text-gray-400" />
+                                <span>{course.maxSubscriptions} vagas</span>
+                              </div>
+                            )}
                           </div>
                           
                           <div className="border-t pt-4">
                             <div className="flex items-center justify-between mb-3">
                               <div>
-                                <p className="text-xs text-gray-500">Investimento</p>
+                                {course.oldPrice && (
+                                  <p className="text-xs text-gray-400 line-through">
+                                    {formatCurrency(course.oldPrice)}
+                                  </p>
+                                )}
                                 <p className="text-lg font-bold text-gray-800">
                                   {formatCurrency(course.price)}
                                 </p>
                               </div>
+                              {course.openClass && (
+                                <Badge className="bg-green-50 text-green-700 border-0 text-xs">
+                                  Turma Aberta
+                                </Badge>
+                              )}
                             </div>
                             <Button
                               size="sm"
@@ -301,34 +263,28 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = ({ handleWhatsApp }) => 
                         </div>
                       </Card>
                       
-                      {/* Back side */}
-                      <Card className="absolute inset-0 bg-white border border-gray-100 shadow-sm overflow-hidden [transform:rotateY(180deg)] [backface-visibility:hidden] w-full h-full">
-                        <div className="relative h-full">
-                          {course.imageUrl ? (
+                      {/* Back side - only render if imageUrl exists */}
+                      {course.imageUrl && (
+                        <Card className="absolute inset-0 bg-white border border-gray-100 shadow-sm overflow-hidden [transform:rotateY(180deg)] [backface-visibility:hidden] w-full h-full">
+                          <div className="relative h-full">
                             <img
                               src={course.imageUrl}
                               alt={course.name}
                               className="w-full h-full object-cover"
                             />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-primary-light/20 to-primary-light/40 flex items-center justify-center">
-                              <p className="text-primary-light font-semibold text-center px-4">
-                                {course.name}
-                              </p>
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-5">
+                              <h3 className="text-white font-semibold mb-3">{course.name}</h3>
+                              <Button
+                                size="sm"
+                                className="w-full bg-white text-primary-light hover:bg-gray-100"
+                                onClick={() => handleEnrollment(course)}
+                              >
+                                Inscrever-se
+                              </Button>
                             </div>
-                          )}
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-5">
-                            <h3 className="text-white font-semibold mb-3">{course.name}</h3>
-                            <Button
-                              size="sm"
-                              className="w-full bg-white text-primary-light hover:bg-gray-100"
-                              onClick={() => handleEnrollment(course)}
-                            >
-                              Inscrever-se
-                            </Button>
                           </div>
-                        </div>
-                      </Card>
+                        </Card>
+                      )}
                     </div>
                   </div>
                 </CarouselItem>
@@ -338,6 +294,14 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = ({ handleWhatsApp }) => 
             <CarouselNext className="absolute -right-4 lg:-right-12 bg-primary-light hover:bg-primary-light/90 border-0 text-white" />
           </Carousel>
         </div>
+        )}
+        
+        {/* Empty State */}
+        {!isLoading && !isError && upcomingCourses.length === 0 && (
+          <div className="text-center py-20">
+            <p className="text-gray-600">Nenhum treinamento disponível no momento.</p>
+          </div>
+        )}
 
         {/* CTA para página completa */}
         <motion.div 

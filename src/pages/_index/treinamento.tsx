@@ -3,7 +3,7 @@ import { useCart } from "../../hooks/use-cart";
 import { MessageCircleMore } from "lucide-react";
 import NavBar from "./-components/NavBar";
 import Hero from "./-components/Hero";
-// import TrainingSchedule from "./-components/TrainingSchedule";
+import TrainingSchedule from "./-components/TrainingSchedule";
 import CourseBadges from "./-components/CourseBadges";
 import Cta from "./-components/Cta";
 import Faq from "./-components/Faq";
@@ -95,7 +95,7 @@ function Treinamento() {
         <CourseBadges />
 
         {/* Training Schedule - Component completo */}
-        {/* <TrainingSchedule handleWhatsApp={handleWhatsApp} /> */}
+        <TrainingSchedule handleWhatsApp={handleWhatsApp} />
 
         {/* CTA Section */}
         <Cta

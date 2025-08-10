@@ -16,6 +16,7 @@ import {
   Users,
   ArrowRight,
   Loader2,
+  CalendarDays,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -37,6 +38,9 @@ interface Course {
   minimumQuorum: number | null;
   maxSubscriptions: number | null;
   active: boolean;
+  _count?: {
+    subscriptions: number;
+  };
 }
 
 interface ApiResponse {
@@ -54,14 +58,17 @@ interface TrainingSummaryProps {
   handleWhatsApp?: (message?: string) => void;
 }
 
-const TrainingSummary: React.FC<TrainingSummaryProps> = ({ handleWhatsApp }) => {
+const TrainingSummary: React.FC<TrainingSummaryProps> = () => {
   // Defina como true para iniciar com a imagem, false para iniciar com as informações
   const START_WITH_IMAGE = true;
   
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
   
-  const searchParams = { active: true };
+  const searchParams = { 
+    active: true,
+    show: ['_count']
+  };
   
   const { 
     data, 
@@ -78,7 +85,18 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = ({ handleWhatsApp }) => 
     },
   });
   
-  const upcomingCourses = data?.rows?.filter(course => course.active) || [];
+  const upcomingCourses = data?.rows?.filter(course => course.active)?.sort((a, b) => {
+    // Check if courses are full
+    const aIsFull = a.maxSubscriptions && a._count && a._count.subscriptions >= a.maxSubscriptions;
+    const bIsFull = b.maxSubscriptions && b._count && b._count.subscriptions >= b.maxSubscriptions;
+    
+    // If one is full and the other isn't, put the full one at the end
+    if (aIsFull && !bIsFull) return 1;
+    if (!aIsFull && bIsFull) return -1;
+    
+    // If both have the same status, maintain original order
+    return 0;
+  }) || [];
 
   useEffect(() => {
     const handleResize = () => {
@@ -100,33 +118,7 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = ({ handleWhatsApp }) => 
     }).format(numValue);
   };
 
-  const getCourseCategory = (name: string) => {
-    if (name.includes('NR33') || name.includes('NR-33')) return 'Espaço Confinado';
-    if (name.includes('NR35') || name.includes('NR-35')) return 'Trabalho em Altura';
-    if (name.includes('NR10') || name.includes('NR-10')) return 'Segurança Elétrica';
-    if (name.includes('NR18') || name.includes('NR-18')) return 'Construção Civil';
-    if (name.includes('NR12') || name.includes('NR-12')) return 'Máquinas e Equipamentos';
-    return 'Segurança do Trabalho';
-  };
 
-  const getCourseColor = (courseId: number) => {
-    const colors = [
-      'bg-purple-100 text-purple-700',
-      'bg-green-100 text-green-700',
-      'bg-blue-100 text-blue-700',
-      'bg-red-100 text-red-700',
-      'bg-yellow-100 text-yellow-700',
-      'bg-orange-100 text-orange-700',
-    ];
-    return colors[courseId % colors.length];
-  };
-
-  const handleEnrollment = (course: Course) => {
-    const message = `Olá! Gostaria de me inscrever no curso ${course.name} - ${course.landingPagesDates}`;
-    if (handleWhatsApp) {
-      handleWhatsApp(message);
-    }
-  };
 
   const handleCardClick = (e: React.MouseEvent, courseId: number) => {
     e.stopPropagation();
@@ -208,9 +200,31 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = ({ handleWhatsApp }) => 
                       <Card className="absolute inset-0 bg-white border border-gray-100 shadow-sm hover:shadow-md [backface-visibility:hidden] w-full h-full">
                         <div className="p-5 h-full flex flex-col">
                           <div className="flex items-start justify-between mb-3">
-                            <Badge className={`${getCourseColor(course.courseId)} border-0 text-xs font-medium`}>
-                              {getCourseCategory(course.name)}
-                            </Badge>
+                            <div className="flex items-center gap-1.5">
+                              <div className="relative">
+                                <div className={`w-2 h-2 rounded-full ${
+                                  course.maxSubscriptions && course._count && course._count.subscriptions >= course.maxSubscriptions 
+                                    ? 'bg-yellow-500' 
+                                    : 'bg-green-500'
+                                }`}>
+                                  <div className={`absolute inset-0 rounded-full ${
+                                    course.maxSubscriptions && course._count && course._count.subscriptions >= course.maxSubscriptions 
+                                      ? 'bg-yellow-500' 
+                                      : 'bg-green-500'
+                                  } animate-ping`} />
+                                </div>
+                              </div>
+                              <span className={`text-xs font-medium ${
+                                course.maxSubscriptions && course._count && course._count.subscriptions >= course.maxSubscriptions 
+                                  ? 'text-yellow-700' 
+                                  : 'text-green-700'
+                              }`}>
+                                {course.maxSubscriptions && course._count && course._count.subscriptions >= course.maxSubscriptions 
+                                  ? 'Max Inscritos Atingidos' 
+                                  : 'Inscrições Abertas'
+                                }
+                              </span>
+                            </div>
                           </div>
                           
                           <h3 className="text-lg font-semibold text-gray-800 mb-3">
@@ -232,6 +246,31 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = ({ handleWhatsApp }) => 
                                 <span>{course.maxSubscriptions} vagas</span>
                               </div>
                             )}
+                            
+                            {/* Progress bar for enrollments */}
+                            {course.maxSubscriptions && course._count && (
+                              <div className="pt-2">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-xs text-gray-500">Vagas</span>
+                                  <span className="text-xs font-medium text-primary-light">
+                                    {course._count.subscriptions}/{course.maxSubscriptions}
+                                  </span>
+                                </div>
+                                <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+                                  <div 
+                                    className="absolute h-full bg-gradient-to-r from-primary-light to-primary-light/80 rounded-full transition-all duration-300"
+                                    style={{ width: `${Math.min((course._count.subscriptions / course.maxSubscriptions) * 100, 100)}%` }}
+                                  />
+                                </div>
+                                {course.maxSubscriptions - course._count.subscriptions > 0 ? (
+                                  <p className="text-xs text-green-600 mt-1">
+                                    {course.maxSubscriptions - course._count.subscriptions} vagas disponíveis
+                                  </p>
+                                ) : (
+                                  <p className="text-xs text-red-600 mt-1">Turma lotada</p>
+                                )}
+                              </div>
+                            )}
                           </div>
                           
                           <div className="border-t pt-4">
@@ -246,19 +285,31 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = ({ handleWhatsApp }) => 
                                   {formatCurrency(course.price)}
                                 </p>
                               </div>
-                              {course.openClass && (
-                                <Badge className="bg-green-50 text-green-700 border-0 text-xs">
-                                  Turma Aberta
-                                </Badge>
-                              )}
                             </div>
-                            <Button
-                              size="sm"
-                              className="w-full bg-primary-light hover:bg-primary-light/90 text-white"
-                              onClick={() => handleEnrollment(course)}
-                            >
-                              Inscrever-se
-                            </Button>
+                            {(() => {
+                              const isFull = course.maxSubscriptions && course._count && course._count.subscriptions >= course.maxSubscriptions;
+                              
+                              return (
+                                <Button
+                                  size="sm"
+                                  className={`w-full ${
+                                    isFull 
+                                      ? 'bg-gray-300 hover:bg-gray-300 cursor-not-allowed opacity-50' 
+                                      : 'bg-primary-light hover:bg-primary-light/90 text-white'
+                                  }`}
+                                  onClick={() => {
+                                    if (!isFull) {
+                                      window.location.href = `/turma/${course.id}`;
+                                    }
+                                  }}
+                                  disabled={!!isFull}
+                                >
+                                  <span className={isFull ? 'line-through' : ''}>
+                                    {isFull ? 'Turma Lotada' : 'Saiba Mais'}
+                                  </span>
+                                </Button>
+                              );
+                            })()}
                           </div>
                         </div>
                       </Card>
@@ -272,15 +323,88 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = ({ handleWhatsApp }) => 
                               alt={course.name}
                               className="w-full h-full object-cover"
                             />
+                            
+                            {/* Dark overlay for full courses */}
+                            {course.maxSubscriptions && course._count && course._count.subscriptions >= course.maxSubscriptions && (
+                              <>
+                                <div className="absolute inset-0 bg-black/70 pointer-events-none" />
+                                
+                                {/* Diagonal banner for full courses */}
+                                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                  <div 
+                                    className="absolute bg-primary-light text-white text-center font-bold py-3 shadow-lg"
+                                    style={{
+                                      transform: 'rotate(-45deg)',
+                                      transformOrigin: 'center',
+                                      top: '30%',
+                                      left: '-30%',
+                                      right: '-30%',
+                                      width: '160%',
+                                      fontSize: '13px',
+                                      letterSpacing: '1px',
+                                      textTransform: 'uppercase',
+                                      lineHeight: '1'
+                                    }}
+                                  >
+                                    INSCRIÇÕES ESGOTADAS
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                            
+                            {/* Status indicator on image */}
+                            <div className="absolute top-4 left-4">
+                              {course.maxSubscriptions && course._count && course._count.subscriptions >= course.maxSubscriptions ? (
+                                <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5">
+                                  <div className="relative">
+                                    <div className="w-2 h-2 rounded-full bg-yellow-500">
+                                      <div className="absolute inset-0 rounded-full bg-yellow-500 animate-ping" />
+                                    </div>
+                                  </div>
+                                  <span className="text-xs font-medium text-yellow-700">
+                                    Esgotado
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5">
+                                  <div className="relative">
+                                    <div className="w-2 h-2 rounded-full bg-green-500">
+                                      <div className="absolute inset-0 rounded-full bg-green-500 animate-ping" />
+                                    </div>
+                                  </div>
+                                  <span className="text-xs font-medium text-green-700">
+                                    Inscrições Abertas
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            
                             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-5">
                               <h3 className="text-white font-semibold mb-3">{course.name}</h3>
-                              <Button
-                                size="sm"
-                                className="w-full bg-white text-primary-light hover:bg-gray-100"
-                                onClick={() => handleEnrollment(course)}
-                              >
-                                Inscrever-se
-                              </Button>
+                              {(() => {
+                                const isFull = course.maxSubscriptions && course._count && course._count.subscriptions >= course.maxSubscriptions;
+                                
+                                return (
+                                  <Button
+                                    size="sm"
+                                    className={`w-full ${
+                                      isFull 
+                                        ? 'bg-gray-300 hover:bg-gray-300 cursor-not-allowed opacity-50 text-gray-600' 
+                                        : 'bg-white text-primary-light hover:bg-gray-100'
+                                    }`}
+                                    onClick={() => {
+                                      if (!isFull) {
+                                        window.location.href = `/turma/${course.id}`;
+                                      }
+                                    }}
+                                    disabled={!!isFull}
+                                  >
+                                    <span className={isFull ? 'line-through' : ''}>
+                                      {isFull ? 'Turma Lotada' : 'Saiba Mais'}
+                                    </span>
+                                  </Button>
+                                );
+                              })()}
                             </div>
                           </div>
                         </Card>
@@ -315,7 +439,8 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = ({ handleWhatsApp }) => 
               size="lg"
               className="bg-black hover:bg-black/90 text-white font-normal text-base px-6 py-2.5 shadow-md hover:shadow-lg transition-all duration-200 group"
             >
-              Ver Todos os Treinamentos 
+              <CalendarDays className="mr-2 h-4 w-4" />
+              Ver Agenda Completa
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
           </Link>

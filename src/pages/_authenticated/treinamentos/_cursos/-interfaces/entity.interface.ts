@@ -7,10 +7,13 @@ export interface IEntity {
   id?: number;
   name: string;
   hoursDuration?: number;
+  yearOfValidation?: number;
   flags?: string;
   companyId?: number;
   imageUrl: string | null;
   image?: File | null;
+  icon?: string;
+  color?: string;
   description?: string;
   gradeTheory?: string;
   gradePracticle?: string;

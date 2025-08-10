@@ -22,6 +22,7 @@ import { Route as AuthenticatedBuildingImport } from './pages/_authenticated/bui
 import { Route as AuthenticatedTreinamentosIndexImport } from './pages/_authenticated/treinamentos/index'
 import { Route as AuthenticatedInventariosIndexImport } from './pages/_authenticated/inventarios/index'
 import { Route as AuthenticatedClientesIndexImport } from './pages/_authenticated/clientes/index'
+import { Route as IndexTurmaIdImport } from './pages/_index/turma.$id'
 import { Route as AuthenticatedTreinamentosProvasImport } from './pages/_authenticated/treinamentos/provas'
 import { Route as AuthenticatedTreinamentosAlunosImport } from './pages/_authenticated/treinamentos/alunos'
 import { Route as AuthenticatedInventariosDashboardImport } from './pages/_authenticated/inventarios/dashboard'
@@ -108,6 +109,12 @@ const AuthenticatedClientesIndexRoute = AuthenticatedClientesIndexImport.update(
     getParentRoute: () => AuthenticatedRoute,
   } as any,
 )
+
+const IndexTurmaIdRoute = IndexTurmaIdImport.update({
+  id: '/_index/turma/$id',
+  path: '/turma/$id',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const AuthenticatedTreinamentosProvasRoute =
   AuthenticatedTreinamentosProvasImport.update({
@@ -309,6 +316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTreinamentosProvasImport
       parentRoute: typeof AuthenticatedImport
     }
+    '/_index/turma/$id': {
+      id: '/_index/turma/$id'
+      path: '/turma/$id'
+      fullPath: '/turma/$id'
+      preLoaderRoute: typeof IndexTurmaIdImport
+      parentRoute: typeof rootRoute
+    }
     '/_authenticated/clientes/': {
       id: '/_authenticated/clientes/'
       path: '/clientes'
@@ -482,6 +496,7 @@ export interface FileRoutesByFullPath {
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosRoute
   '/treinamentos/provas': typeof AuthenticatedTreinamentosProvasRoute
+  '/turma/$id': typeof IndexTurmaIdRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
   '/inventarios': typeof AuthenticatedInventariosIndexRoute
   '/treinamentos': typeof AuthenticatedTreinamentosIndexRoute
@@ -511,6 +526,7 @@ export interface FileRoutesByTo {
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosRoute
   '/treinamentos/provas': typeof AuthenticatedTreinamentosProvasRoute
+  '/turma/$id': typeof IndexTurmaIdRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
   '/inventarios': typeof AuthenticatedInventariosIndexRoute
   '/treinamentos': typeof AuthenticatedTreinamentosIndexRoute
@@ -541,6 +557,7 @@ export interface FileRoutesById {
   '/_authenticated/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/_authenticated/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosRoute
   '/_authenticated/treinamentos/provas': typeof AuthenticatedTreinamentosProvasRoute
+  '/_index/turma/$id': typeof IndexTurmaIdRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
   '/_authenticated/inventarios/': typeof AuthenticatedInventariosIndexRoute
   '/_authenticated/treinamentos/': typeof AuthenticatedTreinamentosIndexRoute
@@ -572,6 +589,7 @@ export interface FileRouteTypes {
     | '/inventarios/dashboard'
     | '/treinamentos/alunos'
     | '/treinamentos/provas'
+    | '/turma/$id'
     | '/clientes'
     | '/inventarios'
     | '/treinamentos'
@@ -600,6 +618,7 @@ export interface FileRouteTypes {
     | '/inventarios/dashboard'
     | '/treinamentos/alunos'
     | '/treinamentos/provas'
+    | '/turma/$id'
     | '/clientes'
     | '/inventarios'
     | '/treinamentos'
@@ -628,6 +647,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventarios/dashboard'
     | '/_authenticated/treinamentos/alunos'
     | '/_authenticated/treinamentos/provas'
+    | '/_index/turma/$id'
     | '/_authenticated/clientes/'
     | '/_authenticated/inventarios/'
     | '/_authenticated/treinamentos/'
@@ -651,6 +671,7 @@ export interface RootRouteChildren {
   IndexSobreRoute: typeof IndexSobreRoute
   IndexTreinamentoRoute: typeof IndexTreinamentoRoute
   IndexIndexRoute: typeof IndexIndexRoute
+  IndexTurmaIdRoute: typeof IndexTurmaIdRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -660,6 +681,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexSobreRoute: IndexSobreRoute,
   IndexTreinamentoRoute: IndexTreinamentoRoute,
   IndexIndexRoute: IndexIndexRoute,
+  IndexTurmaIdRoute: IndexTurmaIdRoute,
 }
 
 export const routeTree = rootRoute
@@ -677,7 +699,8 @@ export const routeTree = rootRoute
         "/_index/loja",
         "/_index/sobre",
         "/_index/treinamento",
-        "/_index/"
+        "/_index/",
+        "/_index/turma/$id"
       ]
     },
     "/_authenticated": {
@@ -747,6 +770,9 @@ export const routeTree = rootRoute
     "/_authenticated/treinamentos/provas": {
       "filePath": "_authenticated/treinamentos/provas.tsx",
       "parent": "/_authenticated"
+    },
+    "/_index/turma/$id": {
+      "filePath": "_index/turma.$id.tsx"
     },
     "/_authenticated/clientes/": {
       "filePath": "_authenticated/clientes/index.tsx",

@@ -699,7 +699,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           id="videoUrl"
           name="videoUrl"
           placeholder="Digite a URL do vídeo"
-          value={dataForm.videoUrl}
+          value={dataForm.videoUrl || ''}
           onValueChange={handleChange}
           className="mt-1"
         />

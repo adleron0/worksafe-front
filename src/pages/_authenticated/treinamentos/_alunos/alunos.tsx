@@ -5,21 +5,18 @@ import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
 import Pagination from "@/components/general-components/Pagination";
-import Dialog from "@/components/general-components/Dialog";
 // Template Page list-form
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
 import ItemSkeleton from "./-skeletons/ItemSkeleton";
-import ItemList from "./-components/TurmasItem";
-import Form from "./-components/TurmasForm";
-import SearchForm from "./-components/TurmasSearch";
-import TurmasInstrutoresList from "@/pages/_authenticated/treinamentos/_instrutores/-turmas-instrutores/TurmasInstrutoresList";
-import Subscriptions from "@/pages/_authenticated/treinamentos/-subscriptions";
+import ItemList from "./-components/AlunosItem";
+import Form from "./-components/AlunosForm";
+import SearchForm from "./-components/AlunosSearch";
 // Interfaces
 import { IEntity } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
-export const Route = createFileRoute('/_authenticated/treinamentos/_turmas/turmas')({
+export const Route = createFileRoute('/_authenticated/treinamentos/_alunos/alunos')({
   component: List,
 })
 
@@ -27,23 +24,20 @@ function List() {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
-  const [openInstrutoresModal, setOpenInstrutoresModal] = useState(false);
-  const [openSubscriptionsModal, setOpenSubscriptionsModal] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
     'order-name': 'asc',
-    'gte-initialDate': new Date().toISOString(), // Data atual
   });
   const initialFormRef = useRef(searchParams);
 
   // Define variáveis de entidade
   const entity = {
-    name: "Turma",
-    pluralName: "Turmas",
-    model: "classes",
-    ability: "classes",
+    name: "Aluno",
+    pluralName: "Alunos",
+    model: "trainee",
+    ability: "treinamentos",
   }
 
   interface Response {
@@ -67,7 +61,16 @@ function List() {
     },
   });
 
-  const handleSearch = async (params: any) => {
+  interface SearchFormData {
+    'like-name': string;
+    active?: boolean;
+    cpf: string;
+    'in-customerId'?: number | number[];
+    'gte-birthDate'?: string;
+    createdAt?: [Date | undefined, Date | undefined];
+  }
+
+  const handleSearch = async (params: SearchFormData) => {
     setSearchParams((prev) => ({
       ...prev,
       ...params,
@@ -128,9 +131,9 @@ function List() {
           : `Cadastrar ${entity.name}`}
         description={formData 
           ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
-          : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
+          : `Por favor, preencha com atenção todas as informações necessárias para cadastrar o ${entity.name}.`}
         side="right"
-        form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} /> }
+        form={<Form formData={formData} openSheet={setOpenForm} entity={entity} />}
       />
 
       {/* Listagem de items */}
@@ -150,8 +153,6 @@ function List() {
                 index={i} 
                 setFormData={setFormData} 
                 setOpenForm={setOpenForm}
-                openInstructorsModal={setOpenInstrutoresModal}
-                openSubscriptionsModal={setOpenSubscriptionsModal}
               />
             ))
           : (
@@ -161,30 +162,6 @@ function List() {
           )
         }
       </div>
-
-      {/* Modal de instrutores */}
-      <Dialog 
-        open={openInstrutoresModal}
-        onOpenChange={setOpenInstrutoresModal}
-        showBttn={false}
-        showHeader={true}
-        title={`Instrutores da Turma ${formData?.name}`}
-        description="Gestão de instrutores da turma."
-      >
-        <TurmasInstrutoresList classId={formData?.id || 0} />
-      </Dialog>
-
-      {/* Modal de inscrições */}
-      <Dialog 
-        open={openSubscriptionsModal}
-        onOpenChange={setOpenSubscriptionsModal}
-        showBttn={false}
-        showHeader={true}
-        title={`Inscrições da Turma ${formData?.name}`}
-        description="Lista de alunos inscritos nesta turma."
-      >
-        <Subscriptions classId={formData?.id || 0} />
-      </Dialog>
 
       {/* Paginação */}
       <div className="mt-4">

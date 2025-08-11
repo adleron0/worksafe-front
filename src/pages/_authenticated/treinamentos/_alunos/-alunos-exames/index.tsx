@@ -1,48 +1,39 @@
-import { createFileRoute } from '@tanstack/react-router'
 import { useRef, useState } from "react";
 // Serviços
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
 import Pagination from "@/components/general-components/Pagination";
-import Dialog from "@/components/general-components/Dialog";
 // Template Page list-form
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
-import ItemSkeleton from "./-skeletons/ItemSkeleton";
-import ItemList from "./-components/TurmasItem";
-import Form from "./-components/TurmasForm";
-import SearchForm from "./-components/TurmasSearch";
-import TurmasInstrutoresList from "@/pages/_authenticated/treinamentos/_instrutores/-turmas-instrutores/TurmasInstrutoresList";
-import Subscriptions from "@/pages/_authenticated/treinamentos/-subscriptions";
+import ItemSkeleton from "./skeletons/ItemSkeleton";
+import ItemList from "./components/ExamesItem";
+import Form from "./components/ExamesForm";
+import SearchForm from "./components/ExamesSearch";
 // Interfaces
-import { IEntity } from "./-interfaces/entity.interface";
+import { IEntity } from "./interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
-export const Route = createFileRoute('/_authenticated/treinamentos/_turmas/turmas')({
-  component: List,
-})
-
-function List() {
+const List = ({ traineeId }: { traineeId: number }) => {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
-  const [openInstrutoresModal, setOpenInstrutoresModal] = useState(false);
-  const [openSubscriptionsModal, setOpenSubscriptionsModal] = useState(false);
-  const [formData, setFormData] = useState<IEntity>();
+  const [formData, setFormData] = useState<IEntity | null>(null);
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
-    'order-name': 'asc',
-    'gte-initialDate': new Date().toISOString(), // Data atual
+    show: ['trainee', 'course', 'class'],
+    traineeId: traineeId,
+    'order-createdAt': 'desc',
   });
   const initialFormRef = useRef(searchParams);
 
   // Define variáveis de entidade
   const entity = {
-    name: "Turma",
-    pluralName: "Turmas",
-    model: "classes",
+    name: "Exame",
+    pluralName: "Exames",
+    model: "exames",
     ability: "classes",
   }
 
@@ -67,7 +58,7 @@ function List() {
     },
   });
 
-  const handleSearch = async (params: any) => {
+  const handleSearch = async (params: Record<string, any>) => {
     setSearchParams((prev) => ({
       ...prev,
       ...params,
@@ -95,18 +86,17 @@ function List() {
   return (
     <>
       <HeaderLists
-        titlePage={`${entity.pluralName}`}
-        descriptionPage={`Administrar nossos ${entity.pluralName}`}
         entityName={entity.name}
         ability={entity.ability}
         limit={data?.total || 0}
+        showCreate={false}
         searchParams={searchParams}
         onlimitChange={handleLimitChange}
         openSearch={setOpenSearch}
         openForm={setOpenForm}
         setFormData={setFormData} 
         setFormType={() => {}}
-        iconForm="plus"
+        iconForm="eye"
       />
 
       {/* Busca avançada */}
@@ -116,21 +106,19 @@ function List() {
         title={`Buscar ${entity.pluralName}`}
         description={`Preencha os campos abaixo para filtrar ${entity.pluralName}.`}
         side="left"
-        form={ <SearchForm onSubmit={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
+        form={ <SearchForm onSearch={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
       />
 
-      {/* Formulário de cadastro */}
+      {/* Formulário de visualização */}
       <SideForm
         openSheet={openForm}
         setOpenSheet={setOpenForm}
-        title={formData 
-          ? `Editar ${entity.name} ${formData.name}`
-          : `Cadastrar ${entity.name}`}
+        title={`Detalhes do ${entity.name}`}
         description={formData 
-          ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
-          : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
+          ? `Visualizando os detalhes do exame realizado.`
+          : `Detalhes do exame.`}
         side="right"
-        form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} /> }
+        form={ <Form formData={formData} setOpenForm={setOpenForm} entity={entity} traineeId={traineeId} /> }
       />
 
       {/* Listagem de items */}
@@ -150,8 +138,6 @@ function List() {
                 index={i} 
                 setFormData={setFormData} 
                 setOpenForm={setOpenForm}
-                openInstructorsModal={setOpenInstrutoresModal}
-                openSubscriptionsModal={setOpenSubscriptionsModal}
               />
             ))
           : (
@@ -161,30 +147,6 @@ function List() {
           )
         }
       </div>
-
-      {/* Modal de instrutores */}
-      <Dialog 
-        open={openInstrutoresModal}
-        onOpenChange={setOpenInstrutoresModal}
-        showBttn={false}
-        showHeader={true}
-        title={`Instrutores da Turma ${formData?.name}`}
-        description="Gestão de instrutores da turma."
-      >
-        <TurmasInstrutoresList classId={formData?.id || 0} />
-      </Dialog>
-
-      {/* Modal de inscrições */}
-      <Dialog 
-        open={openSubscriptionsModal}
-        onOpenChange={setOpenSubscriptionsModal}
-        showBttn={false}
-        showHeader={true}
-        title={`Inscrições da Turma ${formData?.name}`}
-        description="Lista de alunos inscritos nesta turma."
-      >
-        <Subscriptions classId={formData?.id || 0} />
-      </Dialog>
 
       {/* Paginação */}
       <div className="mt-4">
@@ -201,3 +163,5 @@ function List() {
     </>
   );
 };
+
+export default List;

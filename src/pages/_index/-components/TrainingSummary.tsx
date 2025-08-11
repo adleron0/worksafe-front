@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Link } from '@tanstack/react-router';
 import {
   Carousel,
@@ -65,10 +64,11 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = () => {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
   
-  const searchParams = { 
-    active: true,
-    show: ['_count']
-  };
+  const [searchParams] = useState({
+    limit: 999,
+    'gte-initialDate': new Date().toISOString(), // Data atual
+    show: ['_count'],
+  });
   
   const { 
     data, 

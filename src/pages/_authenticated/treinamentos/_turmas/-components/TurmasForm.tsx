@@ -20,7 +20,7 @@ import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { z } from "zod";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, RefreshCw, HelpCircle } from "lucide-react";
 
 interface FormProps {
   formData?: IEntity;
@@ -31,6 +31,16 @@ interface FormProps {
 const Form = ({ formData, openSheet, entity }: FormProps) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
+
+  // Função para gerar hash alfanumérico de 4 dígitos
+  const generateClassCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 4; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  };
 
   // Schema
   const Schema = z.object({
@@ -78,6 +88,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     landingPagesDates: z.string().min(3, { message: "Datas de divulgação devem ter pelo menos 3 caracteres" }),
     allowExam: z.boolean().optional().nullable(),
     allowReview: z.boolean().optional(),
+    classCode: z.string().optional().nullable(),
     minimumQuorum: z.number().optional(),
     maxSubscriptions: z.number().optional(),
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
@@ -86,6 +97,15 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         message: "Imagem deve ser um arquivo ou nulo.",
       }
     ),
+  }).refine((data) => {
+    // Se allowExam é true, classCode é obrigatório
+    if (data.allowExam && (!data.classCode || data.classCode.trim() === '')) {
+      return false;
+    }
+    return true;
+  }, {
+    message: "Código de acesso é obrigatório quando a turma tem prova",
+    path: ["classCode"],
   })
 
   type FormData = z.infer<typeof Schema>;
@@ -158,6 +178,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     landingPagesDates: formData?.landingPagesDates || "",
     allowExam: formData?.allowExam || true,
     allowReview: formData?.allowReview || true,
+    classCode: formData?.classCode || (!formData ? generateClassCode() : (formData?.classCode || generateClassCode())),
     minimumQuorum: formData?.minimumQuorum || 0,
     maxSubscriptions: formData?.maxSubscriptions || 0,
     image: formData?.image || null,
@@ -647,36 +668,75 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {errors.maxSubscriptions && <p className="text-red-500 text-sm">{errors.maxSubscriptions}</p>}
       </div>
 
-      <div className="mt-4 flex justify-between">
-        <Label htmlFor="openClass">Turma aberta?</Label>
+      <div className="mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg flex justify-between items-center">
+        <Label htmlFor="openClass" className="cursor-pointer flex items-center gap-2">
+          <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+          Turma aberta
+        </Label>
         <Switch
           id="openClass"
           name="openClass"
           checked={dataForm.openClass ? true : false}
           onCheckedChange={() => setDataForm((prev) => ({ ...prev, openClass: !prev.openClass }))}
-          className="mt-1"
         />
       </div>
 
-      <div className="mt-4 flex justify-between">
-        <Label htmlFor="allowExam">Tem Prova?</Label>
-        <Switch
-          id="allowExam"
-          name="allowExam"
-          checked={dataForm.allowExam ? true : false}
-          onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowExam: !prev.allowExam }))}
-          className="mt-1"
-        />
+      <div className={`mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg ${dataForm.allowExam ? 'pb-4' : ''}`}>
+        <div className="flex justify-between items-center">
+          <Label htmlFor="allowExam" className="cursor-pointer flex items-center gap-2">
+            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+            Habilitar Prova
+          </Label>
+          <Switch
+            id="allowExam"
+            name="allowExam"
+            checked={dataForm.allowExam ? true : false}
+            onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowExam: !prev.allowExam }))}
+          />
+        </div>
+
+        {dataForm.allowExam && (
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <Label htmlFor="classCode">Código de Acesso à Prova <span className="text-red-500">*</span></Label>
+            <p className="text-xs text-muted-foreground font-medium mb-2">Código que os alunos usarão para acessar a prova</p>
+            <div className="flex gap-2">
+              <Input
+                id="classCode"
+                name="classCode"
+                placeholder="Ex: A3B9"
+                value={dataForm.classCode || ''}
+                onValueChange={handleChange}
+                className="flex-1"
+                required={dataForm.allowExam}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  const newCode = generateClassCode();
+                  handleChange('classCode', newCode);
+                }}
+                title="Gerar novo código"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
+            {errors.classCode && <p className="text-red-500 text-sm mt-1">{errors.classCode}</p>}
+          </div>
+        )}
       </div>
 
-      <div className="mt-4 flex justify-between">
-        <Label htmlFor="allowReview">Tem Avaliação?</Label>
+      <div className="mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg flex justify-between items-center">
+        <Label htmlFor="allowReview" className="cursor-pointer flex items-center gap-2">
+          <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+          Habilitar Avaliação
+        </Label>
         <Switch
           id="allowReview"
           name="allowReview"
           checked={dataForm.allowReview ? true : false}
           onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowReview: !prev.allowReview }))}
-          className="mt-1"
         />
       </div>
 

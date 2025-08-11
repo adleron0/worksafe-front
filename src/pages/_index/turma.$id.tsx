@@ -405,10 +405,10 @@ Turma: ${turma?.landingPagesDates}`;
               transition={{ duration: 0.6 }}
               className="w-full text-left"
             >
-              <div className="flex flex-wrap gap-2 mb-4">
-                <Badge className="bg-primary-light/10 text-primary-light border-0 hover:bg-primary-light/20 transition-colors cursor-default">
+              <div className="flex flex-wrap gap-2 mb-4 font-thin">
+                {/* <Badge className="bg-muted text-foreground border-0 hover:bg-primary-light/20 transition-colors cursor-default">
                   {turma.openClass ? "Turma Aberta" : "Em Breve"}
-                </Badge>
+                </Badge> */}
                 {turma.course?.yearOfValidation && (
                   <Badge className="bg-green-100 text-green-700 border-0 hover:bg-green-200 hover:text-green-800 transition-colors cursor-default">
                     Validade: {turma.course.yearOfValidation} {turma.course.yearOfValidation === 1 ? 'ano' : 'anos'}

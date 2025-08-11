@@ -13,6 +13,7 @@ interface HeaderListsProps {
   limit: number;
   searchParams?: any;
   showSearch?: boolean;
+  showCreate?: boolean;
   iconForm?: string;
   addButtonName?: string;
   // Funções
@@ -32,6 +33,7 @@ const HeaderLists = ({
   limit,
   searchParams,
   showSearch = true,
+  showCreate = true,
   iconForm,
   addButtonName = "Novo",
   // Funções
@@ -82,7 +84,7 @@ const HeaderLists = ({
          
         </div>
         {
-          can(`create_${ability}`) && (
+          can(`create_${ability}`) && showCreate && (
             <Button onClick={() =>{ openForm(true); setFormData(null); setFormType("both")}} variant="outline" className="flex gap-2 items-center">
               <Icon name={iconForm || "plus"} className="w-3 h-3" />
               <span className="hidden md:block">{addButtonName} {entityName}</span>

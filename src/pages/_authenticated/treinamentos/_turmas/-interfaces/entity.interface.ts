@@ -27,6 +27,7 @@ export interface IEntity {
   landingPagesDates?: string | null;
   allowExam?: boolean | null;
   allowReview?: boolean | null;
+  classCode?: string | null;
   instructors?: any[] | null;
   certificates?: any[] | null;
   exams?: any[] | null;

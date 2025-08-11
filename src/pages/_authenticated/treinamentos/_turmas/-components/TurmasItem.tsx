@@ -11,6 +11,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import { QRCode } from '@/components/ui/kibo-ui/qr-code';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -30,6 +33,7 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
+  const [openQrModal, setOpenQrModal] = useState(false);
 
    // Mutation para inativar
   const { mutate: deactivate } = useMutation({
@@ -296,6 +300,21 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
                   <p>Link Inscrição</p>
                 </Button>
               </DropdownMenuItem>
+
+              {
+                item.allowExam && (
+                  <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                    <Button 
+                      variant="ghost" 
+                      className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                      onClick={() => setOpenQrModal(true)}
+                    >
+                      <Icon name="qr-code" className="w-3 h-3" /> 
+                      <p>Link Prova</p>
+                    </Button>
+                  </DropdownMenuItem>
+                )
+              }
               
               {
                 item.active ? (
@@ -328,6 +347,24 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Modal do QR Code */}
+      <Dialog open={openQrModal} onOpenChange={setOpenQrModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>QR Code da Prova</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center space-y-4 py-4">
+            <QRCode 
+              data={`${process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : window.location.origin}/prova/${item.id}`}
+            />
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Código do curso</p>
+              <p className="text-lg font-semibold">{item.classCode || 'Não disponível'}</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 };

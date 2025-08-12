@@ -80,6 +80,7 @@ interface Course {
   gradePracticle?: string;
   faq?: string;
   gifts?: string;
+  dividedIn?: number | null;
   course?: {
     id: number;
     name: string;
@@ -601,9 +602,11 @@ Turma: ${turma?.landingPagesDates}`;
                       <div className="text-xl sm:text-2xl font-bold text-gray-900">
                         {formatCurrency(turma.price)}
                       </div>
-                      <div className="text-xs text-green-600 font-medium mt-1">
-                        Parcelamento disponível
-                      </div>
+                      {turma.dividedIn && turma.dividedIn > 1 && (
+                        <div className="text-xs text-green-600 font-medium mt-1">
+                          Em até {turma.dividedIn}x
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1421,6 +1424,14 @@ Turma: ${turma?.landingPagesDates}`;
                     )}
                   </Button>
                 </div>
+                
+                {turma?.dividedIn && turma.dividedIn > 1 && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                    <p className="text-sm text-green-700">
+                      Parcelamento em até <span className="font-semibold">{turma.dividedIn}x</span> disponível
+                    </p>
+                  </div>
+                )}
 
                 <p className="text-xs text-gray-500 text-center">
                   Ao enviar seus dados, você será direcionado para o WhatsApp para finalizar sua inscrição.

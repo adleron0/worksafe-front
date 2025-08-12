@@ -194,6 +194,7 @@ const CalendarPicker = ({
           initialFocus
           locale={ptBR}
           style={{ pointerEvents: "auto" }}
+          captionLayout="dropdown"
         />
       );
     } else if (mode === "range") {
@@ -206,6 +207,7 @@ const CalendarPicker = ({
           initialFocus
           locale={ptBR}
           style={{ pointerEvents: "auto" }}
+          captionLayout="dropdown"
         />
       );
     } else if (mode === "multiple") {

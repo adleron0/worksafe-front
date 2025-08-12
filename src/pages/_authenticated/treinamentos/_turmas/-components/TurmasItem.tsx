@@ -14,6 +14,7 @@ import Icon from "@/components/general-components/Icon";
 import { QRCode } from '@/components/ui/kibo-ui/qr-code';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
+import DuplicateTurmaModal from "./DuplicateTurmaModal";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -34,6 +35,7 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
   const [openQrModal, setOpenQrModal] = useState(false);
+  const [openDuplicateModal, setOpenDuplicateModal] = useState(false);
 
    // Mutation para inativar
   const { mutate: deactivate } = useMutation({
@@ -243,6 +245,18 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
                 )
               }
 
+              { can(`create_${entity.ability}`) && (
+                  <Button 
+                    variant="ghost" 
+                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                    onClick={() => setOpenDuplicateModal(true)}
+                  >
+                    <Icon name="copy" className="w-3 h-3" /> 
+                    <p>Duplicar Turma</p>
+                  </Button>
+                )
+              }
+
               <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
                 <Button 
                   variant="ghost" 
@@ -365,6 +379,13 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Duplicação */}
+      <DuplicateTurmaModal
+        turma={item}
+        open={openDuplicateModal}
+        onOpenChange={setOpenDuplicateModal}
+      />
     </>
   )
 };

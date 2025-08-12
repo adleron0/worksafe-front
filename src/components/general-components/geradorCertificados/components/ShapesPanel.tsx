@@ -137,10 +137,10 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
           {/* Border radius */}
           <div>
             <label className="text-xs font-medium mb-1 block">
-              Arredondamento: {shapeSettings.cornerRadius}px
+              Arredondamento: {shapeSettings.cornerRadius || 0}px
             </label>
             <Slider
-              value={[shapeSettings.cornerRadius]}
+              value={[shapeSettings.cornerRadius || 0]}
               onValueChange={(value) => {
                 console.log('Changing corner radius to:', value[0]);
                 onUpdateSettings({ cornerRadius: value[0] });

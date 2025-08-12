@@ -31,6 +31,7 @@ interface Course {
   minimumQuorum: number | null;
   maxSubscriptions: number | null;
   active: boolean;
+  dividedIn?: number | null;
   _count?: {
     subscriptions: number;
   };
@@ -333,6 +334,11 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
                             <p className="text-base md:text-lg font-bold text-gray-800">
                               {formatCurrency(course.price)}
                             </p>
+                            {course.dividedIn && course.dividedIn > 1 && (
+                              <p className="text-xs text-gray-500">
+                                Em até {course.dividedIn}x
+                              </p>
+                            )}
                           </div>
                           {(() => {
                             const isInactive = !course.active;

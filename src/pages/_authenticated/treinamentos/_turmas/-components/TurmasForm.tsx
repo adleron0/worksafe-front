@@ -48,8 +48,10 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
     customerId: z.number().optional().nullable(),
     courseId: z.number().min(1, { message: "Id do curso é obrigatório" }),
+    certificateId: z.number().optional().nullable(),
     price: z.number().min(0, { message: "Valor de venda é obrigatório" }),
     oldPrice: z.number(),
+    dividedIn: z.number().min(1).optional().nullable(),
     hoursDuration: z.number().min(1, { message: "Duração é obrigatório" }),
     openClass: z.boolean(),
     gifts: z.string().optional().nullable(),
@@ -159,8 +161,10 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     imageUrl: formData?.imageUrl || '',
     customerId: formData?.customerId || null,
     courseId: formData?.courseId || 0,
+    certificateId: (formData as any)?.certificateId || null,
     price: Number(formData?.price) || 0,
     oldPrice: Number(formData?.oldPrice) || 0,
+    dividedIn: (formData as any)?.dividedIn || null,
     hoursDuration: formData?.hoursDuration || 1,
     openClass: formData?.openClass || true,
     gifts: formData?.gifts || '',
@@ -176,8 +180,8 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     initialDate: formData?.initialDate || null,
     finalDate: formData?.finalDate || null,
     landingPagesDates: formData?.landingPagesDates || "",
-    allowExam: formData?.allowExam || true,
-    allowReview: formData?.allowReview || true,
+    allowExam: formData?.allowExam,
+    allowReview: formData?.allowReview || false,
     classCode: formData?.classCode || (!formData ? generateClassCode() : (formData?.classCode || generateClassCode())),
     minimumQuorum: formData?.minimumQuorum || 0,
     maxSubscriptions: formData?.maxSubscriptions || 0,
@@ -267,16 +271,15 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     if (dataForm.faq && dataForm.faq.length > 0) {
       dataForm.faq.forEach((item, index) => {
         // Check question length
-        if (item.question.trim().length < 3) {
+        if (!item.question || item.question.trim().length < 3) {
           newErrors[`faq.${index}.question`] = "Pergunta deve ter pelo menos 3 caracteres";
           faqHasErrors = true;
         }
         
         // Check answer length
-        if (item.answer.trim().length < 3) {
+        if (!item.answer || item.answer.trim().length < 3) {
           newErrors[`faq.${index}.answer`] = "Resposta deve ter pelo menos 3 caracteres";
           faqHasErrors = true;
-          console.log(`FAQ answer at index ${index} is invalid. Length: ${item.answer.trim().length}, Value: "${item.answer}"`);
         }
       });
       
@@ -406,18 +409,36 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   // Buscas de valores para variaveis de formulário
   const { 
-      data: courses, 
-      isLoading: isLoadingCourses,
-    } = useQuery<Response | undefined, ApiError>({
-      queryKey: [`listCursos`],
-      queryFn: async () => {
-        const params = [
-          { key: 'limit', value: 999 },
-          { key: 'order-name', value: 'asc' },
-        ];
-        return get('courses', '', params);
-      },
-    });
+    data: courses, 
+    isLoading: isLoadingCourses,
+  } = useQuery<Response | undefined, ApiError>({
+    queryKey: [`listCursos`],
+    queryFn: async () => {
+      const params = [
+        { key: 'limit', value: 999 },
+        { key: 'active', value: true },
+        { key: 'order-name', value: 'asc' },
+      ];
+      return get('courses', '', params);
+    },
+  });
+
+  const { 
+    data: certificates, 
+    isLoading: isLoadingCertificates,
+  } = useQuery<Response | undefined, ApiError>({
+    queryKey: [`listCertificates`, dataForm.courseId],
+    queryFn: async () => {
+      const params = [
+        { key: 'courseId', value: dataForm.courseId },
+        { key: 'limit', value: 999 },
+        { key: 'order-name', value: 'asc' },
+      ];
+      return get('certificate', '', params);
+    },
+    // Only run the query if courseId is valid (greater than 0)
+    enabled: dataForm.courseId > 0,
+  });
 
   // Função para encontrar um curso pelo ID
   const findCourseById = (id: number) => {
@@ -504,6 +525,19 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           ]}
         />
         {errors.courseId && <p className="text-red-500 text-sm">{errors.courseId}</p>}
+      </div>
+
+      <div>
+        <Label htmlFor="certificateId">Certificado</Label>
+        <Select 
+          name="certificateId"
+          disabled={!dataForm.courseId || isLoadingCertificates}
+          options={certificates?.rows || []}
+          onChange={(name, value) => handleChange(name, value ? +value : null)} 
+          state={dataForm.certificateId ? String(dataForm.certificateId) : ""}
+          placeholder={!dataForm.courseId ? "Selecione um curso primeiro" : "Selecione o certificado"}
+        />
+        {errors.certificateId && <p className="text-red-500 text-sm">{errors.certificateId}</p>}
       </div>
 
       <div>
@@ -598,6 +632,21 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           className="mt-1"
         />
         {errors.oldPrice && <p className="text-red-500 text-sm">{errors.oldPrice}</p>}
+      </div>
+
+      <div>
+        <Label htmlFor="dividedIn">Parcelamento</Label>
+        <p className="text-xs text-muted-foreground font-medium">Número de parcelas permitidas no pagamento</p>
+        <NumberInput
+          id="dividedIn"
+          name="dividedIn"
+          min={1}
+          max={12}
+          value={dataForm.dividedIn || 1}
+          onValueChange={handleChange}
+          placeholder="Ex: 3"
+        />
+        {errors.dividedIn && <p className="text-red-500 text-sm">{errors.dividedIn}</p>}
       </div>
 
       <div className="space-y-2">
@@ -868,8 +917,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
                         </Label>
                         <Input
                           id={`faq-question-${index}`}
+                          name={`faq-question-${index}`}
                           value={faqItem.question || ''}
-                          onValueChange={(_, value) => updateFaqItem(index, 'question', value as string)}
+                          onValueChange={(_, value) => updateFaqItem(index, 'question', String(value))}
                           placeholder="Ex: Qual é a carga horária do curso?"
                           className={`mt-1 ${errors[`faq.${index}.question`] ? 'border-red-500' : ''}`}
                         />
@@ -884,8 +934,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
                         </Label>
                         <Input
                           id={`faq-answer-${index}`}
+                          name={`faq-answer-${index}`}
                           value={faqItem.answer || ''}
-                          onValueChange={(_, value) => updateFaqItem(index, 'answer', value as string)}
+                          onValueChange={(_, value) => updateFaqItem(index, 'answer', String(value))}
                           placeholder="Ex: O curso tem duração total de 40 horas, distribuídas em..."
                           type="textArea"
                           className={`mt-1 min-h-[80px] ${errors[`faq.${index}.answer`] ? 'border-red-500' : ''}`}

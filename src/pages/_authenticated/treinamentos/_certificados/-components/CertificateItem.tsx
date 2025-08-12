@@ -1,4 +1,5 @@
 // Serviços
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { patch } from "@/services/api";
 import { useLoader } from "@/context/GeneralContext";
@@ -11,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import DuplicateCertificateModal from "./DuplicateCertificateModal";
 // Interfaces
 import { ICertificate } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -28,6 +30,7 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm }: Prop
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
+  const [openDuplicateModal, setOpenDuplicateModal] = useState(false);
 
   // Mutation para inativar
   const { mutate: deactivate } = useMutation({
@@ -207,6 +210,18 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm }: Prop
                   </Button>
                 )
               }
+
+              { can(`create_${entity.ability}`) && (
+                  <Button 
+                    variant="ghost" 
+                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                    onClick={() => setOpenDuplicateModal(true)}
+                  >
+                    <Icon name="copy" className="w-3 h-3" /> 
+                    <p>Duplicar Certificado</p>
+                  </Button>
+                )
+              }
               
               {
                 item.active ? (
@@ -239,6 +254,13 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm }: Prop
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Modal de Duplicação */}
+      <DuplicateCertificateModal
+        certificate={item}
+        open={openDuplicateModal}
+        onOpenChange={setOpenDuplicateModal}
+      />
     </>
   )
 };

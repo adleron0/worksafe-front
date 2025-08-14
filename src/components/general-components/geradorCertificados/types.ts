@@ -16,7 +16,7 @@ export interface Image {
 }
 
 export interface ImageFormData {
-  file: File | null;
+  file?: File | null;
   name: string;
   image?: File | null; // Adicionado para compatibilidade
   type?: string; // Adicionado para suportar tipo de imagem

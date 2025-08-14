@@ -433,7 +433,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       }
       
       const canvas = new fabric.Canvas(canvasRef.current, {
-        backgroundColor: '#e5e7eb',
+        backgroundColor: '#ffffff',
         preserveObjectStacking: true,
         enableRetinaScaling: true,
         stopContextMenu: true,
@@ -442,11 +442,17 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       
       fabricCanvasRef.current = canvas;
       
+      // Definir dimensões baseadas na orientação inicial
+      const a4Width = 842;
+      const a4Height = 595;
+      let bgWidth = orientation === 'landscape' ? a4Width : a4Height;
+      let bgHeight = orientation === 'landscape' ? a4Height : a4Width;
+      
       const bgRect = new fabric.Rect({
         left: 0,
         top: 0,
-        width: 842, // Tamanho base A4 landscape
-        height: 595,
+        width: bgWidth,
+        height: bgHeight,
         fill: 'white',
         selectable: false,
         evented: false,
@@ -1442,7 +1448,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       
       {/* Canvas container */}
       <div 
-        className={`flex-1 min-h-0 border rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-auto relative transition-colors ${
+        className={`flex-1 min-h-0 border rounded-lg bg-white dark:bg-gray-800 p-4 overflow-auto relative transition-colors ${
           isDragging ? 'border-primary border-2' : ''
         } ${!isActive ? 'opacity-0 pointer-events-none' : ''}`}
         data-page-active={isActive}

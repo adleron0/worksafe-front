@@ -252,3 +252,89 @@ const sampleData = VariableReplacer.createSampleStudentData();
 - [ ] Marca d'água de pré-visualização
 - [ ] Exportação em outros formatos (JPG, PNG)
 - [ ] Assinatura digital no PDF
+
+## Solução de Problemas
+
+### Canvas em Branco (Resolvido em 12/08/2025)
+
+**Problema**: Os certificados apareciam com canvas em branco, mesmo com os objetos sendo carregados corretamente nos logs.
+
+**Sintomas**:
+- Canvas visualmente em branco
+- Logs mostrando "objects: 0" após o carregamento
+- JSON contendo 9 objetos na frente e 5 no verso
+
+**Causa Raiz**: 
+1. O canvas estava configurado com `backgroundColor: 'transparent'`
+2. O método `loadFromJSON` estava usando sintaxe de callbacks (versão antiga do Fabric.js)
+3. A limpeza do canvas removia o background necessário
+
+**Solução Implementada**:
+
+#### 1. Background Branco no Canvas (`CertificateCanvas.tsx`):
+```typescript
+// Antes:
+const canvas = new fabric.Canvas(canvasRef.current, {
+  backgroundColor: 'transparent', // Problema: fundo transparente
+  // ...
+});
+
+// Depois:
+const canvas = new fabric.Canvas(canvasRef.current, {
+  backgroundColor: '#ffffff', // Solução: fundo branco
+  // ...
+});
+```
+
+#### 2. Uso de Promises no loadFromJSON (`useCertificateViewer.ts`):
+```typescript
+// Antes (sintaxe antiga - não funcionava):
+frontCanvas.loadFromJSON(processedJsonFront, () => {
+  // callback de sucesso
+}, (o, object) => {
+  // callback de reviver
+});
+
+// Depois (sintaxe moderna - funciona):
+const jsonToLoad = typeof processedJsonFront === 'string' 
+  ? JSON.parse(processedJsonFront) 
+  : processedJsonFront;
+
+frontCanvas.loadFromJSON(jsonToLoad).then(() => {
+  // Configurar objetos como não editáveis
+  frontCanvas.getObjects().forEach((obj) => {
+    obj.set({
+      selectable: false,
+      evented: false,
+      hasControls: false,
+      hasBorders: false
+    });
+  });
+  
+  // Forçar renderização
+  frontCanvas.requestRenderAll();
+}).catch((error) => {
+  console.error('Erro ao carregar JSON:', error);
+});
+```
+
+#### 3. Manter Background ao Limpar Canvas (`useCertificateViewer.ts`):
+```typescript
+// Antes:
+frontCanvas.clear();
+// Canvas ficava sem background
+
+// Depois:
+frontCanvas.clear();
+frontCanvas.backgroundColor = '#ffffff'; // Manter fundo branco
+```
+
+**Arquivos Modificados**:
+- `/components/general-components/visualizadorCertificados/components/CertificateCanvas.tsx` - Linha 108
+- `/components/general-components/visualizadorCertificados/hooks/useCertificateViewer.ts` - Linhas 243-244, 257-303, 321-367
+
+**Lições Aprendidas**:
+- Fabric.js versões recentes usam Promises ao invés de callbacks para `loadFromJSON`
+- Canvas com fundo transparente pode ocultar objetos renderizados
+- Sempre verificar a versão da biblioteca e usar a sintaxe apropriada
+- Usar `requestRenderAll()` ao invés de `renderAll()` para melhor performance

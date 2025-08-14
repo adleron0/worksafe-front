@@ -903,12 +903,19 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
               : editingData.fabricJsonBack)
             : null;
 
+          // Usar as dimensões reais do certificado que está sendo editado
           const canvasData = {
             fabricJsonFront,
             fabricJsonBack,
-            canvasWidth: 800, // Valores padrão, podem vir do JSON
-            canvasHeight: 600
+            canvasWidth: (editingData as any).canvasWidth || 842, // Usar dimensão real ou A4 landscape como padrão
+            canvasHeight: (editingData as any).canvasHeight || 595
           };
+          
+          console.log('📐 Carregando certificado com dimensões:', {
+            width: canvasData.canvasWidth,
+            height: canvasData.canvasHeight,
+            orientation: canvasData.canvasWidth > canvasData.canvasHeight ? 'landscape' : 'portrait'
+          });
           
           await loadCanvasData(canvasData);
           

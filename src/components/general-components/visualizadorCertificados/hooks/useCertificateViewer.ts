@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
-import * as fabric from 'fabric';
 import jsPDF from 'jspdf';
+import * as fabric from 'fabric';
 import { CertificateData, StudentData, VariableToReplace, ProcessedCanvasData } from '../types';
 import { VariableReplacer } from '../utils/VariableReplacer';
 
@@ -28,50 +28,93 @@ export const useCertificateViewer = (
       setIsLoading(true);
       
       try {
+        console.log('🔍 Iniciando processamento dos dados do certificado:', {
+          certificateData,
+          variableToReplace,
+          studentData
+        });
+        
         // Determinar qual conjunto de variáveis usar (nova estrutura ou compatibilidade)
         const variables = variableToReplace || 
           (studentData ? convertStudentDataToVariables(studentData) : {});
 
+        console.log('📦 Variáveis para substituição:', variables);
+
+        // Parsear o JSON se for string
+        let frontJson;
+        if (typeof certificateData.fabricJsonFront === 'string') {
+          try {
+            frontJson = JSON.parse(certificateData.fabricJsonFront);
+            console.log('📦 JSON da frente parseado de string');
+          } catch (error) {
+            console.error('❌ Erro ao parsear fabricJsonFront:', error);
+            frontJson = certificateData.fabricJsonFront;
+          }
+        } else {
+          frontJson = certificateData.fabricJsonFront;
+        }
+
         // Validar se todas as variáveis necessárias estão presentes
         const frontValidation = VariableReplacer.validateRequiredVariables(
-          certificateData.fabricJsonFront,
+          frontJson,
           variables
         );
         
         if (!frontValidation.isValid) {
-          console.warn('Variáveis faltando na frente:', frontValidation.missingVariables);
+          console.warn('⚠️ Variáveis faltando na frente:', frontValidation.missingVariables);
           // Não bloquear, apenas avisar
         }
-
+        
         // Processar dados da frente
         const frontProcessed = VariableReplacer.replaceInCanvasJSON(
-          certificateData.fabricJsonFront,
+          frontJson,
           variables
         );
+        
+        console.log('📄 JSON da frente processado:', frontProcessed);
 
         // Processar dados do verso se existir
         let backProcessed = null;
         if (certificateData.fabricJsonBack) {
+          // Parsear o JSON se for string
+          let backJson;
+          if (typeof certificateData.fabricJsonBack === 'string') {
+            try {
+              backJson = JSON.parse(certificateData.fabricJsonBack);
+              console.log('📦 JSON do verso parseado de string');
+            } catch (error) {
+              console.error('❌ Erro ao parsear fabricJsonBack:', error);
+              backJson = certificateData.fabricJsonBack;
+            }
+          } else {
+            backJson = certificateData.fabricJsonBack;
+          }
+          
           const backValidation = VariableReplacer.validateRequiredVariables(
-            certificateData.fabricJsonBack,
+            backJson,
             variables
           );
           
           if (!backValidation.isValid) {
-            console.warn('Variáveis faltando no verso:', backValidation.missingVariables);
+            console.warn('⚠️ Variáveis faltando no verso:', backValidation.missingVariables);
           }
 
           backProcessed = VariableReplacer.replaceInCanvasJSON(
-            certificateData.fabricJsonBack,
+            backJson,
             variables
           );
         }
 
-        // Determinar orientação baseada nas dimensões do canvas original
-        const orientation: 'landscape' | 'portrait' = 
-          (certificateData.canvasWidth || 842) > (certificateData.canvasHeight || 595) 
-            ? 'landscape' 
-            : 'portrait';
+        // Detectar orientação baseada nas dimensões do certificado
+        const width = certificateData.canvasWidth || 842;
+        const height = certificateData.canvasHeight || 595;
+        const orientation: 'landscape' | 'portrait' = width > height ? 'landscape' : 'portrait';
+        
+        console.log('📐 Orientação detectada:', {
+          width,
+          height,
+          orientation
+        });
 
         // Configurar páginas
         const newPages: CanvasPage[] = [
@@ -92,12 +135,15 @@ export const useCertificateViewer = (
 
         setPages(newPages);
 
-        setProcessedCanvasData({
+        const processedData = {
           fabricJsonFront: frontProcessed,
           fabricJsonBack: backProcessed,
           canvasWidth: certificateData.canvasWidth || 842,
           canvasHeight: certificateData.canvasHeight || 595
-        });
+        };
+        
+        console.log('✅ Dados processados com sucesso:', processedData);
+        setProcessedCanvasData(processedData);
 
       } catch (error) {
         console.error('Erro ao processar dados do certificado:', error);
@@ -107,7 +153,9 @@ export const useCertificateViewer = (
       }
     };
 
-    if (certificateData && (variableToReplace || studentData)) {
+    // Sempre processar quando há certificateData
+    // Para visualização simples, variableToReplace pode ser vazio
+    if (certificateData) {
       processData();
     }
   }, [certificateData, variableToReplace, studentData]);
@@ -138,25 +186,49 @@ export const useCertificateViewer = (
 
   // Função para aplicar proxy nas imagens do JSON (reutilizada do gerador)
   const processImagesInJSON = useCallback((jsonData: any): any => {
-    console.log('Processando imagens no JSON para viewer');
+    console.log('🖼️ Processando imagens no JSON para viewer');
     
-    const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+    // Garantir que temos um objeto, não uma string
+    let data;
+    if (typeof jsonData === 'string') {
+      try {
+        data = JSON.parse(jsonData);
+        console.log('📦 JSON parseado de string');
+      } catch (error) {
+        console.error('❌ Erro ao parsear JSON:', error);
+        return jsonData;
+      }
+    } else {
+      data = jsonData;
+    }
+    
+    console.log('🔍 Estrutura do JSON:', {
+      hasObjects: !!data.objects,
+      objectsLength: data.objects?.length,
+      version: data.version,
+      background: data.background
+    });
     
     if (data.objects && Array.isArray(data.objects)) {
       data.objects = data.objects.map((obj: any) => {
-        if (obj.type && obj.type.toLowerCase() === 'image') {
-          let originalSrc = obj.src;
+        // Verificar se é uma imagem (case insensitive)
+        if (obj.type && obj.type.toLowerCase() === 'image' && obj.src) {
+          const originalSrc = obj.src;
           
-          // Se for URL externa e não tiver proxy, aplicar proxy
-          if (originalSrc && (originalSrc.startsWith('http://') || originalSrc.startsWith('https://'))) {
-            const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
+          // Verificar se já tem proxy aplicado (da substituição de variáveis)
+          if (originalSrc.includes('api.allorigins.win')) {
+            console.log('🔄 Imagem já tem proxy aplicado:', originalSrc);
+            return obj;
+          }
+          
+          // Se for URL externa, aplicar proxy
+          if (originalSrc.startsWith('http://') || originalSrc.startsWith('https://')) {
+            const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3000';
             
-            // Verificar se já não tem proxy
-            if (!originalSrc.includes('/images/proxy')) {
-              obj.src = `${BASE_URL}/images/proxy?url=${encodeURIComponent(originalSrc)}`;
-              obj._originalUrl = originalSrc;
-              console.log('Aplicando proxy na imagem:', originalSrc, '->', obj.src);
-            }
+            // Sempre aplicar proxy para URLs externas
+            obj.src = `${BASE_URL}/images/proxy?url=${encodeURIComponent(originalSrc)}`;
+            obj._originalUrl = originalSrc;
+            console.log('🌐 Aplicando proxy na imagem:', originalSrc, '->', obj.src);
           }
         }
         return obj;
@@ -169,69 +241,145 @@ export const useCertificateViewer = (
   // Função para carregar dados nos canvas
   const loadCanvasData = useCallback(async (data: ProcessedCanvasData) => {
     try {
+      console.log('Iniciando carregamento dos canvas', { 
+        hasFront: !!data.fabricJsonFront,
+        hasBack: !!data.fabricJsonBack,
+        canvasRefs: Array.from(canvasRefs.current.keys())
+      });
+
       // Carregar canvas da frente
       const frontCanvasRef = canvasRefs.current.get('page-front');
       if (frontCanvasRef && data.fabricJsonFront) {
         const frontCanvas = frontCanvasRef.getCanvas();
         if (frontCanvas) {
+          // Limpar canvas mas manter o fundo branco
           frontCanvas.clear();
+          frontCanvas.backgroundColor = '#ffffff';
           
           await new Promise<void>((resolve, reject) => {
             const processedJsonFront = processImagesInJSON(data.fabricJsonFront);
             
-            // Interceptar carregamento de imagens para aplicar proxy
-            const originalFromURL = fabric.FabricImage.fromURL;
-            fabric.FabricImage.fromURL = function(url: string, ...args: any[]) {
-              let processedUrl = url;
-              const originalUrl = url;
-              
-              if (url && (url.startsWith('http://') || url.startsWith('https://')) && !url.includes('/images/proxy')) {
-                const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
-                processedUrl = `${BASE_URL}/images/proxy?url=${encodeURIComponent(url)}&t=${Date.now()}`;
-              }
-              
-              if (args[0] && typeof args[0] === 'object') {
-                args[0].crossOrigin = 'anonymous';
-              } else if (args[0] && typeof args[0] === 'function') {
-                args.splice(1, 0, { crossOrigin: 'anonymous' });
-              }
-              
-              return originalFromURL.call(this, processedUrl, ...args).then((img: any) => {
-                if (img) {
-                  img._originalUrl = originalUrl;
-                  Object.defineProperty(img, 'src', {
-                    get: function() { return originalUrl; },
-                    set: function() {},
-                    configurable: true
-                  });
-                }
-                return img;
-              });
-            };
+            console.log('🎨 Carregando JSON no canvas da frente:', {
+              jsonData: processedJsonFront,
+              canvasId: 'page-front'
+            });
+            
+            // Não precisamos mais interceptar - o proxy já foi aplicado no JSON
 
-            frontCanvas.loadFromJSON(processedJsonFront, () => {
-              fabric.FabricImage.fromURL = originalFromURL;
+            // Tentar carregar o JSON no canvas
+            try {
+              // Garantir que o JSON está em formato correto
+              const jsonToLoad = typeof processedJsonFront === 'string' 
+                ? JSON.parse(processedJsonFront) 
+                : processedJsonFront;
               
-              // Configurar objetos como não editáveis
-              frontCanvas.getObjects().forEach((obj: fabric.Object) => {
-                obj.set({
-                  selectable: false,
-                  evented: false,
-                  hasControls: false,
-                  hasBorders: false
+              console.log('📋 JSON a ser carregado:', {
+                version: jsonToLoad.version,
+                objectCount: jsonToLoad.objects?.length,
+                firstObject: jsonToLoad.objects?.[0]
+              });
+              
+              // Primeiro, adicionar um retângulo branco de background
+              // Detectar orientação baseada nas dimensões
+              const rawWidth = data.canvasWidth || 842;
+              const rawHeight = data.canvasHeight || 595;
+              
+              // Usar dimensões A4 corretas baseadas na orientação
+              let width, height;
+              if (rawWidth > rawHeight) {
+                // Landscape
+                width = 842;
+                height = 595;
+              } else {
+                // Portrait
+                width = 595;
+                height = 842;
+              }
+              const bgRect = new fabric.Rect({
+                left: 0,
+                top: 0,
+                width: width,
+                height: height,
+                fill: 'white',
+                selectable: false,
+                evented: false,
+                name: 'backgroundRect'
+              });
+              
+              // Modificar o JSON para incluir o background como primeiro objeto
+              if (!jsonToLoad.objects) {
+                jsonToLoad.objects = [];
+              }
+              
+              // Verificar se já existe um backgroundRect
+              const hasBackground = jsonToLoad.objects.some((obj: any) => 
+                obj.name === 'backgroundRect'
+              );
+              
+              if (!hasBackground) {
+                // Adicionar o background rect como primeiro objeto no JSON
+                jsonToLoad.objects.unshift(bgRect.toObject(['name']));
+              }
+              
+              frontCanvas.loadFromJSON(jsonToLoad).then(() => {
+                console.log('✅ JSON carregado no canvas, processando objetos...');
+                
+                // Configurar objetos como não editáveis e corrigir fontes
+                frontCanvas.getObjects().forEach((obj: any) => {
+                  obj.set({
+                    selectable: false,
+                    evented: false,
+                    hasControls: false,
+                    hasBorders: false
+                  });
+                  
+                  // Verificar e corrigir fonte Bebas Neue em objetos de texto
+                  if ((obj.type === 'Textbox' || obj.type === 'Text' || obj.type === 'IText') && 
+                      obj.fontFamily && obj.fontFamily.toLowerCase().includes('bebas')) {
+                    // Forçar re-renderização do texto com a fonte correta
+                    const originalText = obj.text;
+                    obj.set({
+                      fontFamily: 'Bebas Neue',
+                      dirty: true
+                    });
+                    
+                    // Pequeno hack: alterar e restaurar o texto para forçar recalculo
+                    if (originalText) {
+                      obj.set('text', originalText + ' ');
+                      obj.set('text', originalText);
+                    }
+                    
+                    console.log('🔤 Fonte Bebas Neue aplicada ao texto:', originalText?.substring(0, 20));
+                  }
+                  
+                  const uniqueId = `viewer_${obj.type}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+                  (obj as any).__uniqueID = uniqueId;
+                  (obj as any).id = uniqueId;
                 });
                 
-                const uniqueId = `viewer_${obj.type}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-                (obj as any).__uniqueID = uniqueId;
-                (obj as any).id = uniqueId;
+                // Forçar renderização múltiplas vezes para garantir que as fontes sejam aplicadas
+                frontCanvas.requestRenderAll();
+                setTimeout(() => frontCanvas.requestRenderAll(), 100);
+                
+                console.log('🎉 Canvas frente carregado com sucesso', {
+                  objects: frontCanvas.getObjects().length,
+                  zoom: frontCanvas.getZoom(),
+                  dimensions: { 
+                    width: frontCanvas.getWidth(), 
+                    height: frontCanvas.getHeight() 
+                  },
+                  objectTypes: frontCanvas.getObjects().map((o: any) => o.type)
+                });
+                
+                resolve();
+              }).catch((error: any) => {
+                console.error('❌ Erro ao carregar JSON da frente:', error);
+                reject(error);
               });
-              
-              frontCanvas.renderAll();
-              resolve();
-            }, (error: any) => {
-              console.error('Erro ao carregar JSON da frente:', error);
+            } catch (error) {
+              console.error('❌ Erro ao carregar JSON da frente:', error);
               reject(error);
-            });
+            }
           });
         }
       }
@@ -242,44 +390,69 @@ export const useCertificateViewer = (
         if (backCanvasRef) {
           const backCanvas = backCanvasRef.getCanvas();
           if (backCanvas) {
+            // Limpar canvas mas manter o fundo branco
             backCanvas.clear();
+            backCanvas.backgroundColor = '#ffffff';
             
             await new Promise<void>((resolve, reject) => {
               const processedJsonBack = processImagesInJSON(data.fabricJsonBack);
               
-              const originalFromURL = fabric.FabricImage.fromURL;
-              fabric.FabricImage.fromURL = function(url: string, ...args: any[]) {
-                let processedUrl = url;
-                const originalUrl = url;
-                
-                if (url && (url.startsWith('http://') || url.startsWith('https://')) && !url.includes('/images/proxy')) {
-                  const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
-                  processedUrl = `${BASE_URL}/images/proxy?url=${encodeURIComponent(url)}&t=${Date.now()}`;
-                }
-                
-                if (args[0] && typeof args[0] === 'object') {
-                  args[0].crossOrigin = 'anonymous';
-                } else if (args[0] && typeof args[0] === 'function') {
-                  args.splice(1, 0, { crossOrigin: 'anonymous' });
-                }
-                
-                return originalFromURL.call(this, processedUrl, ...args).then((img: any) => {
-                  if (img) {
-                    img._originalUrl = originalUrl;
-                    Object.defineProperty(img, 'src', {
-                      get: function() { return originalUrl; },
-                      set: function() {},
-                      configurable: true
-                    });
-                  }
-                  return img;
-                });
-              };
+              // Garantir que o JSON está em formato correto
+              const jsonToLoad = typeof processedJsonBack === 'string' 
+                ? JSON.parse(processedJsonBack) 
+                : processedJsonBack;
+              
+              console.log('📋 JSON do verso a ser carregado:', {
+                version: jsonToLoad.version,
+                objectCount: jsonToLoad.objects?.length
+              });
 
-              backCanvas.loadFromJSON(processedJsonBack, () => {
-                fabric.FabricImage.fromURL = originalFromURL;
+              // Primeiro, adicionar um retângulo branco de background
+              // Detectar orientação baseada nas dimensões
+              const rawWidth = data.canvasWidth || 842;
+              const rawHeight = data.canvasHeight || 595;
+              
+              // Usar dimensões A4 corretas baseadas na orientação
+              let width, height;
+              if (rawWidth > rawHeight) {
+                // Landscape
+                width = 842;
+                height = 595;
+              } else {
+                // Portrait
+                width = 595;
+                height = 842;
+              }
+              const bgRect = new fabric.Rect({
+                left: 0,
+                top: 0,
+                width: width,
+                height: height,
+                fill: 'white',
+                selectable: false,
+                evented: false,
+                name: 'backgroundRect'
+              });
+              
+              // Modificar o JSON para incluir o background como primeiro objeto
+              if (!jsonToLoad.objects) {
+                jsonToLoad.objects = [];
+              }
+              
+              // Verificar se já existe um backgroundRect
+              const hasBackground = jsonToLoad.objects.some((obj: any) => 
+                obj.name === 'backgroundRect'
+              );
+              
+              if (!hasBackground) {
+                // Adicionar o background rect como primeiro objeto no JSON
+                jsonToLoad.objects.unshift(bgRect.toObject(['name']));
+              }
+              
+              backCanvas.loadFromJSON(jsonToLoad).then(() => {
+                console.log('✅ JSON do verso carregado no canvas');
                 
-                backCanvas.getObjects().forEach((obj: fabric.Object) => {
+                backCanvas.getObjects().forEach((obj: any) => {
                   obj.set({
                     selectable: false,
                     evented: false,
@@ -287,14 +460,45 @@ export const useCertificateViewer = (
                     hasBorders: false
                   });
                   
+                  // Verificar e corrigir fonte Bebas Neue em objetos de texto
+                  if ((obj.type === 'Textbox' || obj.type === 'Text' || obj.type === 'IText') && 
+                      obj.fontFamily && obj.fontFamily.toLowerCase().includes('bebas')) {
+                    // Forçar re-renderização do texto com a fonte correta
+                    const originalText = obj.text;
+                    obj.set({
+                      fontFamily: 'Bebas Neue',
+                      dirty: true
+                    });
+                    
+                    // Pequeno hack: alterar e restaurar o texto para forçar recalculo
+                    if (originalText) {
+                      obj.set('text', originalText + ' ');
+                      obj.set('text', originalText);
+                    }
+                    
+                    console.log('🔤 Fonte Bebas Neue aplicada ao texto (verso):', originalText?.substring(0, 20));
+                  }
+                  
                   const uniqueId = `viewer_${obj.type}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
                   (obj as any).__uniqueID = uniqueId;
                   (obj as any).id = uniqueId;
                 });
                 
-                backCanvas.renderAll();
+                // Forçar renderização múltiplas vezes para garantir que as fontes sejam aplicadas
+                backCanvas.requestRenderAll();
+                setTimeout(() => backCanvas.requestRenderAll(), 100);
+                
+                console.log('Canvas verso carregado com sucesso', {
+                  objects: backCanvas.getObjects().length,
+                  zoom: backCanvas.getZoom(),
+                  dimensions: { 
+                    width: backCanvas.getWidth(), 
+                    height: backCanvas.getHeight() 
+                  }
+                });
+                
                 resolve();
-              }, (error: any) => {
+              }).catch((error: any) => {
                 console.error('Erro ao carregar JSON do verso:', error);
                 reject(error);
               });
@@ -321,12 +525,14 @@ export const useCertificateViewer = (
     try {
       const isLandscape = pages[0].orientation === 'landscape';
       
+      // Configurar PDF com máxima qualidade
       const pdf = new jsPDF({
         orientation: isLandscape ? 'landscape' : 'portrait',
         unit: 'mm',
         format: 'a4',
-        compress: false,
-        precision: 16
+        compress: false, // Sem compressão para máxima qualidade
+        precision: 32, // Máxima precisão
+        hotfixes: ['px_scaling'] // Correção para escala de pixels
       });
 
       for (let i = 0; i < pages.length; i++) {
@@ -349,15 +555,56 @@ export const useCertificateViewer = (
         }
 
         try {
+          // Salvar zoom atual e dimensões
+          const originalZoom = canvas.getZoom();
+          const originalWidth = canvas.getWidth();
+          const originalHeight = canvas.getHeight();
+          
+          // Definir dimensões A4 em pixels para alta resolução (300 DPI)
+          // A4: 210mm x 297mm
+          // Em 300 DPI: 2480 x 3508 pixels (portrait) ou 3508 x 2480 (landscape)
+          const targetDPI = 300;
+          const mmToInch = 25.4;
+          const a4WidthMM = isLandscape ? 297 : 210;
+          const a4HeightMM = isLandscape ? 210 : 297;
+          const targetWidth = Math.round(a4WidthMM * targetDPI / mmToInch);
+          const targetHeight = Math.round(a4HeightMM * targetDPI / mmToInch);
+          
+          // Calcular zoom necessário para alcançar a resolução alvo
+          const baseWidth = isLandscape ? 842 : 595;
+          const baseHeight = isLandscape ? 595 : 842;
+          const zoomFactorWidth = targetWidth / baseWidth;
+          const zoomFactorHeight = targetHeight / baseHeight;
+          const targetZoom = Math.min(zoomFactorWidth, zoomFactorHeight);
+          
+          // Aplicar zoom temporariamente para alta resolução
+          canvas.setZoom(targetZoom);
+          canvas.setDimensions({
+            width: baseWidth * targetZoom,
+            height: baseHeight * targetZoom
+          });
+          canvas.renderAll();
+          
+          // Gerar imagem em alta resolução
           const dataURL = canvas.toDataURL({
             format: 'png',
-            quality: 1.0,
-            multiplier: 4
+            quality: 1.0, // Máxima qualidade
+            multiplier: 1, // Já estamos usando zoom alto, não precisa multiplicar
+            enableRetinaScaling: false // Desabilitar scaling adicional
           });
+          
+          // Restaurar zoom e dimensões originais
+          canvas.setZoom(originalZoom);
+          canvas.setDimensions({
+            width: originalWidth,
+            height: originalHeight
+          });
+          canvas.renderAll();
           
           const pageWidth = pdf.internal.pageSize.getWidth();
           const pageHeight = pdf.internal.pageSize.getHeight();
           
+          // Adicionar imagem com compressão NONE para manter qualidade máxima
           pdf.addImage(dataURL, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'NONE');
         } catch (error) {
           console.error(`Erro ao exportar página ${i + 1}:`, error);

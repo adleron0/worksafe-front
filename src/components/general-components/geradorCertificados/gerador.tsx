@@ -427,13 +427,18 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
       if (Array.isArray(response)) {
         // Se for um array direto, criar a estrutura esperada
         processedResponse = {
+          images: response as any,
           total: (response as any).length,
           rows: response as any
         };
         console.log('Response was array, converted to:', processedResponse);
       } else if (response && 'rows' in response) {
-        // Se já tem a estrutura esperada
-        processedResponse = response;
+        // Se já tem a estrutura esperada, mas garantir que images exista
+        processedResponse = {
+          images: (response as any).images || (response as any).rows || [],
+          total: (response as any).total || 0,
+          rows: (response as any).rows || []
+        };
         console.log('Response has expected structure');
       } else if (response && typeof response === 'object') {
         // Tentar encontrar os dados em outras propriedades
@@ -449,18 +454,19 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         
         if (foundData) {
           processedResponse = {
+            images: foundData,
             total: foundData.length,
             rows: foundData
           };
           console.log('Found data in alternative structure:', processedResponse);
         } else {
           // Se não encontrar, assumir estrutura vazia
-          processedResponse = { total: 0, rows: [] };
+          processedResponse = { images: [], total: 0, rows: [] };
           console.log('Could not find data, using empty structure');
         }
       } else {
         // Fallback para estrutura vazia
-        processedResponse = { total: 0, rows: [] };
+        processedResponse = { images: [], total: 0, rows: [] };
         console.log('Unknown response format, using empty structure');
       }
       
@@ -897,12 +903,19 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
               : editingData.fabricJsonBack)
             : null;
 
+          // Usar as dimensões reais do certificado que está sendo editado
           const canvasData = {
             fabricJsonFront,
             fabricJsonBack,
-            canvasWidth: 800, // Valores padrão, podem vir do JSON
-            canvasHeight: 600
+            canvasWidth: (editingData as any).canvasWidth || 842, // Usar dimensão real ou A4 landscape como padrão
+            canvasHeight: (editingData as any).canvasHeight || 595
           };
+          
+          console.log('📐 Carregando certificado com dimensões:', {
+            width: canvasData.canvasWidth,
+            height: canvasData.canvasHeight,
+            orientation: canvasData.canvasWidth > canvasData.canvasHeight ? 'landscape' : 'portrait'
+          });
           
           await loadCanvasData(canvasData);
           

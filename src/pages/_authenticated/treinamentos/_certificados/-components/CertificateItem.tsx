@@ -1,4 +1,5 @@
 // Serviços
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { patch } from "@/services/api";
 import { useLoader } from "@/context/GeneralContext";
@@ -11,6 +12,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import DuplicateCertificateModal from "./DuplicateCertificateModal";
+import VisualizadorCertificados from "@/components/general-components/visualizadorCertificados/VisualizadorCertificados";
+// import { CertificateThumbnail } from "@/components/general-components/visualizadorCertificados";
+import Dialog from "@/components/general-components/Dialog";
 // Interfaces
 import { ICertificate } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -28,6 +33,8 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm }: Prop
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
+  const [openDuplicateModal, setOpenDuplicateModal] = useState(false);
+  const [openViewModal, setOpenViewModal] = useState(false);
 
   // Mutation para inativar
   const { mutate: deactivate } = useMutation({
@@ -130,8 +137,21 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm }: Prop
           )}
         </div>
 
-        {/* Avatar e Nome */}
-        <div className="w-full lg:w-4/12 flex items-center space-x-4 md:pr-2">
+        {/* Thumbnail e Nome */}
+        <div className="w-full h-full flex items-center space-x-4 md:pr-2 ">
+          {/* {item.fabricJsonFront ? (
+            <CertificateThumbnail 
+              certificateData={item}
+              className="border border-gray-200 dark:border-gray-700 shadow-sm"
+              size={30}
+            />
+          ) : (
+            <Avatar className="border rounded-md bg-primary/10">
+              <AvatarFallback className="rounded-md bg-primary/10 text-primary font-bold">
+                {getThumbnail()}
+              </AvatarFallback>
+            </Avatar>
+          )} */}
           <Avatar className="border rounded-md bg-primary/10">
             <AvatarFallback className="rounded-md bg-primary/10 text-primary font-bold">
               {getThumbnail()}
@@ -193,6 +213,16 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm }: Prop
             </DropdownMenuTrigger>
             <DropdownMenuContent>
 
+              {/* Botão de Visualizar */}
+              <Button 
+                variant="ghost" 
+                className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                onClick={() => setOpenViewModal(true)}
+              >
+                <Icon name="eye" className="w-3 h-3" /> 
+                <p>Visualizar Certificado</p>
+              </Button>
+
               { can(`update_${entity.ability}`) && (
                   <Button 
                     variant="ghost" 
@@ -204,6 +234,18 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm }: Prop
                   >
                     <Icon name="edit-3" className="w-3 h-3" /> 
                     <p>Editar Template</p>
+                  </Button>
+                )
+              }
+
+              { can(`create_${entity.ability}`) && (
+                  <Button 
+                    variant="ghost" 
+                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                    onClick={() => setOpenDuplicateModal(true)}
+                  >
+                    <Icon name="copy" className="w-3 h-3" /> 
+                    <p>Duplicar Certificado</p>
                   </Button>
                 )
               }
@@ -239,6 +281,33 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm }: Prop
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Modal de Duplicação */}
+      <DuplicateCertificateModal
+        certificate={item}
+        open={openDuplicateModal}
+        onOpenChange={setOpenDuplicateModal}
+      />
+
+      {/* Modal de Visualização */}
+      {openViewModal && item.fabricJsonFront && (
+        <Dialog
+          open={openViewModal}
+          onOpenChange={setOpenViewModal}
+          title={`Visualizar Certificado: ${item.name}`}
+          description="Pré-visualização do template do certificado"
+          showBttn={false}
+          showHeader={false}
+        >
+          <div className="h-[70vh] w-full">
+            <VisualizadorCertificados
+              certificateData={item}
+              variableToReplace={{}}
+              zoom={50}
+            />
+          </div>
+        </Dialog>
+      )}
     </>
   )
 };

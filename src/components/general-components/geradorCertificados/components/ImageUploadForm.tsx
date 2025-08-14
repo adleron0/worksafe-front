@@ -52,6 +52,7 @@ const ImageUploadForm: React.FC<ImageUploadFormProps> = ({ imageType, onUploadSu
     }
 
     const formData: ImageFormData = {
+      // file: selectedFile,
       image: selectedFile,
       name: imageName,
       type: imageType

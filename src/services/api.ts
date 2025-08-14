@@ -80,7 +80,7 @@ export const get = async <T>(controllerName: string, action = "", extraParams?: 
 };
 
 // Serviço genérico para requisições POST
-export const post = async <T>(controllerName: string, action = "", data: T, extraParams?: queryParams[]): Promise<T | undefined> => {
+export const post = async <T, D = any>(controllerName: string, action = "", data: D, extraParams?: queryParams[]): Promise<T | undefined> => {
   let endpoint = `${controllerName}/${action}`;
 
   if (extraParams) {

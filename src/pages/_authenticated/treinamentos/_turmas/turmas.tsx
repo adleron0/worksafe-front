@@ -14,6 +14,7 @@ import ItemList from "./-components/TurmasItem";
 import Form from "./-components/TurmasForm";
 import SearchForm from "./-components/TurmasSearch";
 import TurmasInstrutoresList from "@/pages/_authenticated/treinamentos/_instrutores/-turmas-instrutores/TurmasInstrutoresList";
+import Subscriptions from "@/pages/_authenticated/treinamentos/-subscriptions";
 // Interfaces
 import { IEntity } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
@@ -27,11 +28,13 @@ function List() {
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [openInstrutoresModal, setOpenInstrutoresModal] = useState(false);
+  const [openSubscriptionsModal, setOpenSubscriptionsModal] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
     'order-name': 'asc',
+    'gte-initialDate': new Date().toISOString(), // Data atual
   });
   const initialFormRef = useRef(searchParams);
 
@@ -148,6 +151,7 @@ function List() {
                 setFormData={setFormData} 
                 setOpenForm={setOpenForm}
                 openInstructorsModal={setOpenInstrutoresModal}
+                openSubscriptionsModal={setOpenSubscriptionsModal}
               />
             ))
           : (
@@ -168,6 +172,18 @@ function List() {
         description="Gestão de instrutores da turma."
       >
         <TurmasInstrutoresList classId={formData?.id || 0} />
+      </Dialog>
+
+      {/* Modal de inscrições */}
+      <Dialog 
+        open={openSubscriptionsModal}
+        onOpenChange={setOpenSubscriptionsModal}
+        showBttn={false}
+        showHeader={true}
+        title={`Inscrições da Turma ${formData?.name}`}
+        description="Lista de alunos inscritos nesta turma."
+      >
+        <Subscriptions classId={formData?.id || 0} />
       </Dialog>
 
       {/* Paginação */}

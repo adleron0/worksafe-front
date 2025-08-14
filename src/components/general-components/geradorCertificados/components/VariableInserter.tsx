@@ -27,6 +27,8 @@ const VariableInserter: React.FC<VariableInserterProps> = ({
   // Mock de variáveis caso não venha do backend ainda
   const mockVariables: AvailableVariables = {
     nome_aluno: {
+      key: "nome_aluno",
+      label: "Nome do Aluno",
       name: "Nome do Aluno",
       description: "Nome completo do aluno",
       type: "text",
@@ -35,6 +37,8 @@ const VariableInserter: React.FC<VariableInserterProps> = ({
       placeholder: "João da Silva"
     },
     cpf_aluno: {
+      key: "cpf_aluno",
+      label: "CPF do Aluno",
       name: "CPF do Aluno",
       description: "CPF do aluno",
       type: "text",
@@ -43,6 +47,8 @@ const VariableInserter: React.FC<VariableInserterProps> = ({
       placeholder: "123.456.789-00"
     },
     nome_curso: {
+      key: "nome_curso",
+      label: "Nome do Curso",
       name: "Nome do Curso",
       description: "Nome do curso realizado",
       type: "text",
@@ -51,6 +57,8 @@ const VariableInserter: React.FC<VariableInserterProps> = ({
       placeholder: "Curso de Segurança"
     },
     data_inicio: {
+      key: "data_inicio",
+      label: "Data de Início",
       name: "Data de Início",
       description: "Data de início do curso",
       type: "text",
@@ -59,6 +67,8 @@ const VariableInserter: React.FC<VariableInserterProps> = ({
       placeholder: "01/01/2024"
     },
     data_fim: {
+      key: "data_fim",
+      label: "Data de Término",
       name: "Data de Término",
       description: "Data de término do curso",
       type: "text",
@@ -67,6 +77,8 @@ const VariableInserter: React.FC<VariableInserterProps> = ({
       placeholder: "05/01/2024"
     },
     carga_horaria: {
+      key: "carga_horaria",
+      label: "Carga Horária",
       name: "Carga Horária",
       description: "Total de horas do curso",
       type: "text",
@@ -75,6 +87,8 @@ const VariableInserter: React.FC<VariableInserterProps> = ({
       placeholder: "40 horas"
     },
     nome_empresa: {
+      key: "nome_empresa",
+      label: "Nome da Empresa",
       name: "Nome da Empresa",
       description: "Nome da empresa cliente",
       type: "text",
@@ -83,6 +97,8 @@ const VariableInserter: React.FC<VariableInserterProps> = ({
       placeholder: "Empresa ABC Ltda"
     },
     assinatura_instrutor: {
+      key: "assinatura_instrutor",
+      label: "Assinatura do Instrutor",
       name: "Assinatura do Instrutor",
       description: "Assinatura digital do instrutor",
       type: "image",
@@ -91,6 +107,8 @@ const VariableInserter: React.FC<VariableInserterProps> = ({
       placeholder: "https://example.com/signature.png"
     },
     logo_empresa: {
+      key: "logo_empresa",
+      label: "Logo da Empresa",
       name: "Logo da Empresa",
       description: "Logotipo da empresa",
       type: "image",
@@ -105,14 +123,15 @@ const VariableInserter: React.FC<VariableInserterProps> = ({
   // Filtrar variáveis por tipo
   const filteredVariables = Object.entries(variables).filter(([_, variable]) => {
     if (type === 'all') return true;
-    return variable.type === type;
+    return (variable as CertificateVariable).type === type;
   });
 
   // Agrupar variáveis por categoria
   const groupedVariables = filteredVariables.reduce((acc, [key, variable]) => {
+    const typedVariable = variable as CertificateVariable;
     let category = 'Outros';
     
-    if (variable.type === 'image') {
+    if (typedVariable.type === 'image') {
       category = 'Imagens';
     } else if (key.includes('aluno') || key.includes('cpf')) {
       category = 'Aluno';
@@ -127,7 +146,7 @@ const VariableInserter: React.FC<VariableInserterProps> = ({
     if (!acc[category]) {
       acc[category] = [];
     }
-    acc[category].push({ key, ...variable });
+    acc[category].push({ ...typedVariable, key });
     return acc;
   }, {} as Record<string, Array<CertificateVariable & { key: string }>>);
 

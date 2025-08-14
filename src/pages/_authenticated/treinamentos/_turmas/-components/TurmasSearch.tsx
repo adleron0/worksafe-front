@@ -11,7 +11,7 @@ import Select from "@/components/general-components/Select";
 interface SearchData {
   name: string;
   active?: boolean;
-  createdAt?: [Date | undefined, Date | undefined];
+  "gte-initialDate"?: string;
 }
 
 interface SearchFormProps {
@@ -26,7 +26,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
   const [searchData, setSearchData] = useState<SearchData>({
     name: "",
     active: undefined as boolean | undefined,
-    createdAt: undefined as [Date | undefined, Date | undefined] | undefined,
+    "gte-initialDate": undefined as string | undefined,
   });
 
   // Load params into form state
@@ -42,8 +42,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
         newSearchData.active = value as boolean | undefined;
       } else if (paramKey === 'name' && (typeof value === 'string' || value === undefined)) {
         newSearchData.name = value as string;
-      } else if (paramKey === 'createdAt' && (Array.isArray(value) || value === undefined)) {
-        newSearchData.createdAt = value as [Date | undefined, Date | undefined] | undefined;
+      } else if (paramKey === 'gte-initialDate' && (typeof value === 'string' || value === undefined)) {
+        newSearchData["gte-initialDate"] = value as string | undefined;
       }
     });
     
@@ -62,28 +62,13 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
 
   const handleDateChange = (_name: string, value: string | null) => {
     if (value) {
-      const [startStr, endStr] = value.split('|');
-      const startDate = startStr ? new Date(startStr) : undefined;
-      const endDate = endStr ? new Date(endStr) : undefined;
-      
-      if (startDate && endDate) {
-        setSearchData(prev => ({ ...prev, createdAt: [startDate, endDate] }));
-      } else {
-        setSearchData(prev => ({ ...prev, createdAt: undefined }));
-      }
+      // For single date picker, value is an ISO string
+      setSearchData(prev => ({ ...prev, "gte-initialDate": value }));
     } else {
-      setSearchData(prev => ({ ...prev, createdAt: undefined }));
+      setSearchData(prev => ({ ...prev, "gte-initialDate": undefined }));
     }
   };
 
-  // Convert createdAt to string format for CalendarPicker
-  const getDateRangeValue = () => {
-    const { createdAt } = searchData;
-    if (createdAt && createdAt[0] && createdAt[1]) {
-      return `${createdAt[0].toISOString()}|${createdAt[1].toISOString()}`;
-    }
-    return null;
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +80,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
     setSearchData({
       name: "",
       active: undefined,
-      createdAt: undefined,
+      "gte-initialDate": undefined,
     });
     onClear();
     openSheet(false);
@@ -133,15 +118,15 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
         />
       </div>
 
-      {/* Data de Criação (Range Picker) */}
+      {/* Data Inicial */}
       <div>
-        <Label htmlFor="createdAt">Data de Criação</Label>
+        <Label htmlFor="initialDate">A partir de</Label>
         <CalendarPicker
-          mode="range"
-          name="dateRange"
-          value={getDateRangeValue()}
+          mode="single"
+          name="initialDate"
+          value={searchData["gte-initialDate"] || null}
           onValueChange={handleDateChange}
-          placeholder="Selecione uma data"
+          placeholder="Selecione a data inicial"
           numberOfMonths={1}
         />
       </div>

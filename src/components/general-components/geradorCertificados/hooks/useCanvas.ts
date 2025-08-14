@@ -680,8 +680,31 @@ export const useCanvas = () => {
   // Função para carregar dados nos canvas
   const loadCanvasData = useCallback(async (data: CanvasData) => {
     try {
+      // Detectar orientação baseada nas dimensões do certificado
+      const width = data.canvasWidth || 842;
+      const height = data.canvasHeight || 595;
+      const detectedOrientation: 'landscape' | 'portrait' = width > height ? 'landscape' : 'portrait';
+      
+      console.log('📐 Orientação detectada ao carregar:', {
+        width,
+        height,
+        orientation: detectedOrientation
+      });
+      
+      // Atualizar a orientação das páginas existentes se necessário
+      const updatedPages = pages.map(page => ({
+        ...page,
+        orientation: detectedOrientation
+      }));
+      
+      // Se houver mudança na orientação, atualizar as páginas
+      if (pages[0] && pages[0].orientation !== detectedOrientation) {
+        console.log('🔄 Atualizando orientação das páginas de', pages[0].orientation, 'para', detectedOrientation);
+        setPages(updatedPages);
+      }
+      
       // Carregar dados no canvas da frente
-      const frontPage = pages[0];
+      const frontPage = updatedPages[0] || pages[0];
       if (!frontPage) {
         toast.error('Nenhuma página disponível para carregar');
         return;
@@ -970,13 +993,17 @@ export const useCanvas = () => {
               (obj as any).name === 'backgroundRect' && obj.fill === 'white'
             );
             
-            // Se não existir, criar um
+            // Se não existir, criar um com dimensões baseadas na orientação detectada
             if (!whiteRect) {
+              // Usar as dimensões A4 baseadas na orientação detectada
+              const rectWidth = detectedOrientation === 'landscape' ? 842 : 595;
+              const rectHeight = detectedOrientation === 'landscape' ? 595 : 842;
+              
               whiteRect = new fabric.Rect({
                 left: 0,
                 top: 0,
-                width: 842, // A4 landscape
-                height: 595,
+                width: rectWidth,
+                height: rectHeight,
                 fill: 'white',
                 selectable: false,
                 evented: false,
@@ -1025,22 +1052,22 @@ export const useCanvas = () => {
               
               // Garantir que está logo acima do retângulo branco
               const finalObjects = frontCanvas.getObjects();
-              const whiteRectIndex = finalObjects.findIndex((obj: fabric.Object) => 
+              const whiteRectObj = finalObjects.find((obj: fabric.Object) => 
                 (obj as any).name === 'backgroundRect' && obj.fill === 'white'
               );
               const bgIndex = finalObjects.indexOf(backgroundObj);
+              const whiteRectIndex = whiteRectObj ? finalObjects.indexOf(whiteRectObj) : -1;
               
-              // Se o background não está na posição correta (logo após o retângulo branco)
-              if (whiteRectIndex !== -1 && bgIndex !== whiteRectIndex + 1) {
+              // Só reorganizar se a ordem estiver errada (background deve estar logo após o retângulo branco)
+              if (whiteRectObj && (whiteRectIndex > bgIndex || bgIndex > 1)) {
                 // Reorganizar objetos
-                const rectObj = finalObjects[whiteRectIndex];
                 const otherObjects = finalObjects.filter((obj: fabric.Object) => 
-                  obj !== backgroundObj && obj !== rectObj
+                  obj !== backgroundObj && obj !== whiteRectObj
                 );
                 
-                frontCanvas.clear();
-                frontCanvas.add(rectObj); // Retângulo branco primeiro
-                frontCanvas.add(backgroundObj); // Background logo acima
+                frontCanvas.remove(...finalObjects);
+                frontCanvas.add(whiteRectObj); // Retângulo branco primeiro
+                frontCanvas.add(backgroundObj); // Imagem de background em segundo
                 otherObjects.forEach((obj: fabric.Object) => frontCanvas.add(obj)); // Outros objetos
               }
               
@@ -1185,14 +1212,46 @@ export const useCanvas = () => {
                   
                   // Aguardar um momento para garantir que todos os objetos sejam carregados
                   setTimeout(async () => {
+                    // Primeiro, garantir que existe um retângulo branco de background no verso
+                    let objects = backCanvas.getObjects();
+                    let whiteRect = objects.find((obj: fabric.Object) => 
+                      (obj as any).name === 'backgroundRect' && obj.fill === 'white'
+                    );
+                    
+                    // Se não existir, criar um com dimensões baseadas na orientação detectada
+                    if (!whiteRect) {
+                      // Usar as dimensões A4 baseadas na orientação detectada
+                      const rectWidth = detectedOrientation === 'landscape' ? 842 : 595;
+                      const rectHeight = detectedOrientation === 'landscape' ? 595 : 842;
+                      
+                      whiteRect = new fabric.Rect({
+                        left: 0,
+                        top: 0,
+                        width: rectWidth,
+                        height: rectHeight,
+                        fill: 'white',
+                        selectable: false,
+                        evented: false,
+                        name: 'backgroundRect'
+                      } as any);
+                      
+                      // Adicionar como primeiro objeto (mas SEM limpar o canvas)
+                      const allObjs = [...backCanvas.getObjects()];
+                      backCanvas.remove(...allObjs);
+                      backCanvas.add(whiteRect);
+                      allObjs.forEach((obj: fabric.Object) => backCanvas.add(obj));
+                      
+                      // Atualizar referência dos objetos
+                      objects = backCanvas.getObjects();
+                    }
+                    
                     // Verificar se há objetos marcados como background (imagem, não o retângulo branco)
-                    const objects = backCanvas.getObjects();
                     const backgroundObj = objects.find((obj: fabric.Object) => 
                       (obj as any).name === 'backgroundImage'
                     );
                     
                     if (backgroundObj) {
-                      // Garantir que o background fique no índice 0 e não seja selecionável
+                      // Garantir que o background fique não selecionável
                       backgroundObj.set({
                         selectable: false,
                         evented: false,
@@ -1205,15 +1264,24 @@ export const useCanvas = () => {
                         lockScalingY: true
                       });
                       
-                      // Garantir que está no fundo
+                      // Reorganizar objetos: retângulo branco primeiro, depois imagem de background, depois outros
                       const allObjects = backCanvas.getObjects();
+                      const whiteRectObj = allObjects.find((obj: fabric.Object) => 
+                        (obj as any).name === 'backgroundRect' && obj.fill === 'white'
+                      );
                       const bgIndex = allObjects.indexOf(backgroundObj);
+                      const whiteRectIndex = whiteRectObj ? allObjects.indexOf(whiteRectObj) : -1;
                       
-                      if (bgIndex > 0) {
-                        const objectsToReorder = allObjects.filter((obj: fabric.Object) => obj !== backgroundObj);
-                        backCanvas.clear();
-                        backCanvas.add(backgroundObj);
-                        objectsToReorder.forEach((obj: fabric.Object) => backCanvas.add(obj));
+                      // Só reorganizar se a ordem estiver errada
+                      if (whiteRectObj && (whiteRectIndex > bgIndex || bgIndex > 1)) {
+                        const otherObjects = allObjects.filter((obj: fabric.Object) => 
+                          obj !== backgroundObj && obj !== whiteRectObj
+                        );
+                        
+                        backCanvas.remove(...allObjects);
+                        backCanvas.add(whiteRectObj); // Retângulo branco primeiro
+                        backCanvas.add(backgroundObj); // Imagem de background em segundo
+                        otherObjects.forEach((obj: fabric.Object) => backCanvas.add(obj)); // Outros objetos
                       }
                       
                       console.log('Background object found and configured for back page');

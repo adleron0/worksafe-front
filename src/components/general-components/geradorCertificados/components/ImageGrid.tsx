@@ -30,12 +30,12 @@ const ImageGrid: React.FC<ImageGridProps> = ({
             <div 
               className="w-full h-full cursor-pointer"
               draggable
-              onDragStart={(e) => onDragStart(e, image.imageUrl, image.name)}
+              onDragStart={(e) => onDragStart(e, image.imageUrl || image.url, image.name)}
               onDragEnd={onDragEnd}
               onClick={async () => {
                 setLoadingImageId(image.id);
                 try {
-                  await onImageClick(image.imageUrl, image.name);
+                  await onImageClick(image.imageUrl || image.url, image.name);
                   // Aguardar um pouco para garantir que a imagem foi processada
                   setTimeout(() => {
                     setLoadingImageId(null);

@@ -20,7 +20,7 @@ import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { z } from "zod";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, RefreshCw, HelpCircle } from "lucide-react";
 
 interface FormProps {
   formData?: IEntity;
@@ -32,21 +32,49 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
 
+  // Função para gerar hash alfanumérico de 4 dígitos
+  const generateClassCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 4; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  };
+
   // Schema
   const Schema = z.object({
     name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
     customerId: z.number().optional().nullable(),
     courseId: z.number().min(1, { message: "Id do curso é obrigatório" }),
+    certificateId: z.number().optional().nullable(),
     price: z.number().min(0, { message: "Valor de venda é obrigatório" }),
     oldPrice: z.number(),
+    dividedIn: z.number().min(1).optional().nullable(),
     hoursDuration: z.number().min(1, { message: "Duração é obrigatório" }),
     openClass: z.boolean(),
     gifts: z.string().optional().nullable(),
     description: z.string().min(10, { message: "Descrição deve ter pelo menos 10 caracteres" }),
     gradeTheory: z.string().min(10, { message: "Grade teórica deve ter pelo menos 10 caracteres" }),
     gradePracticle: z.string().min(10, { message: "Grade prática deve ter pelo menos 10 caracteres" }),
-    videoUrl: z.string().url({ message: "URL do vídeo deve ser uma URL válida" }).optional(),
+    videoUrl: z.string()
+    .optional()
+    .nullable()
+    .refine((value) => {
+      // Se não há valor ou tem 1 caractere ou menos, passa na validação
+      if (!value || value.length <= 1) return true;
+      
+      // Se tem mais de 1 caractere, valida se é URL válida
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        return false;
+      }
+    }, {
+      message: "URL do vídeo deve ser uma URL válida"
+    }),
     videoTitle: z.string().optional(),
     videoSubtitle: z.string().optional(),
     videoDescription: z.string().optional(),
@@ -62,6 +90,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     landingPagesDates: z.string().min(3, { message: "Datas de divulgação devem ter pelo menos 3 caracteres" }),
     allowExam: z.boolean().optional().nullable(),
     allowReview: z.boolean().optional(),
+    classCode: z.string().optional().nullable(),
     minimumQuorum: z.number().optional(),
     maxSubscriptions: z.number().optional(),
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
@@ -70,6 +99,15 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         message: "Imagem deve ser um arquivo ou nulo.",
       }
     ),
+  }).refine((data) => {
+    // Se allowExam é true, classCode é obrigatório
+    if (data.allowExam && (!data.classCode || data.classCode.trim() === '')) {
+      return false;
+    }
+    return true;
+  }, {
+    message: "Código de acesso é obrigatório quando a turma tem prova",
+    path: ["classCode"],
   })
 
   type FormData = z.infer<typeof Schema>;
@@ -123,8 +161,10 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     imageUrl: formData?.imageUrl || '',
     customerId: formData?.customerId || null,
     courseId: formData?.courseId || 0,
+    certificateId: (formData as any)?.certificateId || null,
     price: Number(formData?.price) || 0,
     oldPrice: Number(formData?.oldPrice) || 0,
+    dividedIn: (formData as any)?.dividedIn || null,
     hoursDuration: formData?.hoursDuration || 1,
     openClass: formData?.openClass || true,
     gifts: formData?.gifts || '',
@@ -140,8 +180,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     initialDate: formData?.initialDate || null,
     finalDate: formData?.finalDate || null,
     landingPagesDates: formData?.landingPagesDates || "",
-    allowExam: formData?.allowExam || true,
-    allowReview: formData?.allowReview || true,
+    allowExam: formData?.allowExam,
+    allowReview: formData?.allowReview || false,
+    classCode: formData?.classCode || (!formData ? generateClassCode() : (formData?.classCode || generateClassCode())),
     minimumQuorum: formData?.minimumQuorum || 0,
     maxSubscriptions: formData?.maxSubscriptions || 0,
     image: formData?.image || null,
@@ -230,16 +271,15 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     if (dataForm.faq && dataForm.faq.length > 0) {
       dataForm.faq.forEach((item, index) => {
         // Check question length
-        if (item.question.trim().length < 3) {
+        if (!item.question || item.question.trim().length < 3) {
           newErrors[`faq.${index}.question`] = "Pergunta deve ter pelo menos 3 caracteres";
           faqHasErrors = true;
         }
         
         // Check answer length
-        if (item.answer.trim().length < 3) {
+        if (!item.answer || item.answer.trim().length < 3) {
           newErrors[`faq.${index}.answer`] = "Resposta deve ter pelo menos 3 caracteres";
           faqHasErrors = true;
-          console.log(`FAQ answer at index ${index} is invalid. Length: ${item.answer.trim().length}, Value: "${item.answer}"`);
         }
       });
       
@@ -369,18 +409,36 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   // Buscas de valores para variaveis de formulário
   const { 
-      data: courses, 
-      isLoading: isLoadingCourses,
-    } = useQuery<Response | undefined, ApiError>({
-      queryKey: [`listCursos`],
-      queryFn: async () => {
-        const params = [
-          { key: 'limit', value: 999 },
-          { key: 'order-name', value: 'asc' },
-        ];
-        return get('courses', '', params);
-      },
-    });
+    data: courses, 
+    isLoading: isLoadingCourses,
+  } = useQuery<Response | undefined, ApiError>({
+    queryKey: [`listCursos`],
+    queryFn: async () => {
+      const params = [
+        { key: 'limit', value: 999 },
+        { key: 'active', value: true },
+        { key: 'order-name', value: 'asc' },
+      ];
+      return get('courses', '', params);
+    },
+  });
+
+  const { 
+    data: certificates, 
+    isLoading: isLoadingCertificates,
+  } = useQuery<Response | undefined, ApiError>({
+    queryKey: [`listCertificates`, dataForm.courseId],
+    queryFn: async () => {
+      const params = [
+        { key: 'courseId', value: dataForm.courseId },
+        { key: 'limit', value: 999 },
+        { key: 'order-name', value: 'asc' },
+      ];
+      return get('certificate', '', params);
+    },
+    // Only run the query if courseId is valid (greater than 0)
+    enabled: dataForm.courseId > 0,
+  });
 
   // Função para encontrar um curso pelo ID
   const findCourseById = (id: number) => {
@@ -467,6 +525,19 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           ]}
         />
         {errors.courseId && <p className="text-red-500 text-sm">{errors.courseId}</p>}
+      </div>
+
+      <div>
+        <Label htmlFor="certificateId">Certificado</Label>
+        <Select 
+          name="certificateId"
+          disabled={!dataForm.courseId || isLoadingCertificates}
+          options={certificates?.rows || []}
+          onChange={(name, value) => handleChange(name, value ? +value : null)} 
+          state={dataForm.certificateId ? String(dataForm.certificateId) : ""}
+          placeholder={!dataForm.courseId ? "Selecione um curso primeiro" : "Selecione o certificado"}
+        />
+        {errors.certificateId && <p className="text-red-500 text-sm">{errors.certificateId}</p>}
       </div>
 
       <div>
@@ -563,6 +634,21 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {errors.oldPrice && <p className="text-red-500 text-sm">{errors.oldPrice}</p>}
       </div>
 
+      <div>
+        <Label htmlFor="dividedIn">Parcelamento</Label>
+        <p className="text-xs text-muted-foreground font-medium">Número de parcelas permitidas no pagamento</p>
+        <NumberInput
+          id="dividedIn"
+          name="dividedIn"
+          min={1}
+          max={12}
+          value={dataForm.dividedIn || 1}
+          onValueChange={handleChange}
+          placeholder="Ex: 3"
+        />
+        {errors.dividedIn && <p className="text-red-500 text-sm">{errors.dividedIn}</p>}
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="description">Descrição <span>*</span></Label>
         <Input
@@ -631,36 +717,75 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {errors.maxSubscriptions && <p className="text-red-500 text-sm">{errors.maxSubscriptions}</p>}
       </div>
 
-      <div className="mt-4 flex justify-between">
-        <Label htmlFor="openClass">Turma aberta?</Label>
+      <div className="mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg flex justify-between items-center">
+        <Label htmlFor="openClass" className="cursor-pointer flex items-center gap-2">
+          <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+          Turma aberta
+        </Label>
         <Switch
           id="openClass"
           name="openClass"
           checked={dataForm.openClass ? true : false}
           onCheckedChange={() => setDataForm((prev) => ({ ...prev, openClass: !prev.openClass }))}
-          className="mt-1"
         />
       </div>
 
-      <div className="mt-4 flex justify-between">
-        <Label htmlFor="allowExam">Tem Prova?</Label>
-        <Switch
-          id="allowExam"
-          name="allowExam"
-          checked={dataForm.allowExam ? true : false}
-          onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowExam: !prev.allowExam }))}
-          className="mt-1"
-        />
+      <div className={`mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg ${dataForm.allowExam ? 'pb-4' : ''}`}>
+        <div className="flex justify-between items-center">
+          <Label htmlFor="allowExam" className="cursor-pointer flex items-center gap-2">
+            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+            Habilitar Prova
+          </Label>
+          <Switch
+            id="allowExam"
+            name="allowExam"
+            checked={dataForm.allowExam ? true : false}
+            onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowExam: !prev.allowExam }))}
+          />
+        </div>
+
+        {dataForm.allowExam && (
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <Label htmlFor="classCode">Código de Acesso à Prova <span className="text-red-500">*</span></Label>
+            <p className="text-xs text-muted-foreground font-medium mb-2">Código que os alunos usarão para acessar a prova</p>
+            <div className="flex gap-2">
+              <Input
+                id="classCode"
+                name="classCode"
+                placeholder="Ex: A3B9"
+                value={dataForm.classCode || ''}
+                onValueChange={handleChange}
+                className="flex-1"
+                required={dataForm.allowExam}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  const newCode = generateClassCode();
+                  handleChange('classCode', newCode);
+                }}
+                title="Gerar novo código"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
+            {errors.classCode && <p className="text-red-500 text-sm mt-1">{errors.classCode}</p>}
+          </div>
+        )}
       </div>
 
-      <div className="mt-4 flex justify-between">
-        <Label htmlFor="allowReview">Tem Avaliação?</Label>
+      <div className="mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg flex justify-between items-center">
+        <Label htmlFor="allowReview" className="cursor-pointer flex items-center gap-2">
+          <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+          Habilitar Avaliação
+        </Label>
         <Switch
           id="allowReview"
           name="allowReview"
           checked={dataForm.allowReview ? true : false}
           onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowReview: !prev.allowReview }))}
-          className="mt-1"
         />
       </div>
 
@@ -683,7 +808,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           id="videoUrl"
           name="videoUrl"
           placeholder="Digite a URL do vídeo"
-          value={dataForm.videoUrl}
+          value={dataForm.videoUrl || ''}
           onValueChange={handleChange}
           className="mt-1"
         />
@@ -792,8 +917,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
                         </Label>
                         <Input
                           id={`faq-question-${index}`}
+                          name={`faq-question-${index}`}
                           value={faqItem.question || ''}
-                          onValueChange={(_, value) => updateFaqItem(index, 'question', value as string)}
+                          onValueChange={(_, value) => updateFaqItem(index, 'question', String(value))}
                           placeholder="Ex: Qual é a carga horária do curso?"
                           className={`mt-1 ${errors[`faq.${index}.question`] ? 'border-red-500' : ''}`}
                         />
@@ -808,8 +934,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
                         </Label>
                         <Input
                           id={`faq-answer-${index}`}
+                          name={`faq-answer-${index}`}
                           value={faqItem.answer || ''}
-                          onValueChange={(_, value) => updateFaqItem(index, 'answer', value as string)}
+                          onValueChange={(_, value) => updateFaqItem(index, 'answer', String(value))}
                           placeholder="Ex: O curso tem duração total de 40 horas, distribuídas em..."
                           type="textArea"
                           className={`mt-1 min-h-[80px] ${errors[`faq.${index}.answer`] ? 'border-red-500' : ''}`}

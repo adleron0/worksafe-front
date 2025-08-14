@@ -123,9 +123,19 @@ const CoursesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPro
 
         {/* Avatar e Nome */}
         <div className="w-full lg:w-4/12 flex items-center space-x-4 md:pr-2">
-          <Avatar className="border rounded-md">
+          <Avatar className="border rounded-md relative overflow-visible">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
             <AvatarFallback className="rounded-md">{item.name[0]}</AvatarFallback>
+            {item.icon && (
+              <div 
+                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border-2 border-background shadow-sm"
+                style={{ 
+                  backgroundColor: item.color || '#000000',
+                }}
+              >
+                <Icon name={item.icon} className="w-3 h-3 text-white" />
+              </div>
+            )}
           </Avatar>
           <div className="break-words w-9/12 md:w-full">
             <h2 className="text-sm font-semibold">{item.name}</h2>

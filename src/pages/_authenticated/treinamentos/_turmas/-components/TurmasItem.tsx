@@ -11,6 +11,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import { QRCode } from '@/components/ui/kibo-ui/qr-code';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
+import DuplicateTurmaModal from "./DuplicateTurmaModal";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -23,12 +27,15 @@ interface ItemsProps {
   setFormData: (data: IEntity) => void;
   setOpenForm: (open: boolean) => void;
   openInstructorsModal: (open: boolean) => void;
+  openSubscriptionsModal: (open: boolean) => void;
 }
 
-const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openInstructorsModal }: ItemsProps) => {
+const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openInstructorsModal, openSubscriptionsModal }: ItemsProps) => {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
+  const [openQrModal, setOpenQrModal] = useState(false);
+  const [openDuplicateModal, setOpenDuplicateModal] = useState(false);
 
    // Mutation para inativar
   const { mutate: deactivate } = useMutation({
@@ -238,6 +245,18 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
                 )
               }
 
+              { can(`create_${entity.ability}`) && (
+                  <Button 
+                    variant="ghost" 
+                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                    onClick={() => setOpenDuplicateModal(true)}
+                  >
+                    <Icon name="copy" className="w-3 h-3" /> 
+                    <p>Duplicar Turma</p>
+                  </Button>
+                )
+              }
+
               <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
                 <Button 
                   variant="ghost" 
@@ -251,6 +270,65 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
                   <p>Instrutores</p>
                 </Button>
               </DropdownMenuItem>
+
+              <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                <Button 
+                  variant="ghost" 
+                  className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                  onClick={() => {
+                    openSubscriptionsModal(true);
+                    setFormData(item);
+                  }}
+                >
+                  <Icon name="users" className="w-3 h-3" /> 
+                  <p>Inscrições</p>
+                </Button>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                <Button 
+                  variant="ghost" 
+                  className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                  onClick={() => {
+                    const baseUrl = process.env.NODE_ENV === 'development' 
+                      ? 'http://localhost:5173' 
+                      : window.location.origin;
+                    const enrollmentLink = `${baseUrl}/turma/${item.id}`;
+                    
+                    navigator.clipboard.writeText(enrollmentLink).then(() => {
+                      toast({
+                        title: "Link copiado com sucesso!",
+                        description: "O link de inscrição foi copiado para a área de transferência.",
+                        variant: "success",
+                      });
+                    }).catch(() => {
+                      toast({
+                        title: "Erro ao copiar link",
+                        description: "Não foi possível copiar o link. Tente novamente.",
+                        variant: "destructive",
+                      });
+                    });
+                  }}
+                >
+                  <Icon name="link" className="w-3 h-3" /> 
+                  <p>Link Inscrição</p>
+                </Button>
+              </DropdownMenuItem>
+
+              {
+                item.allowExam && (
+                  <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                    <Button 
+                      variant="ghost" 
+                      className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                      onClick={() => setOpenQrModal(true)}
+                    >
+                      <Icon name="qr-code" className="w-3 h-3" /> 
+                      <p>Link Prova</p>
+                    </Button>
+                  </DropdownMenuItem>
+                )
+              }
               
               {
                 item.active ? (
@@ -283,6 +361,31 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Modal do QR Code */}
+      <Dialog open={openQrModal} onOpenChange={setOpenQrModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>QR Code da Prova</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center space-y-4 py-4">
+            <QRCode 
+              data={`${process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : window.location.origin}/prova/${item.id}`}
+            />
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Código do curso</p>
+              <p className="text-lg font-semibold">{item.classCode || 'Não disponível'}</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Duplicação */}
+      <DuplicateTurmaModal
+        turma={item}
+        open={openDuplicateModal}
+        onOpenChange={setOpenDuplicateModal}
+      />
     </>
   )
 };

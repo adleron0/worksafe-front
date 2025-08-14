@@ -1,251 +1,139 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { get } from "@/services/api";
 import {
   Calendar,
   Clock,
-  MapPin,
   Users,
   Award,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Course {
   id: number;
   name: string;
-  category: string;
-  date: string;
-  endDate?: string;
-  time: string;
-  duration: string;
-  instructor: string;
-  spotsAvailable: number;
-  totalSpots: number;
-  price: number;
-  location: string;
-  color: string;
-  highlights: string[];
-  featured?: boolean;
-  dayNumber: number;
+  courseId: number;
+  price: string;
+  oldPrice: string | null;
+  hoursDuration: number;
+  openClass: boolean;
+  description: string;
+  imageUrl: string;
+  initialDate: string;
+  finalDate: string;
+  landingPagesDates: string;
+  minimumQuorum: number | null;
+  maxSubscriptions: number | null;
+  active: boolean;
+  dividedIn?: number | null;
+  _count?: {
+    subscriptions: number;
+  };
 }
 
-const mockCourses: Course[] = [
-  // Julho (mês anterior)
-  {
-    id: 1,
-    name: "NR-35 - Trabalho em Altura",
-    category: "Trabalhador",
-    date: "15 de Julho",
-    endDate: "15 de Julho",
-    dayNumber: 15,
-    time: "08:00 - 17:00",
-    duration: "8 horas",
-    instructor: "João Silva - Instrutor N3",
-    spotsAvailable: 0,
-    totalSpots: 20,
-    price: 350,
-    location: "Centro de Treinamento WorkSafe",
-    color: "bg-blue-100 text-blue-700",
-    highlights: ["Certificado MTE", "Material incluso", "Coffee break"],
-  },
-  {
-    id: 2,
-    name: "NR-12 - Máquinas e Equipamentos",
-    category: "Operador",
-    date: "22 de Julho",
-    endDate: "22 de Julho",
-    dayNumber: 22,
-    time: "08:00 - 17:00",
-    duration: "8 horas",
-    instructor: "Roberto Lima - Eng. Mecânico",
-    spotsAvailable: 0,
-    totalSpots: 15,
-    price: 380,
-    location: "Centro de Treinamento WorkSafe",
-    color: "bg-indigo-100 text-indigo-700",
-    highlights: ["Prática em máquinas", "Apostila digital", "Certificado"],
-  },
-  // Agosto (mês atual)
-  {
-    id: 3,
-    name: "NR-33 - Espaço Confinado",
-    category: "Trabalhador e Vigia",
-    date: "8 de Agosto",
-    endDate: "9 de Agosto",
-    dayNumber: 8,
-    time: "08:00 - 18:00",
-    duration: "16 horas",
-    instructor: "Maria Santos - Instrutora Sênior",
-    spotsAvailable: 8,
-    totalSpots: 15,
-    price: 450,
-    location: "Centro de Treinamento WorkSafe",
-    color: "bg-purple-100 text-purple-700",
-    highlights: ["Simulação prática", "EPIs fornecidos", "Certificado digital"],
-    featured: true,
-  },
-  {
-    id: 4,
-    name: "Alpinismo Industrial N1",
-    category: "Acesso por Corda",
-    date: "12 de Agosto",
-    endDate: "17 de Agosto",
-    dayNumber: 12,
-    time: "08:00 - 17:00",
-    duration: "48 horas (6 dias)",
-    instructor: "Carlos Oliveira - Instrutor ANEAC",
-    spotsAvailable: 3,
-    totalSpots: 12,
-    price: 2600,
-    location: "Torre de Treinamento WorkSafe",
-    color: "bg-green-100 text-green-700",
-    highlights: ["Certificação ANEAC", "Equipamentos premium", "Prática em altura real"],
-    featured: true,
-  },
-  {
-    id: 5,
-    name: "NR-35 - Trabalho em Altura",
-    category: "Trabalhador",
-    date: "19 de Agosto",
-    endDate: "19 de Agosto",
-    dayNumber: 19,
-    time: "08:00 - 17:00",
-    duration: "8 horas",
-    instructor: "João Silva - Instrutor N3",
-    spotsAvailable: 12,
-    totalSpots: 20,
-    price: 350,
-    location: "Centro de Treinamento WorkSafe",
-    color: "bg-blue-100 text-blue-700",
-    highlights: ["Certificado MTE", "Material incluso", "Coffee break"],
-  },
-  {
-    id: 6,
-    name: "Resgate Técnico Industrial",
-    category: "RTI",
-    date: "22 de Agosto",
-    endDate: "24 de Agosto",
-    dayNumber: 22,
-    time: "08:00 - 17:00",
-    duration: "24 horas (3 dias)",
-    instructor: "Pedro Costa - Especialista em Resgate",
-    spotsAvailable: 10,
-    totalSpots: 16,
-    price: 650,
-    location: "Centro de Treinamento WorkSafe",
-    color: "bg-red-100 text-red-700",
-    highlights: ["Simulações reais", "Técnicas avançadas", "Material completo"],
-  },
-  {
-    id: 7,
-    name: "NR-10 - Segurança em Eletricidade",
-    category: "Básico",
-    date: "26 de Agosto",
-    endDate: "30 de Agosto",
-    dayNumber: 26,
-    time: "08:00 - 17:00",
-    duration: "40 horas",
-    instructor: "Marcos Almeida - Eng. Elétrico",
-    spotsAvailable: 5,
-    totalSpots: 18,
-    price: 680,
-    location: "Centro de Treinamento WorkSafe",
-    color: "bg-yellow-100 text-yellow-700",
-    highlights: ["Prática em campo", "NR-10 completa", "Material didático"],
-  },
-  // Setembro (próximo mês)
-  {
-    id: 8,
-    name: "NR-35 - Supervisor",
-    category: "Supervisor de Altura",
-    date: "2 de Setembro",
-    endDate: "6 de Setembro",
-    dayNumber: 2,
-    time: "08:00 - 17:00",
-    duration: "40 horas (5 dias)",
-    instructor: "Ana Paula - Engenheira de Segurança",
-    spotsAvailable: 12,
-    totalSpots: 20,
-    price: 850,
-    location: "Centro de Treinamento WorkSafe",
-    color: "bg-orange-100 text-orange-700",
-    highlights: ["Gestão de equipes", "Análise de riscos", "Documentação completa"],
-  },
-  {
-    id: 9,
-    name: "Brigada de Incêndio",
-    category: "Emergência",
-    date: "9 de Setembro",
-    endDate: "13 de Setembro",
-    dayNumber: 9,
-    time: "08:00 - 17:00",
-    duration: "40 horas (5 dias)",
-    instructor: "Corpo de Bombeiros",
-    spotsAvailable: 15,
-    totalSpots: 25,
-    price: 950,
-    location: "Campo de Treinamento",
-    color: "bg-amber-100 text-amber-700",
-    highlights: ["Fogo real", "Primeiros socorros", "Certificação oficial"],
-  },
-  {
-    id: 10,
-    name: "NR-18 - Construção Civil",
-    category: "Segurança",
-    date: "16 de Setembro",
-    endDate: "16 de Setembro",
-    dayNumber: 16,
-    time: "08:00 - 17:00",
-    duration: "8 horas",
-    instructor: "Paulo Mendes - Eng. Civil",
-    spotsAvailable: 20,
-    totalSpots: 30,
-    price: 320,
-    location: "Centro de Treinamento WorkSafe",
-    color: "bg-gray-100 text-gray-700",
-    highlights: ["Normas atualizadas", "Cases práticos", "Certificação"],
-  },
-];
+interface ApiResponse {
+  total: number;
+  rows: Course[];
+}
 
 interface TrainingScheduleProps {
   handleWhatsApp?: (message?: string) => void;
 }
 
 const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) => {
-  const [selectedMonth, setSelectedMonth] = useState(1); // Inicia em Agosto (índice 1)
+  const currentDate = new Date();
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
   const [expandedCourse, setExpandedCourse] = useState<number | null>(null);
-  const months = ["Julho", "Agosto", "Setembro"];
+  
+  const months = [
+    "Janeiro", "Fevereiro", "Março", "Abril", 
+    "Maio", "Junho", "Julho", "Agosto", 
+    "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+  
+  // Calculate first and last day of selected month in ISO-8601 format
+  const firstDay = useMemo(() => {
+    // Create date in UTC directly
+    const date = new Date(Date.UTC(selectedYear, selectedMonth, 1, 0, 0, 0, 0));
+    return date.toISOString();
+  }, [selectedYear, selectedMonth]);
+  
+  const lastDay = useMemo(() => {
+    // Get last day of month (day 0 of next month = last day of current month)
+    const date = new Date(Date.UTC(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999));
+    return date.toISOString();
+  }, [selectedYear, selectedMonth]);
+  
+  // Fetch data with date filter
+  const searchParams = useMemo(() => ({
+    // active: true,
+    'lte-initialDate': lastDay,
+    'gte-initialDate': firstDay,
+    'order-initialDate': 'asc',
+    'show': ['_count']
+  }), [firstDay, lastDay]);
+  
+  const { 
+    data, 
+    isLoading, 
+    isError,
+  } = useQuery<ApiResponse | undefined>({
+    queryKey: ['trainingSchedule', searchParams],
+    queryFn: async () => {
+      const params = Object.keys(searchParams).map((key) => ({
+        key,
+        value: searchParams[key as keyof typeof searchParams]
+      }));
+      return get('classes', '', params);
+    },
+  });
   
   const handlePrevMonth = () => {
-    setSelectedMonth(prev => (prev - 1 + months.length) % months.length);
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
     setExpandedCourse(null);
   };
   
   const handleNextMonth = () => {
-    setSelectedMonth(prev => (prev + 1) % months.length);
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(selectedYear + 1);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
     setExpandedCourse(null);
   };
 
-  const currentMonthCourses = mockCourses
-    .filter(course => course.date.includes(months[selectedMonth]))
-    .sort((a, b) => a.dayNumber - b.dayNumber);
+  const currentMonthCourses = data?.rows || [];
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: string | number) => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
     return new Intl.NumberFormat('pt-BR', { 
       style: 'currency', 
       currency: 'BRL' 
-    }).format(value);
+    }).format(numValue);
+  };
+  
+  
+  const getDayFromDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.getDate();
   };
 
   const handleEnrollment = (course: Course) => {
-    const message = `Olá! Gostaria de me inscrever no curso ${course.name} - ${course.date}`;
-    if (handleWhatsApp) {
-      handleWhatsApp(message);
-    }
+    // Redirect to landing page
+    window.location.href = `/turma/${course.id}`;
   };
 
   const toggleExpand = (courseId: number) => {
@@ -258,7 +146,7 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="section-title text-gray-800 text-3xl md:text-5xl font-bold md:pb-4">
-            Próximos Cursos
+            Calendário de Cursos
           </h2>
           <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto">
             Capacitação profissional com os melhores instrutores do mercado
@@ -275,8 +163,8 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
           >
             <ChevronLeft className="h-4 w-4 text-gray-700" />
           </Button>
-          <h3 className="text-2xl font-bold text-gray-800 min-w-[150px] text-center">
-            {months[selectedMonth]} 2025
+          <h3 className="text-2xl font-bold text-gray-800 min-w-[200px] text-center">
+            {months[selectedMonth]} {selectedYear}
           </h3>
           <Button
             variant="ghost"
@@ -287,6 +175,20 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
             <ChevronRight className="h-4 w-4 text-gray-700" />
           </Button>
         </div>
+        
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary-light" />
+          </div>
+        )}
+        
+        {/* Error State */}
+        {isError && (
+          <div className="text-center py-20">
+            <p className="text-gray-600">Erro ao carregar os treinamentos. Por favor, tente novamente.</p>
+          </div>
+        )}
 
         {/* Timeline */}
         <div className="relative">
@@ -295,7 +197,7 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
           
           {/* Courses */}
           <div className="space-y-4 md:space-y-6">
-            {currentMonthCourses.length > 0 ? (
+            {!isLoading && !isError && currentMonthCourses.length > 0 ? (
               currentMonthCourses.map((course, index) => (
                 <motion.div
                   key={course.id}
@@ -307,7 +209,7 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
                   {/* Date Label */}
                   <div className="absolute left-0 w-7 md:w-10 lg:w-20 text-right pr-0.5 md:pr-2 lg:pr-4">
                     <div className="text-sm md:text-lg lg:text-xl font-semibold text-gray-800 leading-none">
-                      {course.dayNumber}
+                      {getDayFromDate(course.initialDate)}
                     </div>
                     <div className="text-[9px] md:text-xs text-gray-500 uppercase">
                       {months[selectedMonth].substring(0, 3)}
@@ -340,35 +242,80 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
                         </div>
                         
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-0 mb-3">
-                          <div className="flex-1">
-                            <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                              <Badge className={`${course.color} border-0 text-[10px] md:text-xs font-medium`}>
-                                {course.category}
-                              </Badge>
-                              {course.featured && (
-                                <Badge className="bg-gradient-to-r from-amber-50 to-orange-50 text-orange-600 border-orange-200 text-[10px] md:text-xs">
-                                  Destaque
-                                </Badge>
-                              )}
-                            </div>
-                            <h3 className="text-sm md:text-base lg:text-lg font-semibold text-gray-800 mb-2">
-                              {course.name}
-                            </h3>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 lg:gap-4 text-xs md:text-sm text-gray-500">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
-                                <span className="truncate">
-                                  {course.date === course.endDate ? course.date : `${course.dayNumber}/${months[selectedMonth].substring(0, 3)} - ${course.endDate}`}
+                          <div className="flex gap-3 flex-1">
+                            {/* Course Image */}
+                            {course.imageUrl && (
+                              <div className="hidden sm:block w-16 h-16 md:w-20 md:h-20 flex-shrink-0">
+                                <img 
+                                  src={course.imageUrl} 
+                                  alt={course.name}
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="text-sm md:text-base lg:text-lg font-semibold text-gray-800">
+                                  {course.name}
+                                </h3>
+                                {(() => {
+                                  const isInactive = !course.active;
+                                  const isPastDate = new Date(course.initialDate) < new Date();
+                                  const isFull = course.maxSubscriptions && course._count && course._count.subscriptions >= course.maxSubscriptions;
+                                  const isOpen = !isInactive && !isPastDate && !isFull;
+                                  
+                                  return (
+                                    <div className="flex items-center gap-1.5">
+                                      <div className="relative">
+                                        <div className={`w-2 h-2 rounded-full ${isFull ? 'bg-yellow-500' : isOpen ? 'bg-green-500' : 'bg-red-500'}`}>
+                                          {(isOpen || isFull) && (
+                                            <div className={`absolute inset-0 rounded-full ${isFull ? 'bg-yellow-500' : 'bg-green-500'} animate-ping`} />
+                                          )}
+                                        </div>
+                                      </div>
+                                      <span className={`text-[10px] md:text-xs font-medium ${isFull ? 'text-yellow-700' : isOpen ? 'text-green-700' : 'text-red-700'}`}>
+                                        {isFull ? 'Max Inscritos Atingidos' : isOpen ? 'Inscrições Abertas' : 'Inscrições Encerradas'}
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 lg:gap-4 text-xs md:text-sm text-gray-500">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
+                                  <span className="truncate">
+                                    {course.landingPagesDates}
+                                  </span>
                                 </span>
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-                                {course.duration}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Users className="w-3.5 h-3.5 flex-shrink-0" />
-                                {course.spotsAvailable} vagas
-                              </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                                  {course.hoursDuration} horas
+                                </span>
+                                {course.maxSubscriptions && (
+                                  <span className="flex items-center gap-1">
+                                    <Users className="w-3.5 h-3.5 flex-shrink-0" />
+                                    {course.maxSubscriptions} vagas
+                                  </span>
+                                )}
+                              </div>
+                              
+                              {/* Progress bar for enrollments */}
+                              {course.maxSubscriptions && course._count && (
+                                <div className="mt-2 max-w-sm">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs text-gray-500">Inscrições</span>
+                                    <span className="text-xs font-medium text-primary-light">
+                                      {course._count.subscriptions}/{course.maxSubscriptions}
+                                    </span>
+                                  </div>
+                                  <div className="relative h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <div 
+                                      className="absolute h-full bg-gradient-to-r from-primary-light to-primary-light/80 rounded-full transition-all duration-300"
+                                      style={{ width: `${Math.min((course._count.subscriptions / course.maxSubscriptions) * 100, 100)}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <ChevronDown 
@@ -379,22 +326,48 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
                         </div>
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-gray-100">
                           <div className="flex items-baseline justify-between sm:block">
-                            <p className="text-xs md:text-sm text-gray-500">Investimento</p>
+                            {course.oldPrice && (
+                              <p className="text-xs text-gray-400 line-through">
+                                {formatCurrency(course.oldPrice)}
+                              </p>
+                            )}
                             <p className="text-base md:text-lg font-bold text-gray-800">
                               {formatCurrency(course.price)}
                             </p>
+                            {course.dividedIn && course.dividedIn > 1 && (
+                              <p className="text-xs text-gray-500">
+                                Em até {course.dividedIn}x
+                              </p>
+                            )}
                           </div>
-                          <Button
-                            size="sm"
-                            className="w-full sm:w-auto bg-primary-light hover:bg-primary-light/90 text-white text-xs md:text-sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEnrollment(course);
-                            }}
-                            disabled={course.spotsAvailable === 0}
-                          >
-                            {course.spotsAvailable > 0 ? 'Inscrever-se' : 'Lista de Espera'}
-                          </Button>
+                          {(() => {
+                            const isInactive = !course.active;
+                            const isPastDate = new Date(course.initialDate) < new Date();
+                            const isFull = course.maxSubscriptions && course._count && course._count.subscriptions >= course.maxSubscriptions;
+                            const isDisabled = isInactive || isPastDate || isFull;
+                            
+                            return (
+                              <Button
+                                size="sm"
+                                className={`w-full sm:w-auto text-xs md:text-sm ${
+                                  isDisabled 
+                                    ? 'bg-gray-300 hover:bg-gray-300 cursor-not-allowed opacity-50' 
+                                    : 'bg-primary-light hover:bg-primary-light/90 text-white'
+                                }`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!isDisabled) {
+                                    handleEnrollment(course);
+                                  }
+                                }}
+                                disabled={!!isDisabled}
+                              >
+                                <span className={isDisabled ? 'line-through' : ''}>
+                                  {isFull ? 'Turma Lotada' : 'Inscrever-se'}
+                                </span>
+                              </Button>
+                            );
+                          })()}
                         </div>
                       </div>
 
@@ -409,63 +382,61 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
                             className="overflow-hidden"
                           >
                             <div className="px-4 md:px-5 pb-4 md:pb-5 border-t border-gray-100">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pt-3 md:pt-4">
-                                {/* Left Column */}
-                                <div className="space-y-2 md:space-y-3">
-                                  <div>
-                                    <p className="text-xs md:text-sm text-gray-500 mb-1">Horário</p>
-                                    <p className="flex items-center gap-2 text-xs md:text-sm text-gray-700">
-                                      <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                                      <span className="truncate">{course.time} ({course.duration})</span>
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs md:text-sm text-gray-500 mb-1">Local</p>
-                                    <p className="flex items-center gap-2 text-xs md:text-sm text-gray-700">
-                                      <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                                      <span className="truncate">{course.location}</span>
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs md:text-sm text-gray-500 mb-1">Instrutor</p>
-                                    <p className="flex items-center gap-2 text-xs md:text-sm text-gray-700">
-                                      <Award className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                                      <span className="truncate">{course.instructor}</span>
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Right Column */}
-                                <div className="space-y-2 md:space-y-3">
-                                  <div>
-                                    <p className="text-xs md:text-sm text-gray-500 mb-1">Diferenciais</p>
-                                    <div className="flex flex-wrap gap-1">
-                                      {course.highlights.map((highlight, idx) => (
-                                        <span key={idx} className="text-[10px] md:text-[11px] px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded">
-                                          {highlight}
+                              <div className="pt-3 md:pt-4">
+                                <p className="text-xs md:text-sm text-gray-500 mb-2">Descrição do Curso</p>
+                                <p className="text-xs md:text-sm text-gray-700 mb-4">
+                                  {course.description}
+                                </p>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                                  {/* Left Column */}
+                                  <div className="space-y-2 md:space-y-3">
+                                    <div>
+                                      <p className="text-xs md:text-sm text-gray-500 mb-1">Período</p>
+                                      <p className="flex items-center gap-2 text-xs md:text-sm text-gray-700">
+                                        <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                        <span className="truncate">
+                                          {new Date(course.initialDate).toLocaleDateString('pt-BR')} - {new Date(course.finalDate).toLocaleDateString('pt-BR')}
                                         </span>
-                                      ))}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs md:text-sm text-gray-500 mb-1">Carga Horária</p>
+                                      <p className="flex items-center gap-2 text-xs md:text-sm text-gray-700">
+                                        <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                        <span className="truncate">{course.hoursDuration} horas</span>
+                                      </p>
                                     </div>
                                   </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500 mb-1">Vagas</p>
-                                    <div className="flex items-center gap-2">
-                                      <div className="flex-1 bg-gray-100 rounded-full h-2">
-                                        <div 
-                                          className="bg-gradient-to-r from-primary-light to-primary-light/70 h-2 rounded-full transition-all"
-                                          style={{ 
-                                            width: `${((course.totalSpots - course.spotsAvailable) / course.totalSpots) * 100}%` 
-                                          }}
-                                        />
+
+                                  {/* Right Column */}
+                                  <div className="space-y-2 md:space-y-3">
+                                    {course.maxSubscriptions && (
+                                      <div>
+                                        <p className="text-xs md:text-sm text-gray-500 mb-1">Vagas Disponíveis</p>
+                                        <p className="flex items-center gap-2 text-xs md:text-sm text-gray-700">
+                                          <Users className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                          <span className="truncate">
+                                            {course._count 
+                                              ? Math.max(0, course.maxSubscriptions - course._count.subscriptions)
+                                              : course.maxSubscriptions
+                                            } vagas
+                                          </span>
+                                        </p>
                                       </div>
-                                      <span className="text-sm text-gray-600">
-                                        {course.spotsAvailable}/{course.totalSpots}
-                                      </span>
-                                    </div>
+                                    )}
+                                    {course.minimumQuorum && (
+                                      <div>
+                                        <p className="text-xs md:text-sm text-gray-500 mb-1">Quórum Mínimo</p>
+                                        <p className="flex items-center gap-2 text-xs md:text-sm text-gray-700">
+                                          <Award className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                          <span className="truncate">{course.minimumQuorum} participantes</span>
+                                        </p>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
-
                             </div>
                           </motion.div>
                         )}
@@ -475,24 +446,26 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
                 </motion.div>
               ))
             ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center py-16"
-              >
-                <div className="ml-12 md:ml-24 lg:ml-44">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4 -ml-20 md:-ml-32">
-                    <Calendar className="w-8 h-8 text-gray-400" />
+              !isLoading && !isError && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center py-16"
+                >
+                  <div className="ml-12 md:ml-24 lg:ml-44">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4 -ml-20 md:-ml-32">
+                      <Calendar className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 mb-4 -ml-20 md:-ml-32">Nenhum curso agendado para {months[selectedMonth]} de {selectedYear}.</p>
+                    <Button 
+                      onClick={() => handleWhatsApp && handleWhatsApp("Olá! Gostaria de saber sobre próximos treinamentos.")}
+                      className="bg-primary-light hover:brightness-110 text-white transition-all -ml-20 md:-ml-32"
+                    >
+                      Consultar Disponibilidade
+                    </Button>
                   </div>
-                  <p className="text-gray-500 mb-4 -ml-20 md:-ml-32">Nenhum curso agendado para {months[selectedMonth]}.</p>
-                  <Button 
-                    onClick={() => handleWhatsApp && handleWhatsApp("Olá! Gostaria de saber sobre próximos treinamentos.")}
-                    className="bg-primary-light hover:brightness-110 text-white transition-all -ml-20 md:-ml-32"
-                  >
-                    Consultar Disponibilidade
-                  </Button>
-                </div>
-              </motion.div>
+                </motion.div>
+              )
             )}
           </div>
         </div>

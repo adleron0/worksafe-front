@@ -8,6 +8,8 @@ import DropUpload from "@/components/general-components/DropUpload";
 import Number from "@/components/general-components/Number";
 import Input from "@/components/general-components/Input";
 import TagInput from "@/components/general-components/TagInput";
+import IconPicker from "@/components/general-components/IconPicker";
+import ColorPickerInput from "@/components/general-components/ColorPickerInput";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 // Interfaces and validations
@@ -39,12 +41,16 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const Schema = z.object({
     name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     hoursDuration: z.number().min(1, { message: "Duração deve ser maior que 0" }),
+    yearOfValidation: z.number().min(1, { message: "Anos de validade deve ser maior que 0" }).optional(),
     flags: z.string().min(3, { message: "Curso deve ter pelo menos 1 bandeira" }),
+    icon: z.string().optional(),
+    color: z.string().optional(),
     description: z.string().min(10, { message: "Descrição deve ter pelo menos 10 caracteres" }),
     gradeTheory: z.string().min(10, { message: "Grade teórica deve ter pelo menos 10 caracteres" }),
     gradePracticle: z.string().min(10, { message: "Grade prática deve ter pelo menos 10 caracteres" }),
     weekly: z.boolean(),
     weekDays: z.string().optional(),
+    media: z.number().min(0, { message: "Média deve ser maior ou igual a 0" }).max(10, { message: "Média deve ser menor ou igual a 10" }),
     faq: z.array(
       z.object({
         question: z.string().min(3, { message: "Pergunta deve ter pelo menos 3 caracteres" }),
@@ -109,12 +115,16 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const [dataForm, setDataForm] = useState<FormData>({
     name: formData?.name || "",
     hoursDuration: formData?.hoursDuration || 1,
+    yearOfValidation: formData?.yearOfValidation || undefined,
     flags: formData?.flags || "",
+    icon: formData?.icon || "",
+    color: formData?.color || "#000000",
     description: formData?.description || "",
     gradeTheory: formData?.gradeTheory || "",
     gradePracticle: formData?.gradePracticle || "",
     weekly: formData?.weekly || false,
     weekDays: formData?.weekDays || "",
+    media: formData?.media || 6,
     faq: parseFaqString(formData?.faq),
     imageUrl: formData?.imageUrl || "",
     image: formData?.image || null,
@@ -146,7 +156,13 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         description: `Novo ${entity.name} cadastrado com sucesso.`,
         variant: "success",
       });
+      // Invalida todos os caches relacionados
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['turma'] });
+      queryClient.invalidateQueries({ queryKey: ['classes'] });
+      // Força refetch de todos os dados
+      queryClient.refetchQueries({ queryKey: [`list${entity.pluralName}`] });
       // Limpa o formulário e fecha o Sheet
       setDataForm(initialFormRef.current);
       openSheet(false);
@@ -173,7 +189,13 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         description: `${entity.name} atualizado com sucesso.`,
         variant: "success",
       });
+      // Invalida todos os caches relacionados
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['turma'] });
+      queryClient.invalidateQueries({ queryKey: ['classes'] });
+      // Força refetch de todos os dados
+      queryClient.refetchQueries({ queryKey: [`list${entity.pluralName}`] });
       // Limpa o formulário e fecha o Sheet
       setDataForm(initialFormRef.current);
       openSheet(false);
@@ -370,6 +392,25 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
 
       <div className="space-y-2">
+        <IconPicker
+          value={dataForm.icon}
+          onChange={(iconName) => handleChange('icon', iconName)}
+          label="Ícone do Curso"
+          placeholder="Selecione um ícone para o curso"
+        />
+        {errors.icon && <p className="text-red-500 text-sm">{errors.icon}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <ColorPickerInput
+          value={dataForm.color}
+          onChange={(color) => handleChange('color', color)}
+          label="Cor do Curso"
+        />
+        {errors.color && <p className="text-red-500 text-sm">{errors.color}</p>}
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="hoursDuration">Carga Horária (Horas)</Label>
         <Number
           id="hoursDuration"
@@ -380,6 +421,35 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           onValueChange={handleChange}
         />
         {errors.hoursDuration && <p className="text-red-500 text-sm">{errors.hoursDuration}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="yearOfValidation">Anos de Validade do Certificado</Label>
+        <Number
+          id="yearOfValidation"
+          name="yearOfValidation"
+          min={1}
+          max={100}
+          value={dataForm.yearOfValidation || 0}
+          onValueChange={handleChange}
+          placeholder="Ex: 2 anos"
+        />
+        {errors.yearOfValidation && <p className="text-red-500 text-sm">{errors.yearOfValidation}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="media">Média para Aprovação <span>*</span></Label>
+        <p className="text-xs text-muted-foreground font-medium">Nota mínima necessária para aprovação no exame do curso</p>
+        <Number
+          id="media"
+          name="media"
+          min={0}
+          max={10}
+          value={dataForm.media}
+          onValueChange={handleChange}
+          placeholder="Ex: 6"
+        />
+        {errors.media && <p className="text-red-500 text-sm">{errors.media}</p>}
       </div>
 
       <div className="space-y-2">
@@ -503,19 +573,14 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
                         <span className="ml-2 text-xs text-red-500">(Erro de validação)</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFaqItem(index);
-                        }}
-                        className="h-8 w-8 p-0 hover:bg-destructive/10"
-                      >
-                        <Trash2 size={16} className="text-destructive" />
-                      </Button>
+                    <div 
+                      className="flex items-center gap-2 h-8 w-8 p-0 hover:bg-destructive/10 rounded cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFaqItem(index);
+                      }}
+                    >
+                      <Trash2 size={16} className="text-destructive mx-auto" />
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-4 pb-4">

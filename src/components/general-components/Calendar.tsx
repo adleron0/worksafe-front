@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -167,16 +168,16 @@ const CalendarPicker = ({
 
   const getDisplayText = () => {
     if (mode === "single" && date) {
-      return format(date, "dd/MM/yyyy");
+      return format(date, "dd/MM/yyyy", { locale: ptBR });
     } else if (mode === "range") {
       if (dateRange.from && dateRange.to) {
-        return `${format(dateRange.from, "dd/MM/yyyy")} - ${format(dateRange.to, "dd/MM/yyyy")}`;
+        return `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
       } else if (dateRange.from) {
-        return format(dateRange.from, "dd/MM/yyyy");
+        return format(dateRange.from, "dd/MM/yyyy", { locale: ptBR });
       }
     } else if (mode === "multiple" && dates.length > 0) {
       return dates.length === 1 
-        ? format(dates[0], "dd/MM/yyyy")
+        ? format(dates[0], "dd/MM/yyyy", { locale: ptBR })
         : `${dates.length} datas selecionadas`;
     }
     return placeholder;
@@ -191,7 +192,9 @@ const CalendarPicker = ({
           onSelect={handleSingleDateSelect}
           numberOfMonths={numberOfMonths}
           initialFocus
+          locale={ptBR}
           style={{ pointerEvents: "auto" }}
+          captionLayout="dropdown"
         />
       );
     } else if (mode === "range") {
@@ -202,7 +205,9 @@ const CalendarPicker = ({
           onSelect={handleRangeDateSelect}
           numberOfMonths={numberOfMonths}
           initialFocus
+          locale={ptBR}
           style={{ pointerEvents: "auto" }}
+          captionLayout="dropdown"
         />
       );
     } else if (mode === "multiple") {
@@ -213,6 +218,7 @@ const CalendarPicker = ({
           onSelect={handleMultipleDateSelect}
           numberOfMonths={numberOfMonths}
           initialFocus
+          locale={ptBR}
           style={{ pointerEvents: "auto" }}
         />
       );

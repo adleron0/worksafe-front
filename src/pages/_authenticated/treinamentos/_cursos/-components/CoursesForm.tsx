@@ -50,6 +50,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     gradePracticle: z.string().min(10, { message: "Grade prática deve ter pelo menos 10 caracteres" }),
     weekly: z.boolean(),
     weekDays: z.string().optional(),
+    media: z.number().min(0, { message: "Média deve ser maior ou igual a 0" }).max(10, { message: "Média deve ser menor ou igual a 10" }),
     faq: z.array(
       z.object({
         question: z.string().min(3, { message: "Pergunta deve ter pelo menos 3 caracteres" }),
@@ -123,6 +124,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     gradePracticle: formData?.gradePracticle || "",
     weekly: formData?.weekly || false,
     weekDays: formData?.weekDays || "",
+    media: formData?.media || 6,
     faq: parseFaqString(formData?.faq),
     imageUrl: formData?.imageUrl || "",
     image: formData?.image || null,
@@ -433,6 +435,21 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           placeholder="Ex: 2 anos"
         />
         {errors.yearOfValidation && <p className="text-red-500 text-sm">{errors.yearOfValidation}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="media">Média para Aprovação <span>*</span></Label>
+        <p className="text-xs text-muted-foreground font-medium">Nota mínima necessária para aprovação no exame do curso</p>
+        <Number
+          id="media"
+          name="media"
+          min={0}
+          max={10}
+          value={dataForm.media}
+          onValueChange={handleChange}
+          placeholder="Ex: 6"
+        />
+        {errors.media && <p className="text-red-500 text-sm">{errors.media}</p>}
       </div>
 
       <div className="space-y-2">

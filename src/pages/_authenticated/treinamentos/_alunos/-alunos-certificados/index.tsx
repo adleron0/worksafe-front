@@ -1,0 +1,162 @@
+import { useRef, useState } from "react";
+// Serviços
+import { useQuery } from "@tanstack/react-query";
+import { get } from "@/services/api";
+import useVerify from "@/hooks/use-verify";
+import Pagination from "@/components/general-components/Pagination";
+// Template Page list-form
+import HeaderLists from "@/components/general-components/HeaderLists";
+import SideForm from "@/components/general-components/SideForm";
+import ItemSkeleton from "./skeletons/ItemSkeleton";
+import ItemList from "./components/CertificadosItem";
+import Form from "./components/CertificadosForm";
+import SearchForm from "./components/CertificadosSearch";
+// Interfaces
+import { ICertificate } from "./interfaces/entity.interface";
+import { ApiError } from "@/general-interfaces/api.interface";
+
+const List = ({ traineeId }: { traineeId: number }) => {
+  const { can } = useVerify();
+  const [openSearch, setOpenSearch] = useState(false);
+  const [openForm, setOpenForm] = useState(false);
+  const [formData, setFormData] = useState<ICertificate | null>(null);
+  const [searchParams, setSearchParams] = useState({
+    limit: 10,
+    page: 0,
+    show: ['trainee', 'course', 'class'],
+    traineeId: traineeId,
+    'order-createdAt': 'desc',
+  });
+  const initialFormRef = useRef(searchParams);
+
+  // Define variáveis de entidade
+  const entity = {
+    name: "Certificado",
+    pluralName: "Certificados",
+    model: "trainee-certificate",
+    ability: "classes",
+  }
+
+  interface Response {
+    rows: ICertificate[];
+    total: number;
+  }
+
+  const { 
+    data, 
+    isLoading, 
+    isError, 
+    error, 
+  } = useQuery<Response | undefined, ApiError>({
+    queryKey: [`listCertificados`, searchParams],
+    queryFn: async () => {
+      const params = Object.keys(searchParams).map((key) => ({
+        key,
+        value: searchParams[key as keyof typeof searchParams]
+      }));
+      return get(entity.model, '', params);
+    },
+  });
+
+  const handleSearch = async (params: Record<string, unknown>) => {
+    setSearchParams((prev) => ({
+      ...prev,
+      ...params,
+    }));
+  };
+
+  const handleClear = () => {
+    setSearchParams(initialFormRef.current);
+  };
+  
+  const handleLimitChange = (name: string, value: string | number) => {
+    setSearchParams((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePageChange = (page: number) => {
+    setSearchParams((prev) => ({ ...prev, page }));
+  };
+
+  const skeletons = Array(5).fill(null);
+
+  if (!can(`view_${entity.ability}`)) return null;
+
+  return (
+    <>
+      <HeaderLists
+        entityName={entity.name}
+        ability={entity.ability}
+        limit={data?.total || 0}
+        showCreate={false}
+        searchParams={searchParams}
+        onlimitChange={handleLimitChange}
+        openSearch={setOpenSearch}
+        openForm={setOpenForm}
+        setFormData={setFormData} 
+        setFormType={() => {}}
+        iconForm="award"
+      />
+
+      {/* Busca avançada */}
+      <SideForm
+        openSheet={openSearch}
+        setOpenSheet={setOpenSearch}
+        title={`Buscar ${entity.pluralName}`}
+        description={`Preencha os campos abaixo para filtrar ${entity.pluralName}.`}
+        side="left"
+        form={ <SearchForm onSearch={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
+      />
+
+      {/* Formulário de visualização */}
+      <SideForm
+        openSheet={openForm}
+        setOpenSheet={setOpenForm}
+        title={`Detalhes do ${entity.name}`}
+        description={formData 
+          ? `Visualizando os detalhes do certificado.`
+          : `Detalhes do certificado.`}
+        side="right"
+        form={ <Form formData={formData} setOpenForm={setOpenForm} entity={entity} traineeId={traineeId} /> }
+      />
+
+      {/* Listagem de items */}
+      <div className="space-y-2 mt-4">
+        {isLoading
+          ? skeletons.map((_, i) => <ItemSkeleton key={i} index={i} />)
+          : isError
+          ? <div className="w-full flex justify-center items-center font-medium text-destructive py-4 rounded border border-destructive">
+              <p>Erro: {error?.response?.data?.message}</p>
+            </div>
+          : data?.rows && data.rows.length > 0 
+          ? data.rows.map((item: ICertificate, i: number) => (
+              <ItemList 
+                key={item.id} 
+                item={item} 
+                entity={entity}
+                index={i} 
+                setFormData={setFormData} 
+                setOpenForm={setOpenForm}
+              />
+            ))
+          : (
+            <div className="w-full flex justify-center items-center font-medium text-primary py-4 rounded border border-primary">
+              <p>Nenhum {entity.name} encontrado!</p>
+            </div>
+          )
+        }
+      </div>
+
+      {/* Paginação */}
+      {data && data.total > searchParams.limit && (
+        <Pagination
+          currentPage={searchParams.page}
+          totalItems={data.total}
+          itemsPerPage={searchParams.limit}
+          onPageChange={handlePageChange}
+        />
+      )}
+    </>
+  );
+};
+
+export default List;

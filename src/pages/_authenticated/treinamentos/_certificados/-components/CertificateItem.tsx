@@ -302,16 +302,7 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm }: Prop
           <div className="h-[70vh] w-full">
             <VisualizadorCertificados
               certificateData={item}
-              variableToReplace={{
-                nome_aluno: {
-                  type: 'string',
-                  value: 'ALFONSE ELRIC'
-                },
-                assinatura_instrutor: {
-                  type: 'url',
-                  value: 'https://worksafe-brasil.s3.us-east-1.amazonaws.com/instructor-signature/1746528859512_Odenis_Mesquita'
-                }
-              }}
+              variableToReplace={{}}
               zoom={50}
             />
           </div>

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 // Interfaces
-import { IEntity, IExamResponse } from "../interfaces/entity.interface";
+import { IEntity } from "../interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
@@ -103,14 +103,21 @@ const ExamesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
     return format(new Date(date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   };
 
-  // Parse dos dados do exame
-  const getExamData = (): IExamResponse | null => {
-    if (!item.examResponses) return null;
-    try {
-      return JSON.parse(item.examResponses);
-    } catch {
-      return null;
-    }
+  // Calcula os dados do exame
+  const getExamData = () => {
+    if (!item.examResponses || !Array.isArray(item.examResponses)) return null;
+    
+    const totalQuestions = item.examResponses.length;
+    const correctAnswers = item.examResponses.filter(response => 
+      response.options?.some(opt => opt.isSelected && opt.isCorrect)
+    ).length;
+    const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 10 : 0;
+    
+    return {
+      totalQuestions,
+      correctAnswers,
+      score
+    };
   };
 
   const examData = getExamData();
@@ -160,7 +167,7 @@ const ExamesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Nota / Acertos: </p>
           <div className="flex items-center gap-3">
             <p className={`text-lg font-bold ${
-              examData && examData.score >= 5 ? 'text-green-600' : 'text-red-600'
+              examData && examData.score >= 6 ? 'text-green-600' : 'text-red-600'
             }`}>
               {examData ? examData.score.toFixed(1) : "-"}
             </p>

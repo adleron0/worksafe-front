@@ -39,7 +39,6 @@ interface ExamQuestion {
   question: string;
   options: {
     text: string;
-    isCorrect: boolean;
   }[];
 }
 
@@ -63,16 +62,27 @@ interface ValidationResponse {
   className?: string;
 }
 
+interface ExamSubmitResponse {
+  success: boolean;
+  message: string;
+  data: any;
+  approved: boolean;
+  nota: number;
+  media: number;
+  correctAnswers: number;
+  totalQuestions: number;
+  subscription: {
+    classId: number;
+    className: string;
+    courseName: string;
+  };
+}
+
 interface ExamAnswer {
   questionIndex: number;
   selectedOption: number;
-  isCorrect: boolean;
   question?: string;
-  options?: {
-    text: string;
-    isCorrect: boolean;
-  }[];
-  correctOption?: number;
+  selectedText?: string;
 }
 
 function ExamPage() {
@@ -158,6 +168,7 @@ function ExamPage() {
     score: number;
     correctAnswers: number;
     totalQuestions: number;
+    media: number;
   } | null>(null);
 
   // Mutation para validar credenciais
@@ -198,14 +209,12 @@ function ExamPage() {
         
         setExamData(newExamData);
         
-        // Inicializa array de respostas com informações completas das questões
+        // Inicializa array de respostas sem validação de corretas
         const newAnswers = examQuestions.map((question: ExamQuestion, index: number) => ({
           questionIndex: index,
           selectedOption: -1,
-          isCorrect: false,
           question: question.question,
-          options: question.options,
-          correctOption: question.options.findIndex((opt: any) => opt.isCorrect)
+          selectedText: ""
         }));
         setAnswers(newAnswers);
         
@@ -247,19 +256,34 @@ function ExamPage() {
       courseId: number;
       classId: number;
       examResponses: string;
-      result: boolean;
       companyId: number;
-    }) => {
-      return post("exames", "register", data);
+    }): Promise<ExamSubmitResponse> => {
+      const response = await post<ExamSubmitResponse>("exames", "register", data);
+      if (!response) {
+        throw new Error("Resposta inválida do servidor");
+      }
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (response: ExamSubmitResponse) => {
+      // Salva o resultado com os dados do backend
+      const result = {
+        passed: response.approved,
+        score: response.nota,
+        correctAnswers: response.correctAnswers,
+        totalQuestions: response.totalQuestions,
+        media: response.media
+      };
+      
+      setExamResult(result);
+      
       toast({
         title: "Prova enviada com sucesso!",
-        description: examResult?.passed 
+        description: response.approved 
           ? "Parabéns! Você foi aprovado." 
           : "Você não atingiu a nota mínima, mas não desista!",
-        variant: examResult?.passed ? "default" : "destructive",
+        variant: response.approved ? "default" : "destructive",
       });
+      
       // Limpar sessão ao finalizar com sucesso
       clearSession();
       // Só vai para a tela de resultado após sucesso
@@ -325,10 +349,8 @@ function ExamPage() {
     updatedAnswers[currentQuestion] = {
       questionIndex: currentQuestion,
       selectedOption: optionIndex,
-      isCorrect: currentQuestionData?.options[optionIndex].isCorrect || false,
       question: currentQuestionData?.question,
-      options: currentQuestionData?.options,
-      correctOption: currentQuestionData?.options.findIndex((opt: any) => opt.isCorrect)
+      selectedText: currentQuestionData?.options[optionIndex]?.text || ""
     };
     setAnswers(updatedAnswers);
     
@@ -368,7 +390,7 @@ function ExamPage() {
       const nextOption = answers[nextQuestion]?.selectedOption?.toString() || "";
       
       setCurrentQuestion(nextQuestion);
-      setSelectedOption(nextOption);
+      setSelectedOption(nextOption === "-1" ? "" : nextOption);
       
       // Salvar progresso
       if (examData) {
@@ -383,7 +405,7 @@ function ExamPage() {
           credentials,
           answers,
           currentQuestion: nextQuestion,
-          selectedOption: nextOption,
+          selectedOption: nextOption === "-1" ? "" : nextOption,
           timeStarted: timeStarted?.toISOString()
         });
       }
@@ -410,11 +432,21 @@ function ExamPage() {
   
   const handlePreviousQuestion = () => {
     if (currentQuestion > 0) {
+      // Verifica se a questão atual foi respondida antes de voltar
+      if (!selectedOption || selectedOption === "") {
+        toast({
+          title: "Questão não respondida",
+          description: "Por favor, responda a questão atual antes de navegar.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       const prevQuestion = currentQuestion - 1;
       const prevOption = answers[prevQuestion]?.selectedOption?.toString() || "";
       
       setCurrentQuestion(prevQuestion);
-      setSelectedOption(prevOption);
+      setSelectedOption(prevOption === "-1" ? "" : prevOption);
       
       // Salvar progresso
       if (examData) {
@@ -429,7 +461,7 @@ function ExamPage() {
           credentials,
           answers,
           currentQuestion: prevQuestion,
-          selectedOption: prevOption,
+          selectedOption: prevOption === "-1" ? "" : prevOption,
           timeStarted: timeStarted?.toISOString()
         });
       }
@@ -472,38 +504,22 @@ function ExamPage() {
     const endTime = new Date();
     setTimeEnded(endTime);
     
-    // Calcula resultado
-    const correctAnswers = answers.filter(a => a.isCorrect).length;
-    const totalQuestions = examData.exam.length;
-    const scorePerQuestion = 10 / totalQuestions;
-    const finalScore = correctAnswers * scorePerQuestion;
-    const passed = (correctAnswers / totalQuestions) >= 0.5; // 50% para passar
-    
-    const result = {
-      passed,
-      score: finalScore,
-      correctAnswers,
-      totalQuestions
-    };
-    
-    setExamResult(result);
-    
-    // Prepara dados para envio
+    // Prepara dados para envio (sem calcular resultado localmente)
     const examResponses = {
-      answers,
-      score: finalScore,
-      totalQuestions,
-      correctAnswers,
+      answers: answers.map(a => ({
+        questionIndex: a.questionIndex,
+        selectedOption: a.selectedOption,
+        selectedText: a.selectedText
+      })),
       timeSpent: (endTime.getTime() - (timeStarted?.getTime() || 0)) / 1000
     };
     
-    // Envia resultado para API
+    // Envia respostas para API (sem resultado pré-calculado)
     submitExam.mutate({
       traineeId: examData.traineeId,
       courseId: examData.courseId,
       classId: examData.classId,
       examResponses: JSON.stringify(examResponses),
-      result: passed,
       companyId: 1
     });
   };
@@ -782,16 +798,28 @@ function ExamPage() {
                         onClick={() => {
                           // Se mudando de questão e a atual não foi respondida, não permite navegar
                           if (index !== currentQuestion) {
-                            // Verifica se a questão atual tem resposta
-                            const currentHasAnswer = answers[currentQuestion]?.selectedOption !== -1 || selectedOption !== "";
-                            
-                            if (!currentHasAnswer) {
+                            // Verifica se a questão atual tem resposta selecionada
+                            if (!selectedOption || selectedOption === "") {
                               toast({
                                 title: "Questão não respondida",
                                 description: "Responda a questão atual antes de navegar para outra.",
                                 variant: "destructive",
                               });
                               return;
+                            }
+                            
+                            // Se navegando para frente, verifica se todas as questões anteriores foram respondidas
+                            if (index > currentQuestion) {
+                              for (let i = 0; i <= currentQuestion; i++) {
+                                if (!answers[i] || answers[i].selectedOption === -1) {
+                                  toast({
+                                    title: "Questão não respondida",
+                                    description: `A questão ${i + 1} precisa ser respondida antes de continuar.`,
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
+                              }
                             }
                           }
                           
@@ -948,6 +976,9 @@ function ExamPage() {
                         {examResult.score.toFixed(1)}
                       </p>
                       <p className="text-sm md:text-base font-medium mt-1" style={{ color: '#4B5563' }}>Nota Final</p>
+                      <p className="text-xs md:text-sm mt-1" style={{ color: '#6B7280' }}>
+                        Média para aprovação: {examResult.media.toFixed(1)}
+                      </p>
                     </div>
                     
                     {/* Cards secundários lado a lado */}

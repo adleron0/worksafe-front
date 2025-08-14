@@ -276,7 +276,7 @@ Turma: ${turma?.landingPagesDates}`;
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white" style={{ colorScheme: 'light' }}>
         <Loader2 className="h-12 w-12 animate-spin text-primary-light" />
       </div>
     );
@@ -284,10 +284,10 @@ Turma: ${turma?.landingPagesDates}`;
 
   if (isError || !turma) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white" style={{ colorScheme: 'light' }}>
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Turma não encontrada</h2>
-          <p className="text-gray-600">A turma que você está procurando não existe ou foi removida.</p>
+          <h2 className="text-2xl font-bold mb-2" style={{ color: '#1F2937' }}>Turma não encontrada</h2>
+          <p style={{ color: '#4B5563' }}>A turma que você está procurando não existe ou foi removida.</p>
         </div>
       </div>
     );
@@ -301,7 +301,7 @@ Turma: ${turma?.landingPagesDates}`;
   // If course is unavailable, show full page with message
   if (isCourseUnavailable) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <div className="min-h-screen bg-white" style={{ colorScheme: 'light' }}>
         {/* Navigation */}
         <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
 
@@ -317,25 +317,25 @@ Turma: ${turma?.landingPagesDates}`;
                 <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               </div>
               
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4" style={{ color: '#111827' }}>
                 Turma Encerrada
               </h1>
               
               <div className="bg-white rounded-xl p-6 sm:p-8 shadow-lg mb-8 max-w-2xl mx-auto">
-                <h2 className="text-xl font-semibold text-gray-800 mb-3">
+                <h2 className="text-xl font-semibold mb-3" style={{ color: '#1F2937' }}>
                   {turma.name}
                 </h2>
-                <p className="text-gray-600 mb-4">
+                <p className="mb-4" style={{ color: '#4B5563' }}>
                   Esta turma já foi finalizada ou as inscrições foram encerradas. 
                   Mas não se preocupe! Temos novas turmas disponíveis para você.
                 </p>
-                <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                <div className="flex items-center justify-center gap-2 text-sm" style={{ color: '#6B7280' }}>
                   <Clock className="h-4 w-4" />
                   <span>Período: {turma.landingPagesDates}</span>
                 </div>
               </div>
 
-              <p className="text-lg text-gray-700 mb-8 max-w-2xl mx-auto">
+              <p className="text-lg mb-8 max-w-2xl mx-auto" style={{ color: '#374151' }}>
                 Confira nossa agenda completa e encontre a próxima turma disponível 
                 para o curso que você deseja.
               </p>
@@ -392,7 +392,7 @@ Turma: ${turma?.landingPagesDates}`;
           animation: shimmer 2s ease-in-out infinite;
         }
       `}</style>
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <div className="min-h-screen bg-white" style={{ colorScheme: 'light' }}>
       {/* Navigation */}
       <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
 
@@ -417,11 +417,11 @@ Turma: ${turma?.landingPagesDates}`;
                 )}
               </div>
               
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 lg:mb-6 leading-tight">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4 lg:mb-6 leading-tight" style={{ color: '#111827' }}>
                 {turma.name}
               </h1>
               
-              <p className="text-base sm:text-lg text-gray-600 mb-4 lg:mb-6 leading-relaxed max-w-2xl">
+              <p className="text-base sm:text-lg mb-4 lg:mb-6 leading-relaxed max-w-2xl" style={{ color: '#4B5563' }}>
                 {turma.description}
               </p>
 
@@ -431,7 +431,7 @@ Turma: ${turma?.landingPagesDates}`;
                   <Gift className="h-5 w-5 text-primary-light flex-shrink-0" />
                   <div className="flex flex-wrap gap-2">
                     {gifts.map((gift, index) => (
-                      <span key={index} className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                      <span key={index} className="text-sm px-3 py-1 rounded-full" style={{ color: '#4B5563', backgroundColor: '#F3F4F6' }}>
                         {gift}
                       </span>
                     ))}
@@ -479,17 +479,17 @@ Turma: ${turma?.landingPagesDates}`;
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-sm text-gray-600">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" style={{ color: '#4B5563' }}>
                   <Calendar className="h-4 w-4" />
                   <span>{turma.landingPagesDates}</span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" style={{ color: '#4B5563' }}>
                     <Clock className="h-4 w-4" />
                     <span>{turma.hoursDuration} horas</span>
                   </div>
                   {turma.maxSubscriptions && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2" style={{ color: '#4B5563' }}>
                       <Users className="h-4 w-4" />
                       <span>{turma.maxSubscriptions} vagas</span>
                     </div>
@@ -501,7 +501,7 @@ Turma: ${turma?.landingPagesDates}`;
               {turma.maxSubscriptions && turma._count && (
                 <div className="mt-6 max-w-md">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium" style={{ color: '#374151' }}>
                       Vagas Preenchidas
                     </span>
                     <span className="text-sm font-semibold text-primary-light">
@@ -591,7 +591,7 @@ Turma: ${turma?.landingPagesDates}`;
                     }}
                   >
                     <div className="relative z-10">
-                      <div className="text-xs text-gray-500 font-medium mb-1">
+                      <div className="text-xs font-medium mb-1" style={{ color: '#6B7280' }}>
                         Investimento
                       </div>
                       {turma.oldPrice && (
@@ -599,7 +599,7 @@ Turma: ${turma?.landingPagesDates}`;
                           {formatCurrency(turma.oldPrice)}
                         </div>
                       )}
-                      <div className="text-xl sm:text-2xl font-bold text-gray-900">
+                      <div className="text-xl sm:text-2xl font-bold" style={{ color: '#111827' }}>
                         {formatCurrency(turma.price)}
                       </div>
                       {turma.dividedIn && turma.dividedIn > 1 && (
@@ -624,15 +624,15 @@ Turma: ${turma?.landingPagesDates}`;
           className="mt-8 sm:mt-12 lg:mt-16 bg-gray-50 -mx-4 px-4 py-6 sm:mx-0 sm:bg-transparent sm:p-0"
         >
           <div className="flex flex-wrap items-center justify-start sm:justify-center gap-4 sm:gap-8">
-            <div className="flex items-center gap-2 text-gray-600 cursor-default">
+            <div className="flex items-center gap-2 cursor-default" style={{ color: '#4B5563' }}>
               <ShieldCheck className="h-5 w-5 text-green-600" />
               <span>Certificado Reconhecido</span>
             </div>
-            <div className="flex items-center gap-2 text-gray-600 cursor-default">
+            <div className="flex items-center gap-2 cursor-default" style={{ color: '#4B5563' }}>
               <HardHat className="h-5 w-5 text-blue-600" />
               <span>Instrutores Certificados</span>
             </div>
-            <div className="flex items-center gap-2 text-gray-600 cursor-default">
+            <div className="flex items-center gap-2 cursor-default" style={{ color: '#4B5563' }}>
               <Users className="h-5 w-5 text-purple-600" />
               <span>+1000 Alunos Formados</span>
             </div>
@@ -650,10 +650,10 @@ Turma: ${turma?.landingPagesDates}`;
             transition={{ duration: 0.6 }}
             className="text-center mb-8 sm:mb-10 lg:mb-12"
           >
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4" style={{ color: '#111827' }}>
               O que você vai aprender
             </h2>
-            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg max-w-2xl mx-auto" style={{ color: '#4B5563' }}>
               Conteúdo completo e atualizado com as melhores práticas do mercado
             </p>
           </motion.div>
@@ -667,18 +667,18 @@ Turma: ${turma?.landingPagesDates}`;
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
               >
-                <Card className="p-4 sm:p-6 lg:p-8 h-full border-0 shadow-lg">
+                <Card className="p-4 sm:p-6 lg:p-8 h-full border-0 shadow-lg" style={{ backgroundColor: '#FFFFFF', color: '#111827' }}>
                   <div className="flex items-center gap-3 mb-4 sm:mb-6">
                     <div className="p-2 sm:p-3 bg-blue-100 rounded-lg">
                       <Award className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">Conteúdo Teórico</h3>
+                    <h3 className="text-xl sm:text-2xl font-semibold" style={{ color: '#111827' }}>Conteúdo Teórico</h3>
                   </div>
                   <ul className="space-y-3">
                     {theoryTopics.map((topic, index) => (
                       <li key={index} className="flex items-start gap-3">
                         <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm sm:text-base text-gray-700">{topic}</span>
+                        <span className="text-sm sm:text-base" style={{ color: '#374151' }}>{topic}</span>
                       </li>
                     ))}
                   </ul>
@@ -694,18 +694,18 @@ Turma: ${turma?.landingPagesDates}`;
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
-                <Card className="p-4 sm:p-6 lg:p-8 h-full border-0 shadow-lg">
+                <Card className="p-4 sm:p-6 lg:p-8 h-full border-0 shadow-lg" style={{ backgroundColor: '#FFFFFF', color: '#111827' }}>
                   <div className="flex items-center gap-3 mb-4 sm:mb-6">
                     <div className="p-2 sm:p-3 bg-green-100 rounded-lg">
                       <Users className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">Conteúdo Prático</h3>
+                    <h3 className="text-xl sm:text-2xl font-semibold" style={{ color: '#111827' }}>Conteúdo Prático</h3>
                   </div>
                   <ul className="space-y-3">
                     {practicalTopics.map((topic, index) => (
                       <li key={index} className="flex items-start gap-3">
                         <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm sm:text-base text-gray-700">{topic}</span>
+                        <span className="text-sm sm:text-base" style={{ color: '#374151' }}>{topic}</span>
                       </li>
                     ))}
                   </ul>
@@ -831,10 +831,10 @@ Turma: ${turma?.landingPagesDates}`;
             transition={{ duration: 0.6 }}
             className="text-center mb-8 sm:mb-10 lg:mb-12"
           >
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4" style={{ color: '#111827' }}>
               Por que escolher a WorkSafe?
             </h2>
-            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg max-w-2xl mx-auto" style={{ color: '#4B5563' }}>
               Somos referência em treinamentos de segurança do trabalho
             </p>
           </motion.div>
@@ -869,12 +869,12 @@ Turma: ${turma?.landingPagesDates}`;
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <Card className="p-4 sm:p-6 text-center h-full border-0 shadow-md hover:shadow-xl transition-shadow cursor-default">
+                <Card className="p-4 sm:p-6 text-center h-full border-0 shadow-md hover:shadow-xl transition-shadow cursor-default" style={{ backgroundColor: '#FFFFFF', color: '#111827' }}>
                   <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-primary-light/10 rounded-full flex items-center justify-center mb-3 sm:mb-4">
                     <item.icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary-light" />
                   </div>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">{item.title}</h3>
-                  <p className="text-gray-600 text-xs sm:text-sm">{item.description}</p>
+                  <h3 className="text-base sm:text-lg font-semibold mb-2" style={{ color: '#111827' }}>{item.title}</h3>
+                  <p className="text-xs sm:text-sm" style={{ color: '#4B5563' }}>{item.description}</p>
                 </Card>
               </motion.div>
             ))}
@@ -893,10 +893,10 @@ Turma: ${turma?.landingPagesDates}`;
               transition={{ duration: 0.6 }}
               className="text-center mb-6 sm:mb-8"
             >
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2" style={{ color: '#111827' }}>
                 Instrutores do Curso
               </h2>
-              <p className="text-sm sm:text-base text-gray-600">
+              <p className="text-sm sm:text-base" style={{ color: '#4B5563' }}>
                 Profissionais certificados e experientes
               </p>
             </motion.div>
@@ -942,20 +942,20 @@ Turma: ${turma?.landingPagesDates}`;
                                   </div>
 
                                   {/* Name */}
-                                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                                  <h3 className="text-base sm:text-lg font-semibold" style={{ color: '#111827' }}>
                                     {instructor.name}
                                   </h3>
                                   
                                   {/* Formation */}
                                   {instructor.formation && (
-                                    <p className="text-sm text-gray-600 mt-1">
+                                    <p className="text-sm mt-1" style={{ color: '#4B5563' }}>
                                       {instructor.formation}
                                     </p>
                                   )}
                                   
                                   {/* Formation Code */}
                                   {instructor.formationCode && (
-                                    <p className="text-xs text-gray-500 mt-1">
+                                    <p className="text-xs mt-1" style={{ color: '#6B7280' }}>
                                       {instructor.formationCode}
                                     </p>
                                   )}
@@ -971,7 +971,7 @@ Turma: ${turma?.landingPagesDates}`;
                                 {/* Curriculum - split by # and join with comma */}
                                 {instructor.curriculum && (
                                   <div className="mt-4 px-2">
-                                    <p className="text-xs text-gray-400 leading-relaxed">
+                                    <p className="text-xs leading-relaxed" style={{ color: '#9CA3AF' }}>
                                       {instructor.curriculum
                                         .split('#')
                                         .filter(item => item.trim())
@@ -1035,10 +1035,10 @@ Turma: ${turma?.landingPagesDates}`;
             transition={{ duration: 0.6 }}
             className="text-center mb-8 sm:mb-10 lg:mb-12"
           >
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4" style={{ color: '#111827' }}>
               O que nossos alunos dizem
             </h2>
-            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg max-w-2xl mx-auto" style={{ color: '#4B5563' }}>
               Mais de 1000 profissionais já transformaram suas carreiras conosco
             </p>
           </motion.div>
@@ -1071,16 +1071,16 @@ Turma: ${turma?.landingPagesDates}`;
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <Card className="p-4 sm:p-5 lg:p-6 h-full border-0 shadow-lg cursor-default">
+                <Card className="p-4 sm:p-5 lg:p-6 h-full border-0 shadow-lg cursor-default" style={{ backgroundColor: '#FFFFFF', color: '#111827' }}>
                   <div className="flex gap-1 mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
                       <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                     ))}
                   </div>
-                  <p className="text-gray-700 mb-4 italic">"{testimonial.review}"</p>
+                  <p className="mb-4 italic" style={{ color: '#374151' }}>"{testimonial.review}"</p>
                   <div>
-                    <p className="font-semibold text-gray-900">{testimonial.name}</p>
-                    <p className="text-sm text-gray-600">{testimonial.role}</p>
+                    <p className="font-semibold" style={{ color: '#111827' }}>{testimonial.name}</p>
+                    <p className="text-sm" style={{ color: '#4B5563' }}>{testimonial.role}</p>
                   </div>
                 </Card>
               </motion.div>

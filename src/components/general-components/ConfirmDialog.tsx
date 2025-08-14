@@ -44,7 +44,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           titleBttn && iconBttn ? (
             <Button
               variant="ghost"
-              className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+              className="flex justify-start gap-2 px-2 py-1.5 items-baseline w-full h-fit"
             >
               <Icon name={iconBttn || "circle-x"} className="w-3 h-3" />
               <p>{titleBttn}</p>

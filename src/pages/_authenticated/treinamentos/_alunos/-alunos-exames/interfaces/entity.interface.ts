@@ -3,7 +3,7 @@ export interface IEntity {
   traineeId: number;
   courseId: number;
   classId: number;
-  examResponses?: string;
+  examResponses?: IExamResponseItem[];
   result: boolean;
   companyId?: number;
   createdAt?: string;
@@ -23,6 +23,16 @@ export interface IEntity {
     id: number;
     name: string;
   };
+}
+
+export interface IExamResponseItem {
+  question: string;
+  options: Array<{
+    text: string;
+    isCorrect: boolean;
+    isSelected: boolean;
+    isUserCorrect: boolean;
+  }>;
 }
 
 export interface IExamResponse {

@@ -18,10 +18,11 @@ import Icon from "@/components/general-components/Icon";
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
-// Dialog para exames
+// Dialog para exames e certificados
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import AlunosExames from "../-alunos-exames";
+import AlunosCertificados from "../-alunos-certificados";
 
 interface ItemsProps {
   item: IEntity;
@@ -36,6 +37,7 @@ const AlunosItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
   const [openExames, setOpenExames] = useState(false);
+  const [openCertificados, setOpenCertificados] = useState(false);
 
   // Mutation para inativar
   const { mutate: deactivate } = useMutation({
@@ -248,6 +250,20 @@ const AlunosItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
                 </DropdownMenuItem>
               )}
               
+              {/* Botão Ver Certificados */}
+              { can(`view_${entity.ability}`) && (
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Button 
+                    variant="ghost" 
+                    className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
+                    onClick={() => setOpenCertificados(true)}
+                  >
+                    <Icon name="award" className="w-3 h-3" /> 
+                    <p>Ver Certificados</p>
+                  </Button>
+                </DropdownMenuItem>
+              )}
+              
               {
                 !item.inactiveAt ? (
                   can(`inactive_${entity.ability}`) && (
@@ -283,7 +299,24 @@ const AlunosItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
       {/* Dialog para exibir exames do aluno */}
       <Dialog open={openExames} onOpenChange={setOpenExames}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <div className="sr-only">
+            <h2>Exames do Aluno</h2>
+            <p>Lista de exames realizados pelo aluno {item.name}</p>
+          </div>
           <AlunosExames 
+            traineeId={item.id || 0}
+          />
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialog para exibir certificados do aluno */}
+      <Dialog open={openCertificados} onOpenChange={setOpenCertificados}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <div className="sr-only">
+            <h2>Certificados do Aluno</h2>
+            <p>Lista de certificados do aluno {item.name}</p>
+          </div>
+          <AlunosCertificados 
             traineeId={item.id || 0}
           />
         </DialogContent>

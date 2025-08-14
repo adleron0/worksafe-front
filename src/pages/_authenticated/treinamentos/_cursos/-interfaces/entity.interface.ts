@@ -20,6 +20,7 @@ export interface IEntity {
   active?: boolean;
   weekly?: boolean;
   weekDays?: string;
+  media?: number;
   faq?: string | FaqItem[];
   exam?: {
     question: string;

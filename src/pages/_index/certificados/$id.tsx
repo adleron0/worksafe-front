@@ -189,27 +189,27 @@ function CertificadoPublico() {
           {/* Header moderno e limpo */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
             {/* Topo com status */}
-            <div className="bg-white border-b border-gray-100 px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-primary-light/10 rounded-lg">
-                    <Shield className="w-6 h-6 text-primary-light" />
+            <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="p-2 bg-primary-light/10 rounded-lg flex-shrink-0">
+                    <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-primary-light" />
                   </div>
                   <div>
-                    <h1 className="text-xl font-bold text-gray-900">Validação de Certificado</h1>
-                    <p className="text-sm text-gray-500">Sistema oficial de verificação</p>
+                    <h1 className="text-lg sm:text-xl font-bold text-gray-900">Validação de Certificado</h1>
+                    <p className="text-xs sm:text-sm text-gray-500">Sistema oficial de verificação</p>
                   </div>
                 </div>
                 {validationStatus && (
-                  <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${
+                  <div className={`inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full self-start sm:self-auto ${
                     validationStatus.status === "valid" 
                       ? "bg-green-50 text-green-700 border border-green-200" 
                       : validationStatus.status === "expired"
                       ? "bg-orange-50 text-orange-700 border border-orange-200"
                       : "bg-red-50 text-red-700 border border-red-200"
                   }`}>
-                    <validationStatus.icon className="w-4 h-4" />
-                    <span className="text-sm font-medium">{validationStatus.message}</span>
+                    <validationStatus.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm font-medium whitespace-nowrap">{validationStatus.message}</span>
                   </div>
                 )}
               </div>
@@ -282,12 +282,12 @@ function CertificadoPublico() {
             </div>
 
             {/* Footer com metadados */}
-            <div className="bg-gray-50 px-6 py-3 border-t border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-6 text-xs">
+            <div className="bg-gray-50 px-4 sm:px-6 py-3 border-t border-gray-100">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-xs">
                   <div className="flex items-center gap-1.5">
                     <span className="text-gray-500">Código:</span>
-                    <span className="font-mono font-medium text-gray-700">{variables.certificado_codigo?.value || `CERT-${certificate?.id}`}</span>
+                    <span className="font-mono font-medium text-gray-700 break-all">{variables.certificado_codigo?.value || `CERT-${certificate?.id}`}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-gray-500">Emissão:</span>
@@ -299,7 +299,7 @@ function CertificadoPublico() {
                     variant="ghost"
                     size="sm"
                     onClick={() => window.open(certificate.pdfUrl, '_blank')}
-                    className="text-xs hover:bg-white"
+                    className="text-xs hover:bg-white w-full sm:w-auto justify-center"
                   >
                     <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

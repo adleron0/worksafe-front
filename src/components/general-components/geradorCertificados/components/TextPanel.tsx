@@ -3,13 +3,15 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Plus, List, ListOrdered, ChevronRight, IndentDecrease, IndentIncrease, Info } from 'lucide-react';
+import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Plus, List, ListOrdered, ChevronRight, IndentDecrease, IndentIncrease, Info, Variable } from 'lucide-react';
 import * as fabric from 'fabric';
+import { toast } from '@/hooks/use-toast';
 
 interface TextPanelProps {
   selectedText: fabric.Textbox | null;
   onAddText: (text: string, settings: TextSettings) => void;
   onUpdateText: (settings: Partial<TextSettings>) => void;
+  canvas?: fabric.Canvas | null;
 }
 
 export interface TextSettings {
@@ -47,7 +49,8 @@ const googleFonts = [
 const TextPanel: React.FC<TextPanelProps> = ({
   selectedText,
   onAddText,
-  onUpdateText
+  onUpdateText,
+  canvas
 }) => {
   const [textSettings, setTextSettings] = useState<TextSettings>({
     text: 'Clique para editar',
@@ -176,6 +179,31 @@ const TextPanel: React.FC<TextPanelProps> = ({
 
   const toggleUnderline = () => {
     updateSetting('underline', !textSettings.underline);
+  };
+
+  const handleVariableClick = (variableKey: string) => {
+    const variableText = `{{${variableKey}}}`;
+    
+    if (selectedText && canvas) {
+      // Se há um texto selecionado, adiciona a variável ao final do texto
+      const currentText = selectedText.text || '';
+      const newText = currentText + (currentText ? ' ' : '') + variableText;
+      selectedText.set('text', newText);
+      canvas.renderAll();
+      
+      toast({
+        description: `Variável ${variableText} adicionada ao texto!`,
+        duration: 2000,
+      });
+    } else {
+      // Se não há texto selecionado, cria um novo texto com a variável
+      onAddText(variableText, textSettings);
+      
+      toast({
+        description: `Variável ${variableText} adicionada ao canvas!`,
+        duration: 2000,
+      });
+    }
   };
 
   return (
@@ -426,25 +454,178 @@ const TextPanel: React.FC<TextPanelProps> = ({
         </div>
       </Card>
       
-      {/* Info sobre variáveis - bem discreto */}
-      <div className="px-4 py-2 bg-muted/30 rounded-md">
-        <div className="flex items-start gap-2">
-          <Info className="w-3 h-3 mt-0.5 text-muted-foreground flex-shrink-0" />
-          <div className="text-xs text-muted-foreground">
-            <p className="font-medium mb-1">Dica: Use variáveis dinâmicas</p>
-            <p>Digite <code className="text-primary">{'{{nome_aluno}}'}</code> para inserir dados que serão substituídos na geração.</p>
-            <details className="mt-1">
-              <summary className="cursor-pointer hover:text-foreground">Ver exemplos</summary>
-              <div className="mt-2 space-y-1 text-xs">
-                <p><code>{'{{nome_aluno}}'}</code> - Nome do aluno</p>
-                <p><code>{'{{nome_curso}}'}</code> - Nome do curso</p>
-                <p><code>{'{{data_inicio}}'}</code> - Data de início</p>
-                <p><code>{'{{carga_horaria}}'}</code> - Carga horária</p>
+      {/* Variáveis disponíveis */}
+      <Card>
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Variable className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold">Variáveis Disponíveis</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Clique em uma variável para adicionar ao canvas. As variáveis serão substituídas automaticamente na geração.
+          </p>
+          
+          {/* Lista de variáveis organizadas por categoria */}
+          <div className="space-y-2.5 max-h-32 overflow-y-auto pr-1">
+            {/* Dados do Aluno */}
+            <div>
+              <h4 className="text-xs font-medium text-muted-foreground mb-1">Aluno</h4>
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { key: 'aluno_nome', label: 'Nome' },
+                  { key: 'aluno_cpf', label: 'CPF' },
+                  { key: 'aluno_data_nascimento', label: 'Nascimento' },
+                  { key: 'aluno_cidade', label: 'Cidade' },
+                  { key: 'aluno_estado', label: 'Estado' },
+                  { key: 'aluno_estado_uf', label: 'UF' },
+                ].map(variable => (
+                  <Button
+                    key={variable.key}
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] hover:bg-primary/10 hover:text-primary hover:border-primary"
+                    onClick={() => handleVariableClick(variable.key)}
+                  >
+                    {variable.label}
+                  </Button>
+                ))}
               </div>
-            </details>
+            </div>
+
+            {/* Dados do Curso */}
+            <div>
+              <h4 className="text-xs font-medium text-muted-foreground mb-1">Curso</h4>
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { key: 'curso_nome', label: 'Nome' },
+                  { key: 'curso_descricao', label: 'Descrição' },
+                  { key: 'curso_validade_anos', label: 'Validade' },
+                ].map(variable => (
+                  <Button
+                    key={variable.key}
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] hover:bg-primary/10 hover:text-primary hover:border-primary"
+                    onClick={() => handleVariableClick(variable.key)}
+                  >
+                    {variable.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Dados da Turma */}
+            <div>
+              <h4 className="text-xs font-medium text-muted-foreground mb-1">Turma</h4>
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { key: 'turma_nome', label: 'Nome' },
+                  { key: 'turma_carga_horaria', label: 'Carga Horária' },
+                  { key: 'turma_data_inicio', label: 'Data Início' },
+                  { key: 'turma_data_inicio_extenso', label: 'Início Extenso' },
+                  { key: 'turma_data_fim', label: 'Data Fim' },
+                  { key: 'turma_data_fim_extenso', label: 'Fim Extenso' },
+                  { key: 'turma_periodo', label: 'Período' },
+                ].map(variable => (
+                  <Button
+                    key={variable.key}
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] hover:bg-primary/10 hover:text-primary hover:border-primary"
+                    onClick={() => handleVariableClick(variable.key)}
+                  >
+                    {variable.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Dados do Instrutor */}
+            <div>
+              <h4 className="text-xs font-medium text-muted-foreground mb-1">Instrutor</h4>
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { key: 'instrutor_nome_1', label: 'Nome 1' },
+                  { key: 'instrutor_cpf_1', label: 'CPF 1' },
+                  { key: 'instrutor_formacao_1', label: 'Formação 1' },
+                  { key: 'instrutor_registro_1', label: 'Registro 1' },
+                  { key: 'instrutor_assinatura_1', label: 'Assinatura 1' },
+                  { key: 'instrutor_nome_2', label: 'Nome 2' },
+                  { key: 'instrutor_formacao_2', label: 'Formação 2' },
+                  { key: 'instrutor_registro_2', label: 'Registro 2' },
+                  { key: 'instrutor_assinatura_2', label: 'Assinatura 2' },
+                  { key: 'instrutores_nomes', label: 'Todos Nomes' },
+                ].map(variable => (
+                  <Button
+                    key={variable.key}
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] hover:bg-primary/10 hover:text-primary hover:border-primary"
+                    onClick={() => handleVariableClick(variable.key)}
+                  >
+                    {variable.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Dados do Certificado */}
+            <div>
+              <h4 className="text-xs font-medium text-muted-foreground mb-1">Certificado</h4>
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { key: 'certificado_validade', label: 'Validade' },
+                  { key: 'certificado_validade_extenso', label: 'Validade Ext' },
+                  { key: 'certificado_emissao', label: 'Emissão' },
+                  { key: 'certificado_emissao_extenso', label: 'Emissão Ext' },
+                  { key: 'certificado_codigo', label: 'Código' },
+                ].map(variable => (
+                  <Button
+                    key={variable.key}
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] hover:bg-primary/10 hover:text-primary hover:border-primary"
+                    onClick={() => handleVariableClick(variable.key)}
+                  >
+                    {variable.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Dados da Inscrição */}
+            <div>
+              <h4 className="text-xs font-medium text-muted-foreground mb-1">Inscrição</h4>
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { key: 'inscricao_nome', label: 'Nome' },
+                  { key: 'inscricao_ocupacao', label: 'Ocupação' },
+                  { key: 'inscricao_empresa', label: 'Empresa' },
+                  { key: 'inscricao_data_confirmacao', label: 'Confirmação' },
+                ].map(variable => (
+                  <Button
+                    key={variable.key}
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] hover:bg-primary/10 hover:text-primary hover:border-primary"
+                    onClick={() => handleVariableClick(variable.key)}
+                  >
+                    {variable.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          {/* Nota sobre múltiplos instrutores */}
+          <div className="mt-3 p-2 bg-muted/30 rounded-md">
+            <p className="text-xs text-muted-foreground">
+              <Info className="w-3 h-3 inline mr-1" />
+              Para mais instrutores, use: instrutor_nome_3, instrutor_nome_4, etc. seguindo o mesmo padrão.
+            </p>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

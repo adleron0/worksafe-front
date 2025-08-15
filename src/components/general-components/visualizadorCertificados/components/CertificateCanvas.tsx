@@ -176,7 +176,7 @@ const CertificateCanvas = forwardRef<CertificateCanvasRef, CertificateCanvasInte
   if (showContainer) {
     return (
       <div 
-        className={`flex-1 min-h-0 border rounded-lg bg-white dark:bg-gray-800 p-4 overflow-auto relative ${
+        className={`flex-1 min-h-0 border rounded-lg bg-muted dark:bg-gray-800 p-4 overflow-auto relative ${
           !isActive ? 'opacity-0 pointer-events-none absolute inset-0' : ''
         }`}
         data-page-active={isActive}

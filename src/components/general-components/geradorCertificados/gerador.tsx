@@ -1319,6 +1319,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
               selectedText={selectedText}
               onAddText={handleAddText}
               onUpdateText={handleUpdateText}
+              canvas={getCurrentCanvasRef()?.getCanvas()}
             />
           </TabsContent>
           

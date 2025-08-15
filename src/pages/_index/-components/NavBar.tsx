@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/general-components/Logo";
@@ -8,6 +8,9 @@ import {
   Plus,
   Minus,
   Trash,
+  ChevronDown,
+  Award,
+  Calendar,
 } from "lucide-react";
 
 // Define the type for cart items
@@ -28,6 +31,9 @@ interface NavBarProps {
 export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   // Desativa rolagem do body se o menu ou o carrinho estiverem abertos
@@ -43,6 +49,20 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
       document.body.style.overflow = "";
     };
   }, [isMenuOpen, isCartOpen]);
+
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Funções para modificar o carrinho
   const incrementQuantity = (id: number) => {
@@ -134,13 +154,41 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
               >
                 Aluguel
               </a> */}
-              <a
-                onClick={() => {navigate({to: `/treinamento`})}}
-                href="#treinamento"
-                className="text-gray-600 hover:text-primary-light transition-colors"
-              >
-                Treinamentos
-              </a>
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center gap-1 text-gray-600 hover:text-primary-light transition-colors cursor-pointer"
+                >
+                  Treinamentos
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {/* Dropdown Menu */}
+                {isDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
+                    <a
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                        navigate({to: `/certificados`});
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                    >
+                      <Award className="w-4 h-4" />
+                      Certificados
+                    </a>
+                    <a
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                        navigate({to: `/treinamento`});
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Calendário
+                    </a>
+                  </div>
+                )}
+              </div>
               <a
                 onClick={() => {navigate({to: `/sobre`})}}
                 href="#sobre"
@@ -249,13 +297,43 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                 >
                   Aluguel
                 </a> */}
-                <a
-                  href="#treinamento"
-                  className="text-gray-600 hover:text-primary-light transition-colors"
-                  onClick={() => {setIsMenuOpen(false); navigate({to: `/treinamento`})}}
-                >
-                  Treinamentos
-                </a>
+                <div>
+                  <button
+                    onClick={() => setIsMobileDropdownOpen(!isMobileDropdownOpen)}
+                    className="flex items-center justify-between w-full text-gray-600 hover:text-primary-light transition-colors cursor-pointer"
+                  >
+                    Treinamentos
+                    <ChevronDown className={`w-4 h-4 transition-transform ${isMobileDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {/* Mobile Dropdown Items */}
+                  {isMobileDropdownOpen && (
+                    <div className="ml-4 mt-2 space-y-2">
+                      <a
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          setIsMobileDropdownOpen(false);
+                          navigate({to: `/certificados`});
+                        }}
+                        className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-light transition-colors cursor-pointer"
+                      >
+                        <Award className="w-4 h-4" />
+                        Certificados
+                      </a>
+                      <a
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          setIsMobileDropdownOpen(false);
+                          navigate({to: `/treinamento`});
+                        }}
+                        className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-light transition-colors cursor-pointer"
+                      >
+                        <Calendar className="w-4 h-4" />
+                        Calendário
+                      </a>
+                    </div>
+                  )}
+                </div>
 
                 <Button
                   onClick={() => {

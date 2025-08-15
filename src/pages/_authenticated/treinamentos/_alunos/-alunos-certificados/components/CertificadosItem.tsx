@@ -287,7 +287,8 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm }: Ite
               id: item.id || 0,
               name: item.course?.name || 'Certificado',
               fabricJsonFront: item.fabricJsonFront,
-              fabricJsonBack: item.fabricJsonBack
+              fabricJsonBack: item.fabricJsonBack,
+              certificateId: item.id?.toString() || 'CERT-001'
             }}
             variableToReplace={item.variableToReplace || {}}
             zoom={50}

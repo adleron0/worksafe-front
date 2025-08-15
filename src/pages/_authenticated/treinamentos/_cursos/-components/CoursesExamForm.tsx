@@ -292,22 +292,24 @@ const CoursesExamForm = ({ courseData, openSheet, entity }: ExamFormProps) => {
                       : ''
                   }`}
                 >
-                  <AccordionTrigger 
-                    className={`group flex items-center justify-between w-full px-4 py-3 hover:no-underline [&>svg]:ml-2 ${
-                      errors[`exam.${questionIndex}.question`] || errors[`exam.${questionIndex}.options`] 
-                        ? 'text-red-500' 
-                        : ''
-                    }`}
-                  >
-                    <div className="text-left flex-1">
-                      <span className="font-medium">
-                        Questão {String(questionIndex + 1).padStart(2, '0')}
-                      </span>
-                      {(errors[`exam.${questionIndex}.question`] || errors[`exam.${questionIndex}.options`]) && (
-                        <span className="ml-2 text-xs text-red-500">(Erro de validação)</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-between">
+                    <AccordionTrigger 
+                      className={`group flex items-center justify-between w-full px-4 py-3 hover:no-underline [&>svg]:ml-2 ${
+                        errors[`exam.${questionIndex}.question`] || errors[`exam.${questionIndex}.options`] 
+                          ? 'text-red-500' 
+                          : ''
+                      }`}
+                    >
+                      <div className="text-left flex-1">
+                        <span className="font-medium">
+                          Questão {String(questionIndex + 1).padStart(2, '0')}
+                        </span>
+                        {(errors[`exam.${questionIndex}.question`] || errors[`exam.${questionIndex}.options`]) && (
+                          <span className="ml-2 text-xs text-red-500">(Erro de validação)</span>
+                        )}
+                      </div>
+                    </AccordionTrigger>
+                    <div className="pr-4">
                       <Button 
                         type="button" 
                         variant="ghost" 
@@ -321,7 +323,7 @@ const CoursesExamForm = ({ courseData, openSheet, entity }: ExamFormProps) => {
                         <Trash2 size={16} className="text-destructive" />
                       </Button>
                     </div>
-                  </AccordionTrigger>
+                  </div>
                   <AccordionContent className="px-4 pb-4">
                     <div className="space-y-4">
                       <div>

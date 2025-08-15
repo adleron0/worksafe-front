@@ -400,12 +400,17 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
     const centerX = canvas.width! / 2;
     const centerY = canvas.height! / 2;
     
+    // Detectar se é um QR Code pelo nome
+    const isQRCode = placeholderName.toLowerCase().includes('qrcode');
+    const size = isQRCode ? 120 : 200; // QR Code menor e quadrado
+    
     const placeholder = createImagePlaceholder({
       name: placeholderName,
-      left: centerX - 100,
-      top: centerY - 50,
-      width: 200,
-      height: 100
+      left: centerX - size / 2,
+      top: centerY - size / 2,
+      width: size,
+      height: isQRCode ? size : 100, // QR Code sempre quadrado
+      type: isQRCode ? 'qrcode' : 'image'
     });
     
     canvas.add(placeholder);
@@ -1448,7 +1453,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       
       {/* Canvas container */}
       <div 
-        className={`flex-1 min-h-0 border rounded-lg bg-white dark:bg-gray-800 p-4 overflow-auto relative transition-colors ${
+        className={`flex-1 min-h-0 border rounded-lg bg-muted dark:bg-gray-800 p-4 overflow-auto relative transition-colors ${
           isDragging ? 'border-primary border-2' : ''
         } ${!isActive ? 'opacity-0 pointer-events-none' : ''}`}
         data-page-active={isActive}

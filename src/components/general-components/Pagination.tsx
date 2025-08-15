@@ -69,14 +69,14 @@ const Pagination: React.FC<PaginationProps> = ({
   return (
     <>
       <span
-        className="text-muted-foreground text-xs"
+        className="text-muted-foreground text-xs text-center"
       >
         {`Listando do item ${currentPage * itemsPerPage + 1} ao ${Math.min((currentPage + 1) * itemsPerPage, totalItems)} de um total de ${totalItems}`}  
       </span>
-      <ShadPagination className="mt-2">
+      <ShadPagination className="mt-2 flex justify-center">
 
         {/* Páginas Numeradas */}
-        <PaginationContent className="list-none p-0 flex flex-row gap-1">
+        <PaginationContent className="list-none p-0 flex flex-row gap-1 justify-center">
           {/* Botão para Primeira Página */}
           <PaginationItem className="list-none">
             <PaginationLink

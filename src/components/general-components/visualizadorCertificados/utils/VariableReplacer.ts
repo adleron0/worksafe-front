@@ -218,8 +218,36 @@ export class VariableReplacer {
         originalPlaceholderName: obj.placeholderName,
         id: obj.id,
         type: obj.type,
+        placeholderType: obj.placeholderType,
         variaveisDisponiveis: Object.keys(variables)
       });
+      
+      // Verificar se é um placeholder de QR Code
+      // Normalizar o nome removendo espaços e convertendo para lowercase
+      const normalizedName = placeholderName?.toLowerCase().replace(/\s+/g, '');
+      const isQRCode = obj.placeholderType === 'qrcode' || 
+                       normalizedName?.includes('qrcode') ||
+                       placeholderName?.toLowerCase().includes('qr code');
+      
+      if (isQRCode) {
+        console.log('🔲 Placeholder de QR Code detectado:', placeholderName);
+        // QR Code será tratado de forma especial - não precisa de variável URL
+        // Retornar um marcador especial para ser processado depois
+        return {
+          ...obj,
+          isQRCodePlaceholder: true,
+          qrCodeName: placeholderName || 'certificado_qrcode',
+          // Manter as dimensões e posição originais
+          preservedPosition: {
+            left: obj.left,
+            top: obj.top,
+            width: obj.width,
+            height: obj.height,
+            scaleX: obj.scaleX,
+            scaleY: obj.scaleY
+          }
+        };
+      }
       
       const variable = variables[placeholderName];
       if (variable && variable.type === 'url' && variable.value) {

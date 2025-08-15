@@ -25,7 +25,7 @@ import cliente24 from "../../../assets/images/clientes/24.png";
 import cliente25 from "../../../assets/images/clientes/25.png";
 import cliente26 from "../../../assets/images/clientes/26.png";
 
-export default function Clients() {
+export default function Clients({showHeader = true}: {showHeader?: boolean}) {
   // Array of client images
   const clientImages = [
     cliente1, cliente2, cliente3, cliente4, cliente5, cliente6, cliente7,
@@ -37,14 +37,18 @@ export default function Clients() {
   return (
     <section id="clientes" className="py-10 bg-gray-50 overflow-hidden">
       <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
-        <div className="text-center mb-8">
-          <h2 className="section-title text-gray-800 text-3xl md:text-5xl font-bold md:pb-4">
-            Faça como grandes marcas
-          </h2>
-          <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto">
-            Experimente nossos serviços e veja como nossos profissionais podem ajudar você a alcançar seus objetivos.
-          </p>
-        </div>
+        {
+          showHeader && (
+             <div className="text-center mb-8">
+              <h2 className="section-title text-gray-800 text-3xl md:text-5xl font-bold md:pb-4">
+                Faça como grandes marcas
+              </h2>
+              <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto">
+                Experimente nossos serviços e veja como nossos profissionais podem ajudar você a alcançar seus objetivos.
+              </p>
+            </div>
+          )
+        }
 
         {/* First slider - Left to Right */}
         <div className="relative overflow-hidden">

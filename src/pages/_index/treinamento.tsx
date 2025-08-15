@@ -5,7 +5,8 @@ import NavBar from "./-components/NavBar";
 import Hero from "./-components/Hero";
 import TrainingSchedule from "./-components/TrainingSchedule";
 import CourseBadges from "./-components/CourseBadges";
-import Cta from "./-components/Cta";
+// import Cta from "./-components/Cta";
+import Clients from './-components/Clients';
 import Faq from "./-components/Faq";
 import Footer from "./-components/Footer";
 
@@ -97,14 +98,17 @@ function Treinamento() {
         {/* Training Schedule - Component completo */}
         <TrainingSchedule handleWhatsApp={handleWhatsApp} />
 
+        {/* Clients */}
+        <Clients showHeader={false} />
+
         {/* CTA Section */}
-        <Cta
+        {/* <Cta
           title="Precisa de Treinamento para sua Equipe?"
           subtitle="Oferecemos treinamentos in-company personalizados para sua Empresa."
           buttonText="Agendar Consultoria"
           whatsAppMessage="Olá, gostaria de agendar um treinamento para minha equipe!"
           handleWhatsApp={handleWhatsApp}
-        />
+        /> */}
 
         {/* FAQ Section */}
         <Faq faqData={faqs} />

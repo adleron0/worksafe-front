@@ -28,24 +28,17 @@ export const useCertificateViewer = (
       setIsLoading(true);
       
       try {
-        console.log('🔍 Iniciando processamento dos dados do certificado:', {
-          certificateData,
-          variableToReplace,
-          studentData
-        });
         
         // Determinar qual conjunto de variáveis usar (nova estrutura ou compatibilidade)
         const variables = variableToReplace || 
           (studentData ? convertStudentDataToVariables(studentData) : {});
 
-        console.log('📦 Variáveis para substituição:', variables);
 
         // Parsear o JSON se for string
         let frontJson;
         if (typeof certificateData.fabricJsonFront === 'string') {
           try {
             frontJson = JSON.parse(certificateData.fabricJsonFront);
-            console.log('📦 JSON da frente parseado de string');
           } catch (error) {
             console.error('❌ Erro ao parsear fabricJsonFront:', error);
             frontJson = certificateData.fabricJsonFront;
@@ -61,7 +54,6 @@ export const useCertificateViewer = (
         );
         
         if (!frontValidation.isValid) {
-          console.warn('⚠️ Variáveis faltando na frente:', frontValidation.missingVariables);
           // Não bloquear, apenas avisar
         }
         
@@ -71,7 +63,6 @@ export const useCertificateViewer = (
           variables
         );
         
-        console.log('📄 JSON da frente processado:', frontProcessed);
 
         // Processar dados do verso se existir
         let backProcessed = null;
@@ -81,7 +72,6 @@ export const useCertificateViewer = (
           if (typeof certificateData.fabricJsonBack === 'string') {
             try {
               backJson = JSON.parse(certificateData.fabricJsonBack);
-              console.log('📦 JSON do verso parseado de string');
             } catch (error) {
               console.error('❌ Erro ao parsear fabricJsonBack:', error);
               backJson = certificateData.fabricJsonBack;
@@ -96,7 +86,6 @@ export const useCertificateViewer = (
           );
           
           if (!backValidation.isValid) {
-            console.warn('⚠️ Variáveis faltando no verso:', backValidation.missingVariables);
           }
 
           backProcessed = VariableReplacer.replaceInCanvasJSON(
@@ -110,11 +99,6 @@ export const useCertificateViewer = (
         const height = certificateData.canvasHeight || 595;
         const orientation: 'landscape' | 'portrait' = width > height ? 'landscape' : 'portrait';
         
-        console.log('📐 Orientação detectada:', {
-          width,
-          height,
-          orientation
-        });
 
         // Configurar páginas
         const newPages: CanvasPage[] = [
@@ -143,7 +127,6 @@ export const useCertificateViewer = (
           certificateId: certificateData.certificateId
         };
         
-        console.log('✅ Dados processados com sucesso:', processedData);
         setProcessedCanvasData(processedData);
 
       } catch (error) {
@@ -181,20 +164,17 @@ export const useCertificateViewer = (
 
   // Função para registrar referências dos canvas
   const registerCanvasRef = useCallback((pageId: string, ref: any) => {
-    console.log('Registrando canvas ref para página:', pageId);
     canvasRefs.current.set(pageId, ref);
   }, []);
 
   // Função para aplicar proxy nas imagens do JSON (reutilizada do gerador)
   const processImagesInJSON = useCallback((jsonData: any): any => {
-    console.log('🖼️ Processando imagens no JSON para viewer');
     
     // Garantir que temos um objeto, não uma string
     let data;
     if (typeof jsonData === 'string') {
       try {
         data = JSON.parse(jsonData);
-        console.log('📦 JSON parseado de string');
       } catch (error) {
         console.error('❌ Erro ao parsear JSON:', error);
         return jsonData;
@@ -203,12 +183,6 @@ export const useCertificateViewer = (
       data = jsonData;
     }
     
-    console.log('🔍 Estrutura do JSON:', {
-      hasObjects: !!data.objects,
-      objectsLength: data.objects?.length,
-      version: data.version,
-      background: data.background
-    });
     
     if (data.objects && Array.isArray(data.objects)) {
       data.objects = data.objects.map((obj: any) => {
@@ -218,7 +192,6 @@ export const useCertificateViewer = (
           
           // Verificar se já tem proxy aplicado (da substituição de variáveis)
           if (originalSrc.includes('api.allorigins.win')) {
-            console.log('🔄 Imagem já tem proxy aplicado:', originalSrc);
             return obj;
           }
           
@@ -229,7 +202,6 @@ export const useCertificateViewer = (
             // Sempre aplicar proxy para URLs externas
             obj.src = `${BASE_URL}/images/proxy?url=${encodeURIComponent(originalSrc)}`;
             obj._originalUrl = originalSrc;
-            console.log('🌐 Aplicando proxy na imagem:', originalSrc, '->', obj.src);
           }
         }
         return obj;
@@ -242,11 +214,6 @@ export const useCertificateViewer = (
   // Função para carregar dados nos canvas
   const loadCanvasData = useCallback(async (data: ProcessedCanvasData) => {
     try {
-      console.log('Iniciando carregamento dos canvas', { 
-        hasFront: !!data.fabricJsonFront,
-        hasBack: !!data.fabricJsonBack,
-        canvasRefs: Array.from(canvasRefs.current.keys())
-      });
 
       // Carregar canvas da frente
       const frontCanvasRef = canvasRefs.current.get('page-front');
@@ -260,10 +227,6 @@ export const useCertificateViewer = (
           await new Promise<void>((resolve, reject) => {
             const processedJsonFront = processImagesInJSON(data.fabricJsonFront);
             
-            console.log('🎨 Carregando JSON no canvas da frente:', {
-              jsonData: processedJsonFront,
-              canvasId: 'page-front'
-            });
             
             // Não precisamos mais interceptar - o proxy já foi aplicado no JSON
 
@@ -274,11 +237,6 @@ export const useCertificateViewer = (
                 ? JSON.parse(processedJsonFront) 
                 : processedJsonFront;
               
-              console.log('📋 JSON a ser carregado:', {
-                version: jsonToLoad.version,
-                objectCount: jsonToLoad.objects?.length,
-                firstObject: jsonToLoad.objects?.[0]
-              });
               
               // Primeiro, adicionar um retângulo branco de background
               // Detectar orientação baseada nas dimensões
@@ -323,7 +281,6 @@ export const useCertificateViewer = (
               }
               
               frontCanvas.loadFromJSON(jsonToLoad).then(async () => {
-                console.log('✅ JSON carregado no canvas, processando objetos...');
                 
                 // Processar placeholders de QR Code ANTES de configurar como não editáveis
                 const objects = frontCanvas.getObjects();
@@ -334,13 +291,11 @@ export const useCertificateViewer = (
                   
                   // Verificar se é um placeholder de QR Code
                   if (obj.isQRCodePlaceholder && obj.qrCodeName) {
-                    console.log('🔲 Processando QR Code placeholder:', obj.qrCodeName);
                     
                     // Obter o ID do certificado
                     const certificateId = data.certificateId || obj.certificateId || 'CERT-001';
                     const validationUrl = `${window.location.origin}/certificados/${certificateId}`;
                     
-                    console.log('📱 URL do QR Code:', validationUrl);
                     
                     // Remover o placeholder do canvas
                     frontCanvas.remove(obj);
@@ -361,18 +316,15 @@ export const useCertificateViewer = (
                           }
                         });
                         
-                        console.log('📸 QR Code Data URL gerado:', qrDataUrl.substring(0, 50) + '...');
                         
                         // Criar imagem do QR Code no canvas
                         const position = obj.preservedPosition || obj;
                         
                         // Usar Promise para aguardar carregamento da imagem
                         await new Promise<void>((resolve, reject) => {
-                          console.log('🔧 Tentando criar fabric.Image do QR Code (frente)...');
                           
                           const img = new Image();
                           img.onload = () => {
-                            console.log('✅ Imagem HTML carregada (frente):', { width: img.width, height: img.height });
                             
                             const fabricImage = new fabric.Image(img);
                             
@@ -393,14 +345,6 @@ export const useCertificateViewer = (
                             const scaleX = finalWidth / (fabricImage.width || 200);
                             const scaleY = finalHeight / (fabricImage.height || 200);
                             
-                            console.log('📏 Configurando QR Code (frente):', {
-                              originalSize: { width: fabricImage.width, height: fabricImage.height },
-                              placeholderSize: { width: targetWidth, height: targetHeight },
-                              placeholderScale: { scaleX: placeholderScaleX, scaleY: placeholderScaleY },
-                              finalSize: { width: finalWidth, height: finalHeight },
-                              calculatedScale: { scaleX, scaleY },
-                              position: { left: position.left, top: position.top }
-                            });
                             
                             fabricImage.set({
                               left: position.left || obj.left,
@@ -417,12 +361,10 @@ export const useCertificateViewer = (
                             // Adicionar ao canvas
                             frontCanvas.add(fabricImage);
                             frontCanvas.renderAll();
-                            console.log('✅ QR Code adicionado ao canvas (frente), objetos no canvas:', frontCanvas.getObjects().length);
                             
                             // Forçar renderização adicional
                             setTimeout(() => {
                               frontCanvas.renderAll();
-                              console.log('🔄 Re-renderização do QR Code (frente)');
                             }, 100);
                             
                             resolve();
@@ -446,9 +388,7 @@ export const useCertificateViewer = (
                 
                 // Aguardar todos os QR codes serem processados
                 if (qrPromises.length > 0) {
-                  console.log(`⏳ Aguardando ${qrPromises.length} QR codes serem processados...`);
                   await Promise.all(qrPromises);
-                  console.log('✅ Todos os QR codes foram processados');
                 }
                 
                 // Configurar objetos como não editáveis e corrigir fontes
@@ -476,7 +416,6 @@ export const useCertificateViewer = (
                       obj.set('text', originalText);
                     }
                     
-                    console.log('🔤 Fonte Bebas Neue aplicada ao texto:', originalText?.substring(0, 20));
                   }
                   
                   const uniqueId = `viewer_${obj.type}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
@@ -488,15 +427,6 @@ export const useCertificateViewer = (
                 frontCanvas.requestRenderAll();
                 setTimeout(() => frontCanvas.requestRenderAll(), 100);
                 
-                console.log('🎉 Canvas frente carregado com sucesso', {
-                  objects: frontCanvas.getObjects().length,
-                  zoom: frontCanvas.getZoom(),
-                  dimensions: { 
-                    width: frontCanvas.getWidth(), 
-                    height: frontCanvas.getHeight() 
-                  },
-                  objectTypes: frontCanvas.getObjects().map((o: any) => o.type)
-                });
                 
                 resolve();
               }).catch((error: any) => {
@@ -529,10 +459,6 @@ export const useCertificateViewer = (
                 ? JSON.parse(processedJsonBack) 
                 : processedJsonBack;
               
-              console.log('📋 JSON do verso a ser carregado:', {
-                version: jsonToLoad.version,
-                objectCount: jsonToLoad.objects?.length
-              });
 
               // Primeiro, adicionar um retângulo branco de background
               // Detectar orientação baseada nas dimensões
@@ -577,7 +503,6 @@ export const useCertificateViewer = (
               }
               
               backCanvas.loadFromJSON(jsonToLoad).then(async () => {
-                console.log('✅ JSON do verso carregado no canvas');
                 
                 // Processar placeholders de QR Code no verso também
                 const backObjects = backCanvas.getObjects();
@@ -587,7 +512,6 @@ export const useCertificateViewer = (
                   const obj = backObjects[i] as any;
                   
                   if (obj.isQRCodePlaceholder && obj.qrCodeName) {
-                    console.log('🔲 Processando QR Code placeholder (verso):', obj.qrCodeName);
                     
                     const certificateId = data.certificateId || obj.certificateId || 'CERT-001';
                     const validationUrl = `${window.location.origin}/certificados/${certificateId}`;
@@ -607,16 +531,13 @@ export const useCertificateViewer = (
                           }
                         });
                         
-                        console.log('📸 QR Code Data URL gerado (verso):', qrDataUrl.substring(0, 50) + '...');
                         
                         const position = obj.preservedPosition || obj;
                         
                         await new Promise<void>((resolve, reject) => {
-                          console.log('🔧 Tentando criar fabric.Image do QR Code...');
                           
                           const img = new Image();
                           img.onload = () => {
-                            console.log('✅ Imagem HTML carregada:', { width: img.width, height: img.height });
                             
                             const fabricImage = new fabric.Image(img);
                             
@@ -637,14 +558,6 @@ export const useCertificateViewer = (
                             const scaleX = finalWidth / (fabricImage.width || 200);
                             const scaleY = finalHeight / (fabricImage.height || 200);
                             
-                            console.log('📏 Configurando QR Code (verso):', {
-                              originalSize: { width: fabricImage.width, height: fabricImage.height },
-                              placeholderSize: { width: targetWidth, height: targetHeight },
-                              placeholderScale: { scaleX: placeholderScaleX, scaleY: placeholderScaleY },
-                              finalSize: { width: finalWidth, height: finalHeight },
-                              calculatedScale: { scaleX, scaleY },
-                              position: { left: position.left, top: position.top }
-                            });
                             
                             fabricImage.set({
                               left: position.left || obj.left,
@@ -660,12 +573,10 @@ export const useCertificateViewer = (
                             
                             backCanvas.add(fabricImage);
                             backCanvas.renderAll();
-                            console.log('✅ QR Code adicionado ao verso, objetos no canvas:', backCanvas.getObjects().length);
                             
                             // Forçar renderização adicional
                             setTimeout(() => {
                               backCanvas.renderAll();
-                              console.log('🔄 Re-renderização do QR Code');
                             }, 100);
                             
                             resolve();
@@ -689,9 +600,7 @@ export const useCertificateViewer = (
                 
                 // Aguardar todos os QR codes do verso serem processados
                 if (backQrPromises.length > 0) {
-                  console.log(`⏳ Aguardando ${backQrPromises.length} QR codes do verso serem processados...`);
                   await Promise.all(backQrPromises);
-                  console.log('✅ Todos os QR codes do verso foram processados');
                 }
                 
                 backCanvas.getObjects().forEach((obj: any) => {
@@ -718,7 +627,6 @@ export const useCertificateViewer = (
                       obj.set('text', originalText);
                     }
                     
-                    console.log('🔤 Fonte Bebas Neue aplicada ao texto (verso):', originalText?.substring(0, 20));
                   }
                   
                   const uniqueId = `viewer_${obj.type}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
@@ -730,14 +638,6 @@ export const useCertificateViewer = (
                 backCanvas.requestRenderAll();
                 setTimeout(() => backCanvas.requestRenderAll(), 100);
                 
-                console.log('Canvas verso carregado com sucesso', {
-                  objects: backCanvas.getObjects().length,
-                  zoom: backCanvas.getZoom(),
-                  dimensions: { 
-                    width: backCanvas.getWidth(), 
-                    height: backCanvas.getHeight() 
-                  }
-                });
                 
                 resolve();
               }).catch((error: any) => {
@@ -763,6 +663,9 @@ export const useCertificateViewer = (
     }
 
     setIsExporting(true);
+    
+    // Delay maior para garantir que o estado seja renderizado e a animação comece
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
       const isLandscape = pages[0].orientation === 'landscape';
@@ -778,6 +681,11 @@ export const useCertificateViewer = (
       });
 
       for (let i = 0; i < pages.length; i++) {
+        // Pequeno delay entre páginas para não bloquear a thread
+        if (i > 0) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
         const page = pages[i];
         const canvasRef = canvasRefs.current.get(page.id);
         
@@ -802,10 +710,9 @@ export const useCertificateViewer = (
           const originalWidth = canvas.getWidth();
           const originalHeight = canvas.getHeight();
           
-          // Definir dimensões A4 em pixels para alta resolução (300 DPI)
-          // A4: 210mm x 297mm
-          // Em 300 DPI: 2480 x 3508 pixels (portrait) ou 3508 x 2480 (landscape)
-          const targetDPI = 300;
+          // Definir dimensões A4 em pixels para alta resolução
+          // Reduzindo para 150 DPI para evitar zoom excessivo
+          const targetDPI = 150;
           const mmToInch = 25.4;
           const a4WidthMM = isLandscape ? 297 : 210;
           const a4HeightMM = isLandscape ? 210 : 297;
@@ -817,7 +724,8 @@ export const useCertificateViewer = (
           const baseHeight = isLandscape ? 595 : 842;
           const zoomFactorWidth = targetWidth / baseWidth;
           const zoomFactorHeight = targetHeight / baseHeight;
-          const targetZoom = Math.min(zoomFactorWidth, zoomFactorHeight);
+          // Limitar o zoom máximo para evitar problemas
+          const targetZoom = Math.min(zoomFactorWidth, zoomFactorHeight, 3);
           
           // Aplicar zoom temporariamente para alta resolução
           canvas.setZoom(targetZoom);
@@ -827,7 +735,7 @@ export const useCertificateViewer = (
           });
           canvas.renderAll();
           
-          // Gerar imagem em alta resolução
+          // Gerar imagem em alta resolução IMEDIATAMENTE após aplicar o zoom
           const dataURL = canvas.toDataURL({
             format: 'png',
             quality: 1.0, // Máxima qualidade
@@ -835,13 +743,16 @@ export const useCertificateViewer = (
             enableRetinaScaling: false // Desabilitar scaling adicional
           });
           
-          // Restaurar zoom e dimensões originais
+          // Restaurar zoom e dimensões originais IMEDIATAMENTE após gerar a imagem
           canvas.setZoom(originalZoom);
           canvas.setDimensions({
             width: originalWidth,
             height: originalHeight
           });
           canvas.renderAll();
+          
+          // Pequeno delay APÓS restaurar para permitir que a UI respire
+          await new Promise(resolve => setTimeout(resolve, 10));
           
           const pageWidth = pdf.internal.pageSize.getWidth();
           const pageHeight = pdf.internal.pageSize.getHeight();

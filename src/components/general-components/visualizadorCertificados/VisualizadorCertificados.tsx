@@ -75,7 +75,6 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
           // Aguardar carregamento com timeout
           await new Promise((resolve) => {
             bebasLink.onload = () => {
-              console.log('✅ Link Bebas Neue carregado');
               resolve(true);
             };
             bebasLink.onerror = () => {
@@ -83,7 +82,6 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
               resolve(false);
             };
             setTimeout(() => {
-              console.warn('⏱️ Timeout ao carregar Bebas Neue');
               resolve(false);
             }, 3000);
           });
@@ -163,11 +161,9 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
                   await document.fonts.load(variation, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
                   const loaded = document.fonts.check(variation, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
                   if (loaded) {
-                    console.log('✅ Bebas Neue carregada com sucesso:', variation);
                     break;
                   }
                 } catch (e) {
-                  console.warn('⚠️ Tentativa de carregar Bebas Neue falhou:', variation, e);
                 }
               }
               
@@ -200,7 +196,6 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
               await document.fonts.load(testString, 'Test');
               return document.fonts.check(testString, 'Test');
             } catch (error) {
-              console.warn(`⚠️ Erro ao carregar fonte ${fontFamily}:`, error);
               return true; // Não bloquear por erro
             }
           });
@@ -220,7 +215,6 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
         }
         
         // Só marcar como carregado após todas as verificações
-        console.log('🎉 Processo de carregamento de fontes finalizado');
         setFontsLoaded(true);
       } catch (error) {
         console.error('Erro no carregamento de fontes:', error);
@@ -233,13 +227,6 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
 
   // Registrar canvas refs
   const handleCanvasReady = useCallback((pageId: string, canvas: fabric.Canvas) => {
-    console.log('🎨 Canvas pronto para página:', pageId, {
-      canvas: canvas,
-      width: canvas.getWidth(),
-      height: canvas.getHeight(),
-      zoom: canvas.getZoom(),
-      objects: canvas.getObjects().length
-    });
     
     // Criar um wrapper para manter compatibilidade com o hook
     const canvasWrapper = {
@@ -265,32 +252,19 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
     const allCanvasReady = pages.length > 0 && 
                           pages.every(page => canvasReady.has(page.id));
     
-    console.log('🔄 Verificando condições para carregar dados:', {
-      hasProcessedData: !!processedCanvasData,
-      fontsLoaded,
-      pagesLength: pages.length,
-      canvasReadyIds: Array.from(canvasReady),
-      allCanvasReady,
-      dataLoaded,
-      processedCanvasData
-    });
     
     // Carregar dados apenas uma vez quando todas as condições forem atendidas
     if (processedCanvasData && fontsLoaded && allCanvasReady && !dataLoaded) {
-      console.log('✅ Todas as condições atendidas, iniciando carregamento...');
-      console.log('📦 ProcessedCanvasData:', processedCanvasData);
-      console.log('🎨 Canvas refs:', Array.from(canvasReady));
       
       setDataLoaded(true); // Marcar como carregado ANTES de chamar loadCanvasData
       
       // Chamar loadCanvasData imediatamente
-      console.log('🚀 Chamando loadCanvasData AGORA!');
       loadCanvasData(processedCanvasData);
     }
   }, [processedCanvasData, fontsLoaded, pages, canvasReady, dataLoaded, loadCanvasData]);
 
-  const handleDownloadPDF = () => {
-    exportToPDF();
+  const handleDownloadPDF = async () => {
+    await exportToPDF();
     onDownloadPDF?.();
   };
 
@@ -386,18 +360,6 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
     // Converter para porcentagem e limitar entre 10% e 200%
     const zoomPercentage = Math.max(10, Math.min(200, scale * 100));
     
-    console.log('📐 Zoom calculado:', {
-      containerSize,
-      hasBackPage,
-      certificateOrientation,
-      baseWidth,
-      baseHeight,
-      scale,
-      zoomPercentage,
-      availableWidth,
-      availableHeight,
-      isMobile
-    });
     
     return zoomPercentage;
   }, [containerSize, hasBackPage, zoom, pages, isMobile]);

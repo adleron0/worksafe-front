@@ -42,13 +42,6 @@ const CertificateCanvas = forwardRef<CertificateCanvasRef, CertificateCanvasInte
     const zoomScale = customZoom ? customZoom / 100 : zoomRef.current / 100;
     const finalScale = zoomScale;
     
-    console.log('🔍 Atualizando zoom do canvas:', {
-      zoomScale,
-      finalScale,
-      customZoom,
-      zoomRef: zoomRef.current,
-      orientation: orient
-    });
     
     const a4Width = 842;
     const a4Height = 595;
@@ -83,16 +76,9 @@ const CertificateCanvas = forwardRef<CertificateCanvasRef, CertificateCanvasInte
   useEffect(() => {
     // Prevenir múltiplas inicializações
     if (fabricCanvasRef.current) {
-      console.log('⚠️ Canvas já inicializado para', props.pageId);
       return;
     }
     
-    console.log('🎆 Inicializando canvas:', {
-      hasCanvasRef: !!canvasRef.current,
-      hasFabricCanvas: !!fabricCanvasRef.current,
-      pageId: props.pageId,
-      orientation
-    });
     
     if (canvasRef.current) {
       const canvas = new fabric.Canvas(canvasRef.current, {
@@ -109,7 +95,6 @@ const CertificateCanvas = forwardRef<CertificateCanvasRef, CertificateCanvasInte
       });
       
       fabricCanvasRef.current = canvas;
-      console.log('✅ Canvas Fabric.js criado para', props.pageId);
       
       // Não adicionar background por enquanto para ver se os objetos aparecem
       // O background pode estar cobrindo os objetos carregados
@@ -124,20 +109,10 @@ const CertificateCanvas = forwardRef<CertificateCanvasRef, CertificateCanvasInte
       canvas.moveCursor = 'default';
       
       // Notificar que o canvas está pronto APÓS a criação
-      console.log('📣 Canvas criado, notificando:', props.pageId);
       
       // Pequeno delay para garantir que o canvas está totalmente pronto
       setTimeout(() => {
         if (onCanvasReady && fabricCanvasRef.current) {
-          console.log('🎨 Canvas pronto com objetos:', {
-            pageId: props.pageId,
-            objectCount: fabricCanvasRef.current.getObjects().length,
-            zoom: fabricCanvasRef.current.getZoom(),
-            dimensions: {
-              width: fabricCanvasRef.current.getWidth(),
-              height: fabricCanvasRef.current.getHeight()
-            }
-          });
           onCanvasReady(fabricCanvasRef.current);
         }
       }, 100);
@@ -147,7 +122,6 @@ const CertificateCanvas = forwardRef<CertificateCanvasRef, CertificateCanvasInte
     // Cleanup
     return () => {
       if (fabricCanvasRef.current) {
-        console.log('🧹 Limpando canvas:', props.pageId);
         try {
           fabricCanvasRef.current.dispose();
         } catch (error) {

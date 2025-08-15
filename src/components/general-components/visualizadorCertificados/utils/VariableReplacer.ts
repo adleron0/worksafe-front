@@ -7,13 +7,11 @@ export class VariableReplacer {
    */
   static replaceInCanvasJSON(jsonData: any, variables: VariableToReplace): any {
     if (!jsonData) {
-      console.warn('⚠️ replaceInCanvasJSON: jsonData é null ou undefined');
       return jsonData;
     }
     
     // Se não há variáveis ou está vazio, retornar JSON original
     if (!variables || Object.keys(variables).length === 0) {
-      console.log('📦 Sem variáveis para substituir, retornando JSON original');
       // Ainda assim, garantir que é um objeto
       if (typeof jsonData === 'string') {
         try {
@@ -31,7 +29,6 @@ export class VariableReplacer {
     if (typeof jsonData === 'string') {
       try {
         processed = JSON.parse(jsonData);
-        console.log('📦 JSON parseado de string para substituição');
       } catch (e) {
         console.error('❌ Erro ao parsear JSON:', e);
         return jsonData;
@@ -40,39 +37,9 @@ export class VariableReplacer {
       processed = JSON.parse(JSON.stringify(jsonData));
     }
     
-    console.log('🔍 Processando substituições:', {
-      objectCount: processed.objects?.length,
-      variables: Object.keys(variables),
-      variablesDetail: variables
-    });
     
     if (processed.objects && Array.isArray(processed.objects)) {
-      // Log dos tipos de objetos antes do processamento
-      console.log('📦 Tipos de objetos no canvas:', 
-        processed.objects.map((obj: any) => ({
-          type: obj.type,
-          hasText: !!obj.text,
-          text: obj.text?.substring(0, 50) + (obj.text?.length > 50 ? '...' : ''),
-          isPlaceholder: obj.isPlaceholder,
-          placeholderName: obj.placeholderName,
-          name: obj.name,
-          hasObjects: !!obj.objects
-        }))
-      );
       
-      // Log detalhado de objetos que são grupos
-      processed.objects.forEach((obj: any, index: number) => {
-        if (obj.type === 'group' || obj.objects) {
-          console.log(`📁 Grupo no índice ${index}:`, {
-            type: obj.type,
-            name: obj.name,
-            isPlaceholder: obj.isPlaceholder,
-            placeholderName: obj.placeholderName,
-            objectCount: obj.objects?.length,
-            keys: Object.keys(obj).filter(k => !['objects'].includes(k))
-          });
-        }
-      });
       
       processed.objects = processed.objects.map((obj: any) => {
         return this.processObject(obj, variables);
@@ -114,51 +81,12 @@ export class VariableReplacer {
   private static processObject(obj: any, variables: VariableToReplace): any {
     const processedObj = { ...obj };
 
-    // Log super detalhado para TODOS os objetos
-    console.log('🔍 Processando objeto:', {
-      type: obj.type,
-      isPlaceholder: obj.isPlaceholder,
-      placeholderName: obj.placeholderName,
-      name: obj.name,
-      id: obj.id,
-      __uniqueID: obj.__uniqueID,
-      hasObjects: !!obj.objects,
-      objectCount: obj.objects?.length
-    });
 
-    // Log para verificar propriedades especiais do objeto
-    if (obj.isPlaceholder || obj.placeholderName || obj.placeholderFor || obj.name?.includes('placeholder')) {
-      console.log('🎯 ENCONTREI UM PLACEHOLDER!:', {
-        type: obj.type,
-        isPlaceholder: obj.isPlaceholder,
-        placeholderName: obj.placeholderName,
-        placeholderFor: obj.placeholderFor,
-        name: obj.name,
-        allKeys: Object.keys(obj).slice(0, 20), // Primeiras 20 chaves
-        variaveisDisponiveis: Object.keys(variables)
-      });
-    }
 
     // Substituir em textos (incluindo todos os tipos de texto do Fabric.js)
     if (obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text' || obj.type === 'IText' || obj.type === 'Text' || obj.type === 'Textbox') {
       if (obj.text && typeof obj.text === 'string') {
-        const originalText = obj.text;
         processedObj.text = this.replaceVariables(obj.text, variables);
-        
-        // Log para debug
-        if (originalText !== processedObj.text) {
-          console.log('✅ Substituição realizada:', {
-            tipo: obj.type,
-            original: originalText,
-            novo: processedObj.text
-          });
-        } else if (originalText.includes('{{')) {
-          console.log('⚠️ Placeholder não substituído:', {
-            tipo: obj.type,
-            texto: originalText,
-            variaveisDisponiveis: Object.keys(variables)
-          });
-        }
       }
     }
 
@@ -182,13 +110,6 @@ export class VariableReplacer {
       
       // Se ainda não tem, tentar extrair do texto dentro do grupo
       if (!placeholderName && obj.objects && Array.isArray(obj.objects)) {
-        console.log('📦 Objetos dentro do grupo placeholder:', 
-          obj.objects.map((o: any) => ({
-            type: o.type,
-            text: o.text,
-            fill: o.fill
-          }))
-        );
         
         const textObj = obj.objects.find((o: any) => (o.type === 'text' || o.type === 'i-text' || o.type === 'Text' || o.type === 'IText') && o.text);
         if (textObj && textObj.text) {
@@ -200,7 +121,6 @@ export class VariableReplacer {
             // Ou pode ser apenas o nome direto
             placeholderName = textObj.text.replace('📷', '').trim();
           }
-          console.log('📝 Nome extraído do texto:', placeholderName, 'de', textObj.text);
         }
       }
       
@@ -209,18 +129,9 @@ export class VariableReplacer {
         const idParts = obj.__uniqueID.split('_');
         if (idParts[0] === 'placeholder' && idParts.length >= 2) {
           placeholderName = idParts[1];
-          console.log('📝 Nome extraído do __uniqueID:', placeholderName);
         }
       }
       
-      console.log('🖼️ Placeholder de imagem encontrado:', {
-        placeholderName,
-        originalPlaceholderName: obj.placeholderName,
-        id: obj.id,
-        type: obj.type,
-        placeholderType: obj.placeholderType,
-        variaveisDisponiveis: Object.keys(variables)
-      });
       
       // Verificar se é um placeholder de QR Code
       // Normalizar o nome removendo espaços e convertendo para lowercase
@@ -230,7 +141,6 @@ export class VariableReplacer {
                        placeholderName?.toLowerCase().includes('qr code');
       
       if (isQRCode) {
-        console.log('🔲 Placeholder de QR Code detectado:', placeholderName);
         // QR Code será tratado de forma especial - não precisa de variável URL
         // Retornar um marcador especial para ser processado depois
         return {
@@ -251,22 +161,9 @@ export class VariableReplacer {
       
       const variable = variables[placeholderName];
       if (variable && variable.type === 'url' && variable.value) {
-        console.log('✅ Substituindo placeholder de imagem (Group -> Image):', {
-          placeholder: placeholderName,
-          url: variable.value,
-          originalType: obj.type
-        });
         
         // Converter grupo placeholder em imagem real
         // Preservar posição e tamanho do grupo original
-        console.log('📏 Dimensões do grupo original:', {
-          left: obj.left,
-          top: obj.top,
-          width: obj.width,
-          height: obj.height,
-          scaleX: obj.scaleX,
-          scaleY: obj.scaleY
-        });
         
         // Calcular o tamanho final desejado do placeholder
         const placeholderWidth = (obj.width || 200) * (obj.scaleX || 1);
@@ -289,22 +186,6 @@ export class VariableReplacer {
         const placeholderCenterX = obj.left + (placeholderWidth / 2);
         const placeholderCenterY = obj.top + (placeholderHeight / 2);
         
-        console.log('📐 Configuração da imagem:', {
-          placeholderWidth,
-          placeholderHeight,
-          imageUrl: imageUrl,
-          estimatedOriginalHeight,
-          scaleToFitHeight,
-          finalImageHeight: estimatedOriginalHeight * scaleToFitHeight,
-          placeholderCenter: {
-            x: placeholderCenterX,
-            y: placeholderCenterY
-          },
-          placeholderPosition: {
-            left: obj.left,
-            top: obj.top
-          }
-        });
         
         // Criar objeto de imagem compatível com Fabric.js 6.x
         // IMPORTANTE: usar 'Image' com I maiúsculo como visto nos logs
@@ -362,7 +243,6 @@ export class VariableReplacer {
           name: `image_${placeholderName}` // Nome para identificar
         };
         
-        console.log('🖼️ Objeto de imagem criado:', imageObj);
         return imageObj;
       } else {
         console.log('⚠️ Placeholder de imagem não substituído:', {
@@ -434,7 +314,6 @@ export class VariableReplacer {
           matches.forEach((match: string) => {
             const key = match.replace(/[{}]/g, '').trim();
             variables.add(key);
-            console.log('📝 Variável encontrada:', key, 'no tipo:', obj.type);
           });
         }
       }

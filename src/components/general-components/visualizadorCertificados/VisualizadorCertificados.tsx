@@ -4,6 +4,7 @@ import { useCertificateViewer } from './hooks/useCertificateViewer';
 import CertificateCanvas, { CertificateCanvasRef } from './components/CertificateCanvas';
 import DownloadToolbar from './components/DownloadToolbar';
 import * as fabric from 'fabric';
+import { decodeBase64Variables } from '@/utils/decodeBase64Variables';
 
 const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
   certificateData,
@@ -369,7 +370,7 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
       <DownloadToolbar 
         onDownloadPDF={handleDownloadPDF}
         certificateName={certificateData.name}
-        studentName={variableToReplace?.nome_do_aluno?.value || studentData?.nome_do_aluno}
+        studentName={decodeBase64Variables(variableToReplace)?.nome_do_aluno?.value || studentData?.nome_do_aluno}
         isLoading={isExporting}
       />
       

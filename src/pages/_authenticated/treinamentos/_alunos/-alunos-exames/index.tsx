@@ -23,6 +23,7 @@ const List = ({ traineeId }: { traineeId: number }) => {
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
+    active: true,
     show: ['trainee', 'course', 'class'],
     traineeId: traineeId,
     'order-createdAt': 'desc',

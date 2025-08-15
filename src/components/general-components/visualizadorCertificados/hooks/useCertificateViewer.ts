@@ -4,6 +4,7 @@ import jsPDF from 'jspdf';
 import * as fabric from 'fabric';
 import { CertificateData, StudentData, VariableToReplace, ProcessedCanvasData } from '../types';
 import { VariableReplacer } from '../utils/VariableReplacer';
+import { decodeBase64Variables } from '@/utils/decodeBase64Variables';
 
 interface CanvasPage {
   id: string;
@@ -29,10 +30,12 @@ export const useCertificateViewer = (
       
       try {
         
+        // Decodificar variableToReplace se estiver em base64
+        const decodedVariables = decodeBase64Variables(variableToReplace);
+        
         // Determinar qual conjunto de variáveis usar (nova estrutura ou compatibilidade)
-        const variables = variableToReplace || 
+        const variables = decodedVariables || 
           (studentData ? convertStudentDataToVariables(studentData) : {});
-
 
         // Parsear o JSON se for string
         let frontJson;
@@ -183,15 +186,14 @@ export const useCertificateViewer = (
       data = jsonData;
     }
     
-    
     if (data.objects && Array.isArray(data.objects)) {
       data.objects = data.objects.map((obj: any) => {
         // Verificar se é uma imagem (case insensitive)
         if (obj.type && obj.type.toLowerCase() === 'image' && obj.src) {
           const originalSrc = obj.src;
           
-          // Verificar se já tem proxy aplicado (da substituição de variáveis)
-          if (originalSrc.includes('api.allorigins.win')) {
+          // Verificar se já tem proxy aplicado (da substituição de variáveis ou decode)
+          if (originalSrc.includes('api.allorigins.win') || originalSrc.includes('/images/proxy')) {
             return obj;
           }
           
@@ -765,8 +767,9 @@ export const useCertificateViewer = (
         }
       }
 
-      // Tentar obter nome do aluno das variáveis
-      const studentName = variableToReplace?.nome_do_aluno?.value || 
+      // Tentar obter nome do aluno das variáveis (decodificando se necessário)
+      const decodedVariables = decodeBase64Variables(variableToReplace);
+      const studentName = decodedVariables?.nome_do_aluno?.value || 
                          studentData?.nome_do_aluno || 
                          'certificado';
       

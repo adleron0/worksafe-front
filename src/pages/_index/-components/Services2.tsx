@@ -118,6 +118,7 @@ const Services2: React.FC<Services2Props> = ({ handleWhatsApp, preloadedData }) 
                       className="absolute inset-0 h-full w-full object-cover transition-transform ease-in-out duration-500 hover:scale-105"
                       width={400}
                       height={300}
+                      loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-60"></div>
                   </div>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import RotatingText from "@/components/ui-bits/RotatingText/RotatingText";
 import Icon from "@/components/general-components/Icon";
@@ -11,6 +11,11 @@ interface HeroProps {
 }
 
 const Hero: React.FC<HeroProps> = () => {
+  // Estados para controle do vídeo
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
   // Configurações WhatsApp
   const whatsappNumber1 = "+5581989479259";
 
@@ -22,15 +27,41 @@ const Hero: React.FC<HeroProps> = () => {
     window.open(url, "_blank");
   };
 
+  // Carregar o vídeo imediatamente quando o componente montar
+  useEffect(() => {
+    // Como o Hero é o primeiro componente visível, vamos carregar o vídeo imediatamente
+    setVideoLoaded(true);
+    
+    // Tentar iniciar o vídeo após um pequeno delay
+    const timer = setTimeout(() => {
+      if (videoRef.current && videoLoaded) {
+        videoRef.current.play().catch(() => {
+          console.log('Autoplay failed, user interaction required');
+        });
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <section className="relative h-100 overflow-hidden">
+      {/* Fallback background gradient while video loads */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" />
+      
       {/* Video background */}
       <video
-        className="absolute inset-0 w-full h-full object-cover"
+        ref={videoRef}
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+          !videoError ? 'opacity-100' : 'opacity-0'
+        }`}
         autoPlay
         muted
         loop
         playsInline
+        preload="auto"
+        onCanPlay={() => setVideoLoaded(true)}
+        onError={() => setVideoError(true)}
       >
         <source src={HeroVideo} type="video/mp4" />
         Seu navegador não suporta a tag de vídeo.

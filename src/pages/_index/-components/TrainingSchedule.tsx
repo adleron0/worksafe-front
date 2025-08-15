@@ -141,14 +141,14 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
   };
 
   return (
-    <section id="treinamentos" className="pt-10 pb-20 md:pt-12 bg-white">
+    <section className="pt-10 pb-20 md:pt-12 bg-white">
       <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="section-title text-gray-800 text-3xl md:text-5xl font-bold md:pb-4">
             Calendário de Cursos
           </h2>
-          <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto">
+          <p id="treinamentos" className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto">
             Capacitação profissional com os melhores instrutores do mercado
           </p>
         </div>
@@ -250,6 +250,7 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
                                   src={course.imageUrl} 
                                   alt={course.name}
                                   className="w-full h-full object-cover rounded-lg"
+                                  loading="lazy"
                                 />
                               </div>
                             )}

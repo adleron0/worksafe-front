@@ -169,6 +169,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                     <a
                       onClick={() => {
                         setIsDropdownOpen(false);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                         navigate({to: `/certificados`});
                       }}
                       className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
@@ -313,6 +314,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                         onClick={() => {
                           setIsMenuOpen(false);
                           setIsMobileDropdownOpen(false);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
                           navigate({to: `/certificados`});
                         }}
                         className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-light transition-colors cursor-pointer"
@@ -324,7 +326,11 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                         onClick={() => {
                           setIsMenuOpen(false);
                           setIsMobileDropdownOpen(false);
-                          navigate({to: `/treinamento`});
+                          const element = document.getElementById('treinamentos');
+                          if (element) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }
+                          navigate({to: `/`});
                         }}
                         className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-light transition-colors cursor-pointer"
                       >

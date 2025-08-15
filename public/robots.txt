@@ -1,6 +1,7 @@
 User-agent: *
 Disallow: /_authenticated/
 Disallow: /prova/
+Disallow: /certificados/
 Allow: /
 
 Sitemap: https://seudominio.com.br/sitemap.xml

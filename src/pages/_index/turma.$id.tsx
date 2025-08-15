@@ -555,6 +555,8 @@ Turma: ${turma?.landingPagesDates}`;
                     src={turma.imageUrl}
                     alt={turma.name}
                     className="w-full h-[350px] sm:h-[400px] lg:h-[500px] object-cover"
+                    loading="eager"
+                    fetchPriority="high"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                 </div>
@@ -741,12 +743,14 @@ Turma: ${turma?.landingPagesDates}`;
                         allowFullScreen
                         className="absolute inset-0 w-full h-full"
                         style={{ border: 0 }}
+                        loading="lazy"
                       />
                     ) : (
                       <video
                         controls
                         className="w-full h-full"
                         poster={turma.imageUrl}
+                        preload="metadata"
                       >
                         <source src={turma.videoUrl} type="video/mp4" />
                         Seu navegador não suporta vídeos HTML5.
@@ -933,6 +937,7 @@ Turma: ${turma?.landingPagesDates}`;
                                         src={instructor.imageUrl}
                                         alt={instructor.name}
                                         className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-primary-light/20"
+                                        loading="lazy"
                                       />
                                     ) : (
                                       <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-primary-light/10 to-primary-light/20 flex items-center justify-center">

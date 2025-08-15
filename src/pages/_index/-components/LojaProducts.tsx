@@ -56,6 +56,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ product }) => {
           className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
           width={400}
           height={400}
+          loading="lazy"
         />
       </div>
     );
@@ -76,6 +77,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ product }) => {
                     className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
                     width={400}
                     height={400}
+                    loading="lazy"
                   />
                 </CardContent>
               </div>

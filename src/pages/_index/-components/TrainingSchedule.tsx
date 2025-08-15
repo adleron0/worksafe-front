@@ -250,6 +250,7 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
                                   src={course.imageUrl} 
                                   alt={course.name}
                                   className="w-full h-full object-cover rounded-lg"
+                                  loading="lazy"
                                 />
                               </div>
                             )}

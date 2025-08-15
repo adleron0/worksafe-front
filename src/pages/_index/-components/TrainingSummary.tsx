@@ -328,6 +328,7 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = () => {
                               src={course.imageUrl}
                               alt={course.name}
                               className="w-full h-full object-cover"
+                              loading="lazy"
                             />
                             
                             {/* Dark overlay for full courses */}

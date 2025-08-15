@@ -1448,7 +1448,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       
       {/* Canvas container */}
       <div 
-        className={`flex-1 min-h-0 border rounded-lg bg-white dark:bg-gray-800 p-4 overflow-auto relative transition-colors ${
+        className={`flex-1 min-h-0 border rounded-lg bg-muted dark:bg-gray-800 p-4 overflow-auto relative transition-colors ${
           isDragging ? 'border-primary border-2' : ''
         } ${!isActive ? 'opacity-0 pointer-events-none' : ''}`}
         data-page-active={isActive}

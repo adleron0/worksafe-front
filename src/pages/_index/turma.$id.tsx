@@ -1230,8 +1230,8 @@ Turma: ${turma?.landingPagesDates}`;
                     </p>
                   </div>
 
-                  <Card className="p-6 sm:p-8 border-0 shadow-xl">
-              <form onSubmit={handleSubmit} className="space-y-6">
+                  <Card className="p-6 sm:p-8 border-0 shadow-xl" style={{ backgroundColor: '#FFFFFF' }}>
+              <form onSubmit={handleSubmit} className="space-y-6" style={{ colorScheme: 'light' }}>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-gray-700 font-medium">
@@ -1246,7 +1246,8 @@ Turma: ${turma?.landingPagesDates}`;
                         placeholder="Seu nome completo"
                         value={formData.name}
                         onValueChange={(name, value) => setFormData({ ...formData, [name]: value })}
-                        className="pl-10 border-gray-300 focus:border-primary-light"
+                        className="pl-10 border-gray-300 focus:border-primary-light bg-white text-gray-900"
+                        style={{ backgroundColor: '#FFFFFF', color: '#111827' }}
                         required
                       />
                     </div>
@@ -1265,7 +1266,8 @@ Turma: ${turma?.landingPagesDates}`;
                         placeholder="000.000.000-00"
                         value={formData.cpf}
                         onValueChange={(name, value) => setFormData({ ...formData, [name]: value })}
-                        className="pl-10 border-gray-300 focus:border-primary-light"
+                        className="pl-10 border-gray-300 focus:border-primary-light bg-white text-gray-900"
+                        style={{ backgroundColor: '#FFFFFF', color: '#111827' }}
                         required
                       />
                     </div>
@@ -1284,7 +1286,8 @@ Turma: ${turma?.landingPagesDates}`;
                         placeholder="seu@email.com"
                         value={formData.email}
                         onValueChange={(name, value) => setFormData({ ...formData, [name]: value })}
-                        className="pl-10 border-gray-300 focus:border-primary-light"
+                        className="pl-10 border-gray-300 focus:border-primary-light bg-white text-gray-900"
+                        style={{ backgroundColor: '#FFFFFF', color: '#111827' }}
                         required
                       />
                     </div>
@@ -1303,7 +1306,8 @@ Turma: ${turma?.landingPagesDates}`;
                         placeholder="(81) 9 9999-9999"
                         value={formData.phone}
                         onValueChange={(name, value) => setFormData({ ...formData, [name]: value })}
-                        className="pl-10 border-gray-300 focus:border-primary-light"
+                        className="pl-10 border-gray-300 focus:border-primary-light bg-white text-gray-900"
+                        style={{ backgroundColor: '#FFFFFF', color: '#111827' }}
                         required
                       />
                     </div>
@@ -1322,7 +1326,8 @@ Turma: ${turma?.landingPagesDates}`;
                         placeholder="Nome da empresa"
                         value={formData.workedAt}
                         onValueChange={(name, value) => setFormData({ ...formData, [name]: value })}
-                        className="pl-10 border-gray-300 focus:border-primary-light"
+                        className="pl-10 border-gray-300 focus:border-primary-light bg-white text-gray-900"
+                        style={{ backgroundColor: '#FFFFFF', color: '#111827' }}
                       />
                     </div>
                   </div>
@@ -1340,7 +1345,8 @@ Turma: ${turma?.landingPagesDates}`;
                         placeholder="Sua profissão"
                         value={formData.occupation}
                         onValueChange={(name, value) => setFormData({ ...formData, [name]: value })}
-                        className="pl-10 border-gray-300 focus:border-primary-light"
+                        className="pl-10 border-gray-300 focus:border-primary-light bg-white text-gray-900"
+                        style={{ backgroundColor: '#FFFFFF', color: '#111827' }}
                       />
                     </div>
                   </div>
@@ -1385,7 +1391,8 @@ Turma: ${turma?.landingPagesDates}`;
                         setCaptcha({ ...captcha, answer: e.target.value });
                         setCaptchaError(false);
                       }}
-                      className={`h-10 flex-1 sm:flex-initial sm:w-20 text-center ${captchaError ? 'border-red-500' : 'border-gray-300'} focus:border-primary-light`}
+                      className={`h-10 flex-1 sm:flex-initial sm:w-20 text-center bg-white text-gray-900 ${captchaError ? 'border-red-500' : 'border-gray-300'} focus:border-primary-light`}
+                      style={{ backgroundColor: '#FFFFFF', color: '#111827' }}
                       required
                     />
                   </div>

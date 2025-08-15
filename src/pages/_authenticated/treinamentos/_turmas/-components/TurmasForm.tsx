@@ -430,6 +430,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     queryKey: [`listCertificates`, dataForm.courseId],
     queryFn: async () => {
       const params = [
+        { key: 'active', value: true },
         { key: 'courseId', value: dataForm.courseId },
         { key: 'limit', value: 999 },
         { key: 'order-name', value: 'asc' },

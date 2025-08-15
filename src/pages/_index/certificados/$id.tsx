@@ -10,6 +10,7 @@ import { useState } from "react";
 import VisualizadorCertificados from "@/components/general-components/visualizadorCertificados";
 import NavBar from "../-components/NavBar";
 import Footer from "../-components/Footer";
+import { decodeBase64Variables } from "@/utils/decodeBase64Variables";
 
 export const Route = createFileRoute("/_index/certificados/$id")({
   component: CertificadoPublico,
@@ -178,8 +179,8 @@ function CertificadoPublico() {
 
   const validationStatus = getValidationStatus();
 
-  // Extrair informações do variableToReplace
-  const variables = certificate?.variableToReplace || {};
+  // Extrair informações do variableToReplace e decodificar se necessário
+  const variables = decodeBase64Variables(certificate?.variableToReplace) || {};
 
   return (
     <>
@@ -323,7 +324,7 @@ function CertificadoPublico() {
                     fabricJsonBack: certificate.fabricJsonBack,
                     certificateId: String(certificate.id)
                   }}
-                  variableToReplace={certificate.variableToReplace || {}}
+                  variableToReplace={variables}
                   zoom={50}
                 />
               </div>

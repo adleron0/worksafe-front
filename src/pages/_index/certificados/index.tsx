@@ -1,15 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getPublic } from "@/services/publicApi";
-import { Loader2, Award, Calendar, User, ArrowRight, GraduationCap } from "lucide-react";
+import { get } from "@/services/api";
+import { Loader2, Award, Calendar, User, ArrowRight, GraduationCap, Shield, Filter, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import NavBar from "../-components/NavBar";
 import Footer from "../-components/Footer";
 import Pagination from "@/components/general-components/Pagination";
+import Select from "@/components/general-components/Select";
+import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/hooks/useDebounce";
+import { decodeBase64Variables } from "@/utils/decodeBase64Variables";
 
 export const Route = createFileRoute("/_index/certificados/")({
   component: CertificadosPublicos,
@@ -38,6 +43,22 @@ interface ICertificateResponse {
   rows: ICertificate[];
 }
 
+// Interface para curso
+interface ICourse {
+  id: number;
+  name: string;
+  icon?: string;
+  color?: string;
+  active: boolean;
+}
+
+// Tipo para compatibilidade com Select
+type CourseOption = {
+  id: number | string;
+  name: string;
+  [key: string]: string | number;
+}
+
 // Tipo para itens do carrinho
 type CartItem = {
   id: number;
@@ -50,6 +71,9 @@ function CertificadosPublicos() {
   const navigate = useNavigate();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [page, setPage] = useState(0);
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("all");
+  const [searchName, setSearchName] = useState<string>("");
+  const debouncedSearchName = useDebounce(searchName, 500);
   const limit = 12;
 
   const handleWhatsApp = (message?: string) => {
@@ -59,26 +83,62 @@ function CertificadosPublicos() {
     window.open(url, "_blank");
   };
 
+  // Buscar cursos disponíveis
+  const { data: courses = [] } = useQuery<ICourse[]>({
+    queryKey: ["courses-list"],
+    queryFn: async () => {
+      const params = [
+        { key: 'active', value: true },
+        { key: 'limit', value: 100 },
+        { key: 'companyId', value: 1 },
+      ];
+      const response = await get<ICourse[]>('courses', 'list', params);
+      return response || [];
+    }
+  });
+
   const { 
     data: certificatesData, 
     isLoading,
     isError,
     error
   } = useQuery<ICertificateResponse | undefined>({
-    queryKey: [`certificates-list-${page}`],
+    queryKey: [`certificates-list-${page}-${selectedCourseId}-${debouncedSearchName}`],
     queryFn: async () => {
       const params = [
         { key: 'active', value: 'true' },
         { key: 'order-createdAt', value: 'desc' },
         { key: 'page', value: page.toString() },
-        { key: 'limit', value: limit.toString() }
+        { key: 'limit', value: limit.toString() },
+        { key: 'show', value: ['trainee'] },
       ];
+      
+      // Adicionar filtro de curso se selecionado (exceto quando for "all")
+      if (selectedCourseId && selectedCourseId !== 'all') {
+        params.push({ key: 'courseId', value: selectedCourseId });
+      }
+      
+      // Adicionar filtro de nome se houver texto de busca
+      if (debouncedSearchName) {
+        params.push({ key: 'like-trainee.name', value: debouncedSearchName });
+      }
       
       const response = await getPublic('trainee-certificate', '', params);
       return response as ICertificateResponse;
     },
     retry: 1
   });
+
+  // Resetar página ao mudar o filtro
+  const handleCourseChange = (_name: string, value: string | string[]) => {
+    setSelectedCourseId(typeof value === 'string' ? value : 'all');
+    setPage(0);
+  };
+
+  // Resetar página quando o texto de busca mudar
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedSearchName]);
 
   const formatDate = (date: string | Date | undefined) => {
     if (!date) return "—";
@@ -148,24 +208,88 @@ function CertificadosPublicos() {
       <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
       <div className="min-h-screen bg-white pt-24 pb-12 px-4">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-10">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="p-3 bg-primary-light/10 rounded-full">
-                <GraduationCap className="w-8 h-8 text-primary-light" />
+          {/* Header Simples */}
+          <div className="mb-8">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Shield className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Profissionais Certificados
+                </h1>
+                <p className="text-sm text-gray-500">
+                  Encontre profissionais qualificados pela WorkSafe
+                </p>
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Certificados Emitidos
-            </h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Consulte os certificados emitidos pela nossa instituição. 
-              Clique em qualquer certificado para verificar sua autenticidade e visualizar os detalhes completos.
-            </p>
-            {certificatesData?.total && (
-              <p className="text-sm text-gray-500 mt-2">
-                Total de {certificatesData.total} certificados emitidos
-              </p>
+
+            {/* Filtros */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Filter className="w-4 h-4" />
+                  <span>Filtros:</span>
+                </div>
+                
+                {/* Botão Limpar Todos os Filtros */}
+                {(selectedCourseId !== 'all' || searchName) && (
+                  <button
+                    onClick={() => {
+                      handleCourseChange('courseFilter', 'all');
+                      setSearchName('');
+                    }}
+                    className="text-sm text-gray-500 hover:text-gray-700 underline cursor-pointer"
+                  >
+                    Limpar todos os filtros
+                  </button>
+                )}
+              </div>
+              
+              <div className="flex flex-col lg:flex-row gap-4">
+                {/* Filtro de Curso */}
+                <div className="min-w-[250px]">
+                  <Select
+                    name="courseFilter"
+                    options={[{ id: 'all', name: 'Todos os cursos' } as CourseOption, ...courses.map(c => ({ id: c.id, name: c.name } as CourseOption))]}
+                    state={selectedCourseId}
+                    label="name"
+                    value="id"
+                    placeholder="Selecione um curso"
+                    onChange={handleCourseChange}
+                    disabled={false}
+                  />
+                </div>
+
+                {/* Busca por Nome */}
+                <div className="relative min-w-[250px]">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Buscar por nome do aluno..."
+                    value={searchName}
+                    onChange={(e) => setSearchName(e.target.value)}
+                    className="pl-10 pr-3 py-2"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Contador de resultados */}
+            {certificatesData?.total !== undefined && (
+              <div className="mt-4 text-sm text-gray-600">
+                {(selectedCourseId && selectedCourseId !== 'all') || searchName ? (
+                  <span>
+                    {certificatesData.total} {certificatesData.total === 1 ? 'resultado encontrado' : 'resultados encontrados'}
+                    {selectedCourseId && selectedCourseId !== 'all' && ' para o curso selecionado'}
+                    {searchName && ` com nome contendo "${searchName}"`}
+                  </span>
+                ) : (
+                  <span>
+                    Total de {certificatesData.total} {certificatesData.total === 1 ? 'certificado emitido' : 'certificados emitidos'}
+                  </span>
+                )}
+              </div>
             )}
           </div>
 
@@ -195,7 +319,7 @@ function CertificadosPublicos() {
                 {/* Lista de itens */}
                 <div className="divide-y divide-gray-200">
                   {certificates.map((certificate) => {
-                    const variables = certificate.variableToReplace || {};
+                    const variables = decodeBase64Variables(certificate.variableToReplace) || {};
                     
                     return (
                       <div 

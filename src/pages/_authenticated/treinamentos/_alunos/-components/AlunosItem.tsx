@@ -20,7 +20,7 @@ import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 // Dialog para exames e certificados
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import Dialog from "@/components/general-components/Dialog";
 import AlunosExames from "../-alunos-exames";
 import AlunosCertificados from "../-alunos-certificados";
 
@@ -297,29 +297,31 @@ const AlunosItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
       </div>
       
       {/* Dialog para exibir exames do aluno */}
-      <Dialog open={openExames} onOpenChange={setOpenExames}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <div className="sr-only">
-            <h2>Exames do Aluno</h2>
-            <p>Lista de exames realizados pelo aluno {item.name}</p>
-          </div>
-          <AlunosExames 
-            traineeId={item.id || 0}
-          />
-        </DialogContent>
+      <Dialog 
+        open={openExames} 
+        onOpenChange={setOpenExames}
+        title="Exames do Aluno"
+        description={`Lista de exames realizados pelo aluno ${item.name}`}
+        showBttn={false}
+        showHeader={true}
+      >
+        <AlunosExames 
+          traineeId={item.id || 0}
+        />
       </Dialog>
       
       {/* Dialog para exibir certificados do aluno */}
-      <Dialog open={openCertificados} onOpenChange={setOpenCertificados}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <div className="sr-only">
-            <h2>Certificados do Aluno</h2>
-            <p>Lista de certificados do aluno {item.name}</p>
-          </div>
-          <AlunosCertificados 
-            traineeId={item.id || 0}
-          />
-        </DialogContent>
+      <Dialog 
+        open={openCertificados} 
+        onOpenChange={setOpenCertificados}
+        title="Certificados do Aluno"
+        description={`Lista de certificados do aluno ${item.name}`}
+        showBttn={false}
+        showHeader={true}
+      >
+        <AlunosCertificados 
+          traineeId={item.id || 0}
+        />
       </Dialog>
     </>
   )

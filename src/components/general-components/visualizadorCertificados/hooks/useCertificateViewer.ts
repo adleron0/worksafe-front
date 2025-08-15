@@ -139,7 +139,8 @@ export const useCertificateViewer = (
           fabricJsonFront: frontProcessed,
           fabricJsonBack: backProcessed,
           canvasWidth: certificateData.canvasWidth || 842,
-          canvasHeight: certificateData.canvasHeight || 595
+          canvasHeight: certificateData.canvasHeight || 595,
+          certificateId: certificateData.certificateId
         };
         
         console.log('✅ Dados processados com sucesso:', processedData);
@@ -321,8 +322,134 @@ export const useCertificateViewer = (
                 jsonToLoad.objects.unshift(bgRect.toObject(['name']));
               }
               
-              frontCanvas.loadFromJSON(jsonToLoad).then(() => {
+              frontCanvas.loadFromJSON(jsonToLoad).then(async () => {
                 console.log('✅ JSON carregado no canvas, processando objetos...');
+                
+                // Processar placeholders de QR Code ANTES de configurar como não editáveis
+                const objects = frontCanvas.getObjects();
+                const qrPromises: Promise<void>[] = [];
+                
+                for (let i = 0; i < objects.length; i++) {
+                  const obj = objects[i] as any;
+                  
+                  // Verificar se é um placeholder de QR Code
+                  if (obj.isQRCodePlaceholder && obj.qrCodeName) {
+                    console.log('🔲 Processando QR Code placeholder:', obj.qrCodeName);
+                    
+                    // Obter o ID do certificado
+                    const certificateId = data.certificateId || obj.certificateId || 'CERT-001';
+                    const validationUrl = `${window.location.origin}/certificados/${certificateId}`;
+                    
+                    console.log('📱 URL do QR Code:', validationUrl);
+                    
+                    // Remover o placeholder do canvas
+                    frontCanvas.remove(obj);
+                    
+                    // Criar o QR Code usando a biblioteca QRCode
+                    const qrPromise = (async () => {
+                      try {
+                        const QR = await import('qrcode');
+                        
+                        // Gerar QR Code como Data URL
+                        const qrDataUrl = await QR.toDataURL(validationUrl, {
+                          width: 200,
+                          margin: 1,
+                          errorCorrectionLevel: 'H',
+                          color: {
+                            dark: '#000000',
+                            light: '#FFFFFF'
+                          }
+                        });
+                        
+                        console.log('📸 QR Code Data URL gerado:', qrDataUrl.substring(0, 50) + '...');
+                        
+                        // Criar imagem do QR Code no canvas
+                        const position = obj.preservedPosition || obj;
+                        
+                        // Usar Promise para aguardar carregamento da imagem
+                        await new Promise<void>((resolve, reject) => {
+                          console.log('🔧 Tentando criar fabric.Image do QR Code (frente)...');
+                          
+                          const img = new Image();
+                          img.onload = () => {
+                            console.log('✅ Imagem HTML carregada (frente):', { width: img.width, height: img.height });
+                            
+                            const fabricImage = new fabric.Image(img);
+                            
+                            // Usar as dimensões preservadas do placeholder original
+                            const targetWidth = position.width || 120;
+                            const targetHeight = position.height || 120;
+                            
+                            // Calcular escala baseada nas dimensões do placeholder
+                            // Considerando que o placeholder pode ter sido escalado (scaleX/scaleY)
+                            const placeholderScaleX = position.scaleX || 1;
+                            const placeholderScaleY = position.scaleY || 1;
+                            
+                            // Tamanho final desejado considerando a escala do placeholder
+                            const finalWidth = targetWidth * placeholderScaleX;
+                            const finalHeight = targetHeight * placeholderScaleY;
+                            
+                            // Calcular escala para o QR Code
+                            const scaleX = finalWidth / (fabricImage.width || 200);
+                            const scaleY = finalHeight / (fabricImage.height || 200);
+                            
+                            console.log('📏 Configurando QR Code (frente):', {
+                              originalSize: { width: fabricImage.width, height: fabricImage.height },
+                              placeholderSize: { width: targetWidth, height: targetHeight },
+                              placeholderScale: { scaleX: placeholderScaleX, scaleY: placeholderScaleY },
+                              finalSize: { width: finalWidth, height: finalHeight },
+                              calculatedScale: { scaleX, scaleY },
+                              position: { left: position.left, top: position.top }
+                            });
+                            
+                            fabricImage.set({
+                              left: position.left || obj.left,
+                              top: position.top || obj.top,
+                              scaleX: scaleX,
+                              scaleY: scaleY,
+                              selectable: false,
+                              evented: false,
+                              hasControls: false,
+                              hasBorders: false,
+                              name: `qrcode_${obj.qrCodeName}`
+                            });
+                            
+                            // Adicionar ao canvas
+                            frontCanvas.add(fabricImage);
+                            frontCanvas.renderAll();
+                            console.log('✅ QR Code adicionado ao canvas (frente), objetos no canvas:', frontCanvas.getObjects().length);
+                            
+                            // Forçar renderização adicional
+                            setTimeout(() => {
+                              frontCanvas.renderAll();
+                              console.log('🔄 Re-renderização do QR Code (frente)');
+                            }, 100);
+                            
+                            resolve();
+                          };
+                          
+                          img.onerror = (error) => {
+                            console.error('❌ Erro ao carregar imagem HTML (frente):', error);
+                            reject(error);
+                          };
+                          
+                          img.src = qrDataUrl;
+                        });
+                      } catch (error) {
+                        console.error('❌ Erro ao gerar QR Code:', error);
+                      }
+                    })();
+                    
+                    qrPromises.push(qrPromise);
+                  }
+                }
+                
+                // Aguardar todos os QR codes serem processados
+                if (qrPromises.length > 0) {
+                  console.log(`⏳ Aguardando ${qrPromises.length} QR codes serem processados...`);
+                  await Promise.all(qrPromises);
+                  console.log('✅ Todos os QR codes foram processados');
+                }
                 
                 // Configurar objetos como não editáveis e corrigir fontes
                 frontCanvas.getObjects().forEach((obj: any) => {
@@ -449,8 +576,123 @@ export const useCertificateViewer = (
                 jsonToLoad.objects.unshift(bgRect.toObject(['name']));
               }
               
-              backCanvas.loadFromJSON(jsonToLoad).then(() => {
+              backCanvas.loadFromJSON(jsonToLoad).then(async () => {
                 console.log('✅ JSON do verso carregado no canvas');
+                
+                // Processar placeholders de QR Code no verso também
+                const backObjects = backCanvas.getObjects();
+                const backQrPromises: Promise<void>[] = [];
+                
+                for (let i = 0; i < backObjects.length; i++) {
+                  const obj = backObjects[i] as any;
+                  
+                  if (obj.isQRCodePlaceholder && obj.qrCodeName) {
+                    console.log('🔲 Processando QR Code placeholder (verso):', obj.qrCodeName);
+                    
+                    const certificateId = data.certificateId || obj.certificateId || 'CERT-001';
+                    const validationUrl = `${window.location.origin}/certificados/${certificateId}`;
+                    
+                    backCanvas.remove(obj);
+                    
+                    const qrPromise = (async () => {
+                      try {
+                        const QR = await import('qrcode');
+                        const qrDataUrl = await QR.toDataURL(validationUrl, {
+                          width: 200,
+                          margin: 1,
+                          errorCorrectionLevel: 'H',
+                          color: {
+                            dark: '#000000',
+                            light: '#FFFFFF'
+                          }
+                        });
+                        
+                        console.log('📸 QR Code Data URL gerado (verso):', qrDataUrl.substring(0, 50) + '...');
+                        
+                        const position = obj.preservedPosition || obj;
+                        
+                        await new Promise<void>((resolve, reject) => {
+                          console.log('🔧 Tentando criar fabric.Image do QR Code...');
+                          
+                          const img = new Image();
+                          img.onload = () => {
+                            console.log('✅ Imagem HTML carregada:', { width: img.width, height: img.height });
+                            
+                            const fabricImage = new fabric.Image(img);
+                            
+                            // Usar as dimensões preservadas do placeholder original
+                            const targetWidth = position.width || 120;
+                            const targetHeight = position.height || 120;
+                            
+                            // Calcular escala baseada nas dimensões do placeholder
+                            // Considerando que o placeholder pode ter sido escalado (scaleX/scaleY)
+                            const placeholderScaleX = position.scaleX || 1;
+                            const placeholderScaleY = position.scaleY || 1;
+                            
+                            // Tamanho final desejado considerando a escala do placeholder
+                            const finalWidth = targetWidth * placeholderScaleX;
+                            const finalHeight = targetHeight * placeholderScaleY;
+                            
+                            // Calcular escala para o QR Code
+                            const scaleX = finalWidth / (fabricImage.width || 200);
+                            const scaleY = finalHeight / (fabricImage.height || 200);
+                            
+                            console.log('📏 Configurando QR Code (verso):', {
+                              originalSize: { width: fabricImage.width, height: fabricImage.height },
+                              placeholderSize: { width: targetWidth, height: targetHeight },
+                              placeholderScale: { scaleX: placeholderScaleX, scaleY: placeholderScaleY },
+                              finalSize: { width: finalWidth, height: finalHeight },
+                              calculatedScale: { scaleX, scaleY },
+                              position: { left: position.left, top: position.top }
+                            });
+                            
+                            fabricImage.set({
+                              left: position.left || obj.left,
+                              top: position.top || obj.top,
+                              scaleX: scaleX,
+                              scaleY: scaleY,
+                              selectable: false,
+                              evented: false,
+                              hasControls: false,
+                              hasBorders: false,
+                              name: `qrcode_${obj.qrCodeName}`
+                            });
+                            
+                            backCanvas.add(fabricImage);
+                            backCanvas.renderAll();
+                            console.log('✅ QR Code adicionado ao verso, objetos no canvas:', backCanvas.getObjects().length);
+                            
+                            // Forçar renderização adicional
+                            setTimeout(() => {
+                              backCanvas.renderAll();
+                              console.log('🔄 Re-renderização do QR Code');
+                            }, 100);
+                            
+                            resolve();
+                          };
+                          
+                          img.onerror = (error) => {
+                            console.error('❌ Erro ao carregar imagem HTML:', error);
+                            reject(error);
+                          };
+                          
+                          img.src = qrDataUrl;
+                        });
+                      } catch (error) {
+                        console.error('❌ Erro ao gerar QR Code (verso):', error);
+                      }
+                    })();
+                    
+                    backQrPromises.push(qrPromise);
+                  }
+                }
+                
+                // Aguardar todos os QR codes do verso serem processados
+                if (backQrPromises.length > 0) {
+                  console.log(`⏳ Aguardando ${backQrPromises.length} QR codes do verso serem processados...`);
+                  await Promise.all(backQrPromises);
+                  console.log('✅ Todos os QR codes do verso foram processados');
+                }
                 
                 backCanvas.getObjects().forEach((obj: any) => {
                   obj.set({

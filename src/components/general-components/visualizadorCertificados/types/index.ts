@@ -5,6 +5,7 @@ export interface CertificateData {
   fabricJsonBack?: any | null;
   canvasWidth?: number;
   canvasHeight?: number;
+  certificateId?: string; // ID do certificado para usar no QR Code
 }
 
 // Interface para substituição de variáveis
@@ -44,6 +45,7 @@ export interface ProcessedCanvasData {
   fabricJsonBack?: any | null;
   canvasWidth: number;
   canvasHeight: number;
+  certificateId?: string; // ID do certificado para usar no QR Code
 }
 
 export interface DownloadToolbarProps {

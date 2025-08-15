@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 // import { Input } from '@/components/ui/input';
-import { ImageIcon, User, Edit3, Plus, Info } from 'lucide-react';
+import { User, Edit3, Plus, Info, QrCode } from 'lucide-react';
 
 interface PlaceholderPanelProps {
   onAddPlaceholder: (name: string) => void;
@@ -20,6 +20,15 @@ const PlaceholderPanel: React.FC<PlaceholderPanelProps> = ({
     label: 'Foto do Aluno',
     category: 'aluno',
     icon: User
+  };
+  
+  // Variável de QR Code para validação (fixa)
+  const qrcodeVariable = {
+    name: 'certificado_qrcode',
+    label: 'QR Code de Validação',
+    category: 'validacao',
+    icon: QrCode,
+    description: 'QR Code para validação online do certificado'
   };
   
   // Gerar variáveis de instrutor dinamicamente baseado em instructorCount
@@ -121,7 +130,7 @@ const PlaceholderPanel: React.FC<PlaceholderPanelProps> = ({
           </div>
 
           {/* Assinaturas dos Instrutores */}
-          <div>
+          <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs font-medium text-muted-foreground">Instrutores</h4>
               <Button
@@ -157,6 +166,27 @@ const PlaceholderPanel: React.FC<PlaceholderPanelProps> = ({
               </p>
             )}
           </div>
+          
+          {/* QR Code de Validação */}
+          <div>
+            <h4 className="text-xs font-medium text-muted-foreground mb-2">Validação</h4>
+            <div className="space-y-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start overflow-hidden"
+                onClick={() => onAddPlaceholder(qrcodeVariable.name)}
+                title={`Adicionar: {{${qrcodeVariable.name}}}`}
+              >
+                <QrCode className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="text-xs truncate flex-1 text-left">{qrcodeVariable.label}</span>
+                <code className="text-[10px] text-muted-foreground ml-2">{`{{${qrcodeVariable.name}}}`}</code>
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Gera um QR Code para validação online do certificado
+            </p>
+          </div>
         </div>
       </Card>
 
@@ -169,11 +199,11 @@ const PlaceholderPanel: React.FC<PlaceholderPanelProps> = ({
           </h3>
           <ul className="text-xs text-muted-foreground space-y-1">
             <li>• Placeholders são áreas reservadas para imagens dinâmicas</li>
-            <li>• Na geração, serão substituídos pelas imagens reais do aluno/instrutor</li>
+            <li>• Na geração, serão substituídos pelas imagens reais</li>
             <li>• <strong>aluno_foto</strong>: Foto do aluno cadastrado</li>
             <li>• <strong>instrutor_assinatura_N</strong>: Assinatura do instrutor N</li>
-            <li>• Use números sequenciais para múltiplos instrutores</li>
-            <li>• As imagens virão automaticamente do banco de dados</li>
+            <li>• <strong>certificado_qrcode</strong>: QR Code para validação online</li>
+            <li>• O QR Code direciona para: /certificados/[id]</li>
           </ul>
         </div>
       </Card>

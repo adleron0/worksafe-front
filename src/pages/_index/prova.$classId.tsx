@@ -25,6 +25,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Rating, RatingButton } from '@/components/ui/kibo-ui/rating';
 import Input from "@/components/general-components/Input";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Loader from "@/components/general-components/Loader";
@@ -83,6 +86,16 @@ interface ExamAnswer {
   selectedOption: number;
   question?: string;
   selectedText?: string;
+}
+
+interface CourseReview {
+  traineeId: number;
+  courseId: number;
+  classId: number;
+  companyId: number;
+  generalRating: number;
+  opinionRating: string;
+  authorizationExposeReview: boolean;
 }
 
 function ExamPage() {
@@ -160,7 +173,7 @@ function ExamPage() {
   const [timeStarted, setTimeStarted] = useState<Date | null>(
     savedSession?.timeStarted ? new Date(savedSession.timeStarted) : null
   );
-  const [timeEnded, setTimeEnded] = useState<Date | null>(null);
+  const [, setTimeEnded] = useState<Date | null>(null);
   
   // Estados para resultado
   const [examResult, setExamResult] = useState<{
@@ -170,6 +183,12 @@ function ExamPage() {
     totalQuestions: number;
     media: number;
   } | null>(null);
+
+  // Estados para avaliação do curso
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewOpinion, setReviewOpinion] = useState("");
+  const [reviewAuthorization, setReviewAuthorization] = useState(true); // Já marcado por padrão
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   // Mutation para validar credenciais
   const validateCredentials = useMutation({
@@ -244,6 +263,28 @@ function ExamPage() {
       toast({
         title: "Erro na validação",
         description: error?.response?.data?.message || "CPF ou código da turma inválidos.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutation para enviar avaliação do curso
+  const submitReview = useMutation({
+    mutationFn: async (data: CourseReview) => {
+      return post("reviews", "create-review", data);
+    },
+    onSuccess: () => {
+      setReviewSubmitted(true);
+      toast({
+        title: "Avaliação enviada!",
+        description: "Obrigado pelo seu feedback!",
+        variant: "default",
+      });
+    },
+    onError: (error: Error & { response?: { data?: { message?: string } } }) => {
+      toast({
+        title: "Erro ao enviar avaliação",
+        description: error?.response?.data?.message || "Erro ao enviar sua avaliação. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -948,81 +989,176 @@ function ExamPage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="max-w-2xl mx-auto"
+              className="max-w-3xl mx-auto"
             >
               <Card className="p-6 md:p-8 shadow-xl bg-white border-gray-200">
-                <div className="text-center">
-                  {/* Ícone de Resultado */}
-                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6"
-                    style={{ backgroundColor: examResult.passed ? '#DCFCE7' : '#FEE2E2' }}>
-                    {examResult.passed ? (
-                      <Award className="w-12 h-12 md:w-16 md:h-16 text-green-600" />
-                    ) : (
-                      <XCircle className="w-12 h-12 md:w-16 md:h-16 text-red-600" />
-                    )}
-                  </div>
-                  
-                  {/* Título do Resultado */}
-                  <h1 className="text-xl md:text-3xl font-bold mb-4"
-                    style={{ color: examResult.passed ? '#15803D' : '#B91C1C' }}>
-                    {examResult.passed ? 'Parabéns! Você foi Aprovado!' : 'Que pena! Você não foi aprovado'}
-                  </h1>
-                  
-                  {/* Estatísticas - Responsivo */}
-                  <div className="flex flex-col gap-3 my-6 md:my-8">
-                    {/* Card principal de nota */}
-                    <div className="p-6 bg-gradient-to-br from-primary-light/10 to-primary-light/5 rounded-lg border border-primary-light/20">
-                      <p className="text-3xl md:text-4xl font-bold" style={{ color: '#111827' }}>
-                        {examResult.score.toFixed(1)}
-                      </p>
-                      <p className="text-sm md:text-base font-medium mt-1" style={{ color: '#4B5563' }}>Nota Final</p>
-                      <p className="text-xs md:text-sm mt-1" style={{ color: '#6B7280' }}>
-                        Média para aprovação: {examResult.media.toFixed(1)}
-                      </p>
+                {/* Resultado Compacto */}
+                <div className="text-center mb-6">
+                  {/* Ícone e Título */}
+                  <div className="flex flex-col items-center gap-3 mb-4">
+                    <div className="w-20 h-20 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: examResult.passed ? '#DCFCE7' : '#FEE2E2' }}>
+                      {examResult.passed ? (
+                        <Award className="w-10 h-10 text-green-600" />
+                      ) : (
+                        <XCircle className="w-10 h-10 text-red-600" />
+                      )}
                     </div>
-                    
-                    {/* Cards secundários lado a lado */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-4 rounded-lg" style={{ backgroundColor: '#F9FAFB' }}>
-                        <p className="text-xl md:text-2xl font-bold" style={{ color: '#111827' }}>
-                          {examResult.correctAnswers}/{examResult.totalQuestions}
-                        </p>
-                        <p className="text-xs md:text-sm" style={{ color: '#4B5563' }}>Acertos</p>
-                      </div>
-                      <div className="p-4 rounded-lg" style={{ backgroundColor: '#F9FAFB' }}>
-                        <p className="text-xl md:text-2xl font-bold" style={{ color: '#111827' }}>
-                          {((examResult.correctAnswers / examResult.totalQuestions) * 100).toFixed(0)}%
-                        </p>
-                        <p className="text-xs md:text-sm" style={{ color: '#4B5563' }}>Aproveitamento</p>
+                    <div className="text-center">
+                      <h1 className="text-2xl md:text-3xl font-bold mb-2"
+                        style={{ color: examResult.passed ? '#15803D' : '#B91C1C' }}>
+                        {examResult.passed ? 'Parabéns, você foi aprovado!' : 'Você não foi aprovado desta vez'}
+                      </h1>
+                      <p className="text-base mb-2" style={{ color: '#4B5563' }}>
+                        {examResult.passed 
+                          ? 'Você demonstrou domínio do conteúdo e está apto para receber seu certificado!' 
+                          : 'Não desanime! Você pode revisar o conteúdo e tentar novamente.'}
+                      </p>
+                      <div className="flex items-center justify-center gap-4 text-sm" style={{ color: '#6B7280' }}>
+                        <span>
+                          Nota: <span className="font-bold text-lg" style={{ color: examResult.passed ? '#15803D' : '#B91C1C' }}>
+                            {examResult.score.toFixed(1)}
+                          </span>
+                        </span>
+                        <span className="text-gray-400">•</span>
+                        <span>
+                          Acertos: <span className="font-bold">{examResult.correctAnswers}/{examResult.totalQuestions}</span>
+                        </span>
+                        <span className="text-gray-400">•</span>
+                        <span>
+                          Aproveitamento: <span className="font-bold">{((examResult.correctAnswers / examResult.totalQuestions) * 100).toFixed(0)}%</span>
+                        </span>
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Mensagem */}
-                  {!examResult.passed && (
-                    <p className="text-sm md:text-base mb-6 md:mb-8 px-4" style={{ color: '#4B5563' }}>
-                      Entre em contato com o instrutor para mais informações sobre nova tentativa.
-                    </p>
-                  )}
-                  
-                  {/* Tempo de prova */}
-                  {timeStarted && timeEnded && (
-                    <div className="flex items-center justify-center gap-2 text-sm mb-6" style={{ color: '#6B7280' }}>
-                      <Clock className="h-4 w-4" />
-                      <span>
-                        Tempo de prova: {Math.floor((timeEnded.getTime() - timeStarted.getTime()) / 60000)} minutos
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Botão de Ação */}
-                  <Button
-                    onClick={() => window.location.href = '/'}
-                    className="bg-primary-light hover:bg-primary-light/90"
-                  >
-                    Voltar ao Início
-                  </Button>
                 </div>
+
+                {/* Divisor */}
+                <div className="border-t border-gray-200 my-6"></div>
+
+                {/* Seção de Avaliação ou Agradecimento */}
+                {!reviewSubmitted ? (
+                  <div>
+                    <div className="text-center mb-4">
+                      <h2 className="text-lg font-bold mb-1" style={{ color: '#111827' }}>
+                        Avalie nosso curso
+                      </h2>
+                      <p className="text-xs" style={{ color: '#6B7280' }}>
+                        Sua opinião nos ajuda a melhorar
+                      </p>
+                    </div>
+
+                    {/* Avaliação com Estrelas */}
+                    <div className="mb-4">
+                      <div className="flex justify-center">
+                        <Rating value={reviewRating} onValueChange={setReviewRating}>
+                          {Array.from({ length: 5 }).map((_, index) => (
+                            <RatingButton key={index} />
+                          ))}
+                        </Rating>
+                      </div>
+                      {reviewRating > 0 && (
+                        <p className="text-center mt-1 text-xs" style={{ color: '#6B7280' }}>
+                          {reviewRating === 1 && "Muito Ruim"}
+                          {reviewRating === 2 && "Ruim"}
+                          {reviewRating === 3 && "Regular"}
+                          {reviewRating === 4 && "Bom"}
+                          {reviewRating === 5 && "Excelente"}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Campo de Opinião */}
+                    <div className="mb-4">
+                      <Textarea
+                        id="opinion"
+                        placeholder="Conte-nos o que achou do curso... (opcional)"
+                        value={reviewOpinion}
+                        onChange={(e) => setReviewOpinion(e.target.value)}
+                        className="min-h-[80px] bg-white border-gray-300 text-sm"
+                        style={{ color: '#111827' }}
+                      />
+                    </div>
+
+                    {/* Checkbox de Autorização */}
+                    <div className="mb-6">
+                      <div className="flex items-start gap-2">
+                        <Checkbox
+                          id="authorization"
+                          checked={reviewAuthorization}
+                          onCheckedChange={(checked) => setReviewAuthorization(checked as boolean)}
+                          className="mt-0.5"
+                        />
+                        <Label 
+                          htmlFor="authorization" 
+                          className="text-xs cursor-pointer"
+                          style={{ color: '#6B7280' }}
+                        >
+                          Autorizo o uso desta avaliação para divulgação
+                        </Label>
+                      </div>
+                    </div>
+
+                    {/* Botões */}
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={() => {
+                          if (reviewRating === 0) {
+                            // Se não avaliou, apenas vai para home
+                            window.location.href = '/';
+                            return;
+                          }
+                          
+                          const reviewData: CourseReview = {
+                            traineeId: examData?.traineeId || 0,
+                            courseId: examData?.courseId || 0,
+                            classId: examData?.classId || 0,
+                            companyId: 1,
+                            generalRating: reviewRating,
+                            opinionRating: reviewOpinion,
+                            authorizationExposeReview: reviewAuthorization
+                          };
+                          
+                          console.log("Review data to send:", reviewData);
+                          
+                          // Envia a avaliação para a API
+                          submitReview.mutate(reviewData);
+                        }}
+                        className="flex-1 bg-primary-light hover:bg-primary-light/90"
+                        disabled={submitReview.isPending}
+                      >
+                        {submitReview.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Enviando...
+                          </>
+                        ) : (
+                          reviewRating === 0 ? 'Finalizar' : 'Enviar Avaliação e Finalizar'
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  // Mensagem de Agradecimento
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" 
+                      style={{ backgroundColor: '#DCFCE7' }}>
+                      <CheckCircle className="w-8 h-8 text-green-600" />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2" style={{ color: '#15803D' }}>
+                      Obrigado pela sua avaliação!
+                    </h3>
+                    <p className="text-sm mb-6" style={{ color: '#6B7280' }}>
+                      Seu feedback é muito importante para continuarmos melhorando nossos cursos.
+                    </p>
+                    <Button
+                      onClick={() => window.location.href = '/'}
+                      className="bg-primary-light hover:bg-primary-light/90"
+                    >
+                      Voltar ao Início
+                    </Button>
+                  </div>
+                )}
               </Card>
             </motion.div>
           )}

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getPublic } from "@/services/publicApi";
-import { Loader2, Award, Calendar, User, Building, ArrowRight, GraduationCap } from "lucide-react";
+import { Loader2, Award, Calendar, User, ArrowRight, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";

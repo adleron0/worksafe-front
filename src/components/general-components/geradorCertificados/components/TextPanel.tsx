@@ -474,10 +474,7 @@ const TextPanel: React.FC<TextPanelProps> = ({
                 {[
                   { key: 'aluno_nome', label: 'Nome' },
                   { key: 'aluno_cpf', label: 'CPF' },
-                  { key: 'aluno_email', label: 'Email' },
-                  { key: 'aluno_telefone', label: 'Telefone' },
                   { key: 'aluno_data_nascimento', label: 'Nascimento' },
-                  { key: 'aluno_endereco_completo', label: 'Endereço' },
                   { key: 'aluno_cidade', label: 'Cidade' },
                   { key: 'aluno_estado', label: 'Estado' },
                   { key: 'aluno_estado_uf', label: 'UF' },
@@ -549,7 +546,6 @@ const TextPanel: React.FC<TextPanelProps> = ({
               <div className="flex flex-wrap gap-1">
                 {[
                   { key: 'instrutor_nome_1', label: 'Nome 1' },
-                  { key: 'instrutor_email_1', label: 'Email 1' },
                   { key: 'instrutor_cpf_1', label: 'CPF 1' },
                   { key: 'instrutor_formacao_1', label: 'Formação 1' },
                   { key: 'instrutor_registro_1', label: 'Registro 1' },

@@ -166,7 +166,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     oldPrice: Number(formData?.oldPrice) || 0,
     dividedIn: (formData as any)?.dividedIn || null,
     hoursDuration: formData?.hoursDuration || 1,
-    openClass: formData?.openClass || true,
+    openClass: formData?.openClass || false,
     gifts: formData?.gifts || '',
     description: formData?.description || "",
     gradeTheory: formData?.gradeTheory || "",

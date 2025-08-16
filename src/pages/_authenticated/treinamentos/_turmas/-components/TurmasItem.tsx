@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import ListHeader from "@/components/general-components/ListHeader";
 import { QRCode } from '@/components/ui/kibo-ui/qr-code';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
@@ -108,15 +109,13 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
   return (
     <>
       {/* Renderiza o Header apenas no primeiro item */}
-      {index === 0 && (
-        <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
-          <div className="w-4/12">Turma</div>
-          <div className="w-4/12">Detlhes</div>
-          <div className="w-2/12">Período</div>
-          <div className="w-1/12">Status</div>
-          <div className="w-1/12">Ações</div>
-        </div>
-      )}
+      <ListHeader show={index === 0}>
+        <div className="w-4/12">Turma</div>
+        <div className="w-4/12">Detlhes</div>
+        <div className="w-2/12">Período</div>
+        <div className="w-1/12">Status</div>
+        <div className="w-1/12">Ações</div>
+      </ListHeader>
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
@@ -127,20 +126,20 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
               {item.openClass ? "Turma aberta" : "InCompany"}
             </Badge>
 
-            { item.minimumQuorum && (
+            { item.minimumQuorum && Number(item.minimumQuorum) > 0 ? (
               <Badge variant="outline" className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary">
                 <Icon name="arrow-big-down-dash" className="w-3 h-3" />
-                {`Mín: ${item.minimumQuorum}`}
+                Mín: {item.minimumQuorum}
               </Badge>
-              )
+              ) : null
             }
 
-            { item.maxSubscriptions && (
+            { item.maxSubscriptions && Number(item.maxSubscriptions) > 0 ? (
               <Badge variant="outline" className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary">
                 <Icon name="arrow-big-up-dash" className="w-3 h-3" />
-                {`Máx: ${item.maxSubscriptions}`}
+                Máx: {item.maxSubscriptions}
               </Badge>
-              )
+              ) : null
             }
         </div>
 

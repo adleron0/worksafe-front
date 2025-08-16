@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { useState, useEffect, useRef } from "react";
+import { format, parse, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -13,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 
 interface CalendarPickerProps {
-  mode?: "single" | "range" | "multiple";
+  mode?: "single" | "range" | "multiple" | "natural";
   name: string;
   value?: string | null;
   onValueChange?: (name: string, value: string | null) => void;
@@ -26,6 +27,8 @@ interface CalendarPickerProps {
   numberOfMonths?: number;
   disabled?: boolean;
   buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  fromYear?: number;
+  toYear?: number;
 }
 
 const CalendarPicker = ({
@@ -40,6 +43,8 @@ const CalendarPicker = ({
   numberOfMonths = 1,
   disabled = false,
   buttonVariant = "outline",
+  fromYear,
+  toYear,
 }: CalendarPickerProps) => {
   // Parse the string date value to Date object
   const parseDate = (dateStr: string | null | undefined): Date | undefined => {
@@ -64,10 +69,54 @@ const CalendarPicker = ({
   // For multiple mode
   const [dates, setDates] = useState<Date[]>([]);
 
+  // For natural mode
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const [month, setMonth] = useState<Date | undefined>(date);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Date mask function for DD/MM/YYYY format
+  const applyDateMask = (value: string): string => {
+    // Remove non-numeric characters
+    const numbers = value.replace(/\D/g, '');
+    
+    // Apply mask
+    if (numbers.length <= 2) {
+      return numbers;
+    } else if (numbers.length <= 4) {
+      return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    } else {
+      return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
+    }
+  };
+
+  // Parse DD/MM/YYYY string to Date
+  const parseBrazilianDate = (dateStr: string): Date | undefined => {
+    if (!dateStr || dateStr.length !== 10) return undefined;
+    
+    try {
+      const parsed = parse(dateStr, 'dd/MM/yyyy', new Date());
+      return isValid(parsed) ? parsed : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
   // Update internal state when value prop changes
   useEffect(() => {
     if (mode === "single") {
       setDate(parseDate(value));
+    } else if (mode === "natural") {
+      if (value) {
+        const parsedDate = parseDate(value);
+        setDate(parsedDate);
+        setMonth(parsedDate);
+        setInputValue(parsedDate ? format(parsedDate, "dd/MM/yyyy") : "");
+      } else {
+        setDate(undefined);
+        setMonth(undefined);
+        setInputValue("");
+      }
     } else if (mode === "range" && value) {
       try {
         // Expect value to be in format "startDate|endDate"
@@ -166,6 +215,44 @@ const CalendarPicker = ({
     }
   };
 
+  // Handler for natural mode input change
+  const handleNaturalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const masked = applyDateMask(e.target.value);
+    setInputValue(masked);
+    
+    // Try to parse date when complete
+    if (masked.length === 10) {
+      const parsedDate = parseBrazilianDate(masked);
+      if (parsedDate) {
+        setDate(parsedDate);
+        setMonth(parsedDate);
+        
+        if (onValueChange) {
+          onValueChange(name, parsedDate.toISOString());
+        }
+        
+        if (form && formField) {
+          form.setValue(formField, parsedDate);
+        }
+      }
+    }
+  };
+
+  // Handler for natural mode calendar select
+  const handleNaturalDateSelect = (selectedDate: Date | undefined) => {
+    setDate(selectedDate);
+    setInputValue(selectedDate ? format(selectedDate, "dd/MM/yyyy") : "");
+    setOpen(false);
+    
+    if (onValueChange) {
+      onValueChange(name, selectedDate ? selectedDate.toISOString() : null);
+    }
+    
+    if (form && formField) {
+      form.setValue(formField, selectedDate);
+    }
+  };
+
   const getDisplayText = () => {
     if (mode === "single" && date) {
       return format(date, "dd/MM/yyyy", { locale: ptBR });
@@ -195,6 +282,8 @@ const CalendarPicker = ({
           locale={ptBR}
           style={{ pointerEvents: "auto" }}
           captionLayout="dropdown"
+          fromYear={fromYear}
+          toYear={toYear}
         />
       );
     } else if (mode === "range") {
@@ -208,6 +297,8 @@ const CalendarPicker = ({
           locale={ptBR}
           style={{ pointerEvents: "auto" }}
           captionLayout="dropdown"
+          fromYear={fromYear}
+          toYear={toYear}
         />
       );
     } else if (mode === "multiple") {
@@ -220,12 +311,66 @@ const CalendarPicker = ({
           initialFocus
           locale={ptBR}
           style={{ pointerEvents: "auto" }}
+          fromYear={fromYear}
+          toYear={toYear}
         />
       );
     }
     return null;
   };
 
+  // Render natural mode with input and calendar icon
+  if (mode === "natural") {
+    return (
+      <div className="relative flex gap-2">
+        <Input
+          ref={inputRef}
+          id={name}
+          value={inputValue}
+          placeholder={placeholder || "DD/MM/AAAA"}
+          className={cn("pr-10", className)}
+          onChange={handleNaturalInputChange}
+          disabled={disabled}
+          maxLength={10}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              setOpen(true);
+            }
+          }}
+        />
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              className="absolute top-1/2 right-2 h-6 w-6 -translate-y-1/2 p-0"
+              disabled={disabled}
+            >
+              <CalendarIcon className="h-3.5 w-3.5" />
+              <span className="sr-only">Selecionar data</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto overflow-hidden p-0" align="end">
+            <Calendar
+              mode="single"
+              selected={date}
+              captionLayout="dropdown"
+              month={month}
+              onMonthChange={setMonth}
+              onSelect={handleNaturalDateSelect}
+              numberOfMonths={numberOfMonths}
+              locale={ptBR}
+              fromYear={fromYear}
+              toYear={toYear}
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+    );
+  }
+
+  // Original render for other modes
   return (
     <Popover modal={true}>
       <PopoverTrigger asChild>

@@ -277,7 +277,7 @@ function CertificadoPublico() {
                     <CheckCircle className="w-4 h-4 text-gray-400" />
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Válido até</p>
                   </div>
-                  <p className="text-sm font-medium text-gray-900 pl-6">{variables.certificado_validade?.value || formatDate(certificate?.expirationDate)}</p>
+                  <p className="text-sm font-medium text-gray-900 pl-6">{formatDate(certificate?.expirationDate)}</p>
                 </div>
               </div>
             </div>

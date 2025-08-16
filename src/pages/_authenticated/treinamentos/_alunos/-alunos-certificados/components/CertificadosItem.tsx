@@ -16,6 +16,7 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Dialog from "@/components/general-components/Dialog";
 import VisualizadorCertificados from "@/components/general-components/visualizadorCertificados";
+import ListHeader from "@/components/general-components/ListHeader";
 
 // Interfaces
 import { ICertificate } from "../interfaces/entity.interface";
@@ -28,9 +29,11 @@ interface ItemsProps {
   entity: IDefaultEntity;
   setFormData: (data: ICertificate) => void;
   setOpenForm: (open: boolean) => void;
+  setEditData?: (data: ICertificate) => void;
+  setOpenEditForm?: (open: boolean) => void;
 }
 
-const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => {
+const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEditData, setOpenEditForm }: ItemsProps) => {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
@@ -128,16 +131,14 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm }: Ite
   return (
     <>
       {/* Renderiza o Header apenas no primeiro item */}
-      {index === 0 && (
-        <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
-          <div className="w-3/12">Curso</div>
-          <div className="w-2/12">Turma</div>
-          <div className="w-2/12">Validade</div>
-          <div className="w-2/12">Emissão</div>
-          <div className="w-2/12">Status</div>
-          <div className="w-1/12">Ações</div>
-        </div>
-      )}
+      <ListHeader show={index === 0}>
+        <div className="w-3/12">Curso</div>
+        <div className="w-2/12">Turma</div>
+        <div className="w-2/12">Emissão</div>
+        <div className="w-2/12">Validade</div>
+        <div className="w-2/12">Status</div>
+        <div className="w-1/12">Ações</div>
+      </ListHeader>
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
@@ -159,19 +160,19 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm }: Ite
           </p>
         </div>
 
-        {/* Validade */}
-        <div className="w-full lg:w-2/12 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Validade: </p>
-          <p className="text-sm text-muted-foreground">
-            {formatDate(item.expirationDate)}
-          </p>
-        </div>
-
         {/* Emissão */}
         <div className="w-full lg:w-2/12 md:pr-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Emissão: </p>
           <p className="text-sm text-muted-foreground">
             {formatDate(item.createdAt)}
+          </p>
+        </div>
+
+        {/* Validade */}
+        <div className="w-full lg:w-2/12 md:pr-2">
+          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Validade: </p>
+          <p className="text-sm text-muted-foreground">
+            {formatDate(item.expirationDate)}
           </p>
         </div>
 
@@ -207,6 +208,23 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm }: Ite
                   >
                     <Icon name="info" className="w-3 h-3" /> 
                     <p>Ver Detalhes</p>
+                  </Button>
+                </DropdownMenuItem>
+              )}
+
+              {/* Editar Certificado */}
+              {can(`update_${entity.ability}`) && setEditData && setOpenEditForm && (
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Button 
+                    variant="ghost" 
+                    className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
+                    onClick={() => {
+                      setEditData(item);
+                      setOpenEditForm(true);
+                    }}
+                  >
+                    <Icon name="edit" className="w-3 h-3" /> 
+                    <p>Editar</p>
                   </Button>
                 </DropdownMenuItem>
               )}

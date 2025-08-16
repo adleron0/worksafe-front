@@ -10,6 +10,7 @@ import SideForm from "@/components/general-components/SideForm";
 import ItemSkeleton from "./skeletons/ItemSkeleton";
 import ItemList from "./components/CertificadosItem";
 import Form from "./components/CertificadosForm";
+import EditForm from "./components/CertificadosEditForm";
 import SearchForm from "./components/CertificadosSearch";
 // Interfaces
 import { ICertificate } from "./interfaces/entity.interface";
@@ -19,7 +20,9 @@ const List = ({ traineeId }: { traineeId: number }) => {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
+  const [openEditForm, setOpenEditForm] = useState(false);
   const [formData, setFormData] = useState<ICertificate | null>(null);
+  const [editData, setEditData] = useState<ICertificate | undefined>(undefined);
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
@@ -120,6 +123,16 @@ const List = ({ traineeId }: { traineeId: number }) => {
         form={ <Form formData={formData} setOpenForm={setOpenForm} entity={entity} traineeId={traineeId} /> }
       />
 
+      {/* Formulário de edição */}
+      <SideForm
+        openSheet={openEditForm}
+        setOpenSheet={setOpenEditForm}
+        title={`Editar ${entity.name}`}
+        description={`Edite as configurações do certificado.`}
+        side="right"
+        form={ <EditForm formData={editData} openSheet={setOpenEditForm} entity={entity} /> }
+      />
+
       {/* Listagem de items */}
       <div className="space-y-2 mt-4">
         {isLoading
@@ -137,6 +150,8 @@ const List = ({ traineeId }: { traineeId: number }) => {
                 index={i} 
                 setFormData={setFormData} 
                 setOpenForm={setOpenForm}
+                setEditData={setEditData}
+                setOpenEditForm={setOpenEditForm}
               />
             ))
           : (

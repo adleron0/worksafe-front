@@ -73,7 +73,8 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
   
   // Fetch data with date filter
   const searchParams = useMemo(() => ({
-    // active: true,
+    active: true,
+    openClass: true,
     'lte-initialDate': lastDay,
     'gte-initialDate': firstDay,
     'order-initialDate': 'asc',

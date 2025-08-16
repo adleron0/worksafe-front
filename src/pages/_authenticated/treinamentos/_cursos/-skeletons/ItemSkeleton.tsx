@@ -1,19 +1,18 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import ListHeader from "@/components/general-components/ListHeader";
 
 const ItemSkeleton = ({ index }: { index: number }) => {
   return (
     <>
       {/* Header para o primeiro item */}
-      {index === 0 && (
-        <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-muted rounded-t-lg font-semibold text-sm text-gray-700 dark:bg-muted dark:text-gray-300">
-          <div className="w-3/12">Usuário</div>
-          <div className="w-2/12">Função</div>
-          <div className="w-2/12">Contatos</div>
-          <div className="w-2/12">Criado em</div>
-          <div className="w-2/12">Status</div>
-          <div className="w-1/12">Ações</div>
-        </div>
-      )}
+      <ListHeader show={index === 0} >
+        <div className="w-3/12">Usuário</div>
+        <div className="w-2/12">Função</div>
+        <div className="w-2/12">Contatos</div>
+        <div className="w-2/12">Criado em</div>
+        <div className="w-2/12">Status</div>
+        <div className="w-1/12">Ações</div>
+      </ListHeader>
 
       {/* Estrutura do Skeleton */}
       <div className="shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b space-y-4 lg:space-y-0">

@@ -111,6 +111,7 @@ function CertificadosPublicos() {
         { key: 'page', value: page.toString() },
         { key: 'limit', value: limit.toString() },
         { key: 'show', value: ['trainee'] },
+        { key: 'showOnWebsiteConsent', value: true },
       ];
       
       // Adicionar filtro de curso se selecionado (exceto quando for "all")

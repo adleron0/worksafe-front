@@ -95,7 +95,7 @@ const SidebarItem = ({
           {subitems && (
             <div
               className={`transition-[max-height] duration-300 ease-in-out overflow-hidden ${
-                isOpen ? "max-h-40" : "max-h-0"
+                isOpen ? `max-h-80` : "max-h-0"
               }`}
             >
               <div className="flex flex-col pl-8 border-y gap-1 py-1">

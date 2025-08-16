@@ -89,9 +89,9 @@ export const items = [
         path: "/treinamentos/certificados",
       },
       {
-        title: "Avaliações",
-        icon: "file-plus",
-        path: "/treinamentos/avaliacoes",
+        title: "Dashboard",
+        icon: "chart-column-big",
+        path: "/treinamentos",
       },
     ],
   },

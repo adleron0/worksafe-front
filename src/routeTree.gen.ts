@@ -26,7 +26,6 @@ import { Route as AuthenticatedClientesIndexImport } from './pages/_authenticate
 import { Route as IndexTurmaIdImport } from './pages/_index/turma.$id'
 import { Route as IndexProvaClassIdImport } from './pages/_index/prova.$classId'
 import { Route as IndexCertificadosIdImport } from './pages/_index/certificados/$id'
-import { Route as AuthenticatedTreinamentosProvasImport } from './pages/_authenticated/treinamentos/provas'
 import { Route as AuthenticatedInventariosDashboardImport } from './pages/_authenticated/inventarios/dashboard'
 import { Route as AuthenticatedInventariosAutorizadosImport } from './pages/_authenticated/inventarios/autorizados'
 import { Route as AuthenticatedInventariosAccessControlImport } from './pages/_authenticated/inventarios/access-control'
@@ -136,13 +135,6 @@ const IndexCertificadosIdRoute = IndexCertificadosIdImport.update({
   path: '/certificados/$id',
   getParentRoute: () => rootRoute,
 } as any)
-
-const AuthenticatedTreinamentosProvasRoute =
-  AuthenticatedTreinamentosProvasImport.update({
-    id: '/treinamentos/provas',
-    path: '/treinamentos/provas',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 
 const AuthenticatedInventariosDashboardRoute =
   AuthenticatedInventariosDashboardImport.update({
@@ -323,13 +315,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventariosDashboardImport
       parentRoute: typeof AuthenticatedImport
     }
-    '/_authenticated/treinamentos/provas': {
-      id: '/_authenticated/treinamentos/provas'
-      path: '/treinamentos/provas'
-      fullPath: '/treinamentos/provas'
-      preLoaderRoute: typeof AuthenticatedTreinamentosProvasImport
-      parentRoute: typeof AuthenticatedImport
-    }
     '/_index/certificados/$id': {
       id: '/_index/certificados/$id'
       path: '/certificados/$id'
@@ -467,7 +452,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedInventariosAccessControlRoute: typeof AuthenticatedInventariosAccessControlRoute
   AuthenticatedInventariosAutorizadosRoute: typeof AuthenticatedInventariosAutorizadosRoute
   AuthenticatedInventariosDashboardRoute: typeof AuthenticatedInventariosDashboardRoute
-  AuthenticatedTreinamentosProvasRoute: typeof AuthenticatedTreinamentosProvasRoute
   AuthenticatedClientesIndexRoute: typeof AuthenticatedClientesIndexRoute
   AuthenticatedInventariosIndexRoute: typeof AuthenticatedInventariosIndexRoute
   AuthenticatedTreinamentosIndexRoute: typeof AuthenticatedTreinamentosIndexRoute
@@ -493,7 +477,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedInventariosAutorizadosRoute,
   AuthenticatedInventariosDashboardRoute:
     AuthenticatedInventariosDashboardRoute,
-  AuthenticatedTreinamentosProvasRoute: AuthenticatedTreinamentosProvasRoute,
   AuthenticatedClientesIndexRoute: AuthenticatedClientesIndexRoute,
   AuthenticatedInventariosIndexRoute: AuthenticatedInventariosIndexRoute,
   AuthenticatedTreinamentosIndexRoute: AuthenticatedTreinamentosIndexRoute,
@@ -537,7 +520,6 @@ export interface FileRoutesByFullPath {
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
-  '/treinamentos/provas': typeof AuthenticatedTreinamentosProvasRoute
   '/certificados/$id': typeof IndexCertificadosIdRoute
   '/prova/$classId': typeof IndexProvaClassIdRoute
   '/turma/$id': typeof IndexTurmaIdRoute
@@ -570,7 +552,6 @@ export interface FileRoutesByTo {
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
-  '/treinamentos/provas': typeof AuthenticatedTreinamentosProvasRoute
   '/certificados/$id': typeof IndexCertificadosIdRoute
   '/prova/$classId': typeof IndexProvaClassIdRoute
   '/turma/$id': typeof IndexTurmaIdRoute
@@ -604,7 +585,6 @@ export interface FileRoutesById {
   '/_authenticated/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/_authenticated/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/_authenticated/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
-  '/_authenticated/treinamentos/provas': typeof AuthenticatedTreinamentosProvasRoute
   '/_index/certificados/$id': typeof IndexCertificadosIdRoute
   '/_index/prova/$classId': typeof IndexProvaClassIdRoute
   '/_index/turma/$id': typeof IndexTurmaIdRoute
@@ -639,7 +619,6 @@ export interface FileRouteTypes {
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
-    | '/treinamentos/provas'
     | '/certificados/$id'
     | '/prova/$classId'
     | '/turma/$id'
@@ -671,7 +650,6 @@ export interface FileRouteTypes {
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
-    | '/treinamentos/provas'
     | '/certificados/$id'
     | '/prova/$classId'
     | '/turma/$id'
@@ -703,7 +681,6 @@ export interface FileRouteTypes {
     | '/_authenticated/inventarios/access-control'
     | '/_authenticated/inventarios/autorizados'
     | '/_authenticated/inventarios/dashboard'
-    | '/_authenticated/treinamentos/provas'
     | '/_index/certificados/$id'
     | '/_index/prova/$classId'
     | '/_index/turma/$id'
@@ -781,7 +758,6 @@ export const routeTree = rootRoute
         "/_authenticated/inventarios/access-control",
         "/_authenticated/inventarios/autorizados",
         "/_authenticated/inventarios/dashboard",
-        "/_authenticated/treinamentos/provas",
         "/_authenticated/clientes/",
         "/_authenticated/inventarios/",
         "/_authenticated/treinamentos/",
@@ -831,10 +807,6 @@ export const routeTree = rootRoute
     },
     "/_authenticated/inventarios/dashboard": {
       "filePath": "_authenticated/inventarios/dashboard.tsx",
-      "parent": "/_authenticated"
-    },
-    "/_authenticated/treinamentos/provas": {
-      "filePath": "_authenticated/treinamentos/provas.tsx",
       "parent": "/_authenticated"
     },
     "/_index/certificados/$id": {

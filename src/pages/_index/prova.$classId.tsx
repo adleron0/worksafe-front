@@ -189,6 +189,10 @@ function ExamPage() {
   const [reviewOpinion, setReviewOpinion] = useState("");
   const [reviewAuthorization, setReviewAuthorization] = useState(true); // Já marcado por padrão
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  
+  // Estado para consentimento de exibição do certificado na página de profissionais
+  const [showOnWebsiteConsent, setShowOnWebsiteConsent] = useState(true);
+  const [hasAskedConsent, setHasAskedConsent] = useState(false);
 
   // Mutation para validar credenciais
   const validateCredentials = useMutation({
@@ -298,6 +302,7 @@ function ExamPage() {
       classId: number;
       examResponses: string;
       companyId: number;
+      showOnWebsiteConsent: boolean;
     }): Promise<ExamSubmitResponse> => {
       const response = await post<ExamSubmitResponse>("exames", "register", data);
       if (!response) {
@@ -534,6 +539,12 @@ function ExamPage() {
       return;
     }
     
+    // Se ainda não perguntou sobre o consentimento, abre o diálogo
+    if (!hasAskedConsent) {
+      setHasAskedConsent(true);
+      return false; // Previne a abertura do diálogo de confirmação padrão
+    }
+    
     // Se tudo está ok, retorna true para abrir o diálogo
     return true;
   };
@@ -561,7 +572,8 @@ function ExamPage() {
       courseId: examData.courseId,
       classId: examData.classId,
       examResponses: JSON.stringify(examResponses),
-      companyId: 1
+      companyId: 1,
+      showOnWebsiteConsent: showOnWebsiteConsent
     });
   };
 
@@ -710,10 +722,10 @@ function ExamPage() {
                         {examData.traineeName}
                       </p>
                     )}
-                    <h1 className="text-lg md:text-2xl font-bold" style={{ color: '#111827' }}>
-                      Prova de Avaliação
+                    <h1 className="text-lg md:text-xl font-bold text-black">
+                      Prova de Avaliação:&nbsp;
                       {examData.courseName && (
-                        <span className="block md:inline text-base md:text-2xl font-normal md:font-bold">
+                        <span className="block md:inline text-sm md:text-lg font-normal md:font-medium">
                           {examData.courseName}
                         </span>
                       )}
@@ -926,28 +938,40 @@ function ExamPage() {
                     </Button>
                     
                     {currentQuestion === examData.exam.length - 1 ? (
-                    <ConfirmDialog
-                      title="Finalizar Prova"
-                      description="Tem certeza que deseja finalizar a prova? Após confirmar, não será possível alterar suas respostas."
-                      onConfirm={handleFinishExam}
-                    >
-                      <Button
-                        className="bg-green-600 hover:bg-green-700 text-xs md:text-sm h-9 md:h-10"
-                        disabled={submitExam.isPending || !selectedOption}
-                        onClick={(e) => {
-                          if (!handleConfirmFinish()) {
-                            e.stopPropagation();
-                            e.preventDefault();
-                          }
-                        }}
-                      >
-                        <>
-                          Finalizar
-                          <CheckCircle className="ml-1 md:ml-2 h-3 w-3 md:h-4 md:w-4" />
-                        </>
-                      </Button>
-                    </ConfirmDialog>
-                  ) : (
+                      hasAskedConsent ? (
+                        <ConfirmDialog
+                          title="Finalizar Prova"
+                          description="Tem certeza que deseja finalizar a prova? Após confirmar, não será possível alterar suas respostas."
+                          onConfirm={handleFinishExam}
+                        >
+                          <Button
+                            className="bg-green-600 hover:bg-green-700 text-xs md:text-sm h-9 md:h-10"
+                            disabled={submitExam.isPending || !selectedOption}
+                          >
+                            <>
+                              Finalizar
+                              <CheckCircle className="ml-1 md:ml-2 h-3 w-3 md:h-4 md:w-4" />
+                            </>
+                          </Button>
+                        </ConfirmDialog>
+                      ) : (
+                        <Button
+                          className="bg-green-600 hover:bg-green-700 text-xs md:text-sm h-9 md:h-10"
+                          disabled={submitExam.isPending || !selectedOption}
+                          onClick={() => {
+                            if (handleConfirmFinish() === false) {
+                              // Abre o modal de consentimento
+                              return;
+                            }
+                          }}
+                        >
+                          <>
+                            Finalizar
+                            <CheckCircle className="ml-1 md:ml-2 h-3 w-3 md:h-4 md:w-4" />
+                          </>
+                        </Button>
+                      )
+                    ) : (
                     <Button
                       onClick={handleNextQuestion}
                       className="bg-primary-light hover:bg-primary-light/90 text-xs md:text-sm h-9 md:h-10"
@@ -960,6 +984,64 @@ function ExamPage() {
                   </div>
                 </div>
               </Card>
+              
+              {/* Modal de Consentimento para Exibição do Certificado */}
+              {hasAskedConsent && !submitExam.isPending && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                  <Card className="w-full max-w-md p-6 bg-white">
+                    <div className="text-center mb-6">
+                      <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                        style={{ backgroundColor: '#FEF3C7' }}>
+                        <Award className="w-8 h-8 text-yellow-600" />
+                      </div>
+                      <h3 className="text-lg font-bold mb-2" style={{ color: '#111827' }}>
+                        Exibir seu Certificado em nossa página?
+                      </h3>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-2 p-3 rounded-lg" style={{ backgroundColor: '#F3F4F6' }}>
+                        <Checkbox
+                          id="websiteConsent"
+                          checked={showOnWebsiteConsent}
+                          onCheckedChange={(checked) => setShowOnWebsiteConsent(checked as boolean)}
+                          className="mt-0.5"
+                        />
+                        <Label 
+                          htmlFor="websiteConsent" 
+                          className="text-sm cursor-pointer flex-1"
+                          style={{ color: '#374151' }}
+                        >
+                          Autorizo a exibição do meu certificado na página de Profissionais Certificados do site
+                        </Label>
+                      </div>
+                      
+                      <div className="text-xs p-3 rounded-lg" style={{ backgroundColor: '#DBEAFE', color: '#1E40AF' }}>
+                        <p className="font-medium mb-1">Benefícios:</p>
+                        <ul className="space-y-1 ml-4">
+                          <li>• Maior visibilidade profissional</li>
+                          <li>• Comprovação pública de sua qualificação</li>
+                          <li>• Possibilidade de ser contactado para oportunidades</li>
+                        </ul>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-3 mt-6">
+                      <ConfirmDialog
+                        title="Finalizar Prova"
+                        description="Tem certeza que deseja finalizar a prova? Após confirmar, não será possível alterar suas respostas."
+                        onConfirm={handleFinishExam}
+                      >
+                        <Button
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                        >
+                          Continuar e Finalizar
+                        </Button>
+                      </ConfirmDialog>
+                    </div>
+                  </Card>
+                </div>
+              )}
               
               {/* Indicador de questões respondidas */}
               <div className="mt-4 md:mt-6 p-3 md:p-4 rounded-lg" style={{ backgroundColor: '#DBEAFE' }}>

@@ -110,6 +110,14 @@ const Form = ({ formData, setOpenForm }: FormProps) => {
             <span className="text-sm text-muted-foreground">Status:</span>
             {getStatusBadge()}
           </div>
+          {formData.showOnWebsiteConsent !== undefined && (
+            <div className="flex justify-between">
+              <span className="text-sm text-muted-foreground">Exibir no site:</span>
+              <Badge variant={formData.showOnWebsiteConsent ? "default" : "outline"}>
+                {formData.showOnWebsiteConsent ? "Autorizado" : "Não autorizado"}
+              </Badge>
+            </div>
+          )}
         </div>
       </Card>
 

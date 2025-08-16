@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import ListHeader from "@/components/general-components/ListHeader";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -127,16 +128,14 @@ const AlunosItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
   return (
     <>
       {/* Renderiza o Header apenas no primeiro item */}
-      {index === 0 && (
-        <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
-          <div className="w-3/12">Aluno</div>
-          <div className="w-3/12">Contatos</div>
-          <div className="w-2/12">Empresa</div>
-          <div className="w-2/12">Nascimento</div>
-          <div className="w-1/12">Status</div>
-          <div className="w-1/12">Ações</div>
-        </div>
-      )}
+      <ListHeader show={index === 0}>
+        <div className="w-3/12">Aluno</div>
+        <div className="w-3/12">Contatos</div>
+        <div className="w-2/12">Empresa</div>
+        <div className="w-2/12">Nascimento</div>
+        <div className="w-1/12">Status</div>
+        <div className="w-1/12">Ações</div>
+      </ListHeader>
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>

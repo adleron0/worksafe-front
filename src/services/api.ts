@@ -59,7 +59,7 @@ const paramsCompose = (params: queryParams[]) => {
 const createFormData = (data: any): FormData => {
   const formData = new FormData();
   Object.keys(data).forEach((key) => {
-    if (!data[key]) return;
+    if (data[key] === null || data[key] === undefined) return;
     formData.append(key, data[key]);
   });
   return formData;

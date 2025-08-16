@@ -4,6 +4,7 @@ export interface ICertificate {
   traineeId: number;
   classId: number;
   expirationDate?: Date | string;
+  showOnWebsiteConsent?: boolean;
   fabricJsonFront?: any;
   fabricJsonBack?: any;
   variableToReplace?: any;

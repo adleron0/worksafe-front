@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { get, post } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,45 +21,8 @@ import NavBar from "./-components/NavBar";
 import Footer from "./-components/Footer";
 import Clients from "./-components/Clients";
 
-// Loader function for pre-fetching data
-async function turmaLoader({ params }: { params: { id: string } }) {
-  try {
-    const apiParams = [
-      { key: "id", value: params.id },
-      { key: "show", value: ["course", "instructors", "_count"] },
-    ];
-    
-    const data = await get("classes", "", apiParams) as ApiResponse;
-    
-    return {
-      turma: data?.rows?.[0] || null,
-      isError: false,
-    };
-  } catch (error) {
-    console.error("Error loading turma:", error);
-    return {
-      turma: null,
-      isError: true,
-    };
-  }
-}
-
 export const Route = createFileRoute("/_index/turma/$id")({
   component: TurmaLandingPage,
-  loader: turmaLoader,
-  pendingComponent: () => (
-    <div className="min-h-screen flex items-center justify-center bg-white" style={{ colorScheme: 'light' }}>
-      <Loader2 className="h-12 w-12 animate-spin text-primary-light" />
-    </div>
-  ),
-  errorComponent: () => (
-    <div className="min-h-screen flex items-center justify-center bg-white" style={{ colorScheme: 'light' }}>
-      <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2" style={{ color: '#1F2937' }}>Erro ao carregar turma</h2>
-        <p style={{ color: '#4B5563' }}>Ocorreu um erro ao carregar os dados da turma.</p>
-      </div>
-    </div>
-  ),
 });
 
 interface InstructorDetails {
@@ -92,6 +56,18 @@ interface Instructor {
   instructor?: InstructorDetails;
 }
 
+interface Review {
+  generalRating: number;
+  opinionRating: string;
+  trainee: {
+    name: string;
+    occupation?: string | null;
+    customer?: {
+      name: string;
+    } | null;
+  };
+}
+
 interface Course {
   id: number;
   name: string;
@@ -122,6 +98,7 @@ interface Course {
     name: string;
     description: string;
     yearOfValidation?: number;
+    reviews?: Review[];
   };
   instructors?: Instructor[];
   _count?: {
@@ -136,7 +113,6 @@ interface ApiResponse {
 
 function TurmaLandingPage() {
   const { id } = Route.useParams();
-  const loaderData = Route.useLoaderData();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [cart, setCart] = useState<any[]>([]);
   const formRef = useRef<HTMLDivElement>(null);
@@ -265,28 +241,19 @@ Turma: ${turma?.landingPagesDates}`;
     }
   };
 
-  // Use loader data directly - the loader handles the fetching
-  const turma = loaderData?.turma;
-  const isError = loaderData?.isError;
-  
-  // Optional: Keep a query for real-time updates if needed
-  // Currently disabled since we're using loader data
-  // const { data } = useQuery<ApiResponse | undefined>({
-  //   queryKey: ["turma", id],
-  //   queryFn: async () => {
-  //     if (loaderData?.turma) {
-  //       return { total: 1, rows: [loaderData.turma] };
-  //     }
-  //     const params = [
-  //       { key: "id", value: id },
-  //       { key: "show", value: ["course", "instructors", "_count"] },
-  //     ];
-  //     return get("classes", "", params);
-  //   },
-  //   initialData: loaderData?.turma ? { total: 1, rows: [loaderData.turma] } : undefined,
-  //   staleTime: 1000 * 60 * 5, // 5 minutes
-  //   enabled: false, // Disable automatic refetching since we have loader data
-  // });
+  const { data, isLoading, isError } = useQuery<ApiResponse | undefined>({
+    queryKey: ["turma", id],
+    queryFn: async () => {
+      const params = [
+        { key: "id", value: id },
+        // Removido o filtro active para buscar turmas inativas também
+        { key: "show", value: ["course", "instructors", "_count"] },
+      ];
+      return get("classes", "", params);
+    },
+  });
+
+  const turma = data?.rows?.[0];
 
   // Generate initial captcha when component mounts
   useState(() => {
@@ -306,7 +273,7 @@ Turma: ${turma?.landingPagesDates}`;
     return grade.split('#').filter(item => item.trim());
   };
 
-  const parseFaq = (faqString: string | undefined) => {
+  const parseFaq = (faqString: string | undefined): Array<{ question: string; answer: string }> => {
     if (!faqString) return [];
     try {
       return JSON.parse(faqString);
@@ -320,8 +287,13 @@ Turma: ${turma?.landingPagesDates}`;
     return gifts.split('#').filter(item => item.trim());
   };
 
-  // Loading is handled by pendingComponent in the route definition
-  // This component only renders when data is available
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white" style={{ colorScheme: 'light' }}>
+        <Loader2 className="h-12 w-12 animate-spin text-primary-light" />
+      </div>
+    );
+  }
 
   if (isError || !turma) {
     return (
@@ -1072,68 +1044,56 @@ Turma: ${turma?.landingPagesDates}`;
       </section>
 
       {/* Reviews Section */}
-      <section id="reviews" className="py-12 sm:py-16 lg:py-20 bg-white">
-        <div className="mx-auto max-w-6xl px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-8 sm:mb-10 lg:mb-12"
-          >
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4" style={{ color: '#111827' }}>
-              O que nossos alunos dizem
-            </h2>
-            <p className="text-base sm:text-lg max-w-2xl mx-auto" style={{ color: '#4B5563' }}>
-              Mais de 1000 profissionais já transformaram suas carreiras conosco
-            </p>
-          </motion.div>
+      {turma.course?.reviews && turma.course.reviews.length > 0 && (
+        <section id="reviews" className="py-12 sm:py-16 lg:py-20 bg-white">
+          <div className="mx-auto max-w-6xl px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-8 sm:mb-10 lg:mb-12"
+            >
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4" style={{ color: '#111827' }}>
+                O que nossos alunos dizem
+              </h2>
+              <p className="text-base sm:text-lg max-w-2xl mx-auto" style={{ color: '#4B5563' }}>
+                Avaliações reais de quem já fez o curso
+              </p>
+            </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
-            {[
-              {
-                name: "João Silva",
-                role: "Técnico em Segurança",
-                review: "Excelente curso! Os instrutores são muito capacitados e a estrutura é impecável. Recomendo fortemente.",
-                rating: 5,
-              },
-              {
-                name: "Maria Santos",
-                role: "Engenheira Civil",
-                review: "O conteúdo é muito completo e atualizado. As aulas práticas fizeram toda a diferença no meu aprendizado.",
-                rating: 5,
-              },
-              {
-                name: "Pedro Oliveira",
-                role: "Supervisor de Obras",
-                review: "Profissionais competentes e dedicados. O certificado me ajudou a conseguir uma promoção no trabalho.",
-                rating: 5,
-              },
-            ].map((testimonial, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <Card className="p-4 sm:p-5 lg:p-6 h-full border-0 shadow-lg cursor-default" style={{ backgroundColor: '#FFFFFF', color: '#111827' }}>
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="mb-4 italic" style={{ color: '#374151' }}>"{testimonial.review}"</p>
-                  <div>
-                    <p className="font-semibold" style={{ color: '#111827' }}>{testimonial.name}</p>
-                    <p className="text-sm" style={{ color: '#4B5563' }}>{testimonial.role}</p>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
+            <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+              {turma.course.reviews.map((review, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                >
+                  <Card className="p-4 sm:p-5 lg:p-6 h-full border-0 shadow-lg cursor-default" style={{ backgroundColor: '#FFFFFF', color: '#111827' }}>
+                    <div className="flex gap-1 mb-4">
+                      {[...Array(review.generalRating || 5)].map((_, i) => (
+                        <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                    <p className="mb-4 italic" style={{ color: '#374151' }}>"{review.opinionRating}"</p>
+                    <div>
+                      <p className="font-semibold" style={{ color: '#111827' }}>{review.trainee?.name || 'Aluno'}</p>
+                      {review.trainee?.occupation && (
+                        <p className="text-sm" style={{ color: '#4B5563' }}>{review.trainee.occupation}</p>
+                      )}
+                      {review.trainee?.customer && (
+                        <p className="text-xs" style={{ color: '#6B7280' }}>{review.trainee.customer.name}</p>
+                      )}
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* FAQ Section */}
       {faqs.length > 0 && (
@@ -1175,7 +1135,7 @@ Turma: ${turma?.landingPagesDates}`;
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="space-y-4"
               >
-                {faqs.map((faq: { question: string; answer: string }, index: number) => (
+                {faqs.map((faq, index) => (
                   <div
                     key={index}
                     className="border-b border-gray-200 pb-4 last:border-0"

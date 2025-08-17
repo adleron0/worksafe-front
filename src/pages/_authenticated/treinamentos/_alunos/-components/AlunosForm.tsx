@@ -31,6 +31,7 @@ const AlunosForm = ({ formData, openSheet, entity }: FormProps) => {
     cpf: z.string().length(11, { message: "CPF deve ter 11 dígitos" }),
     email: z.string().email({ message: "Email inválido" }).optional().or(z.literal('')),
     phone: z.string().min(10, { message: "Telefone deve ter pelo menos 10 dígitos" }).optional().or(z.literal('')),
+    occupation: z.string().optional().or(z.literal('')),
     birthDate: z.string().nullable().optional(),
     zipCode: z.string().optional().or(z.literal('')),
     address: z.string().optional().or(z.literal('')),
@@ -62,6 +63,7 @@ const AlunosForm = ({ formData, openSheet, entity }: FormProps) => {
     cpf: formData?.cpf || "",
     email: formData?.email || "",
     phone: formData?.phone || "",
+    occupation: formData?.occupation || "",
     birthDate: formData?.birthDate ? new Date(formData.birthDate).toISOString() : null,
     zipCode: formData?.zipCode || "",
     address: formData?.address || "",
@@ -348,6 +350,19 @@ const AlunosForm = ({ formData, openSheet, entity }: FormProps) => {
           onValueChange={handleChange}
         />
         {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
+      </div>
+
+      {/* Profissão */}
+      <div>
+        <Label htmlFor="occupation">Profissão</Label>
+        <Input
+          id="occupation"
+          name="occupation"
+          placeholder="Ex: Técnico de Segurança"
+          value={dataForm.occupation || ""}
+          onValueChange={handleChange}
+        />
+        {errors.occupation && <p className="text-red-500 text-sm">{errors.occupation}</p>}
       </div>
 
       {/* Data de Nascimento */}

@@ -4,6 +4,7 @@ export interface IEntity {
   cpf: string;
   email?: string;
   phone?: string;
+  occupation?: string;
   birthDate?: Date | string;
   zipCode?: string;
   address?: string;

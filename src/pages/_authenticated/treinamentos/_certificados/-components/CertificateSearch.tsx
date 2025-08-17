@@ -1,180 +1,155 @@
-import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Search, X } from "lucide-react";
+// React and external libraries
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
+// UI Components
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import Input from "@/components/general-components/Input";
+import Select from "@/components/general-components/Select";
+// Interfaces and validations
+import { ApiError, Response } from "@/general-interfaces/api.interface";
 
-interface Props {
-  onSearch: (params: any) => void;
+interface SearchData {
+  'like-name': string;
+  active?: boolean;
+  courseId?: number;
+}
+
+interface SearchFormProps {
+  onSubmit: (data: SearchData) => void;
   onClear: () => void;
+  openSheet: (open: boolean) => void;
+  params: Record<string, unknown>;
 }
 
-interface Company {
-  id: number;
-  name: string;
-}
 
-interface Course {
-  id: number;
-  name: string;
-  companyId: number;
-}
-
-export default function CertificateSearch({ onSearch, onClear }: Props) {
-  const [name, setName] = useState("");
-  const [companyId, setCompanyId] = useState<string>("");
-  const [courseId, setCourseId] = useState<string>("");
-  const [active, setActive] = useState<string>("");
-
-  // Buscar empresas
-  const { data: companiesData } = useQuery({
-    queryKey: ["companies-search"],
-    queryFn: async () => {
-      const response = await get<{ rows: Company[] }>("companies");
-      return response?.rows || [];
-    },
+const CertificateSearch: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, params }) => {
+  // Form state
+  const [searchData, setSearchData] = useState<SearchData>({
+    'like-name': "",
+    active: undefined as boolean | undefined,
+    courseId: undefined as number | undefined,
   });
 
-  // Buscar cursos baseado na empresa selecionada
-  const { data: coursesData } = useQuery({
-    queryKey: ["courses-search", companyId],
-    queryFn: async () => {
-      const params = companyId ? [{ key: "companyId", value: companyId }] : undefined;
-      const response = await get<{ rows: Course[] }>("courses", "", params);
-      return response?.rows || [];
-    },
-    enabled: !!companyId,
-  });
-
-  // Resetar courseId quando companyId mudar
+  // Load params into form state
   useEffect(() => {
-    setCourseId("");
-  }, [companyId]);
+    setSearchData({
+      'like-name': (params['like-name'] as string) || "",
+      active: params.active as boolean | undefined,
+      courseId: params.courseId as number | undefined,
+    });
+  }, [params]);
+
+  const handleChange = (name: string, value: string | number | null) => {
+    setSearchData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleStatusChange = (_name: string, value: string | string[]) => {
+    if (typeof value === 'string') {
+      setSearchData(prev => ({ ...prev, active: value === "true" ? true : false }));
+    }
+  };
+
+
+  const handleCourseChange = (_name: string, value: string | string[]) => {
+    if (typeof value === 'string') {
+      setSearchData(prev => ({ ...prev, courseId: value ? Number(value) : undefined }));
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const params: any = {};
-    
-    if (name.trim()) params.name = name.trim();
-    if (companyId) params.companyId = companyId;
-    if (courseId) params.courseId = courseId;
-    if (active !== "") params.active = active === "true";
-    
-    onSearch(params);
+    onSubmit(searchData);
+    openSheet(false);
   };
 
   const handleClear = () => {
-    setName("");
-    setCompanyId("");
-    setCourseId("");
-    setActive("");
+    setSearchData({
+      'like-name': "",
+      active: undefined,
+      courseId: undefined,
+    });
     onClear();
+    openSheet(false);
   };
 
-  const hasFilters = name || companyId || courseId || active !== "";
+  // Options for selects
+  const statusOptions = [
+    { id: "true", name: "Ativo" },
+    { id: "false", name: "Inativo" }
+  ];
+
+  // Buscar cursos
+  const { 
+    data: coursesData,
+    isFetching: isFetchingCourses,
+  } = useQuery<Response | undefined, ApiError>({
+    queryKey: ["courses-search"],
+    queryFn: async () => {
+      const params = [
+        { key: 'limit', value: 999 },
+        { key: 'order-name', value: 'asc' },
+      ];
+      return get("courses", "", params);
+    },
+  });
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Nome do certificado */}
-        <div className="space-y-2">
-          <Label htmlFor="name">Nome do Certificado</Label>
-          <Input
-            id="name"
-            placeholder="Buscar por nome..."
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
+      {/* Status */}
+      <div>
+        <Label htmlFor="active">Status</Label>
+        <Select 
+          name="active"
+          options={statusOptions}
+          state={searchData.active?.toString() || ""}
+          onChange={handleStatusChange}
+          placeholder="Selecione status"
+        />
+      </div>
 
-        {/* Status */}
-        <div className="space-y-2">
-          <Label htmlFor="active">Status</Label>
-          <Select value={active} onValueChange={setActive}>
-            <SelectTrigger id="active">
-              <SelectValue placeholder="Todos os status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="true">Ativo</SelectItem>
-              <SelectItem value="false">Inativo</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Nome do certificado */}
+      <div>
+        <Label htmlFor="like-name">Nome do Certificado</Label>
+        <Input
+          id="like-name"
+          name="like-name"
+          placeholder="Digite o nome"
+          value={searchData['like-name']}
+          onValueChange={handleChange}
+        />
+      </div>
 
-        {/* Empresa */}
-        <div className="space-y-2">
-          <Label htmlFor="company">Empresa</Label>
-          <Select value={companyId} onValueChange={setCompanyId}>
-            <SelectTrigger id="company">
-              <SelectValue placeholder="Todas as empresas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              {companiesData?.map((company) => (
-                <SelectItem key={company.id} value={company.id.toString()}>
-                  {company.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Curso */}
-        <div className="space-y-2">
-          <Label htmlFor="course">Curso</Label>
-          <Select 
-            value={courseId} 
-            onValueChange={setCourseId}
-            disabled={!companyId || companyId === "all"}
-          >
-            <SelectTrigger id="course">
-              <SelectValue placeholder={
-                !companyId || companyId === "all" 
-                  ? "Selecione uma empresa primeiro" 
-                  : "Todos os cursos"
-              } />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {coursesData?.map((course) => (
-                <SelectItem key={course.id} value={course.id.toString()}>
-                  {course.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Curso */}
+      <div>
+        <Label htmlFor="courseId">Curso</Label>
+        <Select 
+          name="courseId"
+          disabled={isFetchingCourses}
+          options={coursesData?.rows || []}
+          state={searchData.courseId?.toString() || ""}
+          onChange={handleCourseChange}
+          placeholder="Selecione o curso"
+        />
       </div>
 
       {/* Botões */}
-      <div className="flex justify-end gap-2">
-        {hasFilters && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClear}
-            className="gap-2"
-          >
-            <X className="h-4 w-4" />
-            Limpar Filtros
-          </Button>
-        )}
-        <Button type="submit" className="gap-2">
-          <Search className="h-4 w-4" />
+      <div className="flex w-full space-x-2">
+        <Button className="w-1/2" type="submit">
           Buscar
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-1/2"
+          onClick={handleClear}
+        >
+          Limpar
         </Button>
       </div>
     </form>
   );
 }
+
+export default CertificateSearch;

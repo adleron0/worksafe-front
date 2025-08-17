@@ -1,8 +1,10 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 // Serviços
-import { useQuery } from "@tanstack/react-query";
-import { get } from "@/services/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { get, put } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
+import { useLoader } from "@/context/GeneralContext";
+import { toast } from "@/hooks/use-toast";
 import Pagination from "@/components/general-components/Pagination";
 // Template Page list-form
 import HeaderLists from "@/components/general-components/HeaderLists";
@@ -11,23 +13,43 @@ import ItemSkeleton from "./skeletons/ItemSkeleton";
 import ItemList from "./components/SubscriptionItem";
 import SearchForm from "./components/SubscriptionSearch";
 import SubscriptionForm from "./components/SubscriptionForm";
+import SubscriptionCard from "./components/SubscriptionCard";
+import KanbanView, { KanbanColumn } from "@/components/general-components/KanbanView";
+// UI Components
+import { Button } from "@/components/ui/button";
+import Icon from "@/components/general-components/Icon";
 // Interfaces
 import { IEntity } from "./interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
 const List = ({ classId }: { classId: number }) => {
   const { can } = useVerify();
+  const queryClient = useQueryClient();
+  const { showLoader, hideLoader } = useLoader();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
+  
+  // Recuperar preferência salva do localStorage
+  const getStoredViewMode = (): 'list' | 'kanban' => {
+    const stored = localStorage.getItem('subscription-view-mode');
+    return (stored as 'list' | 'kanban') || 'list';
+  };
+  
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>(getStoredViewMode());
   const [searchParams, setSearchParams] = useState({
-    limit: 10,
+    limit: getStoredViewMode() === 'kanban' ? 999 : 10,
     page: 0,
     // show: ['class', 'company'],
     classId: classId,
     'order-name': 'asc',
   });
   const initialFormRef = useRef(searchParams);
+  
+  // Salvar preferência quando mudar
+  useEffect(() => {
+    localStorage.setItem('subscription-view-mode', viewMode);
+  }, [viewMode]);
 
   // Define variáveis de entidade
   const entity = {
@@ -81,26 +103,117 @@ const List = ({ classId }: { classId: number }) => {
 
   const skeletons = Array(5).fill(null);
 
+  // Configuração das colunas do Kanban
+  const kanbanColumns: KanbanColumn[] = [
+    { 
+      id: 'pending', 
+      name: 'Pendente', 
+      value: 'pending',
+      color: '#fbc02d'
+    },
+    { 
+      id: 'confirmed', 
+      name: 'Confirmado', 
+      value: 'confirmed',
+      color: '#22c55e'
+    },
+    { 
+      id: 'declined', 
+      name: 'Recusado', 
+      value: 'declined',
+      color: '#ef4444'
+    },
+  ];
+
+  // Mutation para alterar status
+  const { mutate: changeStatus } = useMutation({
+    mutationFn: ({ newStatus, itemId, item }: { newStatus: string | number; itemId: string | number; item: IEntity }) => {
+      showLoader(`Atualizando status...`);
+      return put<IEntity>("subscription", `${itemId}`, { 
+        ...item,
+        subscribeStatus: newStatus as "pending" | "confirmed" | "declined"
+      });
+    },
+    onSuccess: () => {
+      hideLoader();
+      toast({
+        title: "Status atualizado!",
+        description: "O status foi atualizado com sucesso.",
+        variant: "default",
+      });
+      queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
+    },
+    onError: (error: unknown) => {
+      hideLoader();
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : typeof error === 'object' && error !== null && 'response' in error 
+          ? ((error as ApiError).response?.data?.message || "Erro ao atualizar status")
+          : "Erro ao atualizar status";
+      toast({
+        title: "Erro ao atualizar status",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Handler para mudança de status no Kanban
+  const handleKanbanStatusChange = (newStatus: string | number, itemId: string | number, item: IEntity) => {
+    changeStatus({ newStatus, itemId, item });
+  };
+
   if (!can(`view_${entity.ability}`)) return null;
 
   return (
     <>
-      <HeaderLists
-        entityName={entity.name}
-        ability={entity.ability}
-        limit={data?.total || 0}
-        searchParams={searchParams}
-        onlimitChange={handleLimitChange}
-        openSearch={setOpenSearch}
-        openForm={() => {
-          setFormData(undefined);
-          setOpenForm(true);
-        }}
-        setFormData={setFormData} 
-        setFormType={() => {}}
-        iconForm="plus"
-        addButtonName="Nova"
-      />
+      <div className="space-y-4">
+        <HeaderLists
+          entityName={entity.name}
+          ability={entity.ability}
+          limit={searchParams.limit || data?.total || 0}
+          searchParams={searchParams}
+          onlimitChange={handleLimitChange}
+          openSearch={setOpenSearch}
+          openForm={() => {
+            setFormData(undefined);
+            setOpenForm(true);
+          }}
+          setFormData={setFormData} 
+          setFormType={() => {}}
+          iconForm="plus"
+          addButtonName="Nova"
+        />
+        {/* Toggle para alternar entre visualizações */}
+        <div className="flex justify-start px-2">
+          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => {
+                setViewMode('list');
+                setSearchParams(prev => ({ ...prev, limit: 10 }));
+              }}
+              className="gap-2"
+            >
+              <Icon name="list" className="w-4 h-4" />
+              Lista
+            </Button>
+            <Button
+              variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => {
+                setViewMode('kanban');
+                setSearchParams(prev => ({ ...prev, limit: 999 }));
+              }}
+              className="gap-2"
+            >
+              <Icon name="columns" className="w-4 h-4" />
+              Kanban
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {/* Error */}
       {isError && (
@@ -121,33 +234,59 @@ const List = ({ classId }: { classId: number }) => {
       )}
 
       {/* Content */}
-      {data && data.rows.length > 0 ? (
-        <div className="p-2">
-          {data.rows.map((item, index) => (
-            <ItemList
-              key={item.id}
-              item={item}
-              index={index}
-              entity={entity}
-              setFormData={setFormData}
-              setOpenForm={setOpenForm}
-            />
-          ))}
-          {totalPages > 1 && (
-            <Pagination
-              currentPage={searchParams.page}
-              totalItems={data.total}
-              itemsPerPage={searchParams.limit}
-              onPageChange={handlePageChange}
-            />
-          )}
-        </div>
-      ) : (
-        !isLoading && (
-          <div className="p-6 text-center">
-            <p className="text-gray-500">Nenhuma inscrição encontrada</p>
+      {viewMode === 'list' ? (
+        // Visualização em Lista
+        data && data.rows.length > 0 ? (
+          <div className="p-2">
+            {data.rows.map((item, index) => (
+              <ItemList
+                key={item.id}
+                item={item}
+                index={index}
+                entity={entity}
+                setFormData={setFormData}
+                setOpenForm={setOpenForm}
+                onStatusChange={handleKanbanStatusChange}
+              />
+            ))}
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={searchParams.page}
+                totalItems={data.total}
+                itemsPerPage={searchParams.limit}
+                onPageChange={handlePageChange}
+              />
+            )}
           </div>
+        ) : (
+          !isLoading && (
+            <div className="p-6 text-center">
+              <p className="text-gray-500">Nenhuma inscrição encontrada</p>
+            </div>
+          )
         )
+      ) : (
+        // Visualização em Kanban
+        <div className="p-2">
+          <KanbanView
+            data={data?.rows || []}
+            columns={kanbanColumns}
+            statusField="subscribeStatus"
+            onStatusChange={handleKanbanStatusChange}
+            isLoading={isLoading}
+            emptyMessage="Nenhuma inscrição encontrada"
+          >
+            {(item: IEntity, column) => (
+              <SubscriptionCard
+                item={item}
+                column={column}
+                entity={entity}
+                setFormData={setFormData}
+                setOpenForm={setOpenForm}
+              />
+            )}
+          </KanbanView>
+        </div>
       )}
 
       {/* Search Form */}

@@ -1,8 +1,4 @@
 // Serviços
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { put } from "@/services/api";
-import { useLoader } from "@/context/GeneralContext";
-import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 // Template Page
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -20,7 +16,6 @@ import OptionSelector from "@/components/general-components/OptionSelector";
 // Interfaces
 import { IEntity } from "../interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
-import { ApiError } from "@/general-interfaces/api.interface";
 
 interface ItemsProps {
   item: IEntity;
@@ -28,12 +23,11 @@ interface ItemsProps {
   entity: IDefaultEntity;
   setFormData: (data: IEntity) => void;
   setOpenForm: (open: boolean) => void;
+  onStatusChange: (newStatus: string | number, itemId: string | number, item: IEntity) => void;
 }
 
-const SubscriptionItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => {
+const SubscriptionItem = ({ item, index, entity, setFormData, setOpenForm, onStatusChange }: ItemsProps) => {
   const { can } = useVerify();
-  const queryClient = useQueryClient();
-  const { showLoader, hideLoader } = useLoader();
 
   const status = [
     { label: "Confirmado", value: "confirmed", color: "#22c55e" },
@@ -41,112 +35,10 @@ const SubscriptionItem = ({ item, index, entity, setFormData, setOpenForm }: Ite
     { label: "Pendente", value: "pending", color: "#fbc02d" },
   ];
 
-  // Mutation para alterar status
-  const { mutate: changeStatus } = useMutation({
-    mutationFn: ({ id, newStatus }: { id: number; newStatus: string }) => {
-      showLoader(`Atualizando status...`);
-      return put<IEntity>("subscription", `${id}`, { 
-        ...item,
-        subscribeStatus: newStatus as "pending" | "confirmed" | "declined"
-      });
-    },
-    onSuccess: () => {
-      hideLoader();
-      toast({
-        title: "Status atualizado!",
-        description: "O status foi atualizado com sucesso.",
-        variant: "default",
-      });
-      queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
-    },
-    onError: (error: unknown) => {
-      hideLoader();
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : typeof error === 'object' && error !== null && 'response' in error 
-          ? ((error as ApiError).response?.data?.message || "Erro ao atualizar status")
-          : "Erro ao atualizar status";
-      toast({
-        title: "Erro ao atualizar status",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
-  });
-
   const handleStatusChange = (newStatus: string | number) => {
     if (!item.id) return;
-    changeStatus({ id: item.id, newStatus: newStatus as string });
+    onStatusChange(newStatus, item.id, item);
   };
-
-  // Mutation para inativar
-  // const { mutate: deactivate } = useMutation({
-  //   mutationFn: (id: number) => {
-  //     showLoader(`Inativando ${entity.name}...`);
-  //     return patch<IEntity>(entity.model, `inactive/${id}`);
-  //   },
-  //   onSuccess: () => {
-  //     hideLoader();
-  //     toast({
-  //       title: `${entity.name} ${item.name} inativada!`,
-  //       description: `${entity.name} inativada com sucesso.`,
-  //       variant: "success",
-  //     })
-  //     queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
-  //   },
-  //   onError: (error: unknown) => {
-  //     hideLoader();
-  //     toast({
-  //       title: `Erro ao inativar ${entity.name}`,
-  //       description: error instanceof Error 
-  //         ? error.message 
-  //         : typeof error === 'object' && error !== null && 'response' in error 
-  //           ? ((error as ApiError).response?.data?.message || `Erro ao inativar ${entity.name}`)
-  //           : `Erro ao inativar ${entity.name}`,
-  //       variant: "destructive",
-  //     })
-  //   }
-  // });
-
-  // Mutation para ativar
-  // const { mutate: activate } = useMutation({
-  //   mutationFn: (id: number) => {
-  //     showLoader(`Ativando ${entity.name}...`);
-  //     return patch<IEntity>(entity.model, `active/${id}`);
-  //   },
-  //   onSuccess: () => {
-  //     hideLoader();
-  //     toast({
-  //       title: `${entity.name} ${item.name} reativada!`,
-  //       description: `A ${entity.name} foi reativada com sucesso.`,
-  //       variant: "success",
-  //     })
-  //     queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
-  //   },
-  //   onError: (error: unknown) => {
-  //     hideLoader();
-  //     toast({
-  //       title: `Erro ao reativar ${entity.name}`,
-  //       description: error instanceof Error 
-  //         ? error.message 
-  //         : typeof error === 'object' && error !== null && 'response' in error 
-  //           ? ((error as ApiError).response?.data?.message || `Erro ao reativar ${entity.name}`)
-  //           : `Erro ao reativar ${entity.name}`,
-  //       variant: "destructive",
-  //     })
-  //   }
-  // });
-
-  // const handleConfirmAction = (actionType: "activate" | "deactivate") => {
-  //   if (!item.id) return;
-
-  //   if (actionType === "activate") {
-  //     activate(item.id);
-  //   } else {
-  //     deactivate(item.id);
-  //   }
-  // };
-
 
   return (
     <>

@@ -48,17 +48,17 @@ const Dialog: React.FC<DialogProps> = ({
         )
       }
       <DialogContent 
-        className="sm:max-w-[90vw] max-h-[85vh] pr-0"
+        className="sm:max-w-[90vw] max-h-[85vh] p-4 pr-0 overflow-hidden max-w-11/12"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
       >
-          <DialogHeader>
+          <DialogHeader className="w-11/12 pr-2 md:w-full">
             <DialogTitle className={`${!showHeader && "hidden"}`}>{ title }</DialogTitle>
             <DialogDescription className={`${!showHeader && "hidden"}`}>
               { description }
             </DialogDescription>
           </DialogHeader>
-          <div className="h-[80vh] overflow-y-auto pr-4">
+          <div className="h-[80vh] overflow-y-auto pb-20 pr-4">
             { children }
           </div>
       </DialogContent>

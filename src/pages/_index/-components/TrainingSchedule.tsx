@@ -452,16 +452,16 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-center py-16"
+                  className="text-center py-16 flex justify-end"
                 >
-                  <div className="ml-12 md:ml-24 lg:ml-44">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4 -ml-20 md:-ml-32">
+                  <div className="w-4/5 md:w-full break-words">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                       <Calendar className="w-8 h-8 text-gray-400" />
                     </div>
-                    <p className="text-gray-500 mb-4 -ml-20 md:-ml-32">Nenhum curso agendado para {months[selectedMonth]} de {selectedYear}.</p>
+                    <p className="text-gray-500 mb-4">Nenhum curso agendado para {months[selectedMonth]} de {selectedYear}.</p>
                     <Button 
                       onClick={() => handleWhatsApp && handleWhatsApp("Olá! Gostaria de saber sobre próximos treinamentos.")}
-                      className="bg-primary-light hover:brightness-110 text-white transition-all -ml-20 md:-ml-32"
+                      className="bg-primary-light hover:brightness-110 text-white transition-all"
                     >
                       Consultar Disponibilidade
                     </Button>

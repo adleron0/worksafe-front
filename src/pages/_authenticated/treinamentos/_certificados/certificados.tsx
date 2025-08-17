@@ -61,7 +61,13 @@ function CertificadosPage() {
 
 
 
-  const handleSearch = async (params: Record<string, string | number>) => {
+  const handleSearch = async (data: any) => {
+    const params: Record<string, any> = {};
+    
+    if (data['like-name']) params['like-name'] = data['like-name'];
+    if (data.active !== undefined) params.active = data.active;
+    if (data.courseId) params.courseId = data.courseId;
+    
     setSearchParams((prev) => ({
       ...prev,
       ...params,
@@ -146,13 +152,13 @@ function CertificadosPage() {
         setOpenSheet={setOpenSearch}
         title="Buscar Certificados"
         description="Filtre os certificados por nome, empresa, curso ou status"
+        side="left"
         form={
           <CertificateSearch
-            onSearch={(params) => {
-              handleSearch(params);
-              setOpenSearch(false);
-            }}
+            onSubmit={handleSearch}
             onClear={handleClear}
+            openSheet={setOpenSearch}
+            params={searchParams}
           />
         }
       />

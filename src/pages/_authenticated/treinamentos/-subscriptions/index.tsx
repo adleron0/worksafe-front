@@ -113,7 +113,7 @@ const List = ({ classId }: { classId: number }) => {
 
       {/* Loading */}
       {isLoading && (
-        <div className="p-6">
+        <div className="p-2">
           {skeletons.map((_, index) => (
             <ItemSkeleton key={index} />
           ))}
@@ -122,7 +122,7 @@ const List = ({ classId }: { classId: number }) => {
 
       {/* Content */}
       {data && data.rows.length > 0 ? (
-        <div className="p-6">
+        <div className="p-2">
           {data.rows.map((item, index) => (
             <ItemList
               key={item.id}

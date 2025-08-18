@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import NavBar from "./-components/NavBar";
 import Footer from "./-components/Footer";
 import Clients from "./-components/Clients";
+import CheckoutForm from "./-components/CheckoutForm";
 
 export const Route = createFileRoute("/_index/turma/$id")({
   component: TurmaLandingPage,
@@ -93,6 +94,7 @@ interface Course {
   faq?: string;
   gifts?: string;
   dividedIn?: number | null;
+  allowCheckout?: boolean;
   course?: {
     id: number;
     name: string;
@@ -116,6 +118,7 @@ function TurmaLandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [cart, setCart] = useState<any[]>([]);
   const formRef = useRef<HTMLDivElement>(null);
+  const [showCheckout, setShowCheckout] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -158,8 +161,84 @@ function TurmaLandingPage() {
     );
   };
 
+  const handleCheckoutComplete = async (paymentData: any) => {
+    try {
+      // Prepare data for API with payment info
+      const subscriptionData = {
+        name: paymentData.personalData.name,
+        cpf: paymentData.personalData.cpf,
+        email: paymentData.personalData.email,
+        phone: paymentData.personalData.phone,
+        workedAt: paymentData.personalData.workedAt || "Não informado",
+        occupation: paymentData.personalData.occupation || "Não informado",
+        companyId: 1,
+        classId: parseInt(id),
+        paymentMethod: paymentData.paymentMethod,
+        paymentStatus: paymentData.status
+      };
+      
+      // Send to API
+      await post("subscription", "subscribe", subscriptionData);
+      
+      // Show success toast
+      toast({
+        title: "Inscrição realizada com sucesso!",
+        description: "Pagamento confirmado e inscrição efetivada.",
+        variant: "success",
+      });
+      
+      // Reset form
+      setShowCheckout(false);
+      
+      // Redirect to WhatsApp after a moment
+      setTimeout(() => {
+        const message = `Olá! Inscrição e pagamento realizados com sucesso no curso ${turma?.name}.
+    
+Dados do inscrito:
+Nome: ${paymentData.personalData.name}
+CPF: ${paymentData.personalData.cpf}
+E-mail: ${paymentData.personalData.email}
+Telefone: ${paymentData.personalData.phone}
+Empresa: ${paymentData.personalData.workedAt || "Não informado"}
+Profissão: ${paymentData.personalData.occupation || "Não informado"}
+Método de Pagamento: ${paymentData.paymentMethod}
+
+Turma: ${turma?.landingPagesDates}`;
+        
+        handleWhatsApp(message);
+      }, 1500);
+      
+    } catch (error: any) {
+      console.error("Erro ao processar pagamento:", error);
+      toast({
+        title: "Erro ao processar pagamento",
+        description: error?.response?.data?.message || "Por favor, tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // If allowCheckout is enabled, validate and show checkout form
+    if (turma?.allowCheckout) {
+      // Validate captcha first
+      const correctAnswer = captcha.num1 + captcha.num2;
+      if (parseInt(captcha.answer) !== correctAnswer) {
+        setCaptchaError(true);
+        generateCaptcha();
+        toast({
+          title: "Verificação incorreta",
+          description: "Por favor, responda corretamente a soma matemática.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setShowCheckout(true);
+      return;
+    }
     
     // Validate captcha
     const correctAnswer = captcha.num1 + captcha.num2;
@@ -569,7 +648,7 @@ Turma: ${turma?.landingPagesDates}`;
                     alt={turma.name}
                     className="w-full h-[350px] sm:h-[400px] lg:h-[500px] object-cover"
                     loading="eager"
-                    fetchPriority="high"
+                    fetchpriority="high"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                 </div>
@@ -732,32 +811,62 @@ Turma: ${turma?.landingPagesDates}`;
         </div>
       </section>
 
-      {/* Video Section */}
-      {turma.videoUrl && (
-        <section id="video" className="py-12 sm:py-16 lg:py-20 bg-gray-50">
-          <div className="mx-auto max-w-6xl px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-                {/* Video Player - Left Side on Desktop, Top on Mobile */}
-                <div className="order-1 lg:order-1">
-                  <div className="relative rounded-xl overflow-hidden shadow-2xl bg-black aspect-video">
-                    {turma.videoUrl.includes('youtube.com') || turma.videoUrl.includes('youtu.be') ? (
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        src={turma.videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                        title={turma.videoTitle || "Vídeo do curso"}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="absolute inset-0 w-full h-full"
-                        style={{ border: 0 }}
-                        loading="lazy"
-                      />
+      {/* Video Section - Only render if URL exists and has valid video ID */}
+      {(() => {
+        if (!turma.videoUrl || turma.videoUrl.trim() === '') return null;
+        
+        // Check if it's a YouTube URL and extract video ID
+        let videoId = '';
+        const url = turma.videoUrl;
+        
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+          // Handle YouTube shorts
+          if (url.includes('youtube.com/shorts/')) {
+            videoId = url.split('shorts/')[1]?.split('?')[0] || '';
+          }
+          // Handle regular YouTube videos
+          else if (url.includes('youtube.com/watch')) {
+            videoId = url.split('v=')[1]?.split('&')[0] || '';
+          }
+          // Handle youtu.be links
+          else if (url.includes('youtu.be/')) {
+            videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
+          }
+          // If already an embed link, extract the video ID
+          else if (url.includes('youtube.com/embed/')) {
+            videoId = url.split('embed/')[1]?.split('?')[0] || '';
+          }
+          
+          // If no valid video ID found, don't render the section
+          if (!videoId) return null;
+        }
+        
+        // Render the video section
+        return (
+          <section id="video" className="py-12 sm:py-16 lg:py-20 bg-gray-50">
+            <div className="mx-auto max-w-6xl px-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                  {/* Video Player - Left Side on Desktop, Top on Mobile */}
+                  <div className="order-1 lg:order-1">
+                    <div className="relative rounded-xl overflow-hidden shadow-2xl bg-black aspect-video">
+                      {(url.includes('youtube.com') || url.includes('youtu.be')) ? (
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          src={`https://www.youtube.com/embed/${videoId}`}
+                          title={turma.videoTitle || "Vídeo do curso"}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="absolute inset-0 w-full h-full"
+                          style={{ border: 0 }}
+                          loading="lazy"
+                        />
                     ) : (
                       <video
                         controls
@@ -836,7 +945,8 @@ Turma: ${turma?.landingPagesDates}`;
             </motion.div>
           </div>
         </section>
-      )}
+        );
+      })()}
 
       {/* Why Choose Us Section */}
       <section id="why-choose" className="py-12 sm:py-16 lg:py-20 bg-white">
@@ -1225,6 +1335,18 @@ Turma: ${turma?.landingPagesDates}`;
                 );
               }
               
+              // If checkout is enabled and showCheckout is true, show CheckoutForm
+              if (turma?.allowCheckout && showCheckout) {
+                return (
+                  <CheckoutForm
+                    turma={turma}
+                    onComplete={handleCheckoutComplete}
+                    onBack={() => setShowCheckout(false)}
+                    initialData={formData}
+                  />
+                );
+              }
+              
               return (
                 <>
                   <div className="text-center mb-8 sm:mb-10">
@@ -1431,7 +1553,7 @@ Turma: ${turma?.landingPagesDates}`;
                       </>
                     ) : (
                       <>
-                        Confirmar Inscrição
+                        {turma?.allowCheckout ? 'Continuar para Pagamento' : 'Confirmar Inscrição'}
                         <ArrowRight className="ml-2 h-5 w-5" />
                       </>
                     )}

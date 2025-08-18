@@ -90,6 +90,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     landingPagesDates: z.string().min(3, { message: "Datas de divulgação devem ter pelo menos 3 caracteres" }),
     allowExam: z.boolean().optional().nullable(),
     allowReview: z.boolean().optional(),
+    allowCheckout: z.boolean().optional(),
     classCode: z.string().optional().nullable(),
     minimumQuorum: z.number().optional(),
     maxSubscriptions: z.number().optional(),
@@ -182,6 +183,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     landingPagesDates: formData?.landingPagesDates || "",
     allowExam: formData?.allowExam,
     allowReview: formData?.allowReview || false,
+    allowCheckout: (formData as any)?.allowCheckout || false,
     classCode: formData?.classCode || (!formData ? generateClassCode() : (formData?.classCode || generateClassCode())),
     minimumQuorum: formData?.minimumQuorum || 0,
     maxSubscriptions: formData?.maxSubscriptions || 0,
@@ -787,6 +789,19 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           name="allowReview"
           checked={dataForm.allowReview ? true : false}
           onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowReview: !prev.allowReview }))}
+        />
+      </div>
+
+      <div className="mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg flex justify-between items-center">
+        <Label htmlFor="allowCheckout" className="cursor-pointer flex items-center gap-2">
+          <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+          Habilitar Checkout (Pagamento Online)
+        </Label>
+        <Switch
+          id="allowCheckout"
+          name="allowCheckout"
+          checked={dataForm.allowCheckout ? true : false}
+          onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowCheckout: !prev.allowCheckout }))}
         />
       </div>
 

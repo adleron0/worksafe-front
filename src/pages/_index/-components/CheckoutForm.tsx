@@ -71,7 +71,7 @@ interface CheckoutFormProps {
   turma: {
     name: string;
     price: string | number;
-    dividedIn?: number;
+    dividedIn?: number | null;
     landingPagesDates?: string;
   };
   onComplete: (paymentData: {

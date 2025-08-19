@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/general-components/Icon";
 import { Badge } from "@/components/ui/badge";
-import { ICertificate } from "../interfaces/entity.interface";
+import { ICertificate } from "../-interfaces/entity.interface";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Dialog from "@/components/general-components/Dialog";
@@ -18,7 +18,7 @@ interface FormProps {
     model: string;
     ability: string;
   };
-  traineeId: number;
+  traineeId?: number;
 }
 
 const Form = ({ formData, setOpenForm }: FormProps) => {

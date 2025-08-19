@@ -25,7 +25,12 @@ function List() {
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
-  const [searchParams, setSearchParams] = useState({
+  const [searchParams, setSearchParams] = useState<{
+    limit: number;
+    page: number;
+    'order-name': string;
+    'like-name'?: string;
+  }>({
     limit: 10,
     page: 0,
     'order-name': 'asc',
@@ -103,6 +108,8 @@ function List() {
         entityName={entity.name}
         ability={entity.ability}
         limit={data?.total || 0}
+        showInputSearch={true}
+        searchPlaceholder="Buscar por nome do aluno..."
         searchParams={searchParams}
         onlimitChange={handleLimitChange}
         openSearch={setOpenSearch}
@@ -110,6 +117,13 @@ function List() {
         setFormData={setFormData} 
         setFormType={() => {}}
         iconForm="plus"
+        onTextSearch={(text) => {
+          setSearchParams(prev => ({
+            ...prev,
+            'like-name': text || undefined,
+            page: 0 // Reset page when searching
+          }));
+        }}
       />
 
       {/* Busca avançada */}

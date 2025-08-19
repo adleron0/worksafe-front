@@ -73,6 +73,11 @@ export const items = [
         path: "/treinamentos/turmas",
       },
       {
+        title: "Inscrições",
+        icon: "ticket-check",
+        path: "/treinamentos/inscricoes",
+      },
+      {
         title: "Instrutores",
         ability: "instrutores",
         icon: "contact",
@@ -87,6 +92,11 @@ export const items = [
         title: "Certificados",
         icon: "file-badge",
         path: "/treinamentos/certificados",
+      },
+      {
+        title: "Criar Certificado",
+        icon: "file-pen",
+        path: "/treinamentos/certificados-modelos",
       },
       {
         title: "Dashboard",

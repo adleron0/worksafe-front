@@ -648,7 +648,7 @@ Turma: ${turma?.landingPagesDates}`;
                     alt={turma.name}
                     className="w-full h-[350px] sm:h-[400px] lg:h-[500px] object-cover"
                     loading="eager"
-                    fetchpriority="high"
+                    fetchPriority="high"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                 </div>

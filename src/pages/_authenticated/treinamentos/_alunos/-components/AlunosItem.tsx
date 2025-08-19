@@ -23,7 +23,7 @@ import { ApiError } from "@/general-interfaces/api.interface";
 import { useState } from "react";
 import Dialog from "@/components/general-components/Dialog";
 import AlunosExames from "../-alunos-exames";
-import AlunosCertificados from "../-alunos-certificados";
+import AlunosCertificados from "../../_certificados/certificados";
 
 interface ItemsProps {
   item: IEntity;

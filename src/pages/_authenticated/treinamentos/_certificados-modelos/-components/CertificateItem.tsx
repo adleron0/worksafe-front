@@ -28,9 +28,10 @@ interface Props {
   entity: IDefaultEntity;
   setFormData: (data: ICertificate) => void;
   setOpenForm: (open: boolean) => void;
+  isDesktop: boolean;
 }
 
-const CertificateItem = ({ item, index, entity, setFormData, setOpenForm }: Props) => {
+const CertificateItem = ({ item, index, entity, setFormData, setOpenForm, isDesktop }: Props) => {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
@@ -222,7 +223,7 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm }: Prop
                 <p>Visualizar Certificado</p>
               </Button>
 
-              { can(`update_${entity.ability}`) && (
+              { can(`update_${entity.ability}`) && isDesktop && (
                   <Button 
                     variant="ghost" 
                     className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"

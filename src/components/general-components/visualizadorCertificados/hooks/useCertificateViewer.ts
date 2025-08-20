@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import * as fabric from 'fabric';
@@ -23,6 +23,11 @@ export const useCertificateViewer = (
   const [pages, setPages] = useState<CanvasPage[]>([]);
   const canvasRefs = useRef<Map<string, any>>(new Map());
 
+  // Memorizar variableToReplace para evitar loops
+  const memoizedVariables = useMemo(() => {
+    return variableToReplace;
+  }, [JSON.stringify(variableToReplace)]);
+
   // Processar dados quando certificateData ou variableToReplace mudarem
   useEffect(() => {
     const processData = async () => {
@@ -31,7 +36,7 @@ export const useCertificateViewer = (
       try {
         
         // Decodificar variableToReplace se estiver em base64
-        const decodedVariables = decodeBase64Variables(variableToReplace);
+        const decodedVariables = decodeBase64Variables(memoizedVariables);
         
         // Determinar qual conjunto de variáveis usar (nova estrutura ou compatibilidade)
         const variables = decodedVariables || 
@@ -43,7 +48,6 @@ export const useCertificateViewer = (
           try {
             frontJson = JSON.parse(certificateData.fabricJsonFront);
           } catch (error) {
-            console.error('❌ Erro ao parsear fabricJsonFront:', error);
             frontJson = certificateData.fabricJsonFront;
           }
         } else {
@@ -76,7 +80,6 @@ export const useCertificateViewer = (
             try {
               backJson = JSON.parse(certificateData.fabricJsonBack);
             } catch (error) {
-              console.error('❌ Erro ao parsear fabricJsonBack:', error);
               backJson = certificateData.fabricJsonBack;
             }
           } else {
@@ -133,7 +136,6 @@ export const useCertificateViewer = (
         setProcessedCanvasData(processedData);
 
       } catch (error) {
-        console.error('Erro ao processar dados do certificado:', error);
         toast.error('Erro ao processar dados do certificado');
       } finally {
         setIsLoading(false);
@@ -145,7 +147,7 @@ export const useCertificateViewer = (
     if (certificateData) {
       processData();
     }
-  }, [certificateData, variableToReplace, studentData]);
+  }, [certificateData, memoizedVariables, studentData]);
 
   // Função helper para converter StudentData para VariableToReplace (compatibilidade)
   const convertStudentDataToVariables = (data: StudentData): VariableToReplace => {
@@ -179,7 +181,6 @@ export const useCertificateViewer = (
       try {
         data = JSON.parse(jsonData);
       } catch (error) {
-        console.error('❌ Erro ao parsear JSON:', error);
         return jsonData;
       }
     } else {
@@ -284,6 +285,102 @@ export const useCertificateViewer = (
               
               frontCanvas.loadFromJSON(jsonToLoad).then(async () => {
                 
+                // Função para processar textboxes garantindo que largura seja respeitada
+                const processTextboxes = () => {
+                  frontCanvas.getObjects().forEach((obj: any) => {
+                    if ((obj.type === 'Textbox' || obj.type === 'textbox')) {
+                      // Se tem largura definida no objeto original
+                      if (obj.width && obj.width > 0) {
+                        const originalWidth = obj.width;
+                        
+                        // Limpar cache interno do Fabric.js
+                        if (obj._clearCache) {
+                          obj._clearCache();
+                        }
+                        
+                        // Definir largura fixa e forçar wrap
+                        obj.set({
+                          width: originalWidth,
+                          splitByGrapheme: obj.splitByGrapheme !== undefined ? obj.splitByGrapheme : false,
+                          dirty: true
+                        });
+                        
+                        // Chamar initDimensions para recalcular quebras de linha
+                        if (obj.initDimensions) {
+                          obj.initDimensions();
+                        }
+                        
+                        // Garantir que a largura foi mantida após todas as operações
+                        if (obj.width !== originalWidth) {
+                          obj.set('width', originalWidth);
+                          if (obj.initDimensions) {
+                            obj.initDimensions();
+                          }
+                        }
+                      }
+                    }
+                  });
+                  
+                  // Forçar re-renderização completa
+                  frontCanvas.requestRenderAll();
+                };
+                
+                // Aguardar fonts carregarem
+                if (document.fonts && document.fonts.ready) {
+                  document.fonts.ready.then(() => {
+                    processTextboxes();
+                    
+                    // Processar novamente após renderização inicial
+                    requestAnimationFrame(() => {
+                      processTextboxes();
+                    });
+                  });
+                } else {
+                  processTextboxes();
+                }
+                
+                // Processar adicionalmente com delays para garantir
+                setTimeout(() => {
+                  processTextboxes();
+                }, 150);
+                
+                // Último processamento para garantir
+                setTimeout(() => {
+                  processTextboxes();
+                }, 500);
+                
+                // Ajustar escala das imagens após carregamento
+                // Aguardar um pouco para garantir que as imagens foram carregadas
+                setTimeout(() => {
+                  frontCanvas.getObjects().forEach((obj: any) => {
+                    // Verificar se é uma imagem de assinatura
+                    if (obj.type === 'image' && obj.name?.includes('assinatura')) {
+                      // Verificar se temos as dimensões alvo e a imagem foi carregada
+                      if (obj.targetHeight && obj.targetWidth && obj._element) {
+                        const naturalWidth = obj._element.naturalWidth;
+                        const naturalHeight = obj._element.naturalHeight;
+                        
+                        if (naturalWidth && naturalHeight) {
+                          // Calcular a escala correta baseada no tamanho real
+                          const scaleToFitHeight = obj.targetHeight / naturalHeight;
+                          const scaleToFitWidth = obj.targetWidth / naturalWidth;
+                          
+                          // Usar a menor escala para manter proporção
+                          const correctScale = Math.min(scaleToFitHeight, scaleToFitWidth);
+                          
+                          // Aplicar a nova escala
+                          obj.set({
+                            scaleX: correctScale,
+                            scaleY: correctScale
+                          });
+                        }
+                      }
+                    }
+                  });
+                  
+                  frontCanvas.renderAll();
+                }, 500); // Aguardar 500ms para garantir carregamento
+                
                 // Processar placeholders de QR Code ANTES de configurar como não editáveis
                 const objects = frontCanvas.getObjects();
                 const qrPromises: Promise<void>[] = [];
@@ -373,14 +470,13 @@ export const useCertificateViewer = (
                           };
                           
                           img.onerror = (error) => {
-                            console.error('❌ Erro ao carregar imagem HTML (frente):', error);
                             reject(error);
                           };
                           
                           img.src = qrDataUrl;
                         });
                       } catch (error) {
-                        console.error('❌ Erro ao gerar QR Code:', error);
+                        // Erro ao gerar QR Code
                       }
                     })();
                     
@@ -401,6 +497,18 @@ export const useCertificateViewer = (
                     hasControls: false,
                     hasBorders: false
                   });
+                  
+                  // Correção específica para Textbox - garantir que as dimensões sejam recalculadas
+                  if (obj.type === 'Textbox' || obj.type === 'textbox') {
+                    // Se tem largura definida, forçar recálculo correto das quebras de linha
+                    if (obj.width !== undefined && obj.width > 0) {
+                      // Método do Fabric.js para recalcular dimensões de textbox
+                      // Isso garante que o texto quebre corretamente dentro da largura definida
+                      if (obj.initDimensions) {
+                        obj.initDimensions();
+                      }
+                    }
+                  }
                   
                   // Verificar e corrigir fonte Bebas Neue em objetos de texto
                   if ((obj.type === 'Textbox' || obj.type === 'Text' || obj.type === 'IText') && 
@@ -425,6 +533,167 @@ export const useCertificateViewer = (
                   (obj as any).id = uniqueId;
                 });
                 
+                // Adicionar listener para detectar mudanças nos objetos após o carregamento
+                frontCanvas.on('object:modified', (e: any) => {
+                  const obj = e.target;
+                  if (obj && (obj.type === 'Textbox' || obj.type === 'textbox')) {
+                    // Listener removido
+                  }
+                });
+                
+                // Verificar e corrigir estado final de todos os textboxes
+                setTimeout(() => {
+                  let problemasDetectados = 0;
+                  
+                  // Mapear textboxes esperados com múltiplas linhas
+                  const expectedMultiline: Record<string, number> = {
+                    'Realizado pela WORKSAFE': 3,
+                    'Descrição: Em conformidade': 5,
+                    'JÚLIO ADLER FERREIRA': 2,
+                    'RTO - RESGATE TÉCNICO': 2
+                  };
+                  
+                  frontCanvas.getObjects().forEach((obj: any) => {
+                    if (obj.type === 'Textbox' || obj.type === 'textbox') {
+                      const text = obj.text || '';
+                      const lines = obj._textLines?.length || 0;
+                      
+                      // Verificar se este textbox deveria ter múltiplas linhas
+                      let shouldHaveMultipleLines = false;
+                      let expectedLines = 1;
+                      
+                      for (const [key, expected] of Object.entries(expectedMultiline)) {
+                        if (text.includes(key)) {
+                          shouldHaveMultipleLines = true;
+                          expectedLines = expected;
+                          break;
+                        }
+                      }
+                      
+                      // Se deveria ter múltiplas linhas mas tem apenas 1, há um problema
+                      if (shouldHaveMultipleLines && lines < expectedLines) {
+                        problemasDetectados++;
+                        
+                        // Forçar correção
+                        
+                        const originalWidth = obj.width;
+                        
+                        // Limpar cache completamente
+                        if (obj._clearCache) {
+                          obj._clearCache();
+                        }
+                        
+                        // Forçar recriação com largura definida
+                        obj.set({
+                          width: originalWidth,
+                          splitByGrapheme: false,
+                          dirty: true
+                        });
+                        
+                        // Forçar recálculo múltiplas vezes
+                        if (obj.initDimensions) {
+                          obj.initDimensions();
+                          
+                          // Se ainda não tem as linhas corretas, tentar novamente
+                          if (obj._textLines?.length < expectedLines) {
+                            // Alterar temporariamente o texto para forçar recálculo
+                            const tempText = obj.text;
+                            obj.text = tempText + ' ';
+                            obj.initDimensions();
+                            obj.text = tempText;
+                            obj.initDimensions();
+                          }
+                        }
+                      }
+                      
+                      // Também verificar largura visual
+                      if (obj.width && obj.width > 0) {
+                        const bounds = obj.getBoundingRect();
+                        const definedWidth = obj.width * (obj.scaleX || 1);
+                        
+                        if (bounds.width > definedWidth * 1.2) {
+                          problemasDetectados++;
+                        }
+                      }
+                    }
+                  });
+                  
+                  if (problemasDetectados > 0) {
+                    frontCanvas.requestRenderAll();
+                    
+                    // Verificar novamente após mais 500ms
+                    setTimeout(() => {
+                      let aindasComProblema = 0;
+                      
+                      frontCanvas.getObjects().forEach((obj: any) => {
+                        if (obj.type === 'Textbox' || obj.type === 'textbox') {
+                          const text = obj.text || '';
+                          const lines = obj._textLines?.length || 0;
+                          
+                          for (const [key, expected] of Object.entries(expectedMultiline)) {
+                            if (text.includes(key) && lines < expected) {
+                              aindasComProblema++;
+                              
+                              // Última tentativa mais agressiva
+                              obj._clearCache && obj._clearCache();
+                              obj.set({ width: obj.width, dirty: true });
+                              obj.initDimensions && obj.initDimensions();
+                            }
+                          }
+                        }
+                      });
+                      
+                      // Verificação concluída
+                      
+                      frontCanvas.requestRenderAll();
+                    }, 500);
+                  }
+                }, 1000);
+                
+                // Verificação contínua a cada 2 segundos para detectar problemas tardios
+                const verificacaoContinua = setInterval(() => {
+                  
+                  const expectedMultiline: Record<string, number> = {
+                    'Realizado pela WORKSAFE': 3,
+                    'Descrição: Em conformidade': 5,
+                    'JÚLIO ADLER FERREIRA': 2,
+                    'RTO - RESGATE TÉCNICO': 2
+                  };
+                  
+                  let problemasDetectados = 0;
+                  
+                  frontCanvas.getObjects().forEach((obj: any) => {
+                    if (obj.type === 'Textbox' || obj.type === 'textbox') {
+                      const text = obj.text || '';
+                      const lines = obj._textLines?.length || 0;
+                      
+                      for (const [key, expected] of Object.entries(expectedMultiline)) {
+                        if (text.includes(key) && lines < expected) {
+                          problemasDetectados++;
+                          
+                          // Aplicar correção imediata
+                          obj._clearCache && obj._clearCache();
+                          obj.set({
+                            width: obj.width,
+                            splitByGrapheme: false,
+                            dirty: true
+                          });
+                          obj.initDimensions && obj.initDimensions();
+                        }
+                      }
+                    }
+                  });
+                  
+                  if (problemasDetectados > 0) {
+                    frontCanvas.requestRenderAll();
+                  }
+                }, 2000);
+                
+                // Limpar verificação após 30 segundos para não sobrecarregar
+                setTimeout(() => {
+                  clearInterval(verificacaoContinua);
+                }, 30000);
+                
                 // Forçar renderização múltiplas vezes para garantir que as fontes sejam aplicadas
                 frontCanvas.requestRenderAll();
                 setTimeout(() => frontCanvas.requestRenderAll(), 100);
@@ -432,11 +701,9 @@ export const useCertificateViewer = (
                 
                 resolve();
               }).catch((error: any) => {
-                console.error('❌ Erro ao carregar JSON da frente:', error);
                 reject(error);
               });
             } catch (error) {
-              console.error('❌ Erro ao carregar JSON da frente:', error);
               reject(error);
             }
           });
@@ -505,6 +772,107 @@ export const useCertificateViewer = (
               }
               
               backCanvas.loadFromJSON(jsonToLoad).then(async () => {
+                
+                // Função para processar textboxes garantindo que largura seja respeitada
+                const processTextboxes = () => {
+                  let textboxCount = 0;
+                  
+                  backCanvas.getObjects().forEach((obj: any) => {
+                    if ((obj.type === 'Textbox' || obj.type === 'textbox')) {
+                      // Se tem largura definida no objeto original
+                      if (obj.width && obj.width > 0) {
+                        textboxCount++;
+                        const originalWidth = obj.width;
+                        
+                        // IMPORTANTE: Para Textbox no Fabric.js v6, precisamos garantir
+                        // que a largura está sendo usada corretamente para wrap de texto
+                        
+                        // Limpar cache interno do Fabric.js
+                        if (obj._clearCache) {
+                          obj._clearCache();
+                        }
+                        
+                        // Definir largura fixa e forçar wrap
+                        obj.set({
+                          width: originalWidth,
+                          splitByGrapheme: obj.splitByGrapheme !== undefined ? obj.splitByGrapheme : false,
+                          dirty: true
+                        });
+                        
+                        // Removido _wrapText - initDimensions já cuida do wrap de texto
+                        
+                        // Chamar initDimensions para recalcular quebras de linha
+                        if (obj.initDimensions) {
+                          obj.initDimensions();
+                        }
+                        
+                        // Garantir que a largura foi mantida após todas as operações
+                        if (obj.width !== originalWidth) {
+                          obj.set('width', originalWidth);
+                        }
+                      }
+                    }
+                  });
+                  
+                  // Forçar re-renderização completa
+                  backCanvas.requestRenderAll();
+                };
+                
+                // Aguardar fonts carregarem (especialmente importante para cálculo de largura de texto)
+                if (document.fonts && document.fonts.ready) {
+                  document.fonts.ready.then(() => {
+                    processTextboxes();
+                    
+                    // Processar novamente após renderização inicial
+                    requestAnimationFrame(() => {
+                      processTextboxes();
+                    });
+                  });
+                } else {
+                  processTextboxes();
+                }
+                
+                // Processar adicionalmente com delays para garantir
+                setTimeout(() => {
+                  processTextboxes();
+                }, 150);
+                
+                // Último processamento para garantir
+                setTimeout(() => {
+                  processTextboxes();
+                }, 500);
+                
+                // Ajustar escala das imagens após carregamento no verso
+                // Aguardar um pouco para garantir que as imagens foram carregadas
+                setTimeout(() => {
+                  backCanvas.getObjects().forEach((obj: any) => {
+                    // Verificar se é uma imagem de assinatura
+                    if (obj.type === 'image' && obj.name?.includes('assinatura')) {
+                      // Verificar se temos as dimensões alvo e a imagem foi carregada
+                      if (obj.targetHeight && obj.targetWidth && obj._element) {
+                        const naturalWidth = obj._element.naturalWidth;
+                        const naturalHeight = obj._element.naturalHeight;
+                        
+                        if (naturalWidth && naturalHeight) {
+                          // Calcular a escala correta baseada no tamanho real
+                          const scaleToFitHeight = obj.targetHeight / naturalHeight;
+                          const scaleToFitWidth = obj.targetWidth / naturalWidth;
+                          
+                          // Usar a menor escala para manter proporção
+                          const correctScale = Math.min(scaleToFitHeight, scaleToFitWidth);
+                          
+                          // Aplicar a nova escala
+                          obj.set({
+                            scaleX: correctScale,
+                            scaleY: correctScale
+                          });
+                        }
+                      }
+                    }
+                  });
+                  
+                  backCanvas.renderAll();
+                }, 500); // Aguardar 500ms para garantir carregamento
                 
                 // Processar placeholders de QR Code no verso também
                 const backObjects = backCanvas.getObjects();
@@ -585,14 +953,13 @@ export const useCertificateViewer = (
                           };
                           
                           img.onerror = (error) => {
-                            console.error('❌ Erro ao carregar imagem HTML:', error);
                             reject(error);
                           };
                           
                           img.src = qrDataUrl;
                         });
                       } catch (error) {
-                        console.error('❌ Erro ao gerar QR Code (verso):', error);
+                        // Erro ao gerar QR Code (verso)
                       }
                     })();
                     
@@ -612,6 +979,18 @@ export const useCertificateViewer = (
                     hasControls: false,
                     hasBorders: false
                   });
+                  
+                  // Correção específica para Textbox - garantir que as dimensões sejam recalculadas
+                  if (obj.type === 'Textbox' || obj.type === 'textbox') {
+                    // Se tem largura definida, forçar recálculo correto das quebras de linha
+                    if (obj.width !== undefined && obj.width > 0) {
+                      // Método do Fabric.js para recalcular dimensões de textbox
+                      // Isso garante que o texto quebre corretamente dentro da largura definida
+                      if (obj.initDimensions) {
+                        obj.initDimensions();
+                      }
+                    }
+                  }
                   
                   // Verificar e corrigir fonte Bebas Neue em objetos de texto
                   if ((obj.type === 'Textbox' || obj.type === 'Text' || obj.type === 'IText') && 
@@ -643,7 +1022,6 @@ export const useCertificateViewer = (
                 
                 resolve();
               }).catch((error: any) => {
-                console.error('Erro ao carregar JSON do verso:', error);
                 reject(error);
               });
             });
@@ -652,7 +1030,6 @@ export const useCertificateViewer = (
       }
 
     } catch (error) {
-      console.error('Erro ao carregar dados nos canvas:', error);
       toast.error('Erro ao carregar certificado');
     }
   }, [canvasRefs, processImagesInJSON]);
@@ -692,13 +1069,12 @@ export const useCertificateViewer = (
         const canvasRef = canvasRefs.current.get(page.id);
         
         if (!canvasRef) {
-          console.error(`Canvas não encontrado para página ${page.id}`);
+          // Canvas não encontrado
           continue;
         }
 
         const canvas = canvasRef.getCanvas();
         if (!canvas) {
-          console.error(`Canvas não inicializado para página ${page.id}`);
           continue;
         }
 
@@ -762,13 +1138,12 @@ export const useCertificateViewer = (
           // Adicionar imagem com compressão NONE para manter qualidade máxima
           pdf.addImage(dataURL, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'NONE');
         } catch (error) {
-          console.error(`Erro ao exportar página ${i + 1}:`, error);
           toast.error(`Erro ao exportar página ${i + 1}`);
         }
       }
 
       // Tentar obter nome do aluno das variáveis (decodificando se necessário)
-      const decodedVariables = decodeBase64Variables(variableToReplace);
+      const decodedVariables = decodeBase64Variables(memoizedVariables);
       const studentName = decodedVariables?.nome_do_aluno?.value || 
                          studentData?.nome_do_aluno || 
                          'certificado';
@@ -777,7 +1152,6 @@ export const useCertificateViewer = (
       pdf.save(fileName);
       toast.success('PDF exportado com sucesso!');
     } catch (error) {
-      console.error('Erro ao exportar PDF:', error);
       toast.error('Erro ao exportar PDF');
     } finally {
       setIsExporting(false);

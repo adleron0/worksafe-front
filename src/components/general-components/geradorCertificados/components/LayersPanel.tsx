@@ -211,10 +211,11 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
     // Atualizar z-index no canvas
     const objects = canvas.getObjects().filter(obj => {
       const objWithName = obj as fabric.Object & { name?: string };
-      return objWithName.name !== 'backgroundRect';
+      // Preservar tanto backgroundRect quanto backgroundImage
+      return objWithName.name !== 'backgroundRect' && objWithName.name !== 'backgroundImage';
     });
 
-    // Limpar o canvas (exceto backgroundRect)
+    // Limpar o canvas (exceto backgroundRect e backgroundImage)
     objects.forEach(obj => canvas.remove(obj));
 
     // Re-adicionar objetos na nova ordem (invertida porque layers está invertido)

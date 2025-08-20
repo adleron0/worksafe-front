@@ -11,7 +11,7 @@ import {
     DropdownMenuContent,
     DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDownIcon, Cross2Icon } from "@radix-ui/react-icons";
 
@@ -46,29 +46,16 @@ const Select = ({
     callBacks = [],
     modal = true,
 }: SelectProps) => {
-  const isInitialMount = useRef(true);
-  const [key, setKey] = useState(0); // Usado para forçar a re-renderização
   const [selectedItems, setSelectedItems] = useState<string[]>(
     multiple ? (Array.isArray(state) ? state : state ? [state] : []) : []
   );
 
-  // Força uma re-renderização quando as opções ou o estado mudam
+  // Atualiza selectedItems quando state muda (apenas para multiple)
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-    
-    // Forçar re-renderização quando as opções ou o estado mudam
-    setKey(prev => prev + 1);
-    
-    // Atualiza selectedItems quando state muda
     if (multiple) {
       setSelectedItems(Array.isArray(state) ? state : state ? [state] : []);
     }
-    
-    // console.log(`Select ${name} - state: ${state}, options count: ${options.length}`);
-  }, [options, state, name, multiple]);
+  }, [state, multiple]);
 
   const handleValueChange = (newValue: string) => {
     onChange(name, newValue);
@@ -130,7 +117,6 @@ const Select = ({
             disabled={disabled}
             variant="outline" 
             className="w-full justify-between font-normal"
-            key={key}
           >
             <span className="truncate">{getSelectedLabels()}</span>
             <div className="flex items-center">
@@ -168,10 +154,10 @@ const Select = ({
                 className="overflow-y-auto"
                 style={{ maxHeight: '250px' }}
               >
-                {options.map((option) => (
+                {options.map((option, index) => (
                 <DropdownMenuCheckboxItem
                   className="cursor-pointer hover:bg-muted"
-                  key={option[value]}
+                  key={option[value] !== undefined ? option[value] : `option-${index}`}
                   checked={selectedItems.includes(String(option[value]))}
                   onCheckedChange={() => handleMultipleValueChange(String(option[value]))}
                 >
@@ -193,24 +179,42 @@ const Select = ({
   // Renderiza o componente de seleção única (original)
   return (
     <UiSelect
-      key={key} // Força re-renderização quando a chave muda
       value={typeof state === 'string' ? state : ''}
       onValueChange={handleValueChange}
-      defaultValue={typeof state === 'string' ? state : ''}
     >
       <SelectTrigger className="w-full" disabled={disabled}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
         {options && options.length > 0 ? (
-          options.map((option) => (
-            <SelectItem 
-              key={option[value]} 
-              value={String(option[value])}
-            >
-              {option[label]}
-            </SelectItem>
-          ))
+          options.map((option, index) => {
+            const optionValue = option[value];
+            const optionLabel = option[label];
+            
+            // Garantir que temos uma key única
+            const keyValue = optionValue !== undefined && optionValue !== null 
+              ? `${name}-${optionValue}` 
+              : `${name}-fallback-${index}`;
+            
+            // Garantir que temos um value válido
+            const itemValue = optionValue !== undefined && optionValue !== null 
+              ? String(optionValue) 
+              : '';
+            
+            // Não renderizar opções sem value
+            if (!itemValue) {
+              return null;
+            }
+            
+            return (
+              <SelectItem 
+                key={keyValue} 
+                value={itemValue}
+              >
+                {optionLabel || 'Sem nome'}
+              </SelectItem>
+            );
+          })
         ) : (
           <SelectItem value="no-options" disabled>
             Nenhuma opção disponível

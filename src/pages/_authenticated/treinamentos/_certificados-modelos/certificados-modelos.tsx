@@ -13,6 +13,7 @@ import CertificateItem from "./-components/CertificateItem";
 import CertificateSearch from "./-components/CertificateSearch";
 import { ICertificate } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
+import useWindowSize from "@/hooks/use-windowSize";
 
 export const Route = createFileRoute('/_authenticated/treinamentos/_certificados-modelos/certificados-modelos')({
   component: CertificadosPage,
@@ -90,6 +91,9 @@ function CertificadosPage() {
 
   const skeletons = Array(5).fill(null);
 
+  const { width } = useWindowSize();
+  const isDesktop = width ? width > 768 : true;
+
   if (!can(`view_${entity.ability}`)) return null;
 
   return (
@@ -109,6 +113,7 @@ function CertificadosPage() {
         }}
         setFormData={setEditingCertificate}
         setFormType={() => {}}
+        showCreate={isDesktop}
         addButtonName="Criar Template"
       />
 
@@ -125,6 +130,7 @@ function CertificadosPage() {
               entity={entity}
               setFormData={setEditingCertificate}
               setOpenForm={setOpenEditor}
+              isDesktop={isDesktop}
             />
           ))
         ) : (

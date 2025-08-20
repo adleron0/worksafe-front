@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { get, del } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Image as ImageIcon, Loader2, Shapes, Frame, Trash2, Type, Layers, ImagePlus } from 'lucide-react';
+import { Image as ImageIcon, Loader2, Shapes, Frame, Trash2, Type, Layers, ImagePlus, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import * as fabric from 'fabric';
 
@@ -284,6 +284,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
     setIsDragging,
     handleApplyAsBackground,
     handleDeleteFromCanvas,
+    handleDuplicateObject,
     addImageToCanvas,
     addShapeToCanvas,
     addTextToCanvas,
@@ -653,6 +654,11 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         title: 'Ações Rápidas - Imagem',
         items: [
           {
+            icon: Copy,
+            label: 'Duplicar',
+            action: () => handleDuplicateObject(contextMenu.target!),
+          },
+          {
             icon: Frame,
             label: 'Aplicar como fundo',
             action: () => handleApplyAsBackground(contextMenu.target!),
@@ -673,6 +679,11 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         title: 'Ações Rápidas - Forma',
         items: [
           {
+            icon: Copy,
+            label: 'Duplicar',
+            action: () => handleDuplicateObject(contextMenu.target!),
+          },
+          {
             icon: Trash2,
             label: 'Excluir do canvas',
             action: () => handleDeleteFromCanvas(contextMenu.target!),
@@ -684,6 +695,11 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
     return {
       title: 'Ações Rápidas',
       items: [
+        {
+          icon: Copy,
+          label: 'Duplicar',
+          action: () => handleDuplicateObject(contextMenu.target!),
+        },
         {
           icon: Trash2,
           label: 'Excluir',
@@ -745,6 +761,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         fill: textObj.fill,
         underline: textObj.underline,
         textAlign: textObj.textAlign,
+        originY: textObj.originY,
         lineHeight: textObj.lineHeight,
         charSpacing: textObj.charSpacing
       });
@@ -835,6 +852,10 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
       if ('lineHeight' in settings) {
         textObj.set('lineHeight', settings.lineHeight);
       }
+      if ('originY' in settings) {
+        console.log('🔵 Atualizando originY:', settings.originY);
+        textObj.set('originY', settings.originY);
+      }
       
       // Force update
       console.log('🔵 Forçando atualização do canvas...');
@@ -851,6 +872,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         fill: textObj.fill,
         underline: textObj.underline,
         textAlign: textObj.textAlign,
+        originY: textObj.originY,
         lineHeight: textObj.lineHeight,
         charSpacing: textObj.charSpacing
       });

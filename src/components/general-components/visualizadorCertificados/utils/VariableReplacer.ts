@@ -17,7 +17,6 @@ export class VariableReplacer {
         try {
           return JSON.parse(jsonData);
         } catch (e) {
-          console.error('❌ Erro ao parsear JSON string:', e);
           return jsonData;
         }
       }
@@ -30,7 +29,6 @@ export class VariableReplacer {
       try {
         processed = JSON.parse(jsonData);
       } catch (e) {
-        console.error('❌ Erro ao parsear JSON:', e);
         return jsonData;
       }
     } else {
@@ -39,8 +37,6 @@ export class VariableReplacer {
     
     
     if (processed.objects && Array.isArray(processed.objects)) {
-      
-      
       processed.objects = processed.objects.map((obj: any) => {
         return this.processObject(obj, variables);
       });
@@ -86,7 +82,29 @@ export class VariableReplacer {
     // Substituir em textos (incluindo todos os tipos de texto do Fabric.js)
     if (obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text' || obj.type === 'IText' || obj.type === 'Text' || obj.type === 'Textbox') {
       if (obj.text && typeof obj.text === 'string') {
+        // Apenas substituir o texto, mantendo todas as outras propriedades originais
         processedObj.text = this.replaceVariables(obj.text, variables);
+        
+        // IMPORTANTE: Para Textbox com largura fixa, precisamos garantir que as propriedades
+        // de quebra de linha sejam preservadas corretamente
+        if (obj.type === 'textbox' || obj.type === 'Textbox') {
+          // Preservar a largura original se existir
+          if (obj.width !== undefined) {
+            processedObj.width = obj.width;
+          }
+          
+          // Preservar splitByGrapheme se existir (importante para fontes especiais)
+          if (obj.splitByGrapheme !== undefined) {
+            processedObj.splitByGrapheme = obj.splitByGrapheme;
+          }
+          
+          // Marcar que o textbox precisa recalcular suas dimensões após carregar
+          processedObj.dirty = true;
+        }
+        
+        // IMPORTANTE: Manter o originY original do objeto
+        // O usuário define isso no editor, então devemos respeitar
+        // Não fazer nenhuma modificação automática no alinhamento vertical
       }
     }
 
@@ -96,6 +114,7 @@ export class VariableReplacer {
     if ((obj.isPlaceholder && obj.placeholderName) || 
         (obj.type === 'Group' && obj.name === 'placeholder') ||
         (obj.type === 'group' && obj.name === 'placeholder')) {
+      
       // Tentar extrair o nome do placeholder de várias formas
       let placeholderName = obj.placeholderName;
       
@@ -110,7 +129,6 @@ export class VariableReplacer {
       
       // Se ainda não tem, tentar extrair do texto dentro do grupo
       if (!placeholderName && obj.objects && Array.isArray(obj.objects)) {
-        
         const textObj = obj.objects.find((o: any) => (o.type === 'text' || o.type === 'i-text' || o.type === 'Text' || o.type === 'IText') && o.text);
         if (textObj && textObj.text) {
           // O texto pode conter algo como "📷 assinatura_instrutor"
@@ -131,7 +149,6 @@ export class VariableReplacer {
           placeholderName = idParts[1];
         }
       }
-      
       
       // Verificar se é um placeholder de QR Code
       // Normalizar o nome removendo espaços e convertendo para lowercase
@@ -172,15 +189,27 @@ export class VariableReplacer {
         // Usar a URL diretamente - o proxy será aplicado depois no processImagesInJSON
         const imageUrl = variable.value;
         
-        // Para calcular a escala correta, vamos usar uma abordagem mais conservadora
-        // Baseado no feedback, a imagem está muito grande, então vamos assumir
-        // que a imagem original é bem maior do que esperávamos
-        // Vamos testar com 2000px de altura como estimativa
-        const estimatedOriginalHeight = 2000;
+        // IMPORTANTE: Não podemos calcular a escala correta sem saber o tamanho real da imagem
+        // O Fabric.js precisa carregar a imagem primeiro para sabermos suas dimensões
+        // Por enquanto, vamos usar uma escala inicial conservadora
+        // O ideal seria que o Fabric.js carregasse a imagem e ajustasse depois
         
-        // Calcular a escala baseada na altura do placeholder
-        // A altura da imagem deve corresponder exatamente à altura do placeholder
-        const scaleToFitHeight = placeholderHeight / estimatedOriginalHeight;
+        // IMPORTANTE: Assinaturas digitais geralmente são imagens grandes
+        // Vamos assumir um tamanho típico de uma assinatura digitalizada
+        // Muitas vezes são escaneadas em alta resolução
+        
+        // Assumir que a imagem original tem cerca de 800x400px
+        // (tamanho comum para assinaturas escaneadas)
+        const estimatedImageWidth = 800;  
+        const estimatedImageHeight = 400;
+        
+        // Calcular escala para fazer a imagem caber no placeholder
+        const scaleByHeight = placeholderHeight / estimatedImageHeight;
+        const scaleByWidth = placeholderWidth / estimatedImageWidth;
+        
+        // Usar a menor escala para garantir que caiba completamente
+        // Multiplicar por 0.9 para dar uma pequena margem
+        const initialScale = Math.min(scaleByHeight, scaleByWidth) * 0.9;
         
         // Calcular o centro do placeholder para posicionar a imagem
         const placeholderCenterX = obj.left + (placeholderWidth / 2);
@@ -206,9 +235,14 @@ export class VariableReplacer {
           strokeLineJoin: 'miter',
           strokeUniform: false,
           strokeMiterLimit: 4,
-          // Aplicar a escala calculada para encaixar na altura
-          scaleX: scaleToFitHeight,
-          scaleY: scaleToFitHeight,
+          // Marcar com propriedades especiais para ajuste posterior
+          scaleX: initialScale,
+          scaleY: initialScale,
+          // IMPORTANTE: Adicionar propriedades customizadas diretamente no objeto
+          // O Fabric.js preserva propriedades customizadas que não começam com underscore
+          targetHeight: placeholderHeight, // Altura desejada
+          targetWidth: placeholderWidth, // Largura máxima
+          placeholderNameDebug: placeholderName, // Nome para debug
           angle: obj.angle || 0,
           flipX: false,
           flipY: false,
@@ -244,14 +278,6 @@ export class VariableReplacer {
         };
         
         return imageObj;
-      } else {
-        console.log('⚠️ Placeholder de imagem não substituído:', {
-          placeholder: obj.placeholderName,
-          variable: variable,
-          hasVariable: !!variable,
-          isUrl: variable?.type === 'url',
-          hasValue: !!variable?.value
-        });
       }
     }
 
@@ -299,7 +325,6 @@ export class VariableReplacer {
       try {
         data = JSON.parse(jsonData);
       } catch (e) {
-        console.error('❌ Erro ao parsear JSON em extractVariables:', e);
         return [];
       }
     }
@@ -349,7 +374,6 @@ export class VariableReplacer {
       try {
         data = JSON.parse(jsonData);
       } catch (e) {
-        console.error('❌ Erro ao parsear JSON em validateRequiredVariables:', e);
         return { isValid: true, missingVariables: [] };
       }
     }

@@ -12,7 +12,7 @@ interface SearchData {
   courseName?: string;
   className?: string;
   expirationDate?: string;
-  status?: string;
+  active?: string;
 }
 
 interface SearchFormProps {
@@ -28,7 +28,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
     courseName: "",
     className: "",
     expirationDate: undefined,
-    status: undefined,
+    active: undefined,
   });
 
   // Load params into form state
@@ -40,8 +40,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
       const value = params[key];
       
       // Type checking for each field
-      if (paramKey === 'status' && (typeof value === 'string' || value === undefined)) {
-        newSearchData.status = value as string | undefined;
+      if (paramKey === 'active' && (typeof value === 'string' || value === undefined)) {
+        newSearchData.active = value as string | undefined;
       } else if (paramKey === 'courseName' && (typeof value === 'string' || value === undefined)) {
         newSearchData.courseName = value as string;
       } else if (paramKey === 'className' && (typeof value === 'string' || value === undefined)) {
@@ -67,7 +67,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
 
   const handleStatusChange = (_name: string, value: string | string[]) => {
     if (typeof value === 'string') {
-      setSearchData(prev => ({ ...prev, status: value || undefined }));
+      setSearchData(prev => ({ ...prev, active: value || undefined }));
     }
   };
 
@@ -82,7 +82,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
       courseName: "",
       className: "",
       expirationDate: undefined,
-      status: undefined,
+      active: undefined,
     });
     onClear();
     openSheet(false);
@@ -90,9 +90,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
 
   // Options for selects
   const statusOptions = [
-    { id: "valid", name: "Válido" },
-    { id: "expired", name: "Expirado" },
-    { id: "inactive", name: "Inativo" }
+    { id: "true", name: "Ativo" },
+    { id: "false", name: "Inativo" }
   ];
 
   return (
@@ -134,11 +133,11 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
 
       {/* Status */}
       <div>
-        <Label htmlFor="status">Status</Label>
+        <Label htmlFor="active">Status</Label>
         <Select 
-          name="status"
+          name="active"
           options={statusOptions}
-          value={searchData.status || ""}
+          state={searchData.active || ""}
           onChange={handleStatusChange}
           placeholder="Todos os status"
         />

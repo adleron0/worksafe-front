@@ -332,6 +332,49 @@ export const useCanvas = () => {
     canvas.renderAll();
   }, [getCurrentCanvasRef]);
 
+  const handleDuplicateObject = useCallback((target: fabric.Object) => {
+    const canvasRef = getCurrentCanvasRef();
+    if (!canvasRef) return;
+    
+    const canvas = canvasRef.getCanvas();
+    if (!canvas) return;
+
+    // Clonar o objeto
+    target.clone().then((cloned: fabric.Object) => {
+      // Deslocar o objeto clonado para não ficar exatamente em cima do original
+      cloned.set({
+        left: (cloned.left || 0) + 20,
+        top: (cloned.top || 0) + 20,
+        evented: true,
+      });
+      
+      // Preservar propriedades customizadas
+      const originalProps = target as any;
+      const clonedProps = cloned as any;
+      
+      if (originalProps.name) {
+        clonedProps.name = originalProps.name;
+      }
+      if (originalProps._originalUrl) {
+        clonedProps._originalUrl = originalProps._originalUrl;
+      }
+      if (originalProps.__uniqueID) {
+        // Gerar novo ID único para o clone
+        clonedProps.__uniqueID = `${originalProps.__uniqueID}_clone_${Date.now()}`;
+      }
+      
+      // Adicionar ao canvas
+      canvas.add(cloned);
+      canvas.setActiveObject(cloned);
+      canvas.renderAll();
+      
+      toast.success('Item duplicado com sucesso!');
+    }).catch((error) => {
+      console.error('Erro ao duplicar objeto:', error);
+      toast.error('Erro ao duplicar item');
+    });
+  }, [getCurrentCanvasRef]);
+
   const addImageToCanvas = useCallback((imageUrl: string, imageName: string): Promise<void> => {
     console.log('addImageToCanvas called, current page index:', currentPageIndex);
     const canvasRef = getCurrentCanvasRef();
@@ -534,7 +577,8 @@ export const useCanvas = () => {
       
       // Serializar o canvas
       // No Fabric.js v6, precisamos adicionar a propriedade ao objeto antes de serializar
-      const canvasJSON = frontCanvas.toObject(['name', '_originalUrl']);
+      // IMPORTANTE: incluir 'width' e 'splitByGrapheme' para preservar configurações de textbox
+      const canvasJSON = frontCanvas.toObject(['name', '_originalUrl', 'originY', 'targetHeight', 'targetWidth', 'placeholderNameDebug', 'width', 'splitByGrapheme']);
       
       // Processar objetos no JSON para garantir URLs originais
       if (canvasJSON.objects) {
@@ -613,7 +657,8 @@ export const useCanvas = () => {
             
             // Serializar o canvas do verso
             const backObjectsWithNames = backCanvas.getObjects();
-            const backCanvasJSON = backCanvas.toObject(['name', '_originalUrl']);
+            // IMPORTANTE: incluir 'width' e 'splitByGrapheme' para preservar configurações de textbox
+            const backCanvasJSON = backCanvas.toObject(['name', '_originalUrl', 'originY', 'targetHeight', 'targetWidth', 'placeholderNameDebug', 'width', 'splitByGrapheme']);
             
             // Processar objetos no JSON para garantir URLs originais
             if (backCanvasJSON.objects) {
@@ -1402,6 +1447,7 @@ export const useCanvas = () => {
     setIsDragging,
     handleApplyAsBackground,
     handleDeleteFromCanvas,
+    handleDuplicateObject,
     addImageToCanvas,
     addShapeToCanvas,
     addTextToCanvas,

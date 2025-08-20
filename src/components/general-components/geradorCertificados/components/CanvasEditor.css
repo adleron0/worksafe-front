@@ -1,0 +1,39 @@
+/* Estilos customizados para scrollbar fina */
+.canvas-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+.canvas-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.canvas-container::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.canvas-container::-webkit-scrollbar-thumb {
+  background-color: rgba(155, 155, 155, 0.5);
+  border-radius: 3px;
+  border: none;
+}
+
+.canvas-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(155, 155, 155, 0.7);
+}
+
+/* Dark mode */
+.dark .canvas-container {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.dark .canvas-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark .canvas-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}

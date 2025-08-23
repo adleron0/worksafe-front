@@ -46,7 +46,7 @@ function List({ classId }: { classId: number | undefined }) {
   const [searchParams, setSearchParams] = useState({
     limit: getStoredViewMode() === 'kanban' ? 999 : 10,
     page: 0,
-    show: ['class'],
+    show: ['class', 'financialRecords'],
     classId: classId ? Number(classId) : undefined,
     'order-name': 'asc',
   });

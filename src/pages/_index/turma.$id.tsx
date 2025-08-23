@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { get, post } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -162,59 +162,216 @@ function TurmaLandingPage() {
     );
   };
 
+  // Create mutation for subscription with checkout
+  const checkoutMutation = useMutation({
+    mutationFn: async (subscriptionData: any) => {
+      return await post("subscription", "subscribe", subscriptionData);
+    }
+  });
+
   const handleCheckoutComplete = async (paymentData: any) => {
     try {
-      // Prepare data for API with payment info
-      const subscriptionData = {
+      // Prepare complete data structure for API with checkout
+      const subscriptionData: any = {
+        // Personal data
         name: paymentData.personalData.name,
         cpf: paymentData.personalData.cpf,
         email: paymentData.personalData.email,
         phone: paymentData.personalData.phone,
-        workedAt: paymentData.personalData.workedAt || "Não informado",
+        
+        // Address data
+        address: paymentData.addressData.address,
+        addressNumber: paymentData.addressData.addressNumber,
+        addressComplement: paymentData.addressData.addressComplement,
+        neighborhood: paymentData.addressData.neighborhood,
+        city: paymentData.addressData.city,
+        state: paymentData.addressData.state,
+        zipCode: paymentData.addressData.zipCode,
+        
+        // Professional data
         occupation: paymentData.personalData.occupation || "Não informado",
-        companyId: 1,
+        workedAt: paymentData.personalData.workedAt || "Não informado",
+        
+        // Class data
         classId: parseInt(id),
+        
+        // Payment data
         paymentMethod: paymentData.paymentMethod,
-        paymentStatus: paymentData.status
+        
+        // Credit card data - send as JSON string if credit card payment, empty string otherwise
+        creditCard: paymentData.paymentMethod === 'cartaoCredito' && paymentData.cardData 
+          ? JSON.stringify({
+              cardName: paymentData.cardData.name,
+              cardNumber: paymentData.cardData.number,
+              expiryDate: paymentData.cardData.expiry,
+              cvv: paymentData.cardData.cvv,
+              installments: paymentData.cardData.installments || "1"
+            })
+          : ""
       };
       
-      // Send to API
-      await post("subscription", "subscribe", subscriptionData);
+      // Debug logs
+      console.log("=== CHECKOUT DATA DEBUG ===");
+      console.log("Payment Method:", paymentData.paymentMethod);
+      console.log("Has Card Data:", !!paymentData.cardData);
       
-      // Show success toast
-      toast({
-        title: "Inscrição realizada com sucesso!",
-        description: "Pagamento confirmado e inscrição efetivada.",
-        variant: "success",
-      });
+      if (paymentData.paymentMethod === 'cartaoCredito') {
+        console.log("=== CREDIT CARD DATA ===");
+        console.log("Card Data Raw:", paymentData.cardData);
+        console.log("Credit Card JSON String Being Sent:", subscriptionData.creditCard);
+        if (subscriptionData.creditCard) {
+          const parsedCard = JSON.parse(subscriptionData.creditCard);
+          console.log("Parsed Credit Card Object:", parsedCard);
+          console.log("Card Name:", parsedCard.cardName);
+          console.log("Card Number Length:", parsedCard.cardNumber?.length);
+          console.log("Expiry Date:", parsedCard.expiryDate);
+          console.log("CVV Length:", parsedCard.cvv?.length);
+          console.log("Installments:", parsedCard.installments);
+        }
+      }
       
-      // Reset form
-      setShowCheckout(false);
+      console.log("=== FULL SUBSCRIPTION DATA ===");
+      console.log(JSON.stringify(subscriptionData, null, 2));
+      console.log("=== END DEBUG ===");
       
-      // Redirect to WhatsApp after a moment
-      setTimeout(() => {
-        const message = `Olá! Inscrição e pagamento realizados com sucesso no curso ${turma?.name}.
-    
-Dados do inscrito:
-Nome: ${paymentData.personalData.name}
-CPF: ${paymentData.personalData.cpf}
-E-mail: ${paymentData.personalData.email}
-Telefone: ${paymentData.personalData.phone}
-Empresa: ${paymentData.personalData.workedAt || "Não informado"}
-Profissão: ${paymentData.personalData.occupation || "Não informado"}
-Método de Pagamento: ${paymentData.paymentMethod}
-
-Turma: ${turma?.landingPagesDates}`;
+      // Send to API and get response using mutation
+      const response: any = await checkoutMutation.mutateAsync(subscriptionData);
+      
+      console.log("=== API RESPONSE ===");
+      console.log("Full Response:", response);
+      console.log("Payment Object:", response?.payment);
+      console.log("Subscribe Status:", response?.subscribeStatus);
+      console.log("=== END API RESPONSE ===");
+      
+      // Process response based on payment method and status
+      // Always send the current payment method response to clear old data
+      if (paymentData.paymentMethod === 'pix' && response?.financialRecord) {
+        // PIX - Use financialRecord data
+        const { pixUrl, pixNumber, key } = response.financialRecord;
         
-        handleWhatsApp(message);
-      }, 1500);
+        // Always send response, even if PIX data is null (user switched payment method)
+        paymentData.onPaymentResponse?.({
+          type: 'pix',
+          qrCode: pixUrl || "", // Send empty string if null
+          copyPasteCode: pixNumber || "",
+          status: response.financialRecord.status,
+          paymentKey: key || ""
+        });
+        
+        if (pixUrl && pixNumber) {
+          toast({
+            title: "PIX gerado com sucesso!",
+            description: "Escaneie o QR Code ou copie o código para realizar o pagamento.",
+            variant: "default",
+          });
+        } else {
+          // User may have switched payment methods
+          toast({
+            title: "Método de pagamento alterado",
+            description: "Por favor, gere o novo pagamento.",
+            variant: "default",
+          });
+        }
+        return; // Don't close checkout
+      } else if (paymentData.paymentMethod === 'boleto' && response?.financialRecord) {
+        // Boleto - Use financialRecord data
+        const { billUrl, billNumber } = response.financialRecord;
+        
+        // Always send response, even if boleto data is null (user switched payment method)
+        paymentData.onPaymentResponse?.({
+          type: 'boleto',
+          billUrl: billUrl || "",
+          billNumber: billNumber || "",
+          bankSlipUrl: billUrl || "",
+          status: response.financialRecord.status
+        });
+        
+        if (billUrl && billNumber) {
+          toast({
+            title: "Boleto gerado com sucesso!",
+            description: "Clique para baixar o boleto bancário.",
+            variant: "default",
+          });
+        } else {
+          // User may have switched payment methods
+          toast({
+            title: "Método de pagamento alterado",
+            description: "Por favor, gere o novo boleto.",
+            variant: "default",
+          });
+        }
+        return; // Don't close checkout
+      } else if (paymentData.paymentMethod === 'cartaoCredito' && response?.payment) {
+        // Credit Card
+        const paymentStatus = response.payment.status;
+        if (paymentStatus === 'CONFIRMED') {
+          // Payment approved - DO NOT close checkout immediately
+          // Let the success screen show in CheckoutForm
+          
+          // Pass success back to CheckoutForm to show success screen
+          paymentData.onPaymentResponse?.({
+            type: 'cartaoCredito',
+            status: paymentStatus,
+            error: false
+          });
+          
+          // Don't show toast here as the success screen will handle the feedback
+          // Don't redirect to WhatsApp automatically, let user click the button on success screen
+        } else {
+          // Payment rejected or pending
+          toast({
+            title: "Pagamento não aprovado",
+            description: "Verifique os dados do cartão e tente novamente.",
+            variant: "destructive",
+          });
+          
+          // Pass error back to CheckoutForm
+          paymentData.onPaymentResponse?.({
+            type: 'cartaoCredito',
+            status: paymentStatus,
+            error: true
+          });
+        }
+      } else {
+        // No payment info in response - shouldn't happen but handle it
+        toast({
+          title: "Erro no processamento",
+          description: "Resposta inválida do servidor. Por favor, tente novamente.",
+          variant: "destructive",
+        });
+        
+        // Reset payment state in CheckoutForm
+        paymentData.onPaymentResponse?.({
+          type: paymentData.paymentMethod,
+          error: true,
+          message: "Resposta inválida do servidor"
+        });
+      }
       
     } catch (error: any) {
-      console.error("Erro ao processar pagamento:", error);
+      console.error("=== ERROR PROCESSING PAYMENT ===");
+      console.error("Error Object:", error);
+      console.error("Error Response:", error?.response);
+      console.error("Error Data:", error?.response?.data);
+      console.error("Error Message:", error?.response?.data?.message);
+      console.error("Error Status Code:", error?.response?.status);
+      console.error("=== END ERROR ===");
+      
+      const errorMessage = Array.isArray(error?.response?.data?.message) 
+        ? error?.response?.data?.message.join(", ")
+        : error?.response?.data?.message || "Por favor, tente novamente.";
+      
       toast({
         title: "Erro ao processar pagamento",
-        description: error?.response?.data?.message || "Por favor, tente novamente.",
+        description: errorMessage,
         variant: "destructive",
+      });
+      
+      // Reset payment state in CheckoutForm
+      paymentData.onPaymentResponse?.({
+        type: paymentData.paymentMethod,
+        error: true,
+        message: errorMessage
       });
     }
   };
@@ -257,15 +414,19 @@ Turma: ${turma?.landingPagesDates}`;
     setIsSubmitting(true);
     
     try {
-      // Prepare data for API
+      // Prepare basic form data (without checkout)
       const subscriptionData = {
+        // Personal data
         name: formData.name,
         cpf: formData.cpf,
         email: formData.email,
         phone: formData.phone,
-        workedAt: formData.workedAt || "Não informado",
+        
+        // Professional data
         occupation: formData.occupation || "Não informado",
-        companyId: 1,
+        workedAt: formData.workedAt || "Não informado",
+        
+        // Class data
         classId: parseInt(id)
       };
       
@@ -1350,6 +1511,7 @@ Turma: ${turma?.landingPagesDates}`;
                     onComplete={handleCheckoutComplete}
                     onBack={() => setShowCheckout(false)}
                     initialData={formData}
+                    isProcessingPayment={checkoutMutation.isPending}
                   />
                 );
               }

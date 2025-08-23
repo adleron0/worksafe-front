@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import Input from "@/components/general-components/Input";
 import { toast } from "@/hooks/use-toast";
+import { get } from "@/services/api";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,7 +46,10 @@ import {
   RefreshCw,
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  MapPin,
+  Wallet,
+  ExternalLink
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Select from "@/components/general-components/Select";
@@ -57,6 +61,16 @@ interface PersonalData {
   cpf: string;
   workedAt: string;
   occupation: string;
+}
+
+interface AddressData {
+  zipCode: string;
+  address: string;
+  addressNumber: string;
+  addressComplement: string;
+  neighborhood: string;
+  city: string;
+  state: string;
 }
 
 interface CardData {
@@ -79,8 +93,10 @@ interface CheckoutFormProps {
   onComplete: (paymentData: {
     paymentMethod: string;
     personalData: PersonalData;
+    addressData: AddressData;
     cardData?: CardData;
     status: string;
+    onPaymentResponse?: (response: any) => void;
   }) => void;
   onBack?: () => void;
   initialData?: {
@@ -91,10 +107,11 @@ interface CheckoutFormProps {
     workedAt: string;
     occupation: string;
   };
+  isProcessingPayment?: boolean;
 }
 
-type PaymentMethod = 'pix' | 'boleto' | 'credit-card';
-type CheckoutStep = 'personal' | 'payment';
+type PaymentMethod = 'pix' | 'boleto' | 'cartaoCredito';
+type CheckoutStep = 'personal' | 'address' | 'payment';
 
 // Simple card brand logo component
 const CardBrandLogo = ({ brand }: { brand: string }) => {
@@ -137,7 +154,7 @@ const CardBrandLogo = ({ brand }: { brand: string }) => {
   }
 };
 
-const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormProps) => {
+const CheckoutForm = ({ turma, onComplete, onBack, initialData, isProcessingPayment }: CheckoutFormProps) => {
   // Filter available payment methods
   const availablePaymentMethods = turma.paymentMethods || [];
   
@@ -145,15 +162,18 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
   const getInitialPaymentMethod = (): PaymentMethod => {
     if (availablePaymentMethods.includes('pix')) return 'pix';
     if (availablePaymentMethods.includes('boleto')) return 'boleto';
-    if (availablePaymentMethods.includes('cartaoCredito')) return 'credit-card';
+    if (availablePaymentMethods.includes('cartaoCredito')) return 'cartaoCredito';
     return 'pix'; // fallback
   };
   
-  // If we have initial data, start at payment step, otherwise start at personal
-  const [currentStep, setCurrentStep] = useState<CheckoutStep>(initialData ? 'payment' : 'personal');
+  // If we have initial data, start at address step, otherwise start at personal
+  const [currentStep, setCurrentStep] = useState<CheckoutStep>(initialData ? 'address' : 'personal');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(getInitialPaymentMethod());
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'completed' | 'failed'>('pending');
+  
+  // Use external processing state if provided, otherwise use local state
+  const isPaymentProcessing = isProcessingPayment !== undefined ? isProcessingPayment : isProcessing;
   
   // Personal Data - use initial data if provided
   const [personalData, setPersonalData] = useState({
@@ -165,11 +185,24 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
     occupation: initialData?.occupation || ""
   });
 
+  // Address Data
+  const [addressData, setAddressData] = useState<AddressData>({
+    zipCode: "",
+    address: "",
+    addressNumber: "",
+    addressComplement: "",
+    neighborhood: "",
+    city: "",
+    state: ""
+  });
+  const [isSearchingCep, setIsSearchingCep] = useState(false);
+
   // Payment Data
   const [pixData, setPixData] = useState({
     qrCode: "",
     copyPasteCode: "",
-    isGenerating: false
+    isGenerating: false,
+    paymentKey: ""
   });
 
   const [boletoData, setBoletoData] = useState({
@@ -190,8 +223,10 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
   const [captchaError, setCaptchaError] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingPaymentAction, setPendingPaymentAction] = useState<() => void>(() => {});
+  const [isModalProcessing, setIsModalProcessing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [cardBrand, setCardBrand] = useState<string>("");
+  const [showSuccessScreen, setShowSuccessScreen] = useState(false);
 
   // Check if device is mobile
   useEffect(() => {
@@ -210,36 +245,38 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
     generateCaptcha();
   }, []);
 
-  // Check payment status for PIX
+  // Poll PIX payment status every 10 seconds
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    const checkPaymentStatus = async () => {
-      // Mock check - replace with actual API call
-      const random = Math.random();
-      if (random > 0.7) {
-        setPaymentStatus('completed');
-        toast({
-          title: "Pagamento confirmado!",
-          description: "Seu pagamento foi processado com sucesso.",
-          variant: "success",
-        });
-        setTimeout(() => {
-          onComplete({ paymentMethod, personalData, status: 'completed' });
-        }, 1500);
-      }
-    };
-    
-    if (paymentMethod === 'pix' && pixData.qrCode && paymentStatus === 'processing') {
-      interval = setInterval(() => {
-        checkPaymentStatus();
-      }, 10000); // Check every 10 seconds
-    }
+    if (paymentMethod === 'pix' && paymentStatus === 'processing' && pixData.paymentKey) {
+      const checkPaymentStatus = async () => {
+        try {
+          const response = await get("financial-records", `key/${pixData.paymentKey}`);
+          
+          if (response && (response.status === 'paid' || response.status === 'received')) {
+            // Payment confirmed
+            setPaymentStatus('completed');
+            setShowSuccessScreen(true);
+            
+            toast({
+              title: "Pagamento confirmado!",
+              description: "Sua inscrição foi realizada com sucesso.",
+              variant: "success",
+            });
+          }
+        } catch (error) {
+          console.error("Error checking payment status:", error);
+        }
+      };
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [paymentMethod, pixData.qrCode, paymentStatus, onComplete, personalData]);
+      // Check immediately
+      checkPaymentStatus();
+
+      // Then check every 10 seconds
+      const interval = setInterval(checkPaymentStatus, 10000);
+
+      return () => clearInterval(interval);
+    }
+  }, [paymentMethod, paymentStatus, pixData.paymentKey]);
 
   const generateCaptcha = () => {
     const num1 = Math.floor(Math.random() * 10) + 1;
@@ -333,77 +370,217 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
       return;
     }
     
+    setCurrentStep('address');
+  };
+
+  const searchCep = async (cep: string) => {
+    // Remove non-numeric characters
+    const cleanCep = cep.replace(/\D/g, '');
+    
+    // Only search if we have 8 digits
+    if (cleanCep.length !== 8) return;
+    
+    setIsSearchingCep(true);
+    
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await response.json();
+      
+      if (!data.erro) {
+        // Update address fields with the fetched data
+        setAddressData(prev => ({
+          ...prev,
+          address: data.logradouro || prev.address,
+          neighborhood: data.bairro || prev.neighborhood,
+          city: data.localidade || prev.city,
+          state: data.uf || prev.state,
+          // Keep the fields that are not returned by the API
+          addressNumber: prev.addressNumber,
+          addressComplement: prev.addressComplement
+        }));
+        
+        // Show success feedback
+        toast({
+          title: "CEP encontrado!",
+          description: "Os dados do endereço foram preenchidos automaticamente.",
+          variant: "success",
+        });
+      } else {
+        // CEP not found
+        toast({
+          title: "CEP não encontrado",
+          description: "Verifique o CEP digitado ou preencha os campos manualmente.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      // Silent fail - user can still fill manually
+      console.error('Erro ao buscar CEP:', error);
+    } finally {
+      setIsSearchingCep(false);
+    }
+  };
+
+  const handleAddressSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic validation
+    if (!addressData.zipCode || !addressData.address || !addressData.addressNumber || 
+        !addressData.neighborhood || !addressData.city || !addressData.state) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos obrigatórios do endereço.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setCurrentStep('payment');
   };
 
+  // Handle payment response from backend
+  const handlePaymentResponse = (response: any) => {
+    if (response.error) {
+      // Handle any error for any payment method
+      setPaymentStatus('failed');
+      setIsProcessing(false);
+      setIsModalProcessing(false);
+      setPixData({ ...pixData, isGenerating: false });
+      setBoletoData({ ...boletoData, isGenerating: false });
+      
+      // Close the confirm modal if open
+      setShowConfirmModal(false);
+      
+      return;
+    }
+    
+    // Always clear all payment method data to handle method switching
+    // This ensures old data doesn't persist when user changes payment method
+    if (response.type === 'pix') {
+      // Clear other payment methods
+      setBoletoData({
+        barCode: "",
+        bankSlipUrl: "",
+        isGenerating: false
+      });
+      
+      // Set PIX data
+      setPixData({
+        qrCode: response.qrCode,
+        copyPasteCode: response.copyPasteCode,
+        isGenerating: false,
+        paymentKey: response.paymentKey || ""
+      });
+      setPaymentStatus('processing');
+      setIsModalProcessing(false);
+      setShowConfirmModal(false); // Close modal after PIX is generated
+    } else if (response.type === 'boleto') {
+      // Clear other payment methods
+      setPixData({
+        qrCode: "",
+        copyPasteCode: "",
+        isGenerating: false,
+        paymentKey: ""
+      });
+      
+      // Set Boleto data
+      setBoletoData({
+        barCode: response.billNumber,
+        bankSlipUrl: response.billUrl,
+        isGenerating: false
+      });
+      setIsModalProcessing(false);
+      setShowConfirmModal(false); // Close modal after boleto is generated
+    } else if (response.type === 'cartaoCredito') {
+      // Clear other payment methods
+      setPixData({
+        qrCode: "",
+        copyPasteCode: "",
+        isGenerating: false,
+        paymentKey: ""
+      });
+      setBoletoData({
+        barCode: "",
+        bankSlipUrl: "",
+        isGenerating: false
+      });
+      
+      if (response.status === 'CONFIRMED' || !response.error) {
+        setPaymentStatus('completed');
+        setIsProcessing(false);
+        setShowSuccessScreen(true); // Show success screen
+      } else {
+        setPaymentStatus('failed');
+        setIsProcessing(false);
+      }
+      setIsModalProcessing(false);
+      setShowConfirmModal(false); // Close modal after processing credit card
+    }
+  };
+
   const generatePixPayment = async () => {
+    // Set generating state immediately when button is clicked
+    setPixData({ ...pixData, isGenerating: true });
+    
     setPendingPaymentAction(() => async () => {
-      setPixData({ ...pixData, isGenerating: true });
+      setIsModalProcessing(true);
       setPaymentStatus('processing');
       
-      // Mock PIX generation - replace with actual API call
-      setTimeout(() => {
-        setPixData({
-          qrCode: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
-          copyPasteCode: "00020126360014BR.GOV.BCB.PIX0114+5581999999999520400005303986540523.455802BR5913WorkSafe6007Recife62070503***6304A1B2",
-          isGenerating: false
-        });
-        
-        toast({
-          title: "QR Code gerado!",
-          description: "Use o QR Code ou código PIX para realizar o pagamento.",
-          variant: "success",
-        });
-      }, 2000);
+      // Call onComplete which will handle the API call
+      onComplete({
+        paymentMethod: 'pix',
+        personalData,
+        addressData,
+        status: 'pending',
+        onPaymentResponse: handlePaymentResponse
+      });
     });
     setShowConfirmModal(true);
   };
 
   const generateBoleto = async () => {
+    // Set generating state immediately when button is clicked
+    setBoletoData({ ...boletoData, isGenerating: true });
+    
     setPendingPaymentAction(() => async () => {
-      setBoletoData({ ...boletoData, isGenerating: true });
+      setIsModalProcessing(true);
       
-      // Mock boleto generation - replace with actual API call
-      setTimeout(() => {
-        setBoletoData({
-          barCode: "23793.38128 60083.774131 52000.063301 1 96150000015045",
-          isGenerating: false
-        });
-        
-        toast({
-          title: "Boleto gerado!",
-          description: "Use o código de barras para realizar o pagamento.",
-          variant: "success",
-        });
-      }, 2000);
+      // Call onComplete which will handle the API call
+      onComplete({
+        paymentMethod: 'boleto',
+        personalData,
+        addressData,
+        status: 'pending',
+        onPaymentResponse: handlePaymentResponse
+      });
     });
     setShowConfirmModal(true);
   };
 
   const handleCardPayment = async () => {
     setPendingPaymentAction(() => async () => {
+      setIsModalProcessing(true);
       setIsProcessing(true);
       
-      // Mock card payment - replace with actual API call
-      setTimeout(() => {
-        setPaymentStatus('completed');
-        toast({
-          title: "Pagamento aprovado!",
-          description: "Sua inscrição foi confirmada com sucesso.",
-          variant: "success",
-        });
-        
-        setTimeout(() => {
-          onComplete({ 
-            paymentMethod: 'credit-card', 
-            personalData, 
-            cardData,
-            status: 'completed' 
-          });
-        }, 1500);
-        
-        setIsProcessing(false);
-      }, 3000);
+      // Debug log card data before sending
+      console.log("=== CARD DATA BEFORE SENDING ===");
+      console.log("Card Number:", cardData.number);
+      console.log("Card Name:", cardData.name);
+      console.log("Card Expiry:", cardData.expiry);
+      console.log("Card CVV:", cardData.cvv);
+      console.log("Card Installments:", cardData.installments);
+      console.log("Full Card Data Object:", cardData);
+      console.log("=== END CARD DATA ===");
+      
+      // Call onComplete which will handle the API call
+      onComplete({ 
+        paymentMethod: 'cartaoCredito', 
+        personalData, 
+        addressData,
+        cardData,
+        status: 'processing',
+        onPaymentResponse: handlePaymentResponse
+      });
     });
     setShowConfirmModal(true);
   };
@@ -424,30 +601,200 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
       : `${i + 1}x de ${formatCurrency(parseFloat(formatPrice(turma.discountPrice || turma.price)) / (i + 1))}`
   }));
 
+  // If showing success screen, show only that
+  if (showSuccessScreen) {
+    return (
+      <div className="w-full max-w-4xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card className="p-8 text-center">
+            <div className="max-w-md mx-auto">
+              {/* Success Animation */}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ 
+                  type: "spring",
+                  stiffness: 260,
+                  damping: 20,
+                  delay: 0.1
+                }}
+                className="mb-6"
+              >
+                <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                  <CheckCircle className="w-12 h-12 text-green-600" />
+                </div>
+              </motion.div>
+
+              {/* Success Message */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                  Pagamento Aprovado!
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Sua inscrição no curso foi confirmada com sucesso.
+                </p>
+              </motion.div>
+
+              {/* Order Details */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-gray-50 rounded-lg p-4 mb-6 text-left"
+              >
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Curso:</span>
+                    <span className="font-medium">{turma?.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Data:</span>
+                    <span className="font-medium">{turma?.landingPagesDates}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Aluno:</span>
+                    <span className="font-medium">{personalData.name}</span>
+                  </div>
+                  <div className="border-t pt-2 mt-2">
+                    <div className="flex justify-between text-lg">
+                      <span className="font-semibold">Valor Pago:</span>
+                      <span className="font-bold text-green-600">
+                        {cardData.installments !== "1"
+                          ? `${cardData.installments}x ${formatCurrency(calculateInstallmentValue())}`
+                          : formatCurrency(formatPrice(turma?.discountPrice || turma?.price || 0))
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Next Steps */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-left text-sm">
+                    <p className="font-medium text-blue-900 mb-1">Próximos passos:</p>
+                    <ul className="text-blue-700 space-y-1">
+                      <li>• Você receberá um e-mail de confirmação</li>
+                      <li>• Nossa equipe entrará em contato via WhatsApp</li>
+                      <li>• Guarde o comprovante de pagamento</li>
+                    </ul>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Action Buttons */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="space-y-3"
+              >
+                <Button
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => {
+                    const message = `Olá! Acabei de confirmar minha inscrição no curso ${turma?.name}. Gostaria de mais informações sobre os próximos passos.`;
+                    const phoneNumber = "5581989479259";
+                    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                    window.open(url, "_blank");
+                  }}
+                >
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Falar com a Equipe
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => window.location.reload()}
+                >
+                  Fazer Nova Inscrição
+                </Button>
+              </motion.div>
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-4xl mx-auto">
       {/* Progress Steps */}
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center justify-center">
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <div className={`flex items-center ${currentStep === 'personal' ? 'text-primary-light' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 text-xs sm:text-base ${
-                currentStep === 'personal' ? 'border-primary-light bg-primary-light text-white' : 'border-gray-300'
+          <div className="flex items-center space-x-1 sm:space-x-4">
+            {/* Step 1 - Personal Data */}
+            <div className={`flex flex-col sm:flex-row items-center ${currentStep === 'personal' ? 'text-primary-light' : 'text-gray-400'}`}>
+              <div className={`w-10 h-10 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 ${
+                currentStep === 'personal' ? 'border-primary-light bg-primary-light text-white' : 'border-gray-300 bg-white'
               }`}>
-                {currentStep === 'payment' ? <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" /> : '1'}
+                {currentStep === 'address' || currentStep === 'payment' ? (
+                  <CheckCircle className="h-5 w-5" />
+                ) : (
+                  <>
+                    <User className="h-5 w-5 block sm:hidden" />
+                    <span className="hidden sm:block text-sm font-semibold">1</span>
+                  </>
+                )}
               </div>
-              <span className="ml-1 sm:ml-2 text-xs sm:text-base font-medium">Dados<span className="hidden sm:inline"> Pessoais</span></span>
+              <span className="hidden sm:block ml-2 text-sm font-medium">Dados Pessoais</span>
+              <span className="text-[10px] mt-1 sm:hidden">Dados</span>
             </div>
             
-            <div className="w-12 sm:w-20 h-0.5 bg-gray-300" />
+            <div className="w-6 sm:w-12 h-0.5 bg-gray-300" />
             
-            <div className={`flex items-center ${currentStep === 'payment' ? 'text-primary-light' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 text-xs sm:text-base ${
-                currentStep === 'payment' ? 'border-primary-light bg-primary-light text-white' : 'border-gray-300'
+            {/* Step 2 - Address */}
+            <div className={`flex flex-col sm:flex-row items-center ${currentStep === 'address' ? 'text-primary-light' : 'text-gray-400'}`}>
+              <div className={`w-10 h-10 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 ${
+                currentStep === 'address' ? 'border-primary-light bg-primary-light text-white' : 'border-gray-300 bg-white'
               }`}>
-                {currentStep === 'personal' ? '2' : paymentStatus === 'completed' ? <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" /> : '2'}
+                {currentStep === 'payment' ? (
+                  <CheckCircle className="h-5 w-5" />
+                ) : (
+                  <>
+                    <MapPin className="h-5 w-5 block sm:hidden" />
+                    <span className="hidden sm:block text-sm font-semibold">2</span>
+                  </>
+                )}
               </div>
-              <span className="ml-1 sm:ml-2 text-xs sm:text-base font-medium">Pagamento</span>
+              <span className="hidden sm:block ml-2 text-sm font-medium">Endereço</span>
+              <span className="text-[10px] mt-1 sm:hidden">Endereço</span>
+            </div>
+            
+            <div className="w-6 sm:w-12 h-0.5 bg-gray-300" />
+            
+            {/* Step 3 - Payment */}
+            <div className={`flex flex-col sm:flex-row items-center ${currentStep === 'payment' ? 'text-primary-light' : 'text-gray-400'}`}>
+              <div className={`w-10 h-10 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 ${
+                currentStep === 'payment' ? 'border-primary-light bg-primary-light text-white' : 'border-gray-300 bg-white'
+              }`}>
+                {paymentStatus === 'completed' ? (
+                  <CheckCircle className="h-5 w-5" />
+                ) : (
+                  <>
+                    <Wallet className="h-5 w-5 block sm:hidden" />
+                    <span className="hidden sm:block text-sm font-semibold">3</span>
+                  </>
+                )}
+              </div>
+              <span className="hidden sm:block ml-2 text-sm font-medium">Pagamento</span>
+              <span className="text-[10px] mt-1 sm:hidden">Pagar</span>
             </div>
           </div>
         </div>
@@ -658,6 +1005,180 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
               </form>
             </Card>
           </motion.div>
+        ) : currentStep === 'address' ? (
+          <motion.div
+            key="address"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className="p-4 sm:p-6 lg:p-8 border-0 shadow-xl">
+              <form onSubmit={handleAddressSubmit} className="space-y-4 sm:space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Endereço de cobrança</h3>
+                  <p className="text-sm text-gray-600 mb-2">Informe o endereço para emissão da nota fiscal</p>
+                  <p className="text-xs text-gray-500 mb-6 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    💡 Digite o CEP e os campos de endereço serão preenchidos automaticamente
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="zipCode" className="text-gray-700 font-medium text-sm sm:text-base">
+                      CEP *
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="zipCode"
+                        name="zipCode"
+                        format="cep"
+                        placeholder="00000-000"
+                        value={addressData.zipCode}
+                        onValueChange={(_, value) => {
+                          const zipCodeValue = String(value);
+                          setAddressData({ ...addressData, zipCode: zipCodeValue });
+                          // Search CEP when user finishes typing (8 digits)
+                          if (zipCodeValue.replace(/\D/g, '').length === 8) {
+                            searchCep(zipCodeValue);
+                          }
+                        }}
+                        className="border-gray-300 focus:border-primary-light pr-10"
+                        required
+                      />
+                      {isSearchingCep && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <Loader2 className="h-4 w-4 animate-spin text-primary-light" />
+                        </div>
+                      )}
+                    </div>
+                    {addressData.zipCode && !isSearchingCep && addressData.city && (
+                      <p className="text-xs text-green-600">✓ CEP válido</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="state" className="text-gray-700 font-medium text-sm sm:text-base">
+                      Estado * {isSearchingCep && <span className="text-xs text-primary-light">(buscando...)</span>}
+                    </Label>
+                    <Input
+                      id="state"
+                      name="state"
+                      type="text"
+                      placeholder="PE"
+                      value={addressData.state}
+                      onChange={(e) => setAddressData({ ...addressData, state: e.target.value })}
+                      className={`border-gray-300 focus:border-primary-light ${isSearchingCep ? 'bg-gray-50' : ''}`}
+                      maxLength={2}
+                      disabled={isSearchingCep}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="city" className="text-gray-700 font-medium text-sm sm:text-base">
+                      Cidade * {isSearchingCep && <span className="text-xs text-primary-light">(buscando...)</span>}
+                    </Label>
+                    <Input
+                      id="city"
+                      name="city"
+                      type="text"
+                      placeholder="Recife"
+                      value={addressData.city}
+                      onChange={(e) => setAddressData({ ...addressData, city: e.target.value })}
+                      className={`border-gray-300 focus:border-primary-light ${isSearchingCep ? 'bg-gray-50' : ''}`}
+                      disabled={isSearchingCep}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="neighborhood" className="text-gray-700 font-medium text-sm sm:text-base">
+                      Bairro * {isSearchingCep && <span className="text-xs text-primary-light">(buscando...)</span>}
+                    </Label>
+                    <Input
+                      id="neighborhood"
+                      name="neighborhood"
+                      type="text"
+                      placeholder="Nome do bairro"
+                      value={addressData.neighborhood}
+                      onChange={(e) => setAddressData({ ...addressData, neighborhood: e.target.value })}
+                      className={`border-gray-300 focus:border-primary-light ${isSearchingCep ? 'bg-gray-50' : ''}`}
+                      disabled={isSearchingCep}
+                      required
+                    />
+                  </div>
+
+                  <div className="md:col-span-2 space-y-1 sm:space-y-2">
+                    <Label htmlFor="address" className="text-gray-700 font-medium text-sm sm:text-base">
+                      Endereço * {isSearchingCep && <span className="text-xs text-primary-light">(buscando...)</span>}
+                    </Label>
+                    <Input
+                      id="address"
+                      name="address"
+                      type="text"
+                      placeholder="Rua, Avenida, etc."
+                      value={addressData.address}
+                      onChange={(e) => setAddressData({ ...addressData, address: e.target.value })}
+                      className={`border-gray-300 focus:border-primary-light ${isSearchingCep ? 'bg-gray-50' : ''}`}
+                      disabled={isSearchingCep}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="addressNumber" className="text-gray-700 font-medium text-sm sm:text-base">
+                      Número *
+                    </Label>
+                    <Input
+                      id="addressNumber"
+                      name="addressNumber"
+                      type="text"
+                      placeholder="123"
+                      value={addressData.addressNumber}
+                      onChange={(e) => setAddressData({ ...addressData, addressNumber: e.target.value })}
+                      className="border-gray-300 focus:border-primary-light"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="addressComplement" className="text-gray-700 font-medium text-sm sm:text-base">
+                      Complemento
+                    </Label>
+                    <Input
+                      id="addressComplement"
+                      name="addressComplement"
+                      type="text"
+                      placeholder="Apto, Sala, etc. (opcional)"
+                      value={addressData.addressComplement}
+                      onChange={(e) => setAddressData({ ...addressData, addressComplement: e.target.value })}
+                      className="border-gray-300 focus:border-primary-light"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setCurrentStep('personal')}
+                    className="w-full sm:flex-1 order-2 sm:order-1"
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Voltar
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="w-full sm:flex-1 bg-primary-light hover:bg-primary-light/90 text-white order-1 sm:order-2"
+                  >
+                    Continuar para Pagamento
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          </motion.div>
         ) : (
           <motion.div
             key="payment"
@@ -678,7 +1199,7 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
                     options={[
                       availablePaymentMethods.includes('pix') && { id: 'pix', name: 'PIX' },
                       availablePaymentMethods.includes('boleto') && { id: 'boleto', name: 'Boleto Bancário' },
-                      availablePaymentMethods.includes('cartaoCredito') && { id: 'credit-card', name: 'Cartão de Crédito' }
+                      availablePaymentMethods.includes('cartaoCredito') && { id: 'cartaoCredito', name: 'Cartão de Crédito' }
                     ].filter(Boolean) as any[]}
                     state={paymentMethod}
                     onChange={(_, value) => setPaymentMethod(value as PaymentMethod)}
@@ -715,9 +1236,9 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
                   )}
                   {availablePaymentMethods.includes('cartaoCredito') && (
                     <button
-                      onClick={() => setPaymentMethod('credit-card')}
+                      onClick={() => setPaymentMethod('cartaoCredito')}
                       className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-                        paymentMethod === 'credit-card'
+                        paymentMethod === 'cartaoCredito'
                           ? 'border-primary-light text-primary-light'
                           : 'border-transparent text-gray-500 hover:text-gray-700'
                       }`}
@@ -747,10 +1268,10 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
                         </p>
                         <Button
                           onClick={generatePixPayment}
-                          disabled={pixData.isGenerating}
+                          disabled={pixData.isGenerating || isProcessingPayment}
                           className="bg-primary-light hover:bg-primary-light/90 text-white"
                         >
-                          {pixData.isGenerating ? (
+                          {(pixData.isGenerating || isProcessingPayment) ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                               Gerando QR Code...
@@ -769,10 +1290,17 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
                         <div className="text-center">
                           <div className="bg-gray-100 p-8 rounded-lg inline-block">
                             <div className="w-48 h-48 bg-white p-2 rounded">
-                              {/* Replace with actual QR Code image */}
-                              <div className="w-full h-full bg-gray-300 rounded flex items-center justify-center">
-                                <QrCode className="h-24 w-24 text-gray-500" />
-                              </div>
+                              {pixData.qrCode ? (
+                                <img 
+                                  src={pixData.qrCode.startsWith('data:') ? pixData.qrCode : `data:image/png;base64,${pixData.qrCode}`}
+                                  alt="QR Code PIX"
+                                  className="w-full h-full"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gray-300 rounded flex items-center justify-center">
+                                  <QrCode className="h-24 w-24 text-gray-500" />
+                                </div>
+                              )}
                             </div>
                           </div>
                           <p className="text-sm text-gray-600 mt-4">
@@ -802,22 +1330,31 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
 
                         {/* Payment Status */}
                         {paymentStatus === 'processing' && (
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                             <div className="flex items-center gap-3">
                               <div className="relative">
-                                <Clock className="h-5 w-5 text-blue-600 animate-pulse" />
+                                <Clock className="h-5 w-5 text-primary-light animate-pulse" />
                               </div>
                               <div className="flex-1">
-                                <p className="font-medium text-blue-900">
+                                <p className="font-medium text-gray-900">
                                   Aguardando pagamento...
                                 </p>
-                                <p className="text-sm text-blue-700">
-                                  Verificando status a cada 10 segundos
+                                <p className="text-sm text-gray-600">
+                                  Após o pagamento, a confirmação é automática
                                 </p>
                               </div>
                             </div>
-                            <div className="mt-3 w-full bg-blue-200 rounded-full h-2">
-                              <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }} />
+                            <div className="mt-3 w-full bg-gray-200 rounded-full h-1 overflow-hidden">
+                              <motion.div 
+                                className="bg-primary-light h-1 rounded-full"
+                                initial={{ width: "0%" }}
+                                animate={{ width: "100%" }}
+                                transition={{
+                                  duration: 10,
+                                  repeat: Infinity,
+                                  ease: "linear"
+                                }}
+                              />
                             </div>
                           </div>
                         )}
@@ -858,10 +1395,10 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
                         </p>
                         <Button
                           onClick={generateBoleto}
-                          disabled={boletoData.isGenerating}
+                          disabled={boletoData.isGenerating || isProcessingPayment}
                           className="bg-primary-light hover:bg-primary-light/90 text-white"
                         >
-                          {boletoData.isGenerating ? (
+                          {(boletoData.isGenerating || isProcessingPayment) ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                               Gerando Boleto...
@@ -888,12 +1425,26 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
                             />
                             <Button
                               variant="outline"
-                              onClick={() => copyToClipboard(boletoData.barCode, 'Código de barras')}
+                              onClick={() => copyToClipboard(boletoData.barCode, 'Linha digitável')}
+                              title="Copiar linha digitável"
                             >
                               <Copy className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
+
+                        {boletoData.bankSlipUrl && (
+                          <div className="flex justify-center">
+                            <Button
+                              onClick={() => window.open(boletoData.bankSlipUrl, '_blank')}
+                              className="bg-primary-light hover:bg-primary-light/90 text-white"
+                            >
+                              <FileText className="mr-2 h-4 w-4" />
+                              Abrir Boleto
+                              <ExternalLink className="ml-2 h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
 
                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                           <div className="flex items-start gap-3">
@@ -914,7 +1465,7 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
                   </motion.div>
                 )}
 
-                {paymentMethod === 'credit-card' && (
+                {paymentMethod === 'cartaoCredito' && (
                   <motion.div
                     key="credit-card"
                     initial={{ opacity: 0, y: 10 }}
@@ -1086,10 +1637,10 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
 
                         <Button
                           onClick={handleCardPayment}
-                          disabled={!cardData.number || !cardData.name || !cardData.expiry || !cardData.cvv || isProcessing}
+                          disabled={!cardData.number || !cardData.name || !cardData.expiry || !cardData.cvv || isPaymentProcessing}
                           className="w-full bg-primary-light hover:bg-primary-light/90 text-white"
                         >
-                          {isProcessing ? (
+                          {isPaymentProcessing ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                               Processando pagamento...
@@ -1111,11 +1662,11 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
               <div className="mt-6 pt-6 border-t">
                 <Button
                   variant="outline"
-                  onClick={() => setCurrentStep('personal')}
-                  disabled={isProcessing || paymentStatus === 'processing'}
+                  onClick={() => setCurrentStep('address')}
+                  disabled={isPaymentProcessing || paymentStatus === 'processing'}
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Voltar para Dados Pessoais
+                  Voltar para Endereço
                 </Button>
               </div>
             </Card>
@@ -1124,73 +1675,97 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
       </AnimatePresence>
 
       {/* Confirmation Modal */}
-      <AlertDialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+      <AlertDialog open={showConfirmModal} onOpenChange={(open) => {
+        // Don't allow closing if processing
+        if (!isModalProcessing) {
+          setShowConfirmModal(open);
+          // Reset processing state if modal is closed manually (not by processing)
+          if (!open) {
+            // Only reset if we're not currently processing a payment
+            if (!isProcessing) {
+              setIsModalProcessing(false);
+              setPixData({ ...pixData, isGenerating: false });
+              setBoletoData({ ...boletoData, isGenerating: false });
+            }
+          }
+        }
+      }}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Informações</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <div className="text-left space-y-2">
-                <p className="font-semibold text-gray-900">Dados Pessoais:</p>
-                <div className="pl-4 space-y-1 text-sm">
-                  <p><span className="text-gray-600">Nome:</span> {personalData.name}</p>
-                  <p><span className="text-gray-600">CPF:</span> {personalData.cpf}</p>
-                  <p><span className="text-gray-600">E-mail:</span> {personalData.email}</p>
-                  <p><span className="text-gray-600">WhatsApp:</span> {personalData.phone}</p>
-                  {personalData.workedAt && (
-                    <p><span className="text-gray-600">Empresa:</span> {personalData.workedAt}</p>
-                  )}
-                  {personalData.occupation && (
-                    <p><span className="text-gray-600">Profissão:</span> {personalData.occupation}</p>
-                  )}
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <div className="text-left space-y-2">
+                  <div className="font-semibold text-gray-900">Dados Pessoais:</div>
+                  <div className="pl-4 space-y-1 text-sm">
+                    <div><span className="text-gray-600">Nome:</span> {personalData.name}</div>
+                    <div><span className="text-gray-600">CPF:</span> {personalData.cpf}</div>
+                    <div><span className="text-gray-600">E-mail:</span> {personalData.email}</div>
+                    <div><span className="text-gray-600">WhatsApp:</span> {personalData.phone}</div>
+                    {personalData.workedAt && (
+                      <div><span className="text-gray-600">Empresa:</span> {personalData.workedAt}</div>
+                    )}
+                    {personalData.occupation && (
+                      <div><span className="text-gray-600">Profissão:</span> {personalData.occupation}</div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="text-left space-y-2">
+                  <div className="font-semibold text-gray-900">Curso:</div>
+                  <div className="pl-4 space-y-1 text-sm">
+                    <div><span className="text-gray-600">Turma:</span> {turma?.name}</div>
+                    <div><span className="text-gray-600">Data:</span> {turma?.landingPagesDates}</div>
+                  </div>
+                </div>
+                
+                <div className="text-left space-y-2">
+                  <div className="font-semibold text-gray-900">Pagamento:</div>
+                  <div className="pl-4 space-y-1 text-sm">
+                    <div><span className="text-gray-600">Método:</span> {
+                      paymentMethod === 'pix' ? 'PIX' :
+                      paymentMethod === 'boleto' ? 'Boleto Bancário' :
+                      'Cartão de Crédito'
+                    }</div>
+                    <div className="text-lg font-semibold text-primary-light">
+                      <span className="text-gray-600">Valor:</span> {
+                        paymentMethod === 'cartaoCredito' && cardData.installments !== "1"
+                          ? `${cardData.installments}x de ${formatCurrency(calculateInstallmentValue())}`
+                          : formatCurrency(formatPrice(turma?.discountPrice || turma?.price || 0))
+                      }
+                    </div>
+                    {paymentMethod === 'cartaoCredito' && cardData.installments !== "1" && (
+                      <div className="text-xs text-gray-500">
+                        Total: {formatCurrency(formatPrice(turma?.discountPrice || turma?.price || 0))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="text-xs text-gray-500 pt-2">
+                  Por favor, confirme que todas as informações estão corretas antes de prosseguir com o pagamento.
                 </div>
               </div>
-              
-              <div className="text-left space-y-2">
-                <p className="font-semibold text-gray-900">Curso:</p>
-                <div className="pl-4 space-y-1 text-sm">
-                  <p><span className="text-gray-600">Turma:</span> {turma?.name}</p>
-                  <p><span className="text-gray-600">Data:</span> {turma?.landingPagesDates}</p>
-                </div>
-              </div>
-              
-              <div className="text-left space-y-2">
-                <p className="font-semibold text-gray-900">Pagamento:</p>
-                <div className="pl-4 space-y-1 text-sm">
-                  <p><span className="text-gray-600">Método:</span> {
-                    paymentMethod === 'pix' ? 'PIX' :
-                    paymentMethod === 'boleto' ? 'Boleto Bancário' :
-                    'Cartão de Crédito'
-                  }</p>
-                  <p className="text-lg font-semibold text-primary-light">
-                    <span className="text-gray-600">Valor:</span> {
-                      paymentMethod === 'credit-card' && cardData.installments !== "1"
-                        ? `${cardData.installments}x de ${formatCurrency(calculateInstallmentValue())}`
-                        : formatCurrency(formatPrice(turma?.price || 0))
-                    }
-                  </p>
-                  {paymentMethod === 'credit-card' && cardData.installments !== "1" && (
-                    <p className="text-xs text-gray-500">
-                      Total: {formatCurrency(formatPrice(turma?.price || 0))}
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              <p className="text-xs text-gray-500 pt-2">
-                Por favor, confirme que todas as informações estão corretas antes de prosseguir com o pagamento.
-              </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Revisar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isModalProcessing}>Revisar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => {
-                setShowConfirmModal(false);
+                // Don't close modal, let the payment action handle it
                 pendingPaymentAction();
               }}
-              className="bg-primary-light hover:bg-primary-light/90"
+              disabled={isModalProcessing}
+              className="bg-primary-light hover:bg-primary-light/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Confirmar e Pagar
+              {isModalProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processando pagamento...
+                </>
+              ) : (
+                'Confirmar e Pagar'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

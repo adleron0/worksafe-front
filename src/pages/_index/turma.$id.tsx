@@ -74,7 +74,7 @@ interface Course {
   name: string;
   courseId: number;
   price: string;
-  oldPrice: string | null;
+  discountPrice: string | null;
   hoursDuration: number;
   openClass: boolean;
   description: string;
@@ -95,6 +95,7 @@ interface Course {
   gifts?: string;
   dividedIn?: number | null;
   allowCheckout?: boolean;
+  paymentMethods?: string[];
   course?: {
     id: number;
     name: string;
@@ -221,8 +222,8 @@ Turma: ${turma?.landingPagesDates}`;
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // If allowCheckout is enabled, validate and show checkout form
-    if (turma?.allowCheckout) {
+    // If allowCheckout is enabled and has payment methods, validate and show checkout form
+    if (turma?.allowCheckout && turma?.paymentMethods && turma.paymentMethods.length > 0) {
       // Validate captcha first
       const correctAnswer = captcha.num1 + captcha.num2;
       if (parseInt(captcha.answer) !== correctAnswer) {
@@ -688,14 +689,20 @@ Turma: ${turma?.landingPagesDates}`;
                       <div className="text-xs font-medium mb-1" style={{ color: '#6B7280' }}>
                         Investimento
                       </div>
-                      {turma.oldPrice && (
-                        <div className="text-gray-400 line-through text-xs">
-                          {formatCurrency(turma.oldPrice)}
+                      {turma.discountPrice ? (
+                        <>
+                          <div className="text-gray-400 line-through text-xs">
+                            {formatCurrency(turma.price)}
+                          </div>
+                          <div className="text-xl sm:text-2xl font-bold" style={{ color: '#111827' }}>
+                            {formatCurrency(turma.discountPrice)}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-xl sm:text-2xl font-bold" style={{ color: '#111827' }}>
+                          {formatCurrency(turma.price)}
                         </div>
                       )}
-                      <div className="text-xl sm:text-2xl font-bold" style={{ color: '#111827' }}>
-                        {formatCurrency(turma.price)}
-                      </div>
                       {turma.dividedIn && turma.dividedIn > 1 && (
                         <div className="text-xs text-green-600 font-medium mt-1">
                           Em até {turma.dividedIn}x
@@ -1335,8 +1342,8 @@ Turma: ${turma?.landingPagesDates}`;
                 );
               }
               
-              // If checkout is enabled and showCheckout is true, show CheckoutForm
-              if (turma?.allowCheckout && showCheckout) {
+              // If checkout is enabled with payment methods and showCheckout is true, show CheckoutForm
+              if (turma?.allowCheckout && turma?.paymentMethods && turma.paymentMethods.length > 0 && showCheckout) {
                 return (
                   <CheckoutForm
                     turma={turma}
@@ -1553,7 +1560,7 @@ Turma: ${turma?.landingPagesDates}`;
                       </>
                     ) : (
                       <>
-                        {turma?.allowCheckout ? 'Continuar para Pagamento' : 'Confirmar Inscrição'}
+                        {turma?.allowCheckout && turma?.paymentMethods && turma.paymentMethods.length > 0 ? 'Continuar para Pagamento' : 'Confirmar Inscrição'}
                         <ArrowRight className="ml-2 h-5 w-5" />
                       </>
                     )}

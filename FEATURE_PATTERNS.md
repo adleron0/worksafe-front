@@ -302,15 +302,18 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
         {/* Campos do item */}
         
-        {/* Ações */}
+        {/* Ações - IMPORTANTE: Seguir este padrão exato */}
         <div className="absolute top-2 right-2 lg:static lg:w-1/12">
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Icon name="ellipsis-vertical" />
+              <Button
+                className="h-8 w-8 rounded-full p-0 text-gray-700 cursor-pointer"
+                variant="outline"
+                size="sm">
+                <Icon name="ellipsis-vertical" className="text-foreground dark:text-primary w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent align="end">
               {/* Menu items */}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -355,6 +358,31 @@ const ParentItem = ({ item }) => {
     </>
   );
 };
+```
+
+## 🎯 Padrão do Botão de Ações
+
+**IMPORTANTE**: O botão de ações em listas deve seguir este padrão específico:
+
+```typescript
+<DropdownMenu modal={false}>  {/* modal={false} é obrigatório */}
+  <DropdownMenuTrigger asChild>
+    <Button
+      className="h-8 w-8 rounded-full p-0 text-gray-700 cursor-pointer"  {/* botão redondo com cursor */}
+      variant="outline"
+      size="sm">
+      <Icon name="ellipsis-vertical" className="text-foreground dark:text-primary w-3 h-3" />
+    </Button>
+  </DropdownMenuTrigger>
+  <DropdownMenuContent align="end">
+    {/* Items do menu */}
+  </DropdownMenuContent>
+</DropdownMenu>
+```
+
+**Skeleton correspondente**:
+```typescript
+<Skeleton className="h-8 w-8 rounded-full" />
 ```
 
 ## 🔑 Convenções Importantes

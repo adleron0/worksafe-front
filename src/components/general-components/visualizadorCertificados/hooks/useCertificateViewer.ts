@@ -1083,53 +1083,66 @@ export const useCertificateViewer = (
         }
 
         try {
-          // Salvar zoom atual e dimensões
-          const originalZoom = canvas.getZoom();
-          const originalWidth = canvas.getWidth();
-          const originalHeight = canvas.getHeight();
+          // Criar um canvas temporário clonado para exportação
+          // Isso evita alterações visuais no canvas original
+          const tempCanvas = document.createElement('canvas');
+          const tempCtx = tempCanvas.getContext('2d');
+          
+          if (!tempCtx) {
+            throw new Error('Não foi possível criar contexto do canvas temporário');
+          }
           
           // Definir dimensões A4 em pixels para alta resolução
-          // Reduzindo para 150 DPI para evitar zoom excessivo
-          const targetDPI = 150;
+          const targetDPI = 300; // Aumentar DPI para melhor qualidade
           const mmToInch = 25.4;
           const a4WidthMM = isLandscape ? 297 : 210;
           const a4HeightMM = isLandscape ? 210 : 297;
           const targetWidth = Math.round(a4WidthMM * targetDPI / mmToInch);
           const targetHeight = Math.round(a4HeightMM * targetDPI / mmToInch);
           
-          // Calcular zoom necessário para alcançar a resolução alvo
+          // Configurar dimensões do canvas temporário
+          tempCanvas.width = targetWidth;
+          tempCanvas.height = targetHeight;
+          
+          // Calcular escala para o canvas temporário
           const baseWidth = isLandscape ? 842 : 595;
           const baseHeight = isLandscape ? 595 : 842;
-          const zoomFactorWidth = targetWidth / baseWidth;
-          const zoomFactorHeight = targetHeight / baseHeight;
-          // Limitar o zoom máximo para evitar problemas
-          const targetZoom = Math.min(zoomFactorWidth, zoomFactorHeight, 3);
+          const scaleX = targetWidth / baseWidth;
+          const scaleY = targetHeight / baseHeight;
+          const scale = Math.min(scaleX, scaleY);
           
-          // Aplicar zoom temporariamente para alta resolução
-          canvas.setZoom(targetZoom);
-          canvas.setDimensions({
-            width: baseWidth * targetZoom,
-            height: baseHeight * targetZoom
+          // Criar um novo canvas Fabric temporário com as mesmas configurações
+          const tempFabricCanvas = new fabric.Canvas(tempCanvas, {
+            width: targetWidth,
+            height: targetHeight,
+            backgroundColor: '#ffffff'
           });
-          canvas.renderAll();
           
-          // Gerar imagem em alta resolução IMEDIATAMENTE após aplicar o zoom
-          const dataURL = canvas.toDataURL({
+          // Clonar o conteúdo do canvas original
+          const jsonData = canvas.toJSON();
+          
+          // Carregar no canvas temporário com escala apropriada
+          await new Promise<void>((resolve, reject) => {
+            tempFabricCanvas.loadFromJSON(jsonData).then(() => {
+              // Aplicar zoom para alta resolução
+              tempFabricCanvas.setZoom(scale);
+              tempFabricCanvas.renderAll();
+              resolve();
+            }).catch(reject);
+          });
+          
+          // Gerar imagem do canvas temporário
+          const dataURL = tempFabricCanvas.toDataURL({
             format: 'png',
-            quality: 1.0, // Máxima qualidade
-            multiplier: 1, // Já estamos usando zoom alto, não precisa multiplicar
-            enableRetinaScaling: false // Desabilitar scaling adicional
+            quality: 1.0,
+            multiplier: 1, // Não precisamos de multiplier adicional
+            enableRetinaScaling: false
           });
           
-          // Restaurar zoom e dimensões originais IMEDIATAMENTE após gerar a imagem
-          canvas.setZoom(originalZoom);
-          canvas.setDimensions({
-            width: originalWidth,
-            height: originalHeight
-          });
-          canvas.renderAll();
+          // Limpar canvas temporário
+          tempFabricCanvas.dispose();
           
-          // Pequeno delay APÓS restaurar para permitir que a UI respire
+          // Pequeno delay para permitir que a UI respire
           await new Promise(resolve => setTimeout(resolve, 10));
           
           const pageWidth = pdf.internal.pageSize.getWidth();

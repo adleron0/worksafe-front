@@ -168,6 +168,11 @@ export const items = [
         icon: "chart-pie",
         path: "/financeiro/relatorios",
       },
+      {
+        title: "GateWays",
+        icon: "wallet",
+        path: "/financeiro/gateways",
+      },
     ],
   },
   {

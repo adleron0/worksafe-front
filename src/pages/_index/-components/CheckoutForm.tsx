@@ -71,8 +71,10 @@ interface CheckoutFormProps {
   turma: {
     name: string;
     price: string | number;
+    discountPrice?: string | number | null;
     dividedIn?: number | null;
     landingPagesDates?: string;
+    paymentMethods?: string[];
   };
   onComplete: (paymentData: {
     paymentMethod: string;
@@ -136,9 +138,20 @@ const CardBrandLogo = ({ brand }: { brand: string }) => {
 };
 
 const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormProps) => {
+  // Filter available payment methods
+  const availablePaymentMethods = turma.paymentMethods || [];
+  
+  // Map payment method strings to the PaymentMethod type
+  const getInitialPaymentMethod = (): PaymentMethod => {
+    if (availablePaymentMethods.includes('pix')) return 'pix';
+    if (availablePaymentMethods.includes('boleto')) return 'boleto';
+    if (availablePaymentMethods.includes('cartaoCredito')) return 'credit-card';
+    return 'pix'; // fallback
+  };
+  
   // If we have initial data, start at payment step, otherwise start at personal
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(initialData ? 'payment' : 'personal');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(getInitialPaymentMethod());
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'completed' | 'failed'>('pending');
   
@@ -289,7 +302,7 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
   };
 
   const calculateInstallmentValue = () => {
-    const price = parseFloat(formatPrice(turma.price));
+    const price = parseFloat(formatPrice(turma.discountPrice || turma.price));
     const installments = parseInt(cardData.installments);
     return price / installments;
   };
@@ -407,8 +420,8 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
   const installmentOptions = Array.from({ length: turma.dividedIn || 1 }, (_, i) => ({
     id: String(i + 1),
     name: i === 0 
-      ? `À vista - ${formatCurrency(formatPrice(turma.price))}`
-      : `${i + 1}x de ${formatCurrency(parseFloat(formatPrice(turma.price)) / (i + 1))}`
+      ? `À vista - ${formatCurrency(formatPrice(turma.discountPrice || turma.price))}`
+      : `${i + 1}x de ${formatCurrency(parseFloat(formatPrice(turma.discountPrice || turma.price)) / (i + 1))}`
   }));
 
   return (
@@ -663,10 +676,10 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
                   <Select
                     name="paymentMethod"
                     options={[
-                      { id: 'pix', name: 'PIX' },
-                      { id: 'boleto', name: 'Boleto Bancário' },
-                      { id: 'credit-card', name: 'Cartão de Crédito' }
-                    ]}
+                      availablePaymentMethods.includes('pix') && { id: 'pix', name: 'PIX' },
+                      availablePaymentMethods.includes('boleto') && { id: 'boleto', name: 'Boleto Bancário' },
+                      availablePaymentMethods.includes('cartaoCredito') && { id: 'credit-card', name: 'Cartão de Crédito' }
+                    ].filter(Boolean) as any[]}
                     state={paymentMethod}
                     onChange={(_, value) => setPaymentMethod(value as PaymentMethod)}
                     placeholder="Selecione o método de pagamento"
@@ -674,39 +687,45 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
                 </div>
               ) : (
                 <div className="flex gap-2 mb-6 border-b">
-                  <button
-                    onClick={() => setPaymentMethod('pix')}
-                    className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-                      paymentMethod === 'pix'
-                        ? 'border-primary-light text-primary-light'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    <QrCode className="h-5 w-5" />
-                    PIX
-                  </button>
-                  <button
-                    onClick={() => setPaymentMethod('boleto')}
-                    className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-                      paymentMethod === 'boleto'
-                        ? 'border-primary-light text-primary-light'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    <FileText className="h-5 w-5" />
-                    Boleto
-                  </button>
-                  <button
-                    onClick={() => setPaymentMethod('credit-card')}
-                    className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-                      paymentMethod === 'credit-card'
-                        ? 'border-primary-light text-primary-light'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    <CreditCardIcon className="h-5 w-5" />
-                    Cartão de Crédito
-                  </button>
+                  {availablePaymentMethods.includes('pix') && (
+                    <button
+                      onClick={() => setPaymentMethod('pix')}
+                      className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                        paymentMethod === 'pix'
+                          ? 'border-primary-light text-primary-light'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <QrCode className="h-5 w-5" />
+                      PIX
+                    </button>
+                  )}
+                  {availablePaymentMethods.includes('boleto') && (
+                    <button
+                      onClick={() => setPaymentMethod('boleto')}
+                      className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                        paymentMethod === 'boleto'
+                          ? 'border-primary-light text-primary-light'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <FileText className="h-5 w-5" />
+                      Boleto
+                    </button>
+                  )}
+                  {availablePaymentMethods.includes('cartaoCredito') && (
+                    <button
+                      onClick={() => setPaymentMethod('credit-card')}
+                      className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                        paymentMethod === 'credit-card'
+                          ? 'border-primary-light text-primary-light'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <CreditCardIcon className="h-5 w-5" />
+                      Cartão de Crédito
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -1052,13 +1071,13 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData }: CheckoutFormPr
                             <div className="text-right">
                               <p className="text-2xl font-bold text-primary-light">
                                 {cardData.installments === "1"
-                                  ? formatCurrency(formatPrice(turma.price))
+                                  ? formatCurrency(formatPrice(turma.discountPrice || turma.price))
                                   : `${cardData.installments}x ${formatCurrency(calculateInstallmentValue())}`
                                 }
                               </p>
                               {cardData.installments !== "1" && (
                                 <p className="text-sm text-gray-500">
-                                  Total: {formatCurrency(formatPrice(turma.price))}
+                                  Total: {formatCurrency(formatPrice(turma.discountPrice || turma.price))}
                                 </p>
                               )}
                             </div>

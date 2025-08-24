@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { get, post } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import NavBar from "./-components/NavBar";
 import Footer from "./-components/Footer";
 import Clients from "./-components/Clients";
+import CheckoutForm from "./-components/CheckoutForm";
 
 export const Route = createFileRoute("/_index/turma/$id")({
   component: TurmaLandingPage,
@@ -73,7 +74,7 @@ interface Course {
   name: string;
   courseId: number;
   price: string;
-  oldPrice: string | null;
+  discountPrice: string | null;
   hoursDuration: number;
   openClass: boolean;
   description: string;
@@ -93,6 +94,8 @@ interface Course {
   faq?: string;
   gifts?: string;
   dividedIn?: number | null;
+  allowCheckout?: boolean;
+  paymentMethods?: string[];
   course?: {
     id: number;
     name: string;
@@ -116,6 +119,7 @@ function TurmaLandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [cart, setCart] = useState<any[]>([]);
   const formRef = useRef<HTMLDivElement>(null);
+  const [showCheckout, setShowCheckout] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -158,8 +162,211 @@ function TurmaLandingPage() {
     );
   };
 
+  // Create mutation for subscription with checkout
+  const checkoutMutation = useMutation({
+    mutationFn: async (subscriptionData: any) => {
+      return await post("subscription", "subscribe", subscriptionData);
+    }
+  });
+
+  const handleCheckoutComplete = async (paymentData: any) => {
+    try {
+      // Prepare complete data structure for API with checkout
+      const subscriptionData: any = {
+        // Personal data
+        name: paymentData.personalData.name,
+        cpf: paymentData.personalData.cpf,
+        email: paymentData.personalData.email,
+        phone: paymentData.personalData.phone,
+        
+        // Address data
+        address: paymentData.addressData.address,
+        addressNumber: paymentData.addressData.addressNumber,
+        addressComplement: paymentData.addressData.addressComplement,
+        neighborhood: paymentData.addressData.neighborhood,
+        city: paymentData.addressData.city,
+        state: paymentData.addressData.state,
+        zipCode: paymentData.addressData.zipCode,
+        
+        // Professional data
+        occupation: paymentData.personalData.occupation || "Não informado",
+        workedAt: paymentData.personalData.workedAt || "Não informado",
+        
+        // Class data
+        classId: parseInt(id),
+        
+        // Payment data
+        paymentMethod: paymentData.paymentMethod,
+        
+        // Credit card data - send as JSON string if credit card payment, empty string otherwise
+        creditCard: paymentData.paymentMethod === 'cartaoCredito' && paymentData.cardData 
+          ? JSON.stringify({
+              cardName: paymentData.cardData.name,
+              cardNumber: paymentData.cardData.number,
+              expiryDate: paymentData.cardData.expiry,
+              cvv: paymentData.cardData.cvv,
+              installments: paymentData.cardData.installments || "1"
+            })
+          : ""
+      };
+      
+      // Send to API and get response using mutation
+      const response: any = await checkoutMutation.mutateAsync(subscriptionData);
+      
+      // Process response based on payment method and status
+      // Always send the current payment method response to clear old data
+      if (paymentData.paymentMethod === 'pix' && response?.financialRecord) {
+        // PIX - Use financialRecord data
+        const { pixUrl, pixNumber, key } = response.financialRecord;
+        
+        // Always send response, even if PIX data is null (user switched payment method)
+        paymentData.onPaymentResponse?.({
+          type: 'pix',
+          qrCode: pixUrl || "", // Send empty string if null
+          copyPasteCode: pixNumber || "",
+          status: response.financialRecord.status,
+          paymentKey: key || ""
+        });
+        
+        if (pixUrl && pixNumber) {
+          toast({
+            title: "PIX gerado com sucesso!",
+            description: "Escaneie o QR Code ou copie o código para realizar o pagamento.",
+            variant: "default",
+          });
+        } else {
+          // User may have switched payment methods
+          toast({
+            title: "Método de pagamento alterado",
+            description: "Por favor, gere o novo pagamento.",
+            variant: "default",
+          });
+        }
+        return; // Don't close checkout
+      } else if (paymentData.paymentMethod === 'boleto' && response?.financialRecord) {
+        // Boleto - Use financialRecord data
+        const { billUrl, billNumber } = response.financialRecord;
+        
+        // Always send response, even if boleto data is null (user switched payment method)
+        paymentData.onPaymentResponse?.({
+          type: 'boleto',
+          billUrl: billUrl || "",
+          billNumber: billNumber || "",
+          bankSlipUrl: billUrl || "",
+          status: response.financialRecord.status
+        });
+        
+        if (billUrl && billNumber) {
+          toast({
+            title: "Boleto gerado com sucesso!",
+            description: "Clique para baixar o boleto bancário.",
+            variant: "default",
+          });
+        } else {
+          // User may have switched payment methods
+          toast({
+            title: "Método de pagamento alterado",
+            description: "Por favor, gere o novo boleto.",
+            variant: "default",
+          });
+        }
+        return; // Don't close checkout
+      } else if (paymentData.paymentMethod === 'cartaoCredito' && response?.payment) {
+        // Credit Card
+        const paymentStatus = response.payment.status;
+        if (paymentStatus === 'CONFIRMED') {
+          // Payment approved - DO NOT close checkout immediately
+          // Let the success screen show in CheckoutForm
+          
+          // Pass success back to CheckoutForm to show success screen
+          paymentData.onPaymentResponse?.({
+            type: 'cartaoCredito',
+            status: paymentStatus,
+            error: false
+          });
+          
+          // Don't show toast here as the success screen will handle the feedback
+          // Don't redirect to WhatsApp automatically, let user click the button on success screen
+        } else {
+          // Payment rejected or pending
+          toast({
+            title: "Pagamento não aprovado",
+            description: "Verifique os dados do cartão e tente novamente.",
+            variant: "destructive",
+          });
+          
+          // Pass error back to CheckoutForm
+          paymentData.onPaymentResponse?.({
+            type: 'cartaoCredito',
+            status: paymentStatus,
+            error: true
+          });
+        }
+      } else {
+        // No payment info in response - shouldn't happen but handle it
+        toast({
+          title: "Erro no processamento",
+          description: "Resposta inválida do servidor. Por favor, tente novamente.",
+          variant: "destructive",
+        });
+        
+        // Reset payment state in CheckoutForm
+        paymentData.onPaymentResponse?.({
+          type: paymentData.paymentMethod,
+          error: true,
+          message: "Resposta inválida do servidor"
+        });
+      }
+      
+    } catch (error: any) {
+      console.error("=== ERROR PROCESSING PAYMENT ===");
+      console.error("Error Object:", error);
+      console.error("Error Response:", error?.response);
+      console.error("Error Data:", error?.response?.data);
+      console.error("Error Message:", error?.response?.data?.message);
+      console.error("Error Status Code:", error?.response?.status);
+      console.error("=== END ERROR ===");
+      
+      const errorMessage = Array.isArray(error?.response?.data?.message) 
+        ? error?.response?.data?.message.join(", ")
+        : error?.response?.data?.message || "Por favor, tente novamente.";
+      
+      toast({
+        title: "Erro ao processar pagamento",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
+      // Reset payment state in CheckoutForm
+      paymentData.onPaymentResponse?.({
+        type: paymentData.paymentMethod,
+        error: true,
+        message: errorMessage
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // If allowCheckout is enabled and has payment methods, validate and show checkout form
+    if (turma?.allowCheckout && turma?.paymentMethods && turma.paymentMethods.length > 0) {
+      // Validate captcha first
+      const correctAnswer = captcha.num1 + captcha.num2;
+      if (parseInt(captcha.answer) !== correctAnswer) {
+        setCaptchaError(true);
+        generateCaptcha();
+        toast({
+          title: "Verificação incorreta",
+          description: "Por favor, responda corretamente a soma matemática.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setShowCheckout(true);
+      return;
+    }
     
     // Validate captcha
     const correctAnswer = captcha.num1 + captcha.num2;
@@ -177,15 +384,19 @@ function TurmaLandingPage() {
     setIsSubmitting(true);
     
     try {
-      // Prepare data for API
+      // Prepare basic form data (without checkout)
       const subscriptionData = {
+        // Personal data
         name: formData.name,
         cpf: formData.cpf,
         email: formData.email,
         phone: formData.phone,
-        workedAt: formData.workedAt || "Não informado",
+        
+        // Professional data
         occupation: formData.occupation || "Não informado",
-        companyId: 1,
+        workedAt: formData.workedAt || "Não informado",
+        
+        // Class data
         classId: parseInt(id)
       };
       
@@ -609,14 +820,20 @@ Turma: ${turma?.landingPagesDates}`;
                       <div className="text-xs font-medium mb-1" style={{ color: '#6B7280' }}>
                         Investimento
                       </div>
-                      {turma.oldPrice && (
-                        <div className="text-gray-400 line-through text-xs">
-                          {formatCurrency(turma.oldPrice)}
+                      {turma.discountPrice ? (
+                        <>
+                          <div className="text-gray-400 line-through text-xs">
+                            {formatCurrency(turma.price)}
+                          </div>
+                          <div className="text-xl sm:text-2xl font-bold" style={{ color: '#111827' }}>
+                            {formatCurrency(turma.discountPrice)}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-xl sm:text-2xl font-bold" style={{ color: '#111827' }}>
+                          {formatCurrency(turma.price)}
                         </div>
                       )}
-                      <div className="text-xl sm:text-2xl font-bold" style={{ color: '#111827' }}>
-                        {formatCurrency(turma.price)}
-                      </div>
                       {turma.dividedIn && turma.dividedIn > 1 && (
                         <div className="text-xs text-green-600 font-medium mt-1">
                           Em até {turma.dividedIn}x
@@ -732,32 +949,62 @@ Turma: ${turma?.landingPagesDates}`;
         </div>
       </section>
 
-      {/* Video Section */}
-      {turma.videoUrl && (
-        <section id="video" className="py-12 sm:py-16 lg:py-20 bg-gray-50">
-          <div className="mx-auto max-w-6xl px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-                {/* Video Player - Left Side on Desktop, Top on Mobile */}
-                <div className="order-1 lg:order-1">
-                  <div className="relative rounded-xl overflow-hidden shadow-2xl bg-black aspect-video">
-                    {turma.videoUrl.includes('youtube.com') || turma.videoUrl.includes('youtu.be') ? (
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        src={turma.videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                        title={turma.videoTitle || "Vídeo do curso"}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="absolute inset-0 w-full h-full"
-                        style={{ border: 0 }}
-                        loading="lazy"
-                      />
+      {/* Video Section - Only render if URL exists and has valid video ID */}
+      {(() => {
+        if (!turma.videoUrl || turma.videoUrl.trim() === '') return null;
+        
+        // Check if it's a YouTube URL and extract video ID
+        let videoId = '';
+        const url = turma.videoUrl;
+        
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+          // Handle YouTube shorts
+          if (url.includes('youtube.com/shorts/')) {
+            videoId = url.split('shorts/')[1]?.split('?')[0] || '';
+          }
+          // Handle regular YouTube videos
+          else if (url.includes('youtube.com/watch')) {
+            videoId = url.split('v=')[1]?.split('&')[0] || '';
+          }
+          // Handle youtu.be links
+          else if (url.includes('youtu.be/')) {
+            videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
+          }
+          // If already an embed link, extract the video ID
+          else if (url.includes('youtube.com/embed/')) {
+            videoId = url.split('embed/')[1]?.split('?')[0] || '';
+          }
+          
+          // If no valid video ID found, don't render the section
+          if (!videoId) return null;
+        }
+        
+        // Render the video section
+        return (
+          <section id="video" className="py-12 sm:py-16 lg:py-20 bg-gray-50">
+            <div className="mx-auto max-w-6xl px-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                  {/* Video Player - Left Side on Desktop, Top on Mobile */}
+                  <div className="order-1 lg:order-1">
+                    <div className="relative rounded-xl overflow-hidden shadow-2xl bg-black aspect-video">
+                      {(url.includes('youtube.com') || url.includes('youtu.be')) ? (
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          src={`https://www.youtube.com/embed/${videoId}`}
+                          title={turma.videoTitle || "Vídeo do curso"}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="absolute inset-0 w-full h-full"
+                          style={{ border: 0 }}
+                          loading="lazy"
+                        />
                     ) : (
                       <video
                         controls
@@ -836,7 +1083,8 @@ Turma: ${turma?.landingPagesDates}`;
             </motion.div>
           </div>
         </section>
-      )}
+        );
+      })()}
 
       {/* Why Choose Us Section */}
       <section id="why-choose" className="py-12 sm:py-16 lg:py-20 bg-white">
@@ -1225,6 +1473,19 @@ Turma: ${turma?.landingPagesDates}`;
                 );
               }
               
+              // If checkout is enabled with payment methods and showCheckout is true, show CheckoutForm
+              if (turma?.allowCheckout && turma?.paymentMethods && turma.paymentMethods.length > 0 && showCheckout) {
+                return (
+                  <CheckoutForm
+                    turma={turma}
+                    onComplete={handleCheckoutComplete}
+                    onBack={() => setShowCheckout(false)}
+                    initialData={formData}
+                    isProcessingPayment={checkoutMutation.isPending}
+                  />
+                );
+              }
+              
               return (
                 <>
                   <div className="text-center mb-8 sm:mb-10">
@@ -1431,7 +1692,7 @@ Turma: ${turma?.landingPagesDates}`;
                       </>
                     ) : (
                       <>
-                        Confirmar Inscrição
+                        {turma?.allowCheckout && turma?.paymentMethods && turma.paymentMethods.length > 0 ? 'Continuar para Pagamento' : 'Confirmar Inscrição'}
                         <ArrowRight className="ml-2 h-5 w-5" />
                       </>
                     )}

@@ -20,7 +20,7 @@ interface Course {
   name: string;
   courseId: number;
   price: string;
-  oldPrice: string | null;
+  discountPrice: string | null;
   hoursDuration: number;
   openClass: boolean;
   description: string;
@@ -328,14 +328,20 @@ const TrainingSchedule: React.FC<TrainingScheduleProps> = ({ handleWhatsApp }) =
                         </div>
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-gray-100">
                           <div className="flex items-baseline justify-between sm:block">
-                            {course.oldPrice && (
-                              <p className="text-xs text-gray-400 line-through">
-                                {formatCurrency(course.oldPrice)}
+                            {course.discountPrice ? (
+                              <>
+                                <p className="text-xs text-gray-400 line-through">
+                                  {formatCurrency(course.price)}
+                                </p>
+                                <p className="text-base md:text-lg font-bold text-gray-800">
+                                  {formatCurrency(course.discountPrice)}
+                                </p>
+                              </>
+                            ) : (
+                              <p className="text-base md:text-lg font-bold text-gray-800">
+                                {formatCurrency(course.price)}
                               </p>
                             )}
-                            <p className="text-base md:text-lg font-bold text-gray-800">
-                              {formatCurrency(course.price)}
-                            </p>
                             {course.dividedIn && course.dividedIn > 1 && (
                               <p className="text-xs text-gray-500">
                                 Em até {course.dividedIn}x

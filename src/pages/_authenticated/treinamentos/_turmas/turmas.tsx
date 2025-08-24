@@ -14,7 +14,7 @@ import ItemList from "./-components/TurmasItem";
 import Form from "./-components/TurmasForm";
 import SearchForm from "./-components/TurmasSearch";
 import TurmasInstrutoresList from "@/pages/_authenticated/treinamentos/_instrutores/-turmas-instrutores/TurmasInstrutoresList";
-import Subscriptions from "@/pages/_authenticated/treinamentos/-subscriptions";
+import Subscriptions from "@/pages/_authenticated/treinamentos/_inscricoes/inscricoes";
 // Interfaces
 import { IEntity } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";

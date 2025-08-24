@@ -3,11 +3,12 @@ import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
+  DropdownMenuItem,
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import Icon from '@/components/general-components/Icon';
 import useVerify from '@/hooks/use-verify';
-import { IEntity } from '../interfaces/entity.interface';
+import { IEntity } from '../-interfaces/entity.interface';
 import { IDefaultEntity } from '@/general-interfaces/defaultEntity.interface';
 import { KanbanColumn } from '@/components/general-components/KanbanView';
 
@@ -50,7 +51,7 @@ const SubscriptionCard = ({
         
         {/* Menu de Ações */}
         {can(`update_${entity.ability}`) && (
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
                 className="h-6 w-6 p-0"
@@ -61,17 +62,19 @@ const SubscriptionCard = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <Button 
-                variant="ghost" 
-                className="flex justify-start gap-2 p-2 items-center w-full h-fit"
-                onClick={() => {
-                  setFormData(item);
-                  setOpenForm(true);
-                }}
-              >
-                <Icon name="edit-3" className="w-3 h-3" /> 
-                <span className="text-sm">Editar</span>
-              </Button>
+              <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                <Button 
+                  variant="ghost" 
+                  className="flex justify-start gap-2 p-2 items-center w-full h-fit"
+                  onClick={() => {
+                    setFormData(item);
+                    setOpenForm(true);
+                  }}
+                >
+                  <Icon name="edit-3" className="w-3 h-3" /> 
+                  <span className="text-sm">Editar</span>
+                </Button>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}

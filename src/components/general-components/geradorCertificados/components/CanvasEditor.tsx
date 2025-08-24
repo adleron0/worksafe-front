@@ -5,6 +5,7 @@ import { RectangleHorizontal, RectangleVertical, ZoomIn, ZoomOut, Loader2 } from
 import * as fabric from 'fabric';
 import { createListTextbox, cleanListMarkers } from '../utils/ListTextbox';
 import { createImagePlaceholder } from '../utils/PlaceholderImage';
+import './CanvasEditor.css';
 
 export interface CanvasEditorRef {
   addImageToCanvas: (imageUrl: string, imageName: string) => void;
@@ -47,6 +48,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const zoomLevelRef = useRef(zoomLevel);
   const orientationRef = useRef(orientation);
   const isActiveRef = useRef(isActive);
@@ -311,7 +313,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       left: centerX,
       top: centerY,
       originX: 'center',
-      originY: 'center',
+      originY: textSettings.originY || 'center',
       fontFamily: textSettings.fontFamily,
       fontSize: textSettings.fontSize,
       fontWeight: adjustedFontWeight,
@@ -1362,6 +1364,26 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
 
   useEffect(() => {
     updateCanvasSize(orientation, zoomLevel);
+    
+    // Centralizar o scroll quando o zoom mudar
+    if (containerRef.current) {
+      const container = containerRef.current;
+      const scrollWidth = container.scrollWidth;
+      const scrollHeight = container.scrollHeight;
+      const clientWidth = container.clientWidth;
+      const clientHeight = container.clientHeight;
+      
+      // Calcular posição central
+      const scrollLeft = (scrollWidth - clientWidth) / 2;
+      const scrollTop = (scrollHeight - clientHeight) / 2;
+      
+      // Aplicar scroll suavemente
+      container.scrollTo({
+        left: scrollLeft,
+        top: scrollTop,
+        behavior: 'smooth'
+      });
+    }
   }, [orientation, zoomLevel]);
 
   const handleZoomChange = (value: number[]) => {
@@ -1453,7 +1475,8 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       
       {/* Canvas container */}
       <div 
-        className={`flex-1 min-h-0 border rounded-lg bg-muted dark:bg-gray-800 p-4 overflow-auto relative transition-colors ${
+        ref={containerRef}
+        className={`canvas-container flex-1 min-h-0 border rounded-lg bg-muted dark:bg-gray-800 p-4 overflow-auto relative transition-colors ${
           isDragging ? 'border-primary border-2' : ''
         } ${!isActive ? 'opacity-0 pointer-events-none' : ''}`}
         data-page-active={isActive}
@@ -1477,7 +1500,12 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
           e.stopPropagation();
         }}
       >
-        <div className="w-full h-full flex items-center justify-center">
+        <div 
+          className="inline-flex min-w-full min-h-full items-center justify-center" 
+          style={{ 
+            padding: zoomLevel > 100 ? `${Math.max(100, zoomLevel * 0.5)}px` : '50px'
+          }}
+        >
           <div className="relative">
             <canvas 
               ref={canvasRef}

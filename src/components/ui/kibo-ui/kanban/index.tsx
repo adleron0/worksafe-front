@@ -118,7 +118,12 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
 
   return (
     <>
-      <div style={style} {...listeners} {...attributes} ref={setNodeRef}>
+      <div 
+        style={style} 
+        ref={setNodeRef}
+        {...attributes}
+        {...listeners}
+      >
         <Card
           className={cn(
             'cursor-grab gap-4 rounded-md p-3 shadow-sm',
@@ -213,8 +218,17 @@ export const KanbanProvider = <
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(MouseSensor),
-    useSensor(TouchSensor),
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 8, // Precisa arrastar 8px antes de ativar
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor)
   );
 

@@ -197,7 +197,7 @@ export default function KanbanView<T extends Record<string, any>>({
                 <KanbanBoard 
                   id={column.id} 
                   key={column.id}
-                  className="w-[280px] md:w-[320px] flex-shrink-0 min-w-[280px] max-w-[320px]"
+                  className="w-[calc(100vw+40rem)] sm:w-[280px] md:w-[320px] flex-shrink-0 max-w-[320px]"
                 >
                   <KanbanHeader className="mb-3">
                     <div className="flex items-center justify-between w-full">
@@ -218,7 +218,7 @@ export default function KanbanView<T extends Record<string, any>>({
                   
                   <KanbanCards 
                     id={column.id}
-                    className="space-y-2 min-h-[400px] max-h-[calc(100vh-350px)] overflow-y-auto"
+                    className="space-y-2 min-h-[200px] sm:min-h-[400px] max-h-[calc(100vh-350px)] overflow-y-auto"
                     style={{ paddingRight: '4px' }}
                   >
                     {(item: any) => {
@@ -231,8 +231,7 @@ export default function KanbanView<T extends Record<string, any>>({
                           id={item.id}
                           key={item.id}
                           name={item.name}
-                          className="bg-card border rounded-lg cursor-move hover:shadow-md transition-shadow"
-                          style={{ width: 'calc(100% - 8px)' }}
+                          className="bg-card border rounded-lg hover:shadow-md transition-shadow w-full"
                         >
                           {children(originalData, originalColumn)}
                         </KanbanCard>

@@ -14,7 +14,7 @@ import Icon from "@/components/general-components/Icon";
 import ListHeader from "@/components/general-components/ListHeader";
 import OptionSelector from "@/components/general-components/OptionSelector";
 // Interfaces
-import { IEntity } from "../interfaces/entity.interface";
+import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 
 interface ItemsProps {

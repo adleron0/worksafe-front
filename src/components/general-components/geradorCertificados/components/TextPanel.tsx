@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Plus, List, ListOrdered, ChevronRight, IndentDecrease, IndentIncrease, Info, Variable } from 'lucide-react';
+import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignVerticalSpaceAround, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Plus, List, ListOrdered, ChevronRight, IndentDecrease, IndentIncrease, Info, Variable } from 'lucide-react';
 import * as fabric from 'fabric';
 import { toast } from '@/hooks/use-toast';
 
@@ -23,6 +23,7 @@ export interface TextSettings {
   underline: boolean;
   fill: string;
   textAlign: 'left' | 'center' | 'right';
+  originY?: 'top' | 'center' | 'bottom';
   lineHeight: number;
   letterSpacing: number;
   listType: 'none' | 'bullet' | 'arrow' | 'numbered';
@@ -61,6 +62,7 @@ const TextPanel: React.FC<TextPanelProps> = ({
     underline: false,
     fill: '#000000',
     textAlign: 'left',
+    originY: 'center',
     lineHeight: 1.16,
     letterSpacing: 0,
     listType: 'none',
@@ -84,6 +86,7 @@ const TextPanel: React.FC<TextPanelProps> = ({
         underline: selectedText.underline || false,
         fill: selectedText.fill as string || '#000000',
         textAlign: (selectedText.textAlign || 'left') as 'left' | 'center' | 'right',
+        originY: (selectedText.originY || 'center') as 'top' | 'center' | 'bottom',
         lineHeight: selectedText.lineHeight || 1.16,
         letterSpacing: (selectedText as any).charSpacing || 0,
         listType: (selectedText as any).listType || 'none',
@@ -303,9 +306,9 @@ const TextPanel: React.FC<TextPanelProps> = ({
             </div>
           </div>
 
-          {/* Alinhamento */}
+          {/* Alinhamento Horizontal */}
           <div>
-            <label className="text-xs font-medium mb-1 block">Alinhamento</label>
+            <label className="text-xs font-medium mb-1 block">Alinhamento Horizontal</label>
             <div className="flex gap-1">
               <Button
                 size="sm"
@@ -332,6 +335,43 @@ const TextPanel: React.FC<TextPanelProps> = ({
                 <AlignRight className="w-4 h-4" />
               </Button>
             </div>
+          </div>
+
+          {/* Alinhamento Vertical (Ponto de Origem) */}
+          <div>
+            <label className="text-xs font-medium mb-1 block">Alinhamento Vertical</label>
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant={textSettings.originY === 'top' ? 'default' : 'outline'}
+                onClick={() => updateSetting('originY', 'top')}
+                className="flex-1"
+                title="Alinhar pelo topo (expande para baixo)"
+              >
+                <AlignVerticalJustifyStart className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant={textSettings.originY === 'center' ? 'default' : 'outline'}
+                onClick={() => updateSetting('originY', 'center')}
+                className="flex-1"
+                title="Centralizar verticalmente (padrão)"
+              >
+                <AlignVerticalSpaceAround className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant={textSettings.originY === 'bottom' ? 'default' : 'outline'}
+                onClick={() => updateSetting('originY', 'bottom')}
+                className="flex-1"
+                title="Alinhar pela base (expande para cima)"
+              >
+                <AlignVerticalJustifyEnd className="w-4 h-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Define como o texto se comporta com quebras de linha
+            </p>
           </div>
 
           {/* Formatação de Lista */}
@@ -548,10 +588,12 @@ const TextPanel: React.FC<TextPanelProps> = ({
                   { key: 'instrutor_nome_1', label: 'Nome 1' },
                   { key: 'instrutor_cpf_1', label: 'CPF 1' },
                   { key: 'instrutor_formacao_1', label: 'Formação 1' },
+                  { key: 'instrutor_curriculum_1', label: 'Curriculum 1' },
                   { key: 'instrutor_registro_1', label: 'Registro 1' },
                   { key: 'instrutor_assinatura_1', label: 'Assinatura 1' },
                   { key: 'instrutor_nome_2', label: 'Nome 2' },
                   { key: 'instrutor_formacao_2', label: 'Formação 2' },
+                  { key: 'instrutor_curriculum_2', label: 'Curriculum 2' },
                   { key: 'instrutor_registro_2', label: 'Registro 2' },
                   { key: 'instrutor_assinatura_2', label: 'Assinatura 2' },
                   { key: 'instrutores_nomes', label: 'Todos Nomes' },
@@ -579,6 +621,7 @@ const TextPanel: React.FC<TextPanelProps> = ({
                   { key: 'certificado_emissao', label: 'Emissão' },
                   { key: 'certificado_emissao_extenso', label: 'Emissão Ext' },
                   { key: 'certificado_codigo', label: 'Código' },
+                  { key: 'certificado_ano', label: 'Ano de Emissão' },
                 ].map(variable => (
                   <Button
                     key={variable.key}

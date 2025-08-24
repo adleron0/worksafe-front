@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 // Interfaces
-import { IEntity } from "../interfaces/entity.interface";
+import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 
 interface FormProps {
@@ -66,7 +66,7 @@ const SubscriptionForm = ({ formData, openSheet, entity, classId }: FormProps) =
   const { mutate: create } = useMutation({
     mutationFn: async (data: IEntity) => {
       showLoader(`Criando ${entity.name}...`);
-      return post("subscription", "subscribe", data);
+      return post("subscription", "", data);
     },
     onSuccess: () => {
       hideLoader();

@@ -1,6 +1,6 @@
 // Serviços
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { patch } from "@/services/api";
+import { patch, post } from "@/services/api";
 import { useLoader } from "@/context/GeneralContext";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
@@ -91,6 +91,34 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
           : typeof error === 'object' && error !== null && 'response' in error 
             ? ((error as ApiError).response?.data?.message || `Erro ao reativar ${entity.name}`)
             : `Erro ao reativar ${entity.name}`,
+        variant: "destructive",
+      })
+    }
+  });
+
+  // Mutation para gerar certificados
+  const { mutate: generateCertificates } = useMutation({
+    mutationFn: (id: number) => {
+      showLoader(`Gerando certificados...`);
+      return post<any>(entity.model, `generate-certificates/${id}`, {});
+    },
+    onSuccess: () => {
+      hideLoader();
+      toast({
+        title: "Certificados gerados com sucesso!",
+        description: "Os certificados foram gerados para todos os alunos aprovados.",
+        variant: "success",
+      })
+    },
+    onError: (error: unknown) => {
+      hideLoader();
+      toast({
+        title: "Erro ao gerar certificados",
+        description: error instanceof Error 
+          ? error.message 
+          : typeof error === 'object' && error !== null && 'response' in error 
+            ? ((error as ApiError).response?.data?.message || "Erro ao gerar certificados")
+            : "Erro ao gerar certificados",
         variant: "destructive",
       })
     }
@@ -325,6 +353,20 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
                       <Icon name="qr-code" className="w-3 h-3" /> 
                       <p>Link Prova</p>
                     </Button>
+                  </DropdownMenuItem>
+                )
+              }
+
+              {
+                !item.allowExam && (
+                  <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                    <ConfirmDialog
+                      title="Gerar certificados para esta turma?"
+                      description="Ao prosseguir, serão gerados certificados para todos os alunos desta turma. ação não poderá ser desfeita."
+                      onConfirm={() => item.id && generateCertificates(item.id)}
+                      titleBttn="Gerar Certificados"
+                      iconBttn="file-badge"
+                    />
                   </DropdownMenuItem>
                 )
               }

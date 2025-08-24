@@ -50,7 +50,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     courseId: z.number().min(1, { message: "Id do curso é obrigatório" }),
     certificateId: z.number().optional().nullable(),
     price: z.number().min(0, { message: "Valor de venda é obrigatório" }),
-    oldPrice: z.number(),
+    discountPrice: z.number(),
     dividedIn: z.number().min(1).optional().nullable(),
     hoursDuration: z.number().min(1, { message: "Duração é obrigatório" }),
     openClass: z.boolean(),
@@ -90,9 +90,11 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     landingPagesDates: z.string().min(3, { message: "Datas de divulgação devem ter pelo menos 3 caracteres" }),
     allowExam: z.boolean().optional().nullable(),
     allowReview: z.boolean().optional(),
+    allowCheckout: z.boolean().optional(),
     classCode: z.string().optional().nullable(),
     minimumQuorum: z.number().optional(),
     maxSubscriptions: z.number().optional(),
+    paymentMethods: z.array(z.enum(['cartaoCredito', 'boleto', 'pix'])).optional(),
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
       (value) => value === null || value instanceof File,
       {
@@ -163,7 +165,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     courseId: formData?.courseId || 0,
     certificateId: (formData as any)?.certificateId || null,
     price: Number(formData?.price) || 0,
-    oldPrice: Number(formData?.oldPrice) || 0,
+    discountPrice: Number((formData as any)?.discountPrice) || 0,
     dividedIn: (formData as any)?.dividedIn || null,
     hoursDuration: formData?.hoursDuration || 1,
     openClass: formData?.openClass || false,
@@ -182,9 +184,11 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     landingPagesDates: formData?.landingPagesDates || "",
     allowExam: formData?.allowExam,
     allowReview: formData?.allowReview || false,
+    allowCheckout: (formData as any)?.allowCheckout || false,
     classCode: formData?.classCode || (!formData ? generateClassCode() : (formData?.classCode || generateClassCode())),
     minimumQuorum: formData?.minimumQuorum || 0,
     maxSubscriptions: formData?.maxSubscriptions || 0,
+    paymentMethods: (formData as any)?.paymentMethods || ['cartaoCredito', 'boleto', 'pix'],
     image: formData?.image || null,
   });
   const initialFormRef = useRef(dataForm);
@@ -256,7 +260,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     },
   });
 
-  const handleChange = (name: string, value: string | number | null) => {
+  const handleChange = (name: string, value: string | number | null | string[]) => {
     setDataForm((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -622,17 +626,17 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
 
       <div>
-        <Label htmlFor="oldPrice">Valor antigo</Label>
+        <Label htmlFor="discountPrice">Valor promocional</Label>
         <p className="text-xs text-muted-foreground font-medium">Para evidenciar quando houver promoções</p>
         <Input
-          id="oldPrice"
-          name="oldPrice"
-          value={dataForm.oldPrice}
+          id="discountPrice"
+          name="discountPrice"
+          value={dataForm.discountPrice}
           onValueChange={handleChange}
           format="currency"
           className="mt-1"
         />
-        {errors.oldPrice && <p className="text-red-500 text-sm">{errors.oldPrice}</p>}
+        {errors.discountPrice && <p className="text-red-500 text-sm">{errors.discountPrice}</p>}
       </div>
 
       <div>
@@ -788,6 +792,41 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           checked={dataForm.allowReview ? true : false}
           onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowReview: !prev.allowReview }))}
         />
+      </div>
+
+      <div className={`mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg ${dataForm.allowCheckout ? 'pb-4' : ''}`}>
+        <div className="flex justify-between items-center">
+          <Label htmlFor="allowCheckout" className="cursor-pointer flex items-center gap-2">
+            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+            Habilitar Checkout (Pagamento Online)
+          </Label>
+          <Switch
+            id="allowCheckout"
+            name="allowCheckout"
+            checked={dataForm.allowCheckout ? true : false}
+            onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowCheckout: !prev.allowCheckout }))}
+          />
+        </div>
+
+        {dataForm.allowCheckout && (
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <Label htmlFor="paymentMethods">Métodos de Pagamento</Label>
+            <p className="text-xs text-muted-foreground font-medium mb-2">Selecione os métodos de pagamento ativos para esta turma</p>
+            <Select
+              name="paymentMethods"
+              multiple={true}
+              options={[
+                { id: 'cartaoCredito', name: 'Cartão de Crédito' },
+                { id: 'boleto', name: 'Boleto' },
+                { id: 'pix', name: 'PIX' }
+              ]}
+              state={dataForm.paymentMethods || []}
+              onChange={(name, value) => handleChange(name, value)}
+              placeholder="Selecione os métodos de pagamento"
+            />
+            {errors.paymentMethods && <p className="text-red-500 text-sm">{errors.paymentMethods}</p>}
+          </div>
+        )}
       </div>
 
       <div>

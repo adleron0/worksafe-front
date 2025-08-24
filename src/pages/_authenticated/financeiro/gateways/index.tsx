@@ -1,3 +1,4 @@
+import { createFileRoute } from '@tanstack/react-router';
 import { useRef, useState } from "react";
 // Serviços
 import { useQuery } from "@tanstack/react-query";
@@ -7,52 +8,46 @@ import Pagination from "@/components/general-components/Pagination";
 // Template Page list-form
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
-import ItemSkeleton from "./skeletons/ItemSkeleton";
-import ItemList from "./components/CertificadosItem";
-import Form from "./components/CertificadosForm";
-import EditForm from "./components/CertificadosEditForm";
-import SearchForm from "./components/CertificadosSearch";
+import ItemSkeleton from "./-skeletons/ItemSkeleton";
+import ItemList from "./-components/GatewaysItem";
+import Form from "./-components/GatewaysForm";
+import SearchForm from "./-components/GatewaysSearch";
 // Interfaces
-import { ICertificate } from "./interfaces/entity.interface";
+import { ICompanyGateway } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
-const List = ({ traineeId }: { traineeId: number }) => {
+export const Route = createFileRoute('/_authenticated/financeiro/gateways/')({
+  component: GatewaysList,
+})
+
+function GatewaysList() {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
-  const [openEditForm, setOpenEditForm] = useState(false);
-  const [formData, setFormData] = useState<ICertificate | null>(null);
-  const [editData, setEditData] = useState<ICertificate | undefined>(undefined);
+  const [formData, setFormData] = useState<ICompanyGateway | null>(null);
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
-    active: true,
-    show: ['trainee', 'course', 'class'],
-    traineeId: traineeId,
+    show: ['company'],
     'order-createdAt': 'desc',
   });
   const initialFormRef = useRef(searchParams);
 
   // Define variáveis de entidade
   const entity = {
-    name: "Certificado",
-    pluralName: "Certificados",
-    model: "trainee-certificate",
-    ability: "classes",
+    name: "Gateway",
+    pluralName: "Gateways",
+    model: "company-gateways",
+    ability: "financeiro",
   }
 
   interface Response {
-    rows: ICertificate[];
+    rows: ICompanyGateway[];
     total: number;
   }
 
-  const { 
-    data, 
-    isLoading, 
-    isError, 
-    error, 
-  } = useQuery<Response | undefined, ApiError>({
-    queryKey: [`listCertificados`, searchParams],
+  const { data, isLoading, isError, error } = useQuery<Response | undefined, ApiError>({
+    queryKey: [`list${entity.pluralName}`, searchParams],
     queryFn: async () => {
       const params = Object.keys(searchParams).map((key) => ({
         key,
@@ -62,11 +57,8 @@ const List = ({ traineeId }: { traineeId: number }) => {
     },
   });
 
-  const handleSearch = async (params: Record<string, unknown>) => {
-    setSearchParams((prev) => ({
-      ...prev,
-      ...params,
-    }));
+  const handleSearch = async (params: Record<string, any>) => {
+    setSearchParams((prev) => ({ ...prev, ...params }));
   };
 
   const handleClear = () => {
@@ -81,6 +73,7 @@ const List = ({ traineeId }: { traineeId: number }) => {
     setSearchParams((prev) => ({ ...prev, page }));
   };
 
+  const totalPages = data ? Math.ceil(data.total / searchParams.limit) : 0;
   const skeletons = Array(5).fill(null);
 
   if (!can(`view_${entity.ability}`)) return null;
@@ -91,14 +84,13 @@ const List = ({ traineeId }: { traineeId: number }) => {
         entityName={entity.name}
         ability={entity.ability}
         limit={data?.total || 0}
-        showCreate={false}
         searchParams={searchParams}
         onlimitChange={handleLimitChange}
         openSearch={setOpenSearch}
         openForm={setOpenForm}
         setFormData={setFormData} 
         setFormType={() => {}}
-        iconForm="award"
+        iconForm="plus"
       />
 
       {/* Busca avançada */}
@@ -111,26 +103,17 @@ const List = ({ traineeId }: { traineeId: number }) => {
         form={ <SearchForm onSearch={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
       />
 
-      {/* Formulário de visualização */}
+      {/* Formulário */}
       <SideForm
         openSheet={openForm}
         setOpenSheet={setOpenForm}
-        title={`Detalhes do ${entity.name}`}
+        title={formData ? `Editar ${entity.name}` : `Cadastrar ${entity.name}`}
         description={formData 
-          ? `Visualizando os detalhes do certificado.`
-          : `Detalhes do certificado.`}
+          ? `Edite as informações do gateway de pagamento.`
+          : `Configure um novo gateway de pagamento para processar transações.`
+        }
         side="right"
-        form={ <Form formData={formData} setOpenForm={setOpenForm} entity={entity} traineeId={traineeId} /> }
-      />
-
-      {/* Formulário de edição */}
-      <SideForm
-        openSheet={openEditForm}
-        setOpenSheet={setOpenEditForm}
-        title={`Editar ${entity.name}`}
-        description={`Edite as configurações do certificado.`}
-        side="right"
-        form={ <EditForm formData={editData} openSheet={setOpenEditForm} entity={entity} /> }
+        form={ <Form formData={formData} setOpenForm={setOpenForm} entity={entity} /> }
       />
 
       {/* Listagem de items */}
@@ -142,7 +125,7 @@ const List = ({ traineeId }: { traineeId: number }) => {
               <p>Erro: {error?.response?.data?.message}</p>
             </div>
           : data?.rows && data.rows.length > 0 
-          ? data.rows.map((item: ICertificate, i: number) => (
+          ? data.rows.map((item: ICompanyGateway, i: number) => (
               <ItemList 
                 key={item.id} 
                 item={item} 
@@ -150,8 +133,6 @@ const List = ({ traineeId }: { traineeId: number }) => {
                 index={i} 
                 setFormData={setFormData} 
                 setOpenForm={setOpenForm}
-                setEditData={setEditData}
-                setOpenEditForm={setOpenEditForm}
               />
             ))
           : (
@@ -163,16 +144,17 @@ const List = ({ traineeId }: { traineeId: number }) => {
       </div>
 
       {/* Paginação */}
-      {data && data.total > searchParams.limit && (
-        <Pagination
-          currentPage={searchParams.page}
-          totalItems={data.total}
-          itemsPerPage={searchParams.limit}
-          onPageChange={handlePageChange}
-        />
-      )}
+      <div className="mt-4">
+        {totalPages >= 1 && (
+          <Pagination
+            totalItems={data?.total || 0}
+            itemsPerPage={searchParams.limit}
+            currentPage={searchParams.page}
+            onPageChange={handlePageChange}
+            maxVisiblePages={5}
+          />
+        )}
+      </div>
     </>
   );
-};
-
-export default List;
+}

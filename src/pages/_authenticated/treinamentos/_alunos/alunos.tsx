@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 // Serviços
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
@@ -25,7 +25,12 @@ function List() {
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
-  const [searchParams, setSearchParams] = useState({
+  const [searchParams, setSearchParams] = useState<{
+    limit: number;
+    page: number;
+    'order-name': string;
+    'like-name'?: string;
+  }>({
     limit: 10,
     page: 0,
     'order-name': 'asc',
@@ -93,6 +98,14 @@ function List() {
 
   const skeletons = Array(5).fill(null);
 
+  const handleTextSearch = useCallback((text: string) => {
+    setSearchParams(prev => ({
+      ...prev,
+      'like-name': text || undefined,
+      page: 0 // Reset page when searching
+    }));
+  }, []);
+
   if (!can(`view_${entity.ability}`)) return null;
 
   return (
@@ -103,6 +116,8 @@ function List() {
         entityName={entity.name}
         ability={entity.ability}
         limit={data?.total || 0}
+        showInputSearch={true}
+        searchPlaceholder="Buscar por nome do aluno..."
         searchParams={searchParams}
         onlimitChange={handleLimitChange}
         openSearch={setOpenSearch}
@@ -110,6 +125,7 @@ function List() {
         setFormData={setFormData} 
         setFormType={() => {}}
         iconForm="plus"
+        onTextSearch={handleTextSearch}
       />
 
       {/* Busca avançada */}

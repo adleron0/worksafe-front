@@ -19,7 +19,7 @@ import VisualizadorCertificados from "@/components/general-components/visualizad
 import ListHeader from "@/components/general-components/ListHeader";
 
 // Interfaces
-import { ICertificate } from "../interfaces/entity.interface";
+import { ICertificate } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
@@ -132,7 +132,7 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
     <>
       {/* Renderiza o Header apenas no primeiro item */}
       <ListHeader show={index === 0}>
-        <div className="w-3/12">Curso</div>
+        <div className="w-3/12">Aluno</div>
         <div className="w-2/12">Turma</div>
         <div className="w-2/12">Emissão</div>
         <div className="w-2/12">Validade</div>
@@ -143,10 +143,11 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
         
-        {/* Curso */}
+        {/* Aluno */}
         <div className="w-full lg:w-3/12 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Curso: </p>
-          <p className="text-sm font-medium">{item.course?.name || "Não informado"}</p>
+          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Aluno: </p>
+          <p className="text-sm font-medium">{item.trainee?.name || "Não informado"}</p>
+          <p className="text-xs text-muted-foreground">{item.course?.name || "Não informado"}</p>
         </div>
 
         {/* Turma */}

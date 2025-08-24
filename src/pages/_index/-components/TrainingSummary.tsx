@@ -26,7 +26,7 @@ interface Course {
   name: string;
   courseId: number;
   price: string;
-  oldPrice: string | null;
+  discountPrice: string | null;
   hoursDuration: number;
   openClass: boolean;
   description: string;
@@ -277,14 +277,20 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = () => {
                           <div className="border-t pt-4">
                             <div className="flex items-center justify-between mb-3">
                               <div>
-                                {course.oldPrice && (
-                                  <p className="text-xs text-gray-400 line-through">
-                                    {formatCurrency(course.oldPrice)}
+                                {course.discountPrice ? (
+                                  <>
+                                    <p className="text-xs text-gray-400 line-through">
+                                      {formatCurrency(course.price)}
+                                    </p>
+                                    <p className="text-lg font-bold text-gray-800">
+                                      {formatCurrency(course.discountPrice)}
+                                    </p>
+                                  </>
+                                ) : (
+                                  <p className="text-lg font-bold text-gray-800">
+                                    {formatCurrency(course.price)}
                                   </p>
                                 )}
-                                <p className="text-lg font-bold text-gray-800">
-                                  {formatCurrency(course.price)}
-                                </p>
                                 {course.dividedIn && course.dividedIn > 1 && (
                                   <p className="text-xs text-gray-500">
                                     Em até {course.dividedIn}x

@@ -7,11 +7,14 @@ import CalendarPicker from "@/components/general-components/Calendar";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ICertificate } from "../interfaces/entity.interface";
+import { ICertificate } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { z } from "zod";
 import { HelpCircle } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { decodeBase64Variables } from "@/utils/decodeBase64Variables";
 
 interface FormProps {
   formData?: ICertificate;
@@ -49,12 +52,45 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   }, [formData]);
 
   const { mutate: updateCertificate, isPending: isPendingUpdate } = useMutation({
-    mutationFn: (values: FormData) => {
+    mutationFn: async (values: FormData) => {
       showLoader(`Atualizando ${entity.name}...`);
+      
+      // Preparar o objeto de atualização
       const updatedItem: any = {
         showOnWebsiteConsent: values.showOnWebsiteConsent,
         expirationDate: values.expirationDate || null,
       };
+      
+      // Se tiver expirationDate, atualizar também o certificado_validade no variableToReplace
+      if (values.expirationDate && formData?.variableToReplace) {
+        const expDate = new Date(values.expirationDate);
+        const formattedDate = format(expDate, 'dd/MM/yyyy');
+        const formattedDateExtenso = format(expDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+        
+        // Decodificar o variableToReplace base64 para objeto
+        const decodedVariables = decodeBase64Variables(formData.variableToReplace);
+        
+        // Atualizar APENAS certificado_validade e certificado_validade_extenso, preservando todas as outras variáveis
+        const updatedVariableToReplace = {
+          ...decodedVariables, // Preserva TODAS as variáveis existentes
+          certificado_validade: {
+            type: "string",
+            value: formattedDate
+          },
+          certificado_validade_extenso: {
+            type: "string",
+            value: formattedDateExtenso
+          }
+        };
+        
+        // Enviar como JSON string (não precisa codificar em base64)
+        updatedItem.variableToReplace = JSON.stringify(updatedVariableToReplace);
+      } else if (formData?.variableToReplace) {
+        // Se não está atualizando a data mas tem variableToReplace, decodificar e enviar como JSON string
+        const decodedVariables = decodeBase64Variables(formData.variableToReplace);
+        updatedItem.variableToReplace = JSON.stringify(decodedVariables);
+      }
+      
       return put<ICertificate>(entity.model, `${formData?.id}`, updatedItem);
     },
     onSuccess: () => {

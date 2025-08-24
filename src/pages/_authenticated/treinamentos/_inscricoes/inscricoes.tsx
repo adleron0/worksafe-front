@@ -1,3 +1,4 @@
+import { createFileRoute } from '@tanstack/react-router'
 import { useRef, useState, useEffect } from "react";
 // Serviços
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,20 +10,25 @@ import Pagination from "@/components/general-components/Pagination";
 // Template Page list-form
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
-import ItemSkeleton from "./skeletons/ItemSkeleton";
-import ItemList from "./components/SubscriptionItem";
-import SearchForm from "./components/SubscriptionSearch";
-import SubscriptionForm from "./components/SubscriptionForm";
-import SubscriptionCard from "./components/SubscriptionCard";
+import ItemSkeleton from "./-skeletons/ItemSkeleton";
+import ItemList from "./-components/SubscriptionItem";
+import SearchForm from "./-components/SubscriptionSearch";
+import SubscriptionForm from "./-components/SubscriptionForm";
+import SubscriptionCard from "./-components/SubscriptionCard";
 import KanbanView, { KanbanColumn } from "@/components/general-components/KanbanView";
 // UI Components
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/general-components/Icon";
+import Select from "@/components/general-components/Select";
 // Interfaces
-import { IEntity } from "./interfaces/entity.interface";
+import { IEntity } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
-const List = ({ classId }: { classId: number }) => {
+export const Route = createFileRoute('/_authenticated/treinamentos/_inscricoes/inscricoes')({
+  component: List,
+})
+
+function List({ classId }: { classId: number | undefined }) {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
@@ -40,11 +46,52 @@ const List = ({ classId }: { classId: number }) => {
   const [searchParams, setSearchParams] = useState({
     limit: getStoredViewMode() === 'kanban' ? 999 : 10,
     page: 0,
-    // show: ['class', 'company'],
-    classId: classId,
+    show: ['class', 'financialRecords'],
+    classId: classId ? Number(classId) : undefined,
     'order-name': 'asc',
   });
   const initialFormRef = useRef(searchParams);
+
+  // Interface para um único item da classe
+  interface ClassItem {
+    id: number;
+    name: string;
+    active: boolean;
+    initialDate: string;
+  }
+
+  // Tipo que o Select espera
+  interface SelectOption {
+    [key: string]: string | number;
+  }
+
+  const { 
+    data: classesData, 
+  } = useQuery<SelectOption[], ApiError>({
+    queryKey: [`listClasses`],
+    queryFn: async () => {
+      const params = [
+        { key: 'all', value: true },
+        { key: 'order-name', value: 'asc' },
+      ];
+      const response = await get('classes', '', params);
+      if (!response || !Array.isArray(response)) {
+        return [];
+      }
+      
+      const classes = response.map((item: ClassItem) => ({
+        id: item.id,
+        name: `${item.name} (${new Date(item.initialDate).toLocaleDateString('pt-BR')})`,
+      }));
+      
+      // Adiciona opção "Todas as turmas" no início com valor especial
+      return [
+        { id: "all", name: "Todas as turmas" },
+        ...classes
+      ];
+    },
+    enabled: !classId
+  });
   
   // Salvar preferência quando mudar
   useEffect(() => {
@@ -127,10 +174,10 @@ const List = ({ classId }: { classId: number }) => {
 
   // Mutation para alterar status
   const { mutate: changeStatus } = useMutation({
-    mutationFn: ({ newStatus, itemId, item }: { newStatus: string | number; itemId: string | number; item: IEntity }) => {
+    mutationFn: ({ newStatus, itemId }: { newStatus: string | number; itemId: string | number; item: IEntity }) => {
       showLoader(`Atualizando status...`);
       return put<IEntity>("subscription", `${itemId}`, { 
-        ...item,
+        // ...item,
         subscribeStatus: newStatus as "pending" | "confirmed" | "declined"
       });
     },
@@ -169,6 +216,8 @@ const List = ({ classId }: { classId: number }) => {
     <>
       <div className="space-y-4">
         <HeaderLists
+          titlePage={`${entity.pluralName}`}
+          descriptionPage={`Administrar nossos ${entity.pluralName}`}
           entityName={entity.name}
           ability={entity.ability}
           limit={searchParams.limit || data?.total || 0}
@@ -184,8 +233,8 @@ const List = ({ classId }: { classId: number }) => {
           iconForm="plus"
           addButtonName="Nova"
         />
-        {/* Toggle para alternar entre visualizações */}
-        <div className="flex justify-start px-2">
+        {/* Toggle para alternar entre visualizações e Select de turmas */}
+        <div className="flex justify-start items-center px-2 gap-4">
           <div className="flex gap-1 p-1 bg-muted rounded-lg">
             <Button
               variant={viewMode === 'list' ? 'default' : 'ghost'}
@@ -212,6 +261,27 @@ const List = ({ classId }: { classId: number }) => {
               Kanban
             </Button>
           </div>
+
+          {/* Select de turmas - só aparece se não houver classId fixo */}
+          {!classId && classesData && (
+            <div className="flex items-center gap-2">
+              {/* <label className="text-sm font-medium">Turma:</label> */}
+              <div className="w-[250px]">
+                <Select
+                  name="classId"
+                  options={classesData}
+                  state={searchParams.classId?.toString() || "all"}
+                  label="name"
+                  value="id"
+                  placeholder="Selecione uma turma"
+                  onChange={(name, value) => {
+                    const selectedValue = value === "all" ? undefined : value ? Number(value) : undefined;
+                    setSearchParams((prev) => ({ ...prev, [name]: selectedValue }));
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -307,7 +377,7 @@ const List = ({ classId }: { classId: number }) => {
             formData={formData}
             openSheet={setOpenForm}
             entity={entity}
-            classId={classId}
+            classId={Number(classId)}
           />
         }
       />

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 // Serviços
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
@@ -98,6 +98,14 @@ function List() {
 
   const skeletons = Array(5).fill(null);
 
+  const handleTextSearch = useCallback((text: string) => {
+    setSearchParams(prev => ({
+      ...prev,
+      'like-name': text || undefined,
+      page: 0 // Reset page when searching
+    }));
+  }, []);
+
   if (!can(`view_${entity.ability}`)) return null;
 
   return (
@@ -117,13 +125,7 @@ function List() {
         setFormData={setFormData} 
         setFormType={() => {}}
         iconForm="plus"
-        onTextSearch={(text) => {
-          setSearchParams(prev => ({
-            ...prev,
-            'like-name': text || undefined,
-            page: 0 // Reset page when searching
-          }));
-        }}
+        onTextSearch={handleTextSearch}
       />
 
       {/* Busca avançada */}

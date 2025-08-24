@@ -207,6 +207,7 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData, isProcessingPaym
 
   const [boletoData, setBoletoData] = useState({
     barCode: "",
+    bankSlipUrl: "",
     isGenerating: false
   });
 
@@ -252,7 +253,7 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData, isProcessingPaym
         try {
           const response = await get("financial-records", `key/${pixData.paymentKey}`);
           
-          if (response && (response.status === 'paid' || response.status === 'received')) {
+          if (response && ((response as any).status === 'paid' || (response as any).status === 'received')) {
             // Payment confirmed
             setPaymentStatus('completed');
             setShowSuccessScreen(true);
@@ -1518,6 +1519,14 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData, isProcessingPaym
                                           </div>
                                         </div>
                                       </div>
+                                      {/* Card brand logo on the back */}
+                                      {cardBrand && (
+                                        <div className="flex justify-end mt-2">
+                                          <span className="text-white text-xs font-semibold opacity-80">
+                                            {cardBrand}
+                                          </span>
+                                        </div>
+                                      )}
                                     </div>
                                   </CreditCardBack>
                                 </CreditCardFlipper>
@@ -1585,8 +1594,21 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData, isProcessingPaym
                                 }
                                 setCardData({ ...cardData, expiry: value });
                               }}
+                              onKeyPress={(e) => {
+                                // Allow numbers and slash
+                                if (!/[0-9/]/.test(e.key)) {
+                                  e.preventDefault();
+                                }
+                                // Prevent typing slash manually (it's auto-added)
+                                if (e.key === '/' && cardData.expiry.length !== 2) {
+                                  e.preventDefault();
+                                }
+                              }}
                               maxLength={5}
                               onFocus={() => setIsFlipped(true)}
+                              inputMode="numeric"
+                              pattern="[0-9/]*"
+                              type="text"
                             />
                           </div>
 
@@ -1596,9 +1618,23 @@ const CheckoutForm = ({ turma, onComplete, onBack, initialData, isProcessingPaym
                               id="cardCvv"
                               placeholder="123"
                               value={cardData.cvv}
-                              onChange={(e) => setCardData({ ...cardData, cvv: e.target.value.replace(/\D/g, '') })}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '');
+                                if (value.length <= 3) {
+                                  setCardData({ ...cardData, cvv: value });
+                                }
+                              }}
+                              onKeyPress={(e) => {
+                                // Block any non-numeric key press
+                                if (!/[0-9]/.test(e.key)) {
+                                  e.preventDefault();
+                                }
+                              }}
                               maxLength={3}
                               onFocus={() => setIsFlipped(true)}
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              type="text"
                             />
                           </div>
                         </div>

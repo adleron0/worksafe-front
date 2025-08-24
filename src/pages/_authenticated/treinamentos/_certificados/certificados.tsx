@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 // Serviços
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
@@ -177,6 +177,14 @@ function List({ traineeId }: { traineeId: number | undefined }) {
 
   const skeletons = Array(5).fill(null);
 
+  const handleTextSearch = useCallback((text: string) => {
+    setSearchParams(prev => ({
+      ...prev,
+      'like-trainee.name': text || undefined,
+      page: 0 // Reset page when searching
+    }));
+  }, []);
+
   if (!can(`view_${entity.ability}`)) return null;
 
   return (
@@ -198,13 +206,7 @@ function List({ traineeId }: { traineeId: number | undefined }) {
           setFormData={setFormData} 
           setFormType={() => {}}
           iconForm="award"
-          onTextSearch={(text) => {
-            setSearchParams(prev => ({
-              ...prev,
-              'like-trainee.name': text || undefined,
-              page: 0 // Reset page when searching
-            }));
-          }}
+          onTextSearch={handleTextSearch}
         />
         <div className="flex justify-start items-center px-2 gap-2">
           {/* Select de turmas */}

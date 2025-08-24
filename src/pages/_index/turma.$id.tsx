@@ -210,38 +210,8 @@ function TurmaLandingPage() {
           : ""
       };
       
-      // Debug logs
-      console.log("=== CHECKOUT DATA DEBUG ===");
-      console.log("Payment Method:", paymentData.paymentMethod);
-      console.log("Has Card Data:", !!paymentData.cardData);
-      
-      if (paymentData.paymentMethod === 'cartaoCredito') {
-        console.log("=== CREDIT CARD DATA ===");
-        console.log("Card Data Raw:", paymentData.cardData);
-        console.log("Credit Card JSON String Being Sent:", subscriptionData.creditCard);
-        if (subscriptionData.creditCard) {
-          const parsedCard = JSON.parse(subscriptionData.creditCard);
-          console.log("Parsed Credit Card Object:", parsedCard);
-          console.log("Card Name:", parsedCard.cardName);
-          console.log("Card Number Length:", parsedCard.cardNumber?.length);
-          console.log("Expiry Date:", parsedCard.expiryDate);
-          console.log("CVV Length:", parsedCard.cvv?.length);
-          console.log("Installments:", parsedCard.installments);
-        }
-      }
-      
-      console.log("=== FULL SUBSCRIPTION DATA ===");
-      console.log(JSON.stringify(subscriptionData, null, 2));
-      console.log("=== END DEBUG ===");
-      
       // Send to API and get response using mutation
       const response: any = await checkoutMutation.mutateAsync(subscriptionData);
-      
-      console.log("=== API RESPONSE ===");
-      console.log("Full Response:", response);
-      console.log("Payment Object:", response?.payment);
-      console.log("Subscribe Status:", response?.subscribeStatus);
-      console.log("=== END API RESPONSE ===");
       
       // Process response based on payment method and status
       // Always send the current payment method response to clear old data

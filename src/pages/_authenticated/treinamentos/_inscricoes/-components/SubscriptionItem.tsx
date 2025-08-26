@@ -24,9 +24,10 @@ interface ItemsProps {
   setFormData: (data: IEntity) => void;
   setOpenForm: (open: boolean) => void;
   onStatusChange: (newStatus: string | number, itemId: string | number, item: IEntity) => void;
+  modalPopover?: boolean;
 }
 
-const SubscriptionItem = ({ item, index, entity, setFormData, setOpenForm, onStatusChange }: ItemsProps) => {
+const SubscriptionItem = ({ item, index, entity, setFormData, setOpenForm, onStatusChange, modalPopover = false }: ItemsProps) => {
   const { can } = useVerify();
 
   const status = [
@@ -102,7 +103,7 @@ const SubscriptionItem = ({ item, index, entity, setFormData, setOpenForm, onSta
 
         {/* Ações */}
         <div className="absolute top-2 right-2 lg:static lg:w-1/12">
-          <DropdownMenu>
+          <DropdownMenu modal={modalPopover}>
             <DropdownMenuTrigger asChild>
               <Button
                 className="h-8 w-8 rounded-full p-0 text-gray-700"

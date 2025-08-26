@@ -7,13 +7,7 @@ import { useLoader } from "@/context/GeneralContext";
 import { Button } from "@/components/ui/button";
 import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import Select from "@/components/general-components/Select";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -23,9 +17,10 @@ interface FormProps {
   openSheet: (open: boolean) => void;
   entity: IDefaultEntity;
   classId: number;
+  isInsideModal?: boolean;
 }
 
-const SubscriptionForm = ({ formData, openSheet, entity, classId }: FormProps) => {
+const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal = false }: FormProps) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
   
@@ -205,33 +200,17 @@ const SubscriptionForm = ({ formData, openSheet, entity, classId }: FormProps) =
       <div className="space-y-2">
         <Label htmlFor="subscribeStatus">Status *</Label>
         <Select
-          value={data.subscribeStatus}
-          onValueChange={(value) => handleChange("subscribeStatus", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione um status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pending">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                Pendente
-              </div>
-            </SelectItem>
-            <SelectItem value="confirmed">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                Confirmado
-              </div>
-            </SelectItem>
-            <SelectItem value="declined">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-red-500" />
-                Recusado
-              </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
+          name="subscribeStatus"
+          state={data.subscribeStatus}
+          options={[
+            { id: "pending", name: "Pendente" },
+            { id: "confirmed", name: "Confirmado" },
+            { id: "declined", name: "Recusado" }
+          ]}
+          placeholder="Selecione um status"
+          onChange={handleChange}
+          modal={!isInsideModal}
+        />
       </div>
 
       <div className="flex gap-2 pt-4">

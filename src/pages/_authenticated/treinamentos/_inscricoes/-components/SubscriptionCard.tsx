@@ -18,13 +18,15 @@ interface SubscriptionCardProps {
   entity: IDefaultEntity;
   setFormData: (data: IEntity) => void;
   setOpenForm: (open: boolean) => void;
+  modalPopover?: boolean;
 }
 
 const SubscriptionCard = ({ 
   item, 
   entity,
   setFormData, 
-  setOpenForm 
+  setOpenForm,
+  modalPopover = false
 }: SubscriptionCardProps) => {
   const { can } = useVerify();
 
@@ -51,7 +53,7 @@ const SubscriptionCard = ({
         
         {/* Menu de Ações */}
         {can(`update_${entity.ability}`) && (
-          <DropdownMenu modal={false}>
+          <DropdownMenu modal={modalPopover}>
             <DropdownMenuTrigger asChild>
               <Button
                 className="h-6 w-6 p-0"
@@ -61,19 +63,15 @@ const SubscriptionCard = ({
                 <Icon name="ellipsis-vertical" className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                <Button 
-                  variant="ghost" 
-                  className="flex justify-start gap-2 p-2 items-center w-full h-fit"
-                  onClick={() => {
-                    setFormData(item);
-                    setOpenForm(true);
-                  }}
-                >
-                  <Icon name="edit-3" className="w-3 h-3" /> 
-                  <span className="text-sm">Editar</span>
-                </Button>
+            <DropdownMenuContent align="end" className="z-[100000]">
+              <DropdownMenuItem 
+                onSelect={() => {
+                  setFormData(item);
+                  setOpenForm(true);
+                }}
+              >
+                <Icon name="edit-3" className="w-3 h-3 mr-2" /> 
+                <span className="text-sm">Editar</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

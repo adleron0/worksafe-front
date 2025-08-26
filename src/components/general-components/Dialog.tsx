@@ -8,6 +8,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import Icon from "./Icon";
+import { cn } from "@/lib/utils";
 
 interface DialogProps {
   showBttn?: boolean;
@@ -18,6 +19,7 @@ interface DialogProps {
   title: string;
   description: string;
   open?: boolean;
+  className?: string;
   onOpenChange?: (open: boolean) => void;
 }
 
@@ -30,6 +32,7 @@ const Dialog: React.FC<DialogProps> = ({
   title,
   description,
   open,
+  className,
   onOpenChange,
 }) => {
   return (
@@ -48,7 +51,7 @@ const Dialog: React.FC<DialogProps> = ({
         )
       }
       <DialogContent 
-        className="sm:max-w-[90vw] max-h-[85vh] p-4 pr-0 overflow-hidden max-w-11/12"
+        className={cn("sm:max-w-[90vw] max-h-[85vh] p-4 pr-0 overflow-hidden max-w-11/12", className)}
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
       >

@@ -28,7 +28,7 @@ export const Route = createFileRoute('/_authenticated/treinamentos/_inscricoes/i
   component: List,
 })
 
-function List({ classId }: { classId: number | undefined }) {
+function List({ classId, modalPopover }: { classId: number | undefined, modalPopover?: boolean }) {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
@@ -317,6 +317,7 @@ function List({ classId }: { classId: number | undefined }) {
                 setFormData={setFormData}
                 setOpenForm={setOpenForm}
                 onStatusChange={handleKanbanStatusChange}
+                modalPopover={modalPopover}
               />
             ))}
             {totalPages > 1 && (
@@ -353,6 +354,7 @@ function List({ classId }: { classId: number | undefined }) {
                 entity={entity}
                 setFormData={setFormData}
                 setOpenForm={setOpenForm}
+                modalPopover={modalPopover}
               />
             )}
           </KanbanView>
@@ -364,14 +366,21 @@ function List({ classId }: { classId: number | undefined }) {
         openSheet={openSearch}
         setOpenSheet={setOpenSearch}
         title="Buscar Inscrições"
+        side="left"
         form={<SearchForm onSearch={handleSearch} onClear={handleClear} searchParams={searchParams} />}
       />
 
-      {/* Form */}
+      {/* Formulário de cadastro */}
       <SideForm
         openSheet={openForm}
         setOpenSheet={setOpenForm}
-        title={formData?.id ? `Editar ${entity.name}` : `Nova ${entity.name}`}
+        title={formData 
+          ? `Editar ${entity.name} ${formData.name}`
+          : `Cadastrar ${entity.name}`}
+        description={formData 
+          ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
+          : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
+        side="right"
         form={
           <SubscriptionForm
             formData={formData}

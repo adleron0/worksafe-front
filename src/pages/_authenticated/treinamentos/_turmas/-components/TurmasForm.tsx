@@ -53,6 +53,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     discountPrice: z.number(),
     dividedIn: z.number().min(1).optional().nullable(),
     hoursDuration: z.number().min(1, { message: "Duração é obrigatório" }),
+    daysDuration: z.number().min(1, { message: "Dias de duração é obrigatório" }),
     openClass: z.boolean(),
     gifts: z.string().optional().nullable(),
     description: z.string().min(10, { message: "Descrição deve ter pelo menos 10 caracteres" }),
@@ -168,6 +169,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     discountPrice: Number((formData as any)?.discountPrice) || 0,
     dividedIn: (formData as any)?.dividedIn || null,
     hoursDuration: formData?.hoursDuration || 1,
+    daysDuration: (formData as any)?.daysDuration || 1,
     openClass: formData?.openClass || false,
     gifts: formData?.gifts || '',
     description: formData?.description || "",
@@ -569,6 +571,19 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           onValueChange={handleChange}
         />
         {errors.hoursDuration && <p className="text-red-500 text-sm">{errors.hoursDuration}</p>}
+      </div>
+
+      <div>
+        <Label htmlFor="daysDuration">Dias de Duração <span>*</span></Label>
+        <NumberInput
+          id="daysDuration"
+          name="daysDuration"
+          min={1}
+          max={365}
+          value={dataForm.daysDuration}
+          onValueChange={handleChange}
+        />
+        {errors.daysDuration && <p className="text-red-500 text-sm">{errors.daysDuration}</p>}
       </div>
 
       <div>

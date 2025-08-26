@@ -30,6 +30,7 @@ interface SideFormProps {
 const SideForm = ({ key, title, description, side, trigger, form, openSheet, setOpenSheet }: SideFormProps) => {
   const { width } = useWindowSize();
   const isDesktop = width ? width > 768 : true;
+  
   if (isDesktop) {
     return (
       <Sheet open={openSheet} onOpenChange={setOpenSheet} key={`${title}-${key}`}>
@@ -48,11 +49,6 @@ const SideForm = ({ key, title, description, side, trigger, form, openSheet, set
             </SheetDescription>
           </SheetHeader>
           {form}
-          {/* <SheetFooter>
-            <SheetClose asChild>
-              <Button type="submit">Save changes</Button>
-            </SheetClose>
-          </SheetFooter> */}
         </SheetContent>
       </Sheet>
     )

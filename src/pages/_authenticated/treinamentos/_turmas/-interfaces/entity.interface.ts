@@ -37,4 +37,5 @@ export interface IEntity {
   inactiveAt?: string | null;
   minimumQuorum?: number | null;
   maxSubscriptions?: number | null;
+  daysDuration?: number | null;
 }

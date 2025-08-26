@@ -185,7 +185,7 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
 
         {/* Ações */}
         <div className="absolute top-2 right-2 lg:static lg:w-1/12">
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
                 className="h-8 w-8 rounded-full p-0 text-gray-700"

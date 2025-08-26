@@ -179,11 +179,11 @@ function List() {
         open={openSubscriptionsModal}
         onOpenChange={setOpenSubscriptionsModal}
         showBttn={false}
-        showHeader={true}
+        showHeader={false}
         title={`Inscrições da Turma ${formData?.name}`}
         description="Lista de alunos inscritos nesta turma."
       >
-        <Subscriptions classId={formData?.id || 0} />
+        <Subscriptions classId={formData?.id || 0} modalPopover={true} />
       </Dialog>
 
       {/* Paginação */}

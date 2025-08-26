@@ -13,9 +13,10 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import ListHeader from "@/components/general-components/ListHeader";
 import { QRCode } from '@/components/ui/kibo-ui/qr-code';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import Dialog from "@/components/general-components/Dialog";
 import { useState } from "react";
 import DuplicateTurmaModal from "./DuplicateTurmaModal";
+import ListaPresenca from "../-lista-presenca";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -37,6 +38,7 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
   const { showLoader, hideLoader } = useLoader();
   const [openQrModal, setOpenQrModal] = useState(false);
   const [openDuplicateModal, setOpenDuplicateModal] = useState(false);
+  const [openAttendanceModal, setOpenAttendanceModal] = useState(false);
 
    // Mutation para inativar
   const { mutate: deactivate } = useMutation({
@@ -342,6 +344,17 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
                 </Button>
               </DropdownMenuItem>
 
+              <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                <Button 
+                  variant="ghost" 
+                  className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                  onClick={() => setOpenAttendanceModal(true)}
+                >
+                  <Icon name="clipboard-check" className="w-3 h-3" /> 
+                  <p>Lista de Presença</p>
+                </Button>
+              </DropdownMenuItem>
+
               {
                 item.allowExam && (
                   <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
@@ -404,21 +417,23 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
       </div>
 
       {/* Modal do QR Code */}
-      <Dialog open={openQrModal} onOpenChange={setOpenQrModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>QR Code da Prova</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col items-center space-y-4 py-4">
-            <QRCode 
-              data={`${process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : window.location.origin}/prova/${item.id}`}
-            />
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">Código do curso</p>
-              <p className="text-lg font-semibold">{item.classCode || 'Não disponível'}</p>
-            </div>
+      <Dialog 
+        open={openQrModal} 
+        onOpenChange={setOpenQrModal}
+        title="QR Code da Prova"
+        description="Escaneie o QR Code para acessar a prova"
+        showBttn={false}
+        className="w-sm"
+      >
+        <div className="flex flex-col items-center space-y-4 py-4">
+          <QRCode 
+            data={`${process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : window.location.origin}/prova/${item.id}`}
+          />
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">Código do curso</p>
+            <p className="text-lg font-semibold">{item.classCode || 'Não disponível'}</p>
           </div>
-        </DialogContent>
+        </div>
       </Dialog>
 
       {/* Modal de Duplicação */}
@@ -427,6 +442,22 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
         open={openDuplicateModal}
         onOpenChange={setOpenDuplicateModal}
       />
+
+      {/* Modal de Lista de Presença */}
+      <Dialog 
+        open={openAttendanceModal} 
+        onOpenChange={setOpenAttendanceModal}
+        title={`Lista de Presença - ${item.name}`}
+        description="Gerencie a presença dos alunos para cada dia da turma"
+        showBttn={false}
+        // showHeader={false}
+      >
+        <ListaPresenca 
+          classId={item.id!} 
+          className={item.name}
+          daysDuration={item.daysDuration || 1}
+        />
+      </Dialog>
     </>
   )
 };

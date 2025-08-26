@@ -506,7 +506,7 @@ const TextPanel: React.FC<TextPanelProps> = ({
           </p>
           
           {/* Lista de variáveis organizadas por categoria */}
-          <div className="space-y-2.5 max-h-32 overflow-y-auto pr-1">
+          <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
             {/* Dados do Aluno */}
             <div>
               <h4 className="text-xs font-medium text-muted-foreground mb-1">Aluno</h4>

@@ -19,6 +19,7 @@ export const Route = createFileRoute("/_index/certificados/$id")({
 // Interface para o certificado
 interface ICertificate {
   id: number;
+  key: string;
   courseId: number;
   traineeId: number;
   classId: number;
@@ -70,7 +71,7 @@ function CertificadoPublico() {
       
       // Fazendo a requisição para buscar o certificado pelo ID com query params
       const params = [
-        { key: 'id', value: id }
+        { key: 'key', value: id }
       ];
       
       const response = await getPublic('trainee-certificate', '', params);
@@ -84,7 +85,7 @@ function CertificadoPublico() {
   const certificate = certificateData?.rows?.[0];
 
   const formatDate = (date: string | Date | undefined) => {
-    if (!date) return "Não informado";
+    if (!date) return "Indefinido";
     
     try {
       const dateObj = typeof date === 'string' ? new Date(date) : date;
@@ -115,6 +116,15 @@ function CertificadoPublico() {
     
     const expDate = new Date(certificate.expirationDate);
     const today = new Date();
+
+    if (!certificate.expirationDate) {
+      return {
+        status: "valid",
+        message: "Sem Expiração",
+        icon: CheckCircle,
+        color: "text-green-500"
+      };
+    }
     
     if (expDate < today) {
       return {
@@ -322,7 +332,7 @@ function CertificadoPublico() {
                     name: variables.curso_nome?.value || 'Certificado',
                     fabricJsonFront: certificate.fabricJsonFront,
                     fabricJsonBack: certificate.fabricJsonBack,
-                    certificateId: String(certificate.id)
+                    certificateId: String(certificate.key)
                   }}
                   variableToReplace={variables}
                   zoom={50}

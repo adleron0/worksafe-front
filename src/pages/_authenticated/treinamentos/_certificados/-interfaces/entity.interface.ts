@@ -1,5 +1,6 @@
 export interface ICertificate {
   id?: number;
+  key?: string;
   courseId: number;
   traineeId: number;
   classId: number;

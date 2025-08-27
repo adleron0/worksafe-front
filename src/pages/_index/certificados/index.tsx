@@ -23,6 +23,7 @@ export const Route = createFileRoute("/_index/certificados/")({
 // Interface para o certificado
 interface ICertificate {
   id: number;
+  key: string;
   courseId: number;
   traineeId: number;
   classId: number;
@@ -326,7 +327,7 @@ function CertificadosPublicos() {
                       <div 
                         key={certificate.id}
                         className="px-4 md:px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors duration-150"
-                        onClick={() => navigate({ to: `/certificados/${certificate.id}` })}
+                        onClick={() => navigate({ to: `/certificados/${certificate.key}` })}
                       >
                         {/* Desktop View */}
                         <div className="hidden md:grid grid-cols-12 gap-4 items-center">

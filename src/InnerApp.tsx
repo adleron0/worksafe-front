@@ -1,7 +1,7 @@
 // src/InnerApp.tsx
 import { useAuth } from '@/context/AuthContext';
 import { RouterProvider } from '@tanstack/react-router';
-import { router } from './main';
+import { router } from './router';
 import { useEffect } from 'react';
 
 function InnerApp() {

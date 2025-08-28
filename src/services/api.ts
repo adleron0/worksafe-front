@@ -1,17 +1,27 @@
 import axios from "axios";
 
-// Função para obter o token do usuário
-const accessToken = localStorage.getItem('accessToken');
-
 // URL base da API
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3000/';
 
+// Adicionar log para debug
+console.log('API BASE_URL:', BASE_URL);
+
+// Instância fixa
 const api = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,
-  headers: {
-    Authorization: `Bearer ${accessToken}`,
-  },
+});
+
+// Interceptor para token dinâmico
+api.interceptors.request.use((config) => {
+  // Verifica se está no cliente (browser) antes de acessar localStorage
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const token = localStorage.getItem('accessToken') || null;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
 });
 
 export default api;

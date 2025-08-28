@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // URL base da API
-const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3000/';
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 // Adicionar log para debug
 console.log('API BASE_URL:', BASE_URL);

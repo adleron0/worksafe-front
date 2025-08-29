@@ -321,7 +321,7 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
                   onClick={() => {
                     const baseUrl = process.env.NODE_ENV === 'development' 
                       ? 'http://localhost:5173' 
-                      : window.location.origin;
+                      : 'https://worksafebrasil.com.br';
                     const enrollmentLink = `${baseUrl}/turma/${item.id}`;
                     
                     navigator.clipboard.writeText(enrollmentLink).then(() => {

@@ -28,7 +28,7 @@ export const Route = createFileRoute('/_authenticated/treinamentos/_inscricoes/i
   component: List,
 })
 
-function List({ classId, modalPopover }: { classId: number | undefined, modalPopover?: boolean }) {
+function List({ classId, modalPopover }: { classId?: number; modalPopover?: boolean } = {}) {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();

@@ -22,7 +22,7 @@ export const Route = createFileRoute('/_authenticated/treinamentos/_certificados
   component: List,
 })
 
-function List({ traineeId }: { traineeId: number | undefined }) {
+function List({ traineeId }: { traineeId?: number } = {}) {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);

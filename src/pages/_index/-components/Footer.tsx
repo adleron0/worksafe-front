@@ -1,5 +1,4 @@
 import { Phone } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
 
 // Função para formatar número de telefone
 const formatPhoneNumber = (phoneNumber: string) => {
@@ -20,7 +19,6 @@ const formatPhoneNumber = (phoneNumber: string) => {
 };
 
 export default function Footer() {
-  const navigate = useNavigate();
 
   return (
     <footer className="bg-black text-white py-20">
@@ -60,17 +58,17 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-4">Links Rápidos</h4>
             <ul className="space-y-2">
               <li>
-                <a onClick={() => { navigate({to: `/sobre`})}} href="#sobre" className="text-gray-400 cursor-pointer hover:text-primary-light">
+                <a href="https://www.worksafebrasil.com.br/sobre" className="text-gray-400 cursor-pointer hover:text-primary-light">
                   Sobre Nós
                 </a>
               </li>
               <li>
-                <a href="/#servicos" className="text-gray-400 cursor-pointer hover:text-primary-light">
+                <a href="https://www.worksafebrasil.com.br#servicos" className="text-gray-400 cursor-pointer hover:text-primary-light">
                   Serviços
                 </a>
               </li>
               <li>
-                <a onClick={() => { navigate({to: `/loja`})}} href="#produtos" className="text-gray-400 cursor-pointer hover:text-primary-light">
+                <a href="https://www.worksafebrasil.com.br/loja" className="text-gray-400 cursor-pointer hover:text-primary-light">
                   Loja
                 </a>
               </li>
@@ -80,7 +78,7 @@ export default function Footer() {
                 </a>
               </li> */}
               <li>
-                <a onClick={() => { navigate({to: `/treinamento`})}} href="#treinamento" className="text-gray-400 cursor-pointer hover:text-primary-light">
+                <a href="https://www.worksafebrasil.com.br/treinamento" className="text-gray-400 cursor-pointer hover:text-primary-light">
                   Treinamentos
                 </a>
               </li>

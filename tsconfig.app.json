@@ -26,5 +26,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "src/pages/_authenticated/confinus/areas/$areaId.tsx"]
+  "include": ["src", "src/pages/_authenticated/confinus/areas/$areaId.tsx"],
+  "exclude": ["src/**/_backup/**/*", "src/pages/_index/_backup/**/*"]
 }

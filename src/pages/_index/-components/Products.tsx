@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -88,7 +87,6 @@ interface ProductsProps {
 const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
   const [showAllProducts, setShowAllProducts] = useState(false);
   const [windowWidth, setWindowWidth] = useState(1024);
-  const navigate = useNavigate();
 
   const {
     data,
@@ -348,7 +346,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart, formatCurrency }) => {
         
         {/* Botão para a página da loja */}
         <div className="text-center mt-8">
-          <a onClick={() => {navigate({to: `/loja`})}} href="#produtos">
+          <a href="https://www.worksafebrasil.com.br/loja">
             <Button
               size="lg"
               className="bg-black hover:bg-black/90 text-white font-normal text-base px-6 py-2.5 shadow-md hover:shadow-lg transition-all duration-200 group"

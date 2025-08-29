@@ -318,7 +318,7 @@ const AlunosItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
         showBttn={false}
         showHeader={false}
       >
-        <AlunosCertificados traineeId={item.id || 0} />
+        <AlunosCertificados traineeId={item.id || 0} modalPopover={true} />
       </Dialog>
     </>
   )

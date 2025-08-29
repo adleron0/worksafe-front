@@ -31,9 +31,10 @@ interface ItemsProps {
   setOpenForm: (open: boolean) => void;
   setEditData?: (data: ICertificate) => void;
   setOpenEditForm?: (open: boolean) => void;
+  modalPopover?: boolean;
 }
 
-const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEditData, setOpenEditForm }: ItemsProps) => {
+const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEditData, setOpenEditForm, modalPopover = false }: ItemsProps) => {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
@@ -185,7 +186,7 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
 
         {/* Ações */}
         <div className="absolute top-2 right-2 lg:static lg:w-1/12">
-          <DropdownMenu modal={false}>
+          <DropdownMenu modal={modalPopover}>
             <DropdownMenuTrigger asChild>
               <Button
                 className="h-8 w-8 rounded-full p-0 text-gray-700"

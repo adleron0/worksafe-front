@@ -316,11 +316,9 @@ const AlunosItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
         title="Certificados do Aluno"
         description={`Lista de certificados do aluno ${item.name}`}
         showBttn={false}
-        showHeader={true}
+        showHeader={false}
       >
-        <AlunosCertificados 
-          traineeId={item.id || 0}
-        />
+        <AlunosCertificados traineeId={item.id || 0} />
       </Dialog>
     </>
   )

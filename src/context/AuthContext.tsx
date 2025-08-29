@@ -85,7 +85,7 @@ export const AuthProvider: React.FC<{ children: ReactNode; router: any }> = ({ c
             setAccessTokenState(null);
             localStorage.removeItem("accessToken");
             router.navigate({
-              to: '/login',
+              to: '/',
             })
             toast({
               title: "Sessão inválida!",
@@ -105,7 +105,7 @@ export const AuthProvider: React.FC<{ children: ReactNode; router: any }> = ({ c
           setAccessTokenState(null);
           localStorage.removeItem("accessToken");
           router.navigate({
-            to: '/login',
+            to: '/',
           })
         }
 
@@ -152,7 +152,7 @@ export const AuthProvider: React.FC<{ children: ReactNode; router: any }> = ({ c
     const accessToken = localStorage.getItem('accessToken');
     if (!accessToken) {
       router.navigate({
-        to: '/login',
+        to: '/',
       })
     }
   };

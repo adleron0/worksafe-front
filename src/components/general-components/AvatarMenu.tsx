@@ -74,7 +74,7 @@ const AvatarMenu = () => {
 
     setTimeout(() => {
       navigate({
-        to: '/login',
+        to: '/',
         replace: true,
       });
     }, 100);

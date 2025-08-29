@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Link } from '@tanstack/react-router';
 import {
   Carousel,
   CarouselContent,
@@ -447,7 +446,7 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = () => {
           transition={{ delay: 0.4 }}
           className="text-center"
         >
-          <Link to="/treinamento">
+          <a href="https://www.worksafebrasil.com.br/treinamento">
             <Button
               size="lg"
               className="bg-black hover:bg-black/90 text-white font-normal text-base px-6 py-2.5 shadow-md hover:shadow-lg transition-all duration-200 group"
@@ -456,7 +455,7 @@ const TrainingSummary: React.FC<TrainingSummaryProps> = () => {
               Ver Agenda Completa
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
-          </Link>
+          </a>
         </motion.div>
       </div>
     </section>

@@ -117,18 +117,17 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
       <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-50 shadow-sm">
         <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
           <div className="flex items-center justify-between h-20">
-            <div className="flex gap-1 items-center cursor-pointer" onClick={() => {navigate({to: `/`})}}>
+            <a href="https://www.worksafebrasil.com.br" className="flex gap-1 items-center cursor-pointer">
               <Logo colorPath24="black" colorPath25="hsl(var(--primary-light))" className="h-10 w-10" />
               <div className="flex flex-col text-black">
                 <span className="font-black text-2xl">WORKSAFE</span>
                 <span className="text-sm -mt-1.5 font-semibold">Brasil</span>
               </div>
-            </div>
+            </a>
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-4">
               <a
-                onClick={() => {navigate({to: `/`})}}
-                href="#servicos"
+                href="https://www.worksafebrasil.com.br#servicos"
                 className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Serviços
@@ -141,8 +140,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                 Produtos
               </a> */}
               <a
-                onClick={() => {navigate({to: `/loja`})}}
-                href="#produtos"
+                href="https://www.worksafebrasil.com.br/loja"
                 className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Loja
@@ -178,12 +176,9 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                       Certificados
                     </a>
                     <a
+                      href="https://www.worksafebrasil.com.br/treinamento#treinamentos"
                       onClick={() => {
                         setIsDropdownOpen(false);
-                        navigate({
-                            to: `/treinamento`,
-                            hash: "treinamentos"
-                          });
                       }}
                       className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                     >
@@ -194,8 +189,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                 )}
               </div>
               <a
-                onClick={() => {navigate({to: `/sobre`})}}
-                href="#sobre"
+                href="https://www.worksafebrasil.com.br/sobre"
                 className="text-gray-600 hover:text-primary-light transition-colors"
               >
                 Sobre Nós
@@ -203,40 +197,16 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
               <Button
                 onClick={() => {
                   navigate({
-                    to: `/login`,
+                    to: `/`,
                   })
                 }}
                 className="bg-primary-light  text-white"
               >
-                Login
+                Admin
               </Button>
-              {/* Botão do Carrinho */}
-              <button
-                className="relative p-2 hover:scale-110 cursor-pointer transition-transform duration-200"
-                onClick={() => setIsCartOpen(true)}
-              >
-                <ShoppingCart className="w-6 h-6 text-gray-900" />
-                {cart.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary-light text-white rounded-full text-xs w-5 h-5 flex items-center justify-center animate-bounce">
-                    {cart.reduce((acc, item) => acc + item.quantity, 0)}
-                  </span>
-                )}
-              </button>
             </div>
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center gap-2">
-              {/* Botão do Carrinho */}
-              <button
-                className="relative text-gray-900 cursor-pointer p-2 hover:scale-110 transition-transform duration-200"
-                onClick={() => setIsCartOpen(true)}
-              >
-                <ShoppingCart className="w-6 h-6" />
-                {cart.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary-light text-white rounded-full text-xs w-5 h-5 flex items-center justify-center animate-bounce">
-                    {cart.reduce((acc, item) => acc + item.quantity, 0)}
-                  </span>
-                )}
-              </button>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="group h-8 w-8 rounded-lg bg-primary-light hover:brightness-125 text-white"
@@ -267,14 +237,14 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
             <div className="md:hidden py-4 border-t">
               <div className="flex flex-col gap-4">
                 <a
-                  onClick={() => {setIsMenuOpen(false); navigate({to: `/sobre`})}}
-                  href="#sobre"
+                  href="https://www.worksafebrasil.com.br/sobre"
                   className="text-gray-600 hover:text-primary-light transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   Sobre Nós
                 </a>
                 <a
-                  href="/#servicos"
+                  href="https://www.worksafebrasil.com.br#servicos"
                   className="text-gray-600 hover:text-primary-light transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -288,9 +258,9 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                   Produtos
                 </a> */}
                 <a
+                  href="https://www.worksafebrasil.com.br/loja"
                   className="text-gray-600 hover:text-primary-light transition-colors"
-                  onClick={() => {setIsMenuOpen(false); navigate({to: `/loja`})}}
-                  href="#produtos"
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   Loja
                 </a>
@@ -326,13 +296,10 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                         Certificados
                       </a>
                       <a
+                        href="https://www.worksafebrasil.com.br/treinamento#treinamentos"
                         onClick={() => {
                           setIsMenuOpen(false);
                           setIsMobileDropdownOpen(false);
-                          navigate({
-                            to: `/treinamento`,
-                            hash: "treinamentos"
-                          });
                         }}
                         className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-light transition-colors cursor-pointer"
                       >
@@ -345,13 +312,14 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
 
                 <Button
                   onClick={() => {
+                    setIsMenuOpen(false);
                     navigate({
-                      to: `/login`,
+                      to: `/`,
                     })
                   }}
                   className="bg-primary-light hover:brightness-125 text-white w-full"
                 >
-                  Login
+                  Admin
                 </Button>
               </div>
             </div>

@@ -22,7 +22,7 @@ export const Route = createFileRoute('/_authenticated/treinamentos/_certificados
   component: List,
 })
 
-function List({ traineeId }: { traineeId?: number } = {}) {
+function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: boolean }) {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
@@ -296,6 +296,7 @@ function List({ traineeId }: { traineeId?: number } = {}) {
                 setOpenForm={setOpenForm}
                 setEditData={setEditData}
                 setOpenEditForm={setOpenEditForm}
+                modalPopover={modalPopover}
               />
             ))
           : (

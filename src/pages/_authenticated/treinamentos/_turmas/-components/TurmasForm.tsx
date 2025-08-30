@@ -8,6 +8,7 @@ import DropUpload from "@/components/general-components/DropUpload";
 import CalendarPicker from "@/components/general-components/Calendar";
 import Input from "@/components/general-components/Input";
 import TagInput from "@/components/general-components/TagInput";
+import FaqGenerator from "@/components/general-components/FaqGenerator";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {Switch} from "@/components/ui/switch";
@@ -15,12 +16,11 @@ import NumberInput from "@/components/general-components/Number";
 import Select from "@/components/general-components/Select";
 // Interfaces and validations
 import { IEntity } from "../-interfaces/entity.interface";
-import { IEntity as Course, FaqItem } from "../../_cursos/-interfaces/entity.interface";
+import { IEntity as Course } from "../../_cursos/-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { z } from "zod";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { PlusCircle, Trash2, RefreshCw, HelpCircle } from "lucide-react";
+import { RefreshCw, HelpCircle } from "lucide-react";
 
 interface FormProps {
   formData?: IEntity;
@@ -58,7 +58,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     gifts: z.string().optional().nullable(),
     description: z.string().min(10, { message: "Descrição deve ter pelo menos 10 caracteres" }),
     gradeTheory: z.string().min(10, { message: "Grade teórica deve ter pelo menos 10 caracteres" }),
-    gradePracticle: z.string().min(10, { message: "Grade prática deve ter pelo menos 10 caracteres" }),
+    gradePracticle: z.string().nullable().optional(),
     videoUrl: z.string()
     .optional()
     .nullable()
@@ -94,7 +94,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     allowCheckout: z.boolean().optional(),
     classCode: z.string().optional().nullable(),
     minimumQuorum: z.number().optional(),
-    maxSubscriptions: z.number().optional(),
+    maxSubscriptions: z.number().min(1, { message: "Máximo de inscrições deve ser maior que 0" }),
     paymentMethods: z.array(z.enum(['cartaoCredito', 'boleto', 'pix'])).optional(),
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
       (value) => value === null || value instanceof File,
@@ -115,50 +115,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   type FormData = z.infer<typeof Schema>;
 
-  // Function to parse existing FAQ string into array of FaqItem objects
-  const parseFaqString = (faqData: string | FaqItem[] | null | undefined): FaqItem[] => {
-    if (!faqData) return [];
-    
-    // If it's already an array of FaqItems, return it
-    if (Array.isArray(faqData)) {
-      return faqData;
-    }
-    
-    try {
-      // First check if it's a JSON string
-      try {
-        const parsed = JSON.parse(faqData);
-        if (Array.isArray(parsed)) {
-          return parsed;
-        }
-      } catch {
-        // Not JSON, continue with string parsing
-      }
-      
-      // Parse the old format: "Pergunta 01?r-resposta da pergunta 01# Pergunta 02?r-resposta da pergunta 02"
-      const faqItems: FaqItem[] = [];
-      const items = faqData.split('#');
-      
-      items.forEach(item => {
-        const trimmedItem = item.trim();
-        if (!trimmedItem) return;
-        
-        const parts = trimmedItem.split('?r-');
-        if (parts.length === 2) {
-          faqItems.push({
-            question: parts[0].trim(),
-            answer: parts[1].trim()
-          });
-        }
-      });
-      
-      return faqItems;
-    } catch (error) {
-      console.error("Error parsing FAQ string:", error);
-      return [];
-    }
-  };
-
   const [dataForm, setDataForm] = useState<FormData>({
     name: formData?.name || '',
     imageUrl: formData?.imageUrl || '',
@@ -170,7 +126,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     dividedIn: (formData as any)?.dividedIn || null,
     hoursDuration: formData?.hoursDuration || 1,
     daysDuration: (formData as any)?.daysDuration || 1,
-    openClass: formData?.openClass || false,
+    openClass: formData?.openClass || true,
     gifts: formData?.gifts || '',
     description: formData?.description || "",
     gradeTheory: formData?.gradeTheory || "",
@@ -180,12 +136,12 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     videoSubtitle: formData?.videoSubtitle || "",
     videoDescription: formData?.videoDescription || "",
     active: formData?.active || null,
-    faq: parseFaqString(formData?.faq),
+    faq: FaqGenerator.parseFaqString(formData?.faq),
     initialDate: formData?.initialDate || null,
     finalDate: formData?.finalDate || null,
     landingPagesDates: formData?.landingPagesDates || "",
-    allowExam: formData?.allowExam,
-    allowReview: formData?.allowReview || false,
+    allowExam: formData?.allowExam || true,
+    allowReview: formData?.allowReview || true,
     allowCheckout: (formData as any)?.allowCheckout || false,
     classCode: formData?.classCode || (!formData ? generateClassCode() : (formData?.classCode || generateClassCode())),
     minimumQuorum: formData?.minimumQuorum || 0,
@@ -197,7 +153,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   const [preview, setPreview] = useState<string | null>(''); // Preview da imagem quando for editar
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   // Efeito para preview de imagem se necessário
   useEffect(() => {
@@ -266,53 +221,13 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     setDataForm((prev) => ({ ...prev, [name]: value }));
   };
 
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Pre-validate FAQ items to ensure they meet minimum requirements
-    let faqHasErrors = false;
     const newErrors: { [key: string]: string } = {};
     
-    // Check if FAQ items exist and validate each one
-    if (dataForm.faq && dataForm.faq.length > 0) {
-      dataForm.faq.forEach((item, index) => {
-        // Check question length
-        if (!item.question || item.question.trim().length < 3) {
-          newErrors[`faq.${index}.question`] = "Pergunta deve ter pelo menos 3 caracteres";
-          faqHasErrors = true;
-        }
-        
-        // Check answer length
-        if (!item.answer || item.answer.trim().length < 3) {
-          newErrors[`faq.${index}.answer`] = "Resposta deve ter pelo menos 3 caracteres";
-          faqHasErrors = true;
-        }
-      });
-      
-      // If FAQ validation failed, set errors, expand items with errors, and return
-      if (faqHasErrors) {
-        setErrors(prev => ({ ...prev, ...newErrors }));
-        
-        // Auto-expand items with errors
-        const itemsWithErrors = Object.keys(newErrors)
-          .filter(key => key.startsWith('faq.'))
-          .map(key => {
-            const match = key.match(/faq\.(\d+)\./);
-            return match ? `item-${match[1]}` : null;
-          })
-          .filter(Boolean) as string[];
-        
-        // Add items with errors to expanded items without duplicates
-        setExpandedItems(prev => {
-          const uniqueItems = new Set([...prev, ...itemsWithErrors]);
-          return Array.from(uniqueItems);
-        });
-        
-        return;
-      }
-    }
-    
-    // Proceed with Zod schema validation
+    // Zod schema validation
     const result = Schema.safeParse(dataForm);
     
     if (!result.success) {
@@ -340,78 +255,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     }
   };
 
-  // FAQ management functions
-  const addFaqItem = () => {
-    const newFaq = [...(dataForm.faq || []), { question: '', answer: '' }];
-    const newIndex = newFaq.length - 1;
-    
-    // Update the form data with the new FAQ item
-    setDataForm(prev => ({
-      ...prev,
-      faq: newFaq
-    }));
-    
-    // Auto-expand the newly added FAQ item
-    setExpandedItems(prev => [...prev, `item-${newIndex}`]);
-  };
-
-  const updateFaqItem = (index: number, field: 'question' | 'answer', value: string) => {
-    const processedValue = String(value || '');
-    
-    setDataForm(prev => {
-      const updatedFaq = [...(prev.faq || [])];
-      
-      updatedFaq[index] = {
-        ...updatedFaq[index],
-        [field]: processedValue
-      };
-      
-      // Clear any existing error for this specific field
-      if (errors[`faq.${index}.${field}`]) {
-        setErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors[`faq.${index}.${field}`];
-          return newErrors;
-        });
-      }
-      
-      return { ...prev, faq: updatedFaq };
-    });
-  };
-
-  const removeFaqItem = (index: number) => {
-    // Update the form data by removing the FAQ item
-    setDataForm(prev => {
-      const updatedFaq = [...(prev.faq || [])];
-      updatedFaq.splice(index, 1);
-      return { ...prev, faq: updatedFaq };
-    });
-    
-    // Update the expanded items state to remove the deleted item and adjust indices
-    setExpandedItems(prev => {
-      const itemToRemove = `item-${index}`;
-      const newExpandedItems = prev.filter(item => item !== itemToRemove);
-      
-      // Adjust indices for items that come after the removed item
-      return newExpandedItems.map(item => {
-        const itemParts = item.split('-');
-        const itemIndex = parseInt(itemParts[1], 10);
-        
-        if (itemIndex > index) {
-          return `item-${itemIndex - 1}`;
-        }
-        return item;
-      });
-    });
-    
-    // Clear any errors related to the removed item
-    setErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors[`faq.${index}.question`];
-      delete newErrors[`faq.${index}.answer`];
-      return newErrors;
-    });
-  };
 
   // Buscas de valores para variaveis de formulário
   const { 
@@ -474,38 +317,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       return course ? propertyGetter(course) : undefined;
     });
 
-  // Special handler for FAQ from course
-  const updateFaqFromCourse = (selectedValue: string | string[]) => {
-    const courseId = typeof selectedValue === 'string' ? parseInt(selectedValue, 10) : null;
-    if (courseId === null) return;
-    
-    const course = findCourseById(courseId) as Course | null;
-    if (!course) return;
-    
-    // Parse FAQ items from the course
-    const parsedFaq = parseFaqString(course.faq);
-    
-    // Update the form data with the new FAQ items
-    setDataForm(prev => ({
-      ...prev,
-      faq: parsedFaq
-    }));
-    
-    // Reset expanded items when loading FAQ from a course
-    setExpandedItems([]);
-    
-    // Clear any existing FAQ-related errors
-    setErrors(prev => {
-      const newErrors = { ...prev };
-      Object.keys(newErrors).forEach(key => {
-        if (key.startsWith('faq.')) {
-          delete newErrors[key];
-        }
-      });
-      return newErrors;
-    });
-  };
-
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
       <DropUpload
@@ -528,7 +339,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
             updateFromCourse("description", course => course.description),
             updateFromCourse("gradeTheory", course => course.gradeTheory),
             updateFromCourse("gradePracticle", course => course.gradePracticle),
-            updateFaqFromCourse,
+            updateFromCourse("faq", course => FaqGenerator.parseFaqString(course.faq)),
           ]}
         />
         {errors.courseId && <p className="text-red-500 text-sm">{errors.courseId}</p>}
@@ -628,7 +439,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
       
       <div>
-        <Label htmlFor="price">Valor atual</Label>
+        <Label htmlFor="price">Valor</Label>
         <Input
           id="price"
           name="price"
@@ -652,6 +463,45 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           className="mt-1"
         />
         {errors.discountPrice && <p className="text-red-500 text-sm">{errors.discountPrice}</p>}
+      </div>
+
+      <div className={`mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg ${dataForm.allowCheckout ? 'pb-4' : ''}`}>
+        <div className="flex justify-between items-center">
+          
+          <div className="flex flex-col">
+            <Label htmlFor="allowCheckout" className="cursor-pointer flex items-center gap-2">
+              <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+              Habilitar Checkout
+            </Label>
+            <p className="text-xs text-muted-foreground font-medium">Habilita pagamento online na inscrição</p>
+          </div>
+          <Switch
+            id="allowCheckout"
+            name="allowCheckout"
+            checked={dataForm.allowCheckout ? true : false}
+            onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowCheckout: !prev.allowCheckout }))}
+          />
+        </div>
+
+        {dataForm.allowCheckout && (
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <Label htmlFor="paymentMethods">Métodos de Pagamento</Label>
+            <p className="text-xs text-muted-foreground font-medium mb-2">Selecione os métodos de pagamento ativos para esta turma</p>
+            <Select
+              name="paymentMethods"
+              multiple={true}
+              options={[
+                { id: 'cartaoCredito', name: 'Cartão de Crédito' },
+                { id: 'boleto', name: 'Boleto' },
+                { id: 'pix', name: 'PIX' }
+              ]}
+              state={dataForm.paymentMethods || []}
+              onChange={(name, value) => handleChange(name, value)}
+              placeholder="Selecione os métodos de pagamento"
+            />
+            {errors.paymentMethods && <p className="text-red-500 text-sm">{errors.paymentMethods}</p>}
+          </div>
+        )}
       </div>
 
       <div>
@@ -684,7 +534,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="gradeTheory">Grade curricular teórica</Label>
+        <Label htmlFor="gradeTheory">Grade curricular teórica <span>*</span></Label>
         <p className="text-xs text-muted-foreground font-medium">Adicione os itens da grade curricular teórica</p>
         <TagInput
           value={dataForm.gradeTheory}
@@ -724,7 +574,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="maxSubscriptions">Máximo de Inscrições</Label>
+        <Label htmlFor="maxSubscriptions">Máximo de Inscrições <span>*</span></Label>
         <p className="text-xs text-muted-foreground font-medium">Máximo de participantes que podem se inscrever na turma</p>
         <NumberInput
           id="maxSubscriptions"
@@ -738,10 +588,13 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
 
       <div className="mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg flex justify-between items-center">
-        <Label htmlFor="openClass" className="cursor-pointer flex items-center gap-2">
-          <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-          Turma aberta
-        </Label>
+        <div className="flex flex-col">
+          <Label htmlFor="openClass" className="cursor-pointer flex items-center gap-2">
+            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+            Turma aberta
+          </Label>
+          <p className="text-xs text-muted-foreground font-medium">Aparecer no site e na landingPage</p>
+        </div>
         <Switch
           id="openClass"
           name="openClass"
@@ -752,10 +605,13 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
       <div className={`mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg ${dataForm.allowExam ? 'pb-4' : ''}`}>
         <div className="flex justify-between items-center">
-          <Label htmlFor="allowExam" className="cursor-pointer flex items-center gap-2">
-            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-            Habilitar Prova
-          </Label>
+          <div className="flex flex-col">
+            <Label htmlFor="allowExam" className="cursor-pointer flex items-center gap-2">
+              <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+              Habilitar Prova Virtual
+            </Label>
+            <p className="text-xs text-muted-foreground font-medium">Habilita exame/prova de Avaliação virtual sobre os conhecimentos adquiridos</p>
+          </div>
           <Switch
             id="allowExam"
             name="allowExam"
@@ -767,7 +623,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {dataForm.allowExam && (
           <div className="mt-4 pt-4 border-t border-border/50">
             <Label htmlFor="classCode">Código de Acesso à Prova <span className="text-red-500">*</span></Label>
-            <p className="text-xs text-muted-foreground font-medium mb-2">Código que os alunos usarão para acessar a prova</p>
+            <p className="text-xs text-muted-foreground font-medium mb-2">Código de acesso a prova</p>
             <div className="flex gap-2">
               <Input
                 id="classCode"
@@ -797,51 +653,19 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       </div>
 
       <div className="mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg flex justify-between items-center">
-        <Label htmlFor="allowReview" className="cursor-pointer flex items-center gap-2">
-          <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-          Habilitar Avaliação
-        </Label>
+        <div className="flex flex-col">
+          <Label htmlFor="allowReview" className="cursor-pointer flex items-center gap-2">
+            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+            Habilitar Avaliação
+          </Label>
+          <p className="text-xs text-muted-foreground font-medium">Permite coleta de avaliação dos alunos sobre o curso ao final do exame</p>
+        </div>
         <Switch
           id="allowReview"
           name="allowReview"
           checked={dataForm.allowReview ? true : false}
           onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowReview: !prev.allowReview }))}
         />
-      </div>
-
-      <div className={`mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg ${dataForm.allowCheckout ? 'pb-4' : ''}`}>
-        <div className="flex justify-between items-center">
-          <Label htmlFor="allowCheckout" className="cursor-pointer flex items-center gap-2">
-            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-            Habilitar Checkout (Pagamento Online)
-          </Label>
-          <Switch
-            id="allowCheckout"
-            name="allowCheckout"
-            checked={dataForm.allowCheckout ? true : false}
-            onCheckedChange={() => setDataForm((prev) => ({ ...prev, allowCheckout: !prev.allowCheckout }))}
-          />
-        </div>
-
-        {dataForm.allowCheckout && (
-          <div className="mt-4 pt-4 border-t border-border/50">
-            <Label htmlFor="paymentMethods">Métodos de Pagamento</Label>
-            <p className="text-xs text-muted-foreground font-medium mb-2">Selecione os métodos de pagamento ativos para esta turma</p>
-            <Select
-              name="paymentMethods"
-              multiple={true}
-              options={[
-                { id: 'cartaoCredito', name: 'Cartão de Crédito' },
-                { id: 'boleto', name: 'Boleto' },
-                { id: 'pix', name: 'PIX' }
-              ]}
-              state={dataForm.paymentMethods || []}
-              onChange={(name, value) => handleChange(name, value)}
-              placeholder="Selecione os métodos de pagamento"
-            />
-            {errors.paymentMethods && <p className="text-red-500 text-sm">{errors.paymentMethods}</p>}
-          </div>
-        )}
       </div>
 
       <div>
@@ -910,130 +734,16 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {errors.videoDescription && <p className="text-red-500 text-sm">{errors.videoDescription}</p>}
       </div>
 
-      <div className="space-y-2 mt-6">
-        <div>
-          <h3 className="text-lg font-semibold">Perguntas Frequentes (FAQ)</h3>
-          <p className="text-sm text-muted-foreground mb-4">Adicione perguntas e respostas comuns sobre o curso</p>
-        </div>
-        
-        {dataForm.faq && dataForm.faq.length > 0 ? (
-          <>
-            <Accordion 
-              type="multiple" 
-              value={expandedItems}
-              onValueChange={setExpandedItems}
-              className="w-full space-y-2"
-            >
-              {dataForm.faq.map((faqItem, index) => (
-                <AccordionItem 
-                  value={`item-${index}`} 
-                  key={index} 
-                  className={`border rounded-lg ${
-                    errors[`faq.${index}.question`] || errors[`faq.${index}.answer`] 
-                      ? 'border-red-500/50' 
-                      : ''
-                  }`}
-                >
-                  <AccordionTrigger 
-                    className={`group flex items-center justify-between w-full px-4 py-3 hover:no-underline [&>svg]:ml-2 ${
-                      errors[`faq.${index}.question`] || errors[`faq.${index}.answer`] 
-                        ? 'text-red-500' 
-                        : ''
-                    }`}
-                  >
-                    <div className="text-left flex-1">
-                      <span className="font-medium">
-                        Pergunta {String(index + 1).padStart(2, '0')}
-                      </span>
-                      {(errors[`faq.${index}.question`] || errors[`faq.${index}.answer`]) && (
-                        <span className="ml-2 text-xs text-red-500">(Erro de validação)</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFaqItem(index);
-                        }}
-                        className="h-8 w-8 p-0 hover:bg-destructive/10"
-                      >
-                        <Trash2 size={16} className="text-destructive" />
-                      </Button>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4">
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor={`faq-question-${index}`} className="text-sm font-medium">
-                          Pergunta <span className="text-red-500">*</span>
-                        </Label>
-                        <Input
-                          id={`faq-question-${index}`}
-                          name={`faq-question-${index}`}
-                          value={faqItem.question || ''}
-                          onValueChange={(_, value) => updateFaqItem(index, 'question', String(value))}
-                          placeholder="Ex: Qual é a carga horária do curso?"
-                          className={`mt-1 ${errors[`faq.${index}.question`] ? 'border-red-500' : ''}`}
-                        />
-                        {errors[`faq.${index}.question`] && (
-                          <p className="text-red-500 text-xs mt-1">{errors[`faq.${index}.question`]}</p>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor={`faq-answer-${index}`} className="text-sm font-medium">
-                          Resposta <span className="text-red-500">*</span>
-                        </Label>
-                        <Input
-                          id={`faq-answer-${index}`}
-                          name={`faq-answer-${index}`}
-                          value={faqItem.answer || ''}
-                          onValueChange={(_, value) => updateFaqItem(index, 'answer', String(value))}
-                          placeholder="Ex: O curso tem duração total de 40 horas, distribuídas em..."
-                          type="textArea"
-                          className={`mt-1 min-h-[80px] ${errors[`faq.${index}.answer`] ? 'border-red-500' : ''}`}
-                        />
-                        {errors[`faq.${index}.answer`] && (
-                          <p className="text-red-500 text-xs mt-1">{errors[`faq.${index}.answer`]}</p>
-                        )}
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-            
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              onClick={addFaqItem}
-              className="w-full mt-3 flex items-center justify-center gap-2"
-            >
-              <PlusCircle size={16} />
-              Adicionar Nova Pergunta
-            </Button>
-          </>
-        ) : (
-          <div className="border-2 border-dashed rounded-lg p-8 text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-              <PlusCircle size={20} className="text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground mb-3">Nenhuma pergunta frequente adicionada</p>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              onClick={addFaqItem}
-            >
-              Adicionar primeira pergunta
-            </Button>
-          </div>
-        )}
-        {errors.faq && <p className="text-red-500 text-xs mt-2">{errors.faq}</p>}
+      <div className="mt-6">
+        <FaqGenerator
+          formData={dataForm}
+          setFormData={setDataForm}
+          fieldName="faq"
+          errors={errors}
+          setErrors={setErrors}
+          title="Perguntas Frequentes (FAQ)"
+          description="Adicione perguntas e respostas comuns sobre o curso"
+        />
       </div>
 
       <Button

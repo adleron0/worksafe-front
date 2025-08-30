@@ -198,10 +198,10 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Detalhes: </p>
           <div className="flex flex-col items-start gap-0.5">
             <p className="text-xs text-muted-foreground dark:text-gray-100">
-              {item.price ? `valor atual: R$ ${item.price}` : 'Não informado'}
+              {item.price ? `valor: R$ ${item.price}` : 'valor: Não informado'}
             </p>
             <p className="text-xs text-muted-foreground dark:text-gray-100">
-              {item.oldPrice ? `valor antigo: R$ ${item.oldPrice}` : 'Não informado'}
+              {item.discountPrice ? `valor promocional: R$ ${item.discountPrice}` : 'valor promocional: R$ 0'}
             </p>
             <div className="flex flex-wrap gap-0.5">
               {
@@ -426,12 +426,50 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
         className="w-sm"
       >
         <div className="flex flex-col items-center space-y-4 py-4">
-          <QRCode 
-            data={`${process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : window.location.origin}/prova/${item.id}`}
-          />
+          {/* Código do curso */}
           <div className="text-center">
             <p className="text-sm text-muted-foreground">Código do curso</p>
             <p className="text-lg font-semibold">{item.classCode || 'Não disponível'}</p>
+          </div>
+          {/* QR Code */}
+          <QRCode 
+            data={`${process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : window.location.origin}/prova/${item.id}`}
+          />
+          {/* Link da prova com botão de copiar */}
+          <div className="w-full space-y-2">
+            <p className="text-sm text-muted-foreground text-center">Link da prova</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={`${process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : window.location.origin}/prova/${item.id}`}
+                className="flex-1 px-3 py-2 text-sm border rounded-md bg-background cursor-pointer"
+                onClick={(e) => e.currentTarget.select()}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const provaLink = `${process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : window.location.origin}/prova/${item.id}`;
+                  navigator.clipboard.writeText(provaLink).then(() => {
+                    toast({
+                      title: "Link copiado!",
+                      description: "O link da prova foi copiado para a área de transferência.",
+                      variant: "success",
+                    });
+                  }).catch(() => {
+                    toast({
+                      title: "Erro ao copiar",
+                      description: "Não foi possível copiar o link. Tente novamente.",
+                      variant: "destructive",
+                    });
+                  });
+                }}
+              >
+                <Icon name="copy" className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </Dialog>

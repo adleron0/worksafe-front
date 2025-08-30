@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
 interface TagInputProps {
-  value: string;
+  value: string | null | undefined;
   onChange: (value: string) => void;
   separator?: string;
   placeholder?: string;
@@ -23,7 +23,7 @@ const TagInput: React.FC<TagInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Parse string value into array of tags
-  const parseTags = (str: string): string[] => {
+  const parseTags = (str: string | null | undefined): string[] => {
     if (!str || str.trim() === "") return [];
     return str.split(separator).map(tag => tag.trim()).filter(tag => tag !== "");
   };

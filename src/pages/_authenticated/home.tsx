@@ -1,6 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { useState } from 'react';
+import Dialog from '@/components/general-components/Dialog';
+import RichTextEditor from '@/components/general-components/RichTextEditor';
+import { Button } from '@/components/ui/button';
 
 const dataUsuarios = [
   { name: "Seg", usuários: 3 },
@@ -31,10 +35,44 @@ export const Route = createFileRoute('/_authenticated/home')({
 })
 
 function Home() {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editorContent, setEditorContent] = useState<string>('');
+
+  const handleEditorChange = (content: string) => {
+    setEditorContent(content);
+    console.log('Conteúdo do editor:', content);
+  };
+
   return (
       <div className="p-8 bg-background/5 min-h-screen">
         {/* Título da Dashboard */}
         <h1 className="text-3xl font-bold mb-6">Dashboard - Hub do Sistema</h1>
+        
+        {/* Botão para abrir o editor */}
+        <div className="mb-6">
+          <Button onClick={() => setDialogOpen(true)} className="mb-4">
+            Abrir Editor de Texto Rico
+          </Button>
+          
+          <Dialog
+            title="Editor de Texto Rico"
+            description="Crie e edite conteúdo para blogs, aulas e artigos"
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            showBttn={false}
+            className="max-w-5xl"
+          >
+            <div className="space-y-4">
+              <RichTextEditor 
+                value={editorContent}
+                onChange={handleEditorChange}
+                placeholder="Comece a escrever seu conteúdo aqui..."
+                height="50vh"
+                // onImageUpload customizado é opcional - por padrão usa S3
+              />
+            </div>
+          </Dialog>
+        </div>
   
         {/* Cards principais */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

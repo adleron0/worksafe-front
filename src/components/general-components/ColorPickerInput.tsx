@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
+import Color from 'color';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,6 +22,7 @@ interface ColorPickerInputProps {
   onChange: (color: string) => void;
   label?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
@@ -28,31 +30,33 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
   onChange,
   label = "Cor",
   className = "",
+  disabled = false,
 }) => {
   const [localColor, setLocalColor] = useState(value);
   const [open, setOpen] = useState(false);
-  const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLocalColor(value);
   }, [value]);
 
-  // Monitor changes in the color picker
-  useEffect(() => {
-    if (!open || !pickerRef.current) return;
+  const handleColorChange = (value: any) => {
+    // Handle both array and string formats
+    if (Array.isArray(value)) {
+      // Convert RGBA array to hex string
+      const color = Color.rgb(value[0], value[1], value[2]);
+      const hexColor = color.hex();
+      setLocalColor(hexColor);
+      onChange(hexColor);
+    } else if (typeof value === 'string') {
+      setLocalColor(value);
+      onChange(value);
+    }
+  };
 
-    const checkForChanges = () => {
-      const colorOutput = pickerRef.current?.querySelector('input[type="text"]') as HTMLInputElement;
-      if (colorOutput && colorOutput.value !== localColor) {
-        const newColor = colorOutput.value;
-        setLocalColor(newColor);
-        onChange(newColor);
-      }
-    };
-
-    const interval = setInterval(checkForChanges, 100);
-    return () => clearInterval(interval);
-  }, [open, onChange, localColor]);
+  const handleHexChange = (newColor: string) => {
+    setLocalColor(newColor);
+    onChange(newColor);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let newValue = e.target.value;
@@ -68,15 +72,9 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
     
     // Always add # at the beginning
     const colorWithHash = `#${newValue}`;
-    setLocalColor(colorWithHash);
-    
-    // Validate and update if it's a valid color (3 or 6 characters)
-    if (newValue.length === 3 || newValue.length === 6) {
-      onChange(colorWithHash);
-    }
+    handleHexChange(colorWithHash);
   };
 
-  // Monitor changes in the color picker - removed as we'll handle it directly in ColorPicker onChange
 
   return (
     <div className={`space-y-2 ${className}`}>
@@ -87,20 +85,26 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
       )}
       
       <div className="flex items-center gap-2">
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="w-9 h-9 rounded-md border-2 border-gray-300 cursor-pointer hover:border-gray-400 transition-colors shadow-sm"
+              className={`w-9 h-9 rounded-md border-2 transition-colors shadow-sm ${
+                disabled 
+                  ? "border-gray-200 cursor-not-allowed opacity-50" 
+                  : "border-gray-300 cursor-pointer hover:border-gray-400"
+              }`}
               style={{ backgroundColor: localColor }}
               aria-label="Selecionar cor"
+              disabled={disabled}
             />
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
-            <div ref={pickerRef}>
+            <div>
               <ColorPicker 
                 className="rounded-md border bg-background p-4"
                 defaultValue={localColor}
+                onChange={handleColorChange}
               >
                 <ColorPickerSelection className="h-40 w-64 rounded-md" />
                 <div className="flex items-center gap-4 mt-3">
@@ -132,6 +136,7 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
             placeholder="000000"
             className="pl-7 font-mono"
             maxLength={6}
+            disabled={disabled}
           />
         </div>
       </div>

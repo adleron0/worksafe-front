@@ -11,6 +11,7 @@
 // Import Routes
 
 import { Route as rootRoute } from './pages/__root'
+import { Route as IndexImport } from './pages/_index'
 import { Route as AuthenticatedImport } from './pages/_authenticated'
 import { Route as IndexIndexImport } from './pages/_index/index'
 import { Route as AuthenticatedHomeImport } from './pages/_authenticated/home'
@@ -18,6 +19,7 @@ import { Route as AuthenticatedBuildingImport } from './pages/_authenticated/bui
 import { Route as IndexCertificadosIndexImport } from './pages/_index/certificados/index'
 import { Route as AuthenticatedTreinamentosIndexImport } from './pages/_authenticated/treinamentos/index'
 import { Route as AuthenticatedInventariosIndexImport } from './pages/_authenticated/inventarios/index'
+import { Route as AuthenticatedEmpresaIndexImport } from './pages/_authenticated/empresa/index'
 import { Route as AuthenticatedClientesIndexImport } from './pages/_authenticated/clientes/index'
 import { Route as IndexProvaClassIdImport } from './pages/_index/prova.$classId'
 import { Route as IndexCertificadosIdImport } from './pages/_index/certificados/$id'
@@ -41,15 +43,20 @@ import { Route as AuthenticatedInventariosAreasAreaIdImport } from './pages/_aut
 
 // Create/Update Routes
 
+const IndexRoute = IndexImport.update({
+  id: '/_index',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const AuthenticatedRoute = AuthenticatedImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRoute,
 } as any)
 
 const IndexIndexRoute = IndexIndexImport.update({
-  id: '/_index/',
+  id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => IndexRoute,
 } as any)
 
 const AuthenticatedHomeRoute = AuthenticatedHomeImport.update({
@@ -65,9 +72,9 @@ const AuthenticatedBuildingRoute = AuthenticatedBuildingImport.update({
 } as any)
 
 const IndexCertificadosIndexRoute = IndexCertificadosIndexImport.update({
-  id: '/_index/certificados/',
+  id: '/certificados/',
   path: '/certificados/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => IndexRoute,
 } as any)
 
 const AuthenticatedTreinamentosIndexRoute =
@@ -84,6 +91,12 @@ const AuthenticatedInventariosIndexRoute =
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
+const AuthenticatedEmpresaIndexRoute = AuthenticatedEmpresaIndexImport.update({
+  id: '/empresa/',
+  path: '/empresa/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+
 const AuthenticatedClientesIndexRoute = AuthenticatedClientesIndexImport.update(
   {
     id: '/clientes/',
@@ -93,15 +106,15 @@ const AuthenticatedClientesIndexRoute = AuthenticatedClientesIndexImport.update(
 )
 
 const IndexProvaClassIdRoute = IndexProvaClassIdImport.update({
-  id: '/_index/prova/$classId',
+  id: '/prova/$classId',
   path: '/prova/$classId',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => IndexRoute,
 } as any)
 
 const IndexCertificadosIdRoute = IndexCertificadosIdImport.update({
-  id: '/_index/certificados/$id',
+  id: '/certificados/$id',
   path: '/certificados/$id',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => IndexRoute,
 } as any)
 
 const AuthenticatedInventariosDashboardRoute =
@@ -234,6 +247,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedImport
       parentRoute: typeof rootRoute
     }
+    '/_index': {
+      id: '/_index'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
     '/_authenticated/building': {
       id: '/_authenticated/building'
       path: '/building'
@@ -253,7 +273,7 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexIndexImport
-      parentRoute: typeof rootRoute
+      parentRoute: typeof IndexImport
     }
     '/_authenticated/inventarios/access-control': {
       id: '/_authenticated/inventarios/access-control'
@@ -281,20 +301,27 @@ declare module '@tanstack/react-router' {
       path: '/certificados/$id'
       fullPath: '/certificados/$id'
       preLoaderRoute: typeof IndexCertificadosIdImport
-      parentRoute: typeof rootRoute
+      parentRoute: typeof IndexImport
     }
     '/_index/prova/$classId': {
       id: '/_index/prova/$classId'
       path: '/prova/$classId'
       fullPath: '/prova/$classId'
       preLoaderRoute: typeof IndexProvaClassIdImport
-      parentRoute: typeof rootRoute
+      parentRoute: typeof IndexImport
     }
     '/_authenticated/clientes/': {
       id: '/_authenticated/clientes/'
       path: '/clientes'
       fullPath: '/clientes'
       preLoaderRoute: typeof AuthenticatedClientesIndexImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/empresa/': {
+      id: '/_authenticated/empresa/'
+      path: '/empresa'
+      fullPath: '/empresa'
+      preLoaderRoute: typeof AuthenticatedEmpresaIndexImport
       parentRoute: typeof AuthenticatedImport
     }
     '/_authenticated/inventarios/': {
@@ -316,7 +343,7 @@ declare module '@tanstack/react-router' {
       path: '/certificados'
       fullPath: '/certificados'
       preLoaderRoute: typeof IndexCertificadosIndexImport
-      parentRoute: typeof rootRoute
+      parentRoute: typeof IndexImport
     }
     '/_authenticated/inventarios/areas/$areaId': {
       id: '/_authenticated/inventarios/areas/$areaId'
@@ -428,6 +455,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedInventariosAutorizadosRoute: typeof AuthenticatedInventariosAutorizadosRoute
   AuthenticatedInventariosDashboardRoute: typeof AuthenticatedInventariosDashboardRoute
   AuthenticatedClientesIndexRoute: typeof AuthenticatedClientesIndexRoute
+  AuthenticatedEmpresaIndexRoute: typeof AuthenticatedEmpresaIndexRoute
   AuthenticatedInventariosIndexRoute: typeof AuthenticatedInventariosIndexRoute
   AuthenticatedTreinamentosIndexRoute: typeof AuthenticatedTreinamentosIndexRoute
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
@@ -456,6 +484,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedInventariosDashboardRoute:
     AuthenticatedInventariosDashboardRoute,
   AuthenticatedClientesIndexRoute: AuthenticatedClientesIndexRoute,
+  AuthenticatedEmpresaIndexRoute: AuthenticatedEmpresaIndexRoute,
   AuthenticatedInventariosIndexRoute: AuthenticatedInventariosIndexRoute,
   AuthenticatedTreinamentosIndexRoute: AuthenticatedTreinamentosIndexRoute,
   AuthenticatedInventariosAreasAreaIdRoute:
@@ -492,8 +521,24 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface IndexRouteChildren {
+  IndexIndexRoute: typeof IndexIndexRoute
+  IndexCertificadosIdRoute: typeof IndexCertificadosIdRoute
+  IndexProvaClassIdRoute: typeof IndexProvaClassIdRoute
+  IndexCertificadosIndexRoute: typeof IndexCertificadosIndexRoute
+}
+
+const IndexRouteChildren: IndexRouteChildren = {
+  IndexIndexRoute: IndexIndexRoute,
+  IndexCertificadosIdRoute: IndexCertificadosIdRoute,
+  IndexProvaClassIdRoute: IndexProvaClassIdRoute,
+  IndexCertificadosIndexRoute: IndexCertificadosIndexRoute,
+}
+
+const IndexRouteWithChildren = IndexRoute._addFileChildren(IndexRouteChildren)
+
 export interface FileRoutesByFullPath {
-  '': typeof AuthenticatedRouteWithChildren
+  '': typeof IndexRouteWithChildren
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
   '/': typeof IndexIndexRoute
@@ -503,6 +548,7 @@ export interface FileRoutesByFullPath {
   '/certificados/$id': typeof IndexCertificadosIdRoute
   '/prova/$classId': typeof IndexProvaClassIdRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
+  '/empresa': typeof AuthenticatedEmpresaIndexRoute
   '/inventarios': typeof AuthenticatedInventariosIndexRoute
   '/treinamentos': typeof AuthenticatedTreinamentosIndexRoute
   '/certificados': typeof IndexCertificadosIndexRoute
@@ -533,6 +579,7 @@ export interface FileRoutesByTo {
   '/certificados/$id': typeof IndexCertificadosIdRoute
   '/prova/$classId': typeof IndexProvaClassIdRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
+  '/empresa': typeof AuthenticatedEmpresaIndexRoute
   '/inventarios': typeof AuthenticatedInventariosIndexRoute
   '/treinamentos': typeof AuthenticatedTreinamentosIndexRoute
   '/certificados': typeof IndexCertificadosIndexRoute
@@ -555,6 +602,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/_index': typeof IndexRouteWithChildren
   '/_authenticated/building': typeof AuthenticatedBuildingRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_index/': typeof IndexIndexRoute
@@ -564,6 +612,7 @@ export interface FileRoutesById {
   '/_index/certificados/$id': typeof IndexCertificadosIdRoute
   '/_index/prova/$classId': typeof IndexProvaClassIdRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
+  '/_authenticated/empresa/': typeof AuthenticatedEmpresaIndexRoute
   '/_authenticated/inventarios/': typeof AuthenticatedInventariosIndexRoute
   '/_authenticated/treinamentos/': typeof AuthenticatedTreinamentosIndexRoute
   '/_index/certificados/': typeof IndexCertificadosIndexRoute
@@ -596,6 +645,7 @@ export interface FileRouteTypes {
     | '/certificados/$id'
     | '/prova/$classId'
     | '/clientes'
+    | '/empresa'
     | '/inventarios'
     | '/treinamentos'
     | '/certificados'
@@ -625,6 +675,7 @@ export interface FileRouteTypes {
     | '/certificados/$id'
     | '/prova/$classId'
     | '/clientes'
+    | '/empresa'
     | '/inventarios'
     | '/treinamentos'
     | '/certificados'
@@ -645,6 +696,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
+    | '/_index'
     | '/_authenticated/building'
     | '/_authenticated/home'
     | '/_index/'
@@ -654,6 +706,7 @@ export interface FileRouteTypes {
     | '/_index/certificados/$id'
     | '/_index/prova/$classId'
     | '/_authenticated/clientes/'
+    | '/_authenticated/empresa/'
     | '/_authenticated/inventarios/'
     | '/_authenticated/treinamentos/'
     | '/_index/certificados/'
@@ -676,18 +729,12 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  IndexIndexRoute: typeof IndexIndexRoute
-  IndexCertificadosIdRoute: typeof IndexCertificadosIdRoute
-  IndexProvaClassIdRoute: typeof IndexProvaClassIdRoute
-  IndexCertificadosIndexRoute: typeof IndexCertificadosIndexRoute
+  IndexRoute: typeof IndexRouteWithChildren
 }
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  IndexIndexRoute: IndexIndexRoute,
-  IndexCertificadosIdRoute: IndexCertificadosIdRoute,
-  IndexProvaClassIdRoute: IndexProvaClassIdRoute,
-  IndexCertificadosIndexRoute: IndexCertificadosIndexRoute,
+  IndexRoute: IndexRouteWithChildren,
 }
 
 export const routeTree = rootRoute
@@ -701,10 +748,7 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/_authenticated",
-        "/_index/",
-        "/_index/certificados/$id",
-        "/_index/prova/$classId",
-        "/_index/certificados/"
+        "/_index"
       ]
     },
     "/_authenticated": {
@@ -716,6 +760,7 @@ export const routeTree = rootRoute
         "/_authenticated/inventarios/autorizados",
         "/_authenticated/inventarios/dashboard",
         "/_authenticated/clientes/",
+        "/_authenticated/empresa/",
         "/_authenticated/inventarios/",
         "/_authenticated/treinamentos/",
         "/_authenticated/inventarios/areas/$areaId",
@@ -734,6 +779,15 @@ export const routeTree = rootRoute
         "/_authenticated/usuarios/_usuarios/"
       ]
     },
+    "/_index": {
+      "filePath": "_index.tsx",
+      "children": [
+        "/_index/",
+        "/_index/certificados/$id",
+        "/_index/prova/$classId",
+        "/_index/certificados/"
+      ]
+    },
     "/_authenticated/building": {
       "filePath": "_authenticated/building.tsx",
       "parent": "/_authenticated"
@@ -743,7 +797,8 @@ export const routeTree = rootRoute
       "parent": "/_authenticated"
     },
     "/_index/": {
-      "filePath": "_index/index.tsx"
+      "filePath": "_index/index.tsx",
+      "parent": "/_index"
     },
     "/_authenticated/inventarios/access-control": {
       "filePath": "_authenticated/inventarios/access-control.tsx",
@@ -758,13 +813,19 @@ export const routeTree = rootRoute
       "parent": "/_authenticated"
     },
     "/_index/certificados/$id": {
-      "filePath": "_index/certificados/$id.tsx"
+      "filePath": "_index/certificados/$id.tsx",
+      "parent": "/_index"
     },
     "/_index/prova/$classId": {
-      "filePath": "_index/prova.$classId.tsx"
+      "filePath": "_index/prova.$classId.tsx",
+      "parent": "/_index"
     },
     "/_authenticated/clientes/": {
       "filePath": "_authenticated/clientes/index.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/empresa/": {
+      "filePath": "_authenticated/empresa/index.tsx",
       "parent": "/_authenticated"
     },
     "/_authenticated/inventarios/": {
@@ -776,7 +837,8 @@ export const routeTree = rootRoute
       "parent": "/_authenticated"
     },
     "/_index/certificados/": {
-      "filePath": "_index/certificados/index.tsx"
+      "filePath": "_index/certificados/index.tsx",
+      "parent": "/_index"
     },
     "/_authenticated/inventarios/areas/$areaId": {
       "filePath": "_authenticated/inventarios/areas/$areaId.tsx",

@@ -193,8 +193,10 @@
   padding-top: env(safe-area-inset-top);
 } */
 
-  body {
-    padding-bottom: env(safe-area-inset-bottom);
+  body, html {
+    /* padding-bottom: env(safe-area-inset-bottom); */
+    overflow: hidden;
+    height: 100dvh;
   }
   
   .animate-marquee {

@@ -3,6 +3,8 @@ import { useAuth } from '@/context/AuthContext';
 import { RouterProvider } from '@tanstack/react-router';
 import { router } from './main';
 import { useEffect } from 'react';
+// TODO: Remover em produção - apenas para debug
+import { ThemeDebug } from '@/components/ThemeDebug';
 
 function InnerApp() {
   // Recupera a preferência do modo escuro do localStorage
@@ -17,9 +19,14 @@ function InnerApp() {
     }
   }, []);
 
-
   const auth = useAuth();
-  return <RouterProvider router={router} context={{ auth }} />;
+  return (
+    <>
+      <RouterProvider router={router} context={{ auth }} />
+      {/* TODO: Remover em produção - apenas para debug */}
+      {process.env.NODE_ENV === 'development' && <ThemeDebug />}
+    </>
+  );
 }
 
 export default InnerApp;

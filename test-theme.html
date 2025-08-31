@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Theme System</title>
+</head>
+<body>
+    <h1>Theme System Test</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Test localStorage cache
+        const cache = localStorage.getItem('worksafe_theme_cache');
+        const resultDiv = document.getElementById('result');
+        
+        if (cache) {
+            try {
+                const parsed = JSON.parse(cache);
+                resultDiv.innerHTML = `
+                    <h2>✅ Theme Cache Found!</h2>
+                    <p><strong>Domain:</strong> ${parsed.domain}</p>
+                    <p><strong>Primary Color:</strong> <span style="background-color: ${parsed.primaryColor}; color: white; padding: 2px 8px;">${parsed.primaryColor}</span></p>
+                    <p><strong>Secondary Color:</strong> <span style="background-color: ${parsed.secondaryColor || '#ccc'}; color: white; padding: 2px 8px;">${parsed.secondaryColor || 'Not set'}</span></p>
+                    <p><strong>Cached at:</strong> ${new Date(parsed.timestamp).toLocaleString()}</p>
+                    <p><strong>Expires at:</strong> ${new Date(parsed.timestamp + parsed.expiresIn).toLocaleString()}</p>
+                `;
+            } catch (e) {
+                resultDiv.innerHTML = '<p>❌ Error parsing cache: ' + e.message + '</p>';
+            }
+        } else {
+            resultDiv.innerHTML = '<p>⚠️ No theme cache found. Open the app first to generate cache.</p>';
+        }
+        
+        // Test CSS variables
+        const computedStyle = getComputedStyle(document.documentElement);
+        const primaryVar = computedStyle.getPropertyValue('--primary');
+        
+        if (primaryVar) {
+            resultDiv.innerHTML += `<p><strong>CSS Variable --primary:</strong> ${primaryVar}</p>`;
+        }
+    </script>
+</body>
+</html>

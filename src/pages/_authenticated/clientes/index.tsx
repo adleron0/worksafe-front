@@ -1,5 +1,5 @@
 import { createFileRoute  } from '@tanstack/react-router'
-// Serviçosç
+// Serviços
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";

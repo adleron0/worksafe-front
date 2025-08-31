@@ -16,7 +16,7 @@ import { VscLoading } from "react-icons/vsc";
 import { LoginData } from "@/general-interfaces/auth.interface";
 import { useAuth } from '@/context/AuthContext';
 import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
-import Logo from "@/components/general-components/Logo";
+import DynamicLogo from "@/components/general-components/DynamicLogo";
 import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute('/_index/')({
@@ -104,12 +104,8 @@ function Login() {
         </Button>
         
         <div className="hidden md:flex w-full max-w-3xl">
-          <div className="flex gap-1 items-center justify-center w-full">
-            <Logo colorPath24="black" colorPath25="hsl(var(--primary-light))" className="h-15 w-15" />
-            <div className="flex flex-col text-black">
-              <span className="font-black text-4xl">WORKSAFE</span>
-              <span className="text-lg -mt-1.5 font-semibold">Brasil</span>
-            </div>
+          <div className="flex gap-3 items-center justify-center w-full">
+            <DynamicLogo width={220} height={80} />
           </div>
         </div>
         <div className="flex flex-col gap-4 items-center justify-center w-full max-w-3xl">

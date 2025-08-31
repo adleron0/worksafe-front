@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import Logo from "@/components/general-components/Logo";
+import DynamicLogo from "@/components/general-components/DynamicLogo";
 import {
   ShoppingCart,
   X,
@@ -117,12 +117,8 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
       <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-50 shadow-sm">
         <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
           <div className="flex items-center justify-between h-20">
-            <a href="https://www.worksafebrasil.com.br" className="flex gap-1 items-center cursor-pointer">
-              <Logo colorPath24="black" colorPath25="hsl(var(--primary-light))" className="h-10 w-10" />
-              <div className="flex flex-col text-black">
-                <span className="font-black text-2xl">WORKSAFE</span>
-                <span className="text-sm -mt-1.5 font-semibold">Brasil</span>
-              </div>
+            <a href="https://www.worksafebrasil.com.br" className="flex gap-2 items-center cursor-pointer">
+              <DynamicLogo width={150} height={50} />
             </a>
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-4">

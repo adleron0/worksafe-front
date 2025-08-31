@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { getPublic } from "@/services/publicApi";
 import { get } from "@/services/api";
 import { Loader2, Award, Calendar, User, ArrowRight, GraduationCap, Shield, Filter, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -125,7 +124,7 @@ function CertificadosPublicos() {
         params.push({ key: 'like-trainee.name', value: debouncedSearchName });
       }
       
-      const response = await getPublic('trainee-certificate', '', params);
+      const response = await get('trainee-certificate', '', params);
       return response as ICertificateResponse;
     },
     retry: 1

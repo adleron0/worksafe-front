@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from "react"; // Keep this one
+import React, { useCallback, useState, useEffect, useId } from "react"; // Keep this one
 import { Label } from "../ui/label";
 import { ImageUp, X } from "lucide-react";
 import { Button } from "../ui/button";
@@ -10,18 +10,21 @@ interface DropUploadProps<T> {
   acceptedFiles?: string; // Add optional acceptedFiles prop
   itemFormData?: string;
   cover?: boolean;
+  clearFields?: string[]; // Fields to clear when removing image
 }
 
-const DropUpload = <T extends object>({ 
+function DropUpload<T extends object>({ 
   setImage, 
   EditPreview, 
   acceptedFiles = "image/*",
   itemFormData = "image",
   cover = true,
-}: DropUploadProps<T>) => { // Make component generic
+  clearFields = [],
+}: DropUploadProps<T>) { // Make component generic
   const [preview, setPreview] = useState<string | null>(null);
   const [errorFile, setErrorFile] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const uniqueId = useId(); // Generate unique ID for this instance
 
   useEffect(() => {
     if (EditPreview) {
@@ -39,7 +42,7 @@ const DropUpload = <T extends object>({
           setErrorFile(null);
         }, 3000);
         // Clear the file input if it's invalid
-        const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+        const fileInput = document.getElementById(`fileInput-${uniqueId}`) as HTMLInputElement;
         if (fileInput) fileInput.value = '';
         return;
       }
@@ -80,23 +83,23 @@ const DropUpload = <T extends object>({
         onDragLeave={handleDragLeave}
         className={`group relative hover:border-primary focus:border-primary border-dashed ${
           isDragging ? "border-primary" : "border-gray-300"
-        } focus:border-primary border-2 h-56 cursor-pointer p-2 rounded-md text-center`}
+        } focus:border-primary border-2 h-full min-h-[8rem] cursor-pointer p-2 rounded-md text-center flex items-center justify-center`}
       >
         <input
           type="file"
           accept={acceptedFiles} // Use the acceptedFiles prop here
           onChange={(e) => handleImageChange(e.target.files ? e.target.files[0] : null)}
           className="hidden"
-          id="fileInput"
+          id={`fileInput-${uniqueId}`}
         />
-        <Label htmlFor="fileInput" className="cursor-pointer">
+        <Label htmlFor={`fileInput-${uniqueId}`} className="cursor-pointer w-full h-full flex items-center justify-center">
           {preview ? (
             <div
-              className="w-full group/image"
+              className="w-full h-full relative flex items-center justify-center group/image bg-muted"
              >
               <div 
                 style={{ backgroundImage: `url(${preview})` }}
-                className={`w-full h-51 mx-auto rounded-md ${cover ? "bg-cover" : "bg-contain"} bg-center bg-no-repeat group-hover/image:blur-xs`}
+                className={`w-full h-full min-h-[6rem] mx-auto rounded-md ${cover ? "bg-cover" : "bg-contain"} bg-center bg-no-repeat group-hover/image:blur-xs`}
               />
               <div className="absolute top-0 bottom-0 left-0 right-0 flex flex-col items-center justify-center text-white text-sm rounded-md bg-black/45 opacity-0 hover:opacity-100 transition-opacity duration-200">
                 <ImageUp/>
@@ -121,11 +124,15 @@ const DropUpload = <T extends object>({
             onClick={() => {
               setPreview(null);
               // Reset the input field value if needed
-              const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+              const fileInput = document.getElementById(`fileInput-${uniqueId}`) as HTMLInputElement;
               if (fileInput) fileInput.value = '';
-              // Update state by merging null values into the previous state object
-              setImage((prev: T) => ({ ...prev, image: null, imageUrl: null }))} 
-            }
+              // Update state by clearing the specified fields
+              const updates: Partial<T> = { [itemFormData]: null } as Partial<T>;
+              clearFields.forEach(field => {
+                (updates as any)[field] = null;
+              });
+              setImage((prev: T) => ({ ...prev, ...updates }));
+            }}
             size="mini"
             variant="destructive"
             title="Descartar Imagem"
@@ -136,6 +143,6 @@ const DropUpload = <T extends object>({
         }
       </div>
   );
-};
+}
 
 export default DropUpload;

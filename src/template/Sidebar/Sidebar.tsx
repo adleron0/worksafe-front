@@ -7,7 +7,7 @@ import {
   Bell,
 } from "lucide-react";
 import { items } from "./items";
-import Logo from "../../components/general-components/Logo";
+import DynamicLogo from "../../components/general-components/DynamicLogo";
 
 const Sidebar = () => {
   const { openSidebar, setOpenSidebar } = useGeneralContext();
@@ -54,11 +54,7 @@ const Sidebar = () => {
               className="h-full rounded-full"
             /> */}
             <div className="flex gap-1 items-center">
-              <Logo colorPath24="hsl(var(--foreground))" colorPath25="hsl(var(--primary))" className="h-8 w-8" />
-              <div className="flex flex-col">
-                <span className="font-black">WORKSAFE</span>
-                <span className="text-xs -mt-1 font-semibold">Brasil</span>
-              </div>
+              <DynamicLogo width={180} height={50} />
             </div>
             <Button variant="outline" size="icon" className="ml-auto h-8 w-8 rounded hidden md:flex">
               <Bell className="h-4 w-4" />
@@ -82,9 +78,9 @@ const Sidebar = () => {
               ))}
             </div>
             <SidebarItem
-              title="Settings"
+              title="Empresa"
               icon="settings"
-              path="/dashboard/settings"
+              path="/empresa"
               activePath={activePath}
               setActivePath={setActivePath}
             />

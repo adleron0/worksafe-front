@@ -9,13 +9,13 @@ export interface IEntity {
   customerId?: number | null;
   courseId?: number;
   price?: number | 0;
-  oldPrice?: number;
+  discountPrice?: number;
   hoursDuration?: number | null;
   openClass?: boolean;
   gifts?: string | null;
   description?: string | null;
   gradeTheory?: string;
-  gradePracticle?: string;
+  gradePracticle?: string | null;
   videoUrl?: string | null;
   videoTitle?: string | null;
   videoSubtitle?: string | null;

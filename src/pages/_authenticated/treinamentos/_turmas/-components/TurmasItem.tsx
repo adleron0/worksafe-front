@@ -2,6 +2,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { patch, post } from "@/services/api";
 import { useLoader } from "@/context/GeneralContext";
+import { useTheme } from "@/context/ThemeContext";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 // Template Page
@@ -36,6 +37,7 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
+  const { theme } = useTheme();
   const [openQrModal, setOpenQrModal] = useState(false);
   const [openDuplicateModal, setOpenDuplicateModal] = useState(false);
   const [openAttendanceModal, setOpenAttendanceModal] = useState(false);
@@ -321,7 +323,9 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
                   onClick={() => {
                     const baseUrl = process.env.NODE_ENV === 'development' 
                       ? 'http://localhost:5173' 
-                      : 'https://worksafebrasil.com.br';
+                      : theme.companyData?.lp_domain 
+                        ? `https://${theme.companyData.lp_domain}`
+                        : 'https://worksafebrasil.com.br';
                     const enrollmentLink = `${baseUrl}/turma/${item.id}`;
                     
                     navigator.clipboard.writeText(enrollmentLink).then(() => {

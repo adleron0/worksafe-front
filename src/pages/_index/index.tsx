@@ -111,12 +111,10 @@ function Login() {
         <div className="flex flex-col gap-4 items-center justify-center w-full max-w-3xl">
           <h1 className="text-2xl md:text-3xl font-bold text-primary">Bem-vindo de volta!</h1>
           <p className="text-foreground text-sm max-w-4/5 md:text-base mt-2">
-            Aqui você acessa o sistema de gerenciamento WorkSafe Brasil para gestão dos seus serviços, atividades,
-            áreas de risco e de seus colaboradores.
+            Aqui você acessa o sistema de gerenciamento de turmas e gestão de treinamentos.
           </p>
           <p className="text-muted-foreground font-light max-w-4/5 text-sm md:text-base mt-2">
-            Se ainda não possui acesso ao nosso sistema, entre em contato com nosso time comercial ou suporte para
-            avaliarmos seus caso e liberar o acesso.
+            Se ainda não possui acesso ao sistema, entre em contato com seu superior ou suporte para avaliarmos seus caso e liberação do acesso.
           </p>
         </div>
       </div>

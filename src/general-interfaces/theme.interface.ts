@@ -30,6 +30,7 @@ export interface CompanyThemeData {
   representative_contact: string | null;
   operational_email: string | null;
   operational_contact: string | null;
+  lp_domain: string | null;
   websiteUrl: string | null;
   facebookUrl: string | null;
   instagramUrl: string | null;

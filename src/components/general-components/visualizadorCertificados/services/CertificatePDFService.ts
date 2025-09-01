@@ -4,7 +4,6 @@ import QRCode from 'qrcode';
 import { 
   CertificateData, 
   VariableToReplace, 
-  ProcessedCanvasData,
   StudentData 
 } from '../types';
 import { VariableReplacer } from '../utils/VariableReplacer';

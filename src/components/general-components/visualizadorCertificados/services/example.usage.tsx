@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import CertificatePDFService from './CertificatePDFService';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -24,6 +24,7 @@ export const DownloadCertificateExample = () => {
     try {
       // Dados do certificado (normalmente viriam da API)
       const certificateData = {
+        id: 1,
         certificateId: 'CERT-001',
         name: 'Certificado de Conclusão',
         fabricJsonFront: '{}', // JSON do canvas da frente
@@ -34,10 +35,10 @@ export const DownloadCertificateExample = () => {
 
       // Variáveis para substituir no template
       const variables = {
-        nome_do_aluno: { type: 'string', value: 'João Silva' },
-        nome_do_curso: { type: 'string', value: 'NR-35 Trabalho em Altura' },
-        data_conclusao: { type: 'string', value: '15/03/2024' },
-        carga_horaria: { type: 'string', value: '8 horas' }
+        nome_do_aluno: { type: 'string' as const, value: 'João Silva' },
+        nome_do_curso: { type: 'string' as const, value: 'NR-35 Trabalho em Altura' },
+        data_conclusao: { type: 'string' as const, value: '15/03/2024' },
+        carga_horaria: { type: 'string' as const, value: '8 horas' }
       };
 
       // Gerar e baixar o PDF
@@ -79,6 +80,7 @@ export const EmailCertificateExample = () => {
     
     try {
       const certificateData = {
+        id: 2,
         certificateId: 'CERT-002',
         name: 'Certificado de Participação',
         fabricJsonFront: '{}',
@@ -87,8 +89,8 @@ export const EmailCertificateExample = () => {
       };
 
       const variables = {
-        nome_do_aluno: { type: 'string', value: 'Maria Santos' },
-        nome_do_curso: { type: 'string', value: 'NR-10 Segurança em Eletricidade' }
+        nome_do_aluno: { type: 'string' as const, value: 'Maria Santos' },
+        nome_do_curso: { type: 'string' as const, value: 'NR-10 Segurança em Eletricidade' }
       };
 
       // Gerar PDF como Blob
@@ -143,6 +145,7 @@ export const Base64CertificateExample = () => {
     
     try {
       const certificateData = {
+        id: 3,
         certificateId: 'CERT-003',
         name: 'Certificado de Treinamento',
         fabricJsonFront: '{}',
@@ -151,7 +154,7 @@ export const Base64CertificateExample = () => {
       };
 
       const variables = {
-        nome_do_aluno: { type: 'string', value: 'Pedro Oliveira' }
+        nome_do_aluno: { type: 'string' as const, value: 'Pedro Oliveira' }
       };
 
       // Gerar PDF como Base64
@@ -214,6 +217,7 @@ export const BatchCertificatesExample = () => {
     
     try {
       const certificateData = {
+        id: 4,
         certificateId: 'CERT-BATCH',
         name: 'Certificado de Curso',
         fabricJsonFront: '{}',
@@ -225,20 +229,20 @@ export const BatchCertificatesExample = () => {
       const students = [
         {
           variables: {
-            nome_do_aluno: { type: 'string', value: 'Ana Silva' },
-            nome_do_curso: { type: 'string', value: 'NR-35' }
+            nome_do_aluno: { type: 'string' as const, value: 'Ana Silva' },
+            nome_do_curso: { type: 'string' as const, value: 'NR-35' }
           }
         },
         {
           variables: {
-            nome_do_aluno: { type: 'string', value: 'Carlos Santos' },
-            nome_do_curso: { type: 'string', value: 'NR-35' }
+            nome_do_aluno: { type: 'string' as const, value: 'Carlos Santos' },
+            nome_do_curso: { type: 'string' as const, value: 'NR-35' }
           }
         },
         {
           variables: {
-            nome_do_aluno: { type: 'string', value: 'Beatriz Lima' },
-            nome_do_curso: { type: 'string', value: 'NR-35' }
+            nome_do_aluno: { type: 'string' as const, value: 'Beatriz Lima' },
+            nome_do_curso: { type: 'string' as const, value: 'NR-35' }
           }
         }
       ];
@@ -337,6 +341,7 @@ export const IntegrationExample = () => {
       
       // Exemplo com dados mockados
       const certificateData = {
+        id: 5,
         certificateId: 'CERT-API-001',
         name: 'Certificado Personalizado',
         fabricJsonFront: '{}',
@@ -345,7 +350,7 @@ export const IntegrationExample = () => {
       };
 
       const variables = {
-        nome_do_aluno: { type: 'string', value: 'Exemplo Aluno' }
+        nome_do_aluno: { type: 'string' as const, value: 'Exemplo Aluno' }
       };
 
       // Gerar com qualidade selecionada

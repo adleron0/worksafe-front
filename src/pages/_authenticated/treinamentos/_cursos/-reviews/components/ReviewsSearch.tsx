@@ -45,18 +45,20 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
     setSearchData(prev => ({ ...prev, ...newData }));
   }, [params]);
 
-  const handleChange = (name: string, value: string | number | null) => {
+  const handleChange = (name: string, value: string | number | string[] | null) => {
+    let processedValue: string | number | boolean | string[] | null = value;
+    
     if (name === 'authorizationExposeReview' || name === 'active') {
-      if (value === 'true') value = true;
-      else if (value === 'false') value = false;
-      else value = null;
+      if (value === 'true') processedValue = true;
+      else if (value === 'false') processedValue = false;
+      else processedValue = null;
     }
     
     if (name === 'generalRating' && value !== null) {
-      value = Number(value);
+      processedValue = Number(value);
     }
     
-    setSearchData(prev => ({ ...prev, [name]: value }));
+    setSearchData(prev => ({ ...prev, [name]: processedValue }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -119,18 +121,17 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
           name="trainee"
           placeholder="Nome do aluno"
           value={searchData.trainee || ""}
-          onChange={(value) => handleChange("trainee", value)}
+          onValueChange={handleChange}
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="generalRating">Avaliação Geral</Label>
         <Select
-          id="generalRating"
           name="generalRating"
           options={ratingOptions}
-          value={searchData.generalRating?.toString() || ""}
-          onChange={(value) => handleChange("generalRating", value === "" ? null : value)}
+          state={searchData.generalRating?.toString() || ""}
+          onChange={(name, value) => handleChange(name, typeof value === 'string' && value === "" ? null : value)}
           placeholder="Selecione a avaliação"
         />
       </div>
@@ -138,11 +139,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
       <div className="space-y-2">
         <Label htmlFor="authorizationExposeReview">Autorização para Exposição</Label>
         <Select
-          id="authorizationExposeReview"
           name="authorizationExposeReview"
           options={booleanOptions}
-          value={searchData.authorizationExposeReview?.toString() || ""}
-          onChange={(value) => handleChange("authorizationExposeReview", value === "" ? null : value)}
+          state={searchData.authorizationExposeReview?.toString() || ""}
+          onChange={(name, value) => handleChange(name, typeof value === 'string' && value === "" ? null : value)}
           placeholder="Selecione uma opção"
         />
       </div>
@@ -150,11 +150,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
       <div className="space-y-2">
         <Label htmlFor="active">Status</Label>
         <Select
-          id="active"
           name="active"
           options={statusOptions}
-          value={searchData.active?.toString() || ""}
-          onChange={(value) => handleChange("active", value === "" ? null : value)}
+          state={searchData.active?.toString() || ""}
+          onChange={(name, value) => handleChange(name, typeof value === 'string' && value === "" ? null : value)}
           placeholder="Selecione o status"
         />
       </div>

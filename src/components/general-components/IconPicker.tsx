@@ -114,7 +114,7 @@ const IconPicker: React.FC<IconPickerProps> = ({
         <Label htmlFor="icon-search">
           {label}
           {selectedIcon && (
-            <Badge variant="secondary" className="ml-2">
+            <Badge variant="outline" className="ml-2">
               <Icon name={selectedIcon} className="h-3 w-3 mr-1" />
               {selectedIcon}
             </Badge>

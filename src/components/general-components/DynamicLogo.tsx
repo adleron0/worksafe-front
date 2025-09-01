@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '@/context/ThemeContext';
-import Logo from './Logo';
+import { Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DynamicLogoProps {
@@ -78,17 +78,45 @@ const DynamicLogo: React.FC<DynamicLogoProps> = ({
     );
   }
 
-  // Se não tem logo e fallback está habilitado, usa o componente Logo padrão
+  // Se não tem logo e fallback está habilitado, usa um ícone do Lucide
   if (fallbackToDefault) {
     return (
-      <Logo 
-        className={className}
-        width={`${width}`}
-        height={`${height}`}
-        // Usar cores do tema para o Logo SVG padrão
-        colorPath24={(forceWhite || isDarkMode) ? '#ffffff' : theme.primaryColor}
-        colorPath25={(forceWhite || isDarkMode) ? '#ffffff' : (theme.secondaryColor || theme.primaryColor)}
-      />
+      <div 
+        className={cn("flex items-center gap-2", className)} 
+        style={{ width: `${width}px`, height: `${height}px` }}
+      >
+        <div 
+          className="flex items-center justify-center rounded-lg p-2"
+          style={{ 
+            backgroundColor: (forceWhite || isDarkMode) ? 'rgba(255,255,255,0.1)' : `${theme.primaryColor}20`
+          }}
+        >
+          <Shield 
+            className="w-8 h-8" 
+            style={{ 
+              color: (forceWhite || isDarkMode) ? '#ffffff' : theme.primaryColor
+            }}
+          />
+        </div>
+        <div className="flex flex-col">
+          <span 
+            className="text-lg font-bold leading-tight"
+            style={{ 
+              color: (forceWhite || isDarkMode) ? '#ffffff' : theme.primaryColor
+            }}
+          >
+            CertifiCajá
+          </span>
+          <span 
+            className="text-xs font-medium opacity-80"
+            style={{ 
+              color: (forceWhite || isDarkMode) ? '#ffffff' : theme.primaryColor
+            }}
+          >
+            Auth
+          </span>
+        </div>
+      </div>
     );
   }
 

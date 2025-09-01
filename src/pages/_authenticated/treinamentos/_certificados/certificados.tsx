@@ -6,6 +6,7 @@ import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
 import Pagination from "@/components/general-components/Pagination";
 import Select from "@/components/general-components/Select";
+import Calendar from "@/components/general-components/Calendar";
 // Template Page list-form
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
@@ -39,6 +40,8 @@ function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: 
     classId: number | null;
     courseId: number | null;
     'like-trainee.name'?: string;
+    'gte-expirationDate'?: string;
+    'lte-expirationDate'?: string;
   }>({
     limit: 10,
     page: 0,
@@ -185,6 +188,29 @@ function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: 
     }));
   }, []);
 
+  // Handler para o filtro de data
+  const handleDateRangeChange = useCallback((_name: string, value: string | null) => {
+    if (value) {
+      // Parse do valor no formato "startDate|endDate"
+      const [startDate, endDate] = value.split('|');
+      setSearchParams(prev => ({
+        ...prev,
+        'gte-expirationDate': startDate || undefined,
+        'lte-expirationDate': endDate || undefined,
+        page: 0 // Reset page when searching
+      }));
+    } else {
+      // Limpar filtros de data
+      setSearchParams(prev => ({
+        ...prev,
+        'gte-expirationDate': undefined,
+        'lte-expirationDate': undefined,
+        page: 0
+      }));
+    }
+  }, []);
+
+
   if (!can(`view_${entity.ability}`)) return null;
 
   return (
@@ -208,7 +234,7 @@ function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: 
           iconForm="award"
           onTextSearch={handleTextSearch}
         />
-        <div className="flex justify-start items-center px-2 gap-2">
+        <div className="flex justify-start items-center px-2 gap-2 flex-wrap">
           {/* Select de turmas */}
           <div className="w-[250px]">
             <Select
@@ -240,6 +266,25 @@ function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: 
                 setSearchParams((prev) => ({ ...prev, [name]: selectedValue }));
               }}
               disabled={coursesData?.length === 0}
+            />
+          </div>
+          
+          {/* Filtro de período de vencimento */}
+          <div className="w-[280px]">
+            <Calendar
+              mode="range"
+              name="expirationDateRange"
+              value={
+                searchParams['gte-expirationDate'] && searchParams['lte-expirationDate']
+                  ? `${searchParams['gte-expirationDate']}|${searchParams['lte-expirationDate']}`
+                  : null
+              }
+              onValueChange={handleDateRangeChange}
+              placeholder="Período de Vencimento"
+              buttonVariant="outline"
+              className="w-full"
+              fromYear={new Date().getFullYear() - 1}
+              toYear={new Date().getFullYear() + 10}
             />
           </div>
         </div>

@@ -99,7 +99,7 @@ const TagInput: React.FC<TagInputProps> = ({
           <Badge
             key={index}
             variant="secondary"
-            className={`flex items-center gap-1 pl-1 pr-2 py-1 cursor-move ${
+            className={`flex items-center bg-muted-50 hover:bg-muted gap-1 pl-1 pr-2 py-1 cursor-move ${
               draggedIndex === index ? 'opacity-50' : ''
             }`}
             draggable

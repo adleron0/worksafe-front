@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { format, parse, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -270,6 +270,42 @@ const CalendarPicker = ({
     return placeholder;
   };
 
+  // Função para limpar todas as seleções
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Evita que o popover abra/feche
+    
+    if (mode === "single" || mode === "natural") {
+      setDate(undefined);
+      setInputValue("");
+    } else if (mode === "range") {
+      setDateRange({ from: undefined, to: undefined });
+    } else if (mode === "multiple") {
+      setDates([]);
+    }
+    
+    // Chamar callback para notificar o componente pai
+    if (onValueChange) {
+      onValueChange(name, null);
+    }
+    
+    // Atualizar form se fornecido
+    if (form && formField) {
+      form.setValue(formField, undefined);
+    }
+  };
+
+  // Verificar se há alguma seleção ativa
+  const hasValue = () => {
+    if (mode === "single" || mode === "natural") {
+      return !!date;
+    } else if (mode === "range") {
+      return !!(dateRange.from || dateRange.to);
+    } else if (mode === "multiple") {
+      return dates.length > 0;
+    }
+    return false;
+  };
+
   const renderCalendar = () => {
     if (mode === "single") {
       return (
@@ -328,7 +364,7 @@ const CalendarPicker = ({
           id={name}
           value={inputValue}
           placeholder={placeholder || "DD/MM/AAAA"}
-          className={cn("pr-10", className)}
+          className={cn("pr-16", className)} // Aumentado padding para dar espaço aos dois botões
           onChange={handleNaturalInputChange}
           disabled={disabled}
           maxLength={10}
@@ -339,6 +375,20 @@ const CalendarPicker = ({
             }
           }}
         />
+        {/* Botão de limpar */}
+        {hasValue() && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleClear}
+            className="absolute top-1/2 right-8 h-4 w-4 -translate-y-1/2 p-0 hover:bg-destructive/10"
+            disabled={disabled}
+            title="Limpar data"
+          >
+            <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+            <span className="sr-only">Limpar data</span>
+          </Button>
+        )}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -372,25 +422,41 @@ const CalendarPicker = ({
 
   // Original render for other modes
   return (
-    <Popover modal={true}>
-      <PopoverTrigger asChild>
+    <div className="relative">
+      <Popover modal={true}>
+        <PopoverTrigger asChild>
+          <Button
+            variant={buttonVariant}
+            className={cn(
+              "w-full justify-start text-left font-normal pr-10",
+              !date && !dateRange.from && !dateRange.to && dates.length === 0 && "text-muted-foreground",
+              className
+            )}
+            disabled={disabled}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {getDisplayText()}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent onOpenAutoFocus={(e) => e.preventDefault()} className="w-auto p-0">
+          {renderCalendar()}
+        </PopoverContent>
+      </Popover>
+      {/* Botão de limpar */}
+      {hasValue() && (
         <Button
-          variant={buttonVariant}
-          className={cn(
-            "w-full justify-start text-left font-normal",
-            !date && !dateRange.from && !dateRange.to && dates.length === 0 && "text-muted-foreground",
-            className
-          )}
+          type="button"
+          variant="ghost"
+          onClick={handleClear}
+          className="absolute top-1/2 right-2 h-6 w-6 -translate-y-1/2 p-0 hover:bg-destructive/10"
           disabled={disabled}
+          title="Limpar seleção"
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {getDisplayText()}
+          <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+          <span className="sr-only">Limpar seleção</span>
         </Button>
-      </PopoverTrigger>
-      <PopoverContent onOpenAutoFocus={(e) => e.preventDefault()} className="w-auto p-0">
-        {renderCalendar()}
-      </PopoverContent>
-    </Popover>
+      )}
+    </div>
   );
 };
 

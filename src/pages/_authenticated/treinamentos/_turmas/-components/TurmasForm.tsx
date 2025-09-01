@@ -21,6 +21,7 @@ import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { z } from "zod";
 import { RefreshCw, HelpCircle } from "lucide-react";
+import WhyUsEditor from "./WhyUsEditor";
 
 interface FormProps {
   formData?: IEntity;
@@ -102,6 +103,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         message: "Imagem deve ser um arquivo ou nulo.",
       }
     ),
+    whyUs: z.string().optional(),
   }).refine((data) => {
     // Se allowExam é true, classCode é obrigatório
     if (data.allowExam && (!data.classCode || data.classCode.trim() === '')) {
@@ -148,6 +150,33 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     maxSubscriptions: formData?.maxSubscriptions || 0,
     paymentMethods: (formData as any)?.paymentMethods || ['cartaoCredito', 'boleto', 'pix'],
     image: formData?.image || null,
+    whyUs: (formData as any)?.whyUs || JSON.stringify({
+      active: true,
+      title: "Por que nos escolher?",
+      subtitle: "Somos referência em nossa área de atuação, com anos de mercado.",
+      cards: [
+        {
+          icon: "award",
+          title: "Certificação Reconhecida",
+          description: "Certificados válidos em todo território nacional",
+        },
+        {
+          icon: "users",
+          title: "Turmas Reduzidas",
+          description: "Atenção personalizada para cada aluno",
+        },
+        {
+          icon: "shield",
+          title: "Instrutores Especializados",
+          description: "Profissionais com vasta experiência no mercado",
+        },
+        {
+          icon: "clock",
+          title: "Horários Flexíveis",
+          description: "Turmas em diversos horários para sua conveniência",
+        },
+      ],
+    }),
   });
   const initialFormRef = useRef(dataForm);
 
@@ -319,10 +348,12 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
-      <DropUpload
-        setImage={setDataForm}
-        EditPreview={preview}
-      />
+      <div className="h-60">
+        <DropUpload
+          setImage={setDataForm}
+          EditPreview={preview}
+        />
+      </div>
 
       <div>
         <Label htmlFor="courseId">Curso<span>*</span></Label>
@@ -732,6 +763,14 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           className="mt-1 h-40"
         />
         {errors.videoDescription && <p className="text-red-500 text-sm">{errors.videoDescription}</p>}
+      </div>
+
+      <div className="mt-6">
+        <WhyUsEditor
+          value={dataForm.whyUs || ""}
+          onChange={(value) => handleChange('whyUs', value)}
+          errors={errors}
+        />
       </div>
 
       <div className="mt-6">

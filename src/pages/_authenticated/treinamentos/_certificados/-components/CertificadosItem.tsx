@@ -1,6 +1,6 @@
 // Serviços
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { patch } from "@/services/api";
+import { patch, post } from "@/services/api";
 import { useLoader } from "@/context/GeneralContext";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
@@ -105,6 +105,67 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
       activate(item.id);
     } else {
       deactivate(item.id);
+    }
+  };
+
+  // Função para enviar certificado por email
+  const handleSendEmail = async () => {
+    if (!item.traineeId || !item.key) {
+      toast({
+        title: "Erro ao enviar certificado",
+        description: "Dados incompletos para enviar o certificado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    showLoader("Enviando certificado por email...");
+
+    try {
+      // Enviar apenas traineeId e key do certificado
+      const dataToSend = {
+        traineeId: item.traineeId,
+        certificateKey: item.key,
+      };
+      
+      // Enviar dados simplificados
+      await post('trainee-certificate', 'send-email', dataToSend);
+
+      hideLoader();
+      toast({
+        title: "Certificado enviado!",
+        description: `Certificado enviado com sucesso para ${item?.trainee?.name || 'o email cadastrado'}`,
+        variant: "success",
+      });
+
+    } catch (error: unknown) {
+      hideLoader();
+      console.error('Erro ao enviar certificado:', error);
+      
+      const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
+      
+      // Tratamento específico para erro 403
+      if (axiosError?.response?.status === 403) {
+        toast({
+          title: "Sem permissão",
+          description: "Você não tem permissão para enviar certificados por email. Verifique com o administrador.",
+          variant: "destructive",
+        });
+      } else if (axiosError?.response?.data?.message) {
+        toast({
+          title: "Erro ao enviar certificado",
+          description: axiosError.response.data.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro ao enviar certificado",
+          description: error instanceof Error 
+            ? error.message 
+            : "Erro ao enviar o certificado",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -256,6 +317,19 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
                     <Icon name="download" className="w-3 h-3" /> 
                     <p>Baixar PDF</p>
                   </Button>
+                </DropdownMenuItem>
+              )}
+
+              {/* Enviar por Email */}
+              {item.traineeId && item.key && (
+                <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                  <ConfirmDialog
+                    title="Enviar certificado por email?"
+                    description={`Deseja enviar o certificado para ${item.trainee?.name || 'o aluno'}?`}
+                    onConfirm={handleSendEmail}
+                    titleBttn="Enviar por Email"
+                    iconBttn="mail"
+                  />
                 </DropdownMenuItem>
               )}
               

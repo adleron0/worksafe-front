@@ -16,6 +16,10 @@ import ListHeader from "@/components/general-components/ListHeader";
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
+// Dialog para reviews
+import { useState } from "react";
+import Dialog from "@/components/general-components/Dialog";
+import Reviews from "../-reviews";
 
 interface ItemsProps {
   item: IEntity;
@@ -29,6 +33,7 @@ const CoursesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPro
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
+  const [openReviews, setOpenReviews] = useState(false);
 
    // Mutation para inativar
   const { mutate: deactivate } = useMutation({
@@ -69,7 +74,7 @@ const CoursesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPro
       hideLoader();
       toast({
         title: `${entity.name} ${item.name} reativado!`,
-        description: `O ${entity.name} foi reativado com sucesso.`,
+        description: `${entity.name} foi reativado com sucesso.`,
         variant: "success",
       })
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
@@ -172,7 +177,7 @@ const CoursesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPro
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
-                className="h-8 w-8 rounded-full p-0 text-gray-700"
+                className="h-8 w-8 rounded-full p-0 text-gray-700 cursor-pointer"
                 variant="outline"
                 size="sm">
                   <Icon name="ellipsis-vertical" className="text-foreground dark:text-primary w-3 h-3" />
@@ -181,9 +186,10 @@ const CoursesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPro
             <DropdownMenuContent>
 
               { can(`update_${entity.ability}`) && (
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                   <Button 
                     variant="ghost" 
-                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                    className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
                     onClick={() => {
                       setFormData(item);
                       setOpenForm(true);
@@ -192,13 +198,15 @@ const CoursesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPro
                     <Icon name="edit-3" className="w-3 h-3" /> 
                     <p>Editar</p>
                   </Button>
+                </DropdownMenuItem>
                 )
               }
 
               { can(`update_${entity.ability}`) && (
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                   <Button 
                     variant="ghost" 
-                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                    className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
                     onClick={() => {
                       setFormData({...item, formType: 'exam'});
                       setOpenForm(true);
@@ -207,28 +215,43 @@ const CoursesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPro
                     <Icon name="file-text" className="w-3 h-3" /> 
                     <p>Exame do Curso</p>
                   </Button>
+                </DropdownMenuItem>
+                )
+              }
+
+              { can(`view_${entity.ability}`) && (
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Button 
+                    variant="ghost" 
+                    className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
+                    onClick={() => setOpenReviews(true)}
+                  >
+                    <Icon name="star" className="w-3 h-3" /> 
+                    <p>Ver Avaliações</p>
+                  </Button>
+                </DropdownMenuItem>
                 )
               }
               
               {
                 item.active ? (
                   can(`inactive_${entity.ability}`) && (
-                      <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                        <ConfirmDialog
-                          title={`Inativar o ${entity.name} ${item.name}?`}
-                          description={`Ao prosseguir, o ${entity.name} ${item.name} será inativo e não poderá acessar a plataforma.`}
-                          onConfirm={() => handleConfirmAction("deactivate")}
-                          titleBttn="Inativar"
-                          iconBttn="power-off"
-                        />
-                      </DropdownMenuItem>
-                  )
-                ) : (
-                  can(`activate_${entity.ability}`) && (	
                     <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
                       <ConfirmDialog
-                        title={`Reativar o ${entity.name} ${item.name}?`}
-                        description={`Ao prosseguir, o ${entity.name} ${item.name} será reativado e poderá acessar a plataforma.`}
+                        title={`Inativar ${entity.name} ${item.name}?`}
+                        description={`Ao prosseguir, ${entity.name} ${item.name} será inativado.`}
+                        onConfirm={() => handleConfirmAction("deactivate")}
+                        titleBttn="Inativar"
+                        iconBttn="power-off"
+                      />
+                    </DropdownMenuItem>
+                  )
+                ) : (
+                  can(`activate_${entity.ability}`) && (
+                    <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                      <ConfirmDialog
+                        title={`Reativar ${entity.name} ${item.name}?`}
+                        description={`Ao prosseguir, ${entity.name} ${item.name} será reativado.`}
                         onConfirm={() => handleConfirmAction("activate")}
                         titleBttn="Reativar"
                         iconBttn="power"
@@ -241,6 +264,21 @@ const CoursesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPro
           </DropdownMenu>
         </div>
       </div>
+      
+      {/* Dialog para exibir reviews do curso */}
+      <Dialog 
+        open={openReviews} 
+        onOpenChange={setOpenReviews}
+        title="Avaliações do Curso"
+        description={`Lista de avaliações do curso ${item.name}`}
+        showBttn={false}
+        showHeader={true}
+      >
+        <Reviews 
+          courseId={item.id || 0}
+          courseName={item.name}
+        />
+      </Dialog>
     </>
   )
 };

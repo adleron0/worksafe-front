@@ -14,8 +14,7 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import ListHeader from "@/components/general-components/ListHeader";
 import DuplicateCertificateModal from "./DuplicateCertificateModal";
-import VisualizadorCertificados from "@/components/general-components/visualizadorCertificados/VisualizadorCertificados";
-// import { CertificateThumbnail } from "@/components/general-components/visualizadorCertificados";
+import VisualizadorCertificados, { CertificateThumbnail } from "@/components/general-components/visualizadorCertificados";
 import Dialog from "@/components/general-components/Dialog";
 // Interfaces
 import { ICertificate } from "../-interfaces/entity.interface";
@@ -112,7 +111,7 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm, isDesk
   };
 
   // Verificar se tem verso
-  const hasBackPage = item.fabricJsonBack !== null;
+  // const hasBackPage = item.fabricJsonBack !== null;
 
   return (
     <>
@@ -128,35 +127,36 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm, isDesk
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
         {/* Badges */}
-        <div className="absolute -top-1 left-4 flex items-center gap-2">
+        {/* <div className="absolute -top-1 left-4 flex items-center gap-2">
           {hasBackPage && (
             <Badge variant="outline" className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary">
               <Icon name="file-text" className="w-3 h-3" />
               Frente e Verso
             </Badge>
           )}
-        </div>
+        </div> */}
 
         {/* Thumbnail e Nome */}
         <div className="w-full h-full flex items-center space-x-4 md:pr-2 ">
-          {/* {item.fabricJsonFront ? (
-            <CertificateThumbnail 
-              certificateData={item}
-              className="border border-gray-200 dark:border-gray-700 shadow-sm"
-              size={30}
-            />
+          {/* Usar CertificateThumbnail se houver dados do certificado, senão usar Avatar como fallback */}
+          {item.fabricJsonFront ? (
+            <div className="w-30 rounded-md overflow-hidden border bg-white dark:bg-gray-800">
+              <CertificateThumbnail
+                certificateData={item}
+                variableToReplace={{}}
+                className="w-full h-fit"
+                zoom={20}
+                // onClick={() => setOpenViewModal(true)}
+                showLoader={false}
+              />
+            </div>
           ) : (
             <Avatar className="border rounded-md bg-primary/10">
               <AvatarFallback className="rounded-md bg-primary/10 text-primary font-bold">
                 {getThumbnail()}
               </AvatarFallback>
             </Avatar>
-          )} */}
-          <Avatar className="border rounded-md bg-primary/10">
-            <AvatarFallback className="rounded-md bg-primary/10 text-primary font-bold">
-              {getThumbnail()}
-            </AvatarFallback>
-          </Avatar>
+          )}
           <div className="break-words w-9/12 md:w-full">
             <h2 className="text-sm font-semibold">{item.name}</h2>
             <p className="text-xs text-muted-foreground">

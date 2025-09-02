@@ -29,6 +29,7 @@ import { Route as AuthenticatedInventariosAccessControlImport } from './pages/_a
 import { Route as AuthenticatedUsuariosUsuariosIndexImport } from './pages/_authenticated/usuarios/_usuarios/index'
 import { Route as AuthenticatedInventariosAreasIndexImport } from './pages/_authenticated/inventarios/areas/index'
 import { Route as AuthenticatedFinanceiroGatewaysIndexImport } from './pages/_authenticated/financeiro/gateways/index'
+import { Route as IndexCertificadosNomeIdImport } from './pages/_index/certificados/$nome.$id'
 import { Route as AuthenticatedUsuariosPerfisPerfisImport } from './pages/_authenticated/usuarios/_perfis/perfis'
 import { Route as AuthenticatedTreinamentosTurmasTurmasImport } from './pages/_authenticated/treinamentos/_turmas/turmas'
 import { Route as AuthenticatedTreinamentosInstrutoresInstrutoresImport } from './pages/_authenticated/treinamentos/_instrutores/instrutores'
@@ -158,6 +159,12 @@ const AuthenticatedFinanceiroGatewaysIndexRoute =
     path: '/financeiro/gateways/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+
+const IndexCertificadosNomeIdRoute = IndexCertificadosNomeIdImport.update({
+  id: '/certificados/$nome/$id',
+  path: '/certificados/$nome/$id',
+  getParentRoute: () => IndexRoute,
+} as any)
 
 const AuthenticatedUsuariosPerfisPerfisRoute =
   AuthenticatedUsuariosPerfisPerfisImport.update({
@@ -422,6 +429,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsuariosPerfisPerfisImport
       parentRoute: typeof AuthenticatedImport
     }
+    '/_index/certificados/$nome/$id': {
+      id: '/_index/certificados/$nome/$id'
+      path: '/certificados/$nome/$id'
+      fullPath: '/certificados/$nome/$id'
+      preLoaderRoute: typeof IndexCertificadosNomeIdImport
+      parentRoute: typeof IndexImport
+    }
     '/_authenticated/financeiro/gateways/': {
       id: '/_authenticated/financeiro/gateways/'
       path: '/financeiro/gateways'
@@ -526,6 +540,7 @@ interface IndexRouteChildren {
   IndexCertificadosIdRoute: typeof IndexCertificadosIdRoute
   IndexProvaClassIdRoute: typeof IndexProvaClassIdRoute
   IndexCertificadosIndexRoute: typeof IndexCertificadosIndexRoute
+  IndexCertificadosNomeIdRoute: typeof IndexCertificadosNomeIdRoute
 }
 
 const IndexRouteChildren: IndexRouteChildren = {
@@ -533,6 +548,7 @@ const IndexRouteChildren: IndexRouteChildren = {
   IndexCertificadosIdRoute: IndexCertificadosIdRoute,
   IndexProvaClassIdRoute: IndexProvaClassIdRoute,
   IndexCertificadosIndexRoute: IndexCertificadosIndexRoute,
+  IndexCertificadosNomeIdRoute: IndexCertificadosNomeIdRoute,
 }
 
 const IndexRouteWithChildren = IndexRoute._addFileChildren(IndexRouteChildren)
@@ -563,6 +579,7 @@ export interface FileRoutesByFullPath {
   '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/financeiro/gateways': typeof AuthenticatedFinanceiroGatewaysIndexRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
@@ -594,6 +611,7 @@ export interface FileRoutesByTo {
   '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/financeiro/gateways': typeof AuthenticatedFinanceiroGatewaysIndexRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
@@ -627,6 +645,7 @@ export interface FileRoutesById {
   '/_authenticated/treinamentos/_instrutores/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/_authenticated/treinamentos/_turmas/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/_authenticated/usuarios/_perfis/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/_index/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/_authenticated/financeiro/gateways/': typeof AuthenticatedFinanceiroGatewaysIndexRoute
   '/_authenticated/inventarios/areas/': typeof AuthenticatedInventariosAreasIndexRoute
   '/_authenticated/usuarios/_usuarios/': typeof AuthenticatedUsuariosUsuariosIndexRoute
@@ -660,6 +679,7 @@ export interface FileRouteTypes {
     | '/treinamentos/instrutores'
     | '/treinamentos/turmas'
     | '/usuarios/perfis'
+    | '/certificados/$nome/$id'
     | '/financeiro/gateways'
     | '/inventarios/areas'
     | '/usuarios'
@@ -690,6 +710,7 @@ export interface FileRouteTypes {
     | '/treinamentos/instrutores'
     | '/treinamentos/turmas'
     | '/usuarios/perfis'
+    | '/certificados/$nome/$id'
     | '/financeiro/gateways'
     | '/inventarios/areas'
     | '/usuarios'
@@ -721,6 +742,7 @@ export interface FileRouteTypes {
     | '/_authenticated/treinamentos/_instrutores/instrutores'
     | '/_authenticated/treinamentos/_turmas/turmas'
     | '/_authenticated/usuarios/_perfis/perfis'
+    | '/_index/certificados/$nome/$id'
     | '/_authenticated/financeiro/gateways/'
     | '/_authenticated/inventarios/areas/'
     | '/_authenticated/usuarios/_usuarios/'
@@ -785,7 +807,8 @@ export const routeTree = rootRoute
         "/_index/",
         "/_index/certificados/$id",
         "/_index/prova/$classId",
-        "/_index/certificados/"
+        "/_index/certificados/",
+        "/_index/certificados/$nome/$id"
       ]
     },
     "/_authenticated/building": {
@@ -883,6 +906,10 @@ export const routeTree = rootRoute
     "/_authenticated/usuarios/_perfis/perfis": {
       "filePath": "_authenticated/usuarios/_perfis/perfis.tsx",
       "parent": "/_authenticated"
+    },
+    "/_index/certificados/$nome/$id": {
+      "filePath": "_index/certificados/$nome.$id.tsx",
+      "parent": "/_index"
     },
     "/_authenticated/financeiro/gateways/": {
       "filePath": "_authenticated/financeiro/gateways/index.tsx",

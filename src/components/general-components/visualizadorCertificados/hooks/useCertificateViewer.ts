@@ -349,31 +349,70 @@ export const useCertificateViewer = (
                   processTextboxes();
                 }, 500);
                 
+                // Primeiro passo: ocultar TODAS as imagens temporariamente (não apenas assinaturas)
+                // para identificar quais são assinaturas depois
+                frontCanvas.getObjects().forEach((obj: any) => {
+                  // Verificar se é uma imagem - no Fabric.js v6 o type é 'Image' com I maiúsculo
+                  if (obj.type === 'Image' || obj.type === 'image') {
+                    // Verificar se é assinatura por diferentes critérios
+                    const isAssinatura = obj.name?.includes('assinatura') || 
+                                       obj.name?.includes('image_') ||
+                                       obj.placeholderNameDebug?.includes('assinatura');
+                    
+                    if (isAssinatura) {
+                      obj.set({ 
+                        opacity: 0,
+                        dirty: true 
+                      });
+                      frontCanvas.renderAll(); // Forçar renderização imediata após ocultar
+                    }
+                  }
+                });
+                
                 // Ajustar escala das imagens após carregamento
                 // Aguardar um pouco para garantir que as imagens foram carregadas
                 setTimeout(() => {
                   frontCanvas.getObjects().forEach((obj: any) => {
-                    // Verificar se é uma imagem de assinatura
-                    if (obj.type === 'image' && obj.name?.includes('assinatura')) {
-                      // Verificar se temos as dimensões alvo e a imagem foi carregada
-                      if (obj.targetHeight && obj.targetWidth && obj._element) {
-                        const naturalWidth = obj._element.naturalWidth;
-                        const naturalHeight = obj._element.naturalHeight;
-                        
-                        if (naturalWidth && naturalHeight) {
-                          // Calcular a escala correta baseada no tamanho real
-                          const scaleToFitHeight = obj.targetHeight / naturalHeight;
-                          const scaleToFitWidth = obj.targetWidth / naturalWidth;
+                    // Verificar se é uma imagem - no Fabric.js v6 o type é 'Image' com I maiúsculo
+                    if (obj.type === 'Image' || obj.type === 'image') {
+                      // Verificar se é assinatura por diferentes critérios
+                      const isAssinatura = obj.name?.includes('assinatura') || 
+                                         obj.name?.includes('image_') ||
+                                         obj.placeholderNameDebug?.includes('assinatura');
+                      
+                      if (isAssinatura) {
+                        // Verificar se temos as dimensões alvo e a imagem foi carregada
+                        if (obj.targetHeight && obj.targetWidth && obj._element) {
+                          const naturalWidth = obj._element.naturalWidth;
+                          const naturalHeight = obj._element.naturalHeight;
                           
-                          // Usar a menor escala para manter proporção
-                          const correctScale = Math.min(scaleToFitHeight, scaleToFitWidth);
-                          
-                          // Aplicar a nova escala
-                          obj.set({
-                            scaleX: correctScale,
-                            scaleY: correctScale
-                          });
+                          if (naturalWidth && naturalHeight) {
+                            // Calcular a escala correta baseada no tamanho real
+                            const scaleToFitHeight = obj.targetHeight / naturalHeight;
+                            const scaleToFitWidth = obj.targetWidth / naturalWidth;
+                            
+                            // Usar a menor escala para manter proporção
+                            const correctScale = Math.min(scaleToFitHeight, scaleToFitWidth);
+                            
+                            // Aplicar a nova escala
+                            obj.set({
+                              scaleX: correctScale,
+                              scaleY: correctScale
+                            });
+                          }
                         }
+                        
+                        // Garantir que a imagem está com opacity 0 antes do fade-in
+                        obj.set({ opacity: 0 });
+                        
+                        // Usar set com delay para fazer aparecer suavemente
+                        setTimeout(() => {
+                          obj.set({ 
+                            opacity: 1,
+                            dirty: true
+                          });
+                          frontCanvas.requestRenderAll();
+                        }, 100);
                       }
                     }
                   });
@@ -842,31 +881,63 @@ export const useCertificateViewer = (
                   processTextboxes();
                 }, 500);
                 
+                // Primeiro passo: ocultar imagens de assinatura no verso
+                backCanvas.getObjects().forEach((obj: any) => {
+                  if (obj.type === 'Image' || obj.type === 'image') {
+                    const isAssinatura = obj.name?.includes('assinatura') || 
+                                       obj.name?.includes('image_') ||
+                                       obj.placeholderNameDebug?.includes('assinatura');
+                    
+                    if (isAssinatura) {
+                      obj.set({ 
+                        opacity: 0,
+                        dirty: true 
+                      });
+                      backCanvas.renderAll();
+                    }
+                  }
+                });
+                
                 // Ajustar escala das imagens após carregamento no verso
                 // Aguardar um pouco para garantir que as imagens foram carregadas
                 setTimeout(() => {
                   backCanvas.getObjects().forEach((obj: any) => {
-                    // Verificar se é uma imagem de assinatura
-                    if (obj.type === 'image' && obj.name?.includes('assinatura')) {
-                      // Verificar se temos as dimensões alvo e a imagem foi carregada
-                      if (obj.targetHeight && obj.targetWidth && obj._element) {
-                        const naturalWidth = obj._element.naturalWidth;
-                        const naturalHeight = obj._element.naturalHeight;
-                        
-                        if (naturalWidth && naturalHeight) {
-                          // Calcular a escala correta baseada no tamanho real
-                          const scaleToFitHeight = obj.targetHeight / naturalHeight;
-                          const scaleToFitWidth = obj.targetWidth / naturalWidth;
+                    if (obj.type === 'Image' || obj.type === 'image') {
+                      const isAssinatura = obj.name?.includes('assinatura') || 
+                                         obj.name?.includes('image_') ||
+                                         obj.placeholderNameDebug?.includes('assinatura');
+                      
+                      if (isAssinatura) {
+                        // Verificar se temos as dimensões alvo e a imagem foi carregada
+                        if (obj.targetHeight && obj.targetWidth && obj._element) {
+                          const naturalWidth = obj._element.naturalWidth;
+                          const naturalHeight = obj._element.naturalHeight;
                           
-                          // Usar a menor escala para manter proporção
-                          const correctScale = Math.min(scaleToFitHeight, scaleToFitWidth);
-                          
-                          // Aplicar a nova escala
-                          obj.set({
-                            scaleX: correctScale,
-                            scaleY: correctScale
-                          });
+                          if (naturalWidth && naturalHeight) {
+                            // Calcular a escala correta baseada no tamanho real
+                            const scaleToFitHeight = obj.targetHeight / naturalHeight;
+                            const scaleToFitWidth = obj.targetWidth / naturalWidth;
+                            
+                            // Usar a menor escala para manter proporção
+                            const correctScale = Math.min(scaleToFitHeight, scaleToFitWidth);
+                            
+                            // Aplicar a nova escala
+                            obj.set({
+                              scaleX: correctScale,
+                              scaleY: correctScale
+                            });
+                          }
                         }
+                        
+                        // Garantir que está com opacity 0 e depois setar para 1
+                        obj.set({ opacity: 0 });
+                        setTimeout(() => {
+                          obj.set({ 
+                            opacity: 1,
+                            dirty: true
+                          });
+                          backCanvas.requestRenderAll();
+                        }, 100);
                       }
                     }
                   });

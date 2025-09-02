@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '@/context/ThemeContext';
-import { Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '../ui/skeleton';
 
 interface DynamicLogoProps {
   className?: string;
@@ -40,6 +40,7 @@ const DynamicLogo: React.FC<DynamicLogoProps> = ({
     return () => observer.disconnect();
   }, []);
 
+  // TESTE: Forçando o Skeleton - remova o "false &&" para voltar ao normal
   // Se tem logo da empresa, usa ela
   if (theme.logoUrl) {
     return (
@@ -78,44 +79,14 @@ const DynamicLogo: React.FC<DynamicLogoProps> = ({
     );
   }
 
-  // Se não tem logo e fallback está habilitado, usa um ícone do Lucide
+  // Se não tem logo e fallback está habilitado, mostra skeleton
   if (fallbackToDefault) {
     return (
       <div 
-        className={cn("flex items-center gap-2", className)} 
+        className={cn("flex items-center", className)} 
         style={{ width: `${width}px`, height: `${height}px` }}
       >
-        <div 
-          className="flex items-center justify-center rounded-lg p-2"
-          style={{ 
-            backgroundColor: (forceWhite || isDarkMode) ? 'rgba(255,255,255,0.1)' : `${theme.primaryColor}20`
-          }}
-        >
-          <Shield 
-            className="w-8 h-8" 
-            style={{ 
-              color: (forceWhite || isDarkMode) ? '#ffffff' : theme.primaryColor
-            }}
-          />
-        </div>
-        <div className="flex flex-col">
-          <span 
-            className="text-lg font-bold leading-tight"
-            style={{ 
-              color: (forceWhite || isDarkMode) ? '#ffffff' : theme.primaryColor
-            }}
-          >
-            CertifiCajá
-          </span>
-          <span 
-            className="text-xs font-medium opacity-80"
-            style={{ 
-              color: (forceWhite || isDarkMode) ? '#ffffff' : theme.primaryColor
-            }}
-          >
-            Auth
-          </span>
-        </div>
+        <Skeleton className="w-full h-full bg-muted" />
       </div>
     );
   }

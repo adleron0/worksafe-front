@@ -1,279 +1,265 @@
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { CertificateThumbnailProps } from './types';
+import { useCertificateThumbnail } from './hooks/useCertificateThumbnail';
+import CertificateCanvas, { CertificateCanvasRef } from './components/CertificateCanvas';
 import * as fabric from 'fabric';
-import { CertificateData } from './types';
-
-interface CertificateThumbnailProps {
-  certificateData: CertificateData;
-  className?: string;
-  size?: number;
-}
 
 const CertificateThumbnail: React.FC<CertificateThumbnailProps> = ({
   certificateData,
+  variableToReplace,
   className = '',
-  size = 48
+  zoom = 100,
+  onClick,
+  showLoader = true,
+  studentData // Mantém compatibilidade (deprecated)
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-
-  // Detectar orientação do certificado
-  const orientation = useMemo(() => {
-    const width = certificateData.canvasWidth || 842;
-    const height = certificateData.canvasHeight || 595;
-    return width > height ? 'landscape' : 'portrait';
-  }, [certificateData]);
-
-  // Calcular dimensões mantendo proporção A4
-  const dimensions = useMemo(() => {
-    const A4_WIDTH = orientation === 'landscape' ? 842 : 595;
-    const A4_HEIGHT = orientation === 'landscape' ? 595 : 842;
-    const aspectRatio = A4_WIDTH / A4_HEIGHT;
-    
-    // Para thumbnail, manter altura fixa e calcular largura
-    const height = size;
-    const width = Math.round(height * aspectRatio);
-    
-    return {
-      width,
-      height,
-      baseWidth: A4_WIDTH,
-      baseHeight: A4_HEIGHT
-    };
-  }, [size, orientation]);
-
-  // Aplicar proxy nas imagens
-  const processImagesInJSON = (jsonData: any): any => {
-    let data;
-    if (typeof jsonData === 'string') {
-      try {
-        data = JSON.parse(jsonData);
-      } catch (error) {
-        return jsonData;
-      }
-    } else {
-      data = JSON.parse(JSON.stringify(jsonData));
-    }
-    
-    if (data.objects && Array.isArray(data.objects)) {
-      data.objects = data.objects.map((obj: any) => {
-        if (obj.type && obj.type.toLowerCase() === 'image' && obj.src) {
-          const originalSrc = obj.src;
-          
-          if (originalSrc.includes('api.allorigins.win') || originalSrc.includes('/images/proxy')) {
-            return obj;
-          }
-          
-          if (originalSrc.startsWith('http://') || originalSrc.startsWith('https://')) {
-            const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3000';
-            obj.src = `${BASE_URL}/images/proxy?url=${encodeURIComponent(originalSrc)}`;
-            obj._originalUrl = originalSrc;
-          }
-        }
-        return obj;
-      });
-    }
-    
-    return data;
-  };
-
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const canvasRef = useRef<CertificateCanvasRef | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mountedRef = useRef(false);
+  
+  // Reset ao montar/desmontar
   useEffect(() => {
-    if (!certificateData.fabricJsonFront) {
-      setHasError(true);
-      setIsLoading(false);
-      return;
-    }
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
-    // Aguardar o canvas estar disponível no DOM
-    const timeoutId = setTimeout(() => {
-      if (!canvasRef.current) {
-        setHasError(true);
-        setIsLoading(false);
-        return;
-      }
+  const {
+    processedCanvasData,
+    isLoading,
+    page,
+    registerCanvasRef,
+    loadCanvasData
+  } = useCertificateThumbnail(certificateData, variableToReplace, studentData);
 
-      initCanvas();
-    }, 50);
-
-    const initCanvas = async () => {
+  // Carregar fontes do Google (versão simplificada)
+  useEffect(() => {
+    const loadGoogleFonts = async () => {
       try {
-        // Limpar canvas anterior
-        if (fabricCanvasRef.current) {
-          try {
-            fabricCanvasRef.current.dispose();
-          } catch (e) {
-            console.warn('Erro ao limpar canvas anterior:', e);
+        const fontsToLoad = [
+          'Bebas Neue',
+          'Roboto',
+          'Open Sans', 
+          'Lato',
+          'Montserrat',
+          'Poppins',
+          'Raleway',
+          'Inter',
+          'Playfair Display',
+          'Oswald',
+          'Merriweather'
+        ];
+
+        // Carregar Bebas Neue primeiro
+        const bebasLinkId = 'bebas-neue-priority-link';
+        if (!document.getElementById(bebasLinkId)) {
+          const bebasLink = document.createElement('link');
+          bebasLink.id = bebasLinkId;
+          bebasLink.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&display=block';
+          bebasLink.rel = 'stylesheet';
+          bebasLink.crossOrigin = 'anonymous';
+          
+          const firstElement = document.head.firstChild;
+          if (firstElement) {
+            document.head.insertBefore(bebasLink, firstElement);
+          } else {
+            document.head.appendChild(bebasLink);
           }
-          fabricCanvasRef.current = null;
+          
+          await new Promise((resolve) => {
+            bebasLink.onload = () => resolve(true);
+            bebasLink.onerror = () => resolve(false);
+            setTimeout(() => resolve(false), 3000);
+          });
         }
 
-        // Verificar se o elemento canvas ainda existe
-        if (!canvasRef.current) {
-          console.error('Canvas ref não disponível');
-          return;
+        // Adicionar estilos CSS
+        const styleId = 'thumbnail-google-fonts-import-styles';
+        if (!document.getElementById(styleId)) {
+          const style = document.createElement('style');
+          style.id = styleId;
+          style.textContent = `
+            @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=block');
+            @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Inter:wght@400;700&family=Playfair+Display:wght@400;700&family=Oswald:wght@400;700&family=Merriweather:wght@400;700&display=swap');
+          `;
+          document.head.appendChild(style);
         }
 
-        // Criar novo canvas com dimensões exatas
-        const canvas = new fabric.Canvas(canvasRef.current, {
-          width: dimensions.width,
-          height: dimensions.height,
-          backgroundColor: '#ffffff',
-          preserveObjectStacking: true,
-          selection: false,
-          interactive: false,
-          renderOnAddRemove: false
-        });
-
-        fabricCanvasRef.current = canvas;
-
-        // Processar JSON
-        const processedJson = processImagesInJSON(certificateData.fabricJsonFront);
-
-        // Garantir que tem background branco
-        if (!processedJson.objects) {
-          processedJson.objects = [];
-        }
+        // Verificar se já existe o link das fontes
+        let link = document.querySelector('link[href*="fonts.googleapis.com"][href*="Roboto"]') as HTMLLinkElement;
         
-        // Remover qualquer backgroundRect existente para evitar duplicação
-        processedJson.objects = processedJson.objects.filter((obj: any) => 
-          obj.name !== 'backgroundRect'
-        );
-        
-        // Adicionar novo background branco
-        const bgRect = new fabric.Rect({
-          left: 0,
-          top: 0,
-          width: dimensions.baseWidth,
-          height: dimensions.baseHeight,
-          fill: 'white',
-          selectable: false,
-          evented: false,
-          name: 'backgroundRect'
-        });
-        processedJson.objects.unshift(bgRect.toObject(['name']));
+        if (!link) {
+          link = document.createElement('link');
+          link.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Inter:wght@400;700&family=Playfair+Display:wght@400;700&family=Oswald:wght@400;700&family=Merriweather:wght@400;700&display=swap';
+          link.rel = 'stylesheet';
+          link.crossOrigin = 'anonymous';
+          document.head.appendChild(link);
+        }
 
-        // Calcular scale para ajustar conteúdo A4 no thumbnail
-        const scale = Math.min(
-          dimensions.width / dimensions.baseWidth,
-          dimensions.height / dimensions.baseHeight
-        ) * 0.9; // 90% para dar uma pequena margem
-
-        // Carregar JSON
-        await new Promise<void>((resolve, reject) => {
-          try {
-            canvas.loadFromJSON(processedJson).then(() => {
-              // Verificar se canvas ainda existe
-              if (!canvas || !fabricCanvasRef.current) {
-                reject(new Error('Canvas foi destruído'));
-                return;
-              }
-
-              // Desabilitar interação em todos os objetos
-              canvas.getObjects().forEach((obj: any) => {
-                obj.set({
-                  selectable: false,
-                  evented: false,
-                  hasControls: false,
-                  hasBorders: false
-                });
-              });
-
-              // Aplicar zoom e centralizar usando viewportTransform
-              const scaledWidth = dimensions.baseWidth * scale;
-              const scaledHeight = dimensions.baseHeight * scale;
-              const offsetX = (dimensions.width - scaledWidth) / 2;
-              const offsetY = (dimensions.height - scaledHeight) / 2;
+        // Aguardar o carregamento usando Font Loading API
+        if ('fonts' in document) {
+          await document.fonts.ready;
+          
+          // Verificação especial para Bebas Neue
+          const bebasNeue = fontsToLoad.find(f => f === 'Bebas Neue');
+          if (bebasNeue) {
+            try {
+              const variations = [
+                '400 12px "Bebas Neue"',
+                '12px "Bebas Neue"',
+                'normal 400 12px "Bebas Neue"'
+              ];
               
-              // Usar setViewportTransform para zoom e centralização simultâneos
-              canvas.setViewportTransform([
-                scale, 0, 0, scale, offsetX, offsetY
-              ]);
-
-              // Renderizar
-              canvas.renderAll();
-              
-              setTimeout(() => {
-                if (canvas && fabricCanvasRef.current) {
-                  canvas.renderAll();
+              for (const variation of variations) {
+                try {
+                  await document.fonts.load(variation, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
+                  const loaded = document.fonts.check(variation, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
+                  if (loaded) break;
+                } catch (e) {
+                  // Ignorar erro
                 }
-                setIsLoading(false);
-                setHasError(false);
-                resolve();
-              }, 100);
-            }).catch((error) => {
-              console.error('Erro ao carregar JSON:', error);
-              setHasError(true);
-              setIsLoading(false);
-              reject(error);
-            });
-          } catch (error) {
-            console.error('Erro ao processar JSON:', error);
-            setHasError(true);
-            setIsLoading(false);
-            reject(error);
+              }
+            } catch (error) {
+              console.error('Erro ao carregar Bebas Neue:', error);
+            }
           }
-        });
+          
+          // Carregar outras fontes
+          const fontPromises = fontsToLoad.filter(f => f !== 'Bebas Neue').map(async (fontFamily) => {
+            try {
+              const testString = `12px "${fontFamily}"`;
+              await document.fonts.load(testString, 'Test');
+              return document.fonts.check(testString, 'Test');
+            } catch (error) {
+              return true;
+            }
+          });
 
+          await Promise.allSettled(fontPromises);
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        setFontsLoaded(true);
       } catch (error) {
-        console.error('Erro ao inicializar thumbnail:', error);
-        setHasError(true);
-        setIsLoading(false);
+        console.error('Erro no carregamento de fontes:', error);
+        setFontsLoaded(true);
       }
     };
+
+    loadGoogleFonts();
+  }, []);
+
+  // Registrar canvas ref
+  const handleCanvasReady = useCallback((pageId: string, canvas: fabric.Canvas) => {
+    const canvasWrapper = {
+      getCanvas: () => canvas
+    };
+    
+    registerCanvasRef(pageId, canvasWrapper);
+    setCanvasReady(true);
+  }, [registerCanvasRef]);
+
+  // Estado para rastrear se canvas está pronto
+  const [canvasReady, setCanvasReady] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  
+  // Carregar dados quando processos estiverem prontos
+  useEffect(() => {
+    if (processedCanvasData && fontsLoaded && canvasReady && !dataLoaded && page) {
+      setDataLoaded(true);
+      loadCanvasData(processedCanvasData);
+    }
+  }, [processedCanvasData, fontsLoaded, canvasReady, dataLoaded, page, loadCanvasData]);
+
+  // Observer para o tamanho do container
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setContainerSize({ width, height });
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
 
     return () => {
-      clearTimeout(timeoutId);
-      if (fabricCanvasRef.current) {
-        try {
-          fabricCanvasRef.current.dispose();
-        } catch (error) {
-          console.warn('Erro ao limpar canvas:', error);
-        }
-        fabricCanvasRef.current = null;
-      }
+      resizeObserver.disconnect();
     };
-  }, [certificateData, dimensions]);
+  }, []);
 
-  // Fallback para erro
-  if (hasError || !certificateData.fabricJsonFront) {
-    return (
-      <div 
-        className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 ${className}`}
-        style={{
-          width: dimensions.width,
-          height: dimensions.height
-        }}
-      >
-        <span className="text-xs font-bold text-gray-400">
-          {certificateData.name ? certificateData.name.charAt(0).toUpperCase() : 'C'}
-        </span>
-      </div>
-    );
-  }
+  // Detectar se é mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  
+  // Calcular zoom automático baseado no espaço disponível
+  const calculatedZoom = useMemo(() => {
+    if (containerSize.width === 0 || containerSize.height === 0) {
+      return zoom || 100;
+    }
+
+    // Determinar orientação do certificado
+    const certificateOrientation = page ? page.orientation : 'landscape';
+    
+    // Dimensões base do certificado A4 ajustadas pela orientação
+    const baseWidth = certificateOrientation === 'landscape' ? 842 : 595;
+    const baseHeight = certificateOrientation === 'landscape' ? 595 : 842;
+    
+    // Calcular espaço disponível
+    const padding = isMobile ? 16 : 24;
+    const availableWidth = containerSize.width - padding;
+    const availableHeight = containerSize.height - padding;
+
+    const scaleWidth = availableWidth / baseWidth;
+    const scaleHeight = availableHeight / baseHeight;
+    const scale = Math.min(scaleWidth, scaleHeight);
+    
+    // Converter para porcentagem e limitar entre 10% e 150% para thumbnail
+    const zoomPercentage = Math.max(10, Math.min(150, scale * 100));
+    
+    return zoomPercentage;
+  }, [containerSize, zoom, page, isMobile]);
+
+  // Handler de clique
+  const handleClick = useCallback(() => {
+    if (onClick && !isLoading) {
+      onClick();
+    }
+  }, [onClick, isLoading]);
 
   return (
     <div 
-      className={`relative overflow-hidden bg-white ${className}`}
-      style={{
-        width: dimensions.width,
-        height: dimensions.height
-      }}
+      ref={containerRef} 
+      className={`relative h-full ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      onClick={handleClick}
     >
-      <canvas 
-        ref={canvasRef}
-        width={dimensions.width}
-        height={dimensions.height}
-        style={{
-          display: 'block',
-          width: dimensions.width + 'px',
-          height: dimensions.height + 'px'
-        }}
-      />
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-50/50">
-          <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-        </div>
+      <div className="w-full h-full bg-gray-50 dark:bg-gray-900 p-2 rounded-lg overflow-hidden">
+        {page && (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-800 rounded shadow-sm">
+              <CertificateCanvas
+                ref={canvasRef}
+                pageId={page.id}
+                pageIndex={0}
+                orientation={page.orientation}
+                canvasData={processedCanvasData}
+                isLoading={showLoader && isLoading}
+                zoom={calculatedZoom}
+                onCanvasReady={(canvas) => handleCanvasReady(page.id, canvas)}
+                isActive={true}
+                showContainer={false}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Overlay de hover opcional */}
+      {onClick && (
+        <div className="absolute inset-0 bg-muted bg-opacity-0 hover:bg-opacity-10 transition-opacity duration-200 rounded-lg" />
       )}
     </div>
   );

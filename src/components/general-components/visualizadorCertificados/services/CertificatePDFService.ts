@@ -215,37 +215,27 @@ class CertificatePDFService {
           ? JSON.parse(processedJson) 
           : processedJson;
         
-        // Adicionar background branco se não existir
-        if (!jsonToLoad.objects) {
-          jsonToLoad.objects = [];
-        }
+        // Não adicionar background aqui, deixar como está no JSON original
+        // O background já deve estar no JSON do certificado
         
-        const hasBackground = jsonToLoad.objects.some((obj: any) => 
-          obj.name === 'backgroundRect'
-        );
-        
-        if (!hasBackground) {
-          const bgRect = {
-            type: 'rect',
-            left: 0,
-            top: 0,
-            width: canvas.width || 842,
-            height: canvas.height || 595,
-            fill: 'white',
-            selectable: false,
-            evented: false,
-            name: 'backgroundRect'
-          };
-          jsonToLoad.objects.unshift(bgRect);
-        }
-        
+        // Carregar o JSON no canvas
         await canvas.loadFromJSON(jsonToLoad);
         
         // Processar QR Codes
-        const objects = canvas.getObjects();
+        const objects = [...canvas.getObjects()]; // Clonar array para evitar problemas ao remover
         for (const obj of objects) {
-          if ((obj as any).isQRCodePlaceholder) {
+          if ((obj as any).isQRCodePlaceholder && (obj as any).qrCodeName) {
             const qrDataUrl = await this.generateQRCode(certificateId);
+            
+            // Salvar posição e dimensões do placeholder antes de remover
+            const position = {
+              left: obj.left,
+              top: obj.top,
+              width: (obj as any).width || 120,
+              height: (obj as any).height || 120,
+              scaleX: (obj as any).scaleX || 1,
+              scaleY: (obj as any).scaleY || 1
+            };
             
             canvas.remove(obj);
             
@@ -255,18 +245,30 @@ class CertificatePDFService {
               img.onload = () => {
                 const fabricImage = new fabric.Image(img);
                 
-                const targetWidth = (obj as any).width || 120;
-                const targetHeight = (obj as any).height || 120;
-                const scaleX = targetWidth / (fabricImage.width || 200);
-                const scaleY = targetHeight / (fabricImage.height || 200);
+                // Calcular tamanho final considerando a escala do placeholder
+                const targetWidth = position.width || 120;
+                const targetHeight = position.height || 120;
+                const placeholderScaleX = position.scaleX;
+                const placeholderScaleY = position.scaleY;
+                
+                // Tamanho final desejado considerando a escala do placeholder
+                const finalWidth = targetWidth * placeholderScaleX;
+                const finalHeight = targetHeight * placeholderScaleY;
+                
+                // Calcular escala para o QR Code
+                const scaleX = finalWidth / (fabricImage.width || 200);
+                const scaleY = finalHeight / (fabricImage.height || 200);
                 
                 fabricImage.set({
-                  left: obj.left,
-                  top: obj.top,
+                  left: position.left,
+                  top: position.top,
                   scaleX: scaleX,
                   scaleY: scaleY,
                   selectable: false,
-                  evented: false
+                  evented: false,
+                  hasControls: false,
+                  hasBorders: false,
+                  name: `qrcode_${(obj as any).qrCodeName}`
                 });
                 
                 canvas.add(fabricImage);
@@ -277,14 +279,45 @@ class CertificatePDFService {
           }
         }
         
-        // Configurar objetos como não editáveis
+        // Processar e ajustar objetos
         canvas.getObjects().forEach((obj: any) => {
+          // Configurar como não editável
           obj.set({
             selectable: false,
             evented: false,
             hasControls: false,
             hasBorders: false
           });
+          
+          // Processar imagens de assinatura
+          if (obj.type === 'Image' || obj.type === 'image') {
+            const isAssinatura = obj.name?.includes('assinatura') || 
+                               obj.name?.includes('image_') ||
+                               obj.placeholderNameDebug?.includes('assinatura');
+            
+            if (isAssinatura) {
+              // Verificar se temos as dimensões alvo e a imagem foi carregada
+              if (obj.targetHeight && obj.targetWidth && obj._element) {
+                const naturalWidth = obj._element.naturalWidth;
+                const naturalHeight = obj._element.naturalHeight;
+                
+                if (naturalWidth && naturalHeight) {
+                  // Calcular a escala correta baseada no tamanho real
+                  const scaleToFitHeight = obj.targetHeight / naturalHeight;
+                  const scaleToFitWidth = obj.targetWidth / naturalWidth;
+                  
+                  // Usar a menor escala para manter proporção
+                  const correctScale = Math.min(scaleToFitHeight, scaleToFitWidth);
+                  
+                  // Aplicar a nova escala
+                  obj.set({
+                    scaleX: correctScale,
+                    scaleY: correctScale
+                  });
+                }
+              }
+            }
+          }
           
           // Processar Textboxes
           if (obj.type === 'Textbox' || obj.type === 'textbox') {
@@ -356,10 +389,12 @@ class CertificatePDFService {
         backProcessed = VariableReplacer.replaceInCanvasJSON(backJson, variables);
       }
       
-      // Detectar orientação
-      const width = certificateData.canvasWidth || 842;
-      const height = certificateData.canvasHeight || 595;
-      const isLandscape = width > height;
+      // Usar dimensões reais do certificado ou padrão A4 landscape
+      const canvasWidth = certificateData.canvasWidth || 842;
+      const canvasHeight = certificateData.canvasHeight || 595;
+      
+      // Detectar orientação baseada nas dimensões reais
+      const isLandscape = canvasWidth > canvasHeight;
       
       // Configurar qualidade
       const qualitySettings = {
@@ -371,7 +406,7 @@ class CertificatePDFService {
       
       const quality = qualitySettings[options.quality || 'high'];
       
-      // Criar PDF
+      // Criar PDF com orientação correta
       const pdf = new jsPDF({
         orientation: isLandscape ? 'landscape' : 'portrait',
         unit: 'mm',
@@ -381,70 +416,119 @@ class CertificatePDFService {
         hotfixes: ['px_scaling']
       });
       
-      // Criar canvas temporário
-      const tempCanvas = document.createElement('canvas');
-      const targetDPI = quality.dpi;
-      const mmToInch = 25.4;
+      // Dimensões A4 em mm
       const a4WidthMM = isLandscape ? 297 : 210;
       const a4HeightMM = isLandscape ? 210 : 297;
+      
+      // DPI para alta qualidade
+      const targetDPI = quality.dpi;
+      const mmToInch = 25.4;
+      
+      // Calcular dimensões do canvas temporário em pixels (alta resolução)
       const targetWidth = Math.round(a4WidthMM * targetDPI / mmToInch);
       const targetHeight = Math.round(a4HeightMM * targetDPI / mmToInch);
       
+      // Criar canvas temporário
+      const tempCanvas = document.createElement('canvas');
       tempCanvas.width = targetWidth;
       tempCanvas.height = targetHeight;
       
-      // Processar página da frente
+      // Criar canvas Fabric com dimensões do certificado original
+      // Isso é importante: o canvas Fabric deve ter as dimensões originais
       const tempFabricCanvas = new fabric.Canvas(tempCanvas, {
-        width: targetWidth,
-        height: targetHeight,
+        width: canvasWidth,
+        height: canvasHeight,
         backgroundColor: '#ffffff'
       });
       
-      const baseWidth = isLandscape ? 842 : 595;
-      const baseHeight = isLandscape ? 595 : 842;
-      const scale = Math.min(targetWidth / baseWidth, targetHeight / baseHeight);
-      
-      // Carregar dados da frente
+      // Carregar dados da frente no tamanho original
       await this.loadCanvasData(
         tempFabricCanvas, 
         frontProcessed, 
         certificateData.certificateId || 'CERT-001'
       );
       
+      // Calcular escala para fazer o certificado caber na página A4
+      const scaleX = targetWidth / canvasWidth;
+      const scaleY = targetHeight / canvasHeight;
+      const scale = Math.min(scaleX, scaleY);
+      
+      // Ajustar as dimensões do viewport do canvas para o tamanho final
+      tempFabricCanvas.setDimensions({
+        width: targetWidth,
+        height: targetHeight
+      });
+      
+      // Aplicar zoom para escalar o conteúdo
       tempFabricCanvas.setZoom(scale);
+      
+      // Centralizar o conteúdo se houver espaço extra
+      const scaledWidth = canvasWidth * scale;
+      const scaledHeight = canvasHeight * scale;
+      const offsetX = (targetWidth - scaledWidth) / 2 / scale;
+      const offsetY = (targetHeight - scaledHeight) / 2 / scale;
+      
+      if (offsetX > 0 || offsetY > 0) {
+        tempFabricCanvas.absolutePan(new fabric.Point(-offsetX, -offsetY));
+      }
+      
       tempFabricCanvas.renderAll();
+      
+      // Aguardar renderização completa antes de exportar
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Gerar imagem da frente
       const frontDataURL = tempFabricCanvas.toDataURL({
         format: 'png',
         quality: 1.0,
-        multiplier: 1,
+        multiplier: 1, // Não precisamos de multiplier adicional pois já temos alta resolução
         enableRetinaScaling: false
       });
       
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       
+      // Adicionar imagem mantendo qualidade máxima
       pdf.addImage(frontDataURL, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'NONE');
       
       // Processar verso se existir
       if (backProcessed) {
         pdf.addPage();
         
-        // Limpar e reutilizar canvas
-        tempFabricCanvas.clear();
-        tempFabricCanvas.backgroundColor = '#ffffff';
+        // Recriar o canvas Fabric para o verso
+        tempFabricCanvas.dispose();
+        
+        const tempFabricCanvasBack = new fabric.Canvas(tempCanvas, {
+          width: canvasWidth,
+          height: canvasHeight,
+          backgroundColor: '#ffffff'
+        });
         
         await this.loadCanvasData(
-          tempFabricCanvas,
+          tempFabricCanvasBack,
           backProcessed,
           certificateData.certificateId || 'CERT-001'
         );
         
-        tempFabricCanvas.setZoom(scale);
-        tempFabricCanvas.renderAll();
+        // Ajustar dimensões e aplicar zoom
+        tempFabricCanvasBack.setDimensions({
+          width: targetWidth,
+          height: targetHeight
+        });
         
-        const backDataURL = tempFabricCanvas.toDataURL({
+        tempFabricCanvasBack.setZoom(scale);
+        
+        // Centralizar se necessário
+        if (offsetX > 0 || offsetY > 0) {
+          tempFabricCanvasBack.absolutePan(new fabric.Point(-offsetX, -offsetY));
+        }
+        
+        tempFabricCanvasBack.renderAll();
+        
+        // Aguardar renderização completa antes de exportar
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const backDataURL = tempFabricCanvasBack.toDataURL({
           format: 'png',
           quality: 1.0,
           multiplier: 1,
@@ -452,10 +536,13 @@ class CertificatePDFService {
         });
         
         pdf.addImage(backDataURL, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'NONE');
+        
+        // Limpar canvas do verso
+        tempFabricCanvasBack.dispose();
+      } else {
+        // Limpar canvas da frente se não houver verso
+        tempFabricCanvas.dispose();
       }
-      
-      // Limpar canvas temporário
-      tempFabricCanvas.dispose();
       
       // Gerar nome do arquivo
       const studentName = variables?.nome_do_aluno?.value || 

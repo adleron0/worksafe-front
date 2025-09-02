@@ -2,14 +2,11 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { CertificateViewerProps } from './types';
 import { useCertificateViewer } from './hooks/useCertificateViewer';
 import CertificateCanvas, { CertificateCanvasRef } from './components/CertificateCanvas';
-import DownloadToolbar from './components/DownloadToolbar';
 import * as fabric from 'fabric';
-import { decodeBase64Variables } from '@/utils/decodeBase64Variables';
 
 const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
   certificateData,
   variableToReplace,
-  onDownloadPDF,
   className = '',
   zoom = 100,
   studentData // Mantém compatibilidade (deprecated)
@@ -31,11 +28,9 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
   const {
     processedCanvasData,
     isLoading,
-    isExporting,
     pages,
     registerCanvasRef,
-    loadCanvasData,
-    exportToPDF
+    loadCanvasData
   } = useCertificateViewer(certificateData, variableToReplace, studentData);
 
   // Carregar fontes do Google (reutilizado do gerador)
@@ -164,7 +159,7 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
                   if (loaded) {
                     break;
                   }
-                } catch (e) {
+                } catch {
                 }
               }
               
@@ -196,7 +191,7 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
               const testString = `12px "${fontFamily}"`;
               await document.fonts.load(testString, 'Test');
               return document.fonts.check(testString, 'Test');
-            } catch (error) {
+            } catch {
               return true; // Não bloquear por erro
             }
           });
@@ -263,11 +258,6 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
       loadCanvasData(processedCanvasData);
     }
   }, [processedCanvasData, fontsLoaded, pages, canvasReady, dataLoaded, loadCanvasData]);
-
-  const handleDownloadPDF = async () => {
-    await exportToPDF();
-    onDownloadPDF?.();
-  };
 
 
   // Determinar se tem verso
@@ -367,12 +357,12 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
 
   return (
     <div ref={containerRef} className={`flex flex-col h-full ${className}`}>
-      <DownloadToolbar 
+      {/* <DownloadToolbar 
         onDownloadPDF={handleDownloadPDF}
         certificateName={certificateData.name}
         studentName={decodeBase64Variables(variableToReplace)?.nome_do_aluno?.value || studentData?.nome_do_aluno}
         isLoading={isExporting}
-      />
+      /> */}
       
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Container principal para canvas */}
@@ -398,11 +388,11 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
             `}>
               {pages.map((page, index) => (
                 <div key={page.id} className="flex flex-col items-center">
-                  <div className="mb-2">
+                  {/* <div className="mb-2">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {index === 0 ? 'Frente' : 'Verso'}
                     </span>
-                  </div>
+                  </div> */}
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2">
                     <CertificateCanvas
                       ref={(ref) => {

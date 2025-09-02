@@ -62,4 +62,16 @@ export interface CertificateCanvasProps {
   onCanvasReady?: (canvas: any) => void;
 }
 
+// Interface para o componente CertificateThumbnail
+export interface CertificateThumbnailProps {
+  certificateData: CertificateData;
+  variableToReplace: VariableToReplace;
+  className?: string;
+  zoom?: number;
+  onClick?: () => void;
+  showLoader?: boolean;
+  // Mantém compatibilidade (deprecated - use variableToReplace)
+  studentData?: StudentData;
+}
+
 // Exportação removida para evitar conflito de tipos

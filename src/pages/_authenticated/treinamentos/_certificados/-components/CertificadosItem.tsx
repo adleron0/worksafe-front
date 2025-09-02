@@ -7,6 +7,7 @@ import useVerify from "@/hooks/use-verify";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
+import CertificatePDFService from "@/components/general-components/visualizadorCertificados/services/CertificatePDFService";
 
 // Template Page
 import { Badge } from "@/components/ui/badge";
@@ -109,6 +110,71 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
   };
 
   // Função para enviar certificado por email
+  // Função para gerar e abrir PDF em nova guia
+  const handleGeneratePDF = async () => {
+    if (!item.fabricJsonFront || !item.variableToReplace) {
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Dados incompletos para gerar o certificado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    showLoader("Gerando PDF do certificado...");
+
+    try {
+      const certificateData = {
+        id: item.id || 0,
+        name: item.course?.name || 'Certificado',
+        fabricJsonFront: item.fabricJsonFront,
+        fabricJsonBack: item.fabricJsonBack || null,
+        certificateId: item.key?.toString() || 'CERT-001'
+      };
+
+      const result = await CertificatePDFService.generatePDF(
+        certificateData,
+        item.variableToReplace,
+        { 
+          returnBlob: true,
+          quality: 'high'
+        }
+      );
+
+      if (result.success && result.data instanceof Blob) {
+        // Criar URL do blob
+        const pdfUrl = URL.createObjectURL(result.data);
+        
+        // Abrir em nova guia
+        const newWindow = window.open(pdfUrl, '_blank');
+        
+        // Limpar URL após um tempo
+        if (newWindow) {
+          setTimeout(() => {
+            URL.revokeObjectURL(pdfUrl);
+          }, 10000);
+        }
+        
+        hideLoader();
+        toast({
+          title: "PDF gerado com sucesso!",
+          description: "O certificado foi aberto em uma nova guia",
+          variant: "success",
+        });
+      } else {
+        throw new Error(result.error || "Erro ao gerar PDF");
+      }
+    } catch (error) {
+      hideLoader();
+      console.error('Erro ao gerar PDF:', error);
+      toast({
+        title: "Erro ao gerar PDF",
+        description: error instanceof Error ? error.message : "Erro desconhecido ao gerar o certificado",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSendEmail = async () => {
     if (!item.traineeId || !item.key) {
       toast({
@@ -306,16 +372,30 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
                 </DropdownMenuItem>
               )}
 
-              {/* Baixar PDF */}
+              {/* Gerar PDF */}
+              {item.variableToReplace && item.fabricJsonFront && (
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Button 
+                    variant="ghost" 
+                    className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
+                    onClick={handleGeneratePDF}
+                  >
+                    <Icon name="download" className="w-3 h-3" /> 
+                    <p>Gerar PDF</p>
+                  </Button>
+                </DropdownMenuItem>
+              )}
+
+              {/* Baixar PDF (se houver URL) */}
               {item.pdfUrl && (
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                   <Button 
                     variant="ghost" 
-                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                    className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
                     onClick={() => window.open(item.pdfUrl, '_blank')}
                   >
                     <Icon name="download" className="w-3 h-3" /> 
-                    <p>Baixar PDF</p>
+                    <p>Baixar PDF Salvo</p>
                   </Button>
                 </DropdownMenuItem>
               )}

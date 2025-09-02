@@ -9,6 +9,7 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { routeTree } from './routeTree.gen';
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { HelmetProvider } from 'react-helmet-async';
 import InnerApp from './InnerApp';
 import './index.css';
 
@@ -29,18 +30,20 @@ declare module '@tanstack/react-router' {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider router={router}>
-          <GeneralProvider>
-            <TooltipProvider>
-              <Toaster />
-              <ToastProvider />
-              <InnerApp />
-            </TooltipProvider>
-          </GeneralProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <HelmetProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider router={router}>
+            <GeneralProvider>
+              <TooltipProvider>
+                <Toaster />
+                <ToastProvider />
+                <InnerApp />
+              </TooltipProvider>
+            </GeneralProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </HelmetProvider>
   </StrictMode>,
 );

@@ -15,6 +15,7 @@ import { decodeBase64Variables } from "@/utils/decodeBase64Variables";
 import CertificatePDFService from "@/components/general-components/visualizadorCertificados/services/CertificatePDFService";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
+import { Helmet } from "react-helmet-async";
 
 export const Route = createFileRoute("/_index/certificados/$id")({
   component: CertificadoPublico,
@@ -314,8 +315,45 @@ function CertificadoPublico() {
   // Extrair informações do variableToReplace e decodificar se necessário
   const variables = decodeBase64Variables(certificate?.variableToReplace) || {};
 
+  // Montar informações para meta tags
+  const metaTitle = certificate ? `Certificado de ${variables.aluno_nome?.value || "Aluno"} - ${variables.curso_nome?.value || "Curso"}` : "Certificado";
+  const metaDescription = certificate 
+    ? `Certificado de conclusão do curso ${variables.curso_nome?.value || ""} emitido para ${variables.aluno_nome?.value || ""} pela ${certificate?.company?.comercial_name || "empresa"}. Carga horária: ${variables.turma_carga_horaria?.value || "não informada"}.`
+    : "Certificado de conclusão de curso";
+  const metaUrl = typeof window !== 'undefined' ? `${window.location.origin}/certificados/${certificate?.key || certificate?.id}` : '';
+  // Usar logo da empresa ou uma imagem padrão genérica
+  const metaImage = certificate?.company?.logoUrl || `${window.location.origin}/certificate-preview.jpg`;
+
   return (
     <>
+      {certificate && (
+        <Helmet>
+          <title>{metaTitle}</title>
+          <meta name="description" content={metaDescription} />
+          
+          {/* Open Graph / Facebook */}
+          <meta property="og:type" content="website" />
+          <meta property="og:url" content={metaUrl} />
+          <meta property="og:title" content={metaTitle} />
+          <meta property="og:description" content={metaDescription} />
+          <meta property="og:image" content={metaImage} />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta property="og:site_name" content="WorkSafe Brasil - Sistema de Certificados" />
+          <meta property="og:locale" content="pt_BR" />
+          
+          {/* Twitter */}
+          <meta property="twitter:card" content="summary_large_image" />
+          <meta property="twitter:url" content={metaUrl} />
+          <meta property="twitter:title" content={metaTitle} />
+          <meta property="twitter:description" content={metaDescription} />
+          <meta property="twitter:image" content={metaImage} />
+          
+          {/* LinkedIn specific */}
+          <meta name="author" content={certificate?.company?.comercial_name || "WorkSafe Brasil"} />
+          <meta property="article:author" content={certificate?.company?.comercial_name || "WorkSafe Brasil"} />
+        </Helmet>
+      )}
       <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
       <div className="min-h-screen bg-gray-50 pt-24 md:pt-18 lg:pt-10 pb-16 px-4">
         <div className="max-w-7xl mx-auto">
@@ -686,7 +724,7 @@ function CertificadoPublico() {
                       className="w-full justify-start gap-3 hover:bg-blue-50 hover:border-blue-300"
                       onClick={() => {
                         const certificateUrl = `${window.location.origin}/certificados/${certificate?.key || certificate?.id}`;
-                        const linkedinUrl = `https://www.linkedin.com/feed/?linkOrigin=LI_BADGE&shareActive=true&shareUrl=${encodeURIComponent(certificateUrl + '?utm_source=linkedin&utm_medium=social')}`;
+                        const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(certificateUrl)}`;
                         window.open(linkedinUrl, '_blank');
                       }}
                     >

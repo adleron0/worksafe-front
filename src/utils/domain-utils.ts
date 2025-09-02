@@ -9,19 +9,28 @@
  */
 export function extractDomain(): string | null {
   try {
-    const hostname = window.location.hostname;
-    
-    // Remove www. se presente
-    const domain = hostname.replace(/^www\./, '');
-    
-    // Se for localhost ou IP, retorna null
-    if (domain === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(domain)) {
+    // Verificar se está no cliente (browser)
+    if (typeof window === 'undefined') {
       return null;
     }
     
-    return domain;
+    const hostname = window.location.hostname;
+    
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return null;
+    }
+    
+    const parts = hostname.split('.');
+    
+    if (parts.length >= 2) {
+      // Remover apenas o www se presente, retornar domínio completo com subdomínios
+      const domainParts = parts[0] === 'www' ? parts.slice(1) : parts;
+      return domainParts.join('.');
+    }
+    
+    return hostname;
   } catch (error) {
-    console.error('Erro ao extrair domínio:', error);
+    console.error('Error extracting domain:', error);
     return null;
   }
 }

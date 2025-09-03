@@ -189,17 +189,6 @@ const Item = ({ item, index, entity }: ItemsProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {/* Visualizar detalhes */}
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                  }}
-                  className="cursor-pointer"
-                >
-                  <Icon name="eye" className="mr-2 h-4 w-4" />
-                  Ver Detalhes
-                </DropdownMenuItem>
-
                 {/* Inativar/Ativar */}
                 {
                 !item.inactiveAt ? (

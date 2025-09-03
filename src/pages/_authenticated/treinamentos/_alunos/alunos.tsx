@@ -117,6 +117,7 @@ function List() {
         ability={entity.ability}
         limit={data?.total || 0}
         showInputSearch={true}
+        showCreate={false}
         searchPlaceholder="Buscar por nome do aluno..."
         searchParams={searchParams}
         onlimitChange={handleLimitChange}

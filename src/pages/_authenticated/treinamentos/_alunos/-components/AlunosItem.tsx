@@ -1,8 +1,4 @@
 // Serviços
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { patch } from "@/services/api";
-import { useLoader } from "@/context/GeneralContext";
-import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { formatCPF } from "@/utils/cpf-mask";
 import { format } from "date-fns";
@@ -12,13 +8,12 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import ConfirmDialog from "@/components/general-components/ConfirmDialog";
+// import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import ListHeader from "@/components/general-components/ListHeader";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
-import { ApiError } from "@/general-interfaces/api.interface";
 // Dialog para exames e certificados
 import { useState } from "react";
 import Dialog from "@/components/general-components/Dialog";
@@ -33,80 +28,12 @@ interface ItemsProps {
   setOpenForm: (open: boolean) => void;
 }
 
-const AlunosItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => {
+const AlunosItem = ({ item, index, entity }: ItemsProps) => {
   const { can } = useVerify();
-  const queryClient = useQueryClient();
-  const { showLoader, hideLoader } = useLoader();
   const [openExames, setOpenExames] = useState(false);
   const [openCertificados, setOpenCertificados] = useState(false);
 
-  // Mutation para inativar
-  const { mutate: deactivate } = useMutation({
-    mutationFn: (id: number) => {
-      showLoader(`Inativando ${entity.name}...`);
-      return patch<IEntity>('trainee', `inactive/${id}`);
-    },
-    onSuccess: () => {
-      hideLoader();
-      toast({
-        title: `${entity.name} ${item.name} inativado!`,
-        description: `${entity.name} inativado com sucesso.`,
-        variant: "success",
-      })
-      queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
-    },
-    onError: (error: unknown) => {
-      hideLoader();
-      toast({
-        title: `Erro ao inativar ${entity.name}`,
-        description: error instanceof Error 
-          ? error.message 
-          : typeof error === 'object' && error !== null && 'response' in error 
-            ? ((error as ApiError).response?.data?.message || `Erro ao inativar ${entity.name}`)
-            : `Erro ao inativar ${entity.name}`,
-        variant: "destructive",
-      })
-    }
-  });
 
-  // Mutation para ativar
-  const { mutate: activate } = useMutation({
-    mutationFn: (id: number) => {
-      showLoader(`Ativando ${entity.name}...`);
-      return patch<IEntity>('trainee', `active/${id}`);
-    },
-    onSuccess: () => {
-      hideLoader();
-      toast({
-        title: `${entity.name} ${item.name} reativado!`,
-        description: `${entity.name} foi reativado com sucesso.`,
-        variant: "success",
-      })
-      queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
-    },
-    onError: (error: unknown) => {
-      hideLoader();
-      toast({
-        title: `Erro ao reativar ${entity.name}`,
-        description: error instanceof Error 
-          ? error.message 
-          : typeof error === 'object' && error !== null && 'response' in error 
-            ? ((error as ApiError).response?.data?.message || `Erro ao reativar ${entity.name}`)
-            : `Erro ao reativar ${entity.name}`,
-        variant: "destructive",
-      })
-    }
-  });
-
-  const handleConfirmAction = (actionType: "activate" | "deactivate") => {
-    if (!item.id) return;
-
-    if (actionType === "activate") {
-      activate(item.id);
-    } else {
-      deactivate(item.id);
-    }
-  };
 
   const formatDate = (date: string | Date | undefined) => {
     if (!date) return "Não informado";
@@ -144,7 +71,7 @@ const AlunosItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
         <div className="w-full lg:w-3/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border rounded-full">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
-            <AvatarFallback className="rounded-full">{item.name?.[0] || "?"}</AvatarFallback>
+            <AvatarFallback className="rounded-full uppercase">{item.name?.[0] || "?"}</AvatarFallback>
           </Avatar>
           <div className="break-words w-9/12 md:w-full">
             <h2 className="text-sm font-semibold">{item.name}</h2>
@@ -219,7 +146,7 @@ const AlunosItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
             </DropdownMenuTrigger>
             <DropdownMenuContent>
 
-              { can(`update_${entity.ability}`) && (
+              {/* { can(`update_${entity.ability}`) && (
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                   <Button 
                     variant="ghost" 
@@ -233,7 +160,7 @@ const AlunosItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
                     <p>Editar</p>
                   </Button>
                 </DropdownMenuItem>
-              )}
+              )} */}
               
               {/* Botão Ver Provas */}
               { can(`view_${entity.ability}`) && (
@@ -263,7 +190,7 @@ const AlunosItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
                 </DropdownMenuItem>
               )}
               
-              {
+              {/* {
                 !item.inactiveAt ? (
                   can(`inactive_${entity.ability}`) && (
                       <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
@@ -289,7 +216,7 @@ const AlunosItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
                     </DropdownMenuItem>
                   )
                 )
-              }
+              } */}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

@@ -125,12 +125,12 @@ function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: 
           { key: 'all', value: true },
           { key: 'order-name', value: 'asc' },
         ];
-        const response = await get('classes', '', params);
-        if (!response || !Array.isArray(response)) {
+        const response = await get('classes', '', params) as { rows: ClassItem[] };
+        if (!response.rows.length) {
           return [];
         }
         
-        const classes = response.map((item: ClassItem) => ({
+        const classes = response?.rows?.map((item: ClassItem) => ({
           id: item.id,
           name: `${item.name} (${new Date(item.initialDate).toLocaleDateString('pt-BR')})`,
         }));
@@ -160,12 +160,12 @@ function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: 
           { key: 'all', value: true },
           { key: 'order-name', value: 'asc' },
         ];
-        const response = await get('courses', '', params);
-        if (!response || !Array.isArray(response)) {
+        const response = await get('courses', '', params) as { rows: CourseItem[] };
+        if (!response.rows.length) {
           return [];
         }
         
-        const courses = response.map((item: CourseItem) => ({
+        const courses = response?.rows?.map((item: CourseItem) => ({
           id: item.id,
           name: item.name,
         }));

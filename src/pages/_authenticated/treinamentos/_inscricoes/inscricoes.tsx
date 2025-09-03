@@ -74,12 +74,12 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
         { key: 'all', value: true },
         { key: 'order-name', value: 'asc' },
       ];
-      const response = await get('classes', '', params);
-      if (!response || !Array.isArray(response)) {
-        return [];
-      }
+      const response = await get('classes', '', params) as { rows: ClassItem[] };
+      if (!response.rows.length) {
+          return [];
+        }
       
-      const classes = response.map((item: ClassItem) => ({
+      const classes = response?.rows?.map((item: ClassItem) => ({
         id: item.id,
         name: `${item.name} (${new Date(item.initialDate).toLocaleDateString('pt-BR')})`,
       }));

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { post, put, get } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
@@ -87,7 +87,7 @@ const Form = ({ formData, setOpenForm, entity }: FormProps) => {
   const { mutate: updateEntityMutation, isPending: isPendingUpdate } = useMutation({
     mutationFn: (updatedItem: FormData) => {
       showLoader(`Atualizando ${entity.name}...`);
-      return put<IEntity>(entity.model, `${formData?.id}`, updatedItem);
+      return put<Partial<IEntity>>(entity.model, `${formData?.id}`, updatedItem);
     },
     onSuccess: () => {
       hideLoader();

@@ -57,7 +57,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
     }
   }, [params]);
 
-  const handleChange = (name: string, value: string | number | null) => {
+  const handleChange = (name: string, value: string | number | boolean | null) => {
     setSearchData(prev => ({ 
       ...prev, 
       [name]: value === "" || value === null ? undefined : value 

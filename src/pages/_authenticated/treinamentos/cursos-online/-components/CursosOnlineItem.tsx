@@ -131,9 +131,22 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
       )}
 
       {/* Conteúdo do item */}
-      <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+      <div 
+        className={`
+          ${index % 2 === 0 ? "bg-background" : "bg-background/50"} 
+          group relative shadow-sm rounded gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full 
+          border-b border-border/40
+          cursor-pointer 
+          transition-all duration-200 ease-in-out
+          hover:shadow-md 
+          hover:-translate-y-0.5
+          hover:bg-card
+          after:absolute after:left-0 after:top-0 after:h-full after:w-0.5 after:bg-primary after:opacity-0 hover:after:opacity-100 after:transition-opacity
+        `}
+        onClick={() => console.log('Item clicado:', item.id)}
+      >
         {/* Título */}
-        <div className="flex flex-col lg:w-4/12">
+        <div className="flex flex-col lg:w-4/12 relative z-10">
           <p className="text-xs text-muted-foreground lg:hidden">Título</p>
           <p className="font-medium">{item.title}</p>
           {item.description && (
@@ -143,13 +156,13 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
         </div>
 
         {/* Versão */}
-        <div className="flex flex-col lg:w-1/12">
+        <div className="flex flex-col lg:w-1/12 relative z-10">
           <p className="text-xs text-muted-foreground lg:hidden">Versão</p>
           <p className="text-sm">{item.version || '1.0.0'}</p>
         </div>
 
         {/* Configuração de Progresso */}
-        <div className="flex flex-col lg:w-2/12 space-y-1 pr-4 lg:pr-8">
+        <div className="flex flex-col lg:w-2/12 space-y-1 pr-4 lg:pr-8 relative z-10">
           <Progress 
             value={typeof item.progressConfig === 'string' 
               ? JSON.parse(item.progressConfig).minProgress || 80
@@ -161,7 +174,7 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
         </div>
 
         {/* Data de Criação */}
-        <div className="flex flex-col lg:w-2/12">
+        <div className="flex flex-col lg:w-2/12 relative z-10">
           <p className="text-xs text-muted-foreground lg:hidden">Data Criação</p>
           <p className="text-sm">
             {item.createdAt 
@@ -171,7 +184,7 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
         </div>
 
         {/* Status */}
-        <div className="flex flex-col lg:w-2/12">
+        <div className="flex flex-col lg:w-2/12 relative z-10">
           <p className="text-xs text-muted-foreground lg:hidden">Status</p>
           <Status status={item.isActive ? "online" : "offline"} className="w-fit">
             <StatusIndicator />
@@ -182,13 +195,14 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
         </div>
 
         {/* Ações */}
-        <div className="absolute flex justify-end top-2 right-2 lg:static lg:w-1/12">
+        <div className="absolute top-2 right-2 lg:static lg:w-1/12">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
                 className="h-8 w-8 rounded-full p-0 text-gray-700 cursor-pointer"
                 variant="outline"
-                size="sm">
+                size="sm"
+                onClick={(e) => e.stopPropagation()}>
                 <Icon name="ellipsis-vertical" className="text-foreground dark:text-primary w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>

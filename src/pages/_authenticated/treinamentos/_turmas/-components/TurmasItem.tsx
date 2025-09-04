@@ -8,6 +8,7 @@ import useVerify from "@/hooks/use-verify";
 // Template Page
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
@@ -143,9 +144,9 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
       {/* Renderiza o Header apenas no primeiro item */}
       <ListHeader show={index === 0}>
         <div className="w-4/12">Turma</div>
-        <div className="w-4/12">Detlhes</div>
+        <div className="w-3/12">Detlhes</div>
         <div className="w-2/12">Período</div>
-        <div className="w-1/12">Status</div>
+        <div className="w-2/12">Status</div>
         <div className="w-1/12">Ações</div>
       </ListHeader>
 
@@ -196,7 +197,7 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
         </div>
 
         {/* Detalhes */}
-        <div className="lg:w-4/12 flex items-baseline gap-2 md:pr-2">
+        <div className="lg:w-3/12 flex items-baseline gap-2 md:pr-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Detalhes: </p>
           <div className="flex flex-col items-start gap-0.5">
             <p className="text-xs text-muted-foreground dark:text-gray-100">
@@ -234,18 +235,14 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
         </div>
 
         {/* Status */}
-        <div className="lg:w-1/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
-          <Badge
-            variant="outline"
-            className={`${
-              item.active
-              ? "bg-green-200 text-green-900 dark:bg-green-900 dark:text-green-200"
-              : "bg-red-200 text-red-900 dark:bg-red-900 dark:text-red-200"
-            } rounded-full px-2 py-1 text-xs`}
-          >
-            {item.active ? "Ativo" : "Inativo"}
-          </Badge>
+        <div className="flex flex-col lg:w-2/12">
+          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+          <Status status={item.active ? "online" : "offline"} className="w-fit">
+            <StatusIndicator />
+            <StatusLabel>
+              {item.active ? 'Ativo' : 'Inativo'}
+            </StatusLabel>
+          </Status>
         </div>
 
         {/* Ações */}

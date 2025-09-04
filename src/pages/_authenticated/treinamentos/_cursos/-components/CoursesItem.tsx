@@ -8,6 +8,7 @@ import useVerify from "@/hooks/use-verify";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
@@ -158,18 +159,14 @@ const CoursesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPro
         </div>
 
         {/* Status */}
-        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
-          <Badge
-            variant="outline"
-            className={`${
-              item.active
-              ? "bg-green-200 text-green-900 dark:bg-green-900 dark:text-green-200"
-              : "bg-red-200 text-red-900 dark:bg-red-900 dark:text-red-200"
-            } rounded-full px-2 py-1 text-xs`}
-          >
-            {item.active ? "Ativo" : "Inativo"}
-          </Badge>
+        <div className="flex flex-col lg:w-2/12">
+          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+          <Status status={item.active ? "online" : "offline"} className="w-fit">
+            <StatusIndicator />
+            <StatusLabel>
+              {item.active ? 'Ativo' : 'Inativo'}
+            </StatusLabel>
+          </Status>
         </div>
 
         {/* Ações */}

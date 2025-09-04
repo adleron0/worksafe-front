@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 // Template Page
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 // import ConfirmDialog from "@/components/general-components/ConfirmDialog";
@@ -32,8 +32,6 @@ const AlunosItem = ({ item, index, entity }: ItemsProps) => {
   const { can } = useVerify();
   const [openExames, setOpenExames] = useState(false);
   const [openCertificados, setOpenCertificados] = useState(false);
-
-
 
   const formatDate = (date: string | Date | undefined) => {
     if (!date) return "Não informado";
@@ -126,11 +124,14 @@ const AlunosItem = ({ item, index, entity }: ItemsProps) => {
         </div>
 
         {/* Status */}
-        <div className="lg:w-1/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
-          <Badge variant={item.inactiveAt ? "destructive" : "default"}>
-            {item.inactiveAt ? "Inativo" : "Ativo"}
-          </Badge>
+        <div className="flex flex-col lg:w-1/12">
+          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+          <Status status={!item.inactiveAt ? "online" : "offline"} className="w-fit">
+            <StatusIndicator />
+            <StatusLabel>
+              {!item.inactiveAt ? 'Ativo' : 'Inativo'}
+            </StatusLabel>
+          </Status>
         </div>
 
         {/* Ações */}

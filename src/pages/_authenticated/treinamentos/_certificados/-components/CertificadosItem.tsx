@@ -10,7 +10,7 @@ import { useState } from "react";
 import CertificatePDFService from "@/components/general-components/visualizadorCertificados/services/CertificatePDFService";
 
 // Template Page
-import { Badge } from "@/components/ui/badge";
+import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
@@ -242,18 +242,18 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
 
   const getStatusBadge = () => {
     if (item.inactiveAt) {
-      return <Badge variant="destructive">Inativo</Badge>;
+      return false;
     }
     
     if (item.expirationDate) {
       const expDate = new Date(item.expirationDate);
       const today = new Date();
       if (expDate < today) {
-        return <Badge variant="destructive">Expirado</Badge>;
+        return false;
       }
     }
     
-    return <Badge variant="default">Válido</Badge>;
+    return true;
   };
 
   return (
@@ -306,9 +306,14 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
         </div>
 
         {/* Status */}
-        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
-          {getStatusBadge()}
+        <div className="flex flex-col lg:w-2/12">
+          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+          <Status status={getStatusBadge() ? "online" : "offline"} className="w-fit">
+            <StatusIndicator />
+            <StatusLabel>
+              {getStatusBadge() ? 'Válido' : 'Expirado'}
+            </StatusLabel>
+          </Status>
         </div>
 
         {/* Ações */}

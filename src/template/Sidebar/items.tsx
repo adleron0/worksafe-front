@@ -73,6 +73,11 @@ export const items = [
         path: "/treinamentos/turmas",
       },
       {
+        title: "Cursos Online",
+        icon: "youtube",
+        path: "/treinamentos/cursos-online",
+      },
+      {
         title: "Inscrições",
         icon: "ticket-check",
         path: "/treinamentos/inscricoes",

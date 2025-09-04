@@ -30,6 +30,7 @@ function CertificadosPage() {
     page: 0,
     'order-name': 'asc',
     active: 'true',
+    show: ['course']
   });
   const initialFormRef = useRef(searchParams);
 

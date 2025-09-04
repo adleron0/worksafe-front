@@ -15,7 +15,21 @@ src/pages/_authenticated/[modulo]/[feature]/
 │   └── entity.interface.ts    # Interface da entidade
 ├── -skeletons/
 │   └── ItemSkeleton.tsx       # Skeleton loading
-└── index.tsx ou [feature].tsx # Componente principal
+└── index.tsx                  # Componente principal com rota
+```
+
+**⚠️ IMPORTANTE para Features com Rota (sem prefixo `-`):**
+Toda feature que representa uma rota (diretórios sem prefixo `-`) DEVE incluir no arquivo `index.tsx`:
+```typescript
+import { createFileRoute } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/_authenticated/[modulo]/[feature]/')({
+  component: List,
+})
+
+function List() {
+  // Componente usando function declaration, não arrow function
+}
 ```
 
 ### Feature em Dialog (Sub-feature)
@@ -34,8 +48,9 @@ src/pages/_authenticated/[modulo]/[feature]/-[sub-feature]/
 
 ## 📝 Padrão do index.tsx
 
-### Estrutura Base
+### Estrutura Base para Features com Rota
 ```typescript
+import { createFileRoute } from '@tanstack/react-router'
 import { useRef, useState } from "react";
 // Serviços
 import { useQuery } from "@tanstack/react-query";
@@ -53,7 +68,13 @@ import SearchForm from "./components/[Feature]Search";
 import { IEntity } from "./interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
-const List = ({ [parentId]: number }) => {
+// Export da rota para TanStack Router
+export const Route = createFileRoute('/_authenticated/[modulo]/[feature]/')({
+  component: List,
+})
+
+// Componente deve ser uma function declaration
+function List({ [parentId]: number }) {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
@@ -91,7 +112,7 @@ const List = ({ [parentId]: number }) => {
     },
   });
 
-  const handleSearch = async (params: Record<string, any>) => {
+  const handleSearch = async (params: { [key: string]: any }) => {
     setSearchParams((prev) => ({ ...prev, ...params }));
   };
 
@@ -189,8 +210,6 @@ const List = ({ [parentId]: number }) => {
     </>
   );
 };
-
-export default List;
 ```
 
 ## 🔍 Padrão do SearchForm
@@ -267,6 +286,7 @@ import useVerify from "@/hooks/use-verify";
 // Componentes UI
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 // Interfaces
@@ -301,6 +321,17 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
         {/* Campos do item */}
+        
+        {/* Status - Usar componente Status do Kibo UI */}
+        <div className="flex flex-col lg:w-1/12">
+          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+          <Status status={item.active ? "online" : "offline"} className="w-fit">
+            <StatusIndicator />
+            <StatusLabel>
+              {item.active ? 'Ativo' : 'Inativo'}
+            </StatusLabel>
+          </Status>
+        </div>
         
         {/* Ações - IMPORTANTE: Seguir este padrão exato */}
         <div className="absolute top-2 right-2 lg:static lg:w-1/12">
@@ -437,6 +468,23 @@ const ParentItem = ({ item }) => {
 2. Ajuste o `entity` object
 3. Atualize as interfaces em `entity.interface.ts`
 4. Customize os componentes Item, Form e Search
-5. Ajuste as permissões necessárias
-6. Teste as operações CRUD
-7. Verifique responsividade mobile/desktop
+5. Use o componente `Status` do Kibo UI para exibir status (ativo/inativo)
+6. Ajuste as permissões necessárias
+7. Teste as operações CRUD
+8. Verifique responsividade mobile/desktop
+
+## 📌 Componentes Padrão
+
+### Status
+Use o componente Status do Kibo UI para exibir status de ativo/inativo:
+```typescript
+import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
+
+// Uso no Item
+<Status status={item.active ? "online" : "offline"} className="w-fit">
+  <StatusIndicator />
+  <StatusLabel>
+    {item.active ? 'Ativo' : 'Inativo'}
+  </StatusLabel>
+</Status>
+```

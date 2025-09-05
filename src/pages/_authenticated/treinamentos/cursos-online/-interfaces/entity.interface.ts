@@ -2,11 +2,9 @@ export interface IEntity {
   id: number;
   courseId: number;
   companyId?: number;
-  title: string;
+  name: string;
   description?: string;
-  version?: string;
   isActive: boolean;
-  progressConfig: any;
   inactiveAt?: Date | string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -18,4 +16,18 @@ export interface IEntity {
     description?: string;
     hoursDuration?: number;
   };
+  
+  // Lições associadas ao modelo
+  lessons?: {
+    id: number;
+    lessonId: number;
+    order: number;
+    lesson?: {
+      id: number;
+      title: string;
+      description?: string;
+      version?: string;
+      isActive: boolean;
+    };
+  }[];
 }

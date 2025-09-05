@@ -14,6 +14,7 @@ import {
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDownIcon, Cross2Icon } from "@radix-ui/react-icons";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface OptionType {
     [key: string]: string | number;
@@ -28,6 +29,8 @@ interface SelectProps {
     placeholder?: string;
     multiple?: boolean;
     disabled?: boolean;
+    isLoading?: boolean;
+    clearable?: boolean;
     onChange?: (name: string, value: string | string[]) => void;
     callBacks?: ((name: string, value: string | string[]) => void)[];
     modal?: boolean;
@@ -42,6 +45,8 @@ const Select = ({
     placeholder = "Selecione uma opção",
     multiple = false,
     disabled = false,
+    isLoading = false,
+    clearable = false,
     onChange = () => {},
     callBacks = [],
     modal = true,
@@ -94,6 +99,13 @@ const Select = ({
     callBacks.forEach(callback => callback(name, []));
   };
 
+  const handleClearSingle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange(name, "");
+    // Execute all callback functions after onChange
+    callBacks.forEach(callback => callback(name, ""));
+  };
+
   const getSelectedLabels = () => {
     if (!selectedItems.length) return placeholder;
     
@@ -107,6 +119,11 @@ const Select = ({
     
     return `${selectedOptions.length} itens selecionados`;
   };
+  
+  // Se está carregando, exibe skeleton
+  if (isLoading) {
+    return <Skeleton className="h-10 w-full bg-muted" />;
+  }
   
   // Renderiza o componente de seleção múltipla
   if (multiple) {
@@ -178,13 +195,14 @@ const Select = ({
   
   // Renderiza o componente de seleção única (original)
   return (
-    <UiSelect
-      value={typeof state === 'string' ? state : ''}
-      onValueChange={handleValueChange}
-    >
-      <SelectTrigger className="w-full" disabled={disabled}>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
+    <div className="relative w-full">
+      <UiSelect
+        value={typeof state === 'string' ? state : ''}
+        onValueChange={handleValueChange}
+      >
+        <SelectTrigger className="w-full" disabled={disabled}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
       <SelectContent>
         {options && options.length > 0 ? (
           options.map((option, index) => {
@@ -222,6 +240,17 @@ const Select = ({
         )}
       </SelectContent>
     </UiSelect>
+      {clearable && state && typeof state === 'string' && (
+        <button
+          type="button"
+          onClick={handleClearSingle}
+          className="absolute right-8 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
+          disabled={disabled}
+        >
+          <Cross2Icon className="h-3 w-3 opacity-50 hover:opacity-100" />
+        </button>
+      )}
+    </div>
   );
 }
 

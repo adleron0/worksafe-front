@@ -1,104 +1,84 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import Input from "@/components/general-components/Input";
-import Select from "@/components/general-components/Select";
+import React, { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
-import { ApiError, Response } from "@/general-interfaces/api.interface";
-
-interface SearchData {
-  title?: string;
-  courseId?: number;
-  isActive?: boolean;
-  version?: string;
-}
+// Template Components
+import Input from "@/components/general-components/Input";
+import Select from "@/components/general-components/Select";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Response } from "@/general-interfaces/api.interface";
+import { ApiError } from "@/general-interfaces/api.interface";
 
 interface SearchFormProps {
-  onSearch: (data: SearchData) => void;
+  onSearch: (params: { [key: string]: string | number | boolean | string[] }) => void;
   onClear: () => void;
-  openSheet: (open: boolean) => void;
-  params: Record<string, unknown>;
+  openSheet: (value: boolean) => void;
+  params: { [key: string]: string | number | boolean | string[] };
 }
 
-const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, params }) => {
-  const [searchData, setSearchData] = useState<SearchData>({
-    title: "",
-    courseId: undefined,
-    isActive: undefined,
-    version: "",
+const SearchForm = ({ onSearch, onClear, openSheet }: SearchFormProps) => {
+  const [filters, setFilters] = useState({
+    name: '',
+    courseId: '',
+    active: '',
   });
+  const initialFormRef = useRef(filters);
 
-  // Buscar cursos para o select
+  // Buscar cursos disponíveis
   const { 
     data: courses, 
     isLoading: isLoadingCourses,
   } = useQuery<Response | undefined, ApiError>({
-    queryKey: [`listCursosSearch`],
+    queryKey: [`listCursos`],
     queryFn: async () => {
-      const queryParams = [
+      const params = [
         { key: 'limit', value: 999 },
         { key: 'active', value: true },
         { key: 'order-name', value: 'asc' },
       ];
-      return get('courses', '', queryParams);
+      return get('courses', '', params);
     },
   });
 
-  useEffect(() => {
-    // Carregar params no form state
-    if (params) {
-      setSearchData({
-        title: (params.title as string) || "",
-        courseId: params.courseId ? Number(params.courseId) : undefined,
-        isActive: params.isActive !== undefined ? params.isActive as boolean : undefined,
-        version: (params.version as string) || "",
-      });
-    }
-  }, [params]);
-
   const handleChange = (name: string, value: string | number | boolean | null) => {
-    setSearchData(prev => ({ 
-      ...prev, 
-      [name]: value === "" || value === null ? undefined : value 
-    }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const searchParams: { [key: string]: any } = {};
     
-    // Filtrar apenas campos preenchidos
-    const filteredData = Object.entries(searchData).reduce((acc, [key, value]) => {
-      if (value !== undefined && value !== "" && value !== null) {
-        acc[key as keyof SearchData] = value;
-      }
-      return acc;
-    }, {} as SearchData);
+    if (filters.name) {
+      searchParams['search-name'] = filters.name;
+    }
+    
+    if (filters.courseId) {
+      searchParams.courseId = filters.courseId;
+    }
+    
+    if (filters.active !== '') {
+      searchParams.active = filters.active === 'true';
+    }
 
-    onSearch(filteredData);
+    onSearch(searchParams);
     openSheet(false);
   };
 
   const handleClear = () => {
-    setSearchData({
-      title: "",
-      courseId: undefined,
-      isActive: undefined,
-      version: "",
-    });
+    setFilters(initialFormRef.current);
     onClear();
     openSheet(false);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
       <div>
-        <Label htmlFor="title">Título</Label>
+        <Label htmlFor="name">Nome</Label>
         <Input
-          id="title"
-          name="title"
-          placeholder="Buscar por título"
-          value={searchData.title}
+          id="name"
+          name="name"
+          placeholder="Buscar por nome"
+          value={filters.name}
           onValueChange={handleChange}
           className="mt-1"
         />
@@ -106,62 +86,39 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
 
       <div>
         <Label htmlFor="courseId">Curso</Label>
-        <Select
+        <Select 
           name="courseId"
-          disabled={isLoadingCourses}
+          isLoading={isLoadingCourses}
           options={[
             { id: '', name: 'Todos os cursos' },
             ...(courses?.rows || [])
           ]}
-          onChange={(name, value) => handleChange(name, value ? +value : null)}
-          state={searchData.courseId ? String(searchData.courseId) : ""}
-          placeholder="Selecione o curso"
+          onChange={(name, value) => handleChange(name, typeof value === 'string' ? value : '')} 
+          state={filters.courseId}
+          placeholder="Filtrar por curso"
         />
       </div>
 
       <div>
-        <Label htmlFor="version">Versão</Label>
-        <Input
-          id="version"
-          name="version"
-          placeholder="Buscar por versão"
-          value={searchData.version}
-          onValueChange={handleChange}
-          className="mt-1"
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="isActive">Status</Label>
-        <Select
-          name="isActive"
+        <Label htmlFor="active">Status</Label>
+        <Select 
+          name="active"
           options={[
             { id: '', name: 'Todos' },
-            { id: 'true', name: 'Ativo' },
-            { id: 'false', name: 'Inativo' }
+            { id: 'true', name: 'Ativos' },
+            { id: 'false', name: 'Inativos' },
           ]}
-          onChange={(name, value) => {
-            if (value === '') {
-              handleChange(name, null);
-            } else {
-              handleChange(name, value === 'true');
-            }
-          }}
-          state={searchData.isActive !== undefined ? String(searchData.isActive) : ""}
-          placeholder="Selecione o status"
+          onChange={(name, value) => handleChange(name, typeof value === 'string' ? value : '')} 
+          state={filters.active}
+          placeholder="Filtrar por status"
         />
       </div>
 
-      <div className="flex gap-2 pt-4">
+      <div className="flex gap-2 mt-4">
         <Button type="submit" className="flex-1">
           Buscar
         </Button>
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={handleClear} 
-          className="flex-1"
-        >
+        <Button type="button" variant="outline" onClick={handleClear} className="flex-1">
           Limpar
         </Button>
       </div>

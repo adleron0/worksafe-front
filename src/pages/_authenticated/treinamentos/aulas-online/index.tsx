@@ -8,17 +8,15 @@ import Pagination from "@/components/general-components/Pagination";
 // Template Page list-form
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
-import Dialog from "@/components/general-components/Dialog";
 import ItemSkeleton from "./-skeletons/ItemSkeleton";
-import ItemList from "./-components/CursosOnlineItem";
-import Form from "./-components/CursosOnlineForm";
-import SearchForm from "./-components/CursosOnlineSearch";
-import CourseLessonsManager from "./-components/CourseLessonsManager";
+import ItemList from "./-components/AulasOnlineItem";
+import Form from "./-components/AulasOnlineForm";
+import SearchForm from "./-components/AulasOnlineSearch";
 // Interfaces
 import { IEntity } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
-export const Route = createFileRoute('/_authenticated/treinamentos/cursos-online/')({
+export const Route = createFileRoute('/_authenticated/treinamentos/aulas-online/')({
   component: List,
 })
 
@@ -27,21 +25,19 @@ function List() {
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<IEntity | null>(null);
-  const [openLessonsDialog, setOpenLessonsDialog] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<IEntity | null>(null);
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
-    show: ['course', 'lessons'],
-    'order-name': 'asc',
+    show: ['course'],
+    'order-title': 'asc',
   });
   const initialFormRef = useRef(searchParams);
 
   // Define variáveis de entidade
   const entity = {
-    name: "Curso Online",
-    pluralName: "Cursos Online",
-    model: "online-courses",
+    name: "Aula Online",
+    pluralName: "Aulas Online",
+    model: "online-lesson",
     ability: "classes",
   }
 
@@ -61,7 +57,7 @@ function List() {
     },
   });
 
-  const handleSearch = async (params: { [key: string]: string | number | boolean | string[] }) => {
+  const handleSearch = async (params: { [key: string]: any }) => {
     setSearchParams((prev) => ({ ...prev, ...params }));
   };
 
@@ -75,11 +71,6 @@ function List() {
 
   const handlePageChange = (page: number) => {
     setSearchParams((prev) => ({ ...prev, page }));
-  };
-
-  const handleManageLessons = (model: IEntity) => {
-    setSelectedModel(model);
-    setOpenLessonsDialog(true);
   };
 
   const totalPages = data ? Math.ceil(data.total / searchParams.limit) : 0;
@@ -139,7 +130,6 @@ function List() {
                 index={i} 
                 setFormData={setFormData} 
                 setOpenForm={setOpenForm}
-                onManageLessons={handleManageLessons}
               />
             ))
           : (
@@ -162,23 +152,6 @@ function List() {
           />
         )}
       </div>
-
-      {/* Dialog de Gerenciamento de Lições */}
-      <Dialog
-        open={openLessonsDialog}
-        onOpenChange={setOpenLessonsDialog}
-        title={`Vincular Aulas - ${selectedModel?.name || ''}`}
-        description="Arraste as aulas para vinculá-las ao modelo do curso online"
-        className="max-w-6xl"
-      >
-        {selectedModel && (
-          <CourseLessonsManager
-            modelId={selectedModel.id}
-            courseId={selectedModel.courseId}
-            onClose={() => setOpenLessonsDialog(false)}
-          />
-        )}
-      </Dialog>
     </>
   );
 };

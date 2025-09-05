@@ -15,8 +15,6 @@ import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
-import { HelpCircle } from "lucide-react";
 
 interface FormProps {
   formData?: IEntity | null;
@@ -31,32 +29,22 @@ const Form = ({ formData, setOpenForm, entity }: FormProps) => {
   // Schema de validação
   const Schema = z.object({
     courseId: z.number().min(1, { message: "Curso é obrigatório" }),
-    title: z.string().min(3, { message: "Título deve ter pelo menos 3 caracteres" }),
+    name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     description: z.string().optional(),
-    version: z.string().optional(),
     isActive: z.boolean(),
-    progressConfig: z.any(),
   });
 
   type FormData = z.infer<typeof Schema>;
 
   const [dataForm, setDataForm] = useState<FormData>({
     courseId: formData?.courseId || 0,
-    title: formData?.title || '',
+    name: formData?.name || '',
     description: formData?.description || '',
-    version: formData?.version || '1.0.0',
     isActive: formData?.isActive !== undefined ? formData.isActive : true,
-    progressConfig: formData?.progressConfig || {
-      minProgress: 80,
-      trackVideo: true,
-      trackQuiz: true,
-      trackActivities: true,
-    },
   });
 
   const initialFormRef = useRef(dataForm);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [showProgressConfig, setShowProgressConfig] = useState(false);
 
   const { mutate: registerEntity, isPending } = useMutation({
     mutationFn: (newItem: FormData) => {
@@ -128,16 +116,14 @@ const Form = ({ formData, setOpenForm, entity }: FormProps) => {
 
   const handleChange = (name: string, value: string | number | boolean | null) => {
     setDataForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleProgressConfigChange = (key: string, value: any) => {
-    setDataForm((prev) => ({
-      ...prev,
-      progressConfig: {
-        ...prev.progressConfig,
-        [key]: value,
-      },
-    }));
+    // Limpar erro do campo ao modificar
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -160,18 +146,13 @@ const Form = ({ formData, setOpenForm, entity }: FormProps) => {
       return;
     }
 
-    // Preparar dados para envio
-    const submissionData = {
-      ...dataForm,
-      progressConfig: JSON.stringify(dataForm.progressConfig)
-    } as unknown as FormData;
-
     if (formData) {
-      updateEntityMutation(submissionData);
+      updateEntityMutation(dataForm);
     } else {
-      registerEntity(submissionData);
+      registerEntity(dataForm);
     }
   };
+
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full mt-4">
@@ -179,26 +160,32 @@ const Form = ({ formData, setOpenForm, entity }: FormProps) => {
         <Label htmlFor="courseId">Curso <span className="text-red-500">*</span></Label>
         <Select 
           name="courseId"
-          disabled={isLoadingCourses}
+          disabled={!!formData}
+          isLoading={isLoadingCourses}
           options={courses?.rows || []}
           onChange={(name, value) => handleChange(name, +value)} 
           state={dataForm.courseId ? String(dataForm.courseId) : ""}
           placeholder="Selecione o curso"
         />
+        {!!formData && (
+          <p className="text-xs text-muted-foreground mt-1">
+            O curso não pode ser alterado após a criação.
+          </p>
+        )}
         {errors.courseId && <p className="text-red-500 text-sm mt-1">{errors.courseId}</p>}
       </div>
 
       <div>
-        <Label htmlFor="title">Título <span className="text-red-500">*</span></Label>
+        <Label htmlFor="name">Nome <span className="text-red-500">*</span></Label>
         <Input
-          id="title"
-          name="title"
-          placeholder="Digite o título do curso online"
-          value={dataForm.title}
+          id="name"
+          name="name"
+          placeholder="Digite o nome do modelo online"
+          value={dataForm.name}
           onValueChange={handleChange}
           className="mt-1"
         />
-        {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
       </div>
 
       <div>
@@ -206,7 +193,7 @@ const Form = ({ formData, setOpenForm, entity }: FormProps) => {
         <Textarea
           id="description"
           name="description"
-          placeholder="Digite uma descrição para o curso online"
+          placeholder="Digite uma descrição para o modelo online"
           value={dataForm.description}
           onChange={(e) => handleChange('description', e.target.value)}
           className="mt-1 min-h-[100px]"
@@ -214,27 +201,14 @@ const Form = ({ formData, setOpenForm, entity }: FormProps) => {
         {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
       </div>
 
-      <div>
-        <Label htmlFor="version">Versão</Label>
-        <Input
-          id="version"
-          name="version"
-          placeholder="Ex: 1.0.0"
-          value={dataForm.version}
-          onValueChange={handleChange}
-          className="mt-1"
-        />
-        {errors.version && <p className="text-red-500 text-sm mt-1">{errors.version}</p>}
-      </div>
-
       <div className="mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg">
         <div className="flex justify-between items-center">
           <div className="flex flex-col">
             <Label htmlFor="isActive" className="cursor-pointer">
-              Curso Ativo
+              Curso Online Ativo
             </Label>
             <p className="text-xs text-muted-foreground font-medium">
-              Define se o curso está disponível para os alunos
+              Define se o modelo está disponível para os alunos
             </p>
           </div>
           <Switch
@@ -244,92 +218,6 @@ const Form = ({ formData, setOpenForm, entity }: FormProps) => {
             onCheckedChange={(checked) => handleChange('isActive', checked)}
           />
         </div>
-      </div>
-
-      <div className="mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg">
-        <div 
-          className="flex justify-between items-center cursor-pointer"
-          onClick={() => setShowProgressConfig(!showProgressConfig)}
-        >
-          <div className="flex flex-col">
-            <Label className="cursor-pointer flex items-center gap-2">
-              <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-              Configurações de Progresso
-            </Label>
-            <p className="text-xs text-muted-foreground font-medium">
-              Configure como o progresso do aluno será calculado
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowProgressConfig(!showProgressConfig);
-            }}
-          >
-            {showProgressConfig ? 'Ocultar' : 'Mostrar'}
-          </Button>
-        </div>
-
-        {showProgressConfig && (
-          <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="minProgress">Progresso Mínimo</Label>
-                <span className="text-sm font-medium bg-primary/10 text-primary px-2 py-1 rounded">
-                  {dataForm.progressConfig?.minProgress || 80}%
-                </span>
-              </div>
-              <Slider
-                id="minProgress"
-                value={[dataForm.progressConfig?.minProgress || 80]}
-                onValueChange={(value) => handleProgressConfigChange('minProgress', value[0])}
-                min={0}
-                max={100}
-                step={1}
-                className="w-full"
-              />
-              <p className="text-xs text-muted-foreground">
-                Porcentagem mínima de conclusão para considerar o curso completo
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="trackVideo" className="cursor-pointer">
-                Rastrear Vídeos
-              </Label>
-              <Switch
-                id="trackVideo"
-                checked={dataForm.progressConfig?.trackVideo || false}
-                onCheckedChange={(checked) => handleProgressConfigChange('trackVideo', checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="trackQuiz" className="cursor-pointer">
-                Rastrear Questionários
-              </Label>
-              <Switch
-                id="trackQuiz"
-                checked={dataForm.progressConfig?.trackQuiz || false}
-                onCheckedChange={(checked) => handleProgressConfigChange('trackQuiz', checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="trackActivities" className="cursor-pointer">
-                Rastrear Atividades
-              </Label>
-              <Switch
-                id="trackActivities"
-                checked={dataForm.progressConfig?.trackActivities || false}
-                onCheckedChange={(checked) => handleProgressConfigChange('trackActivities', checked)}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       <Button

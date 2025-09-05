@@ -4,37 +4,37 @@ export const items = [
     icon:  "rocket",
     path: "/home",
   },
-  // {
-  //   title: "Clientes",
-  //   icon: "heart-handshake",
-  //   path: "/clientes",
-  //   isProduct: "clientes",
-  //   ability: "clientes",
-  // },
-  // {
-  //   title: "Comercial",
-  //   icon: "briefcase-business",
-  //   path: "/comercial",
-  //   isProduct: "comercial",
-  //   ability: "comercial",
-  //   subitems: [
-  //     {
-  //       title: "Orçamentos",
-  //       icon: "file-text",
-  //       path: "/comercial/orcamentos",
-  //     },
-  //     {
-  //       title: "Comissões",
-  //       icon: "hand-coins",
-  //       path: "/comercial/comissaoes",
-  //     },
-  //     {
-  //       title: "Relatórios",
-  //       icon: "chart-line",
-  //       path: "/comercial/relatorios",
-  //     },
-  //   ],
-  // },
+  {
+    title: "Clientes",
+    icon: "heart-handshake",
+    path: "/clientes",
+    isProduct: "clientes",
+    ability: "clientes",
+  },
+  {
+    title: "Comercial",
+    icon: "briefcase-business",
+    path: "/comercial",
+    isProduct: "comercial",
+    ability: "comercial",
+    subitems: [
+      {
+        title: "Vendedores",
+        icon: "user-round-check",
+        path: "/comercial/vendedores",
+      },
+      {
+        title: "Comissões",
+        icon: "hand-coins",
+        path: "/comercial/comissaoes",
+      },
+      {
+        title: "Cupons de Desconto",
+        icon: "ticket-percent",
+        path: "/comercial/cupons-desconto",
+      },
+    ],
+  },
   // {
   //   title: "Serviços",
   //   icon: "drill",
@@ -76,6 +76,11 @@ export const items = [
         title: "Cursos Online",
         icon: "youtube",
         path: "/treinamentos/cursos-online",
+      },
+      {
+        title: "Aulas Online",
+        icon: "blocks",
+        path: "/treinamentos/aulas-online",
       },
       {
         title: "Inscrições",

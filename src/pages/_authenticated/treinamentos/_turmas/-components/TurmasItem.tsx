@@ -8,13 +8,22 @@ import useVerify from "@/hooks/use-verify";
 // Template Page
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Status,
+  StatusIndicator,
+  StatusLabel,
+} from "@/components/ui/kibo-ui/status";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import ListHeader from "@/components/general-components/ListHeader";
-import { QRCode } from '@/components/ui/kibo-ui/qr-code';
+import { QRCode } from "@/components/ui/kibo-ui/qr-code";
 import Dialog from "@/components/general-components/Dialog";
 import { useState } from "react";
 import DuplicateTurmaModal from "./DuplicateTurmaModal";
@@ -34,7 +43,15 @@ interface ItemsProps {
   openSubscriptionsModal: (open: boolean) => void;
 }
 
-const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openInstructorsModal, openSubscriptionsModal }: ItemsProps) => {
+const SiteServicesItem = ({
+  item,
+  index,
+  entity,
+  setFormData,
+  setOpenForm,
+  openInstructorsModal,
+  openSubscriptionsModal,
+}: ItemsProps) => {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
@@ -43,7 +60,7 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
   const [openDuplicateModal, setOpenDuplicateModal] = useState(false);
   const [openAttendanceModal, setOpenAttendanceModal] = useState(false);
 
-   // Mutation para inativar
+  // Mutation para inativar
   const { mutate: deactivate } = useMutation({
     mutationFn: (id: number) => {
       showLoader(`Inativando ${entity.name}...`);
@@ -55,21 +72,23 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
         title: `${entity.name} ${item.name} inativado!`,
         description: `${entity.name} inativado com sucesso.`,
         variant: "success",
-      })
+      });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
     },
     onError: (error: unknown) => {
       hideLoader();
       toast({
         title: `Erro ao inativar ${entity.name}`,
-        description: error instanceof Error 
-          ? error.message 
-          : typeof error === 'object' && error !== null && 'response' in error 
-            ? ((error as ApiError).response?.data?.message || `Erro ao inativar ${entity.name}`)
-            : `Erro ao inativar ${entity.name}`,
+        description:
+          error instanceof Error
+            ? error.message
+            : typeof error === "object" && error !== null && "response" in error
+              ? (error as ApiError).response?.data?.message ||
+                `Erro ao inativar ${entity.name}`
+              : `Erro ao inativar ${entity.name}`,
         variant: "destructive",
-      })
-    }
+      });
+    },
   });
 
   // Mutation para ativar
@@ -84,21 +103,23 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
         title: `${entity.name} ${item.name} reativado!`,
         description: `O ${entity.name} foi reativado com sucesso.`,
         variant: "success",
-      })
+      });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
     },
     onError: (error: unknown) => {
       hideLoader();
       toast({
         title: `Erro ao reativar ${entity.name}`,
-        description: error instanceof Error 
-          ? error.message 
-          : typeof error === 'object' && error !== null && 'response' in error 
-            ? ((error as ApiError).response?.data?.message || `Erro ao reativar ${entity.name}`)
-            : `Erro ao reativar ${entity.name}`,
+        description:
+          error instanceof Error
+            ? error.message
+            : typeof error === "object" && error !== null && "response" in error
+              ? (error as ApiError).response?.data?.message ||
+                `Erro ao reativar ${entity.name}`
+              : `Erro ao reativar ${entity.name}`,
         variant: "destructive",
-      })
-    }
+      });
+    },
   });
 
   // Mutation para gerar certificados
@@ -111,22 +132,25 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
       hideLoader();
       toast({
         title: "Certificados gerados com sucesso!",
-        description: "Os certificados foram gerados para todos os alunos aprovados.",
+        description:
+          "Os certificados foram gerados para todos os alunos aprovados.",
         variant: "success",
-      })
+      });
     },
     onError: (error: unknown) => {
       hideLoader();
       toast({
         title: "Erro ao gerar certificados",
-        description: error instanceof Error 
-          ? error.message 
-          : typeof error === 'object' && error !== null && 'response' in error 
-            ? ((error as ApiError).response?.data?.message || "Erro ao gerar certificados")
-            : "Erro ao gerar certificados",
+        description:
+          error instanceof Error
+            ? error.message
+            : typeof error === "object" && error !== null && "response" in error
+              ? (error as ApiError).response?.data?.message ||
+                "Erro ao gerar certificados"
+              : "Erro ao gerar certificados",
         variant: "destructive",
-      })
-    }
+      });
+    },
   });
 
   const handleConfirmAction = (actionType: "activate" | "deactivate") => {
@@ -143,44 +167,74 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
     <>
       {/* Renderiza o Header apenas no primeiro item */}
       <ListHeader show={index === 0}>
-        <div className="w-4/12">Turma</div>
-        <div className="w-3/12">Detlhes</div>
+        <div className="w-3/12">Turma</div>
+        <div className="w-2/12">Detalhes</div>
         <div className="w-2/12">Período</div>
+        <div className="w-2/12">Inscrições</div>
         <div className="w-2/12">Status</div>
         <div className="w-1/12">Ações</div>
       </ListHeader>
 
       {/* Conteúdo do item */}
-      <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+      <div
+        className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}
+      >
         {/* Badges */}
         <div className="absolute -top-1 left-4 flex items-center gap-2">
-            <Badge variant="outline" className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary">
-              <Icon name="asterisk" className="w-4 h-4" />
-              {item.openClass ? "Turma aberta" : "InCompany"}
+          <Badge
+            variant="outline"
+            className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary"
+          >
+            <Icon name="asterisk" className="w-4 h-4" />
+            {item.openClass ? "Turma aberta" : "InCompany"}
+          </Badge>
+
+          {(item as any).allowSubscriptions && (
+            <Badge
+              variant="outline"
+              className="text-2xs h-4 rounded-sm font-medium text-green-800 bg-green-100"
+            >
+              <Icon name="check-circle" className="w-3 h-3 mr-1" />
+              Inscrições ativas
             </Badge>
+          )}
 
-            { item.minimumQuorum && Number(item.minimumQuorum) > 0 ? (
-              <Badge variant="outline" className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary">
-                <Icon name="arrow-big-down-dash" className="w-3 h-3" />
-                Mín: {item.minimumQuorum}
-              </Badge>
-              ) : null
-            }
+          {item.minimumQuorum && Number(item.minimumQuorum) > 0 ? (
+            <Badge
+              variant="outline"
+              className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary"
+            >
+              <Icon name="arrow-big-down-dash" className="w-3 h-3 mr-1" />
+              Mín: {item.minimumQuorum}
+            </Badge>
+          ) : null}
 
-            { item.maxSubscriptions && Number(item.maxSubscriptions) > 0 ? (
-              <Badge variant="outline" className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary">
-                <Icon name="arrow-big-up-dash" className="w-3 h-3" />
-                Máx: {item.maxSubscriptions}
-              </Badge>
-              ) : null
-            }
+          {(item as any).unlimitedSubscriptions ? (
+            <Badge
+              variant="outline"
+              className="text-2xs h-4 rounded-sm font-medium text-blue-800 bg-blue-100"
+            >
+              <Icon name="infinity" className="w-3 h-3 mr-1" />
+              Inscritos ilimitados
+            </Badge>
+          ) : item.maxSubscriptions && Number(item.maxSubscriptions) > 0 ? (
+            <Badge
+              variant="outline"
+              className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary"
+            >
+              <Icon name="arrow-big-up-dash" className="w-3 h-3 mr-1" />
+              Máx: {item.maxSubscriptions}
+            </Badge>
+          ) : null}
         </div>
 
         {/* Avatar e Nome */}
-        <div className="w-full lg:w-4/12 flex items-center space-x-4 md:pr-2">
+        <div className="w-full lg:w-3/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border rounded-md">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
-            <AvatarFallback className="rounded-md">{item.name[0]}</AvatarFallback>
+            <AvatarFallback className="rounded-md">
+              {item.name[0]}
+            </AvatarFallback>
           </Avatar>
           <div className="break-words w-9/12 md:w-full">
             <p className="text-xs text-muted-foreground dark:text-gray-100">
@@ -197,40 +251,84 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
         </div>
 
         {/* Detalhes */}
-        <div className="lg:w-3/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Detalhes: </p>
+        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
+          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">
+            Detalhes:{" "}
+          </p>
           <div className="flex flex-col items-start gap-0.5">
             <p className="text-xs text-muted-foreground dark:text-gray-100">
-              {item.price ? `valor: R$ ${item.price}` : 'valor: Não informado'}
+              {item.price ? `R$ ${item.price}` : "Não informado"}
             </p>
-            <p className="text-xs text-muted-foreground dark:text-gray-100">
-              {item.discountPrice ? `valor promocional: R$ ${item.discountPrice}` : 'valor promocional: R$ 0'}
-            </p>
-            <div className="flex flex-wrap gap-0.5">
-              {
-                item.gifts?.split('#').map((feature: string, index: number) => (
-                  <p 
-                    key={`feature-${index}`} 
-                    className="text-xs text-muted-foreground dark:text-gray-100 border rounded-sm py-1 px-2"
-                  >
-                    {feature}
-                  </p>
-                ))
-              }
-            </div>
+            {item.discountPrice && (
+              <p className="text-xs text-muted-foreground dark:text-gray-100">
+                Promo: R$ {item.discountPrice}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Período */}
         <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Período: </p>
+          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">
+            Período:{" "}
+          </p>
           <div>
-            <p className="text-sm text-muted-foreground dark:text-gray-100">
-              {new Date(item.initialDate || '2024-01-01').toLocaleDateString()}
-            </p>
-            <p className="text-sm text-muted-foreground dark:text-gray-100">
-              {new Date(item.finalDate || '2024-01-01').toLocaleDateString()}
-            </p>
+            {(item as any).periodClass === "UNLIMITED" ? (
+              <Badge variant="outline" className="text-xs font-medium">
+                <Icon name="infinity" className="w-3 h-3 mr-1" />
+                Ilimitado
+              </Badge>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground dark:text-gray-100">
+                  {new Date(
+                    item.initialDate || "2024-01-01",
+                  ).toLocaleDateString()}
+                </p>
+                <p className="text-sm text-muted-foreground dark:text-gray-100">
+                  {new Date(
+                    item.finalDate || "2024-01-01",
+                  ).toLocaleDateString()}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Período de Inscrições */}
+        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
+          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">
+            Inscrições:{" "}
+          </p>
+          <div>
+            {!(item as any).allowSubscriptions ? (
+              <Badge variant="secondary" className="text-xs font-medium">
+                <Icon name="x-circle" className="w-3 h-3 mr-1" />
+                Desabilitadas
+              </Badge>
+            ) : (item as any).periodSubscriptionsType === "UNLIMITED" ? (
+              <Badge variant="outline" className="text-xs font-medium">
+                <Icon name="infinity" className="w-3 h-3 mr-1" />
+                Sempre abertas
+              </Badge>
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground dark:text-gray-100">
+                  {(item as any).periodSubscriptionsInitialDate
+                    ? new Date(
+                        (item as any).periodSubscriptionsInitialDate,
+                      ).toLocaleDateString()
+                    : "-"}
+                </p>
+                <p className="text-xs text-muted-foreground dark:text-gray-100">
+                  {(item as any).periodSubscriptionsFinalDate
+                    ? new Date(
+                        (item as any).periodSubscriptionsFinalDate,
+                      ).toLocaleDateString()
+                    : "-"}
+                </p>
+              </>
+            )}
           </div>
         </div>
 
@@ -239,9 +337,7 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
           <p className="text-xs text-muted-foreground lg:hidden">Status</p>
           <Status status={item.active ? "online" : "offline"} className="w-fit">
             <StatusIndicator />
-            <StatusLabel>
-              {item.active ? 'Ativo' : 'Inativo'}
-            </StatusLabel>
+            <StatusLabel>{item.active ? "Ativo" : "Inativo"}</StatusLabel>
           </Status>
         </div>
 
@@ -252,174 +348,197 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
               <Button
                 className="h-8 w-8 rounded-full p-0 text-gray-700"
                 variant="outline"
-                size="sm">
-                  <Icon name="ellipsis-vertical" className="text-foreground dark:text-primary w-3 h-3" />
+                size="sm"
+              >
+                <Icon
+                  name="ellipsis-vertical"
+                  className="text-foreground dark:text-primary w-3 h-3"
+                />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
+              {can(`update_${entity.ability}`) && (
+                <Button
+                  variant="ghost"
+                  className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                  onClick={() => {
+                    setFormData(item);
+                    setOpenForm(true);
+                  }}
+                >
+                  <Icon name="edit-3" className="w-3 h-3" />
+                  <p>Editar</p>
+                </Button>
+              )}
 
-              { can(`update_${entity.ability}`) && (
-                  <Button 
-                    variant="ghost" 
-                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
-                    onClick={() => {
-                      setFormData(item);
-                      setOpenForm(true);
-                    }}
-                  >
-                    <Icon name="edit-3" className="w-3 h-3" /> 
-                    <p>Editar</p>
-                  </Button>
-                )
-              }
+              {can(`create_${entity.ability}`) && (
+                <Button
+                  variant="ghost"
+                  className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                  onClick={() => setOpenDuplicateModal(true)}
+                >
+                  <Icon name="copy" className="w-3 h-3" />
+                  <p>Duplicar Turma</p>
+                </Button>
+              )}
 
-              { can(`create_${entity.ability}`) && (
-                  <Button 
-                    variant="ghost" 
-                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
-                    onClick={() => setOpenDuplicateModal(true)}
-                  >
-                    <Icon name="copy" className="w-3 h-3" /> 
-                    <p>Duplicar Turma</p>
-                  </Button>
-                )
-              }
-
-              <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                <Button 
-                  variant="ghost" 
+              <DropdownMenuItem
+                className="p-0"
+                onSelect={(e) => e.preventDefault()}
+              >
+                <Button
+                  variant="ghost"
                   className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
                   onClick={() => {
                     openInstructorsModal(true);
                     setFormData(item);
                   }}
                 >
-                  <Icon name="contact" className="w-3 h-3" /> 
+                  <Icon name="contact" className="w-3 h-3" />
                   <p>Instrutores</p>
                 </Button>
               </DropdownMenuItem>
 
-              <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                <Button 
-                  variant="ghost" 
+              <DropdownMenuItem
+                className="p-0"
+                onSelect={(e) => e.preventDefault()}
+              >
+                <Button
+                  variant="ghost"
                   className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
                   onClick={() => {
                     openSubscriptionsModal(true);
                     setFormData(item);
                   }}
                 >
-                  <Icon name="users" className="w-3 h-3" /> 
+                  <Icon name="users" className="w-3 h-3" />
                   <p>Inscrições</p>
                 </Button>
               </DropdownMenuItem>
 
-              <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                <Button 
-                  variant="ghost" 
+              <DropdownMenuItem
+                className="p-0"
+                onSelect={(e) => e.preventDefault()}
+              >
+                <Button
+                  variant="ghost"
                   className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
                   onClick={() => {
-                    const baseUrl = process.env.NODE_ENV === 'development' 
-                      ? 'http://localhost:5173' 
-                      : theme.companyData?.lp_domain 
-                        ? `https://${theme.companyData.lp_domain}`
-                        : 'https://worksafebrasil.com.br';
+                    const baseUrl =
+                      process.env.NODE_ENV === "development"
+                        ? "http://localhost:5173"
+                        : theme.companyData?.lp_domain
+                          ? `https://${theme.companyData.lp_domain}`
+                          : "https://worksafebrasil.com.br";
                     const enrollmentLink = `${baseUrl}/turma/${item.id}`;
-                    
-                    navigator.clipboard.writeText(enrollmentLink).then(() => {
-                      toast({
-                        title: "Link copiado com sucesso!",
-                        description: "O link de inscrição foi copiado para a área de transferência.",
-                        variant: "success",
+
+                    navigator.clipboard
+                      .writeText(enrollmentLink)
+                      .then(() => {
+                        toast({
+                          title: "Link copiado com sucesso!",
+                          description:
+                            "O link de inscrição foi copiado para a área de transferência.",
+                          variant: "success",
+                        });
+                      })
+                      .catch(() => {
+                        toast({
+                          title: "Erro ao copiar link",
+                          description:
+                            "Não foi possível copiar o link. Tente novamente.",
+                          variant: "destructive",
+                        });
                       });
-                    }).catch(() => {
-                      toast({
-                        title: "Erro ao copiar link",
-                        description: "Não foi possível copiar o link. Tente novamente.",
-                        variant: "destructive",
-                      });
-                    });
                   }}
                 >
-                  <Icon name="link" className="w-3 h-3" /> 
+                  <Icon name="link" className="w-3 h-3" />
                   <p>Link Inscrição</p>
                 </Button>
               </DropdownMenuItem>
 
-              <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                <Button 
-                  variant="ghost" 
+              <DropdownMenuItem
+                className="p-0"
+                onSelect={(e) => e.preventDefault()}
+              >
+                <Button
+                  variant="ghost"
                   className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
                   onClick={() => setOpenAttendanceModal(true)}
                 >
-                  <Icon name="clipboard-check" className="w-3 h-3" /> 
+                  <Icon name="clipboard-check" className="w-3 h-3" />
                   <p>Lista de Presença</p>
                 </Button>
               </DropdownMenuItem>
 
-              {
-                item.allowExam && (
-                  <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                    <Button 
-                      variant="ghost" 
-                      className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
-                      onClick={() => setOpenQrModal(true)}
-                    >
-                      <Icon name="qr-code" className="w-3 h-3" /> 
-                      <p>Link Prova</p>
-                    </Button>
-                  </DropdownMenuItem>
-                )
-              }
+              {item.allowExam && (
+                <DropdownMenuItem
+                  className="p-0"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <Button
+                    variant="ghost"
+                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                    onClick={() => setOpenQrModal(true)}
+                  >
+                    <Icon name="qr-code" className="w-3 h-3" />
+                    <p>Link Prova</p>
+                  </Button>
+                </DropdownMenuItem>
+              )}
 
-              {
-                !item.allowExam && (
-                  <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                    <ConfirmDialog
-                      title="Gerar certificados para esta turma?"
-                      description="Ao prosseguir, serão gerados certificados para todos os alunos desta turma. ação não poderá ser desfeita."
-                      onConfirm={() => item.id && generateCertificates(item.id)}
-                      titleBttn="Gerar Certificados"
-                      iconBttn="file-badge"
-                    />
-                  </DropdownMenuItem>
-                )
-              }
-              
-              {
-                item.active ? (
-                  can(`inactive_${entity.ability}`) && (
-                      <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                        <ConfirmDialog
-                          title={`Inativar o ${entity.name} ${item.name}?`}
-                          description={`Ao prosseguir, o ${entity.name} ${item.name} será inativo e não poderá acessar a plataforma.`}
-                          onConfirm={() => handleConfirmAction("deactivate")}
-                          titleBttn="Inativar"
-                          iconBttn="power-off"
-                        />
-                      </DropdownMenuItem>
-                  )
-                ) : (
-                  can(`activate_${entity.ability}`) && (	
-                    <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+              {!item.allowExam && (
+                <DropdownMenuItem
+                  className="p-0"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <ConfirmDialog
+                    title="Gerar certificados para esta turma?"
+                    description="Ao prosseguir, serão gerados certificados para todos os alunos desta turma. ação não poderá ser desfeita."
+                    onConfirm={() => item.id && generateCertificates(item.id)}
+                    titleBttn="Gerar Certificados"
+                    iconBttn="file-badge"
+                  />
+                </DropdownMenuItem>
+              )}
+
+              {item.active
+                ? can(`inactive_${entity.ability}`) && (
+                    <DropdownMenuItem
+                      className="p-0"
+                      onSelect={(e) => e.preventDefault()}
+                    >
                       <ConfirmDialog
-                        title={`Reativar o ${entity.name} ${item.name}?`}
-                        description={`Ao prosseguir, o ${entity.name} ${item.name} será reativado e poderá acessar a plataforma.`}
-                        onConfirm={() => handleConfirmAction("activate")}
-                        titleBttn="Reativar"
-                        iconBttn="power"
+                        title={`Cancelar o ${entity.name} ${item.name}?`}
+                        description={`Ao prosseguir, o ${entity.name} ${item.name} será cancelado e não poderá acessar a plataforma.`}
+                        onConfirm={() => handleConfirmAction("deactivate")}
+                        titleBttn="Cancelar"
+                        iconBttn="power-off"
                       />
                     </DropdownMenuItem>
                   )
-                )
-              }
+                : can(`activate_${entity.ability}`) && (
+                    <DropdownMenuItem
+                      className="p-0"
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <ConfirmDialog
+                        title={`Reabrir o ${entity.name} ${item.name}?`}
+                        description={`Ao prosseguir, o ${entity.name} ${item.name} será reaberto e poderá acessar a plataforma.`}
+                        onConfirm={() => handleConfirmAction("activate")}
+                        titleBttn="Reabrir"
+                        iconBttn="power"
+                      />
+                    </DropdownMenuItem>
+                  )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
       {/* Modal do QR Code */}
-      <Dialog 
-        open={openQrModal} 
+      <Dialog
+        open={openQrModal}
         onOpenChange={setOpenQrModal}
         title="QR Code da Prova"
         description="Escaneie o QR Code para acessar a prova"
@@ -430,20 +549,24 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
           {/* Código do curso */}
           <div className="text-center">
             <p className="text-sm text-muted-foreground">Código do curso</p>
-            <p className="text-lg font-semibold">{item.classCode || 'Não disponível'}</p>
+            <p className="text-lg font-semibold">
+              {item.classCode || "Não disponível"}
+            </p>
           </div>
           {/* QR Code */}
-          <QRCode 
-            data={`${process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : window.location.origin}/prova/${item.id}`}
+          <QRCode
+            data={`${process.env.NODE_ENV === "development" ? "http://localhost:5173" : window.location.origin}/prova/${item.id}`}
           />
           {/* Link da prova com botão de copiar */}
           <div className="w-full space-y-2">
-            <p className="text-sm text-muted-foreground text-center">Link da prova</p>
+            <p className="text-sm text-muted-foreground text-center">
+              Link da prova
+            </p>
             <div className="flex items-center gap-2">
               <input
                 type="text"
                 readOnly
-                value={`${process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : window.location.origin}/prova/${item.id}`}
+                value={`${process.env.NODE_ENV === "development" ? "http://localhost:5173" : window.location.origin}/prova/${item.id}`}
                 className="flex-1 px-3 py-2 text-sm border rounded-md bg-background cursor-pointer"
                 onClick={(e) => e.currentTarget.select()}
               />
@@ -452,20 +575,25 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const provaLink = `${process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : window.location.origin}/prova/${item.id}`;
-                  navigator.clipboard.writeText(provaLink).then(() => {
-                    toast({
-                      title: "Link copiado!",
-                      description: "O link da prova foi copiado para a área de transferência.",
-                      variant: "success",
+                  const provaLink = `${process.env.NODE_ENV === "development" ? "http://localhost:5173" : window.location.origin}/prova/${item.id}`;
+                  navigator.clipboard
+                    .writeText(provaLink)
+                    .then(() => {
+                      toast({
+                        title: "Link copiado!",
+                        description:
+                          "O link da prova foi copiado para a área de transferência.",
+                        variant: "success",
+                      });
+                    })
+                    .catch(() => {
+                      toast({
+                        title: "Erro ao copiar",
+                        description:
+                          "Não foi possível copiar o link. Tente novamente.",
+                        variant: "destructive",
+                      });
                     });
-                  }).catch(() => {
-                    toast({
-                      title: "Erro ao copiar",
-                      description: "Não foi possível copiar o link. Tente novamente.",
-                      variant: "destructive",
-                    });
-                  });
                 }}
               >
                 <Icon name="copy" className="w-4 h-4" />
@@ -483,22 +611,22 @@ const SiteServicesItem = ({ item, index, entity, setFormData, setOpenForm, openI
       />
 
       {/* Modal de Lista de Presença */}
-      <Dialog 
-        open={openAttendanceModal} 
+      <Dialog
+        open={openAttendanceModal}
         onOpenChange={setOpenAttendanceModal}
         title={`Lista de Presença - ${item.name}`}
         description="Gerencie a presença dos alunos para cada dia da turma"
         showBttn={false}
         // showHeader={false}
       >
-        <ListaPresenca 
-          classId={item.id!} 
+        <ListaPresenca
+          classId={item.id!}
           className={item.name}
           daysDuration={item.daysDuration || 1}
         />
       </Dialog>
     </>
-  )
+  );
 };
 
 export default SiteServicesItem;

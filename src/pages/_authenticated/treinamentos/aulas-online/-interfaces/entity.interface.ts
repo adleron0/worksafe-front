@@ -13,7 +13,7 @@ export interface IOnlineLessonStep {
   lessonId: number;
   order: number;
   title: string;
-  type: 'video' | 'text' | 'quiz' | 'activity';
+  type: "video" | "text" | "quiz" | "activity";
   content: any;
   duration?: number;
 }
@@ -49,7 +49,7 @@ export interface IEntity {
   inactiveAt?: Date | string | null;
   createdAt?: string;
   updatedAt?: string;
-  
+
   // Novos relacionamentos
   steps?: IOnlineLessonStep[];
   modelLessons?: IOnlineModelLesson[];

@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @plugin 'tailwindcss-animate';
 
@@ -121,13 +121,13 @@
   }
   @keyframes echo {
     0% {
-        box-shadow: 0 0 0 0 rgba(74, 222, 128, .4);
+      box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4);
     }
     70% {
-        box-shadow: 0 0 0 8px rgba(74, 222, 128, 0);
+      box-shadow: 0 0 0 8px rgba(74, 222, 128, 0);
     }
     100% {
-        box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+      box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
     }
   }
   @keyframes bounceOut {
@@ -193,16 +193,17 @@
   padding-top: env(safe-area-inset-top);
 } */
 
-  body, html {
+  body,
+  html {
     /* padding-bottom: env(safe-area-inset-bottom); */
     overflow: hidden;
     height: 100dvh;
   }
-  
+
   .animate-marquee {
     animation: var(--animate-marquee);
   }
-  
+
   .animate-marquee-reverse {
     animation: var(--animate-marquee-reverse);
   }
@@ -229,17 +230,16 @@
   }
 
   /* Chrome, Safari, Edge, Opera */
-  input[type='number']::-webkit-inner-spin-button,
-  input[type='number']::-webkit-outer-spin-button {
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
   /* Firefox */
-  input[type='number'] {
+  input[type="number"] {
     -moz-appearance: textfield;
   }
 }
-
 
 @layer base {
   :root {

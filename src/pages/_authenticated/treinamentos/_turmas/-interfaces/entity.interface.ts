@@ -25,8 +25,8 @@ export interface IEntity {
   initialDate?: string | null;
   finalDate?: string | null;
   landingPagesDates?: string | null;
-  allowExam?: boolean | null;
-  allowReview?: boolean | null;
+  allowExam?: boolean;
+  allowReview?: boolean;
   classCode?: string | null;
   instructors?: any[] | null;
   certificates?: any[] | null;

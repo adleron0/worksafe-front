@@ -8,7 +8,7 @@ export interface IEntity {
   inactiveAt?: Date | string | null;
   createdAt?: string;
   updatedAt?: string;
-  
+
   // Relações
   course?: {
     id: number;
@@ -16,12 +16,13 @@ export interface IEntity {
     description?: string;
     hoursDuration?: number;
   };
-  
+
   // Lições associadas ao modelo
   lessons?: {
     id: number;
     lessonId: number;
     order: number;
+    isActive: boolean;
     lesson?: {
       id: number;
       title: string;

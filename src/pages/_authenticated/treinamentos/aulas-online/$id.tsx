@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { get, patch, post, put } from "@/services/api";
+import { get, patch, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import { useLoader } from "@/context/GeneralContext";
 import useVerify from "@/hooks/use-verify";
@@ -120,6 +120,7 @@ interface IOnlineLessonStep {
   contentType: "VIDEO" | "TEXT" | "QUIZ";
   isActive: boolean;
   content: StepContent;
+  duration?: number;
   inactiveAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -406,6 +407,8 @@ function AulaOnlineDetails() {
   });
 
   // Mutation para atualizar a ordem de um step individual
+  // Comentado temporariamente - pode ser necessário no futuro
+  /*
   const { mutate: updateStepOrder } = useMutation({
     mutationFn: async (data: {
       id: number;
@@ -435,6 +438,7 @@ function AulaOnlineDetails() {
       });
     },
   });
+  */
 
   // Mutation para atualizar múltiplos steps de uma vez (batch)
   const { mutate: batchUpdateStepsOrder } = useMutation({
@@ -556,19 +560,6 @@ function AulaOnlineDetails() {
     }
 
     setActiveId(null);
-  };
-
-  const getStepIcon = (type: string) => {
-    switch (type) {
-      case "VIDEO":
-        return "video";
-      case "TEXT":
-        return "file-text";
-      case "QUIZ":
-        return "help-circle";
-      default:
-        return "file";
-    }
   };
 
   const activeSteps = steps.filter((s) => s.isActive);

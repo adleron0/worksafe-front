@@ -108,13 +108,17 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         .optional(),
       initialDate: z.string().optional().nullable(),
       finalDate: z.string().optional().nullable(),
-      landingPagesDates: z.string().optional().nullable(),
+      landingPagesDates: z.string().min(3, {
+        message: "Datas de divulgação devem ter pelo menos 3 caracteres",
+      }),
       allowExam: z.boolean().optional(),
       allowReview: z.boolean().optional(),
       allowCheckout: z.boolean().optional(),
       classCode: z.string().optional().nullable(),
       minimumQuorum: z.number().optional(),
-      maxSubscriptions: z.number().optional(),
+      maxSubscriptions: z
+        .number()
+        .min(1, { message: "Máximo de inscrições deve ser maior que 0" }),
       paymentMethods: z
         .array(z.enum(["cartaoCredito", "boleto", "pix"]))
         .optional(),
@@ -126,8 +130,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           message: "Imagem deve ser um arquivo ou nulo.",
         }),
       whyUs: z.string().optional(),
-      // Period class field
-      periodClass: z.string().optional(),
       // New subscription fields
       allowSubscriptions: z.boolean().optional(),
       periodSubscriptionsType: z.string().optional().nullable(),
@@ -150,116 +152,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         message: "Código de acesso é obrigatório quando a turma tem prova",
         path: ["classCode"],
       },
-    )
-    .refine(
-      (data) => {
-        // Se periodClass é LIMITED, initialDate é obrigatório
-        if (
-          data.periodClass === "LIMITED" &&
-          (!data.initialDate || data.initialDate.trim() === "")
-        ) {
-          return false;
-        }
-        return true;
-      },
-      {
-        message: "Data de início é obrigatória quando o período é limitado",
-        path: ["initialDate"],
-      },
-    )
-    .refine(
-      (data) => {
-        // Se periodClass é LIMITED, finalDate é obrigatório
-        if (
-          data.periodClass === "LIMITED" &&
-          (!data.finalDate || data.finalDate.trim() === "")
-        ) {
-          return false;
-        }
-        return true;
-      },
-      {
-        message: "Data de fim é obrigatória quando o período é limitado",
-        path: ["finalDate"],
-      },
-    )
-    .refine(
-      (data) => {
-        // Se periodClass é LIMITED, landingPagesDates é obrigatório
-        if (
-          data.periodClass === "LIMITED" &&
-          (!data.landingPagesDates || data.landingPagesDates.trim() === "")
-        ) {
-          return false;
-        }
-        return true;
-      },
-      {
-        message:
-          "Datas de divulgação são obrigatórias quando o período é limitado",
-        path: ["landingPagesDates"],
-      },
-    )
-    .refine(
-      (data) => {
-        // Se unlimitedSubscriptions é false, maxSubscriptions é obrigatório e deve ser maior que 0
-        if (
-          !data.unlimitedSubscriptions &&
-          (!data.maxSubscriptions || data.maxSubscriptions <= 0)
-        ) {
-          return false;
-        }
-        return true;
-      },
-      {
-        message:
-          "Máximo de inscrições deve ser maior que 0 quando não for ilimitado",
-        path: ["maxSubscriptions"],
-      },
-    )
-    .refine(
-      (data) => {
-        // Se periodSubscriptionsType é LIMITED, a data inicial é obrigatória
-        if (
-          data.allowSubscriptions &&
-          data.periodSubscriptionsType === "LIMITED"
-        ) {
-          if (
-            !data.periodSubscriptionsInitialDate ||
-            data.periodSubscriptionsInitialDate.trim() === ""
-          ) {
-            return false;
-          }
-        }
-        return true;
-      },
-      {
-        message:
-          "Data inicial do período é obrigatória quando o tipo é por período",
-        path: ["periodSubscriptionsInitialDate"],
-      },
-    )
-    .refine(
-      (data) => {
-        // Se periodSubscriptionsType é LIMITED, a data final é obrigatória
-        if (
-          data.allowSubscriptions &&
-          data.periodSubscriptionsType === "LIMITED"
-        ) {
-          if (
-            !data.periodSubscriptionsFinalDate ||
-            data.periodSubscriptionsFinalDate.trim() === ""
-          ) {
-            return false;
-          }
-        }
-        return true;
-      },
-      {
-        message:
-          "Data final do período é obrigatória quando o tipo é por período",
-        path: ["periodSubscriptionsFinalDate"],
-      },
     );
 
   type FormData = z.infer<typeof Schema>;
@@ -275,7 +167,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     dividedIn: (formData as any)?.dividedIn || null,
     hoursDuration: formData?.hoursDuration || 1,
     daysDuration: (formData as any)?.daysDuration || 1,
-    openClass: formData?.openClass ?? false,
+    openClass: formData?.openClass || true,
     gifts: formData?.gifts || "",
     description: formData?.description || "",
     gradeTheory: formData?.gradeTheory || "",
@@ -290,7 +182,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     finalDate: formData?.finalDate || null,
     landingPagesDates: formData?.landingPagesDates || "",
     allowExam: formData?.allowExam ?? true,
-    allowReview: formData?.allowReview,
+    allowReview: formData?.allowReview || true,
     allowCheckout: (formData as any)?.allowCheckout || false,
     classCode:
       formData?.classCode ||
@@ -335,12 +227,10 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           },
         ],
       }),
-    // Period class field
-    periodClass: (formData as any)?.periodClass || "UNLIMITED",
     // New subscription fields
     allowSubscriptions: (formData as any)?.allowSubscriptions || false,
     periodSubscriptionsType:
-      (formData as any)?.periodSubscriptionsType || "LIMITED",
+      (formData as any)?.periodSubscriptionsType || "monthly",
     periodSubscriptionsInitialDate:
       (formData as any)?.periodSubscriptionsInitialDate || null,
     periodSubscriptionsFinalDate:
@@ -534,29 +424,6 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         <DropUpload setImage={setDataForm} EditPreview={preview} />
       </div>
 
-      <div className="mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg flex justify-between items-center">
-        <div className="flex flex-col">
-          <Label
-            htmlFor="openClass"
-            className="cursor-pointer flex items-center gap-2"
-          >
-            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-            Turma aberta
-          </Label>
-          <p className="text-xs text-muted-foreground font-medium">
-            Aparecer no site e na landingPage
-          </p>
-        </div>
-        <Switch
-          id="openClass"
-          name="openClass"
-          checked={dataForm.openClass ? true : false}
-          onCheckedChange={() =>
-            setDataForm((prev) => ({ ...prev, openClass: !prev.openClass }))
-          }
-        />
-      </div>
-
       <div>
         <Label htmlFor="courseId">
           Curso<span>*</span>
@@ -655,263 +522,56 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         )}
       </div>
 
-      {/* Period Class Fields */}
-      <div className="mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg">
-        <div className="flex flex-col mb-4">
-          <Label htmlFor="periodClass" className="flex items-center gap-2">
-            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-            Período da Turma
-          </Label>
-          <p className="text-xs text-muted-foreground font-medium">
-            Define o período de duração da turma
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="periodClass">Tipo de Período</Label>
-            <Select
-              name="periodClass"
-              options={[
-                { id: "LIMITED", name: "Por Período" },
-                { id: "UNLIMITED", name: "Ilimitado" },
-              ]}
-              state={dataForm.periodClass || "UNLIMITED"}
-              onChange={(name, value) => handleChange(name, value)}
-              placeholder="Selecione o tipo de período"
-            />
-            {errors.periodClass && (
-              <p className="text-red-500 text-sm">{errors.periodClass}</p>
-            )}
-          </div>
-
-          {dataForm.periodClass === "LIMITED" && (
-            <>
-              <div>
-                <Label htmlFor="initialDate">
-                  Data de Início <span>*</span>
-                </Label>
-                <CalendarPicker
-                  mode="single"
-                  name="initialDate"
-                  value={dataForm.initialDate}
-                  onValueChange={(name, value) => handleChange(name, value)}
-                  formField="initialDate"
-                  placeholder="Selecione a data de início"
-                  className="mt-1"
-                />
-                {errors.initialDate && (
-                  <p className="text-red-500 text-sm">{errors.initialDate}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="finalDate">
-                  Data de Fim <span>*</span>
-                </Label>
-                <CalendarPicker
-                  mode="single"
-                  name="finalDate"
-                  value={dataForm.finalDate}
-                  onValueChange={(name, value) => handleChange(name, value)}
-                  formField="finalDate"
-                  placeholder="Selecione a data de fim"
-                  className="mt-1"
-                />
-                {errors.finalDate && (
-                  <p className="text-red-500 text-sm">{errors.finalDate}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="landingPagesDates">
-                  Datas Exatas para Divulgação <span>*</span>
-                </Label>
-                <Input
-                  id="landingPagesDates"
-                  name="landingPagesDates"
-                  placeholder="Ex: 12, 13 e 14 de janeiro"
-                  value={dataForm.landingPagesDates ?? ""}
-                  onValueChange={handleChange}
-                  className="mt-1"
-                />
-                {errors.landingPagesDates && (
-                  <p className="text-red-500 text-sm">
-                    {errors.landingPagesDates}
-                  </p>
-                )}
-              </div>
-            </>
-          )}
-        </div>
+      <div>
+        <Label htmlFor="initialDate">
+          Data de Início <span>*</span>
+        </Label>
+        <CalendarPicker
+          mode="single"
+          name="initialDate"
+          value={dataForm.initialDate}
+          onValueChange={(name, value) => handleChange(name, value)}
+          formField="initialDate"
+          placeholder="Selecione a data de início"
+          className="mt-1"
+        />
+        {errors.initialDate && (
+          <p className="text-red-500 text-sm">{errors.initialDate}</p>
+        )}
       </div>
 
-      {/* Subscription Management Fields */}
-      <div
-        className={`mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg ${dataForm.allowSubscriptions ? "pb-4" : ""}`}
-      >
-        <div className="flex justify-between items-center">
-          <div className="flex flex-col">
-            <Label
-              htmlFor="allowSubscriptions"
-              className="cursor-pointer flex items-center gap-2"
-            >
-              <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-              Habilitar Inscrições
-            </Label>
-            <p className="text-xs text-muted-foreground font-medium">
-              Habilita subscrições na turma e configura período e limites.
-            </p>
-          </div>
-          <Switch
-            id="allowSubscriptions"
-            name="allowSubscriptions"
-            checked={dataForm.allowSubscriptions ? true : false}
-            onCheckedChange={() =>
-              setDataForm((prev) => ({
-                ...prev,
-                allowSubscriptions: !prev.allowSubscriptions,
-              }))
-            }
-          />
-        </div>
+      <div>
+        <Label htmlFor="finalDate">
+          Data de Fim <span>*</span>
+        </Label>
+        <CalendarPicker
+          mode="single"
+          name="finalDate"
+          value={dataForm.finalDate}
+          onValueChange={(name, value) => handleChange(name, value)}
+          formField="finalDate"
+          placeholder="Selecione a data de fim"
+          className="mt-1"
+        />
+        {errors.finalDate && (
+          <p className="text-red-500 text-sm">{errors.finalDate}</p>
+        )}
+      </div>
 
-        {dataForm.allowSubscriptions && (
-          <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="periodSubscriptionsType">
-                Período de Inscrição
-              </Label>
-              <Select
-                name="periodSubscriptionsType"
-                options={[
-                  { id: "LIMITED", name: "Por Período" },
-                  { id: "UNLIMITED", name: "Ilimitado" },
-                ]}
-                state={dataForm.periodSubscriptionsType || "LIMITED"}
-                onChange={(name, value) => handleChange(name, value)}
-                placeholder="Selecione o tipo de inscrição"
-              />
-              {errors.periodSubscriptionsType && (
-                <p className="text-red-500 text-sm">
-                  {errors.periodSubscriptionsType}
-                </p>
-              )}
-            </div>
-
-            {dataForm.periodSubscriptionsType === "LIMITED" && (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="periodSubscriptionsInitialDate">
-                    Data Inicial do Período <span>*</span>
-                  </Label>
-                  <CalendarPicker
-                    mode="single"
-                    name="periodSubscriptionsInitialDate"
-                    value={dataForm.periodSubscriptionsInitialDate}
-                    onValueChange={(name, value) => handleChange(name, value)}
-                    formField="periodSubscriptionsInitialDate"
-                    placeholder="Selecione a data inicial"
-                    className="mt-1"
-                  />
-                  {errors.periodSubscriptionsInitialDate && (
-                    <p className="text-red-500 text-sm">
-                      {errors.periodSubscriptionsInitialDate}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="periodSubscriptionsFinalDate">
-                    Data Final do Período <span>*</span>
-                  </Label>
-                  <CalendarPicker
-                    mode="single"
-                    name="periodSubscriptionsFinalDate"
-                    value={dataForm.periodSubscriptionsFinalDate}
-                    onValueChange={(name, value) => handleChange(name, value)}
-                    formField="periodSubscriptionsFinalDate"
-                    placeholder="Selecione a data final"
-                    className="mt-1"
-                  />
-                  {errors.periodSubscriptionsFinalDate && (
-                    <p className="text-red-500 text-sm">
-                      {errors.periodSubscriptionsFinalDate}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="minimumQuorum">Quorum Mínimo</Label>
-                <p className="text-xs text-muted-foreground font-medium">
-                  Mínimo de inscritos para confirmação da turma
-                </p>
-                <NumberInput
-                  id="minimumQuorum"
-                  name="minimumQuorum"
-                  min={0}
-                  max={100}
-                  value={dataForm.minimumQuorum}
-                  onValueChange={handleChange}
-                />
-                {errors.minimumQuorum && (
-                  <p className="text-red-500 text-sm">{errors.minimumQuorum}</p>
-                )}
-              </div>
-
-              <div className="flex justify-between items-center p-3 bg-background rounded-lg">
-                <div className="flex flex-col">
-                  <Label
-                    htmlFor="unlimitedSubscriptions"
-                    className="cursor-pointer"
-                  >
-                    Inscrições Ilimitadas
-                  </Label>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    Permite inscrições sem limite de vagas
-                  </p>
-                </div>
-                <Switch
-                  id="unlimitedSubscriptions"
-                  name="unlimitedSubscriptions"
-                  checked={dataForm.unlimitedSubscriptions ? true : false}
-                  onCheckedChange={() =>
-                    setDataForm((prev) => ({
-                      ...prev,
-                      unlimitedSubscriptions: !prev.unlimitedSubscriptions,
-                    }))
-                  }
-                />
-              </div>
-
-              {!dataForm.unlimitedSubscriptions && (
-                <div>
-                  <Label htmlFor="maxSubscriptions">
-                    Máximo de Inscrições <span>*</span>
-                  </Label>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    Máximo de participantes que podem se inscrever na turma
-                  </p>
-                  <NumberInput
-                    id="maxSubscriptions"
-                    name="maxSubscriptions"
-                    min={0}
-                    max={100}
-                    value={dataForm.maxSubscriptions}
-                    onValueChange={handleChange}
-                  />
-                  {errors.maxSubscriptions && (
-                    <p className="text-red-500 text-sm">
-                      {errors.maxSubscriptions}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+      <div>
+        <Label htmlFor="landingPagesDates">
+          Datas Exatas para Divulgação <span>*</span>
+        </Label>
+        <Input
+          id="landingPagesDates"
+          name="landingPagesDates"
+          placeholder="Ex: 12, 13 e 14 de janeiro"
+          value={dataForm.landingPagesDates ?? ""}
+          onValueChange={handleChange}
+          className="mt-1"
+        />
+        {errors.landingPagesDates && (
+          <p className="text-red-500 text-sm">{errors.landingPagesDates}</p>
         )}
       </div>
 
@@ -1073,94 +733,65 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         )}
       </div>
 
-      <div className="mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg">
-        <div className="flex flex-col mb-4">
-          <Label htmlFor="periodClass" className="flex items-center gap-2">
+      <div className="space-y-2">
+        <Label htmlFor="minimumQuorum">Quorum Mínimo</Label>
+        <p className="text-xs text-muted-foreground font-medium">
+          Mínimo de inscritos para confirmação da turma
+        </p>
+        <NumberInput
+          id="minimumQuorum"
+          name="minimumQuorum"
+          min={0}
+          max={100}
+          value={dataForm.minimumQuorum}
+          onValueChange={handleChange}
+        />
+        {errors.minimumQuorum && (
+          <p className="text-red-500 text-sm">{errors.minimumQuorum}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="maxSubscriptions">
+          Máximo de Inscrições <span>*</span>
+        </Label>
+        <p className="text-xs text-muted-foreground font-medium">
+          Máximo de participantes que podem se inscrever na turma
+        </p>
+        <NumberInput
+          id="maxSubscriptions"
+          name="maxSubscriptions"
+          min={0}
+          max={100}
+          value={dataForm.maxSubscriptions}
+          onValueChange={handleChange}
+        />
+        {errors.maxSubscriptions && (
+          <p className="text-red-500 text-sm">{errors.maxSubscriptions}</p>
+        )}
+      </div>
+
+      <div className="mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg flex justify-between items-center">
+        <div className="flex flex-col">
+          <Label
+            htmlFor="openClass"
+            className="cursor-pointer flex items-center gap-2"
+          >
             <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-            Período da Turma
+            Turma aberta
           </Label>
           <p className="text-xs text-muted-foreground font-medium">
-            Define o período de duração da turma
+            Aparecer no site e na landingPage
           </p>
         </div>
-
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="periodClass">Tipo de Período</Label>
-            <Select
-              name="periodClass"
-              options={[
-                { id: "LIMITED", name: "Por Período" },
-                { id: "UNLIMITED", name: "Ilimitado" },
-              ]}
-              state={dataForm.periodClass || "UNLIMITED"}
-              onChange={(name, value) => handleChange(name, value)}
-              placeholder="Selecione o tipo de período"
-            />
-            {errors.periodClass && (
-              <p className="text-red-500 text-sm">{errors.periodClass}</p>
-            )}
-          </div>
-
-          {dataForm.periodClass === "LIMITED" && (
-            <>
-              <div>
-                <Label htmlFor="initialDate">
-                  Data de Início <span>*</span>
-                </Label>
-                <CalendarPicker
-                  mode="single"
-                  name="initialDate"
-                  value={dataForm.initialDate}
-                  onValueChange={(name, value) => handleChange(name, value)}
-                  formField="initialDate"
-                  placeholder="Selecione a data de início"
-                  className="mt-1"
-                />
-                {errors.initialDate && (
-                  <p className="text-red-500 text-sm">{errors.initialDate}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="finalDate">
-                  Data de Fim <span>*</span>
-                </Label>
-                <CalendarPicker
-                  mode="single"
-                  name="finalDate"
-                  value={dataForm.finalDate}
-                  onValueChange={(name, value) => handleChange(name, value)}
-                  formField="finalDate"
-                  placeholder="Selecione a data de fim"
-                  className="mt-1"
-                />
-                {errors.finalDate && (
-                  <p className="text-red-500 text-sm">{errors.finalDate}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="landingPagesDates">
-                  Datas Exatas para Divulgação <span>*</span>
-                </Label>
-                <Input
-                  id="landingPagesDates"
-                  name="landingPagesDates"
-                  placeholder="Ex: 12, 13 e 14 de janeiro"
-                  value={dataForm.landingPagesDates ?? ""}
-                  onValueChange={handleChange}
-                  className="mt-1"
-                />
-                {errors.landingPagesDates && (
-                  <p className="text-red-500 text-sm">
-                    {errors.landingPagesDates}
-                  </p>
-                )}
-              </div>
-            </>
-          )}
-        </div>
+        <Switch
+          id="openClass"
+          name="openClass"
+          checked={dataForm.openClass ? true : false}
+          onCheckedChange={() =>
+            setDataForm((prev) => ({ ...prev, openClass: !prev.openClass }))
+          }
+        />
       </div>
 
       <div

@@ -1,7 +1,7 @@
 export const items = [
   {
     title: "Home",
-    icon:  "rocket",
+    icon: "rocket",
     path: "/home",
   },
   {
@@ -163,11 +163,11 @@ export const items = [
       //   icon: "trending-down",
       //   path: "/financeiro/pagar",
       // },
-      // {
-      //   title: "Contas a Receber",
-      //   icon: "trending-up",
-      //   path: "/financeiro/receber",
-      // },
+      {
+        title: "Contas a Receber",
+        icon: "trending-up",
+        path: "/financeiro/receber",
+      },
       // {
       //   title: "Notas Fiscais",
       //   icon: "receipt",
@@ -178,11 +178,6 @@ export const items = [
       //   icon: "chart-pie",
       //   path: "/financeiro/relatorios",
       // },
-      {
-        title: "GateWays",
-        icon: "wallet",
-        path: "/financeiro/gateways",
-      },
     ],
   },
   {
@@ -204,6 +199,12 @@ export const items = [
         path: "/site/produtos",
       },
     ],
+  },
+  {
+    title: "Integrações",
+    icon: "unplug",
+    path: "/integracoes",
+    ability: "financeiro",
   },
   {
     title: "Equipe",

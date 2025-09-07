@@ -8,6 +8,7 @@ import useVerify from "@/hooks/use-verify";
 // Template Page
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Status,
   StatusIndicator,
@@ -179,53 +180,58 @@ const SiteServicesItem = ({
       <div
         className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}
       >
-        {/* Badges */}
-        <div className="absolute -top-1 left-4 flex items-center gap-2">
-          <Badge
-            variant="outline"
-            className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary"
-          >
-            <Icon name="asterisk" className="w-4 h-4" />
-            {item.openClass ? "Turma aberta" : "InCompany"}
-          </Badge>
+        {/* Badges com ScrollArea */}
+        <div className="absolute -top-1 left-4 right-14 lg:right-auto lg:left-4">
+          <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="outline"
+                className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary flex-shrink-0"
+              >
+                <Icon name="asterisk" className="w-4 h-4" />
+                {item.openClass ? "Turma aberta" : "InCompany"}
+              </Badge>
 
-          {(item as any).allowSubscriptions && (
-            <Badge
-              variant="outline"
-              className="text-2xs h-4 rounded-sm font-medium text-green-800 bg-green-100"
-            >
-              <Icon name="check-circle" className="w-3 h-3 mr-1" />
-              Inscrições ativas
-            </Badge>
-          )}
+              {(item as any).allowSubscriptions && (
+                <Badge
+                  variant="outline"
+                  className="text-2xs h-4 rounded-sm font-medium text-green-800 bg-green-100 flex-shrink-0"
+                >
+                  <Icon name="check-circle" className="w-3 h-3 mr-1" />
+                  Inscrições ativas
+                </Badge>
+              )}
 
-          {item.minimumQuorum && Number(item.minimumQuorum) > 0 ? (
-            <Badge
-              variant="outline"
-              className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary"
-            >
-              <Icon name="arrow-big-down-dash" className="w-3 h-3 mr-1" />
-              Mín: {item.minimumQuorum}
-            </Badge>
-          ) : null}
+              {item.minimumQuorum && Number(item.minimumQuorum) > 0 ? (
+                <Badge
+                  variant="outline"
+                  className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary flex-shrink-0"
+                >
+                  <Icon name="arrow-big-down-dash" className="w-3 h-3 mr-1" />
+                  Mín: {item.minimumQuorum}
+                </Badge>
+              ) : null}
 
-          {(item as any).unlimitedSubscriptions ? (
-            <Badge
-              variant="outline"
-              className="text-2xs h-4 rounded-sm font-medium text-blue-800 bg-blue-100"
-            >
-              <Icon name="infinity" className="w-3 h-3 mr-1" />
-              Inscritos ilimitados
-            </Badge>
-          ) : item.maxSubscriptions && Number(item.maxSubscriptions) > 0 ? (
-            <Badge
-              variant="outline"
-              className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary"
-            >
-              <Icon name="arrow-big-up-dash" className="w-3 h-3 mr-1" />
-              Máx: {item.maxSubscriptions}
-            </Badge>
-          ) : null}
+              {(item as any).unlimitedSubscriptions ? (
+                <Badge
+                  variant="outline"
+                  className="text-2xs h-4 rounded-sm font-medium text-blue-800 bg-blue-100 flex-shrink-0"
+                >
+                  <Icon name="infinity" className="w-3 h-3 mr-1" />
+                  Inscritos ilimitados
+                </Badge>
+              ) : item.maxSubscriptions && Number(item.maxSubscriptions) > 0 ? (
+                <Badge
+                  variant="outline"
+                  className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary flex-shrink-0"
+                >
+                  <Icon name="arrow-big-up-dash" className="w-3 h-3 mr-1" />
+                  Máx: {item.maxSubscriptions}
+                </Badge>
+              ) : null}
+            </div>
+            <ScrollBar orientation="horizontal" className="invisible" />
+          </ScrollArea>
         </div>
 
         {/* Avatar e Nome */}

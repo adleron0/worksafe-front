@@ -28,7 +28,7 @@ import { Route as AuthenticatedInventariosAccessControlRouteImport } from './pag
 import { Route as AuthenticatedUsuariosUsuariosIndexRouteImport } from './pages/_authenticated/usuarios/_usuarios/index'
 import { Route as AuthenticatedTreinamentosAulasOnlineIndexRouteImport } from './pages/_authenticated/treinamentos/aulas-online/index'
 import { Route as AuthenticatedInventariosAreasIndexRouteImport } from './pages/_authenticated/inventarios/areas/index'
-import { Route as IndexCertificadosNomeIdRouteImport } from './pages/_inde./pages/_authenticated/financeiro/-gateways/index
+import { Route as IndexCertificadosNomeIdRouteImport } from './pages/_index/certificados/$nome.$id'
 import { Route as AuthenticatedUsuariosPerfisPerfisRouteImport } from './pages/_authenticated/usuarios/_perfis/perfis'
 import { Route as AuthenticatedTreinamentosAulasOnlineIdRouteImport } from './pages/_authenticated/treinamentos/aulas-online/$id'
 import { Route as AuthenticatedTreinamentosTurmasTurmasRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas'

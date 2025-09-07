@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { patch } from "@/services/api";
 import { useLoader } from "@/context/GeneralContext";
@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import Icon from "@/components/general-components/Icon";
+import Dialog from "@/components/general-components/Dialog";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
+import AsaasForm from "./gatewaysForms/AsaasForm";
 import { ICompanyGateway } from "../-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
@@ -22,20 +24,18 @@ interface GatewayInfo {
 interface GatewayCardProps {
   gatewayInfo: GatewayInfo;
   gatewayData?: ICompanyGateway;
-  onActivate: () => void;
-  onEdit: () => void;
   entity: any;
 }
 
 const GatewayCard: React.FC<GatewayCardProps> = ({
   gatewayInfo,
   gatewayData,
-  onActivate,
-  onEdit,
   entity,
 }) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
+  const [openFormDialog, setOpenFormDialog] = useState(false);
+  const [formData, setFormData] = useState<ICompanyGateway | null>(null);
   const isConnected = !!gatewayData;
   const isActive = gatewayData?.active || false;
 
@@ -104,8 +104,14 @@ const GatewayCard: React.FC<GatewayCardProps> = ({
   const handleToggle = (checked: boolean) => {
     if (!isConnected && checked) {
       // Se não está conectado e tenta ativar, abre o modal de configuração
-      onActivate();
+      setFormData(null);
+      setOpenFormDialog(true);
     }
+  };
+
+  const handleEdit = () => {
+    setFormData(gatewayData || null);
+    setOpenFormDialog(true);
   };
 
   const handleConfirmAction = (actionType: "activate" | "deactivate") => {
@@ -118,97 +124,138 @@ const GatewayCard: React.FC<GatewayCardProps> = ({
     }
   };
 
+  // Função para renderizar o formulário correto baseado no gateway
+  const renderGatewayForm = () => {
+    switch (gatewayInfo.id) {
+      case "asaas":
+        return (
+          <AsaasForm
+            formData={formData}
+            entity={entity}
+            onClose={() => setOpenFormDialog(false)}
+          />
+        );
+      // Adicionar outros gateways no futuro
+      // case 'stripe':
+      //   return <StripeForm ... />;
+      default:
+        return <div>Gateway não suportado</div>;
+    }
+  };
+
   return (
-    <Card className="relative hover:shadow-lg transition-shadow duration-200 h-full min-h-[220px]">
-      <CardContent className="p-6 h-full flex flex-col">
-        {/* Header com Logo e Controles */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-shrink-0">{gatewayInfo.logo}</div>
+    <>
+      <Card className="relative hover:shadow-lg transition-shadow duration-200 h-full min-h-[220px]">
+        <CardContent className="p-6 h-full flex flex-col">
+          {/* Header com Logo e Controles */}
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-shrink-0">{gatewayInfo.logo}</div>
 
-          <div className="flex items-center gap-2">
-            {isConnected && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onEdit}
-                className="h-8 w-8"
-              >
-                <Icon name="edit" className="h-4 w-4" />
-              </Button>
-            )}
-
-            {/* Switch - sempre visível */}
-            {!isConnected ? (
-              <Switch checked={false} onCheckedChange={handleToggle} />
-            ) : isActive ? (
-              <ConfirmDialog
-                title="Desativar Gateway"
-                description={`Tem certeza que deseja desativar o ${gatewayInfo.name}? Isso impedirá o processamento de novos pagamentos.`}
-                onConfirm={() => handleConfirmAction("deactivate")}
-              >
-                <div className="cursor-pointer">
-                  <Switch checked={true} onCheckedChange={() => {}} />
-                </div>
-              </ConfirmDialog>
-            ) : (
-              <ConfirmDialog
-                title="Ativar Gateway"
-                description={`Tem certeza que deseja ativar o ${gatewayInfo.name}? Isso permitirá o processamento de pagamentos.`}
-                onConfirm={() => handleConfirmAction("activate")}
-              >
-                <div className="cursor-pointer">
-                  <Switch checked={false} onCheckedChange={() => {}} />
-                </div>
-              </ConfirmDialog>
-            )}
-          </div>
-        </div>
-
-        {/* Informações do Gateway */}
-        <div className="space-y-3 flex-1 flex flex-col">
-          <div>
-            <h3 className="font-semibold text-lg mb-2">{gatewayInfo.name}</h3>
-            <p className="text-sm text-muted-foreground line-clamp-3">
-              {gatewayInfo.description}
-            </p>
-          </div>
-
-          {/* Status Badge - empurrado para o fundo */}
-          <div className="flex items-center justify-between mt-auto pt-4">
             <div className="flex items-center gap-2">
-              <div
-                className={`h-2 w-2 rounded-full ${
-                  isConnected
-                    ? isActive
-                      ? "bg-green-500"
-                      : "bg-yellow-500"
-                    : "bg-gray-400"
-                }`}
-              />
-              <span className="text-xs text-muted-foreground">
-                {isConnected
-                  ? isActive
-                    ? "Ativo"
-                    : "Inativo"
-                  : "Não conectado"}
-              </span>
+              {isConnected && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleEdit}
+                  className="h-8 w-8"
+                >
+                  <Icon name="edit" className="h-4 w-4" />
+                </Button>
+              )}
+
+              {/* Switch - sempre visível */}
+              {!isConnected ? (
+                <Switch checked={false} onCheckedChange={handleToggle} />
+              ) : isActive ? (
+                <ConfirmDialog
+                  title="Desativar Gateway"
+                  description={`Tem certeza que deseja desativar o ${gatewayInfo.name}? Isso impedirá o processamento de novos pagamentos.`}
+                  onConfirm={() => handleConfirmAction("deactivate")}
+                >
+                  <div className="cursor-pointer">
+                    <Switch checked={true} onCheckedChange={() => {}} />
+                  </div>
+                </ConfirmDialog>
+              ) : (
+                <ConfirmDialog
+                  title="Ativar Gateway"
+                  description={`Tem certeza que deseja ativar o ${gatewayInfo.name}? Isso permitirá o processamento de pagamentos.`}
+                  onConfirm={() => handleConfirmAction("activate")}
+                >
+                  <div className="cursor-pointer">
+                    <Switch checked={false} onCheckedChange={() => {}} />
+                  </div>
+                </ConfirmDialog>
+              )}
+            </div>
+          </div>
+
+          {/* Informações do Gateway */}
+          <div className="space-y-3 flex-1 flex flex-col">
+            <div>
+              <h3 className="font-semibold text-lg mb-2">{gatewayInfo.name}</h3>
+              <p className="text-sm text-muted-foreground line-clamp-3">
+                {gatewayInfo.description}
+              </p>
             </div>
 
-            {!isConnected && (
-              <a
-                href={gatewayInfo.signupUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-primary hover:underline flex items-center gap-1"
-              >
-                Criar conta
-                <Icon name="external-link" className="h-3 w-3" />
-              </a>
-            )}
+            {/* Status Badge - empurrado para o fundo */}
+            <div className="flex items-center justify-between mt-auto pt-4">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    isConnected
+                      ? isActive
+                        ? "bg-green-500"
+                        : "bg-yellow-500"
+                      : "bg-gray-400"
+                  }`}
+                />
+                <span className="text-xs text-muted-foreground">
+                  {isConnected
+                    ? isActive
+                      ? "Ativo"
+                      : "Inativo"
+                    : "Não conectado"}
+                </span>
+              </div>
+
+              {!isConnected && (
+                <a
+                  href={gatewayInfo.signupUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline flex items-center gap-1"
+                >
+                  Criar conta
+                  <Icon name="external-link" className="h-3 w-3" />
+                </a>
+              )}
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* Dialog com formulário do gateway */}
+      <Dialog
+        open={openFormDialog}
+        onOpenChange={setOpenFormDialog}
+        title={
+          formData
+            ? `Editar ${gatewayInfo.name}`
+            : `Conectar ${gatewayInfo.name}`
+        }
+        description={
+          formData
+            ? `Atualize as configurações do gateway de pagamento.`
+            : `Configure as credenciais para conectar ao ${gatewayInfo.name}.`
+        }
+        showBttn={false}
+        className="sm:max-w-lg"
+      >
+        {renderGatewayForm()}
+      </Dialog>
+    </>
   );
 };
 

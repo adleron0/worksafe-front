@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
 import GatewayCard from "./GatewayCard";
-import GatewaysModal from "./GatewaysModal";
 import { ICompanyGateway } from "../-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,9 +37,6 @@ interface GatewaysGridProps {
 
 const GatewaysGrid: React.FC<GatewaysGridProps> = ({ showHeader = true }) => {
   const { can } = useVerify();
-  const [openModal, setOpenModal] = useState(false);
-  const [selectedGateway, setSelectedGateway] = useState<string | null>(null);
-  const [formData, setFormData] = useState<ICompanyGateway | null>(null);
 
   const entity = {
     name: "Gateway",
@@ -66,18 +62,6 @@ const GatewaysGrid: React.FC<GatewaysGridProps> = ({ showHeader = true }) => {
       ]);
     },
   });
-
-  const handleActivate = (gatewayId: string) => {
-    setSelectedGateway(gatewayId);
-    setFormData(null);
-    setOpenModal(true);
-  };
-
-  const handleEdit = (gateway: ICompanyGateway) => {
-    setSelectedGateway(gateway.gateway);
-    setFormData(gateway);
-    setOpenModal(true);
-  };
 
   const getGatewayData = (gatewayId: string): ICompanyGateway | undefined => {
     return data?.rows.find((g) => g.gateway === gatewayId);
@@ -141,25 +125,11 @@ const GatewaysGrid: React.FC<GatewaysGridProps> = ({ showHeader = true }) => {
               key={gateway.id}
               gatewayInfo={gateway}
               gatewayData={getGatewayData(gateway.id)}
-              onActivate={() => handleActivate(gateway.id)}
-              onEdit={() => {
-                const data = getGatewayData(gateway.id);
-                if (data) handleEdit(data);
-              }}
               entity={entity}
             />
           ))
         )}
       </div>
-
-      {/* Modal para formulário */}
-      <GatewaysModal
-        open={openModal}
-        onOpenChange={setOpenModal}
-        formData={formData}
-        selectedGateway={selectedGateway}
-        entity={entity}
-      />
     </div>
   );
 };

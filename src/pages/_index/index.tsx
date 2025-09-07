@@ -24,7 +24,7 @@ import { LoginData } from "@/general-interfaces/auth.interface";
 import { useAuth } from "@/context/AuthContext";
 import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
 import DynamicLogo from "@/components/general-components/DynamicLogo";
-import { ArrowLeft } from "lucide-react";
+// import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/_index/")({
   loader: async () => {

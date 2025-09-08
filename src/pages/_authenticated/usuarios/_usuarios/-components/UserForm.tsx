@@ -168,10 +168,12 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
       {
         onlyPassword !== 'only' && (
           <>
+           <div className="h-60">
             <DropUpload
               setImage={setDataForm}
               EditPreview={preview}
             />
+           </div>
             <div>
               <Label htmlFor="name">Nome <span>*</span></Label>
               <Input

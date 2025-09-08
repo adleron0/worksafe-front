@@ -240,6 +240,7 @@ const GatewayCard: React.FC<GatewayCardProps> = ({
       <Dialog
         open={openFormDialog}
         onOpenChange={setOpenFormDialog}
+        showHeader={false}
         title={
           formData
             ? `Editar ${gatewayInfo.name}`
@@ -252,6 +253,7 @@ const GatewayCard: React.FC<GatewayCardProps> = ({
         }
         showBttn={false}
         className="sm:max-w-lg"
+        classNameContent="h-fit"
       >
         {renderGatewayForm()}
       </Dialog>

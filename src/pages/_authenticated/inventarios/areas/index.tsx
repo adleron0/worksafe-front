@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import Pagination from "@/components/general-components/Pagination";
-import { listAreasCompany } from "@/services/areaService";
+import { listAreasCompany } from "@/services/specific/areaService";
 import { useQuery } from "@tanstack/react-query";
 import AreaItemSkeleton from "./-skeletons/areaItemSkeleton";
 import { ApiError } from "@/general-interfaces/api.interface";

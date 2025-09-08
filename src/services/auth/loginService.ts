@@ -1,4 +1,4 @@
-import api from './api';
+import api from '../api';
 import { LoginData } from '@/general-interfaces/auth.interface';
 
 // URL base da API

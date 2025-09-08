@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useToast } from '@/hooks/use-toast';
-import { refreshToken } from '@/services/loginService';
+import { refreshToken } from '@/services/auth/loginService';
 import { useMutation } from '@tanstack/react-query';
 import { createContext, useState, useContext, ReactNode, useMemo, useEffect } from 'react';
 import api from '@/services/api';

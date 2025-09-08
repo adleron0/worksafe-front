@@ -251,7 +251,7 @@ const CourseLessonsManager: React.FC<CourseLessonsManagerProps> = ({
       queryFn: async () => {
         if (!courseId) return { rows: [], total: 0 };
         const params = [
-          { key: "courseId", value: courseId },
+          { key: "or", value: `[{ "courseId": ${courseId} }, { "courseId": null }]` },
           { key: "limit", value: 999 },
           { key: "active", value: true },
         ];

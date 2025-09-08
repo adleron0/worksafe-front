@@ -1,6 +1,6 @@
 // Serviços
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { inactiveArea, activeArea } from "@/services/areaService";
+import { inactiveArea, activeArea } from "@/services/specific/areaService";
 import { useLoader } from "@/context/GeneralContext";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";

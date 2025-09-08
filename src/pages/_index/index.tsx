@@ -3,7 +3,7 @@ import Loader from "@/components/general-components/Loader";
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { postLogin } from "@/services/loginService";
+import { postLogin } from "@/services/auth/loginService";
 import { useForm, Controller } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";

@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import ListHeader from "@/components/general-components/ListHeader";
+import ResponsiveBadge from "@/components/general-components/ResponsiveBadge";
 import { QRCode } from "@/components/ui/kibo-ui/qr-code";
 import Dialog from "@/components/general-components/Dialog";
 import { useState } from "react";
@@ -184,51 +185,60 @@ const SiteServicesItem = ({
         <div className="absolute -top-1 left-4 right-14 lg:right-auto lg:left-4">
           <ScrollArea className="w-full whitespace-nowrap">
             <div className="flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary flex-shrink-0"
-              >
-                <Icon name="asterisk" className="w-4 h-4" />
-                {item.openClass ? "Turma aberta" : "InCompany"}
-              </Badge>
+              {/* Badge Turma Aberta/InCompany */}
+              <ResponsiveBadge
+                icon="asterisk"
+                text={item.openClass ? "Turma aberta" : "InCompany"}
+                colorClass="text-inverse-foreground bg-primary"
+                iconClassName="w-4 h-4"
+              />
 
+              {/* Badge Inscrições Ativas */}
               {(item as any).allowSubscriptions && (
-                <Badge
-                  variant="outline"
-                  className="text-2xs h-4 rounded-sm font-medium text-green-800 bg-green-100 flex-shrink-0"
-                >
-                  <Icon name="check-circle" className="w-3 h-3 mr-1" />
-                  Inscrições ativas
-                </Badge>
+                <ResponsiveBadge
+                  icon="check-circle"
+                  text="Inscrições ativas"
+                  colorClass="text-green-800 bg-green-100"
+                />
               )}
 
-              {item.minimumQuorum && Number(item.minimumQuorum) > 0 ? (
-                <Badge
-                  variant="outline"
-                  className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary flex-shrink-0"
-                >
-                  <Icon name="arrow-big-down-dash" className="w-3 h-3 mr-1" />
-                  Mín: {item.minimumQuorum}
-                </Badge>
-              ) : null}
+              {/* Badge Mínimo de Alunos */}
+              {item.minimumQuorum && Number(item.minimumQuorum) > 0 && (
+                <ResponsiveBadge
+                  icon="arrow-big-down-dash"
+                  text={`Mínimo: ${item.minimumQuorum} alunos`}
+                  shortText={item.minimumQuorum.toString()}
+                  colorClass="text-inverse-foreground bg-primary"
+                />
+              )}
 
+              {/* Badge Inscritos Ilimitados ou Máximo */}
               {(item as any).unlimitedSubscriptions ? (
-                <Badge
-                  variant="outline"
-                  className="text-2xs h-4 rounded-sm font-medium text-blue-800 bg-blue-100 flex-shrink-0"
-                >
-                  <Icon name="infinity" className="w-3 h-3 mr-1" />
-                  Inscritos ilimitados
-                </Badge>
-              ) : item.maxSubscriptions && Number(item.maxSubscriptions) > 0 ? (
-                <Badge
-                  variant="outline"
-                  className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary flex-shrink-0"
-                >
-                  <Icon name="arrow-big-up-dash" className="w-3 h-3 mr-1" />
-                  Máx: {item.maxSubscriptions}
-                </Badge>
-              ) : null}
+                <ResponsiveBadge
+                  icon="infinity"
+                  text="Inscritos ilimitados"
+                  colorClass="text-blue-800 bg-blue-100"
+                />
+              ) : (
+                item.maxSubscriptions &&
+                Number(item.maxSubscriptions) > 0 && (
+                  <ResponsiveBadge
+                    icon="arrow-big-up-dash"
+                    text={`Máximo: ${item.maxSubscriptions} alunos`}
+                    shortText={item.maxSubscriptions.toString()}
+                    colorClass="text-inverse-foreground bg-primary"
+                  />
+                )
+              )}
+
+              {/* Badge Curso Online */}
+              {item.hasOnlineCourse && (
+                <ResponsiveBadge
+                  icon="youtube"
+                  text={`Curso online`}
+                  colorClass="text-inverse-foreground bg-primary"
+                />
+              )}
             </div>
             <ScrollBar orientation="horizontal" className="invisible" />
           </ScrollArea>

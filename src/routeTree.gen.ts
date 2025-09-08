@@ -10,8 +10,12 @@
 
 import { Route as rootRouteImport } from './pages/__root'
 import { Route as IndexRouteImport } from './pages/_index'
+import { Route as StudentRouteImport } from './pages/student'
 import { Route as AuthenticatedRouteImport } from './pages/_authenticated'
+import { Route as StudentIndexRouteImport } from './pages/student/index'
 import { Route as IndexIndexRouteImport } from './pages/_index/index'
+import { Route as StudentProfileRouteImport } from './pages/student/profile'
+import { Route as StudentCoursesRouteImport } from './pages/student/courses'
 import { Route as AuthenticatedHomeRouteImport } from './pages/_authenticated/home'
 import { Route as AuthenticatedBuildingRouteImport } from './pages/_authenticated/building'
 import { Route as IndexCertificadosIndexRouteImport } from './pages/_index/certificados/index'
@@ -29,6 +33,7 @@ import { Route as AuthenticatedUsuariosUsuariosIndexRouteImport } from './pages/
 import { Route as AuthenticatedTreinamentosAulasOnlineIndexRouteImport } from './pages/_authenticated/treinamentos/aulas-online/index'
 import { Route as AuthenticatedInventariosAreasIndexRouteImport } from './pages/_authenticated/inventarios/areas/index'
 import { Route as IndexCertificadosNomeIdRouteImport } from './pages/_index/certificados/$nome.$id'
+import { Route as IndexAuthStudentLoginRouteImport } from './pages/_index/auth/student/login'
 import { Route as AuthenticatedUsuariosPerfisPerfisRouteImport } from './pages/_authenticated/usuarios/_perfis/perfis'
 import { Route as AuthenticatedTreinamentosAulasOnlineIdRouteImport } from './pages/_authenticated/treinamentos/aulas-online/$id'
 import { Route as AuthenticatedTreinamentosTurmasTurmasRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas'
@@ -47,14 +52,34 @@ const IndexRoute = IndexRouteImport.update({
   id: '/_index',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudentRoute = StudentRouteImport.update({
+  id: '/student',
+  path: '/student',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
+} as any)
+const StudentIndexRoute = StudentIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StudentRoute,
 } as any)
 const IndexIndexRoute = IndexIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => IndexRoute,
+} as any)
+const StudentProfileRoute = StudentProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentCoursesRoute = StudentCoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
+  getParentRoute: () => StudentRoute,
 } as any)
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   id: '/home',
@@ -152,6 +177,11 @@ const IndexCertificadosNomeIdRoute = IndexCertificadosNomeIdRouteImport.update({
   path: '/certificados/$nome/$id',
   getParentRoute: () => IndexRoute,
 } as any)
+const IndexAuthStudentLoginRoute = IndexAuthStudentLoginRouteImport.update({
+  id: '/auth/student/login',
+  path: '/auth/student/login',
+  getParentRoute: () => IndexRoute,
+} as any)
 const AuthenticatedUsuariosPerfisPerfisRoute =
   AuthenticatedUsuariosPerfisPerfisRouteImport.update({
     id: '/usuarios/_perfis/perfis',
@@ -234,9 +264,13 @@ const AuthenticatedInventariosAreasAreaIdRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/student': typeof StudentRouteWithChildren
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/student/courses': typeof StudentCoursesRoute
+  '/student/profile': typeof StudentProfileRoute
   '/': typeof IndexIndexRoute
+  '/student/': typeof StudentIndexRoute
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
@@ -261,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/treinamentos/aulas-online/$id': typeof AuthenticatedTreinamentosAulasOnlineIdRoute
   '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
   '/treinamentos/aulas-online': typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
@@ -269,7 +304,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/student/courses': typeof StudentCoursesRoute
+  '/student/profile': typeof StudentProfileRoute
   '/': typeof IndexIndexRoute
+  '/student': typeof StudentIndexRoute
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
@@ -294,6 +332,7 @@ export interface FileRoutesByTo {
   '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/treinamentos/aulas-online/$id': typeof AuthenticatedTreinamentosAulasOnlineIdRoute
   '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
   '/treinamentos/aulas-online': typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
@@ -303,9 +342,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_index': typeof IndexRouteWithChildren
+  '/student': typeof StudentRouteWithChildren
   '/_authenticated/building': typeof AuthenticatedBuildingRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/student/courses': typeof StudentCoursesRoute
+  '/student/profile': typeof StudentProfileRoute
   '/_index/': typeof IndexIndexRoute
+  '/student/': typeof StudentIndexRoute
   '/_authenticated/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/_authenticated/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/_authenticated/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
@@ -330,6 +373,7 @@ export interface FileRoutesById {
   '/_authenticated/treinamentos/_turmas/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/_authenticated/treinamentos/aulas-online/$id': typeof AuthenticatedTreinamentosAulasOnlineIdRoute
   '/_authenticated/usuarios/_perfis/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/_index/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/_index/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/_authenticated/inventarios/areas/': typeof AuthenticatedInventariosAreasIndexRoute
   '/_authenticated/treinamentos/aulas-online/': typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
@@ -338,9 +382,13 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/student'
     | '/building'
     | '/home'
+    | '/student/courses'
+    | '/student/profile'
     | '/'
+    | '/student/'
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
@@ -365,6 +413,7 @@ export interface FileRouteTypes {
     | '/treinamentos/turmas'
     | '/treinamentos/aulas-online/$id'
     | '/usuarios/perfis'
+    | '/auth/student/login'
     | '/certificados/$nome/$id'
     | '/inventarios/areas'
     | '/treinamentos/aulas-online'
@@ -373,7 +422,10 @@ export interface FileRouteTypes {
   to:
     | '/building'
     | '/home'
+    | '/student/courses'
+    | '/student/profile'
     | '/'
+    | '/student'
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
@@ -398,6 +450,7 @@ export interface FileRouteTypes {
     | '/treinamentos/turmas'
     | '/treinamentos/aulas-online/$id'
     | '/usuarios/perfis'
+    | '/auth/student/login'
     | '/certificados/$nome/$id'
     | '/inventarios/areas'
     | '/treinamentos/aulas-online'
@@ -406,9 +459,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/_index'
+    | '/student'
     | '/_authenticated/building'
     | '/_authenticated/home'
+    | '/student/courses'
+    | '/student/profile'
     | '/_index/'
+    | '/student/'
     | '/_authenticated/inventarios/access-control'
     | '/_authenticated/inventarios/autorizados'
     | '/_authenticated/inventarios/dashboard'
@@ -433,6 +490,7 @@ export interface FileRouteTypes {
     | '/_authenticated/treinamentos/_turmas/turmas'
     | '/_authenticated/treinamentos/aulas-online/$id'
     | '/_authenticated/usuarios/_perfis/perfis'
+    | '/_index/auth/student/login'
     | '/_index/certificados/$nome/$id'
     | '/_authenticated/inventarios/areas/'
     | '/_authenticated/treinamentos/aulas-online/'
@@ -442,6 +500,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   IndexRoute: typeof IndexRouteWithChildren
+  StudentRoute: typeof StudentRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -453,6 +512,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/student': {
+      id: '/student'
+      path: '/student'
+      fullPath: '/student'
+      preLoaderRoute: typeof StudentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -460,12 +526,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/student/': {
+      id: '/student/'
+      path: '/'
+      fullPath: '/student/'
+      preLoaderRoute: typeof StudentIndexRouteImport
+      parentRoute: typeof StudentRoute
+    }
     '/_index/': {
       id: '/_index/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexIndexRouteImport
       parentRoute: typeof IndexRoute
+    }
+    '/student/profile': {
+      id: '/student/profile'
+      path: '/profile'
+      fullPath: '/student/profile'
+      preLoaderRoute: typeof StudentProfileRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/student/courses': {
+      id: '/student/courses'
+      path: '/courses'
+      fullPath: '/student/courses'
+      preLoaderRoute: typeof StudentCoursesRouteImport
+      parentRoute: typeof StudentRoute
     }
     '/_authenticated/home': {
       id: '/_authenticated/home'
@@ -584,6 +671,13 @@ declare module '@tanstack/react-router' {
       path: '/certificados/$nome/$id'
       fullPath: '/certificados/$nome/$id'
       preLoaderRoute: typeof IndexCertificadosNomeIdRouteImport
+      parentRoute: typeof IndexRoute
+    }
+    '/_index/auth/student/login': {
+      id: '/_index/auth/student/login'
+      path: '/auth/student/login'
+      fullPath: '/auth/student/login'
+      preLoaderRoute: typeof IndexAuthStudentLoginRouteImport
       parentRoute: typeof IndexRoute
     }
     '/_authenticated/usuarios/_perfis/perfis': {
@@ -766,6 +860,7 @@ interface IndexRouteChildren {
   IndexCertificadosIdRoute: typeof IndexCertificadosIdRoute
   IndexProvaClassIdRoute: typeof IndexProvaClassIdRoute
   IndexCertificadosIndexRoute: typeof IndexCertificadosIndexRoute
+  IndexAuthStudentLoginRoute: typeof IndexAuthStudentLoginRoute
   IndexCertificadosNomeIdRoute: typeof IndexCertificadosNomeIdRoute
 }
 
@@ -774,14 +869,31 @@ const IndexRouteChildren: IndexRouteChildren = {
   IndexCertificadosIdRoute: IndexCertificadosIdRoute,
   IndexProvaClassIdRoute: IndexProvaClassIdRoute,
   IndexCertificadosIndexRoute: IndexCertificadosIndexRoute,
+  IndexAuthStudentLoginRoute: IndexAuthStudentLoginRoute,
   IndexCertificadosNomeIdRoute: IndexCertificadosNomeIdRoute,
 }
 
 const IndexRouteWithChildren = IndexRoute._addFileChildren(IndexRouteChildren)
 
+interface StudentRouteChildren {
+  StudentCoursesRoute: typeof StudentCoursesRoute
+  StudentProfileRoute: typeof StudentProfileRoute
+  StudentIndexRoute: typeof StudentIndexRoute
+}
+
+const StudentRouteChildren: StudentRouteChildren = {
+  StudentCoursesRoute: StudentCoursesRoute,
+  StudentProfileRoute: StudentProfileRoute,
+  StudentIndexRoute: StudentIndexRoute,
+}
+
+const StudentRouteWithChildren =
+  StudentRoute._addFileChildren(StudentRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   IndexRoute: IndexRouteWithChildren,
+  StudentRoute: StudentRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

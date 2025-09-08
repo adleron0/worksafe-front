@@ -1,4 +1,4 @@
-import api from './api';
+import api from '../api';
 import { Area } from '@/pages/_authenticated/inventarios/areas/-interfaces/area.interface';
 
 // URL base da API

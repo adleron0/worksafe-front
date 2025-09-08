@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { post, put, get } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 // Template Components
 import { useLoader } from "@/context/GeneralContext";
 import DropUpload from "@/components/general-components/DropUpload";
@@ -14,13 +15,18 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import NumberInput from "@/components/general-components/Number";
 import Select from "@/components/general-components/Select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 // Interfaces and validations
 import { IEntity } from "../-interfaces/entity.interface";
 import { IEntity as Course } from "../../_cursos/-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { z } from "zod";
-import { RefreshCw, HelpCircle } from "lucide-react";
+import { RefreshCw, HelpCircle, ChevronDown, MapPin, Loader2 } from "lucide-react";
 import WhyUsEditor from "./WhyUsEditor";
 
 interface FormProps {
@@ -134,6 +140,17 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       periodSubscriptionsInitialDate: z.string().optional().nullable(),
       periodSubscriptionsFinalDate: z.string().optional().nullable(),
       unlimitedSubscriptions: z.boolean().optional(),
+      // Online course fields
+      hasOnlineCourse: z.boolean().optional(),
+      onlineCourseModelId: z.number().optional().nullable(),
+      // Address fields
+      address: z.string().optional().nullable(),
+      addressNumber: z.string().optional().nullable(),
+      addressComplement: z.string().optional().nullable(),
+      neighborhood: z.string().optional().nullable(),
+      city: z.string().optional().nullable(),
+      state: z.string().optional().nullable(),
+      zipCode: z.string().optional().nullable(),
     })
     .refine(
       (data) => {
@@ -260,6 +277,22 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           "Data final do período é obrigatória quando o tipo é por período",
         path: ["periodSubscriptionsFinalDate"],
       },
+    )
+    .refine(
+      (data) => {
+        // Se hasOnlineCourse é true, onlineCourseModelId é obrigatório
+        if (
+          data.hasOnlineCourse &&
+          (!data.onlineCourseModelId || data.onlineCourseModelId <= 0)
+        ) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message: "Modelo de curso online é obrigatório quando habilitado",
+        path: ["onlineCourseModelId"],
+      },
     );
 
   type FormData = z.infer<typeof Schema>;
@@ -346,11 +379,27 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     periodSubscriptionsFinalDate:
       (formData as any)?.periodSubscriptionsFinalDate || null,
     unlimitedSubscriptions: (formData as any)?.unlimitedSubscriptions || false,
+    // Online course fields
+    hasOnlineCourse: (formData as any)?.hasOnlineCourse || false,
+    onlineCourseModelId: (formData as any)?.onlineCourseModelId || null,
+    // Address fields
+    address: (formData as any)?.address || "",
+    addressNumber: (formData as any)?.addressNumber || "",
+    addressComplement: (formData as any)?.addressComplement || "",
+    neighborhood: (formData as any)?.neighborhood || "",
+    city: (formData as any)?.city || "",
+    state: (formData as any)?.state || "",
+    zipCode: (formData as any)?.zipCode || "",
   });
   const initialFormRef = useRef(dataForm);
 
   const [preview, setPreview] = useState<string | null>(""); // Preview da imagem quando for editar
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isAddressOpen, setIsAddressOpen] = useState<boolean>(
+    !!formData?.address || false
+  );
+  const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const [lastFetchedCep, setLastFetchedCep] = useState<string>("");
 
   // Efeito para preview de imagem se necessário
   useEffect(() => {
@@ -425,6 +474,80 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     setDataForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Função para buscar CEP
+  const fetchAddressByCep = async (cep: string) => {
+    // Remove caracteres não numéricos
+    const cleanCep = cep.replace(/\D/g, "");
+    
+    // Verifica se o CEP tem 8 dígitos
+    if (cleanCep.length !== 8) return;
+    
+    // Não busca se já foi o último CEP buscado (evita requisições desnecessárias)
+    if (cleanCep === lastFetchedCep) return;
+    
+    setIsLoadingCep(true);
+    
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await response.json();
+      
+      if (!data.erro) {
+        // Atualiza os campos com os dados do CEP
+        setDataForm(prev => ({
+          ...prev,
+          address: data.logradouro || prev.address,
+          neighborhood: data.bairro || prev.neighborhood,
+          city: data.localidade || prev.city,
+          state: data.uf || prev.state,
+          // Mantém número e complemento que o usuário já digitou
+          addressNumber: prev.addressNumber,
+          addressComplement: prev.addressComplement,
+        }));
+        
+        // Expande a seção de endereço se estava fechada
+        setIsAddressOpen(true);
+        
+        // Salva o CEP buscado
+        setLastFetchedCep(cleanCep);
+        
+        toast({
+          title: "CEP encontrado!",
+          description: "Endereço preenchido automaticamente.",
+          variant: "success",
+        });
+      } else {
+        toast({
+          title: "CEP não encontrado",
+          description: "Verifique o CEP digitado.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao buscar CEP:", error);
+      toast({
+        title: "Erro ao buscar CEP",
+        description: "Não foi possível buscar o endereço.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingCep(false);
+    }
+  };
+
+  // Handler específico para o campo CEP
+  const handleCepChange = (name: string, value: string | number | null | string[]) => {
+    const cepValue = String(value);
+    handleChange(name, cepValue);
+    
+    // Remove caracteres não numéricos para verificar
+    const cleanCep = cepValue.replace(/\D/g, "");
+    
+    // Se tem 8 dígitos e é diferente do último buscado, busca o endereço
+    if (cleanCep.length === 8 && cleanCep !== lastFetchedCep) {
+      fetchAddressByCep(cepValue);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -490,6 +613,23 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     },
     // Only run the query if courseId is valid (greater than 0)
     enabled: dataForm.courseId > 0,
+  });
+
+  const { data: onlineCourses, isLoading: isLoadingOnlineCourses } = useQuery<
+    Response | undefined,
+    ApiError
+  >({
+    queryKey: [`listOnlineCourses`, dataForm.courseId],
+    queryFn: async () => {
+      const params = [
+        { key: "courseId", value: dataForm.courseId },
+        { key: "limit", value: 999 },
+        { key: "order-name", value: "asc" },
+      ];
+      return get("online-courses", "", params);
+    },
+    // Only run the query if hasOnlineCourse is true and courseId is valid
+    enabled: dataForm.hasOnlineCourse && dataForm.courseId > 0,
   });
 
   // Função para encontrar um curso pelo ID
@@ -606,6 +746,66 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         )}
       </div>
 
+      {/* Online Course Section */}
+      <div
+        className={`mt-4 p-4 bg-muted/30 border border-border/50 rounded-lg ${dataForm.hasOnlineCourse ? "pb-4" : ""}`}
+      >
+        <div className="flex justify-between items-center">
+          <div className="flex flex-col">
+            <Label
+              htmlFor="hasOnlineCourse"
+              className="cursor-pointer flex items-center gap-2"
+            >
+              <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+              Habilitar Curso Online
+            </Label>
+            <p className="text-xs text-muted-foreground font-medium">
+              Vincula um modelo de curso online à esta turma
+            </p>
+          </div>
+          <Switch
+            id="hasOnlineCourse"
+            name="hasOnlineCourse"
+            checked={dataForm.hasOnlineCourse ? true : false}
+            onCheckedChange={() =>
+              setDataForm((prev) => ({
+                ...prev,
+                hasOnlineCourse: !prev.hasOnlineCourse,
+                onlineCourseModelId: !prev.hasOnlineCourse ? prev.onlineCourseModelId : null,
+              }))
+            }
+          />
+        </div>
+
+        {dataForm.hasOnlineCourse && (
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <Label htmlFor="onlineCourseModelId">
+              Modelo de Curso Online <span className="text-red-500">*</span>
+            </Label>
+            <p className="text-xs text-muted-foreground font-medium mb-2">
+              Selecione o modelo de curso online para esta turma
+            </p>
+            <Select
+              name="onlineCourseModelId"
+              disabled={!dataForm.courseId || isLoadingOnlineCourses}
+              options={onlineCourses?.rows || []}
+              onChange={(name, value) => handleChange(name, value ? +value : null)}
+              state={dataForm.onlineCourseModelId ? String(dataForm.onlineCourseModelId) : ""}
+              placeholder={
+                !dataForm.courseId
+                  ? "Selecione um curso primeiro"
+                  : isLoadingOnlineCourses
+                  ? "Carregando modelos..."
+                  : "Selecione o modelo de curso online"
+              }
+            />
+            {errors.onlineCourseModelId && (
+              <p className="text-red-500 text-sm mt-1">{errors.onlineCourseModelId}</p>
+            )}
+          </div>
+        )}
+      </div>
+
       <div>
         <Label htmlFor="name">
           Nome da Turma <span>*</span>
@@ -620,6 +820,142 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         />
         {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
       </div>
+
+      {/* Address Section - Optional Collapsible */}
+      <Collapsible
+        open={isAddressOpen}
+        onOpenChange={setIsAddressOpen}
+        className="mt-4"
+      >
+        <div className="p-4 bg-muted/30 border border-border/50 rounded-lg">
+          <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+            <div className="flex flex-col text-left">
+              <Label className="flex items-center gap-2 cursor-pointer">
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                Endereço do Curso Presencial
+                {dataForm.address && (
+                  <span className="text-xs text-green-600 font-medium ml-2">
+                    • Preenchido
+                  </span>
+                )}
+              </Label>
+              <p className="text-xs text-muted-foreground font-medium">
+                Informações opcionais do local onde o curso presencial será realizado
+              </p>
+            </div>
+            <ChevronDown
+              className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+                isAddressOpen ? "rotate-180" : ""
+              }`}
+            />
+          </CollapsibleTrigger>
+
+          <CollapsibleContent className="pt-4">
+            <div className="grid gap-4 md:grid-cols-2 border-t border-border/50 pt-4">
+              <div className="md:col-span-2">
+                <Label htmlFor="zipCode" className="flex items-center gap-2">
+                  CEP
+                  {isLoadingCep && (
+                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                  )}
+                </Label>
+                <Input
+                  id="zipCode"
+                  name="zipCode"
+                  placeholder="00000-000"
+                  format="cep"
+                  value={dataForm.zipCode || ""}
+                  onValueChange={handleCepChange}
+                  className="mt-1"
+                  disabled={isLoadingCep}
+                />
+                {errors.zipCode && <p className="text-red-500 text-sm">{errors.zipCode}</p>}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Digite o CEP para buscar o endereço automaticamente
+                </p>
+              </div>
+
+              <div className="md:col-span-2">
+                <Label htmlFor="address">Endereço</Label>
+                <Input
+                  id="address"
+                  name="address"
+                  placeholder="Rua, Avenida, etc..."
+                  value={dataForm.address || ""}
+                  onValueChange={handleChange}
+                  className="mt-1"
+                />
+                {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
+              </div>
+
+              <div>
+                <Label htmlFor="addressNumber">Número</Label>
+                <Input
+                  id="addressNumber"
+                  name="addressNumber"
+                  placeholder="Número"
+                  value={dataForm.addressNumber || ""}
+                  onValueChange={handleChange}
+                  className="mt-1"
+                />
+                {errors.addressNumber && <p className="text-red-500 text-sm">{errors.addressNumber}</p>}
+              </div>
+
+              <div>
+                <Label htmlFor="addressComplement">Complemento</Label>
+                <Input
+                  id="addressComplement"
+                  name="addressComplement"
+                  placeholder="Apartamento, Sala, etc..."
+                  value={dataForm.addressComplement || ""}
+                  onValueChange={handleChange}
+                  className="mt-1"
+                />
+                {errors.addressComplement && <p className="text-red-500 text-sm">{errors.addressComplement}</p>}
+              </div>
+
+              <div>
+                <Label htmlFor="neighborhood">Bairro</Label>
+                <Input
+                  id="neighborhood"
+                  name="neighborhood"
+                  placeholder="Bairro"
+                  value={dataForm.neighborhood || ""}
+                  onValueChange={handleChange}
+                  className="mt-1"
+                />
+                {errors.neighborhood && <p className="text-red-500 text-sm">{errors.neighborhood}</p>}
+              </div>
+
+              <div>
+                <Label htmlFor="city">Cidade</Label>
+                <Input
+                  id="city"
+                  name="city"
+                  placeholder="Cidade"
+                  value={dataForm.city || ""}
+                  onValueChange={handleChange}
+                  className="mt-1"
+                />
+                {errors.city && <p className="text-red-500 text-sm">{errors.city}</p>}
+              </div>
+
+              <div>
+                <Label htmlFor="state">Estado</Label>
+                <Input
+                  id="state"
+                  name="state"
+                  placeholder="Ex: SP, RJ, MG"
+                  value={dataForm.state || ""}
+                  onValueChange={handleChange}
+                  className="mt-1"
+                />
+                {errors.state && <p className="text-red-500 text-sm">{errors.state}</p>}
+              </div>
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
 
       <div>
         <Label htmlFor="hoursDuration">

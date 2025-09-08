@@ -20,6 +20,7 @@ const DynamicLogo: React.FC<DynamicLogoProps> = ({
 }) => {
   const { theme } = useTheme();
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     // Verificar se está em modo escuro
@@ -40,9 +41,23 @@ const DynamicLogo: React.FC<DynamicLogoProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  // TESTE: Forçando o Skeleton - remova o "false &&" para voltar ao normal
-  // Se tem logo da empresa, usa ela
-  if (theme.logoUrl) {
+  // TESTE: Forçando logo padrão - comente este bloco para voltar ao comportamento normal
+  const FORCE_DEFAULT_LOGO = false; // Mude para false para desativar o teste
+  
+  // Mostra skeleton enquanto carrega o tema
+  if (theme.isLoading && !imageError && !FORCE_DEFAULT_LOGO) {
+    return (
+      <div 
+        className={cn("flex items-center", className)} 
+        style={{ width: `${width}px`, height: `${height}px` }}
+      >
+        <Skeleton className="w-full h-full bg-muted" />
+      </div>
+    );
+  }
+
+  // Se tem logo da empresa e não houve erro, usa ela
+  if (theme.logoUrl && !imageError && !FORCE_DEFAULT_LOGO) {
     return (
       <div className={cn("relative", className)} style={{ width: `${width}px`, height: `${height}px` }}>
         <img
@@ -74,24 +89,47 @@ const DynamicLogo: React.FC<DynamicLogoProps> = ({
               e.currentTarget.style.opacity = '0.9';
             }
           }}
+          onError={() => {
+            console.warn('Erro ao carregar logo da empresa, usando logo padrão');
+            setImageError(true);
+          }}
         />
       </div>
     );
   }
 
-  // Se não tem logo e fallback está habilitado, mostra skeleton
+  // Se não tem logo ou houve erro, usa logo padrão
   if (fallbackToDefault) {
     return (
-      <div 
-        className={cn("flex items-center", className)} 
-        style={{ width: `${width}px`, height: `${height}px` }}
-      >
-        <Skeleton className="w-full h-full bg-muted" />
+      <div className={cn("relative", className)} style={{ width: `${width}px`, height: `${height}px` }}>
+        <img
+          src="/certfield-logo.png"
+          alt="CertField Logo"
+          className={cn(
+            "w-full h-full object-contain transition-all duration-200"
+          )}
+          style={{
+            filter: (forceWhite || isDarkMode) ? 
+              `invert(0.9) hue-rotate(180deg) brightness(1.1)` :
+              'none',
+            opacity: (forceWhite || isDarkMode) ? 0.95 : 1
+          }}
+          onMouseEnter={(e) => {
+            if (forceWhite || isDarkMode) {
+              e.currentTarget.style.opacity = '1';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (forceWhite || isDarkMode) {
+              e.currentTarget.style.opacity = '0.9';
+            }
+          }}
+        />
       </div>
     );
   }
 
-  // Se não tem logo e fallback está desabilitado, não renderiza nada
+  // Se fallback está desabilitado, não renderiza nada
   return null;
 };
 

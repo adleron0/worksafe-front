@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { listPermissions, grantsPermission, revokesPermission } from "@/services/permissionsService";
+import { listPermissions, grantsPermission, revokesPermission } from "@/services/specific/permissionsService";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";

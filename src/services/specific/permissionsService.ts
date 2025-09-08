@@ -1,4 +1,4 @@
-import api from './api';
+import api from '../api';
 
 // URL base da API
 const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:3000";

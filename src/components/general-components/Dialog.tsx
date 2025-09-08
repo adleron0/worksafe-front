@@ -20,6 +20,7 @@ interface DialogProps {
   description: string;
   open?: boolean;
   className?: string;
+  classNameContent?: string;
   onOpenChange?: (open: boolean) => void;
 }
 
@@ -33,6 +34,7 @@ const Dialog: React.FC<DialogProps> = ({
   description,
   open,
   className,
+  classNameContent,
   onOpenChange,
 }) => {
   return (
@@ -65,7 +67,10 @@ const Dialog: React.FC<DialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         <div
-          className={`h-[80vh] overflow-y-auto pr-4 ${showHeader && "pb-20"}`}
+          className={cn(
+            `h-[80vh] overflow-y-auto pr-4 ${showHeader && "pb-20"}`,
+            classNameContent,
+          )}
         >
           {children}
         </div>

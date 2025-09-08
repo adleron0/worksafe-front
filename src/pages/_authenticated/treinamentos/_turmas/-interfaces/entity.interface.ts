@@ -38,4 +38,5 @@ export interface IEntity {
   minimumQuorum?: number | null;
   maxSubscriptions?: number | null;
   daysDuration?: number | null;
+  hasOnlineCourse?: boolean;
 }

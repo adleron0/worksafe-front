@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createArea, updateArea } from "@/services/areaService";
+import { createArea, updateArea } from "@/services/specific/areaService";
 import { toast } from "@/hooks/use-toast";
 import Loader from "@/components/general-components/Loader";
 import { DialogDescription } from "@/components/ui/dialog";

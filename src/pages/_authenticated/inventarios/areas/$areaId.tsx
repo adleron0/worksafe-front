@@ -13,7 +13,7 @@ import { useState } from "react";
 // import fabricaImage from "@/assets/seguro-de-fabrica-corretora-de-seguros.jpg";
 import { toast } from "@/hooks/use-toast";
 import { useMatches } from "@tanstack/react-router";
-import { getArea } from "@/services/areaService";
+import { getArea } from "@/services/specific/areaService";
 import { useQuery } from "@tanstack/react-query";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Eye, Map } from "lucide-react";

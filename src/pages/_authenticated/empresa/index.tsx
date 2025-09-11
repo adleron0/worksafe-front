@@ -67,7 +67,7 @@ const Empresa = () => {
     queryKey: [`listStates`],
     queryFn: async () => {
       const params = [
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'order-name', value: 'asc' },
       ];
       return get('states', '', params);
@@ -83,7 +83,7 @@ const Empresa = () => {
     queryFn: async () => {
       const params = [
         { key: 'stateId', value: formData?.stateId },
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'order-name', value: 'asc' },
       ];
       return get('cities', '', params);

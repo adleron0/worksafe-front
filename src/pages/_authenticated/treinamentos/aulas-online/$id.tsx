@@ -317,7 +317,7 @@ function AulaOnlineDetails() {
       const params = [
         { key: "lessonId", value: id },
         { key: "order-order", value: "asc" },
-        { key: "limit", value: 999 },
+        { key: "limit", value: 'all' },
       ];
       return get("online-lesson-step", "", params);
     },
@@ -926,7 +926,7 @@ function AulaOnlineDetails() {
             }}
             title={selectedStep ? "Editar Texto" : "Adicionar Texto"}
             description="Configure o conteúdo em texto para esta etapa da aula"
-            className="sm:max-w-2xl"
+            className="sm:max-w-5xl"
           >
             <StepTextForm
               onClose={() => {

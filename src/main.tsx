@@ -12,6 +12,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { HelmetProvider } from 'react-helmet-async';
 import InnerApp from './InnerApp';
 import './index.css';
+import 'video.js/dist/video-js.css';
 
 const queryClient = new QueryClient();
 

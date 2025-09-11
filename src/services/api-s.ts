@@ -3,8 +3,6 @@ import axios from "axios";
 // URL base da API
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-// Adicionar log para debug
-console.log('API BASE_URL:', BASE_URL);
 
 // Instância fixa
 const api = axios.create({
@@ -114,14 +112,14 @@ export const put = async <T>(controllerName: string, action = "", data: T, extra
 };
 
 // Serviço genérico para requisições PATCH
-export const patch = async <T>(controllerName: string, action = "", extraParams?: queryParams[]): Promise<T | undefined> => {
+export const patch = async <T, D = any>(controllerName: string, action = "", data?: D, extraParams?: queryParams[]): Promise<T | undefined> => {
   let endpoint = `${controllerName}/${action}`;
 
   if (extraParams) {
     endpoint += `?${paramsCompose(extraParams)}`;
   }
 
-  const response = await api.patch(endpoint);
+  const response = await api.patch(endpoint, data ? createFormData(data) : undefined);
   return response.data;
 };
 

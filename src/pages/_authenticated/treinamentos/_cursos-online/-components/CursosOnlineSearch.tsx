@@ -32,7 +32,7 @@ const SearchForm = ({ onSearch, onClear, openSheet }: SearchFormProps) => {
     queryKey: [`listCursos`],
     queryFn: async () => {
       const params = [
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'active', value: true },
         { key: 'order-name', value: 'asc' },
       ];

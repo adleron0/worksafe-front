@@ -88,7 +88,7 @@ const CertificateSearch: React.FC<SearchFormProps> = ({ onSubmit, onClear, openS
     queryKey: ["courses-search"],
     queryFn: async () => {
       const params = [
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'order-name', value: 'asc' },
       ];
       return get("courses", "", params);

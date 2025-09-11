@@ -1,6 +1,5 @@
-import { Search, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { StudentAvatar } from './StudentAvatar';
 import { useStudentAuth } from '@/context/StudentAuthContext';
 import { useSidebar } from '@/components/ui/sidebar';

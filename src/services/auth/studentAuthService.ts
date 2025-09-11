@@ -1,4 +1,4 @@
-import api from '../api';
+import api from '../api-s';
 import { StudentData } from '@/context/StudentAuthContext';
 
 interface LoginResponse {

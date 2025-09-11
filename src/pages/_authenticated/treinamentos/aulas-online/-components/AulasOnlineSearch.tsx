@@ -37,7 +37,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
     queryKey: [`listCursosSearch`],
     queryFn: async () => {
       const queryParams = [
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'active', value: true },
         { key: 'order-name', value: 'asc' },
       ];

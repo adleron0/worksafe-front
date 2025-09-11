@@ -111,7 +111,7 @@ function StudentProfile() {
       queryKey: [`listStates`],
       queryFn: async () => {
         const params = [
-          { key: 'limit', value: 999 },
+          { key: 'limit', value: 'all' },
           { key: 'order-name', value: 'asc' },
         ];
         return get('states', '', params);
@@ -126,7 +126,7 @@ function StudentProfile() {
       queryFn: async () => {
         const params = [
           { key: 'stateId', value: dataForm.stateId },
-          { key: 'limit', value: 999 },
+          { key: 'limit', value: 'all' },
           { key: 'order-name', value: 'asc' },
         ];
         return get('cities', '', params);

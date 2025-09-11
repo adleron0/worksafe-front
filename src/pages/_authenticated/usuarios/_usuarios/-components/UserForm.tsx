@@ -155,7 +155,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
     queryKey: [`listPerfis`],
     queryFn: async () => {
       const params = [
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'order-id', value: 'asc' },
       ];
       return get('profiles', '', params);

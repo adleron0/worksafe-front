@@ -86,21 +86,9 @@ export const StudentAuthProvider: React.FC<StudentAuthProviderProps> = ({ childr
     try {
       setLoading(true);
       
-      // Fazer requisição para API de login
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/auth/student/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ credential: emailOrCpf, password }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro ao fazer login');
-      }
-
-      const data = await response.json();
+      // Usar o studentAuthService existente
+      const { studentAuthService } = await import('@/services/auth/studentAuthService');
+      const data = await studentAuthService.loginStudent(emailOrCpf, password);
       
       // Salva o token
       setStudentToken(data.accessToken);

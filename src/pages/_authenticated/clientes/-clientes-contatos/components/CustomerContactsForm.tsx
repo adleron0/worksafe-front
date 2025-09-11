@@ -133,7 +133,7 @@ const Form = ({ formData, openSheet, entity, customerId }: FormProps) => {
     queryKey: [`listRoles`],
     queryFn: async () => {
       const params = [
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'order-id', value: 'asc' },
       ];
       return get('roles', '', params);

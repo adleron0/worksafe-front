@@ -1,332 +1,362 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Select from '@/components/general-components/Select';
 import { 
   Search, 
-  Clock, 
   BookOpen, 
   Users, 
-  Star, 
-  Filter,
   ChevronRight,
   Calendar,
   Trophy,
-  PlayCircle
+  PlayCircle,
+  GraduationCap
 } from 'lucide-react';
+import { get, post } from '@/services/api-s';
+import { useToast } from '@/hooks/use-toast';
+import Loader from '@/components/general-components/Loader';
 
 export const Route = createFileRoute('/student/courses')({
   component: StudentCourses,
 });
 
-// Tipos mockados
-interface Course {
-  id: number;
-  title: string;
-  description: string;
-  instructor: string;
-  duration: string;
-  totalLessons: number;
-  completedLessons: number;
-  progress: number;
-  thumbnail: string;
-  category: string;
-  level: string;
-  rating: number;
-  studentsCount: number;
-  status: 'not-started' | 'in-progress' | 'completed';
-  certificateAvailable: boolean;
-  startDate?: string;
-  endDate?: string;
+// Interfaces
+interface OnlineStudentLessonProgress {
+  id: number | null;
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+  startedAt: string | null;
+  completedAt: string | null;
+  currentStepOrder: number;
+  maxStepReached: number;
+  lastAccessAt: string | null;
 }
 
-// Dados mockados
-const mockCourses: Course[] = [
-  {
-    id: 1,
-    title: "NR-35 - Trabalho em Altura",
-    description: "Curso completo sobre segurança no trabalho em altura, conforme norma regulamentadora NR-35.",
-    instructor: "João Silva",
-    duration: "8 horas",
-    totalLessons: 12,
-    completedLessons: 8,
-    progress: 67,
-    thumbnail: "https://via.placeholder.com/300x200",
-    category: "Segurança do Trabalho",
-    level: "Intermediário",
-    rating: 4.8,
-    studentsCount: 1250,
-    status: 'in-progress',
-    certificateAvailable: false,
-    startDate: "2024-01-15",
-    endDate: "2024-02-15"
-  },
-  {
-    id: 2,
-    title: "NR-10 - Segurança em Instalações Elétricas",
-    description: "Capacitação para trabalhos com eletricidade, seguindo as diretrizes da NR-10.",
-    instructor: "Maria Santos",
-    duration: "40 horas",
-    totalLessons: 24,
-    completedLessons: 24,
-    progress: 100,
-    thumbnail: "https://via.placeholder.com/300x200",
-    category: "Segurança do Trabalho",
-    level: "Avançado",
-    rating: 4.9,
-    studentsCount: 850,
-    status: 'completed',
-    certificateAvailable: true,
-    startDate: "2023-11-01",
-    endDate: "2023-12-15"
-  },
-  {
-    id: 3,
-    title: "Primeiros Socorros",
-    description: "Técnicas básicas de primeiros socorros para situações de emergência no ambiente de trabalho.",
-    instructor: "Carlos Oliveira",
-    duration: "4 horas",
-    totalLessons: 8,
-    completedLessons: 0,
-    progress: 0,
-    thumbnail: "https://via.placeholder.com/300x200",
-    category: "Saúde",
-    level: "Básico",
-    rating: 4.7,
-    studentsCount: 2100,
-    status: 'not-started',
-    certificateAvailable: false
-  },
-  {
-    id: 4,
-    title: "EPI - Equipamentos de Proteção Individual",
-    description: "Uso correto, conservação e importância dos EPIs no ambiente de trabalho.",
-    instructor: "Ana Costa",
-    duration: "3 horas",
-    totalLessons: 6,
-    completedLessons: 3,
-    progress: 50,
-    thumbnail: "https://via.placeholder.com/300x200",
-    category: "Segurança do Trabalho",
-    level: "Básico",
-    rating: 4.6,
-    studentsCount: 3200,
-    status: 'in-progress',
-    certificateAvailable: false,
-    startDate: "2024-01-20"
-  },
-  {
-    id: 5,
-    title: "NR-33 - Espaços Confinados",
-    description: "Segurança e saúde nos trabalhos em espaços confinados.",
-    instructor: "Pedro Almeida",
-    duration: "16 horas",
-    totalLessons: 20,
-    completedLessons: 0,
-    progress: 0,
-    thumbnail: "https://via.placeholder.com/300x200",
-    category: "Segurança do Trabalho",
-    level: "Avançado",
-    rating: 4.8,
-    studentsCount: 450,
-    status: 'not-started',
-    certificateAvailable: false
-  },
-  {
-    id: 6,
-    title: "Prevenção de Incêndios",
-    description: "Técnicas de prevenção e combate a incêndios no ambiente de trabalho.",
-    instructor: "Luiza Ferreira",
-    duration: "6 horas",
-    totalLessons: 10,
-    completedLessons: 10,
-    progress: 100,
-    thumbnail: "https://via.placeholder.com/300x200",
-    category: "Segurança do Trabalho",
-    level: "Intermediário",
-    rating: 4.7,
-    studentsCount: 1800,
-    status: 'completed',
-    certificateAvailable: true,
-    startDate: "2023-10-01",
-    endDate: "2023-10-15"
-  }
-];
+interface Course {
+  id: number;
+  name: string;
+  description: string;
+  hoursDuration: number;
+}
 
-const categories = [
-  { id: '1', name: 'Segurança do Trabalho' },
-  { id: '2', name: 'Saúde' },
-  { id: '3', name: 'Meio Ambiente' },
-  { id: '4', name: 'Qualidade' }
-];
+interface OnlineCourseModel {
+  id: number;
+  course: Course;
+  lessonsCount?: number;
+  modelLessons?: any[]; // Para compatibilidade
+}
 
-const levels = [
-  { id: '1', name: 'Básico' },
-  { id: '2', name: 'Intermediário' },
-  { id: '3', name: 'Avançado' }
-];
+interface CourseClass {
+  id: number;
+  name?: string;
+  startDate: string;
+  endDate: string;
+  maxSubscriptions: number;
+  currentSubscriptions: number;
+  onlineCourseModel: OnlineCourseModel;
+  company?: {
+    id?: number;
+    name: string;
+  };
+}
+
+interface StudentCourse {
+  id: number;
+  traineeId?: number;
+  classId: number;
+  subscribedAt?: string;
+  subscribeStatus?: 'pending' | 'confirmed' | 'cancelled';
+  class: CourseClass;
+  onlineStudentLessonProgress?: OnlineStudentLessonProgress;
+  progress?: number; // Manter para compatibilidade
+}
 
 function StudentCourses() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedLevel, setSelectedLevel] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
-  // Filtrar cursos baseado na aba ativa
-  const filterCoursesByTab = (courses: Course[]) => {
-    switch (activeTab) {
-      case 'in-progress':
-        return courses.filter(c => c.status === 'in-progress');
-      case 'completed':
-        return courses.filter(c => c.status === 'completed');
-      case 'not-started':
-        return courses.filter(c => c.status === 'not-started');
-      default:
-        return courses;
-    }
-  };
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('available');
 
-  // Aplicar filtros
-  const filteredCourses = filterCoursesByTab(mockCourses).filter(course => {
-    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          course.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !selectedCategory || course.category === categories.find(c => c.id === selectedCategory)?.name;
-    const matchesLevel = !selectedLevel || course.level === levels.find(l => l.id === selectedLevel)?.name;
-    
-    return matchesSearch && matchesCategory && matchesLevel;
+  // Buscar cursos disponíveis
+  const { data: availableCourses, isLoading: isLoadingAvailable } = useQuery({
+    queryKey: ['student-courses', 'available', searchTerm],
+    queryFn: async () => {
+      const params: Array<{ key: string; value: string | number | boolean }> = [
+        { key: 'page', value: 1 },
+        { key: 'limit', value: 20 },
+        { key: 'active', value: true }
+      ];
+      
+      if (searchTerm) {
+        params.push({ key: 'search', value: searchTerm });
+      }
+      
+      const response = await get<{ total: number; rows: StudentCourse[] }>('student-courses', '', params);
+      
+      // Filtrar apenas cursos válidos com estrutura completa
+      const validCourses = response?.rows?.filter(course => 
+        course && 
+        course.class && 
+        course.class.onlineCourseModel && 
+        course.class.onlineCourseModel.course
+      ) || [];
+      
+      return validCourses;
+    },
   });
 
-  const getStatusBadge = (status: Course['status']) => {
-    switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-500">Concluído</Badge>;
-      case 'in-progress':
-        return <Badge className="bg-blue-500">Em Andamento</Badge>;
-      case 'not-started':
-        return <Badge variant="outline">Não Iniciado</Badge>;
+  // Buscar meus cursos
+  const { data: myCourses, isLoading: isLoadingMyCourses } = useQuery({
+    queryKey: ['student-courses', 'my-courses'],
+    queryFn: async () => {
+      const response = await get<StudentCourse[]>('student-courses', 'my-courses');
+      
+      // Filtrar apenas cursos válidos com estrutura completa
+      const validCourses = response?.filter(course => 
+        course && 
+        course.class && 
+        course.class.onlineCourseModel && 
+        course.class.onlineCourseModel.course
+      ) || [];
+      
+      return validCourses;
+    },
+  });
+
+  // Mutation para inscrição em curso
+  const { mutate: enrollInCourse, isPending: isEnrolling } = useMutation({
+    mutationFn: async (courseClassId: number) => {
+      return post('student-courses', '', { courseClassId });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Inscrição realizada!',
+        description: 'Você foi inscrito no curso com sucesso.',
+        variant: 'success',
+      });
+      
+      // Invalidar queries para atualizar as listas
+      queryClient.invalidateQueries({ queryKey: ['student-courses'] });
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Erro ao realizar inscrição';
+      toast({
+        title: 'Erro na inscrição',
+        description: message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Filtrar cursos baseado na aba ativa
+  const getFilteredCourses = () => {
+    if (activeTab === 'available') {
+      // Disponíveis: cursos não inscritos + cursos inscritos mas NOT_STARTED
+      const notEnrolled = availableCourses || [];
+      const notStarted = myCourses?.filter(c => 
+        c.onlineStudentLessonProgress?.status === 'NOT_STARTED' || 
+        !c.onlineStudentLessonProgress
+      ) || [];
+      return [...notEnrolled, ...notStarted];
+    } else if (activeTab === 'enrolled') {
+      // Em andamento: apenas IN_PROGRESS
+      return myCourses?.filter(c => 
+        c.onlineStudentLessonProgress?.status === 'IN_PROGRESS'
+      ) || [];
+    } else if (activeTab === 'completed') {
+      // Concluídos: status COMPLETED
+      return myCourses?.filter(c => 
+        c.onlineStudentLessonProgress?.status === 'COMPLETED'
+      ) || [];
     }
+    return [];
   };
 
-  const CourseCard = ({ course }: { course: Course }) => (
-    <Card className="h-full hover:shadow-lg transition-shadow">
-      <div className="aspect-video relative overflow-hidden bg-muted">
-        <img 
-          src={course.thumbnail} 
-          alt={course.title}
-          className="object-cover w-full h-full"
-        />
-        {course.status === 'in-progress' && (
-          <div className="absolute top-2 right-2">
-            <Badge className="bg-blue-500">{course.progress}%</Badge>
-          </div>
-        )}
-        {course.certificateAvailable && (
-          <div className="absolute top-2 left-2">
-            <Badge className="bg-green-500">
-              <Trophy className="h-3 w-3 mr-1" />
-              Certificado
-            </Badge>
-          </div>
-        )}
-      </div>
-      
-      <CardHeader>
-        <div className="flex justify-between items-start mb-2">
-          <Badge variant="secondary" className="text-xs">
-            {course.category}
-          </Badge>
-          {getStatusBadge(course.status)}
-        </div>
-        <CardTitle className="line-clamp-2">{course.title}</CardTitle>
-        <CardDescription className="line-clamp-2">
-          {course.description}
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="space-y-3">
-          {course.status === 'in-progress' && (
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-muted-foreground">Progresso</span>
-                <span>{course.completedLessons}/{course.totalLessons} aulas</span>
-              </div>
-              <Progress value={course.progress} className="h-2" />
-            </div>
-          )}
-          
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              <span>{course.duration}</span>
-            </div>
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <BookOpen className="h-3 w-3" />
-              <span>{course.totalLessons} aulas</span>
-            </div>
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <Users className="h-3 w-3" />
-              <span>{course.studentsCount}</span>
-            </div>
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-              <span>{course.rating}</span>
-            </div>
-          </div>
-          
-          <div className="text-sm text-muted-foreground">
-            <span>Instrutor: {course.instructor}</span>
-          </div>
+  const filteredCourses = getFilteredCourses();
 
-          {course.startDate && (
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <Calendar className="h-3 w-3" />
-              <span>
-                Início: {new Date(course.startDate).toLocaleDateString('pt-BR')}
-                {course.endDate && ` • Fim: ${new Date(course.endDate).toLocaleDateString('pt-BR')}`}
-              </span>
+  // Verificar se o aluno já está inscrito
+  const isEnrolled = (classId: number) => {
+    return myCourses?.some(c => c.classId === classId);
+  };
+
+  // Calcular vagas disponíveis
+  const getAvailableSlots = (courseClass: CourseClass) => {
+    const available = courseClass.maxSubscriptions - courseClass.currentSubscriptions;
+    return available > 0 ? available : 0;
+  };
+
+  const CourseCard = ({ course }: { course: StudentCourse }) => {
+    // Verificar se course e class existem
+    if (!course || !course.class) {
+      return null;
+    }
+    
+    const courseClass = course.class;
+    
+    // Verificar se onlineCourseModel existe
+    if (!courseClass.onlineCourseModel || !courseClass.onlineCourseModel.course) {
+      return null;
+    }
+    
+    const enrolled = isEnrolled(courseClass.id);
+    const availableSlots = getAvailableSlots(courseClass);
+    const hasSlots = availableSlots > 0;
+    
+    return (
+      <Card className="h-full hover:shadow-lg transition-shadow">
+        {/* Header com badges */}
+        <CardHeader>
+          <div className="flex justify-between items-start mb-2">
+            <Badge variant="secondary" className="text-xs">
+              {courseClass.onlineCourseModel.course.hoursDuration}h
+            </Badge>
+            {enrolled && (
+              <Badge className="bg-green-500">
+                Inscrito
+              </Badge>
+            )}
+            {!enrolled && !hasSlots && (
+              <Badge variant="destructive">
+                Sem vagas
+              </Badge>
+            )}
+          </div>
+          
+          <CardTitle className="line-clamp-2">
+            {courseClass.onlineCourseModel.course.name}
+          </CardTitle>
+          
+          <CardDescription className="line-clamp-3">
+            {courseClass.onlineCourseModel.course.description || 'Sem descrição disponível'}
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent>
+          <div className="space-y-3">
+            {/* Progresso para cursos inscritos */}
+            {enrolled && course.onlineStudentLessonProgress && (
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-muted-foreground">Status</span>
+                  <span className="font-medium">
+                    {course.onlineStudentLessonProgress.status === 'COMPLETED' ? '✅ Concluído' :
+                     course.onlineStudentLessonProgress.status === 'IN_PROGRESS' ? '📚 Em andamento' :
+                     '🆕 Não iniciado'}
+                  </span>
+                </div>
+                {course.onlineStudentLessonProgress.lastAccessAt && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Último acesso: {new Date(course.onlineStudentLessonProgress.lastAccessAt).toLocaleDateString('pt-BR')}
+                  </p>
+                )}
+              </div>
+            )}
+            
+            {/* Informações do curso */}
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Calendar className="h-3 w-3" />
+                <span>
+                  Início: {new Date(courseClass.startDate).toLocaleDateString('pt-BR')}
+                </span>
+              </div>
+              
+              {courseClass.endDate && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Calendar className="h-3 w-3" />
+                  <span>
+                    Término: {new Date(courseClass.endDate).toLocaleDateString('pt-BR')}
+                  </span>
+                </div>
+              )}
+              
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <BookOpen className="h-3 w-3" />
+                <span>
+                  {courseClass.onlineCourseModel.lessonsCount || courseClass.onlineCourseModel.modelLessons?.length || 0} aulas
+                </span>
+              </div>
+              
+              {!enrolled && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Users className="h-3 w-3" />
+                  <span>
+                    {availableSlots} vagas disponíveis
+                  </span>
+                </div>
+              )}
+              
+              {courseClass.company && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <GraduationCap className="h-3 w-3" />
+                  <span>{courseClass.company.name}</span>
+                </div>
+              )}
             </div>
+          </div>
+        </CardContent>
+        
+        <CardFooter>
+          {enrolled ? (
+            <Button 
+              className="w-full" 
+              variant="outline"
+              onClick={() => navigate({ to: `/student/course/${courseClass.id}/lessons` })}
+            >
+              {course.onlineStudentLessonProgress?.status === 'COMPLETED' ? (
+                <>
+                  <Trophy className="h-4 w-4 mr-2" />
+                  Ver Certificado
+                </>
+              ) : course.onlineStudentLessonProgress?.status === 'IN_PROGRESS' ? (
+                <>
+                  <ChevronRight className="h-4 w-4 mr-2" />
+                  Continuar
+                </>
+              ) : (
+                <>
+                  <PlayCircle className="h-4 w-4 mr-2" />
+                  Iniciar
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button 
+              className="w-full"
+              disabled={!hasSlots || isEnrolling}
+              onClick={() => enrollInCourse(courseClass.id)}
+            >
+              {hasSlots ? (
+                <>
+                  <PlayCircle className="h-4 w-4 mr-2" />
+                  {isEnrolling ? 'Inscrevendo...' : 'Inscrever-se'}
+                </>
+              ) : (
+                'Sem vagas'
+              )}
+            </Button>
           )}
-        </div>
-      </CardContent>
-      
-      <CardFooter>
-        <Button className="w-full" variant={course.status === 'not-started' ? 'default' : 'outline'}>
-          {course.status === 'not-started' && (
-            <>
-              <PlayCircle className="h-4 w-4 mr-2" />
-              Iniciar Curso
-            </>
-          )}
-          {course.status === 'in-progress' && (
-            <>
-              <ChevronRight className="h-4 w-4 mr-2" />
-              Continuar
-            </>
-          )}
-          {course.status === 'completed' && (
-            <>
-              <Trophy className="h-4 w-4 mr-2" />
-              Ver Certificado
-            </>
-          )}
-        </Button>
-      </CardFooter>
-    </Card>
-  );
+        </CardFooter>
+      </Card>
+    );
+  };
+
+  if (isLoadingAvailable || isLoadingMyCourses) {
+    return <Loader title="Carregando cursos..." />;
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Meus Cursos</h1>
+        <h1 className="text-3xl font-bold">Cursos</h1>
         <p className="text-muted-foreground">
-          Gerencie seus cursos e acompanhe seu progresso
+          Explore cursos disponíveis e gerencie suas inscrições
         </p>
       </div>
 
@@ -335,11 +365,30 @@ function StudentCourses() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Cursos
+              Cursos Disponíveis
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockCourses.length}</div>
+            <div className="text-2xl font-bold">
+              {(availableCourses?.length || 0) + 
+               (myCourses?.filter(c => 
+                 c.onlineStudentLessonProgress?.status === 'NOT_STARTED' || 
+                 !c.onlineStudentLessonProgress
+               ).length || 0)}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Meus Cursos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-500">
+              {myCourses?.length || 0}
+            </div>
           </CardContent>
         </Card>
         
@@ -350,8 +399,10 @@ function StudentCourses() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-500">
-              {mockCourses.filter(c => c.status === 'in-progress').length}
+            <div className="text-2xl font-bold text-orange-500">
+              {myCourses?.filter(c => 
+                c.onlineStudentLessonProgress?.status === 'IN_PROGRESS'
+              ).length || 0}
             </div>
           </CardContent>
         </Card>
@@ -364,26 +415,13 @@ function StudentCourses() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-500">
-              {mockCourses.filter(c => c.status === 'completed').length}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Certificados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-500">
-              {mockCourses.filter(c => c.certificateAvailable).length}
+              {myCourses?.filter(c => c.onlineStudentLessonProgress?.status === 'COMPLETED').length || 0}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters and Search */}
+      {/* Search Bar */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4">
@@ -399,50 +437,27 @@ function StudentCourses() {
                 />
               </div>
             </div>
-            
-            <div className="flex gap-2">
-              <Select
-                name="category"
-                options={categories}
-                state={selectedCategory}
-                onChange={(_, value) => setSelectedCategory(value as string)}
-                placeholder="Categoria"
-                value="id"
-                label="name"
-              />
-              
-              <Select
-                name="level"
-                options={levels}
-                state={selectedLevel}
-                onChange={(_, value) => setSelectedLevel(value as string)}
-                placeholder="Nível"
-                value="id"
-                label="name"
-              />
-              
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Tabs and Course Grid */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="all">
-            Todos ({mockCourses.length})
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="available">
+            Disponíveis ({(availableCourses?.length || 0) + 
+              (myCourses?.filter(c => 
+                c.onlineStudentLessonProgress?.status === 'NOT_STARTED' || 
+                !c.onlineStudentLessonProgress
+              ).length || 0)})
           </TabsTrigger>
-          <TabsTrigger value="in-progress">
-            Em Andamento ({mockCourses.filter(c => c.status === 'in-progress').length})
+          <TabsTrigger value="enrolled">
+            Em Andamento ({myCourses?.filter(c => 
+              c.onlineStudentLessonProgress?.status === 'IN_PROGRESS'
+            ).length || 0})
           </TabsTrigger>
           <TabsTrigger value="completed">
-            Concluídos ({mockCourses.filter(c => c.status === 'completed').length})
-          </TabsTrigger>
-          <TabsTrigger value="not-started">
-            Não Iniciados ({mockCourses.filter(c => c.status === 'not-started').length})
+            Concluídos ({myCourses?.filter(c => c.onlineStudentLessonProgress?.status === 'COMPLETED').length || 0})
           </TabsTrigger>
         </TabsList>
         
@@ -450,7 +465,7 @@ function StudentCourses() {
           {filteredCourses.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredCourses.map(course => (
-                <CourseCard key={course.id} course={course} />
+                <CourseCard key={course.id || course.class.id} course={course} />
               ))}
             </div>
           ) : (
@@ -459,8 +474,20 @@ function StudentCourses() {
                 <BookOpen className="h-12 w-12 mx-auto text-muted-foreground" />
                 <h3 className="text-lg font-semibold">Nenhum curso encontrado</h3>
                 <p className="text-muted-foreground">
-                  Tente ajustar os filtros ou fazer uma nova busca
+                  {activeTab === 'available' 
+                    ? 'Não há cursos disponíveis no momento'
+                    : activeTab === 'enrolled'
+                    ? 'Você não está inscrito em nenhum curso'
+                    : 'Você ainda não concluiu nenhum curso'}
                 </p>
+                {activeTab !== 'available' && (
+                  <Button 
+                    variant="outline"
+                    onClick={() => setActiveTab('available')}
+                  >
+                    Ver cursos disponíveis
+                  </Button>
+                )}
               </div>
             </Card>
           )}

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { post, put, get } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
-import { useToast } from "@/hooks/use-toast";
 // Template Components
 import { useLoader } from "@/context/GeneralContext";
 import DropUpload from "@/components/general-components/DropUpload";
@@ -396,7 +395,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const [preview, setPreview] = useState<string | null>(""); // Preview da imagem quando for editar
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isAddressOpen, setIsAddressOpen] = useState<boolean>(
-    !!formData?.address || false
+    !!(formData as any)?.address || false
   );
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [lastFetchedCep, setLastFetchedCep] = useState<string>("");
@@ -589,7 +588,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     queryKey: [`listCursos`],
     queryFn: async () => {
       const params = [
-        { key: "limit", value: 999 },
+        { key: "limit", value: 'all' },
         { key: "active", value: true },
         { key: "order-name", value: "asc" },
       ];
@@ -606,7 +605,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       const params = [
         { key: "active", value: true },
         { key: "courseId", value: dataForm.courseId },
-        { key: "limit", value: 999 },
+        { key: "limit", value: 'all' },
         { key: "order-name", value: "asc" },
       ];
       return get("certificate", "", params);
@@ -623,7 +622,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     queryFn: async () => {
       const params = [
         { key: "courseId", value: dataForm.courseId },
-        { key: "limit", value: 999 },
+        { key: "limit", value: 'all' },
         { key: "order-name", value: "asc" },
       ];
       return get("online-courses", "", params);

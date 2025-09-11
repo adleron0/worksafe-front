@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, LogOut, Settings, FileText } from 'lucide-react';
+import { User, LogOut, FileText } from 'lucide-react';
 import { useStudentAuth } from '@/context/StudentAuthContext';
 
 interface StudentAvatarProps {
@@ -66,10 +66,10 @@ export function StudentAvatar({ showDropdown = true }: StudentAvatarProps) {
           <FileText className="mr-2 h-4 w-4" />
           <span>Meus Certificados</span>
         </DropdownMenuItem>
-        <DropdownMenuItem className="cursor-pointer">
+        {/* <DropdownMenuItem className="cursor-pointer">
           <Settings className="mr-2 h-4 w-4" />
           <span>Configurações</span>
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
         <DropdownMenuSeparator />
         <DropdownMenuItem 
           className="cursor-pointer text-red-600 focus:text-red-600"

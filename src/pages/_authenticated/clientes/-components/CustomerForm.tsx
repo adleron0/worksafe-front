@@ -173,7 +173,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     queryKey: [`listRanks`],
     queryFn: async () => {
       const params = [
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'order-id', value: 'asc' },
       ];
       return get('ranks', '', params);
@@ -186,7 +186,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     queryKey: [`listStates`],
     queryFn: async () => {
       const params = [
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'order-name', value: 'asc' },
       ];
       return get('states', '', params);
@@ -201,7 +201,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     queryFn: async () => {
       const params = [
         { key: 'stateId', value: dataForm.stateId },
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'order-name', value: 'asc' },
       ];
       return get('cities', '', params);

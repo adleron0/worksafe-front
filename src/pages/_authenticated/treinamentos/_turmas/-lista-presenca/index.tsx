@@ -60,7 +60,7 @@ const ListaPresenca = ({ classId, daysDuration = 1 }: ListaPresencaProps) => {
         { key: 'classId', value: classId },
         { key: 'subscribeStatus', value: 'confirmed' },
         { key: 'show', value: 'trainee' },
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'order-id', value: 'asc' },
       ];
       return get('subscription', '', params);
@@ -76,7 +76,7 @@ const ListaPresenca = ({ classId, daysDuration = 1 }: ListaPresencaProps) => {
     queryFn: async () => {
       const params = [
         { key: 'classId', value: classId },
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
       ];
       return get('attendance-list', '', params);
     },

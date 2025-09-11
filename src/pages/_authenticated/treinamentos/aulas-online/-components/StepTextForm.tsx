@@ -234,7 +234,7 @@ const StepTextForm: React.FC<StepTextFormProps> = ({
           )}
         </div>
 
-        <div>
+        <div className="w-fit">
           <Label htmlFor="duration">
             Tempo de Leitura (minutos){" "}
             <span className="text-destructive">*</span>

@@ -201,7 +201,7 @@ const AlunosForm = ({ formData, openSheet, entity }: FormProps) => {
     queryKey: [`listStates`],
     queryFn: async () => {
       const params = [
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'order-name', value: 'asc' },
       ];
       return get('states', '', params);
@@ -214,7 +214,7 @@ const AlunosForm = ({ formData, openSheet, entity }: FormProps) => {
     queryFn: async () => {
       if (!dataForm.stateId) return undefined;
       const params = [
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'order-name', value: 'asc' },
         { key: 'stateId', value: dataForm.stateId },
       ];
@@ -228,7 +228,7 @@ const AlunosForm = ({ formData, openSheet, entity }: FormProps) => {
     queryKey: [`listCustomers`],
     queryFn: async () => {
       const params = [
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'order-name', value: 'asc' },
       ];
       return get('customer', '', params);

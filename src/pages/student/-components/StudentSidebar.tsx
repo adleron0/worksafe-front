@@ -1,4 +1,4 @@
-import { Home, BookOpen, Award, Building2, CreditCard, User, Settings, HelpCircle } from "lucide-react";
+import { Home, BookOpen, Award, CreditCard, User } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
   Sidebar,
@@ -34,11 +34,11 @@ const menuItems = [
         icon: Award,
         href: "/student/certificates",
       },
-      {
-        title: "Instituições",
-        icon: Building2,
-        href: "/student/institutions",
-      },
+      // {
+      //   title: "Instituições",
+      //   icon: Building2,
+      //   href: "/student/institutions",
+      // },
       {
         title: "Pagamentos",
         icon: CreditCard,
@@ -54,16 +54,16 @@ const menuItems = [
         icon: User,
         href: "/student/profile",
       },
-      {
-        title: "Configurações",
-        icon: Settings,
-        href: "/student/settings",
-      },
-      {
-        title: "Ajuda",
-        icon: HelpCircle,
-        href: "/student/help",
-      },
+      // {
+      //   title: "Configurações",
+      //   icon: Settings,
+      //   href: "/student/settings",
+      // },
+      // {
+      //   title: "Ajuda",
+      //   icon: HelpCircle,
+      //   href: "/student/help",
+      // },
     ],
   },
 ];

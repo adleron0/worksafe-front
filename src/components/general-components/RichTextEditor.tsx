@@ -8,6 +8,50 @@ import { Loader2, CheckCircle, XCircle } from "lucide-react";
 // Registrar o módulo de redimensionamento
 Quill.register("modules/imageResize", ImageResize);
 
+// Registrar atributos personalizados para preservar estilos das imagens
+const ImageBlot = Quill.import("formats/image") as any;
+if (ImageBlot) {
+  ImageBlot.formats = function formats(domNode: any) {
+    return ["alt", "height", "width", "style"].reduce((formats: any, attribute) => {
+      if (domNode.hasAttribute(attribute)) {
+        formats[attribute] = domNode.getAttribute(attribute);
+      }
+      return formats;
+    }, {});
+  };
+}
+
+// Criar um novo formato de imagem que preserva os estilos
+class StyledImage extends (ImageBlot || class {}) {
+  domNode: any;
+  
+  static formats(domNode: any) {
+    return ["alt", "height", "width", "style"].reduce((formats: any, attribute) => {
+      if (domNode.hasAttribute(attribute)) {
+        formats[attribute] = domNode.getAttribute(attribute);
+      }
+      return formats;
+    }, {});
+  }
+
+  format(name: string, value: any) {
+    if (['alt', 'height', 'width', 'style'].includes(name)) {
+      if (value) {
+        this.domNode.setAttribute(name, value);
+      } else {
+        this.domNode.removeAttribute(name);
+      }
+    } else {
+      super.format(name, value);
+    }
+  }
+}
+
+// Registrar o formato personalizado
+if (ImageBlot) {
+  Quill.register('formats/image', StyledImage, true);
+}
+
 interface RichTextEditorProps {
   value?: string;
   onChange?: (content: string) => void;
@@ -163,6 +207,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     "link",
     "image",
     "video",
+    "alt",
+    "height",
+    "width",
+    "style",
   ];
 
   const getUploadStatusContent = () => {

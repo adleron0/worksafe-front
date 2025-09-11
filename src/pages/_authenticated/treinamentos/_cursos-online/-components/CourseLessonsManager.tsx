@@ -252,7 +252,7 @@ const CourseLessonsManager: React.FC<CourseLessonsManagerProps> = ({
         if (!courseId) return { rows: [], total: 0 };
         const params = [
           { key: "or", value: `[{ "courseId": ${courseId} }, { "courseId": null }]` },
-          { key: "limit", value: 999 },
+          { key: "limit", value: 'all' },
           { key: "active", value: true },
         ];
         return get("online-lesson", "", params) as Promise<ApiResponse>;
@@ -270,7 +270,7 @@ const CourseLessonsManager: React.FC<CourseLessonsManagerProps> = ({
     queryFn: async () => {
       const params = [
         { key: "modelId", value: modelId },
-        { key: "limit", value: 999 },
+        { key: "limit", value: 'all' },
         { key: "show", value: "lesson" },
         { key: "order-order", value: "asc" },
       ];

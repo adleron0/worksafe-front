@@ -154,7 +154,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
     queryKey: [`listCustomers`],
     queryFn: async () => {
       const params = [
-        { key: 'limit', value: 999 },
+        { key: 'limit', value: 'all' },
         { key: 'order-name', value: 'asc' },
       ];
       return get('customers', '', params);

@@ -141,7 +141,8 @@ export function useStepCompletion(lessonId: string, _currentStep: MergedStep | n
 
   const completeStep = useCallback((data: CompleteStepData) => {
     console.log('🎯 useStepCompletion: completeStep chamado - Step:', data.stepId, 'Type:', data.contentType, 'Data:', data.progressData || data.data);
-    completeStepMutation.mutate(data);
+    // Usar mutateAsync para retornar uma Promise com o resultado
+    return completeStepMutation.mutateAsync(data);
   }, [completeStepMutation]);
 
   return {

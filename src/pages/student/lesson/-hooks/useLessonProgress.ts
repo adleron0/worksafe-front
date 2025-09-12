@@ -26,19 +26,9 @@ export function useLessonProgress(lessonId: string, onLessonComplete?: () => voi
     onSuccess: async (_, stepId) => {
       console.log('✅ Step iniciado com sucesso:', stepId);
       
-      // Invalidar e refetch imediatamente para atualizar o status
-      await queryClient.invalidateQueries({ 
-        queryKey: ['student-lesson', lessonId],
-        refetchType: 'all' 
-      });
-      
-      // Aguardar o refetch completar para garantir dados atualizados
-      await queryClient.refetchQueries({
-        queryKey: ['student-lesson', lessonId],
-        type: 'active'
-      });
-      
-      console.log('🔄 Dados da lição atualizados após iniciar step');
+      // REMOVIDO: Não precisa invalidar após start
+      // O conteúdo não muda, apenas o status interno é registrado no backend
+      // Isso evita requisições desnecessárias de content
     },
     onError: (error, stepId) => {
       console.error('❌ Erro ao iniciar step:', stepId, error);
@@ -149,17 +139,29 @@ export function useLessonProgress(lessonId: string, onLessonComplete?: () => voi
 
   // Verificar se a aula está completa
   const checkLessonCompletion = () => {
+    console.log('🔍 checkLessonCompletion: Verificando conclusão da lição...');
+    
     // Se já está completando, não verificar novamente
     if (isCompletingLessonRef.current || completeLesson.isPending) {
+      console.log('⚠️ Já está completando a lição, pulando verificação');
       return;
     }
     
     const lessonData = queryClient.getQueryData<LessonDataWithSteps>(['student-lesson', lessonId]);
     
-    if (!lessonData) return;
+    if (!lessonData) {
+      console.log('⚠️ Dados da lição não encontrados');
+      return;
+    }
     
-    // Se já está marcada como completa, não fazer nada
+    // Se já está marcada como completa, verificar se o modal deve ser exibido
     if (lessonData.lessonProgress.completed) {
+      console.log('✅ Lição já está marcada como completa');
+      // Ainda assim, chamar o callback para mostrar o modal se for a primeira vez
+      if (onLessonComplete) {
+        console.log('🎊 Chamando onLessonComplete para mostrar modal (lição já completa)');
+        onLessonComplete();
+      }
       return;
     }
     

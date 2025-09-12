@@ -1,7 +1,6 @@
 import { memo, useRef, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Progress } from '@/components/ui/progress';
 import { CheckCircle } from 'lucide-react';
 import RichTextViewer from '@/components/general-components/RichTextViewer';
 import type { ContentComponentProps } from '../../types';
@@ -83,7 +82,7 @@ export const TextContent = memo(({
   const [readingProgress, setReadingProgress] = useState(0);
   const [canComplete, setCanComplete] = useState(false);
   const [isSmallContent, setIsSmallContent] = useState(false);
-  const [estimatedReadTime, setEstimatedReadTime] = useState(0);
+  const [, setEstimatedReadTime] = useState(0);
   
   // Guardar o ID do step atual para detectar mudanças reais
   const currentStepIdRef = useRef(step.id);
@@ -706,27 +705,53 @@ export const TextContent = memo(({
           </p>
         </div>
       )}
-      <CardHeader className="p-4 md:p-6 pb-3">
+      <CardHeader className="p-4 md:p-6 pb-3 relative">
         <div className="flex flex-col gap-3">
-          <CardTitle className="text-base md:text-lg leading-tight">{step.title}</CardTitle>
+          <CardTitle className="text-base md:text-lg leading-tight pr-12">{step.title}</CardTitle>
+          
+          {/* Progresso Circular - Canto superior direito */}
           {shouldShowProgress && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs md:text-sm text-muted-foreground">
-                <span className="truncate mr-2">
-                  {isSmallContent 
-                    ? `Tempo: ${Math.ceil((estimatedReadTime || 60) / 60)} min`
-                    : 'Progresso'
-                  }
-                </span>
-                <span className="font-medium">{Math.round(readingProgress)}%</span>
-              </div>
-              <Progress value={readingProgress} className="h-1.5 md:h-2" />
-              {canComplete && (
-                <div className="flex items-center gap-1.5 text-xs md:text-sm text-green-600 dark:text-green-400">
-                  <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                  <span>Leitura concluída!</span>
+            <div className="absolute top-4 right-4">
+              <div className="relative">
+                <svg className="w-10 h-10 transform -rotate-90">
+                  {/* Círculo de fundo */}
+                  <circle
+                    cx="20"
+                    cy="20"
+                    r="14"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    fill="none"
+                    className="text-gray-200 dark:text-gray-700"
+                  />
+                  {/* Círculo de progresso */}
+                  <circle
+                    cx="20"
+                    cy="20"
+                    r="14"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    fill="none"
+                    strokeDasharray={`${readingProgress * 0.88} 88`}
+                    strokeLinecap="round"
+                    className="text-primary transition-all duration-300 ease-out"
+                  />
+                </svg>
+                {/* Porcentagem no centro */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[8px] font-medium text-muted-foreground">
+                    {Math.round(readingProgress)}%
+                  </span>
                 </div>
-              )}
+              </div>
+            </div>
+          )}
+          
+          {/* Status de conclusão */}
+          {canComplete && (
+            <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+              <CheckCircle className="h-3.5 w-3.5" />
+              <span>Leitura concluída!</span>
             </div>
           )}
         </div>

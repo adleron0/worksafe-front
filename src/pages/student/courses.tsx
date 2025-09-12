@@ -443,21 +443,33 @@ function StudentCourses() {
 
       {/* Tabs and Course Grid */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="available">
-            Disponíveis ({(availableCourses?.length || 0) + 
-              (myCourses?.filter(c => 
-                c.onlineStudentLessonProgress?.status === 'NOT_STARTED' || 
-                !c.onlineStudentLessonProgress
-              ).length || 0)})
+        <TabsList className="grid w-full grid-cols-3 h-full">
+          <TabsTrigger value="available" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2">
+            <BookOpen className="h-4 w-4" />
+            <span className="hidden sm:inline">Disponíveis</span>
+            <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+              {(availableCourses?.length || 0) + 
+                (myCourses?.filter(c => 
+                  c.onlineStudentLessonProgress?.status === 'NOT_STARTED' || 
+                  !c.onlineStudentLessonProgress
+                ).length || 0)}
+            </Badge>
           </TabsTrigger>
-          <TabsTrigger value="enrolled">
-            Em Andamento ({myCourses?.filter(c => 
-              c.onlineStudentLessonProgress?.status === 'IN_PROGRESS'
-            ).length || 0})
+          <TabsTrigger value="enrolled" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2">
+            <GraduationCap className="h-4 w-4" />
+            <span className="hidden sm:inline">Em Andamento</span>
+            <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+              {myCourses?.filter(c => 
+                c.onlineStudentLessonProgress?.status === 'IN_PROGRESS'
+              ).length || 0}
+            </Badge>
           </TabsTrigger>
-          <TabsTrigger value="completed">
-            Concluídos ({myCourses?.filter(c => c.onlineStudentLessonProgress?.status === 'COMPLETED').length || 0})
+          <TabsTrigger value="completed" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2">
+            <Trophy className="h-4 w-4" />
+            <span className="hidden sm:inline">Concluídos</span>
+            <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+              {myCourses?.filter(c => c.onlineStudentLessonProgress?.status === 'COMPLETED').length || 0}
+            </Badge>
           </TabsTrigger>
         </TabsList>
         

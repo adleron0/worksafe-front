@@ -85,13 +85,24 @@ const StepTextForm: React.FC<StepTextFormProps> = ({
 
   useEffect(() => {
     if (step) {
+      // Parse do content se vier como string JSON
+      let parsedContent = step.content;
+      if (typeof step.content === 'string') {
+        try {
+          parsedContent = JSON.parse(step.content);
+        } catch (e) {
+          console.error('Failed to parse step content:', e);
+          parsedContent = { content: step.content, attachments: [], externalLinks: [] };
+        }
+      }
+      
       setFormData({
         title: step.title,
         duration: step.duration || 5,
         content: {
-          content: step.content.content || "",
-          attachments: step.content.attachments || [],
-          externalLinks: step.content.externalLinks || [],
+          content: parsedContent.content || "",
+          attachments: parsedContent.attachments || [],
+          externalLinks: parsedContent.externalLinks || [],
         },
       });
     } else {

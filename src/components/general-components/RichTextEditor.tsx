@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, useMemo } from "react";
+import { useRef, useCallback, useState, useMemo, useEffect } from "react";
 import ReactQuill, { Quill } from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import ImageResize from "quill-image-resize-module-react";
@@ -8,33 +8,66 @@ import { Loader2, CheckCircle, XCircle } from "lucide-react";
 // Registrar o módulo de redimensionamento
 Quill.register("modules/imageResize", ImageResize);
 
-// Registrar atributos personalizados para preservar estilos das imagens
-const ImageBlot = Quill.import("formats/image") as any;
-if (ImageBlot) {
-  ImageBlot.formats = function formats(domNode: any) {
-    return ["alt", "height", "width", "style"].reduce((formats: any, attribute) => {
-      if (domNode.hasAttribute(attribute)) {
-        formats[attribute] = domNode.getAttribute(attribute);
-      }
-      return formats;
-    }, {});
+// Tipos para o Quill
+type ImageValue = string | { src?: string; url?: string; style?: string; width?: string; height?: string; alt?: string };
+type ImageFormats = { [key: string]: string };
+
+// Estender o formato de imagem para preservar estilos
+// Criar interface para a classe base do Quill
+interface QuillImageBase {
+  new (...args: unknown[]): {
+    domNode: HTMLElement;
+    format(name: string, value: string | null): void;
   };
+  create(value: unknown): HTMLElement;
+  formats(domNode: HTMLElement): Record<string, string>;
+  value(domNode: HTMLElement): string;
 }
 
-// Criar um novo formato de imagem que preserva os estilos
-class StyledImage extends (ImageBlot || class {}) {
-  domNode: any;
+const Image = Quill.import('formats/image') as QuillImageBase;
+class StyledImage extends Image {
+  declare domNode: HTMLElement;
   
-  static formats(domNode: any) {
-    return ["alt", "height", "width", "style"].reduce((formats: any, attribute) => {
+  static create(value: ImageValue) {
+    // Determinar o src correto
+    let src = value;
+    if (typeof value === 'object' && value !== null) {
+      src = value.src || value.url || value;
+    }
+    
+    // Criar o nó com o src
+    const node = super.create(src);
+    
+    // Se value é objeto, aplicar atributos adicionais
+    if (typeof value === 'object' && value !== null) {
+      if (value.style) {
+        node.setAttribute('style', value.style);
+      }
+      if (value.width) node.setAttribute('width', value.width);
+      if (value.height) node.setAttribute('height', value.height);
+      if (value.alt) node.setAttribute('alt', value.alt);
+    }
+    
+    return node;
+  }
+
+  static formats(domNode: HTMLElement): ImageFormats {
+    const formats = ['alt', 'height', 'width', 'style'].reduce((formats: ImageFormats, attribute) => {
       if (domNode.hasAttribute(attribute)) {
-        formats[attribute] = domNode.getAttribute(attribute);
+        formats[attribute] = domNode.getAttribute(attribute) || '';
       }
       return formats;
     }, {});
+    return formats;
   }
 
-  format(name: string, value: any) {
+  static value(domNode: HTMLElement): string {
+    // Sempre retornar apenas o src como string para compatibilidade
+    const src = domNode.getAttribute('src');
+    return src || '';
+  }
+
+  format(name: string, value: string | null) {
     if (['alt', 'height', 'width', 'style'].includes(name)) {
       if (value) {
         this.domNode.setAttribute(name, value);
@@ -47,17 +80,14 @@ class StyledImage extends (ImageBlot || class {}) {
   }
 }
 
-// Registrar o formato personalizado
-if (ImageBlot) {
-  Quill.register('formats/image', StyledImage, true);
-}
+Quill.register('formats/image', StyledImage, true);
 
 interface RichTextEditorProps {
   value?: string;
   onChange?: (content: string) => void;
   placeholder?: string;
   readOnly?: boolean;
-  height?: number | string; // Altura do editor em px ou string CSS (ex: '50vh', '400px')
+  height?: number | string;
   onImageUpload?: (file: File) => Promise<string>;
 }
 
@@ -70,13 +100,37 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   onChange,
   placeholder = "Comece a escrever seu conteúdo...",
   readOnly = false,
-  height = 300, // Altura padrão de 300px
+  height = 300,
   onImageUpload,
 }) => {
   const quillRef = useRef<ReactQuill>(null);
   const [uploadStatus, setUploadStatus] = useState<
     "idle" | "uploading" | "success" | "error"
   >("idle");
+
+  // Função para processar o valor recebido
+  const processValue = (val: string): string => {
+    if (!val) return "";
+    
+    // Se o valor parece ser um JSON stringificado
+    if (typeof val === 'string' && val.startsWith('{') && val.includes('"content"')) {
+      try {
+        const parsed = JSON.parse(val);
+        if (parsed.content) {
+          const processed = parsed.content
+            .replace(/\\"/g, '"')
+            .replace(/\\'/g, "'");
+          return processed;
+        }
+      } catch (e) {
+        console.warn('Failed to parse JSON content:', e);
+      }
+    }
+    
+    return val;
+  };
+
+  const processedValue = useMemo(() => processValue(value), [value]);
 
   const imageHandler = useCallback(() => {
     const input = document.createElement("input");
@@ -99,11 +153,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       try {
         let url: string;
 
-        // Se tiver função customizada de upload, usa ela
         if (onImageUpload) {
           url = await onImageUpload(file);
         } else {
-          // Faz upload direto sem usar hook para evitar re-render
           const response = await post<ImageUploadResponse, { image: File }>(
             "images",
             "s3",
@@ -117,10 +169,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           url = response.imageUrl;
         }
 
-        // Insere a imagem na posição correta
         quill.insertEmbed(range.index, "image", url);
 
-        // Move o cursor para depois da imagem
         setTimeout(() => {
           quill.setSelection(range.index + 1, 0);
           quill.focus();
@@ -132,13 +182,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         console.error("Erro ao fazer upload da imagem:", error);
         setUploadStatus("error");
 
-        // Se falhar o upload para S3, converte para base64 como fallback
         const reader = new FileReader();
         reader.onload = () => {
           const url = reader.result as string;
-
           quill.insertEmbed(range.index, "image", url);
-
           setTimeout(() => {
             quill.setSelection(range.index + 1, 0);
             quill.focus();
@@ -152,39 +199,62 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   }, [onImageUpload]);
 
   const modules = useMemo(
-    () => ({
-      toolbar: {
-        container: [
-          [{ header: [1, 2, 3, 4, 5, 6, false] }],
-          [{ font: [] }],
-          [{ size: ["small", false, "large", "huge"] }],
-
-          ["bold", "italic", "underline", "strike"],
-          [{ color: [] }, { background: [] }],
-          [{ script: "sub" }, { script: "super" }],
-
-          [{ list: "ordered" }, { list: "bullet" }],
-          [{ indent: "-1" }, { indent: "+1" }],
-          [{ align: [] }],
-
-          ["blockquote", "code-block"],
-          ["link", "image", "video"],
-
-          ["clean"],
-        ],
-        handlers: {
-          image: imageHandler,
+    () => {
+      const baseModules: Record<string, unknown> = {
+        toolbar: {
+          container: [
+            [{ header: [1, 2, 3, 4, 5, 6, false] }],
+            [{ font: [] }],
+            [{ size: ["small", false, "large", "huge"] }],
+            ["bold", "italic", "underline", "strike"],
+            [{ color: [] }, { background: [] }],
+            [{ script: "sub" }, { script: "super" }],
+            [{ list: "ordered" }, { list: "bullet" }],
+            [{ indent: "-1" }, { indent: "+1" }],
+            [{ align: [] }],
+            ["blockquote", "code-block"],
+            ["link", "image", "video"],
+            ["clean"],
+          ],
+          handlers: {
+            image: imageHandler,
+          },
         },
-      },
-      imageResize: {
-        parchment: Quill.import("parchment"),
-        modules: ["Resize", "DisplaySize", "Toolbar"],
-      },
-      clipboard: {
-        matchVisual: false,
-      },
-    }),
-    [imageHandler],
+        clipboard: {
+          matchVisual: false, // Voltar para false para evitar conflitos
+        },
+      };
+
+      // Adicionar módulo de redimensionamento apenas no modo de edição
+      if (!readOnly) {
+        baseModules.imageResize = {
+          parchment: Quill.import("parchment"),
+          modules: ["Resize", "DisplaySize", "Toolbar"],
+          handleStyles: {
+            backgroundColor: 'black',
+            border: 'none',
+            color: 'white',
+            opacity: '0.80'
+          },
+          toolbarStyles: {
+            backgroundColor: 'black',
+            border: 'none',
+            color: 'white'
+          },
+          toolbarButtonStyles: {},
+          contentStyles: {
+            border: '2px solid #3b82f6',
+            'border-radius': '2px'
+          },
+          overlayStyles: {
+            border: '2px dashed #3b82f6'
+          }
+        };
+      }
+
+      return baseModules;
+    },
+    [imageHandler, readOnly],
   );
 
   const formats = [
@@ -211,7 +281,75 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     "height",
     "width",
     "style",
+    "float",
+    "display",
+    "margin",
   ];
+
+  // Aplicar estilos após o conteúdo ser carregado
+  useEffect(() => {
+    if (!quillRef.current || !processedValue) return;
+
+    const editor = quillRef.current.getEditor();
+    if (!editor) return;
+
+    // Capturar estilos originais antes do imageResize modificar
+    const captureOriginalStyles = () => {
+      const images = editor.root.querySelectorAll('img');
+      const originalStyles = new Map();
+      
+      images.forEach((img: HTMLImageElement) => {
+        const style = img.getAttribute('style');
+        if (style) {
+          originalStyles.set(img.src, style);
+        }
+      });
+      
+      return originalStyles;
+    };
+
+    // Restaurar estilos após modificações
+    const restoreStyles = (originalStyles: Map<string, string>) => {
+      const images = editor.root.querySelectorAll('img');
+      
+      images.forEach((img: HTMLImageElement) => {
+        const originalStyle = originalStyles.get(img.src);
+        if (originalStyle) {
+          // Preservar width/height atuais mas restaurar float e margin
+          const currentWidth = img.style.width || img.getAttribute('width');
+          const currentHeight = img.style.height || img.getAttribute('height');
+          
+          // Parse do estilo original para extrair float e margin
+          const styleObj: Record<string, string> = {};
+          originalStyle.split(';').forEach(style => {
+            const [key, value] = style.split(':').map(s => s.trim());
+            if (key && value) {
+              styleObj[key] = value;
+            }
+          });
+          
+          // Aplicar estilos preservando dimensões atuais
+          const newStyle = Object.entries({
+            ...styleObj,
+            width: currentWidth ? (currentWidth + (typeof currentWidth === 'number' ? 'px' : '')) : styleObj.width,
+            height: currentHeight ? (currentHeight + (typeof currentHeight === 'number' ? 'px' : '')) : styleObj.height
+          }).map(([key, value]) => `${key}: ${value}`).join('; ');
+          
+          img.setAttribute('style', newStyle);
+        }
+      });
+    };
+
+    // Capturar estilos originais
+    const originalStyles = captureOriginalStyles();
+
+    // Após um pequeno delay, restaurar estilos se necessário
+    const timer = setTimeout(() => {
+      restoreStyles(originalStyles);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [processedValue]);
 
   const getUploadStatusContent = () => {
     switch (uploadStatus) {
@@ -256,7 +394,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       <ReactQuill
         ref={quillRef}
         theme="snow"
-        value={value}
+        value={processedValue}
         onChange={onChange}
         placeholder={placeholder}
         readOnly={readOnly}
@@ -265,7 +403,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         preserveWhitespace={true}
         style={{
           height: typeof height === "number" ? `${height}px` : height,
-          maxHeight: "100vh", // Limite máximo de altura
+          maxHeight: "100vh",
         }}
         className=""
       />
@@ -546,47 +684,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           box-shadow: 0 4px 12px hsl(var(--primary) / 0.3);
           outline: 2px solid hsl(var(--primary) / 0.5);
           outline-offset: 2px;
-        }
-
-        /* Estilos para o módulo de redimensionamento */
-        .rich-text-editor .ql-editor .ql-image-resize-module {
-          position: relative;
-        }
-
-        .rich-text-editor .ql-editor img[style*="cursor: nwse-resize"] {
-          border: 2px dashed hsl(var(--primary));
-        }
-
-        /* Handles de redimensionamento */
-        .ql-image-resize-handle {
-          position: absolute;
-          width: 12px;
-          height: 12px;
-          background: hsl(var(--primary));
-          border: 2px solid hsl(var(--background));
-          border-radius: 2px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .ql-image-resize-handle:hover {
-          opacity: 0.8;
-          transform: scale(1.1);
-        }
-
-        /* Display do tamanho */
-        .ql-image-resize-display {
-          position: absolute;
-          font-size: 12px;
-          color: hsl(var(--primary-foreground));
-          background: hsl(var(--primary));
-          padding: 4px 8px;
-          border-radius: 4px;
-          bottom: -30px;
-          left: 50%;
-          transform: translateX(-50%);
-          white-space: nowrap;
-          pointer-events: none;
-          z-index: 1000;
         }
 
         .rich-text-editor .ql-editor a {

@@ -1,9 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AlertCircle, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { ContentComponentProps } from '../../types';
 
@@ -134,12 +134,6 @@ export function QuizContent({ step, onCompleteStep }: ContentComponentProps) {
         selectedOptions: answers[q.id] !== undefined ? [answers[q.id]] : []
       }));
       
-      console.log('📝 Enviando quiz para validação:', {
-        stepId: step.id,
-        responses,
-        timeSpent
-      });
-      
       // Enviar para o backend e aguardar resultado
       if (onCompleteStep) {
         const result = await onCompleteStep({
@@ -151,11 +145,8 @@ export function QuizContent({ step, onCompleteStep }: ContentComponentProps) {
           })
         });
         
-        console.log('📊 Resultado recebido:', result);
-        
-        // Buscar o resultado do step atualizado
-        const updatedStep = result?.stepsContent?.find((s: any) => s.id === step.id);
-        const progressData = updatedStep?.stepProgress?.progressData || result?.progressData;
+        // O resultado vem direto do backend, não precisa buscar em stepsContent
+        const progressData = result?.progressData || result;
         
         // Processar o resultado formatado do backend
         if (progressData?.formattedResult) {
@@ -163,6 +154,11 @@ export function QuizContent({ step, onCompleteStep }: ContentComponentProps) {
           setQuizResult(formattedResult);
           setShowResults(true);
           setAttempts(progressData.attempts || attempts + 1);
+          
+          // Pequeno delay para transição suave do loading para resultado
+          setTimeout(() => {
+            setIsLoadingResults(false);
+          }, 300);
           
           if (formattedResult.passed) {
             setSubmitted(true);
@@ -191,7 +187,6 @@ export function QuizContent({ step, onCompleteStep }: ContentComponentProps) {
           }
         } else {
           // Fallback se não receber formattedResult
-          console.error('formattedResult não encontrado na resposta');
           toast({
             title: 'Quiz enviado',
             description: 'Suas respostas foram registradas.',
@@ -201,7 +196,6 @@ export function QuizContent({ step, onCompleteStep }: ContentComponentProps) {
         }
       }
     } catch (error) {
-      console.error('Erro ao enviar quiz:', error);
       toast({
         title: 'Erro ao enviar',
         description: 'Ocorreu um erro ao enviar suas respostas. Tente novamente.',
@@ -209,7 +203,11 @@ export function QuizContent({ step, onCompleteStep }: ContentComponentProps) {
       });
     } finally {
       setIsSubmitting(false);
-      setIsLoadingResults(false);
+      // Loading é removido após processar o resultado com sucesso
+      // ou em caso de erro
+      if (!quizResult) {
+        setIsLoadingResults(false);
+      }
     }
   };
   
@@ -225,10 +223,10 @@ export function QuizContent({ step, onCompleteStep }: ContentComponentProps) {
     <div className="space-y-4">
       {/* Banner de conclusão */}
       {submitted && quizResult && (
-        <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+        <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 animate-in fade-in slide-in-from-top-2 duration-300">
           <p className="text-sm text-green-700 dark:text-green-400 flex items-center">
             <CheckCircle className="h-4 w-4 mr-2" />
-            Este quiz já foi concluído
+            Este quiz foi concluído
           </p>
         </div>
       )}
@@ -244,8 +242,17 @@ export function QuizContent({ step, onCompleteStep }: ContentComponentProps) {
         {isLoadingResults ? (
           <div className="text-center py-12 space-y-4">
             <Loader2 className="h-12 w-12 mx-auto animate-spin text-primary" />
-            <p className="text-lg font-medium">Validando suas respostas...</p>
-            <p className="text-sm text-muted-foreground">Aguarde enquanto processamos o resultado</p>
+            <div className="space-y-2">
+              <p className="text-lg font-medium">Validando suas respostas...</p>
+              <p className="text-sm text-muted-foreground">
+                Analisando {questions.length} {questions.length === 1 ? 'questão' : 'questões'}
+              </p>
+              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                <div className="h-1 w-1 rounded-full bg-primary animate-pulse" />
+                <div className="h-1 w-1 rounded-full bg-primary animate-pulse [animation-delay:0.2s]" />
+                <div className="h-1 w-1 rounded-full bg-primary animate-pulse [animation-delay:0.4s]" />
+              </div>
+            </div>
           </div>
         ) : questions.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
@@ -263,16 +270,19 @@ export function QuizContent({ step, onCompleteStep }: ContentComponentProps) {
                   <p className="font-medium flex-1 text-sm md:text-base">{question.question}</p>
                 </div>
                 
-                <RadioGroup
+                <ToggleGroup
+                  type="single"
                   value={answers[question.id]?.toString() || ''}
                   onValueChange={(value) => {
-                    setAnswers(prev => ({
-                      ...prev,
-                      [question.id]: parseInt(value)
-                    }));
+                    if (value && !showResults) {
+                      setAnswers(prev => ({
+                        ...prev,
+                        [question.id]: parseInt(value)
+                      }));
+                    }
                   }}
                   disabled={showResults}
-                  className="ml-7 md:ml-9"
+                  className="ml-7 md:ml-9 flex-col items-stretch gap-3"
                 >
                   {question.options.map((option, optionIndex) => {
                     // Buscar informações do resultado se disponível
@@ -281,37 +291,62 @@ export function QuizContent({ step, onCompleteStep }: ContentComponentProps) {
                     const isWrong = showResults && resultQuestion && 
                                    optionIndex === resultQuestion.selectedOption && 
                                    optionIndex !== resultQuestion.correctAnswer;
+                    const optionLetter = String.fromCharCode(65 + optionIndex); // A, B, C, D...
                     
                     return (
-                      <div key={optionIndex} className="flex items-start space-x-2">
-                        <RadioGroupItem 
-                          value={optionIndex.toString()} 
-                          id={`${question.id}-${optionIndex}`}
-                          className="mt-1"
-                        />
-                        <Label 
-                          htmlFor={`${question.id}-${optionIndex}`}
-                          className={`cursor-pointer flex-1 text-sm md:text-base ${
-                            isCorrect ? 'text-green-600 font-medium' : 
-                            isWrong ? 'text-red-600' : ''
-                          }`}
-                        >
-                          <span className="flex items-center gap-2">
-                            {option}
-                            {isCorrect && <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />}
-                            {isWrong && <XCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />}
-                          </span>
-                        </Label>
-                      </div>
+                      <ToggleGroupItem
+                        key={optionIndex}
+                        value={optionIndex.toString()}
+                        className={cn(
+                          "w-full justify-start gap-3 h-auto p-3 text-left rounded-lg",
+                          "data-[state=on]:bg-primary/10 data-[state=on]:border-primary",
+                          // Resposta correta (após enviar)
+                          showResults && isCorrect && "border-green-500 bg-green-50 hover:bg-green-50 dark:bg-green-900/20",
+                          // Resposta errada (após enviar)
+                          showResults && isWrong && "border-red-500 bg-red-50 hover:bg-red-50 dark:bg-red-900/20",
+                          // Outras opções após enviar
+                          showResults && !isCorrect && !isWrong && "opacity-60"
+                        )}
+                      >
+                        <div className={cn(
+                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-md font-semibold text-sm",
+                          "bg-muted text-muted-foreground",
+                          // Selecionado (antes de enviar)
+                          answers[question.id] === optionIndex && !showResults && "bg-primary text-primary-foreground",
+                          // Resposta correta (após enviar)
+                          showResults && isCorrect && "bg-green-500 text-white",
+                          // Resposta errada (após enviar)
+                          showResults && isWrong && "bg-red-500 text-white"
+                        )}>
+                          {optionLetter}
+                        </div>
+                        <span className={cn(
+                          "flex-1 text-sm md:text-base",
+                          isCorrect && "text-green-700 font-medium dark:text-green-400",
+                          isWrong && "text-red-700 dark:text-red-400"
+                        )}>
+                          {option}
+                        </span>
+                        {isCorrect && <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-green-500" />}
+                        {isWrong && <XCircle className="h-4 w-4 md:h-5 md:w-5 text-red-500" />}
+                      </ToggleGroupItem>
                     );
                   })}
-                </RadioGroup>
+                </ToggleGroup>
                 
                 {showResults && quizResult?.questions?.[index]?.explanation && (
-                  <div className="ml-7 md:ml-9 p-2 md:p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                    <p className="text-xs md:text-sm">
-                      <span className="font-medium">Explicação:</span> {quizResult.questions[index].explanation}
-                    </p>
+                  <div className="ml-7 md:ml-9 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-start gap-2">
+                      <span className="text-blue-600 dark:text-blue-400 mt-0.5">💡</span>
+                      <div className="flex-1">
+                        <p className="text-xs md:text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                          Explicação:
+                        </p>
+                        <p className="text-xs md:text-sm text-blue-800 dark:text-blue-200">
+                          {quizResult.questions[index].explanation}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

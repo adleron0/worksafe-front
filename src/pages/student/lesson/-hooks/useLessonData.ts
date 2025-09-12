@@ -47,20 +47,9 @@ export function useLessonData(lessonId: string) {
       
       return result;
     },
-    // Refetch automático se houver steps em progresso
-    refetchInterval: (query) => {
-      const data = query?.state?.data;
-      if (!data) return false;
-      
-      // Verificar se há algum step em progresso
-      const hasInProgress = data.stepsOverview?.some(
-        (s: any) => s.status === 'in_progress' || s.status === 'IN_PROGRESS'
-      );
-      
-      // Se houver steps em progresso, refetch a cada 5 segundos
-      // Isso mantém os dados atualizados enquanto o usuário está progredindo
-      return hasInProgress ? 5000 : false;
-    },
+    // Desabilitado: Refetch automático não é necessário
+    // O conteúdo é carregado uma vez e atualizado apenas após completar steps
+    refetchInterval: false,
     // Manter dados frescos quando a janela volta ao foco
     refetchOnWindowFocus: true,
   });

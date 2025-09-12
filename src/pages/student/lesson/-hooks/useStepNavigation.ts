@@ -37,15 +37,14 @@ export function useStepNavigation({ lessonData, startStep }: UseStepNavigationPr
       return;
     }
     
-    // Iniciar se status for 'available' ou se nunca foi iniciado
+    // Iniciar APENAS se status for 'available' ou 'in_progress'
+    // Steps já completos não precisam de start novamente
     if (currentStep.status === 'available' || currentStep.status === 'in_progress') {
       startStep(currentStep.id);
       startedStepsRef.current.add(currentStep.id);
-    } else if (currentStep.status === 'completed') {
-      // Para steps completos, ainda podemos querer rastrear visualizações
-      startStep(currentStep.id);
-      startedStepsRef.current.add(currentStep.id);
     }
+    // REMOVIDO: Não precisa start para steps já completos
+    // Isso evita requisições desnecessárias ao revisitar conteúdo
   }, [currentStep?.id, startStep]);
 
   // Função para navegar para um step específico

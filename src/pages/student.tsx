@@ -37,7 +37,7 @@ function StudentLayout() {
   return (
     <StudentAuthProvider>
       <SidebarProvider>
-        <div className="flex h-screen w-full">
+        <div className="flex h-dvh w-screen">
           <StudentSidebar />
           <SidebarInset className="flex flex-col flex-1">
             <StudentHeader />

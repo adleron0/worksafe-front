@@ -245,12 +245,12 @@ function StudentDashboard() {
           [...Array(4)].map((_, index) => (
             <Card key={`skeleton-stat-${index}`}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-[60%] max-w-[100px]" />
                 <Skeleton className="h-4 w-4 rounded" />
               </CardHeader>
               <CardContent>
-                <Skeleton className="h-8 w-16 mb-2" />
-                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-8 w-[40%] max-w-[64px] mb-2" />
+                <Skeleton className="h-3 w-[80%] max-w-[128px]" />
               </CardContent>
             </Card>
           ))
@@ -322,20 +322,20 @@ function StudentDashboard() {
             {isLoadingCourses || isLoadingProgress ? (
               // Skeleton for next class
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <Skeleton className="h-5 w-48" />
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="space-y-2 min-w-0">
+                    <Skeleton className="h-5 w-full max-w-[200px]" />
                     <div className="flex items-center gap-4">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-4 w-[60%] max-w-[96px]" />
+                      <Skeleton className="h-4 w-[40%] max-w-[64px]" />
                     </div>
                   </div>
-                  <Skeleton className="h-9 w-28" />
+                  <Skeleton className="h-9 w-full sm:w-auto sm:min-w-[112px] max-w-[112px]" />
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-4 w-8" />
+                    <Skeleton className="h-4 w-[70%] max-w-[128px]" />
+                    <Skeleton className="h-4 w-[15%] max-w-[32px]" />
                   </div>
                   <Skeleton className="h-2 w-full" />
                 </div>
@@ -409,11 +409,11 @@ function StudentDashboard() {
                 // Skeleton for activities
                 [...Array(3)].map((_, index) => (
                   <div key={`skeleton-activity-${index}`} className="flex items-center justify-between">
-                    <div className="space-y-2 flex-1">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-3 w-1/2" />
+                    <div className="space-y-2 flex-1 min-w-0">
+                      <Skeleton className="h-4 w-[75%] max-w-[200px]" />
+                      <Skeleton className="h-3 w-[50%] max-w-[150px]" />
                     </div>
-                    <Skeleton className="h-6 w-12 rounded-full" />
+                    <Skeleton className="h-6 w-12 rounded-full flex-shrink-0" />
                   </div>
                 ))
               ) : studentProgress?.recentActivity && studentProgress.recentActivity.length > 0 ? (
@@ -459,17 +459,17 @@ function StudentDashboard() {
         // Skeleton for certificates with thumbnail
         <Card>
           <CardHeader>
-            <Skeleton className="h-6 w-40 mb-2" />
-            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-6 w-[50%] max-w-[160px] mb-2" />
+            <Skeleton className="h-4 w-[60%] max-w-[192px]" />
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {[...Array(3)].map((_, index) => (
-                <div key={`skeleton-cert-${index}`} className="flex items-center gap-4">
-                  <Skeleton className="h-20 w-28 rounded" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-3 w-1/2" />
+                <div key={`skeleton-cert-${index}`} className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <Skeleton className="h-20 w-full sm:w-28 rounded flex-shrink-0" />
+                  <div className="flex-1 space-y-2 w-full">
+                    <Skeleton className="h-4 w-3/4 max-w-[200px]" />
+                    <Skeleton className="h-3 w-1/2 max-w-[150px]" />
                   </div>
                   <div className="flex gap-2">
                     <Skeleton className="h-9 w-9 rounded" />

@@ -170,6 +170,7 @@ function List() {
         title={`Vincular Aulas - ${selectedModel?.name || ''}`}
         description="Arraste as aulas para vinculá-las ao modelo do curso online"
         className="max-w-6xl"
+        showBttn={false}
       >
         {selectedModel && (
           <CourseLessonsManager

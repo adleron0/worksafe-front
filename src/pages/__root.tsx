@@ -1,4 +1,4 @@
-import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
+import { Outlet, createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router'
 // import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import { Toaster } from "@/components/ui/toaster";
 import question from "../assets/questions-animate.svg";
@@ -16,7 +16,9 @@ interface MyRouterContext {
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: () => (
     <>
+      <HeadContent />
       <Outlet />
+      <Scripts />
       {/* <TanStackRouterDevtools /> */}
       <Toaster />
     </>

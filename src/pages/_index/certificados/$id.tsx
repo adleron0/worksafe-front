@@ -16,10 +16,160 @@ import CertificatePDFService from "@/components/general-components/visualizadorC
 import CertificateImageService from "@/components/general-components/visualizadorCertificados/services/CertificateImageService";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-import { Helmet } from "react-helmet-async";
 
 export const Route = createFileRoute("/_index/certificados/$id")({
   component: CertificadoPublico,
+  // Loader para buscar dados do certificado antes de renderizar
+  loader: async ({ params }) => {
+    try {
+      const response = await get('trainee-certificate', `get-trainee-certificate/${params.id}`) as { data: { rows: any[] } };
+      return response.data.rows[0] || null;
+    } catch (error) {
+      console.error('Erro ao buscar certificado:', error);
+      return null;
+    }
+  },
+  // Configurar meta tags dinâmicas com TanStack Router
+  head: ({ params, loaderData }) => {
+    const certificate = loaderData as any;
+    const certificateId = params.id;
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://sistema.worksafebrasil.com.br';
+    const metaUrl = `${baseUrl}/certificados/${certificateId}`;
+
+    // Decodificar variáveis se disponível
+    let variables: any = {};
+    if (certificate?.variableToReplace) {
+      try {
+        variables = typeof certificate.variableToReplace === 'string'
+          ? decodeBase64Variables(certificate.variableToReplace)
+          : certificate.variableToReplace;
+      } catch (e) {
+        variables = certificate.variableToReplace;
+      }
+    }
+
+    // Extrair informações dinâmicas
+    const studentName = variables['aluno_nome']?.value || 'Aluno';
+    const courseName = variables['curso_nome']?.value || 'Certificado';
+    const companyName = certificate?.company?.comercial_name || 'WorkSafe Brasil';
+
+    // Meta tags dinâmicas
+    const metaTitle = `Certificado de ${studentName} - ${courseName}`;
+    const metaDescription = `Certificado válido emitido por ${companyName} para o curso de ${courseName}. Verifique a autenticidade deste certificado no sistema oficial.`;
+
+    // Usar thumbnail se disponível, senão usar imagem padrão
+    let metaImage = `${baseUrl}/og-image.jpg`;
+    if (certificate?.pdfUrl) {
+      metaImage = certificate.pdfUrl;
+      // LinkedIn requer HTTPS
+      if (metaImage.startsWith('http://')) {
+        metaImage = metaImage.replace('http://', 'https://');
+      }
+    } else if (certificate?.company?.logoUrl) {
+      metaImage = certificate.company.logoUrl;
+      if (metaImage.startsWith('http://')) {
+        metaImage = metaImage.replace('http://', 'https://');
+      }
+    }
+
+    return {
+      meta: [
+        {
+          title: metaTitle,
+        },
+        {
+          name: 'description',
+          content: metaDescription,
+        },
+        // Open Graph Tags - ORDEM IMPORTA PARA LINKEDIN!
+        {
+          property: 'og:title',
+          content: metaTitle,
+        },
+        {
+          property: 'og:image',
+          content: metaImage,
+        },
+        {
+          property: 'og:description',
+          content: metaDescription,
+        },
+        {
+          property: 'og:url',
+          content: metaUrl,
+        },
+        {
+          property: 'og:type',
+          content: 'article',
+        },
+        {
+          property: 'og:image:secure_url',
+          content: metaImage,
+        },
+        {
+          property: 'og:image:type',
+          content: 'image/png',
+        },
+        {
+          property: 'og:image:width',
+          content: '1200',
+        },
+        {
+          property: 'og:image:height',
+          content: '630',
+        },
+        {
+          property: 'og:image:alt',
+          content: metaTitle,
+        },
+        {
+          property: 'og:site_name',
+          content: 'WorkSafe Brasil',
+        },
+        {
+          property: 'og:locale',
+          content: 'pt_BR',
+        },
+        // Meta tags adicionais para LinkedIn
+        {
+          name: 'image',
+          property: 'og:image',
+          content: metaImage,
+        },
+        {
+          name: 'title',
+          property: 'og:title',
+          content: metaTitle,
+        },
+        // Twitter Card Tags
+        {
+          name: 'twitter:card',
+          content: 'summary_large_image',
+        },
+        {
+          name: 'twitter:title',
+          content: metaTitle,
+        },
+        {
+          name: 'twitter:description',
+          content: metaDescription,
+        },
+        {
+          name: 'twitter:image',
+          content: metaImage,
+        },
+        // Author
+        {
+          name: 'author',
+          content: companyName,
+        },
+        {
+          property: 'article:author',
+          content: companyName,
+        },
+      ],
+    };
+  },
 });
 
 // Interface para o instrutor
@@ -375,87 +525,8 @@ function CertificadoPublico() {
   // Extrair informações do variableToReplace e decodificar se necessário
   const variables = decodeBase64Variables(certificate?.variableToReplace) || {};
 
-  // Montar informações para meta tags
-  const metaTitle = certificate ? `Certificado de ${variables.aluno_nome?.value || "Aluno"} - ${variables.curso_nome?.value || "Curso"}` : "Certificado";
-  const metaDescription = certificate
-    ? `Certificado de conclusão do curso ${variables.curso_nome?.value || ""} emitido para ${variables.aluno_nome?.value || ""} pela ${certificate?.company?.comercial_name || "empresa"}. Carga horária: ${variables.turma_carga_horaria?.value || "não informada"}.`
-    : "Certificado de conclusão de curso";
-  const metaUrl = typeof window !== 'undefined' ? `${window.location.origin}/certificados/${certificate?.key || certificate?.id}` : '';
-
-  // Garantir que o pdfUrl seja uma URL completa e HTTPS
-  let metaImage = `${window.location.origin}/certificate-preview.jpg`; // Fallback padrão
-
-  if (certificate?.pdfUrl) {
-    // Se pdfUrl já é uma URL completa, usar diretamente
-    if (certificate.pdfUrl.startsWith('http://') || certificate.pdfUrl.startsWith('https://')) {
-      metaImage = certificate.pdfUrl;
-    } else if (certificate.pdfUrl.startsWith('/')) {
-      // Se é uma URL relativa, adicionar o domínio
-      metaImage = `${window.location.origin}${certificate.pdfUrl}`;
-    } else {
-      // Se é apenas um path, adicionar domínio e barra
-      metaImage = `${window.location.origin}/${certificate.pdfUrl}`;
-    }
-
-    // LinkedIn requer HTTPS
-    if (metaImage.startsWith('http://')) {
-      metaImage = metaImage.replace('http://', 'https://');
-    }
-  } else if (certificate?.company?.logoUrl) {
-    // Fallback para logo da empresa
-    metaImage = certificate.company.logoUrl;
-    if (metaImage.startsWith('http://')) {
-      metaImage = metaImage.replace('http://', 'https://');
-    }
-  }
-
-  // Adicionar timestamp para forçar refresh do cache se necessário
-  const debugMode = false; // Mudar para true para debug
-  if (debugMode && metaImage && metaImage !== `${window.location.origin}/certificate-preview.jpg`) {
-    const separator = metaImage.includes('?') ? '&' : '?';
-    metaImage = `${metaImage}${separator}v=${Date.now()}`;
-  }
-
   return (
     <>
-      {certificate && (
-        <Helmet>
-          <title>{metaTitle}</title>
-          <meta name="description" content={metaDescription} />
-          
-          {/* LinkedIn Required Meta Tags - ORDEM IMPORTA! */}
-          <meta property="og:title" content={metaTitle} />
-          <meta property="og:image" content={metaImage} />
-          <meta property="og:description" content={metaDescription} />
-          <meta property="og:url" content={metaUrl} />
-
-          {/* Open Graph Completo */}
-          <meta property="og:type" content="article" />
-          <meta property="og:image:secure_url" content={metaImage} />
-          <meta property="og:image:type" content="image/png" />
-          <meta property="og:image:width" content="1200" />
-          <meta property="og:image:height" content="627" />
-          <meta property="og:image:alt" content={metaTitle} />
-          <meta property="og:site_name" content="WorkSafe Brasil" />
-          <meta property="og:locale" content="pt_BR" />
-
-          {/* Meta tags adicionais para LinkedIn */}
-          <meta name="image" property="og:image" content={metaImage} />
-          <meta name="title" property="og:title" content={metaTitle} />
-          <meta name="description" property="og:description" content={metaDescription} />
-          
-          {/* Twitter */}
-          <meta property="twitter:card" content="summary_large_image" />
-          <meta property="twitter:url" content={metaUrl} />
-          <meta property="twitter:title" content={metaTitle} />
-          <meta property="twitter:description" content={metaDescription} />
-          <meta property="twitter:image" content={metaImage} />
-          
-          {/* LinkedIn specific */}
-          <meta name="author" content={certificate?.company?.comercial_name || "WorkSafe Brasil"} />
-          <meta property="article:author" content={certificate?.company?.comercial_name || "WorkSafe Brasil"} />
-        </Helmet>
-      )}
       <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
       <div className="min-h-screen bg-background pt-24 md:pt-18 lg:pt-10 pb-16 px-4">
         <div className="max-w-7xl mx-auto">
@@ -858,8 +929,6 @@ function CertificadoPublico() {
                         console.log('Certificate URL:', certificateUrl);
                         console.log('URL to Share:', urlToShare);
                         console.log('Has pdfUrl:', !!certificate?.pdfUrl);
-                        console.log('Meta Image:', metaImage);
-                        console.log('Meta Title:', metaTitle);
                         console.log('LinkedIn URL:', linkedinUrl);
                         console.groupEnd();
 

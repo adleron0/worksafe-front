@@ -415,7 +415,7 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
                       {index === 0 ? 'Frente' : 'Verso'}
                     </span>
                   </div> */}
-                  <div className="bg-background rounded-lg shadow-lg p-2">
+                  <div className="bg-muted rounded-lg shadow-lg p-2">
                     <CertificateCanvas
                       ref={(ref) => {
                         if (ref) {
@@ -441,7 +441,7 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
             <div className="flex items-center justify-center min-h-full">
               {pages.length > 0 && (
                 <div className="flex flex-col items-center">
-                  <div className="bg-background rounded-lg shadow-lg p-2">
+                  <div className="bg-muted rounded-lg shadow-lg p-2">
                     <CertificateCanvas
                       ref={(ref) => {
                         if (ref) {

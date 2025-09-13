@@ -1,0 +1,3 @@
+# Netlify redirects
+# Redirecionar /share/ para a página de compartilhamento
+/share/certificados/*  /share.html  200

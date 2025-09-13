@@ -1,7 +1,29 @@
+# Bots de redes sociais - permitir acesso aos certificados para preview
+User-agent: LinkedInBot
+Allow: /certificados/
+Disallow: /_authenticated/
+Disallow: /prova/
+
+User-agent: facebookexternalhit
+Allow: /certificados/
+Disallow: /_authenticated/
+Disallow: /prova/
+
+User-agent: Twitterbot
+Allow: /certificados/
+Disallow: /_authenticated/
+Disallow: /prova/
+
+User-agent: WhatsApp
+Allow: /certificados/
+Disallow: /_authenticated/
+Disallow: /prova/
+
+# Todos os outros bots
 User-agent: *
 Disallow: /_authenticated/
 Disallow: /prova/
 Disallow: /certificados/
 Allow: /
 
-Sitemap: https://seudominio.com.br/sitemap.xml
+Sitemap: https://sistema.worksafebrasil.com.br/sitemap.xml

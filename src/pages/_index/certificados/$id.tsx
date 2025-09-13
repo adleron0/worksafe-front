@@ -382,7 +382,7 @@ function CertificadoPublico() {
     : "Certificado de conclusão de curso";
   const metaUrl = typeof window !== 'undefined' ? `${window.location.origin}/certificados/${certificate?.key || certificate?.id}` : '';
 
-  // Garantir que o pdfUrl seja uma URL completa
+  // Garantir que o pdfUrl seja uma URL completa e HTTPS
   let metaImage = `${window.location.origin}/certificate-preview.jpg`; // Fallback padrão
 
   if (certificate?.pdfUrl) {
@@ -396,9 +396,24 @@ function CertificadoPublico() {
       // Se é apenas um path, adicionar domínio e barra
       metaImage = `${window.location.origin}/${certificate.pdfUrl}`;
     }
+
+    // LinkedIn requer HTTPS
+    if (metaImage.startsWith('http://')) {
+      metaImage = metaImage.replace('http://', 'https://');
+    }
   } else if (certificate?.company?.logoUrl) {
     // Fallback para logo da empresa
     metaImage = certificate.company.logoUrl;
+    if (metaImage.startsWith('http://')) {
+      metaImage = metaImage.replace('http://', 'https://');
+    }
+  }
+
+  // Adicionar timestamp para forçar refresh do cache se necessário
+  const debugMode = false; // Mudar para true para debug
+  if (debugMode && metaImage && metaImage !== `${window.location.origin}/certificate-preview.jpg`) {
+    const separator = metaImage.includes('?') ? '&' : '?';
+    metaImage = `${metaImage}${separator}v=${Date.now()}`;
   }
 
   return (
@@ -408,16 +423,26 @@ function CertificadoPublico() {
           <title>{metaTitle}</title>
           <meta name="description" content={metaDescription} />
           
-          {/* Open Graph / Facebook */}
-          <meta property="og:type" content="website" />
-          <meta property="og:url" content={metaUrl} />
+          {/* LinkedIn Required Meta Tags - ORDEM IMPORTA! */}
           <meta property="og:title" content={metaTitle} />
-          <meta property="og:description" content={metaDescription} />
           <meta property="og:image" content={metaImage} />
+          <meta property="og:description" content={metaDescription} />
+          <meta property="og:url" content={metaUrl} />
+
+          {/* Open Graph Completo */}
+          <meta property="og:type" content="article" />
+          <meta property="og:image:secure_url" content={metaImage} />
+          <meta property="og:image:type" content="image/png" />
           <meta property="og:image:width" content="1200" />
-          <meta property="og:image:height" content="630" />
-          <meta property="og:site_name" content="WorkSafe Brasil - Sistema de Certificados" />
+          <meta property="og:image:height" content="627" />
+          <meta property="og:image:alt" content={metaTitle} />
+          <meta property="og:site_name" content="WorkSafe Brasil" />
           <meta property="og:locale" content="pt_BR" />
+
+          {/* Meta tags adicionais para LinkedIn */}
+          <meta name="image" property="og:image" content={metaImage} />
+          <meta name="title" property="og:title" content={metaTitle} />
+          <meta name="description" property="og:description" content={metaDescription} />
           
           {/* Twitter */}
           <meta property="twitter:card" content="summary_large_image" />
@@ -817,18 +842,26 @@ function CertificadoPublico() {
                     {/* LinkedIn */}
                     <Button
                       variant="outline"
-                      className="w-full justify-start gap-3 hover:bg-blue-50 hover:border-blue-300"
+                      className="w-full justify-start gap-3 hover:bg-[#0077B5]/10 hover:border-[#0077B5] dark:hover:bg-[#0077B5]/20 dark:hover:text-white transition-colors"
                       onClick={() => {
                         const certificateUrl = `${window.location.origin}/certificados/${certificate?.key || certificate?.id}`;
-                        // Adicionar parâmetros para forçar o LinkedIn a usar as meta tags corretas
-                        const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(certificateUrl)}`;
 
-                        // Log para debug
-                        if (certificate?.pdfUrl) {
-                          console.log('[LinkedIn Share] Compartilhando com thumbnail:', metaImage);
-                        } else {
-                          console.log('[LinkedIn Share] Compartilhando sem thumbnail personalizado');
-                        }
+                        // Adicionar cache buster se não tiver thumbnail
+                        const urlToShare = !certificate?.pdfUrl
+                          ? `${certificateUrl}?t=${Date.now()}` // Força re-fetch se não tem thumbnail
+                          : certificateUrl;
+
+                        const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(urlToShare)}`;
+
+                        // Log detalhado para debug
+                        console.group('[LinkedIn Share Debug]');
+                        console.log('Certificate URL:', certificateUrl);
+                        console.log('URL to Share:', urlToShare);
+                        console.log('Has pdfUrl:', !!certificate?.pdfUrl);
+                        console.log('Meta Image:', metaImage);
+                        console.log('Meta Title:', metaTitle);
+                        console.log('LinkedIn URL:', linkedinUrl);
+                        console.groupEnd();
 
                         window.open(linkedinUrl, '_blank');
                       }}
@@ -858,7 +891,7 @@ function CertificadoPublico() {
                     {/* Facebook */}
                     <Button
                       variant="outline"
-                      className="w-full justify-start gap-3 hover:bg-blue-50 hover:border-blue-400"
+                      className="w-full justify-start gap-3 hover:bg-[#1877F2]/10 hover:border-[#1877F2] dark:hover:bg-[#1877F2]/20 dark:hover:text-white transition-colors"
                       onClick={() => {
                         const certificateUrl = `${window.location.origin}/certificados/${certificate?.key || certificate?.id}`;
                         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(certificateUrl + '?utm_source=facebook&utm_medium=social')}`;
@@ -874,7 +907,7 @@ function CertificadoPublico() {
                     {/* WhatsApp */}
                     <Button
                       variant="outline"
-                      className="w-full justify-start gap-3 hover:bg-green-50 hover:border-green-400"
+                      className="w-full justify-start gap-3 hover:bg-[#25D366]/10 hover:border-[#25D366] dark:hover:bg-[#25D366]/20 dark:hover:text-white transition-colors"
                       onClick={() => {
                         const certificateUrl = `${window.location.origin}/certificados/${certificate?.key || certificate?.id}`;
                         const whatsappUrl = `https://api.whatsapp.com/send/?text=${encodeURIComponent(certificateUrl + '?utm_source=whatsapp&utm_medium=social')}&type=custom_url&app_absent=0`;
@@ -890,7 +923,7 @@ function CertificadoPublico() {
                     {/* Copiar Link */}
                     <Button
                       variant="outline"
-                      className="w-full justify-start gap-3 hover:bg-background"
+                      className="w-full justify-start gap-3 hover:bg-muted hover:border-muted-foreground/20 dark:hover:bg-muted dark:hover:text-white transition-colors"
                       onClick={() => {
                         const certificateUrl = `${window.location.origin}/certificados/${certificate?.key || certificate?.id}`;
                         navigator.clipboard.writeText(certificateUrl).then(() => {
@@ -903,6 +936,22 @@ function CertificadoPublico() {
                       <Icon name="link" className="w-5 h-5 text-muted-foreground" />
                       Copiar Link
                     </Button>
+
+                    {/* LinkedIn Inspector (Debug) */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start gap-3 hover:bg-yellow-50 hover:border-yellow-300"
+                        onClick={() => {
+                          const certificateUrl = `${window.location.origin}/certificados/${certificate?.key || certificate?.id}`;
+                          const inspectorUrl = `https://www.linkedin.com/post-inspector/inspect/${encodeURIComponent(certificateUrl)}`;
+                          window.open(inspectorUrl, '_blank');
+                        }}
+                      >
+                        <Icon name="bug" className="w-5 h-5 text-yellow-600" />
+                        LinkedIn Inspector
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

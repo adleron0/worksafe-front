@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileCheck, Award, XCircle, Eye } from 'lucide-react';
+import { Award, XCircle, Eye } from 'lucide-react';
 
 interface ExamResultCardProps {
   exam: {
@@ -34,7 +34,7 @@ export function ExamResultCard({ exam, onViewDetails }: ExamResultCardProps) {
   const percentage = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
   const passed = exam.result;
   const hasCertificate = exam.certificates && exam.certificates.length > 0;
-  const certificateKey = hasCertificate ? exam.certificates[0].key : null;
+  const certificateKey = hasCertificate && exam.certificates ? exam.certificates[0].key : null;
 
   // Formatar data
   const examDate = new Date(exam.createdAt).toLocaleDateString('pt-BR', {

@@ -6,15 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
   PlayCircle,
   CheckCircle,
   Lock,
@@ -22,10 +13,7 @@ import {
   ArrowLeft,
   ChevronRight,
   BookOpen,
-  FileCheck,
-  Award,
-  XCircle,
-  Eye
+  FileCheck
 } from 'lucide-react';
 import { get } from '@/services/api-s';
 import Loader from '@/components/general-components/Loader';

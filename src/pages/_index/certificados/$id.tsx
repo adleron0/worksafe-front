@@ -13,6 +13,7 @@ import NavBar from "../-components/NavBar";
 import Footer from "../-components/Footer";
 import { decodeBase64Variables } from "@/utils/decodeBase64Variables";
 import CertificatePDFService from "@/components/general-components/visualizadorCertificados/services/CertificatePDFService";
+import CertificateImageService from "@/components/general-components/visualizadorCertificados/services/CertificateImageService";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { Helmet } from "react-helmet-async";
@@ -98,6 +99,7 @@ function CertificadoPublico() {
   const { id } = Route.useParams();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isGeneratingPNG, setIsGeneratingPNG] = useState(false);
   const navigate = useNavigate();
 
   const handleWhatsApp = (message?: string) => {
@@ -127,7 +129,7 @@ function CertificadoPublico() {
       const result = await CertificatePDFService.generatePDF(
         certificateDataForPDF,
         variables,
-        { 
+        {
           returnBlob: true,
           quality: 'high'
         }
@@ -137,7 +139,7 @@ function CertificadoPublico() {
         // Criar URL do Blob e abrir em nova aba
         const blobUrl = URL.createObjectURL(result.data);
         const newWindow = window.open(blobUrl, '_blank');
-        
+
         // Limpar URL após um tempo
         if (newWindow) {
           setTimeout(() => {
@@ -159,6 +161,64 @@ function CertificadoPublico() {
       toast.error('Erro ao gerar PDF do certificado');
     } finally {
       setIsGeneratingPDF(false);
+    }
+  };
+
+  const handleGeneratePNG = async () => {
+    if (!certificate || !certificate.fabricJsonFront || isGeneratingPNG) return;
+
+    setIsGeneratingPNG(true);
+    try {
+      // Preparar dados do certificado para o serviço de imagem
+      const certificateDataForImage = {
+        id: certificate.id,
+        name: variables.curso_nome?.value || 'Certificado',
+        fabricJsonFront: certificate.fabricJsonFront,
+        fabricJsonBack: certificate.fabricJsonBack,
+        canvasWidth: certificate.canvasWidth || 842,
+        canvasHeight: certificate.canvasHeight || 595,
+        certificateId: certificate.key || String(certificate.id)
+      };
+
+      // Gerar PNG como Blob com máxima qualidade
+      const result = await CertificateImageService.generateImage(
+        certificateDataForImage,
+        variables,
+        {
+          format: 'png',
+          scale: 4, // Resolução 4x (3368x2380 pixels para A4)
+          quality: 1.0, // Máxima qualidade
+          returnBlob: true
+        }
+      );
+
+      if (result.success && result.data instanceof Blob) {
+        // Criar URL do Blob e abrir em nova aba
+        const blobUrl = URL.createObjectURL(result.data);
+        const newWindow = window.open(blobUrl, '_blank');
+
+        // Limpar URL após um tempo
+        if (newWindow) {
+          setTimeout(() => {
+            URL.revokeObjectURL(blobUrl);
+          }, 10000);
+        } else {
+          // Se não conseguir abrir nova aba, fazer download
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = result.fileName || 'certificado.png';
+          link.click();
+          URL.revokeObjectURL(blobUrl);
+        }
+        toast.success('Imagem gerada com sucesso!');
+      } else {
+        toast.error('Erro ao gerar imagem do certificado');
+      }
+    } catch (error) {
+      console.error('Erro ao gerar PNG:', error);
+      toast.error('Erro ao gerar imagem do certificado');
+    } finally {
+      setIsGeneratingPNG(false);
     }
   };
 
@@ -317,12 +377,29 @@ function CertificadoPublico() {
 
   // Montar informações para meta tags
   const metaTitle = certificate ? `Certificado de ${variables.aluno_nome?.value || "Aluno"} - ${variables.curso_nome?.value || "Curso"}` : "Certificado";
-  const metaDescription = certificate 
+  const metaDescription = certificate
     ? `Certificado de conclusão do curso ${variables.curso_nome?.value || ""} emitido para ${variables.aluno_nome?.value || ""} pela ${certificate?.company?.comercial_name || "empresa"}. Carga horária: ${variables.turma_carga_horaria?.value || "não informada"}.`
     : "Certificado de conclusão de curso";
   const metaUrl = typeof window !== 'undefined' ? `${window.location.origin}/certificados/${certificate?.key || certificate?.id}` : '';
-  // Usar logo da empresa ou uma imagem padrão genérica
-  const metaImage = certificate?.company?.logoUrl || `${window.location.origin}/certificate-preview.jpg`;
+
+  // Garantir que o pdfUrl seja uma URL completa
+  let metaImage = `${window.location.origin}/certificate-preview.jpg`; // Fallback padrão
+
+  if (certificate?.pdfUrl) {
+    // Se pdfUrl já é uma URL completa, usar diretamente
+    if (certificate.pdfUrl.startsWith('http://') || certificate.pdfUrl.startsWith('https://')) {
+      metaImage = certificate.pdfUrl;
+    } else if (certificate.pdfUrl.startsWith('/')) {
+      // Se é uma URL relativa, adicionar o domínio
+      metaImage = `${window.location.origin}${certificate.pdfUrl}`;
+    } else {
+      // Se é apenas um path, adicionar domínio e barra
+      metaImage = `${window.location.origin}/${certificate.pdfUrl}`;
+    }
+  } else if (certificate?.company?.logoUrl) {
+    // Fallback para logo da empresa
+    metaImage = certificate.company.logoUrl;
+  }
 
   return (
     <>
@@ -367,7 +444,8 @@ function CertificadoPublico() {
                     name: variables.curso_nome?.value || 'Certificado',
                     fabricJsonFront: certificate.fabricJsonFront,
                     fabricJsonBack: certificate.fabricJsonBack,
-                    certificateId: String(certificate.key)
+                    certificateId: String(certificate.key),
+                    pdfUrl: certificate.pdfUrl // Passando o pdfUrl para o visualizador
                   }}
                   variableToReplace={variables}
                   zoom={50}
@@ -420,19 +498,31 @@ function CertificadoPublico() {
 
                   {/* Botões de Ação */}
                   <div className="flex gap-2">
-                    <Button 
+                    <Button
                       variant="default"
                       size="sm"
                       onClick={handleGeneratePDF}
                       disabled={isGeneratingPDF || !certificate?.fabricJsonFront}
                     >
-                      <Icon 
-                        name={isGeneratingPDF ? "loader-2" : "file-text"} 
-                        className={`w-4 h-4 mr-2 ${isGeneratingPDF ? "animate-spin" : ""}`} 
+                      <Icon
+                        name={isGeneratingPDF ? "loader-2" : "file-text"}
+                        className={`w-4 h-4 mr-2 ${isGeneratingPDF ? "animate-spin" : ""}`}
                       />
                       PDF
                     </Button>
-                    <Button 
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleGeneratePNG}
+                      disabled={isGeneratingPNG || !certificate?.fabricJsonFront}
+                    >
+                      <Icon
+                        name={isGeneratingPNG ? "loader-2" : "image"}
+                        className={`w-4 h-4 mr-2 ${isGeneratingPNG ? "animate-spin" : ""}`}
+                      />
+                      PNG
+                    </Button>
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {/* Mock - adicionar funcionalidade depois */}}
@@ -440,7 +530,7 @@ function CertificadoPublico() {
                       <Icon name="info" className="w-4 h-4 mr-2" />
                       Informações
                     </Button>
-                    <Button 
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {/* Mock - adicionar funcionalidade depois */}}
@@ -716,6 +806,12 @@ function CertificadoPublico() {
                 <div className="p-4">
                   <p className="text-sm text-muted-foreground mb-4">
                     Compartilhe sua conquista nas redes sociais
+                    {certificate?.pdfUrl && (
+                      <span className="block mt-1 text-xs text-green-600">
+                        <Icon name="image" className="inline w-3 h-3 mr-1" />
+                        Preview do certificado disponível
+                      </span>
+                    )}
                   </p>
                   <div className="space-y-2">
                     {/* LinkedIn */}
@@ -724,7 +820,16 @@ function CertificadoPublico() {
                       className="w-full justify-start gap-3 hover:bg-blue-50 hover:border-blue-300"
                       onClick={() => {
                         const certificateUrl = `${window.location.origin}/certificados/${certificate?.key || certificate?.id}`;
+                        // Adicionar parâmetros para forçar o LinkedIn a usar as meta tags corretas
                         const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(certificateUrl)}`;
+
+                        // Log para debug
+                        if (certificate?.pdfUrl) {
+                          console.log('[LinkedIn Share] Compartilhando com thumbnail:', metaImage);
+                        } else {
+                          console.log('[LinkedIn Share] Compartilhando sem thumbnail personalizado');
+                        }
+
                         window.open(linkedinUrl, '_blank');
                       }}
                     >

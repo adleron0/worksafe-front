@@ -915,9 +915,8 @@ function CertificadoPublico() {
                       variant="outline"
                       className="w-full justify-start gap-3 hover:bg-[#0077B5]/10 hover:border-[#0077B5] dark:hover:bg-[#0077B5]/20 dark:hover:text-white transition-colors"
                       onClick={() => {
-                        // Usar rota /share/ para meta tags funcionarem
-                        const shareUrl = `${window.location.origin}/share/certificados/${certificate?.key || certificate?.id}`;
-                        const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+                        const certificateUrl = `${window.location.origin}/certificados/${certificate?.key || certificate?.id}`;
+                        const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(certificateUrl)}`;
                         window.open(linkedinUrl, '_blank');
                       }}
                     >
@@ -932,9 +931,8 @@ function CertificadoPublico() {
                       variant="outline"
                       className="w-full justify-start gap-3 hover:bg-muted hover:border-gray-400"
                       onClick={() => {
-                        // Usar rota /share/ para meta tags funcionarem
-                        const shareUrl = `${window.location.origin}/share/certificados/${certificate?.key || certificate?.id}`;
-                        const xUrl = `https://x.com/intent/post?url=${encodeURIComponent(shareUrl)}`;
+                        const certificateUrl = `${window.location.origin}/certificados/${certificate?.key || certificate?.id}`;
+                        const xUrl = `https://x.com/intent/post?url=${encodeURIComponent(certificateUrl)}`;
                         window.open(xUrl, '_blank');
                       }}
                     >
@@ -949,9 +947,8 @@ function CertificadoPublico() {
                       variant="outline"
                       className="w-full justify-start gap-3 hover:bg-[#1877F2]/10 hover:border-[#1877F2] dark:hover:bg-[#1877F2]/20 dark:hover:text-white transition-colors"
                       onClick={() => {
-                        // Usar rota /share/ para meta tags funcionarem
-                        const shareUrl = `${window.location.origin}/share/certificados/${certificate?.key || certificate?.id}`;
-                        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+                        const certificateUrl = `${window.location.origin}/certificados/${certificate?.key || certificate?.id}`;
+                        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(certificateUrl)}`;
                         window.open(facebookUrl, '_blank');
                       }}
                     >
@@ -966,9 +963,8 @@ function CertificadoPublico() {
                       variant="outline"
                       className="w-full justify-start gap-3 hover:bg-[#25D366]/10 hover:border-[#25D366] dark:hover:bg-[#25D366]/20 dark:hover:text-white transition-colors"
                       onClick={() => {
-                        // Usar rota /share/ para meta tags funcionarem
-                        const shareUrl = `${window.location.origin}/share/certificados/${certificate?.key || certificate?.id}`;
-                        const message = `Confira meu certificado: ${shareUrl}`;
+                        const certificateUrl = `${window.location.origin}/certificados/${certificate?.key || certificate?.id}`;
+                        const message = `Confira meu certificado: ${certificateUrl}`;
                         const whatsappUrl = `https://api.whatsapp.com/send/?text=${encodeURIComponent(message)}&type=custom_url&app_absent=0`;
                         window.open(whatsappUrl, '_blank');
                       }}

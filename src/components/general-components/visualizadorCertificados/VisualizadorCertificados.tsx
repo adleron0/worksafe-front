@@ -366,7 +366,7 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
       
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Container principal para canvas */}
-        <div className={`flex-1 bg-gray-50 dark:bg-gray-900 p-4 ${
+        <div className={`flex-1 bg-background p-4 ${
           // No mobile: permitir scroll vertical
           // No desktop: sem scroll (overflow-hidden)
           isMobile ? 'overflow-y-auto overflow-x-hidden' : 'overflow-hidden'
@@ -393,7 +393,7 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
                       {index === 0 ? 'Frente' : 'Verso'}
                     </span>
                   </div> */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2">
+                  <div className="bg-background rounded-lg shadow-lg p-2">
                     <CertificateCanvas
                       ref={(ref) => {
                         if (ref) {
@@ -419,7 +419,7 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
             <div className="flex items-center justify-center min-h-full">
               {pages.length > 0 && (
                 <div className="flex flex-col items-center">
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2">
+                  <div className="bg-background rounded-lg shadow-lg p-2">
                     <CertificateCanvas
                       ref={(ref) => {
                         if (ref) {

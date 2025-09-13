@@ -7,17 +7,16 @@ import type { LessonDataWithSteps, LessonStatus } from '../types';
 interface LessonHeaderProps {
   lessonData: LessonDataWithSteps;
   isCompleted: boolean;
+  classId?: number;
 }
 
-export function LessonHeader({ lessonData, isCompleted }: LessonHeaderProps) {
+export function LessonHeader({ lessonData, isCompleted, classId }: LessonHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   
   // Pegar courseId do state da navegação
   const courseIdFromState = (location.state as any)?.courseId;
   
-  // Debug para verificar classId
-  console.log('🔍 LessonHeader - classId:', lessonData.classId, 'courseId:', lessonData.courseId, 'courseIdFromState:', courseIdFromState);
   
   // Usar o status da lesson ou determinar baseado em isCompleted
   const lessonStatus: LessonStatus = lessonData.lessonProgress.status || 
@@ -66,8 +65,8 @@ export function LessonHeader({ lessonData, isCompleted }: LessonHeaderProps) {
               size="icon"
               className="h-8 w-8 md:h-9 md:w-9 mt-0.5 md:mt-0"
               onClick={() => {
-                // Usar courseId do state, classId ou courseId dos dados, nessa ordem
-                const courseIdToUse = courseIdFromState || lessonData.classId || lessonData.courseId;
+                // Priorizar classId das props (vem dos search params), depois outras fontes
+                const courseIdToUse = classId || courseIdFromState || lessonData.classId || lessonData.courseId;
                 if (courseIdToUse) {
                   navigate({ to: `/student/course/${courseIdToUse}/lessons` });
                 } else {

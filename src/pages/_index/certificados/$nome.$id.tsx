@@ -174,10 +174,10 @@ function TraineeCertificatesPage() {
     return (
       <>
         <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-20">
+        <div className="min-h-screen flex items-center justify-center bg-background pt-20">
           <div className="text-center">
             <Icon name="loader-2" className="w-12 h-12 animate-spin mx-auto text-primary mb-4" />
-            <p className="text-gray-600">Carregando certificados...</p>
+            <p className="text-muted-foreground">Carregando certificados...</p>
           </div>
         </div>
         <Footer />
@@ -189,14 +189,14 @@ function TraineeCertificatesPage() {
     return (
       <>
         <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-20">
+        <div className="min-h-screen flex items-center justify-center bg-background pt-20">
           <Card className="max-w-md w-full mx-4 p-6">
             <div className="text-center">
-              <Icon name="folder-x" className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <Icon name="folder-x" className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-foreground mb-2">
                 Nenhum certificado encontrado
               </h2>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Este aluno ainda não possui certificados publicados.
               </p>
               {error && (
@@ -215,10 +215,10 @@ function TraineeCertificatesPage() {
   return (
     <>
       <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
-      <div className="min-h-screen bg-gray-50 pt-24 pb-16">
+      <div className="min-h-screen bg-background pt-24 pb-16">
         <div className="max-w-7xl mx-auto px-4">
           {/* Header com informações do aluno */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+          <div className="bg-card rounded-xl shadow-sm border border-border p-6 mb-8">
             <div className="flex items-center gap-4">
               <Avatar className="h-10 w-10 border-2 border-primary/20">
                 {traineeData?.imageUrl ? (
@@ -238,13 +238,13 @@ function TraineeCertificatesPage() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900">{traineeName}</h1>
+                <h1 className="text-2xl font-bold text-foreground">{traineeName}</h1>
                 <div className="flex items-center gap-4 mt-1">
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-muted-foreground">
                     {certificatesData.total} {certificatesData.total === 1 ? 'Credencial' : 'Credenciais'}
                   </span>
-                  <span className="text-sm text-gray-400">•</span>
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-muted-foreground">•</span>
+                  <span className="text-sm text-muted-foreground">
                     {companiesCount} {companiesCount === 1 ? 'emissor' : 'emissores'}
                   </span>
                 </div>
@@ -266,11 +266,11 @@ function TraineeCertificatesPage() {
               return (
                 <Card 
                   key={certificate.id}
-                  className="overflow-hidden hover:shadow-lg transition-shadow duration-200 cursor-pointer bg-white"
+                  className="overflow-hidden hover:shadow-lg transition-shadow duration-200 cursor-pointer bg-card"
                   onClick={() => handleCertificateClick(certificate.key)}
                 >
                   {/* Thumbnail do certificado */}
-                  <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
+                  <div className="aspect-[4/3] bg-muted relative overflow-hidden">
                     <CertificateThumbnail
                       certificateData={{
                         id: certificate.id,
@@ -290,21 +290,21 @@ function TraineeCertificatesPage() {
 
                   {/* Informações do certificado */}
                   <div className="p-4">
-                    <h3 className="text-gray-900 text-base mb-1 line-clamp-2">
+                    <h3 className="text-foreground text-base mb-1 line-clamp-2">
                       {courseName}
                     </h3>
-                    <p className="text-sm font-light text-gray-600 mb-3">
+                    <p className="text-sm font-light text-muted-foreground mb-3">
                       {formatDate(certificate.createdAt)}
                     </p>
                     {/* Nome da empresa com avatar */}
                     <div className="flex items-center gap-3 mb-4">
                       <div className="relative">
-                        <Avatar className="h-6 w-6 border border-gray-200 p-1">
+                        <Avatar className="h-6 w-6 border border-border p-1 bg-muted">
                           <AvatarImage 
                             src={company.faviconUrl || company.logoUrl || ''} 
                             alt={company.comercial_name}
                           />
-                          <AvatarFallback className="bg-gray-100 text-xs font-semibold text-gray-600">
+                          <AvatarFallback className="bg-muted text-xs font-semibold text-muted-foreground">
                             {company.comercial_name.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -313,7 +313,7 @@ function TraineeCertificatesPage() {
                           className="absolute -top-0.5 -right-1 w-2.5 h-2.5 text-white bg-primary rounded-full"
                         />
                       </div>
-                      <p className="text-base font-light text-gray-900">
+                      <p className="text-base font-light text-foreground">
                         {company.comercial_name}
                       </p>
                     </div>

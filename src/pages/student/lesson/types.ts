@@ -98,6 +98,8 @@ export interface LessonResponse {
   stepsOverview: StepOverview[];
   stepsContent: StepContent[];
   metadata: LessonMetadata;
+  // Novo campo retornado quando modelId é fornecido
+  nextLesson?: number | null;
   // Campos legados para compatibilidade
   classId?: number;
   className?: string;

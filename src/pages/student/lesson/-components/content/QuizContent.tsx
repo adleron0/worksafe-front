@@ -116,7 +116,7 @@ export function QuizContent({ step, onCompleteStep }: ContentComponentProps) {
     }
   }, [step.id, step.stepProgress, quizData.questions]);
   
-  const { questions = [], passingScore = 70, maxAttempts = 3, description } = quizData;
+  const { questions = [], maxAttempts = 3, description } = quizData;
   
   const handleSubmit = async () => {
     if (isSubmitting || submitted) return; // Não permitir reenvio se já foi submetido
@@ -162,26 +162,50 @@ export function QuizContent({ step, onCompleteStep }: ContentComponentProps) {
           
           if (formattedResult.passed) {
             setSubmitted(true);
+            // COMENTADO: Toast de aprovação - Quiz é apenas autoavaliação
+            // toast({
+            //   title: '🎉 Quiz aprovado!',
+            //   description: `Você acertou ${formattedResult.score} de ${formattedResult.maxScore} questões (${formattedResult.percentage.toFixed(0)}%).`,
+            //   variant: 'success',
+            // });
+            
+            // Toast neutro para autoavaliação
             toast({
-              title: '🎉 Quiz aprovado!',
-              description: `Você acertou ${formattedResult.score} de ${formattedResult.maxScore} questões (${formattedResult.percentage.toFixed(0)}%).`,
-              variant: 'success',
+              title: '✅ Quiz concluído!',
+              description: `Você acertou ${formattedResult.score} de ${formattedResult.maxScore} questões.`,
+              variant: 'default',
             });
           } else {
             const remainingAttempts = maxAttempts - (progressData.attempts || attempts + 1);
             
             if (remainingAttempts <= 0) {
               setSubmitted(true);
+              // COMENTADO: Toast de tentativas esgotadas - Quiz é apenas autoavaliação
+              // toast({
+              //   title: 'Tentativas esgotadas',
+              //   description: `Você não atingiu a pontuação mínima de ${passingScore}%.`,
+              //   variant: 'destructive',
+              // });
+              
+              // Toast neutro para autoavaliação
               toast({
-                title: 'Tentativas esgotadas',
-                description: `Você não atingiu a pontuação mínima de ${passingScore}%.`,
-                variant: 'destructive',
+                title: '✅ Quiz concluído!',
+                description: `Você acertou ${formattedResult.score} de ${formattedResult.maxScore} questões.`,
+                variant: 'default',
               });
             } else {
+              // COMENTADO: Toast de tentar novamente com pontuação mínima - Quiz é apenas autoavaliação
+              // toast({
+              //   title: 'Tente novamente',
+              //   description: `Você fez ${formattedResult.percentage.toFixed(0)}% e precisa de ${passingScore}%. Restam ${remainingAttempts} tentativa(s).`,
+              //   variant: 'destructive',
+              // });
+              
+              // Toast neutro para autoavaliação
               toast({
-                title: 'Tente novamente',
-                description: `Você fez ${formattedResult.percentage.toFixed(0)}% e precisa de ${passingScore}%. Restam ${remainingAttempts} tentativa(s).`,
-                variant: 'destructive',
+                title: 'Quiz registrado!',
+                description: `Você acertou ${formattedResult.score} de ${formattedResult.maxScore} questões. Você pode revisar suas respostas.`,
+                variant: 'default',
               });
             }
           }
@@ -377,11 +401,11 @@ export function QuizContent({ step, onCompleteStep }: ContentComponentProps) {
                 <div className="flex-1 text-center py-2">
                   <CheckCircle className="h-6 w-6 md:h-8 md:w-8 text-green-500 mx-auto mb-2" />
                   <p className="text-xs md:text-sm font-medium text-green-600">
-                    {quizResult?.passed ? 'Quiz aprovado!' : 'Quiz concluído'}
+                    Quiz concluído - Autoavaliação
                   </p>
                   {quizResult && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Pontuação: {quizResult.score}/{quizResult.maxScore} ({quizResult.percentage.toFixed(0)}%)
+                      Resultado: {quizResult.score}/{quizResult.maxScore} ({quizResult.percentage.toFixed(0)}%)
                     </p>
                   )}
                 </div>

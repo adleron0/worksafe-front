@@ -1,11 +1,16 @@
 import { jwtDecode } from 'jwt-decode';
 
 interface StudentTokenPayload {
-  sub: string;
-  email: string;
+  traineeId: number;
+  cpf: string;
   name: string;
+  email: string;
+  customerId: number;
+  type: string;
   exp: number;
   iat: number;
+  // Campos antigos para compatibilidade
+  sub?: string;
 }
 
 const STUDENT_TOKEN_KEY = 's-token';

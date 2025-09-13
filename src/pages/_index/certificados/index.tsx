@@ -168,7 +168,7 @@ function CertificadosPublicos() {
     return (
       <>
         <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
-        <div className="min-h-screen flex items-center justify-center bg-white pt-20">
+        <div className="min-h-screen flex items-center justify-center bg-background/50 pt-20">
           <div className="text-center">
             <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary-light mb-4" />
             <p className="text-gray-600">Carregando certificados...</p>
@@ -207,19 +207,19 @@ function CertificadosPublicos() {
   return (
     <>
       <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
-      <div className="min-h-screen bg-white pt-24 pb-12 px-4">
+      <div className="min-h-screen bg-background pt-24 pb-12 px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header Simples */}
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-6">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Shield className="w-6 h-6 text-green-600" />
+              <div className="p-2 bg-green-100 dark:bg-green-950/30 rounded-lg">
+                <Shield className="w-6 h-6 text-green-600 dark:text-green-500" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-foreground">
                   Profissionais Certificados
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   Encontre profissionais qualificados pela WorkSafe
                 </p>
               </div>
@@ -228,11 +228,11 @@ function CertificadosPublicos() {
             {/* Filtros */}
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Filter className="w-4 h-4" />
                   <span>Filtros:</span>
                 </div>
-                
+
                 {/* Botão Limpar Todos os Filtros */}
                 {(selectedCourseId !== 'all' || searchName) && (
                   <button
@@ -240,7 +240,7 @@ function CertificadosPublicos() {
                       handleCourseChange('courseFilter', 'all');
                       setSearchName('');
                     }}
-                    className="text-sm text-gray-500 hover:text-gray-700 underline cursor-pointer"
+                    className="text-sm text-muted-foreground hover:text-foreground underline cursor-pointer"
                   >
                     Limpar todos os filtros
                   </button>
@@ -264,13 +264,13 @@ function CertificadosPublicos() {
 
                 {/* Busca por Nome */}
                 <div className="relative min-w-[250px]">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="text"
                     placeholder="Buscar por nome do aluno..."
                     value={searchName}
                     onChange={(e) => setSearchName(e.target.value)}
-                    className="pl-10 pr-3 py-2"
+                    className="pl-10 pr-3 py-2 bg-background border-input"
                   />
                 </div>
               </div>
@@ -278,7 +278,7 @@ function CertificadosPublicos() {
 
             {/* Contador de resultados */}
             {certificatesData?.total !== undefined && (
-              <div className="mt-4 text-sm text-gray-600">
+              <div className="mt-4 text-sm text-muted-foreground">
                 {(selectedCourseId && selectedCourseId !== 'all') || searchName ? (
                   <span>
                     {certificatesData.total} {certificatesData.total === 1 ? 'resultado encontrado' : 'resultados encontrados'}
@@ -296,18 +296,18 @@ function CertificadosPublicos() {
 
           {/* Lista de Certificados */}
           {certificates.length === 0 ? (
-            <div className="bg-white rounded-lg border border-gray-200 p-8">
+            <div className="bg-card rounded-lg border border-border p-8">
               <div className="text-center">
-                <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Nenhum certificado encontrado</p>
+                <Award className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+                <p className="text-muted-foreground">Nenhum certificado encontrado</p>
               </div>
             </div>
           ) : (
             <>
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="bg-card rounded-lg border border-border overflow-hidden">
                 {/* Header da tabela - Desktop */}
-                <div className="hidden md:block bg-gray-50 px-6 py-3 border-b border-gray-200">
-                  <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <div className="hidden md:block bg-muted/50 px-6 py-3 border-b border-border">
+                  <div className="grid grid-cols-12 gap-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     <div className="col-span-1">Código</div>
                     <div className="col-span-3">Aluno</div>
                     <div className="col-span-3">Curso</div>
@@ -318,21 +318,21 @@ function CertificadosPublicos() {
                 </div>
 
                 {/* Lista de itens */}
-                <div className="divide-y divide-gray-200">
+                <div className="divide-y divide-border">
                   {certificates.map((certificate) => {
                     const variables = decodeBase64Variables(certificate.variableToReplace) || {};
-                    
+
                     return (
-                      <div 
+                      <div
                         key={certificate.id}
-                        className="px-4 md:px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors duration-150"
+                        className="px-4 md:px-6 py-4 hover:bg-accent cursor-pointer transition-colors duration-150"
                         onClick={() => navigate({ to: `/certificados/${certificate.key}` })}
                       >
                         {/* Desktop View */}
                         <div className="hidden md:grid grid-cols-12 gap-4 items-center">
                           {/* Código */}
                           <div className="col-span-1">
-                            <span className="text-xs font-mono text-gray-600">
+                            <span className="text-xs font-mono text-muted-foreground">
                               #{variables.certificado_codigo?.value?.slice(-6) || certificate.id}
                             </span>
                           </div>
@@ -340,8 +340,8 @@ function CertificadosPublicos() {
                           {/* Nome do Aluno */}
                           <div className="col-span-3">
                             <div className="flex items-center gap-2">
-                              <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                              <p className="text-sm font-medium text-gray-900 truncate">
+                              <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              <p className="text-sm font-medium text-foreground truncate">
                                 {variables.aluno_nome?.value || "—"}
                               </p>
                             </div>
@@ -350,8 +350,8 @@ function CertificadosPublicos() {
                           {/* Curso */}
                           <div className="col-span-3">
                             <div className="flex items-center gap-2">
-                              <GraduationCap className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                              <p className="text-sm text-gray-700 truncate">
+                              <GraduationCap className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              <p className="text-sm text-muted-foreground truncate">
                                 {variables.curso_nome?.value || "—"}
                               </p>
                             </div>
@@ -359,7 +359,7 @@ function CertificadosPublicos() {
 
                           {/* Turma */}
                           <div className="col-span-2">
-                            <p className="text-sm text-gray-600 truncate">
+                            <p className="text-sm text-muted-foreground truncate">
                               {variables.turma_nome?.value || "—"}
                             </p>
                           </div>
@@ -367,8 +367,8 @@ function CertificadosPublicos() {
                           {/* Data de Conclusão */}
                           <div className="col-span-2">
                             <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-gray-400" />
-                              <p className="text-sm text-gray-600">
+                              <Calendar className="w-4 h-4 text-muted-foreground" />
+                              <p className="text-sm text-muted-foreground">
                                 {formatDate(variables.certificado_emissao?.value || certificate.createdAt)}
                               </p>
                             </div>
@@ -376,10 +376,10 @@ function CertificadosPublicos() {
 
                           {/* Ação */}
                           <div className="col-span-1 flex justify-end">
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="sm"
-                              className="text-primary-light hover:text-primary-light hover:bg-primary-light/10"
+                              className="text-primary hover:text-primary hover:bg-primary/10"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate({ to: `/certificados/${certificate.id}` });
@@ -393,20 +393,20 @@ function CertificadosPublicos() {
                         {/* Mobile View */}
                         <div className="md:hidden">
                           <div className="flex justify-between items-start mb-2">
-                            <span className="text-xs font-mono text-gray-500">
+                            <span className="text-xs font-mono text-muted-foreground">
                               #{variables.certificado_codigo?.value?.slice(-6) || certificate.id}
                             </span>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-muted-foreground">
                               {formatDate(variables.certificado_emissao?.value || certificate.createdAt)}
                             </span>
                           </div>
-                          <p className="font-medium text-gray-900 text-sm mb-1">
+                          <p className="font-medium text-foreground text-sm mb-1">
                             {variables.aluno_nome?.value || "—"}
                           </p>
-                          <p className="text-sm text-gray-600 mb-1">
+                          <p className="text-sm text-muted-foreground mb-1">
                             {variables.curso_nome?.value || "—"}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-muted-foreground">
                             Turma: {variables.turma_nome?.value || "—"}
                           </p>
                         </div>
@@ -419,31 +419,7 @@ function CertificadosPublicos() {
               {/* Paginação */}
               {certificatesData?.total && certificatesData.total > 0 && (
                 <div className="mt-8 w-full">
-                  <div className="flex flex-col items-center gap-2
-                    [&_*]:text-gray-600 
-                    [&_button]:text-gray-600 
-                    [&_button]:bg-white 
-                    [&_button]:border-gray-300 
-                    [&_button:hover]:text-gray-900 
-                    [&_button:hover]:bg-gray-50 
-                    [&_button:disabled]:text-gray-400 
-                    [&_.text-muted-foreground]:text-gray-500 
-                    [&_a[aria-current='page']]:!bg-primary-light 
-                    [&_a[aria-current='page']]:!text-white 
-                    [&_a[aria-current='page']]:!border-primary-light
-                    [&_button[aria-current='page']]:!bg-primary-light 
-                    [&_button[aria-current='page']]:!text-white 
-                    [&_button[aria-current='page']]:!border-primary-light
-                    [&_a[data-state='active']]:!bg-primary-light 
-                    [&_a[data-state='active']]:!text-white 
-                    [&_a[data-state='active']]:!border-primary-light
-                    [&_.bg-foreground]:!bg-primary-light
-                    [&_.bg-foreground]:!text-white
-                    [&_.bg-primary]:!bg-primary-light
-                    [&_.bg-primary]:!text-white
-                    [&_.dark\\:bg-primary]:!bg-primary-light
-                    [&_.dark\\:bg-primary]:!text-white
-                  ">
+                  <div className="flex flex-col items-center gap-2">
                     <Pagination
                       totalItems={certificatesData.total}
                       itemsPerPage={limit}

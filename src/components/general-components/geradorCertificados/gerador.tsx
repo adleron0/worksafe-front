@@ -1203,7 +1203,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
           
           {/* Canvas Area Skeleton */}
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <div className="flex-1 relative overflow-hidden bg-gray-50 dark:bg-gray-900">
+            <div className="flex-1 relative overflow-hidden bg-background">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
                   <Loader2 className="w-12 h-12 animate-spin mx-auto text-muted-foreground mb-4" />

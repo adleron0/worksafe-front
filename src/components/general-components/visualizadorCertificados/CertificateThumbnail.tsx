@@ -236,10 +236,10 @@ const CertificateThumbnail: React.FC<CertificateThumbnailProps> = ({
       className={`relative h-full ${onClick ? 'cursor-pointer' : ''} ${className}`}
       onClick={handleClick}
     >
-      <div className="w-full h-full bg-gray-50 dark:bg-gray-900 p-2 rounded-lg overflow-hidden">
+      <div className="w-full h-full bg-background p-2 overflow-hidden">
         {page && (
           <div className="w-full h-full flex items-center justify-center">
-            <div className="bg-white dark:bg-gray-800 rounded shadow-sm">
+            <div className="bg-background rounded shadow-sm">
               <CertificateCanvas
                 ref={canvasRef}
                 pageId={page.id}

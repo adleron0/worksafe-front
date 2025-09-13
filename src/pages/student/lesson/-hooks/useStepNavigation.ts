@@ -12,21 +12,54 @@ export function useStepNavigation({ lessonData, startStep }: UseStepNavigationPr
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [currentStep, setCurrentStep] = useState<MergedStep | null>(null);
   const startedStepsRef = useRef<Set<number>>(new Set());
+  const previousLessonIdRef = useRef<number | null>(null);
+
+  // Resetar step quando mudar de lição
+  useEffect(() => {
+    if (!lessonData) {
+      // Se não há dados, resetar tudo
+      setCurrentStep(null);
+      setCurrentStepIndex(0);
+      return;
+    }
+    
+    const currentLessonId = lessonData.lesson.id;
+    
+    // Se mudou de lição, resetar para o primeiro step
+    if (previousLessonIdRef.current !== null && previousLessonIdRef.current !== currentLessonId) {
+      console.log('🔄 Mudou de lição de', previousLessonIdRef.current, 'para', currentLessonId, '- resetando para primeiro step');
+      setCurrentStep(null);
+      setCurrentStepIndex(0);
+      startedStepsRef.current.clear();
+    }
+    
+    previousLessonIdRef.current = currentLessonId;
+  }, [lessonData?.lesson.id]);
 
   // Definir step inicial quando os dados carregarem
   useEffect(() => {
     if (!lessonData || lessonData.steps.length === 0) return;
-    if (currentStep) return; // Já tem step selecionado
+    
+    // Só definir step se não houver um ou se o step atual não pertence à lição atual
+    const stepBelongsToCurrentLesson = currentStep && lessonData.steps.some(s => s.id === currentStep.id);
+    if (currentStep && stepBelongsToCurrentLesson) {
+      console.log('✅ Step atual pertence à lição atual, mantendo');
+      return;
+    }
+    
+    console.log('🎯 Definindo step inicial para a lição', lessonData.lesson.id);
     
     // Encontrar o primeiro step disponível ou em progresso
     const firstAvailable = lessonData.steps.find(
       s => s.status === 'in_progress' || s.status === 'available'
     ) || lessonData.steps[0];
     
+    console.log('📍 Primeiro step disponível:', firstAvailable?.id, 'de', lessonData.steps.length, 'steps');
+    
     setCurrentStep(firstAvailable);
     const index = lessonData.steps.findIndex(s => s.id === firstAvailable.id);
     setCurrentStepIndex(index >= 0 ? index : 0);
-  }, [lessonData]);
+  }, [lessonData, currentStep]);
 
   // Iniciar step quando mudar o currentStep
   useEffect(() => {

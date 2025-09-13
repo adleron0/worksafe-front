@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import DynamicLogo from "@/components/general-components/DynamicLogo";
+import { ThemeToggle } from "@/components/general-components/ThemeToggle";
 import {
   ShoppingCart,
   X,
@@ -108,13 +109,13 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
     <>
       {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 bg-primary-light/30 backdrop-blur-sm transition-opacity duration-300 z-40 ${
+        className={`fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity duration-300 z-40 ${
           isMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setIsMenuOpen(false)}
       />
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-50 shadow-sm">
+      <nav className="fixed top-0 left-0 right-0 bg-background/95 dark:bg-background/90 backdrop-blur-md z-50 shadow-sm border-b border-border">
         <div className="mx-5 md:mx-20 lg:mx-40 2xl:mx-50">
           <div className="flex items-center justify-between h-20">
             <a href="https://www.worksafebrasil.com.br" className="flex gap-2 items-center cursor-pointer">
@@ -124,7 +125,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
             <div className="hidden md:flex items-center gap-4">
               <a
                 href="https://www.worksafebrasil.com.br#servicos"
-                className="text-gray-600 hover:text-primary-light transition-colors"
+                className="text-muted-foreground hover:text-primary transition-colors"
               >
                 Serviços
               </a>
@@ -137,7 +138,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
               </a> */}
               <a
                 href="https://www.worksafebrasil.com.br/loja"
-                className="text-gray-600 hover:text-primary-light transition-colors"
+                className="text-muted-foreground hover:text-primary transition-colors"
               >
                 Loja
               </a>
@@ -151,7 +152,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center gap-1 text-gray-600 hover:text-primary-light transition-colors cursor-pointer"
+                  className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                 >
                   Treinamentos
                   <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -159,14 +160,14 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                 
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-popover rounded-md shadow-lg border border-border py-1 z-50">
                     <a
                       onClick={() => {
                         setIsDropdownOpen(false);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                         navigate({to: `/certificados`});
                       }}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer"
                     >
                       <Award className="w-4 h-4" />
                       Certificados
@@ -176,7 +177,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                       onClick={() => {
                         setIsDropdownOpen(false);
                       }}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer"
                     >
                       <Calendar className="w-4 h-4" />
                       Calendário
@@ -186,40 +187,42 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
               </div>
               <a
                 href="https://www.worksafebrasil.com.br/sobre"
-                className="text-gray-600 hover:text-primary-light transition-colors"
+                className="text-muted-foreground hover:text-primary transition-colors"
               >
                 Sobre Nós
               </a>
+              <ThemeToggle variant="ghost" size="icon" className="ml-2" />
               <Button
                 onClick={() => {
                   navigate({
-                    to: `/`,
+                    to: `/student`,
                   })
                 }}
-                className="bg-primary-light  text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
-                Admin
+                Login
               </Button>
             </div>
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center gap-2">
+              <ThemeToggle variant="ghost" size="icon" />
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="group h-8 w-8 rounded-lg bg-primary-light hover:brightness-125 text-white"
+                className="group h-8 w-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 <div className="grid justify-items-center gap-1">
                   <span
-                    className={`h-0.5 w-5 rounded-full bg-white transition-transform duration-300 ${
+                    className={`h-0.5 w-5 rounded-full bg-primary-foreground transition-transform duration-300 ${
                       isMenuOpen ? "rotate-45 translate-y-1.5" : ""
                     }`}
                   />
                   <span
-                    className={`h-0.5 w-5 rounded-full bg-white transition-transform duration-300 ${
+                    className={`h-0.5 w-5 rounded-full bg-primary-foreground transition-transform duration-300 ${
                       isMenuOpen ? "scale-x-0" : ""
                     }`}
                   />
                   <span
-                    className={`h-0.5 w-5 rounded-full bg-white transition-transform duration-300 ${
+                    className={`h-0.5 w-5 rounded-full bg-primary-foreground transition-transform duration-300 ${
                       isMenuOpen ? "-rotate-45 -translate-y-1.5" : ""
                     }`}
                   />
@@ -230,18 +233,18 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
 
           {/* Mobile Menu */}
           {isMenuOpen && (
-            <div className="md:hidden py-4 border-t">
+            <div className="md:hidden py-4 border-t border-border">
               <div className="flex flex-col gap-4">
                 <a
                   href="https://www.worksafebrasil.com.br/sobre"
-                  className="text-gray-600 hover:text-primary-light transition-colors"
+                  className="text-muted-foreground hover:text-primary transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Sobre Nós
                 </a>
                 <a
                   href="https://www.worksafebrasil.com.br#servicos"
-                  className="text-gray-600 hover:text-primary-light transition-colors"
+                  className="text-muted-foreground hover:text-primary transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Serviços
@@ -255,7 +258,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                 </a> */}
                 <a
                   href="https://www.worksafebrasil.com.br/loja"
-                  className="text-gray-600 hover:text-primary-light transition-colors"
+                  className="text-muted-foreground hover:text-primary transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Loja
@@ -270,7 +273,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                 <div>
                   <button
                     onClick={() => setIsMobileDropdownOpen(!isMobileDropdownOpen)}
-                    className="flex items-center justify-between w-full text-gray-600 hover:text-primary-light transition-colors cursor-pointer"
+                    className="flex items-center justify-between w-full text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                   >
                     Treinamentos
                     <ChevronDown className={`w-4 h-4 transition-transform ${isMobileDropdownOpen ? 'rotate-180' : ''}`} />
@@ -286,7 +289,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                           navigate({to: `/certificados`});
                         }}
-                        className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-light transition-colors cursor-pointer"
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                       >
                         <Award className="w-4 h-4" />
                         Certificados
@@ -297,7 +300,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                           setIsMenuOpen(false);
                           setIsMobileDropdownOpen(false);
                         }}
-                        className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-light transition-colors cursor-pointer"
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                       >
                         <Calendar className="w-4 h-4" />
                         Calendário
@@ -310,12 +313,12 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                   onClick={() => {
                     setIsMenuOpen(false);
                     navigate({
-                      to: `/`,
+                      to: `/student`,
                     })
                   }}
-                  className="bg-primary-light hover:brightness-125 text-white w-full"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
                 >
-                  Admin
+                  Login
                 </Button>
               </div>
             </div>
@@ -325,7 +328,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
 
       {/* Cart Overlay */}
       <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 z-40 ${
+        className={`fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity duration-300 z-40 ${
           isCartOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setIsCartOpen(false)}
@@ -333,21 +336,21 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
 
       {/* Cart Sidebar */}
       <div
-        className={`fixed top-0 right-0 w-full md:w-96 h-full bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 w-full md:w-96 h-full bg-card shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${
           isCartOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <div className="flex flex-col h-full"> {/* Inner flex container */}
           {/* Cart Header */}
-          <div className="flex justify-between items-center p-6 border-b">
+          <div className="flex justify-between items-center p-6 border-b border-border">
             <div className="flex items-center gap-2">
-              <ShoppingCart className="w-6 h-6 text-primary-light" />
-              <h2 className="text-xl font-bold text-primary-light">Carrinho</h2>
+              <ShoppingCart className="w-6 h-6 text-primary" />
+              <h2 className="text-xl font-bold text-primary">Carrinho</h2>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setIsCartOpen(false)}
-                className="p-1 hover:bg-gray-100 rounded-sm cursor-pointer text-gray-700 hover:text-destructive transition-colors"
+                className="p-1 hover:bg-accent rounded-sm cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -358,9 +361,9 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
           <div className="flex-1 overflow-y-auto p-4">
             {cart.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
-                <ShoppingCart className="w-16 h-16 text-gray-300 mb-4" />
-                <p className="text-gray-500 mb-2">Seu carrinho está vazio</p>
-                <p className="text-sm text-gray-400">
+                <ShoppingCart className="w-16 h-16 text-muted-foreground/50 mb-4" />
+                <p className="text-muted-foreground mb-2">Seu carrinho está vazio</p>
+                <p className="text-sm text-muted-foreground/70">
                   Adicione produtos para solicitar um orçamento
                 </p>
               </div>
@@ -369,10 +372,10 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                 {cart.map((item) => (
                   <li
                     key={item.id}
-                    className="flex items-start gap-4 p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors" // Use items-start for better alignment with image
+                    className="flex items-start gap-4 p-2 bg-muted/50 hover:bg-muted rounded-lg transition-colors"
                   >
                     {/* Product Image */}
-                    <div className="w-14 h-14 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+                    <div className="w-14 h-14 bg-muted rounded overflow-hidden flex-shrink-0">
                       {item.imageUrl ? (
                         <img
                           src={item.imageUrl}
@@ -380,7 +383,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                           {/* Placeholder Icon or Text */}
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                             <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
@@ -390,27 +393,27 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                     </div>
                     {/* Product Details */}
                     <div className="flex-1">
-                      <h3 className="font-medium text-sm text-gray-700 mb-1">{item.name}</h3> {/* Added margin-bottom */}
-                      <p className="text-xs text-gray-500">
+                      <h3 className="font-medium text-sm text-foreground mb-1">{item.name}</h3>
+                      <p className="text-xs text-muted-foreground">
                         Quantidade: {item.quantity}
                       </p>
                     </div>
-                    <div className="flex text-gray-700 items-center gap-2">
+                    <div className="flex text-foreground items-center gap-2">
                       <button
                         onClick={() => decrementQuantity(item.id)}
-                        className="p-1 rounded cursor-pointer bg-gray-200 hover:bg-gray-300 transition-colors"
+                        className="p-1 rounded cursor-pointer bg-secondary hover:bg-secondary/80 transition-colors"
                       >
                         <Minus className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => incrementQuantity(item.id)}
-                        className="p-1 rounded cursor-pointer bg-gray-200 hover:bg-gray-300 transition-colors"
+                        className="p-1 rounded cursor-pointer bg-secondary hover:bg-secondary/80 transition-colors"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="p-1 rounded cursor-pointer bg-red-200 hover:bg-red-300 transition-colors"
+                        className="p-1 rounded cursor-pointer bg-destructive/20 hover:bg-destructive/30 text-destructive transition-colors"
                       >
                         <Trash className="w-4 h-4" />
                       </button>
@@ -422,11 +425,11 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
           </div>
 
           {/* Cart Footer */}
-          <div className="p-4 border-t bg-gray-50"> {/* Footer container */}
+          <div className="p-4 border-t border-border bg-muted/50"> {/* Footer container */}
             {/* Total Items Display */}
             {cart.length > 0 && (
               <div className="mb-4 text-start">
-                <p className="text-sm font-semibold text-gray-700">
+                <p className="text-sm font-semibold text-foreground">
                   Total: {cart.reduce((acc, item) => acc + item.quantity, 0)} {cart.reduce((acc, item) => acc + item.quantity, 0) === 1 ? 'item' : 'itens'}
                 </p>
               </div>
@@ -438,7 +441,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                   handleWhatsApp(generateCartMessage());
                   setIsCartOpen(false);
                 }}
-                className="w-full bg-primary-light text-white gap-2"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
               >
                 <ShoppingCart className="w-5 h-5" />
                 Solicitar Orçamento
@@ -446,7 +449,7 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
               <Button
                 variant="outline"
                 onClick={clearCart}
-                className="border-gray-300 w-full text-gray-600 hover:text-gray-700 bg-gray-50 hover:bg-gray-100"
+                className="w-full"
               >
                 Limpar Carrinho
               </Button>

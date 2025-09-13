@@ -5,17 +5,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { 
-  PlayCircle, 
-  CheckCircle, 
-  Lock, 
-  Clock, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  PlayCircle,
+  CheckCircle,
+  Lock,
+  Clock,
   ArrowLeft,
   ChevronRight,
-  BookOpen
+  BookOpen,
+  FileCheck,
+  Award,
+  XCircle,
+  Eye
 } from 'lucide-react';
 import { get } from '@/services/api-s';
 import Loader from '@/components/general-components/Loader';
+import { useStudentAuth } from '@/context/StudentAuthContext';
+import { ExamResultCard } from './-components/ExamResultCard';
+import { ExamDetailsModal } from './-components/ExamDetailsModal';
 
 export const Route = createFileRoute('/student/course/$courseId/lessons')({
   component: CourseLessons,
@@ -25,7 +41,7 @@ export const Route = createFileRoute('/student/course/$courseId/lessons')({
 interface StepProgress {
   id: number;
   progressPercent: number;
-  progressData: Record<string, any> | null;
+  progressData: Record<string, unknown> | null;
   firstAccessAt?: string;
   lastAccessAt?: string;
   completedAt?: string | null;
@@ -65,10 +81,39 @@ interface Course {
   description: string;
 }
 
+interface ExamOption {
+  text: string;
+  isCorrect: boolean;
+  isSelected: boolean;
+  isUserCorrect: boolean;
+}
+
+interface ExamResponse {
+  options: ExamOption[];
+  question: string;
+}
+
+interface Exam {
+  id: number;
+  result: boolean;
+  createdAt: string;
+  certificates?: Array<{
+    key: string;
+  }>;
+  examResponses: ExamResponse[];
+}
+
 interface CourseClass {
   id: number;
   hoursDuration: number;
+  allowExam?: boolean;
+  classCode?: string;
+  exams?: Exam[];
+  certificates?: Array<{
+    key: string;
+  }>;
   onlineCourseModel: {
+    id: number;
     lessons: ModelLesson[];
     course: Course;
   };
@@ -77,7 +122,9 @@ interface CourseClass {
 function CourseLessons() {
   const { courseId } = Route.useParams(); // Na verdade é o classId
   const navigate = useNavigate();
+  const { studentData } = useStudentAuth();
   const [selectedLesson, setSelectedLesson] = useState<number | null>(null);
+  const [showExamDetails, setShowExamDetails] = useState(false);
 
   // Buscar dados do curso e aulas (usando classId)
   const { data: courseData, isLoading, error } = useQuery({
@@ -197,48 +244,51 @@ function CourseLessons() {
         } ${selectedLesson === lesson.id ? 'ring-2 ring-primary' : ''}`}
         onClick={() => !isLocked && setSelectedLesson(lesson.id)}
       >
-        <CardContent className="p-4">
-          <div className="flex items-start gap-4">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-start gap-3 sm:gap-4">
             {/* Status Icon */}
-            <div className="mt-1">
+            <div className="mt-0.5 sm:mt-1">
               {isLocked ? (
-                <Lock className="h-5 w-5 text-muted-foreground" />
+                <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               ) : isCompleted ? (
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
               ) : isInProgress ? (
                 <div className="relative">
-                  <PlayCircle className="h-5 w-5 text-blue-500" />
+                  <PlayCircle className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
                   <div className="absolute -bottom-1 -right-1 h-2 w-2 bg-blue-500 rounded-full animate-pulse" />
                 </div>
               ) : (
-                <PlayCircle className="h-5 w-5 text-muted-foreground" />
+                <PlayCircle className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               )}
             </div>
 
             {/* Content */}
             <div className="flex-1 space-y-2">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="font-medium line-clamp-1">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-start justify-between gap-2">
+                  <h4 className="font-medium line-clamp-2 text-sm sm:text-base">
                     Aula {index + 1}: {lesson.title}
                   </h4>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                  {lesson.steps && lesson.steps.length > 0 && (
+                    <Badge variant="outline" className="shrink-0 text-xs sm:text-sm">
+                      <Clock className="h-3 w-3 mr-1" />
+                      <span className="hidden sm:inline">{lesson.steps.length} etapa{lesson.steps.length !== 1 ? 's' : ''}</span>
+                      <span className="sm:hidden">{lesson.steps.length}</span>
+                    </Badge>
+                  )}
+                </div>
+                {lesson.description && (
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                     {lesson.description}
                   </p>
-                </div>
-                {lesson.steps && lesson.steps.length > 0 && (
-                  <Badge variant="outline" className="ml-2">
-                    <Clock className="h-3 w-3 mr-1" />
-                    {lesson.steps.length} etapa{lesson.steps.length !== 1 ? 's' : ''}
-                  </Badge>
                 )}
               </div>
 
               {/* Contador de steps */}
               {lesson.steps && lesson.steps.length > 0 && (
-                <div className="text-sm text-muted-foreground">
-                  {lesson.steps.filter(step => 
-                    step.stepProgress?.[0]?.completedAt !== null && 
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  {lesson.steps.filter(step =>
+                    step.stepProgress?.[0]?.completedAt !== null &&
                     step.stepProgress?.[0]?.completedAt !== undefined
                   ).length}/{lesson.steps.length} etapas concluídas
                 </div>
@@ -261,7 +311,11 @@ function CourseLessons() {
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate({ 
-                      to: `/student/lesson/${lesson.id}`
+                      to: `/student/lesson/${lesson.id}`,
+                      search: {
+                        modelId: courseData.onlineCourseModel.id,
+                        classId: courseData.id
+                      }
                     });
                   }}
                 >
@@ -360,9 +414,9 @@ function CourseLessons() {
         {lessons.length > 0 ? (
           <div className="space-y-3">
             {lessons.map((modelLesson, index) => (
-              <LessonCard 
-                key={modelLesson.lesson.id} 
-                modelLesson={modelLesson} 
+              <LessonCard
+                key={modelLesson.lesson.id}
+                modelLesson={modelLesson}
                 index={index}
               />
             ))}
@@ -375,6 +429,100 @@ function CourseLessons() {
           </Card>
         )}
       </div>
+
+      {/* Exam Button/Card */}
+      {courseData.allowExam && courseData.classCode && (
+        <>
+          {courseData.exams && courseData.exams.length > 0 ? (
+            // Mostrar resultado da prova se já foi feita
+            <>
+              <ExamResultCard
+                exam={{
+                  ...courseData.exams[0],
+                  certificates: courseData.certificates // Passar certificados do courseData
+                }}
+                onViewDetails={() => setShowExamDetails(true)}
+              />
+              <ExamDetailsModal
+                isOpen={showExamDetails}
+                onClose={() => setShowExamDetails(false)}
+                examResponses={courseData.exams[0].examResponses}
+                result={courseData.exams[0].result}
+              />
+            </>
+          ) : (
+            // Mostrar botão para fazer prova se ainda não foi feita
+            <Card className="border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <FileCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  Prova de Avaliação
+                </CardTitle>
+                <CardDescription className="text-sm">
+                  Teste seus conhecimentos e obtenha seu certificado
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="space-y-1">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        Status: {completedLessons === totalLessons ? 'Disponível' : 'Complete todas as aulas primeiro'}
+                      </p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        Código da turma: {courseData.classCode}
+                      </p>
+                    </div>
+                    <Button
+                      size="default"
+                      disabled={completedLessons < totalLessons}
+                      className="w-full sm:w-auto"
+                      onClick={() => {
+                        // Navegar para a prova com auto-login
+                        const cpf = studentData?.cpf;
+                        if (cpf) {
+                          navigate({
+                            to: '/prova/$classId',
+                            params: { classId: courseId },
+                            search: {
+                              cpf: cpf,
+                              classCode: courseData.classCode,
+                              autoLogin: true
+                            }
+                          });
+                        } else {
+                          // Se não tiver CPF, vai sem auto-login
+                          navigate({
+                            to: '/prova/$classId',
+                            params: { classId: courseId },
+                            search: {
+                              cpf: undefined,
+                              classCode: undefined,
+                              autoLogin: false
+                            }
+                          });
+                        }
+                      }}
+                    >
+                      <FileCheck className="mr-2 h-4 w-4" />
+                      <span className="text-sm sm:text-base">
+                        {completedLessons === totalLessons ? 'Fazer Prova' : 'Prova Bloqueada'}
+                      </span>
+                    </Button>
+                  </div>
+                  {completedLessons < totalLessons && (
+                    <div className="p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                      <p className="text-xs sm:text-sm text-yellow-800 dark:text-yellow-200">
+                        ⚠️ Você precisa concluir todas as {totalLessons - completedLessons} aulas restantes antes de fazer a prova.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
     </div>
   );
 }

@@ -270,10 +270,10 @@ function CertificadoPublico() {
     return (
       <>
         <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-20">
+        <div className="min-h-screen flex items-center justify-center bg-background pt-20">
           <div className="text-center">
             <Icon name="loader-2" className="w-12 h-12 animate-spin mx-auto text-primary mb-4" />
-            <p className="text-gray-600">Carregando certificado...</p>
+            <p className="text-muted-foreground">Carregando certificado...</p>
           </div>
         </div>
         <Footer />
@@ -285,15 +285,15 @@ function CertificadoPublico() {
     return (
       <>
         <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-20">
+        <div className="min-h-screen flex items-center justify-center bg-background pt-20">
           <Card className="max-w-md w-full mx-4">
             <CardContent className="pt-6">
               <div className="text-center">
                 <Icon name="x-circle" className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                <h2 className="text-2xl font-bold text-foreground mb-2">
                   Certificado não encontrado
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   O certificado solicitado não foi encontrado ou não está disponível.
                 </p>
                 {error && (
@@ -355,11 +355,11 @@ function CertificadoPublico() {
         </Helmet>
       )}
       <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
-      <div className="min-h-screen bg-gray-50 pt-24 md:pt-18 lg:pt-10 pb-16 px-4">
+      <div className="min-h-screen bg-background pt-24 md:pt-18 lg:pt-10 pb-16 px-4">
         <div className="max-w-7xl mx-auto">
           {/* Visualizador de Certificados */}
           {certificate?.variableToReplace && certificate?.fabricJsonFront && (
-            <div className="bg-white overflow-hidden mb-6">
+            <div className="bg-card overflow-hidden mb-6">
               <div className="h-[75vh] w-full">
                 <VisualizadorCertificados
                   certificateData={{
@@ -381,17 +381,17 @@ function CertificadoPublico() {
             {/* Coluna principal - 2/3 */}
             <div className="lg:col-span-2 space-y-6">
             {/* Card Principal - Status e Informações do Certificado */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
               {/* Header com Status */}
-              <div className="bg-gradient-to-r from-primary/5 to-primary/10 border-b border-gray-100 px-6 py-4">
+              <div className="bg-gradient-to-r from-primary/5 to-primary/10 border-b border-border px-6 py-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-white rounded-lg shadow-sm">
+                    <div className="p-2.5 bg-card rounded-lg shadow-sm">
                       <Icon name="badge-check" className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <h1 className="text-xl font-bold text-gray-900">Certificado Validado</h1>
-                      <p className="text-sm text-gray-600">Sistema oficial de verificação</p>
+                      <h1 className="text-xl font-bold text-foreground">Certificado Validado</h1>
+                      <p className="text-sm text-muted-foreground">Sistema oficial de verificação</p>
                     </div>
                   </div>
                   {validationStatus && (
@@ -415,7 +415,7 @@ function CertificadoPublico() {
                 <div className="space-y-4">
                   {/* Nome do Curso */}
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">{variables.curso_nome?.value || "Curso não informado"}</h2>
+                    <h2 className="text-2xl font-bold text-foreground">{variables.curso_nome?.value || "Curso não informado"}</h2>
                   </div>
 
                   {/* Botões de Ação */}
@@ -454,7 +454,7 @@ function CertificadoPublico() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
                       {/* Avatar do Aluno */}
-                      <Avatar className="h-12 w-12 border-2 border-gray-200">
+                      <Avatar className="h-12 w-12 border-2 border-border">
                         {certificate?.trainee?.imageUrl ? (
                           <AvatarImage 
                             src={certificate.trainee.imageUrl} 
@@ -475,7 +475,7 @@ function CertificadoPublico() {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-lg font-semibold text-gray-700">{variables.aluno_nome?.value || "Aluno não informado"}</p>
+                        <p className="text-lg font-semibold text-foreground">{variables.aluno_nome?.value || "Aluno não informado"}</p>
                         <a 
                           href="#" 
                           className="text-sm text-primary hover:underline inline-flex items-center gap-1 cursor-pointer"
@@ -499,11 +499,11 @@ function CertificadoPublico() {
                   </div>
 
                   {/* Separator */}
-                  <div className="border-t border-gray-200 py-4">
+                  <div className="border-t border-border py-4">
                     {/* Descrição da Turma */}
                     <div className="space-y-1">
-                      <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider">Sobre a Turma</h3>
-                      <p className="text-sm text-gray-600 leading-relaxed">
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Sobre a Turma</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
                         {classData?.description || 
                          `Turma ${variables.turma_nome?.value || ""} do curso de ${variables.curso_nome?.value || ""}, 
                          com carga horária de ${variables.turma_carga_horaria?.value || "não informada"}.
@@ -517,35 +517,35 @@ function CertificadoPublico() {
 
                 {/* Grid de Informações Principais */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                    <Icon name="clock" className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div className="flex items-start gap-3 p-4 bg-background rounded-lg">
+                    <Icon name="clock" className="w-5 h-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Carga Horária</p>
-                      <p className="text-sm font-semibold text-gray-900">{variables.turma_carga_horaria?.value || "—"}</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Carga Horária</p>
+                      <p className="text-sm font-semibold text-foreground">{variables.turma_carga_horaria?.value || "—"}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                    <Icon name="calendar-check" className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div className="flex items-start gap-3 p-4 bg-background rounded-lg">
+                    <Icon name="calendar-check" className="w-5 h-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Válido até</p>
-                      <p className="text-sm font-semibold text-gray-900">{formatDate(certificate?.expirationDate)}</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Válido até</p>
+                      <p className="text-sm font-semibold text-foreground">{formatDate(certificate?.expirationDate)}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                    <Icon name="hash" className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div className="flex items-start gap-3 p-4 bg-background rounded-lg">
+                    <Icon name="hash" className="w-5 h-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Código</p>
-                      <p className="text-sm font-mono font-semibold text-gray-900">{variables.certificado_codigo?.value || `CERT-${certificate?.id}`}</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Código</p>
+                      <p className="text-sm font-mono font-semibold text-foreground">{variables.certificado_codigo?.value || `CERT-${certificate?.id}`}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                    <Icon name="calendar" className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div className="flex items-start gap-3 p-4 bg-background rounded-lg">
+                    <Icon name="calendar" className="w-5 h-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Data de Emissão</p>
-                      <p className="text-sm font-semibold text-gray-900">{formatDate(certificate?.createdAt)}</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Data de Emissão</p>
+                      <p className="text-sm font-semibold text-foreground">{formatDate(certificate?.createdAt)}</p>
                     </div>
                   </div>
                 </div>
@@ -554,26 +554,26 @@ function CertificadoPublico() {
 
             {/* Card da Turma */}
             {classData && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-gray-50 border-b border-gray-100 px-6 py-4">
+              <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+                <div className="bg-background border-b border-border px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <Icon name="users" className="w-5 h-5 text-gray-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Informações da Turma</h3>
+                    <Icon name="users" className="w-5 h-5 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold text-foreground">Informações da Turma</h3>
                   </div>
                 </div>
                 <div className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Nome da Turma</p>
-                      <p className="text-sm font-medium text-gray-900">{classData.name || variables.turma_nome?.value || "—"}</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Nome da Turma</p>
+                      <p className="text-sm font-medium text-foreground">{classData.name || variables.turma_nome?.value || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Período</p>
-                      <p className="text-sm font-medium text-gray-900">{variables.turma_periodo?.value || "—"}</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Período</p>
+                      <p className="text-sm font-medium text-foreground">{variables.turma_periodo?.value || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Modalidade</p>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Modalidade</p>
+                      <p className="text-sm font-medium text-foreground">
                         {classData.modality === 'presential' ? 'Presencial' : 
                          classData.modality === 'online' ? 'Online' : 
                          classData.modality === 'hybrid' ? 'Híbrido' : classData.modality || "—"}
@@ -581,20 +581,20 @@ function CertificadoPublico() {
                     </div>
                     {classData.startAt && (
                       <div>
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Início</p>
-                        <p className="text-sm font-medium text-gray-900">{formatDateTime(classData.startAt)}</p>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Início</p>
+                        <p className="text-sm font-medium text-foreground">{formatDateTime(classData.startAt)}</p>
                       </div>
                     )}
                     {classData.endAt && (
                       <div>
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Término</p>
-                        <p className="text-sm font-medium text-gray-900">{formatDateTime(classData.endAt)}</p>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Término</p>
+                        <p className="text-sm font-medium text-foreground">{formatDateTime(classData.endAt)}</p>
                       </div>
                     )}
                     {classData.workload && (
                       <div>
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Carga Horária Total</p>
-                        <p className="text-sm font-medium text-gray-900">{classData.workload} horas</p>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Carga Horária Total</p>
+                        <p className="text-sm font-medium text-foreground">{classData.workload} horas</p>
                       </div>
                     )}
                   </div>
@@ -604,27 +604,27 @@ function CertificadoPublico() {
 
             {/* Card dos Instrutores */}
             {instructors.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-gray-50 border-b border-gray-100 px-6 py-4">
+              <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+                <div className="bg-background border-b border-border px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <Icon name="graduation-cap" className="w-5 h-5 text-gray-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Instrutores</h3>
+                    <Icon name="graduation-cap" className="w-5 h-5 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold text-foreground">Instrutores</h3>
                   </div>
                 </div>
                 <div className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {instructors.map((instructor, index) => (
-                      <div key={instructor.id || index} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                      <div key={instructor.id || index} className="flex items-center gap-4 p-4 bg-background rounded-lg">
                         <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                           <Icon name="user" className="w-6 h-6 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{instructor.name}</p>
+                          <p className="text-sm font-semibold text-foreground truncate">{instructor.name}</p>
                           {instructor.registryCode && (
-                            <p className="text-xs text-gray-500">Registro: {instructor.registryCode}</p>
+                            <p className="text-xs text-muted-foreground">Registro: {instructor.registryCode}</p>
                           )}
                           {instructor.specialty && (
-                            <p className="text-xs text-gray-600 mt-1">{instructor.specialty}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{instructor.specialty}</p>
                           )}
                         </div>
                       </div>
@@ -639,23 +639,23 @@ function CertificadoPublico() {
             <div className="space-y-6">
               {/* Card do Emissor */}
               {certificate?.company && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="bg-gray-50 border-b border-gray-100 px-4 py-3">
+                <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+                  <div className="bg-background border-b border-border px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <Icon name="building-2" className="w-5 h-5 text-gray-600" />
-                      <h3 className="text-base font-semibold text-gray-900">Emissor do Certificado</h3>
+                      <Icon name="building-2" className="w-5 h-5 text-muted-foreground" />
+                      <h3 className="text-base font-semibold text-foreground">Emissor do Certificado</h3>
                     </div>
                   </div>
                   <div className="p-4">
                     {/* Nome da empresa com avatar */}
                     <div className="flex items-center gap-3 mb-4 py-3">
                       <div className="relative">
-                        <Avatar className="h-10 w-10 border border-gray-200 p-1">
+                        <Avatar className="h-10 w-10 border border-border p-1 bg-muted">
                           <AvatarImage 
                             src={certificate.company.faviconUrl || certificate.company.logoUrl} 
                             alt={certificate.company.comercial_name}
                           />
-                          <AvatarFallback className="bg-gray-100 text-xs font-semibold text-gray-600">
+                          <AvatarFallback className="bg-muted text-xs font-semibold text-muted-foreground">
                             {certificate.company.comercial_name.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -664,17 +664,17 @@ function CertificadoPublico() {
                           className="absolute -top-1 -right-1 w-4 h-4 text-white bg-primary rounded-full"
                         />
                       </div>
-                      <p className="text-base font-light text-gray-900">
+                      <p className="text-base font-light text-foreground">
                         {certificate.company.comercial_name}
                       </p>
                     </div>
 
                     {/* CNPJ */}
-                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg mb-3">
-                      <Icon name="file-text" className="w-4 h-4 text-gray-500" />
+                    <div className="flex items-center gap-2 p-3 bg-background rounded-lg mb-3">
+                      <Icon name="file-text" className="w-4 h-4 text-muted-foreground" />
                       <div className="flex-1">
-                        <p className="text-xs text-gray-500 uppercase tracking-wider">CNPJ</p>
-                        <p className="text-sm font-mono text-gray-700">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">CNPJ</p>
+                        <p className="text-sm font-mono text-foreground">
                           {certificate.company.cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')}
                         </p>
                       </div>
@@ -686,7 +686,7 @@ function CertificadoPublico() {
                         href={certificate.company.websiteUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                        className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-primary text-inverse-foreground rounded-lg hover:bg-primary/90 transition-colors"
                       >
                         <Icon name="globe" className="w-4 h-4" />
                         <span className="text-sm font-medium">Visitar Site</span>
@@ -695,7 +695,7 @@ function CertificadoPublico() {
                     )}
 
                     {/* Badge de verificação */}
-                    <div className="mt-4 pt-4 border-t border-gray-100">
+                    <div className="mt-4 pt-4 border-t border-border">
                       <div className="flex items-center gap-2 text-green-600">
                         <Icon name="shield-check" className="w-5 h-5" />
                         <p className="text-xs font-medium">Emissor Verificado</p>
@@ -706,15 +706,15 @@ function CertificadoPublico() {
               )}
 
               {/* Card de Compartilhamento */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-gray-50 border-b border-gray-100 px-4 py-3">
+              <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+                <div className="bg-background border-b border-border px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <Icon name="share-2" className="w-5 h-5 text-gray-600" />
-                    <h3 className="text-base font-semibold text-gray-900">Compartilhar Certificado</h3>
+                    <Icon name="share-2" className="w-5 h-5 text-muted-foreground" />
+                    <h3 className="text-base font-semibold text-foreground">Compartilhar Certificado</h3>
                   </div>
                 </div>
                 <div className="p-4">
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-muted-foreground mb-4">
                     Compartilhe sua conquista nas redes sociais
                   </p>
                   <div className="space-y-2">
@@ -737,7 +737,7 @@ function CertificadoPublico() {
                     {/* X (Twitter) */}
                     <Button
                       variant="outline"
-                      className="w-full justify-start gap-3 hover:bg-gray-100 hover:border-gray-400"
+                      className="w-full justify-start gap-3 hover:bg-muted hover:border-gray-400"
                       onClick={() => {
                         const certificateUrl = `${window.location.origin}/certificados/${certificate?.key || certificate?.id}`;
                         const xUrl = `https://x.com/intent/post?url=${encodeURIComponent(certificateUrl + '?utm_source=twitter&utm_medium=social')}`;
@@ -785,7 +785,7 @@ function CertificadoPublico() {
                     {/* Copiar Link */}
                     <Button
                       variant="outline"
-                      className="w-full justify-start gap-3 hover:bg-gray-50"
+                      className="w-full justify-start gap-3 hover:bg-background"
                       onClick={() => {
                         const certificateUrl = `${window.location.origin}/certificados/${certificate?.key || certificate?.id}`;
                         navigator.clipboard.writeText(certificateUrl).then(() => {
@@ -795,7 +795,7 @@ function CertificadoPublico() {
                         });
                       }}
                     >
-                      <Icon name="link" className="w-5 h-5 text-gray-600" />
+                      <Icon name="link" className="w-5 h-5 text-muted-foreground" />
                       Copiar Link
                     </Button>
                   </div>

@@ -2,12 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { get } from '@/services/api-s';
 import type { LessonResponse, LessonDataWithSteps, MergedStep } from '../types';
 
-export function useLessonData(lessonId: string) {
+export function useLessonData(lessonId: string, modelId?: number) {
   return useQuery({
-    queryKey: ['student-lesson', lessonId],
+    queryKey: ['student-lesson', lessonId, modelId],
     queryFn: async () => {
-      console.log('🔄 Buscando dados da lição:', lessonId);
-      const response = await get<LessonResponse>(`student-lessons/${lessonId}/content`);
+      console.log('🔄 Buscando dados da lição:', lessonId, modelId ? `com modelId: ${modelId}` : 'sem modelId');
+      const params = []
+      if (modelId) params.push({ key: 'modelId', value: modelId });
+      const response = await get<LessonResponse>(`student-lessons/${lessonId}`,'content', params);
       
       if (!response) {
         throw new Error('Dados da lição não encontrados');
@@ -47,10 +49,12 @@ export function useLessonData(lessonId: string) {
       
       return result;
     },
-    // Desabilitado: Refetch automático não é necessário
-    // O conteúdo é carregado uma vez e atualizado apenas após completar steps
+    // Configurações de cache e refetch
+    staleTime: 0, // Considerar dados sempre stale para forçar refetch
+    gcTime: 5 * 60 * 1000, // Cache por 5 minutos (anteriormente cacheTime)
     refetchInterval: false,
-    // Manter dados frescos quando a janela volta ao foco
     refetchOnWindowFocus: true,
+    // Importante: refetch quando os parâmetros mudam
+    enabled: !!lessonId,
   });
 }

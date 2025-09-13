@@ -11,7 +11,8 @@ import {
 } from '@/utils/studentAuth';
 
 export interface StudentData {
-  id: string;
+  id: string | number;
+  traineeId?: number;
   name: string;
   email: string;
   cpf?: string;
@@ -21,6 +22,7 @@ export interface StudentData {
   enrolledCourses?: number;
   certificates?: number;
   institutions?: string[];
+  customerId?: number;
 }
 
 interface StudentAuthContextProps {
@@ -68,12 +70,14 @@ export const StudentAuthProvider: React.FC<StudentAuthProviderProps> = ({ childr
     const payload = getTokenPayload(token);
     if (payload) {
       // Atualiza dados básicos do payload
-      setStudentData(prev => ({
-        ...prev,
-        id: payload.sub,
+      setStudentData({
+        id: payload.traineeId || payload.sub || '',
+        traineeId: payload.traineeId,
         email: payload.email,
         name: payload.name,
-      } as StudentData));
+        cpf: payload.cpf,
+        customerId: payload.customerId
+      } as StudentData);
       setIsAuthenticated(true);
       return true;
     }

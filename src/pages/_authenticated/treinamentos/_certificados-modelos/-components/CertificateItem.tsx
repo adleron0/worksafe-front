@@ -139,7 +139,7 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm, isDesk
         <div className="w-full h-full flex items-center space-x-4 md:pr-2 lg:w-6/12">
           {/* Usar CertificateThumbnail se houver dados do certificado, senão usar Avatar como fallback */}
           {item.fabricJsonFront ? (
-            <div className="w-30 rounded-md overflow-hidden border bg-white dark:bg-gray-800">
+            <div className="w-30 rounded-md overflow-hidden border bg-background">
               <CertificateThumbnail
                 certificateData={item}
                 variableToReplace={{}}

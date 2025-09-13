@@ -239,18 +239,18 @@ function StudentDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-4">
         {(isLoadingCourses || isLoadingProgress) ? (
           // Skeleton for stats cards
           [...Array(4)].map((_, index) => (
             <Card key={`skeleton-stat-${index}`}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <Skeleton className="h-4 w-[60%] max-w-[100px]" />
+                <Skeleton className="h-4 w-[60%]" />
                 <Skeleton className="h-4 w-4 rounded" />
               </CardHeader>
               <CardContent>
-                <Skeleton className="h-8 w-[40%] max-w-[64px] mb-2" />
-                <Skeleton className="h-3 w-[80%] max-w-[128px]" />
+                <Skeleton className="h-8 w-[40%] mb-2" />
+                <Skeleton className="h-3 w-[80%]" />
               </CardContent>
             </Card>
           ))
@@ -258,12 +258,12 @@ function StudentDashboard() {
           <>
             <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cursos Matriculados</CardTitle>
-            <BookOpen className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium break-words">Cursos Matriculados</CardTitle>
+            <BookOpen className="h-4 w-4 text-primary flex-shrink-0 ml-2" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{studentProgress?.summary?.totalCourses || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground break-words">
               {coursesInProgress > 0 ? `${coursesInProgress} em andamento` : 'Total de cursos'}
             </p>
           </CardContent>
@@ -271,12 +271,12 @@ function StudentDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Progresso Geral</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <CardTitle className="text-sm font-medium break-words">Progresso Geral</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0 ml-2" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{studentProgress?.summary?.overallProgress || 0}%</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground break-words">
               {studentProgress?.summary?.completedSteps || 0} de {studentProgress?.summary?.totalSteps || 0} etapas
             </p>
           </CardContent>
@@ -284,23 +284,23 @@ function StudentDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Certificados</CardTitle>
-            <Award className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+            <CardTitle className="text-sm font-medium break-words">Certificados</CardTitle>
+            <Award className="h-4 w-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 ml-2" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{certificatesCount}</div>
-            <p className="text-xs text-muted-foreground">Disponíveis para download</p>
+            <p className="text-xs text-muted-foreground break-words">Disponíveis para download</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Etapas Concluídas</CardTitle>
-            <Star className="h-4 w-4 text-yellow-500" />
+            <CardTitle className="text-sm font-medium break-words">Etapas Concluídas</CardTitle>
+            <Star className="h-4 w-4 text-yellow-500 flex-shrink-0 ml-2" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{studentProgress?.summary?.completedSteps || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground break-words">
               {studentProgress?.summary?.inProgressSteps > 0 
                 ? `${studentProgress?.summary?.inProgressSteps} em progresso` 
                 : 'Total completado'}
@@ -323,28 +323,28 @@ function StudentDashboard() {
               // Skeleton for next class
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="space-y-2 min-w-0">
-                    <Skeleton className="h-5 w-full max-w-[200px]" />
+                  <div className="space-y-2 min-w-0 flex-1">
+                    <Skeleton className="h-5 w-3/4" />
                     <div className="flex items-center gap-4">
-                      <Skeleton className="h-4 w-[60%] max-w-[96px]" />
-                      <Skeleton className="h-4 w-[40%] max-w-[64px]" />
+                      <Skeleton className="h-4 w-[60%]" />
+                      <Skeleton className="h-4 w-[40%]" />
                     </div>
                   </div>
-                  <Skeleton className="h-9 w-full sm:w-auto sm:min-w-[112px] max-w-[112px]" />
+                  <Skeleton className="h-9 w-full sm:w-auto" />
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Skeleton className="h-4 w-[70%] max-w-[128px]" />
-                    <Skeleton className="h-4 w-[15%] max-w-[32px]" />
+                    <Skeleton className="h-4 w-[70%]" />
+                    <Skeleton className="h-4 w-[15%]" />
                   </div>
                   <Skeleton className="h-2 w-full" />
                 </div>
               </div>
             ) : nextClass ? (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <h3 className="font-semibold">{nextClass.class.onlineCourseModel.course.name}</h3>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <h3 className="font-semibold break-words">{nextClass.class.onlineCourseModel.course.name}</h3>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
@@ -359,6 +359,7 @@ function StudentDashboard() {
                   <Button 
                     size="sm"
                     onClick={() => navigate({ to: `/student/course/${nextClass.classId}/lessons` })}
+                    className="w-full sm:w-auto"
                   >
                     Continuar <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -410,8 +411,8 @@ function StudentDashboard() {
                 [...Array(3)].map((_, index) => (
                   <div key={`skeleton-activity-${index}`} className="flex items-center justify-between">
                     <div className="space-y-2 flex-1 min-w-0">
-                      <Skeleton className="h-4 w-[75%] max-w-[200px]" />
-                      <Skeleton className="h-3 w-[50%] max-w-[150px]" />
+                      <Skeleton className="h-4 w-[75%]" />
+                      <Skeleton className="h-3 w-[50%]" />
                     </div>
                     <Skeleton className="h-6 w-12 rounded-full flex-shrink-0" />
                   </div>
@@ -465,11 +466,11 @@ function StudentDashboard() {
           <CardContent>
             <div className="space-y-4">
               {[...Array(3)].map((_, index) => (
-                <div key={`skeleton-cert-${index}`} className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                  <Skeleton className="h-20 w-full sm:w-28 rounded flex-shrink-0" />
-                  <div className="flex-1 space-y-2 w-full">
-                    <Skeleton className="h-4 w-3/4 max-w-[200px]" />
-                    <Skeleton className="h-3 w-1/2 max-w-[150px]" />
+                <div key={`skeleton-cert-${index}`} className="flex flex-col min-[480px]:flex-row items-start min-[480px]:items-center gap-4">
+                  <Skeleton className="h-20 w-full min-[480px]:w-28 rounded min-[480px]:flex-shrink-0" />
+                  <div className="flex-1 space-y-2 min-w-0">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
                   </div>
                   <div className="flex gap-2">
                     <Skeleton className="h-9 w-9 rounded" />
@@ -489,10 +490,10 @@ function StudentDashboard() {
           <CardContent>
             <div className="space-y-4">
               {certificates.slice(0, 3).map((cert) => (
-                <div key={cert.id} className="flex items-center gap-4 p-2 hover:bg-muted/50 rounded-lg transition-colors">
+                <div key={cert.id} className="flex flex-col min-[480px]:flex-row items-start min-[480px]:items-center gap-4 p-2 hover:bg-muted/50 rounded-lg transition-colors">
                   {/* Thumbnail do certificado */}
                   {cert.fabricJsonFront ? (
-                    <div className="w-28 h-20 rounded overflow-hidden border bg-white dark:bg-gray-800 cursor-pointer"
+                    <div className="w-full min-[480px]:w-28 h-32 min-[480px]:h-20 rounded overflow-hidden border bg-background cursor-pointer min-[480px]:flex-shrink-0"
                          onClick={() => handleViewCertificate(cert)}>
                       <CertificateThumbnail
                         certificateData={{
@@ -509,26 +510,26 @@ function StudentDashboard() {
                       />
                     </div>
                   ) : (
-                    <div className="w-28 h-20 rounded border bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center">
+                    <div className="w-full min-[480px]:w-28 h-32 min-[480px]:h-20 rounded border bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center min-[480px]:flex-shrink-0">
                       <Award className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
                     </div>
                   )}
                   
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium break-words">
                       {cert.variableToReplace?.curso_nome?.value || 'Certificado'}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground break-words">
                       Emitido em {new Date(cert.createdAt).toLocaleDateString('pt-BR')}
                     </p>
                     {cert.expirationDate && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground break-words">
                         Válido até {new Date(cert.expirationDate).toLocaleDateString('pt-BR')}
                       </p>
                     )}
                   </div>
                   
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 flex-shrink-0 w-full min-[480px]:w-auto justify-end">
                     <Button 
                       size="icon" 
                       variant="ghost"
@@ -579,14 +580,14 @@ function StudentDashboard() {
 
       {/* Call to Action */}
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
-        <CardContent className="flex items-center justify-between p-6">
-          <div>
-            <h3 className="font-semibold text-lg mb-1">Explore novos cursos</h3>
-            <p className="text-sm text-muted-foreground">
+        <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-lg mb-1 break-words">Explore novos cursos</h3>
+            <p className="text-sm text-muted-foreground break-words">
               Descubra cursos recomendados baseados no seu perfil
             </p>
           </div>
-          <Button onClick={() => navigate({ to: '/student/courses' })}>
+          <Button onClick={() => navigate({ to: '/student/courses' })} className="w-full sm:w-auto flex-shrink-0">
             Explorar Cursos <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </CardContent>

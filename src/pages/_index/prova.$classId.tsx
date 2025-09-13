@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { post } from "@/services/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,6 +36,13 @@ import Footer from "./-components/Footer";
 
 export const Route = createFileRoute("/_index/prova/$classId")({
   component: ExamPage,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      cpf: search.cpf as string | undefined,
+      classCode: search.classCode as string | undefined,
+      autoLogin: search.autoLogin === 'true' || search.autoLogin === true
+    };
+  }
 });
 
 interface ExamQuestion {
@@ -100,6 +107,8 @@ interface CourseReview {
 
 function ExamPage() {
   const { classId } = Route.useParams();
+  const searchParams = Route.useSearch();
+  const navigate = useNavigate();
   const STORAGE_KEY = `exam_session_${classId}`;
   const STORAGE_EXPIRY_KEY = `exam_session_expiry_${classId}`;
   
@@ -594,17 +603,51 @@ function ExamPage() {
       });
     }
   }, []);
+
+  // Efeito para auto-login via URL params
+  useEffect(() => {
+    if (searchParams?.autoLogin && searchParams?.cpf && searchParams?.classCode && stage === "auth") {
+      // Define as credenciais automaticamente
+      setCredentials({
+        cpf: searchParams.cpf,
+        classCode: searchParams.classCode
+      });
+
+      // Limpa os parâmetros da URL para segurança
+      navigate({
+        to: '/prova/$classId',
+        params: { classId },
+        search: {
+          cpf: undefined,
+          classCode: undefined,
+          autoLogin: false
+        },
+        replace: true
+      });
+
+      // Valida automaticamente as credenciais
+      validateCredentials.mutate({
+        cpf: searchParams.cpf,
+        classCode: searchParams.classCode
+      });
+
+      toast({
+        title: "Autenticando...",
+        description: "Validando suas credenciais automaticamente.",
+      });
+    }
+  }, [searchParams, stage, classId]);
   
   return (
-    <div className="[color-scheme:light] min-h-screen bg-white" style={{ colorScheme: 'light' }}>
+    <div className="min-h-screen bg-background text-foreground">
         <NavBar cart={[]} setCart={() => {}} handleWhatsApp={() => {}} />
-        
+
         {/* Loader ao enviar prova */}
         {submitExam.isPending && (
           <Loader title="Enviando sua prova..." />
         )}
-        
-        <div className="container mx-auto px-4 py-24" style={{ backgroundColor: 'white' }}>
+
+        <div className="container mx-auto px-4 py-24">
         <AnimatePresence mode="wait">
           {/* Estágio de Autenticação */}
           {stage === "auth" && (
@@ -615,53 +658,53 @@ function ExamPage() {
               exit={{ opacity: 0, y: -20 }}
               className="max-w-md mx-auto"
             >
-              <Card className="p-8 shadow-xl bg-white border-gray-200">
+              <Card className="p-8 shadow-xl bg-card border-border">
                 <div className="text-center mb-8">
-                  <h1 className="text-2xl font-bold text-gray-900 mb-2" style={{ color: '#111827' }}>
+                  <h1 className="text-2xl font-bold text-foreground mb-2">
                     Acesso à Prova
                   </h1>
-                  <p className="text-gray-600" style={{ color: '#4B5563' }}>
+                  <p className="text-muted-foreground">
                     Digite suas credenciais para acessar a prova
                   </p>
                 </div>
                 
                 <form onSubmit={handleAuth} className="space-y-6">
                   <div>
-                    <Label htmlFor="cpf" className="text-gray-700 font-medium" style={{ color: '#374151' }}>
+                    <Label htmlFor="cpf" className="text-foreground font-medium">
                       CPF
                     </Label>
                     <div className="relative mt-2">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="cpf"
                         name="cpf"
                         format="cpf"
                         placeholder="000.000.000-00"
                         value={credentials.cpf}
-                        onValueChange={(name, value) => 
+                        onValueChange={(name, value) =>
                           setCredentials(prev => ({ ...prev, [name]: value }))
                         }
-                        className="pl-10 bg-white text-gray-900 border-gray-300"
+                        className="pl-10 bg-background text-foreground border-input"
                         required
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <Label htmlFor="classCode" className="text-gray-700 font-medium" style={{ color: '#374151' }}>
+                    <Label htmlFor="classCode" className="text-foreground font-medium">
                       Código da Turma
                     </Label>
                     <div className="relative mt-2">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="classCode"
                         name="classCode"
                         placeholder="Ex: A3B9"
                         value={credentials.classCode}
-                        onValueChange={(name, value) => 
+                        onValueChange={(name, value) =>
                           setCredentials(prev => ({ ...prev, [name]: typeof value === 'string' ? value.toUpperCase() : value.toString() }))
                         }
-                        className="pl-10 uppercase bg-white text-gray-900 border-gray-300"
+                        className="pl-10 uppercase bg-background text-foreground border-input"
                         maxLength={4}
                         required
                       />
@@ -687,10 +730,10 @@ function ExamPage() {
                   </Button>
                 </form>
                 
-                <div className="mt-6 p-4 rounded-lg" style={{ backgroundColor: '#FEF3C7' }}>
+                <div className="mt-6 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900">
                   <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                    <div className="text-sm" style={{ color: '#92400E' }}>
+                    <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5" />
+                    <div className="text-sm text-yellow-900 dark:text-yellow-200">
                       <p className="font-semibold mb-1">Importante:</p>
                       <ul className="space-y-1">
                         <li>• Use o mesmo CPF cadastrado na inscrição</li>
@@ -718,11 +761,11 @@ function ExamPage() {
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div className="order-2 md:order-1">
                     {examData.traineeName && (
-                      <p className="text-base md:text-lg font-semibold mb-1" style={{ color: '#1F2937' }}>
+                      <p className="text-base md:text-lg font-semibold mb-1 text-foreground">
                         {examData.traineeName}
                       </p>
                     )}
-                    <h1 className="text-lg md:text-xl font-bold text-black">
+                    <h1 className="text-lg md:text-xl font-bold text-foreground">
                       Prova de Avaliação:&nbsp;
                       {examData.courseName && (
                         <span className="block md:inline text-sm md:text-lg font-normal md:font-medium">
@@ -731,13 +774,13 @@ function ExamPage() {
                       )}
                     </h1>
                     {examData.className && (
-                      <p className="text-xs md:text-sm mt-1" style={{ color: '#6B7280' }}>
+                      <p className="text-xs md:text-sm mt-1 text-muted-foreground">
                         Turma: {examData.className}
                       </p>
                     )}
                   </div>
                   <div className="order-1 md:order-2 flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-3">
-                    <Badge variant="outline" className="px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm" style={{ backgroundColor: 'white', color: '#374151', borderColor: '#E5E7EB' }}>
+                    <Badge variant="outline" className="px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm bg-background">
                       <Clock className="mr-1.5 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
                       Questão {currentQuestion + 1} de {examData.exam.length}
                     </Badge>
@@ -749,20 +792,7 @@ function ExamPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-xs md:text-sm h-8 md:h-9"
-                        style={{ 
-                          backgroundColor: 'white', 
-                          borderColor: '#E5E7EB',
-                          color: '#DC2626'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#FEF2F2';
-                          e.currentTarget.style.color = '#B91C1C';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'white';
-                          e.currentTarget.style.color = '#DC2626';
-                        }}
+                        className="text-xs md:text-sm h-8 md:h-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
                       >
                         <LogOut className="mr-1.5 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
                         Sair
@@ -773,30 +803,29 @@ function ExamPage() {
                 
                 {/* Barra de Progresso */}
                 <div className="space-y-2 mt-4">
-                  <div className="flex justify-between text-xs md:text-sm" style={{ color: '#4B5563' }}>
+                  <div className="flex justify-between text-xs md:text-sm text-muted-foreground">
                     <span>Progresso da Prova</span>
                     <span>{Math.round(progress)}% completo</span>
                   </div>
-                  <Progress 
-                    value={progress} 
-                    className="h-1.5 md:h-2" 
-                    style={{ backgroundColor: '#E5E7EB' }}
+                  <Progress
+                    value={progress}
+                    className="h-1.5 md:h-2 bg-muted"
                   />
                 </div>
               </div>
               
               {/* Questão */}
-              <Card className="p-4 md:p-8 shadow-xl bg-white border-gray-200">
+              <Card className="p-4 md:p-8 shadow-xl bg-card border-border">
                 <div className="mb-6 md:mb-8">
                   <div className="flex items-start gap-3 md:gap-4 mb-4 md:mb-6">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-primary-light/10 rounded-full flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-4 h-4 md:w-5 md:h-5 text-primary-light" />
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <h2 className="text-base md:text-lg font-semibold mb-2" style={{ color: '#111827' }}>
+                      <h2 className="text-base md:text-lg font-semibold mb-2 text-foreground">
                         Questão {currentQuestion + 1}
                       </h2>
-                      <p className="text-sm md:text-base leading-relaxed" style={{ color: '#374151' }}>
+                      <p className="text-sm md:text-base leading-relaxed text-foreground">
                         {examData.exam[currentQuestion].question}
                       </p>
                     </div>
@@ -809,31 +838,27 @@ function ExamPage() {
                     className="space-y-2 md:space-y-3"
                   >
                     {examData.exam[currentQuestion].options.map((option, index) => (
-                      <div 
+                      <div
                         key={index}
                         className={`relative flex items-center space-x-2 md:space-x-3 p-3 md:p-4 rounded-lg border-2 transition-all cursor-pointer ${
                           selectedOption === index.toString()
-                            ? 'border-primary-light'
-                            : 'border-gray-200'
+                            ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                            : 'border-border bg-background hover:bg-accent hover:border-accent-foreground/20'
                         }`}
-                        style={{
-                          backgroundColor: selectedOption === index.toString() ? 'rgba(34, 197, 94, 0.05)' : 'white',
-                          borderColor: selectedOption === index.toString() ? '#22C55E' : '#E5E7EB'
-                        }}
                       >
-                        <RadioGroupItem 
-                          value={index.toString()} 
+                        <RadioGroupItem
+                          value={index.toString()}
                           id={`option-${index}`}
-                          className="text-primary-light h-4 w-4 md:h-5 md:w-5"
+                          className="text-primary h-4 w-4 md:h-5 md:w-5"
                         />
-                        <Label 
+                        <Label
                           htmlFor={`option-${index}`}
-                          className="flex-1 cursor-pointer text-sm md:text-base" style={{ color: '#374151' }}
+                          className="flex-1 cursor-pointer text-sm md:text-base text-foreground"
                         >
                           {option.text}
                         </Label>
                         {selectedOption === index.toString() && (
-                          <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-primary-light" />
+                          <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                         )}
                       </div>
                     ))}
@@ -898,20 +923,13 @@ function ExamPage() {
                             });
                           }
                         }}
-                        className={`w-8 h-8 md:w-10 md:h-10 rounded-lg text-xs md:text-sm font-medium transition-all flex-shrink-0`}
-                        style={{
-                          backgroundColor: index === currentQuestion 
-                            ? '#22C55E' 
+                        className={`w-8 h-8 md:w-10 md:h-10 rounded-lg text-xs md:text-sm font-medium transition-all flex-shrink-0 ${
+                          index === currentQuestion
+                            ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2 ring-offset-background'
                             : answers[index]?.selectedOption !== -1
-                            ? '#DCFCE7'
-                            : '#F3F4F6',
-                          color: index === currentQuestion
-                            ? 'white'
-                            : answers[index]?.selectedOption !== -1
-                            ? '#15803D'
-                            : '#4B5563',
-                          boxShadow: index === currentQuestion ? '0 0 0 2px white, 0 0 0 4px #22C55E' : 'none'
-                        }}
+                            ? 'bg-primary/20 text-primary dark:bg-primary/30'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                        }`}
                         title={
                           answers[index]?.selectedOption !== -1
                             ? `Quest\u00e3o ${index + 1} - Respondida`
@@ -974,7 +992,7 @@ function ExamPage() {
                     ) : (
                     <Button
                       onClick={handleNextQuestion}
-                      className="bg-primary-light hover:bg-primary-light/90 text-xs md:text-sm h-9 md:h-10"
+                      className="bg-primary hover:bg-primary/90 text-xs md:text-sm h-9 md:h-10"
                       disabled={!selectedOption || selectedOption === ""}
                     >
                       Próxima
@@ -987,38 +1005,36 @@ function ExamPage() {
               
               {/* Modal de Consentimento para Exibição do Certificado */}
               {hasAskedConsent && !submitExam.isPending && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                  <Card className="w-full max-w-md p-6 bg-white">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70">
+                  <Card className="w-full max-w-md p-6 bg-card">
                     <div className="text-center mb-6">
-                      <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                        style={{ backgroundColor: '#FEF3C7' }}>
-                        <Award className="w-8 h-8 text-yellow-600" />
+                      <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-yellow-50 dark:bg-yellow-950/30">
+                        <Award className="w-8 h-8 text-yellow-600 dark:text-yellow-500" />
                       </div>
-                      <h3 className="text-lg font-bold mb-2" style={{ color: '#111827' }}>
+                      <h3 className="text-lg font-bold mb-2 text-foreground">
                         Exibir seu Certificado em nossa página?
                       </h3>
                     </div>
                     
                     <div className="space-y-3">
-                      <div className="flex items-start gap-2 p-3 rounded-lg" style={{ backgroundColor: '#F3F4F6' }}>
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-muted">
                         <Checkbox
                           id="websiteConsent"
                           checked={showOnWebsiteConsent}
                           onCheckedChange={(checked) => setShowOnWebsiteConsent(checked as boolean)}
                           className="mt-0.5"
                         />
-                        <Label 
-                          htmlFor="websiteConsent" 
-                          className="text-sm cursor-pointer flex-1"
-                          style={{ color: '#374151' }}
+                        <Label
+                          htmlFor="websiteConsent"
+                          className="text-sm cursor-pointer flex-1 text-foreground"
                         >
                           Autorizo a exibição do meu certificado na página de Profissionais Certificados do site
                         </Label>
                       </div>
-                      
-                      <div className="text-xs p-3 rounded-lg" style={{ backgroundColor: '#DBEAFE', color: '#1E40AF' }}>
-                        <p className="font-medium mb-1">Benefícios:</p>
-                        <ul className="space-y-1 ml-4">
+
+                      <div className="text-xs p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
+                        <p className="font-medium mb-1 text-blue-900 dark:text-blue-200">Benefícios:</p>
+                        <ul className="space-y-1 ml-4 text-blue-900 dark:text-blue-200">
                           <li>• Maior visibilidade profissional</li>
                           <li>• Comprovação pública de sua qualificação</li>
                           <li>• Possibilidade de ser contactado para oportunidades</li>
@@ -1044,19 +1060,19 @@ function ExamPage() {
               )}
               
               {/* Indicador de questões respondidas */}
-              <div className="mt-4 md:mt-6 p-3 md:p-4 rounded-lg" style={{ backgroundColor: '#DBEAFE' }}>
+              <div className="mt-4 md:mt-6 p-3 md:p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-xs md:text-sm">
                   <div className="flex items-center gap-3 sm:gap-4">
                     <div className="flex items-center gap-1.5 md:gap-2">
-                      <div className="w-2.5 h-2.5 md:w-3 md:h-3 bg-green-500 rounded-full"></div>
-                      <span style={{ color: '#374151' }}>Respondidas</span>
+                      <div className="w-2.5 h-2.5 md:w-3 md:h-3 bg-green-500 dark:bg-green-400 rounded-full"></div>
+                      <span className="text-foreground">Respondidas</span>
                     </div>
                     <div className="flex items-center gap-1.5 md:gap-2">
-                      <div className="w-2.5 h-2.5 md:w-3 md:h-3 bg-gray-300 rounded-full"></div>
-                      <span style={{ color: '#374151' }}>Pendentes</span>
+                      <div className="w-2.5 h-2.5 md:w-3 md:h-3 bg-muted-foreground/30 rounded-full"></div>
+                      <span className="text-foreground">Pendentes</span>
                     </div>
                   </div>
-                  <div className="sm:ml-auto font-medium" style={{ color: '#374151' }}>
+                  <div className="sm:ml-auto font-medium text-foreground">
                     {answers.filter(a => a.selectedOption !== -1).length} de {examData.exam.length} respondidas
                   </div>
                 </div>
@@ -1073,40 +1089,50 @@ function ExamPage() {
               exit={{ opacity: 0, scale: 0.9 }}
               className="max-w-3xl mx-auto"
             >
-              <Card className="p-6 md:p-8 shadow-xl bg-white border-gray-200">
+              <Card className="p-6 md:p-8 shadow-xl bg-card border-border">
                 {/* Resultado Compacto */}
                 <div className="text-center mb-6">
                   {/* Ícone e Título */}
                   <div className="flex flex-col items-center gap-3 mb-4">
-                    <div className="w-20 h-20 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: examResult.passed ? '#DCFCE7' : '#FEE2E2' }}>
+                    <div className={`w-20 h-20 rounded-full flex items-center justify-center ${
+                      examResult.passed
+                        ? 'bg-green-100 dark:bg-green-950/30'
+                        : 'bg-red-100 dark:bg-red-950/30'
+                    }`}>
                       {examResult.passed ? (
-                        <Award className="w-10 h-10 text-green-600" />
+                        <Award className="w-10 h-10 text-green-600 dark:text-green-500" />
                       ) : (
-                        <XCircle className="w-10 h-10 text-red-600" />
+                        <XCircle className="w-10 h-10 text-red-600 dark:text-red-500" />
                       )}
                     </div>
                     <div className="text-center">
-                      <h1 className="text-2xl md:text-3xl font-bold mb-2"
-                        style={{ color: examResult.passed ? '#15803D' : '#B91C1C' }}>
+                      <h1 className={`text-2xl md:text-3xl font-bold mb-2 ${
+                        examResult.passed
+                          ? 'text-green-700 dark:text-green-400'
+                          : 'text-red-700 dark:text-red-400'
+                      }`}>
                         {examResult.passed ? 'Parabéns, você foi aprovado!' : 'Você não foi aprovado desta vez'}
                       </h1>
-                      <p className="text-base mb-2" style={{ color: '#4B5563' }}>
-                        {examResult.passed 
-                          ? 'Você demonstrou domínio do conteúdo e está apto para receber seu certificado!' 
+                      <p className="text-base mb-2 text-muted-foreground">
+                        {examResult.passed
+                          ? 'Você demonstrou domínio do conteúdo e está apto para receber seu certificado!'
                           : 'Não desanime! Você pode revisar o conteúdo e tentar novamente.'}
                       </p>
-                      <div className="flex items-center justify-center gap-4 text-sm" style={{ color: '#6B7280' }}>
+                      <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
                         <span>
-                          Nota: <span className="font-bold text-lg" style={{ color: examResult.passed ? '#15803D' : '#B91C1C' }}>
+                          Nota: <span className={`font-bold text-lg ${
+                            examResult.passed
+                              ? 'text-green-700 dark:text-green-400'
+                              : 'text-red-700 dark:text-red-400'
+                          }`}>
                             {examResult.score.toFixed(1)}
                           </span>
                         </span>
-                        <span className="text-gray-400">•</span>
+                        <span className="text-muted-foreground/50">•</span>
                         <span>
                           Acertos: <span className="font-bold">{examResult.correctAnswers}/{examResult.totalQuestions}</span>
                         </span>
-                        <span className="text-gray-400">•</span>
+                        <span className="text-muted-foreground/50">•</span>
                         <span>
                           Aproveitamento: <span className="font-bold">{((examResult.correctAnswers / examResult.totalQuestions) * 100).toFixed(0)}%</span>
                         </span>
@@ -1116,16 +1142,16 @@ function ExamPage() {
                 </div>
 
                 {/* Divisor */}
-                <div className="border-t border-gray-200 my-6"></div>
+                <div className="border-t border-border my-6"></div>
 
                 {/* Seção de Avaliação ou Agradecimento */}
                 {!reviewSubmitted ? (
                   <div>
                     <div className="text-center mb-4">
-                      <h2 className="text-lg font-bold mb-1" style={{ color: '#111827' }}>
+                      <h2 className="text-lg font-bold mb-1 text-foreground">
                         Avalie nosso curso
                       </h2>
-                      <p className="text-xs" style={{ color: '#6B7280' }}>
+                      <p className="text-xs text-muted-foreground">
                         Sua opinião nos ajuda a melhorar
                       </p>
                     </div>
@@ -1140,7 +1166,7 @@ function ExamPage() {
                         </Rating>
                       </div>
                       {reviewRating > 0 && (
-                        <p className="text-center mt-1 text-xs" style={{ color: '#6B7280' }}>
+                        <p className="text-center mt-1 text-xs text-muted-foreground">
                           {reviewRating === 1 && "Muito Ruim"}
                           {reviewRating === 2 && "Ruim"}
                           {reviewRating === 3 && "Regular"}
@@ -1157,8 +1183,7 @@ function ExamPage() {
                         placeholder="Conte-nos o que achou do curso... (opcional)"
                         value={reviewOpinion}
                         onChange={(e) => setReviewOpinion(e.target.value)}
-                        className="min-h-[80px] bg-white border-gray-300 text-sm"
-                        style={{ color: '#111827' }}
+                        className="min-h-[80px] bg-background border-input text-sm text-foreground"
                       />
                     </div>
 
@@ -1171,10 +1196,9 @@ function ExamPage() {
                           onCheckedChange={(checked) => setReviewAuthorization(checked as boolean)}
                           className="mt-0.5"
                         />
-                        <Label 
-                          htmlFor="authorization" 
-                          className="text-xs cursor-pointer"
-                          style={{ color: '#6B7280' }}
+                        <Label
+                          htmlFor="authorization"
+                          className="text-xs cursor-pointer text-muted-foreground"
                         >
                           Autorizo o uso desta avaliação para divulgação
                         </Label>
@@ -1206,7 +1230,7 @@ function ExamPage() {
                           // Envia a avaliação para a API
                           submitReview.mutate(reviewData);
                         }}
-                        className="flex-1 bg-primary-light hover:bg-primary-light/90"
+                        className="flex-1 bg-primary hover:bg-primary/90"
                         disabled={submitReview.isPending}
                       >
                         {submitReview.isPending ? (
@@ -1223,19 +1247,18 @@ function ExamPage() {
                 ) : (
                   // Mensagem de Agradecimento
                   <div className="text-center py-6">
-                    <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" 
-                      style={{ backgroundColor: '#DCFCE7' }}>
-                      <CheckCircle className="w-8 h-8 text-green-600" />
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-green-100 dark:bg-green-950/30">
+                      <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-500" />
                     </div>
-                    <h3 className="text-lg font-bold mb-2" style={{ color: '#15803D' }}>
+                    <h3 className="text-lg font-bold mb-2 text-green-700 dark:text-green-400">
                       Obrigado pela sua avaliação!
                     </h3>
-                    <p className="text-sm mb-6" style={{ color: '#6B7280' }}>
+                    <p className="text-sm mb-6 text-muted-foreground">
                       Seu feedback é muito importante para continuarmos melhorando nossos cursos.
                     </p>
                     <Button
                       onClick={() => window.location.href = '/'}
-                      className="bg-primary-light hover:bg-primary-light/90"
+                      className="bg-primary hover:bg-primary/90"
                     >
                       Voltar ao Início
                     </Button>

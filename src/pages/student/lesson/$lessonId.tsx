@@ -3,6 +3,7 @@ import { useEffect, useMemo, useCallback, useRef, useState } from 'react';
 import Loader from '@/components/general-components/Loader';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from '@tanstack/react-router';
+import { ArrowUpRight, Sparkles } from 'lucide-react';
 
 // Hooks
 import { useLessonData } from './-hooks/useLessonData';
@@ -19,29 +20,55 @@ import { TextContent } from './-components/content/TextContent';
 import { QuizContent } from './-components/content/QuizContent';
 import { DownloadContent } from './-components/content/DownloadContent';
 import { CompletionModal } from './-components/CompletionModal';
+import { NextLessonModal } from './-components/NextLessonModal';
+import { ContentSkeleton } from './-components/ContentSkeleton';
 
 // Types  (MergedStep é usado indiretamente pelos componentes)
 
 export const Route = createFileRoute('/student/lesson/$lessonId')({
   component: LessonPlayer,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      modelId: search.modelId ? Number(search.modelId) : undefined,
+      classId: search.classId ? Number(search.classId) : undefined,
+    };
+  },
 });
 
 function LessonPlayer() {
   const { lessonId } = Route.useParams();
+  const { modelId, classId } = Route.useSearch();
   const navigate = useNavigate();
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [showNextLessonModal, setShowNextLessonModal] = useState(false);
+  const [nextLessonId, setNextLessonId] = useState<number | null>(null);
+  const [hasShownCompletionModal, setHasShownCompletionModal] = useState(false);
+  const [isChangingLesson, setIsChangingLesson] = useState(false);
+  const previousLessonIdRef = useRef(lessonId);
   
-  // Hooks
-  const { data: lessonData, isLoading, refetch } = useLessonData(lessonId);
+  // Hooks - passa modelId para o hook useLessonData
+  const { data: lessonData, isLoading, refetch } = useLessonData(lessonId, modelId);
+  
   const {
     startStep,
     updateStepProgress,
     checkLessonCompletion
   } = useLessonProgress(lessonId, () => {
-    // Callback quando a lição for concluída
-    setShowCompletionModal(true);
-    // Refetch para garantir dados atualizados
-    refetch();
+    // Callback quando a lição for concluída pela primeira vez
+    // Verificar nextLesson imediatamente se disponível
+    if (lessonData?.nextLesson !== undefined) {
+      if (lessonData.nextLesson) {
+        setNextLessonId(lessonData.nextLesson);
+        setShowNextLessonModal(true);
+        setHasShownCompletionModal(true);
+      } else {
+        setShowCompletionModal(true);
+        setHasShownCompletionModal(true);
+      }
+    } else {
+      // Refetch para garantir dados atualizados com nextLesson
+      refetch();
+    }
   });
   
   const {
@@ -51,10 +78,29 @@ function LessonPlayer() {
     goToNextStep,
     goToPreviousStep,
     canGoNext,
-    canGoPrevious
+    canGoPrevious,
+    setCurrentStep,
+    setCurrentStepIndex
   } = useStepNavigation({ lessonData, startStep });
   
   const { completeStep } = useStepCompletion(lessonId, currentStep, checkLessonCompletion);
+
+  // Reset imediato do step quando mudar de lição
+  useEffect(() => {
+    if (previousLessonIdRef.current !== lessonId) {
+      setIsChangingLesson(true);
+      setCurrentStep(null);
+      setCurrentStepIndex(0);
+      previousLessonIdRef.current = lessonId;
+    }
+  }, [lessonId, setCurrentStep, setCurrentStepIndex]);
+
+  // Resetar flag quando dados carregarem
+  useEffect(() => {
+    if (!isLoading && lessonData && isChangingLesson) {
+      setIsChangingLesson(false);
+    }
+  }, [isLoading, lessonData, isChangingLesson]);
 
   // Ref para controlar se já está completando o vídeo
   const isCompletingVideoRef = useRef<Set<number>>(new Set());
@@ -64,6 +110,28 @@ function LessonPlayer() {
   // Não precisa mais iniciar lesson manualmente
   // O backend inicia automaticamente quando iniciar o primeiro step
   // useEffect removido - startLesson não é mais necessário
+
+  // Monitorar quando refetch traz nextLesson após conclusão
+  useEffect(() => {
+    // Só processa se a lição está completa e ainda não mostrou modal
+    if (lessonData?.lessonProgress?.completed && !hasShownCompletionModal && lessonData?.nextLesson !== undefined) {
+      if (lessonData.nextLesson) {
+        setNextLessonId(lessonData.nextLesson);
+        setShowNextLessonModal(true);
+        setHasShownCompletionModal(true);
+      } else {
+        setShowCompletionModal(true);
+        setHasShownCompletionModal(true);
+      }
+    }
+  }, [lessonData, hasShownCompletionModal]);
+
+  // Resetar flag quando mudar de lição
+  useEffect(() => {
+    setHasShownCompletionModal(false);
+    setShowCompletionModal(false);
+    setShowNextLessonModal(false);
+  }, [lessonId]);
 
   // Limpar refs quando mudar de step
   useEffect(() => {
@@ -86,11 +154,8 @@ function LessonPlayer() {
   const handleVideoProgress = useCallback((progress: number, currentTime?: number, duration?: number) => {
     if (!currentStep) return;
     
-    console.log('📊 handleVideoProgress - Progress:', progress, 'Step:', currentStep.id, 'Status:', currentStep.status);
-    
     // Se o step já está completo, não fazer nada para evitar reset do vídeo
     if (currentStep.status === ('completed' as any) || currentStep.status === ('COMPLETED' as any)) {
-      console.log('⏸️ Step já está completo, ignorando progresso');
       return;
     }
     
@@ -114,7 +179,6 @@ function LessonPlayer() {
     if (progress >= videoCompletePercent) {
       // Verificar se já está processando a conclusão deste vídeo
       if (isCompletingVideoRef.current.has(currentStep.id)) {
-        console.log('⏭️ Já está processando a conclusão do vídeo');
         return;
       }
       
@@ -123,7 +187,6 @@ function LessonPlayer() {
         return;
       }
       
-      console.log('🎯 Vídeo atingiu', videoCompletePercent + '% - Marcando como completo');
       
       // Marcar que está processando
       isCompletingVideoRef.current.add(currentStep.id);
@@ -159,7 +222,22 @@ function LessonPlayer() {
 
   // Renderizar conteúdo baseado no tipo do step
   const renderStepContent = () => {
-    if (!currentStep) return null;
+    // Só mostrar skeleton no carregamento inicial ou quando estiver mudando de lição
+    if (isLoading || isChangingLesson) {
+      const stepType = currentStep?.type?.toLowerCase() || 'unknown';
+      return <ContentSkeleton type={stepType as any} />;
+    }
+    
+    if (!currentStep) {
+      // Mostrar skeleton genérico quando não há step atual
+      return <ContentSkeleton type="unknown" />;
+    }
+    
+    // Se o step não tem conteúdo ainda, mostrar skeleton do tipo apropriado
+    if (!currentStep.hasContent || !currentStep.content) {
+      const stepType = currentStep.type?.toLowerCase();
+      return <ContentSkeleton type={stepType as any} />;
+    }
     
     const stepType = currentStep.type?.toLowerCase();
     
@@ -178,7 +256,6 @@ function LessonPlayer() {
             step={currentStep}
             onUpdateProgress={updateStepProgress}
             onCompleteStep={(data) => {
-              console.log('📖 Main: TextContent chamou onCompleteStep - Step:', data.stepId);
               completeStep({
                 stepId: data.stepId,
                 contentType: 'TEXT' as const,
@@ -212,7 +289,7 @@ function LessonPlayer() {
           />
         );
       default:
-        return <div>Tipo de conteúdo não suportado: {currentStep.type}</div>;
+        return <ContentSkeleton type="unknown" />;
     }
   };
 
@@ -236,18 +313,59 @@ function LessonPlayer() {
   }
 
   const isCompleted = lessonData.lessonProgress.completed;
+  const isLastStep = currentStepIndex === lessonData.lesson.totalSteps - 1;
+  const hasNextLesson = lessonData.nextLesson !== null && lessonData.nextLesson !== undefined;
+
+  // Função para navegar para próxima aula
+  const handleGoToNextLesson = () => {
+    if (lessonData.nextLesson) {
+      navigate({ 
+        to: `/student/lesson/${lessonData.nextLesson}`,
+        search: {
+          modelId: modelId,
+          classId: classId
+        }
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <LessonHeader 
         lessonData={lessonData}
         isCompleted={isCompleted}
+        classId={classId}
       />
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-0 md:px-4 py-6">
         <div className="grid gap-6 lg:grid-cols-12">
           {/* Main Content */}
           <div className="lg:col-span-8">
+            {/* Botão de Próxima Aula - aparece no último step se há próxima aula */}
+            {isLastStep && hasNextLesson && isCompleted && (
+              <div className="mb-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/20 rounded-full">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">Aula concluída com sucesso!</p>
+                      <p className="text-xs text-muted-foreground">Pronto para continuar sua jornada?</p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={handleGoToNextLesson}
+                    className="group"
+                    size="sm"
+                  >
+                    Próxima Aula
+                    <ArrowUpRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            
             {renderStepContent()}
             
             <StepNavigation
@@ -271,15 +389,24 @@ function LessonPlayer() {
         </div>
       </div>
       
-      {/* Modal de conclusão */}
+      {/* Modal de próxima aula */}
+      {nextLessonId && (
+        <NextLessonModal
+          isOpen={showNextLessonModal}
+          onClose={() => setShowNextLessonModal(false)}
+          currentLessonTitle={lessonData.lesson.title}
+          nextLessonId={nextLessonId}
+          modelId={modelId}
+          classId={classId}
+        />
+      )}
+      
+      {/* Modal de conclusão do curso */}
       <CompletionModal
         isOpen={showCompletionModal}
         onClose={() => setShowCompletionModal(false)}
         lessonTitle={lessonData.lesson.title}
-        classId={lessonData.classId}
-        // TODO: Implementar lógica para buscar próxima aula disponível
-        // nextLessonId={nextLesson?.id}
-        // nextLessonTitle={nextLesson?.title}
+        classId={classId || lessonData.classId}
       />
     </div>
   );

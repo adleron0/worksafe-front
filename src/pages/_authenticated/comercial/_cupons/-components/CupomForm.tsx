@@ -146,6 +146,11 @@ const CupomForm: React.FC<FormProps> = ({ formData, setOpenForm, entity }) => {
       processedValue = value ? Number(value) : undefined;
     }
 
+    // Convert code to uppercase
+    if (name === 'code' && typeof value === 'string') {
+      processedValue = value.toUpperCase();
+    }
+
     if (name === 'courseId' && !value) {
       setData(prev => ({ ...prev, courseId: undefined, classId: undefined }));
     } else if (name === 'sellerId' && !value) {
@@ -261,6 +266,7 @@ const CupomForm: React.FC<FormProps> = ({ formData, setOpenForm, entity }) => {
 
     const formPayload = {
       ...data,
+      code: data.code.toUpperCase(), // Garantir uppercase no envio
       discountValue: Number(data.discountValue),
       commissionValue: data.commissionValue ? Number(data.commissionValue) : undefined,
       minPurchaseValue: data.minPurchaseValue ? Number(data.minPurchaseValue) : undefined,
@@ -360,7 +366,7 @@ const CupomForm: React.FC<FormProps> = ({ formData, setOpenForm, entity }) => {
               value={data.discountValue}
               min={0}
               max={100}
-              step={1}
+              step={0.5}
               onValueChange={handleChange}
             />
           ) : (
@@ -452,7 +458,7 @@ const CupomForm: React.FC<FormProps> = ({ formData, setOpenForm, entity }) => {
                   value={data.commissionValue || 0}
                   min={0}
                   max={100}
-                  step={1}
+                  step={0.5}
                   onValueChange={handleChange}
                 />
               ) : (
@@ -487,6 +493,9 @@ const CupomForm: React.FC<FormProps> = ({ formData, setOpenForm, entity }) => {
               setIsUnlimited(checked);
               if (checked) {
                 setData(prev => ({ ...prev, usageLimit: undefined }));
+              } else {
+                // Quando desmarcar, define um valor padrão de 1
+                setData(prev => ({ ...prev, usageLimit: 1 }));
               }
             }}
           />

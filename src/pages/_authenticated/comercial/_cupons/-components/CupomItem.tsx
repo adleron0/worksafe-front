@@ -12,6 +12,7 @@ import { ICupom } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import ResponsiveBadge from "@/components/general-components/ResponsiveBadge";
 
 interface ItemsProps {
   item: ICupom;
@@ -39,11 +40,14 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
         description: `${entity.name} foi ativado com sucesso.`,
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       hideLoader();
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+        : "Ocorreu um erro ao ativar.";
       toast({
         title: "Erro ao ativar",
-        description: error?.response?.data?.message || "Ocorreu um erro ao ativar.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -62,11 +66,14 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
         description: `${entity.name} foi inativado com sucesso.`,
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       hideLoader();
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+        : "Ocorreu um erro ao inativar.";
       toast({
         title: "Erro ao inativar",
-        description: error?.response?.data?.message || "Ocorreu um erro ao inativar.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -95,7 +102,25 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
   const formatDate = (date?: Date | string) => {
     if (!date) return 'Sem prazo';
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      let dateObj: Date;
+      if (typeof date === 'string') {
+        // Se é uma string ISO com timezone (formato do backend)
+        if (date.includes('T')) {
+          // Extrai apenas a parte da data (YYYY-MM-DD)
+          const datePart = date.split('T')[0];
+          const [year, month, day] = datePart.split('-').map(Number);
+          // Cria a data sem conversão de timezone
+          dateObj = new Date(year, month - 1, day, 12, 0, 0);
+        } else if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          // Se já está no formato YYYY-MM-DD
+          const [year, month, day] = date.split('-').map(Number);
+          dateObj = new Date(year, month - 1, day, 12, 0, 0);
+        } else {
+          dateObj = new Date(date);
+        }
+      } else {
+        dateObj = date;
+      }
       return format(dateObj, 'dd/MM/yyyy', { locale: ptBR });
     } catch {
       return 'Data inválida';
@@ -104,8 +129,28 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
 
   const isExpired = () => {
     if (!item.validUntil) return false;
-    const validDate = typeof item.validUntil === 'string' ? new Date(item.validUntil) : item.validUntil;
-    return validDate < new Date();
+    let validDate: Date;
+
+    if (typeof item.validUntil === 'string') {
+      // Se é uma string ISO com timezone
+      if (item.validUntil.includes('T')) {
+        const datePart = item.validUntil.split('T')[0];
+        const [year, month, day] = datePart.split('-').map(Number);
+        validDate = new Date(year, month - 1, day, 23, 59, 59); // Fim do dia para comparação
+      } else if (item.validUntil.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [year, month, day] = item.validUntil.split('-').map(Number);
+        validDate = new Date(year, month - 1, day, 23, 59, 59);
+      } else {
+        validDate = new Date(item.validUntil);
+      }
+    } else {
+      validDate = item.validUntil;
+    }
+
+    // Compara com o início do dia atual
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return validDate < today;
   };
 
   return (
@@ -123,17 +168,42 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
       )}
 
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
-        <div className="flex flex-col lg:w-3/12">
+        {/* Badges com ScrollArea */}
+        <div className="absolute -top-1 left-4 right-14 lg:right-auto lg:left-4 flex gap-1">
+          { item.course && (
+              <ResponsiveBadge
+                icon="square-library"
+                text="Vinculado a Curso"
+                colorClass="text-inverse-foreground bg-primary"
+              />
+            )
+          }
+
+          { item.class && (
+              <ResponsiveBadge
+                icon="clipboard-list"
+                text="Vinculado a Turma"
+                colorClass="text-inverse-foreground bg-blue-500"
+              />
+            )
+          }
+        </div>
+
+        {/* Nome do Cupom */}
+        <div className="flex flex-col lg:w-3/12 mt-1">
           <p className="text-xs text-muted-foreground lg:hidden">Cupom</p>
-          <p className="font-semibold text-primary">{item.code}</p>
+          <div className="border text-sm border-primary rounded flex items-center w-fit gap-2 py-0.5 px-2">
+            <Icon name="ticket" className="w-4 h-4 text-primary" />
+            <p className="font-semibold text-primary">{item.code}</p>
+          </div>
           {item.description && (
             <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
           )}
-          {(item.course || item.class) && (
+          {/* {(item.course || item.class) && (
             <p className="text-xs text-muted-foreground mt-0.5">
               {item.course?.name}{item.class ? ` - ${item.class.name}` : ''}
             </p>
-          )}
+          )} */}
         </div>
 
         <div className="flex flex-col lg:w-2/12">
@@ -184,7 +254,7 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
           </Status>
         </div>
 
-        <div className="absolute top-2 right-2 lg:static lg:w-1/12">
+        <div className="absolute flex justify-center top-2 right-2 lg:static lg:w-1/12">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button

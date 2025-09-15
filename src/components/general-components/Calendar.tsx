@@ -46,10 +46,24 @@ const CalendarPicker = ({
   fromYear,
   toYear,
 }: CalendarPickerProps) => {
-  // Parse the string date value to Date object
+  // Parse the string date value to Date object without timezone conversion
   const parseDate = (dateStr: string | null | undefined): Date | undefined => {
     if (!dateStr) return undefined;
     try {
+      // If it's an ISO string with timezone, extract just the date part
+      if (dateStr.includes('T')) {
+        // Extract YYYY-MM-DD from the ISO string
+        const datePart = dateStr.split('T')[0];
+        const [year, month, day] = datePart.split('-').map(Number);
+        // Create a date in local timezone with the exact date values
+        return new Date(year, month - 1, day, 12, 0, 0); // Set to noon to avoid DST issues
+      }
+      // If it's already in YYYY-MM-DD format
+      if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        return new Date(year, month - 1, day, 12, 0, 0); // Set to noon to avoid DST issues
+      }
+      // Fallback to regular parsing
       return new Date(dateStr);
     } catch {
       console.error("Invalid date format:", dateStr);
@@ -148,12 +162,20 @@ const CalendarPicker = ({
   // Handlers for each mode
   const handleSingleDateSelect = (selectedDate: Date | undefined) => {
     setDate(selectedDate);
-    
+
     // Update via onValueChange callback
     if (onValueChange) {
-      onValueChange(name, selectedDate ? selectedDate.toISOString() : null);
+      // Format as YYYY-MM-DD to maintain consistency
+      if (selectedDate) {
+        const year = selectedDate.getFullYear();
+        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(selectedDate.getDate()).padStart(2, '0');
+        onValueChange(name, `${year}-${month}-${day}`);
+      } else {
+        onValueChange(name, null);
+      }
     }
-    
+
     // Update form directly if form and formField are provided
     if (form && formField) {
       form.setValue(formField, selectedDate);
@@ -163,13 +185,21 @@ const CalendarPicker = ({
   const handleRangeDateSelect = (range: DateRange | undefined) => {
     if (range) {
       setDateRange(range);
-      
+
       // Update via onValueChange callback
       if (onValueChange) {
-        const rangeStr = `${range.from ? range.from.toISOString() : ''}|${range.to ? range.to.toISOString() : ''}`;
+        // Format dates as YYYY-MM-DD
+        const formatDate = (date: Date | undefined) => {
+          if (!date) return '';
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+        const rangeStr = `${formatDate(range.from)}|${formatDate(range.to)}`;
         onValueChange(name, rangeStr);
       }
-      
+
       // Update form directly if form and formField are provided
       if (form && formField) {
         // For range mode, we expect the form field to be an array of two dates
@@ -177,11 +207,11 @@ const CalendarPicker = ({
       }
     } else {
       setDateRange({ from: undefined, to: undefined });
-      
+
       if (onValueChange) {
         onValueChange(name, null);
       }
-      
+
       if (form && formField) {
         form.setValue(formField, undefined);
       }
@@ -191,24 +221,30 @@ const CalendarPicker = ({
   const handleMultipleDateSelect = (selectedDates: Date[] | undefined) => {
     if (selectedDates) {
       setDates(selectedDates);
-      
+
       // Update via onValueChange callback
       if (onValueChange) {
-        const datesStr = selectedDates.map(d => d.toISOString()).join(',');
+        // Format dates as YYYY-MM-DD
+        const datesStr = selectedDates.map(d => {
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        }).join(',');
         onValueChange(name, datesStr || null);
       }
-      
+
       // Update form directly if form and formField are provided
       if (form && formField) {
         form.setValue(formField, selectedDates);
       }
     } else {
       setDates([]);
-      
+
       if (onValueChange) {
         onValueChange(name, null);
       }
-      
+
       if (form && formField) {
         form.setValue(formField, undefined);
       }
@@ -219,18 +255,22 @@ const CalendarPicker = ({
   const handleNaturalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const masked = applyDateMask(e.target.value);
     setInputValue(masked);
-    
+
     // Try to parse date when complete
     if (masked.length === 10) {
       const parsedDate = parseBrazilianDate(masked);
       if (parsedDate) {
         setDate(parsedDate);
         setMonth(parsedDate);
-        
+
         if (onValueChange) {
-          onValueChange(name, parsedDate.toISOString());
+          // Format as YYYY-MM-DD to maintain consistency
+          const year = parsedDate.getFullYear();
+          const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+          const day = String(parsedDate.getDate()).padStart(2, '0');
+          onValueChange(name, `${year}-${month}-${day}`);
         }
-        
+
         if (form && formField) {
           form.setValue(formField, parsedDate);
         }
@@ -243,11 +283,19 @@ const CalendarPicker = ({
     setDate(selectedDate);
     setInputValue(selectedDate ? format(selectedDate, "dd/MM/yyyy") : "");
     setOpen(false);
-    
+
     if (onValueChange) {
-      onValueChange(name, selectedDate ? selectedDate.toISOString() : null);
+      // Format as YYYY-MM-DD to maintain consistency
+      if (selectedDate) {
+        const year = selectedDate.getFullYear();
+        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(selectedDate.getDate()).padStart(2, '0');
+        onValueChange(name, `${year}-${month}-${day}`);
+      } else {
+        onValueChange(name, null);
+      }
     }
-    
+
     if (form && formField) {
       form.setValue(formField, selectedDate);
     }

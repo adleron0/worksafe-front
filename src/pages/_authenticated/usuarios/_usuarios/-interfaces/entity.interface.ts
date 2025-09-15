@@ -17,4 +17,15 @@ export interface IEntity {
     name: string;
   };
   permissions?: any;
+  isSeller?: boolean;
+  sellerStatus?: 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'BLOCKED';
+  // Campos de endereço adicionados
+  birthDate?: string | null;
+  address?: string | null;
+  addressNumber?: string | null;
+  addressComplement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
 }

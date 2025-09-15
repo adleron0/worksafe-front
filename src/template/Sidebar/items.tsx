@@ -29,9 +29,9 @@ export const items = [
         path: "/comercial/comissaoes",
       },
       {
-        title: "Cupons de Desconto",
+        title: "Cupons",
         icon: "ticket-percent",
-        path: "/comercial/cupons-desconto",
+        path: "/comercial/cupons",
       },
     ],
   },

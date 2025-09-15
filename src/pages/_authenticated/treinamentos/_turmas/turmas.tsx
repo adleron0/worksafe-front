@@ -11,7 +11,8 @@ import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
 import ItemSkeleton from "./-skeletons/ItemSkeleton";
 import ItemList from "./-components/TurmasItem";
-import Form from "./-components/TurmasForm";
+// import Form from "./-components/TurmasForm"; // Comentado - backup SideForm
+import TurmasFormSteps from "./-components/TurmasFormSteps";
 import SearchForm from "./-components/TurmasSearch";
 import TurmasInstrutoresList from "@/pages/_authenticated/treinamentos/_instrutores/-turmas-instrutores/TurmasInstrutoresList";
 import Subscriptions from "@/pages/_authenticated/treinamentos/_inscricoes/inscricoes";
@@ -26,7 +27,8 @@ export const Route = createFileRoute('/_authenticated/treinamentos/_turmas/turma
 function List() {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
-  const [openForm, setOpenForm] = useState(false);
+  // const [openForm, setOpenForm] = useState(false); // Comentado - backup SideForm
+  const [openFormDialog, setOpenFormDialog] = useState(false); // Novo estado para Dialog
   const [openInstrutoresModal, setOpenInstrutoresModal] = useState(false);
   const [openSubscriptionsModal, setOpenSubscriptionsModal] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
@@ -103,8 +105,11 @@ function List() {
         searchParams={searchParams}
         onlimitChange={handleLimitChange}
         openSearch={setOpenSearch}
-        openForm={setOpenForm}
-        setFormData={setFormData} 
+        openForm={() => {
+          setFormData(undefined); // Limpa dados anteriores
+          setOpenFormDialog(true); // Abre o Dialog em vez do SideForm
+        }}
+        setFormData={setFormData}
         setFormType={() => {}}
         iconForm="plus"
       />
@@ -119,19 +124,44 @@ function List() {
         form={ <SearchForm onSubmit={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
       />
 
-      {/* Formulário de cadastro */}
-      <SideForm
+      {/* Formulário de cadastro - Versão anterior com SideForm (comentada como backup) */}
+      {/* <SideForm
         openSheet={openForm}
         setOpenSheet={setOpenForm}
-        title={formData 
+        title={formData
           ? `Editar ${entity.name} ${formData.name}`
           : `Cadastrar ${entity.name}`}
-        description={formData 
+        description={formData
           ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
           : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
         side="right"
         form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} /> }
-      />
+      /> */}
+
+      {/* Novo Dialog com formulário em Steps */}
+      <Dialog
+        open={openFormDialog}
+        onOpenChange={setOpenFormDialog}
+        showBttn={false}
+        showHeader={true}
+        title={formData
+          ? `Editar ${entity.name} ${formData.name}`
+          : `Cadastrar Nova ${entity.name}`}
+        description={formData
+          ? `Atualize as informações da ${entity.name}`
+          : `Preencha as informações para criar uma nova ${entity.name}`}
+        className="max-w-[95vw] w-full h-[90vh]"
+        classNameContent="h-full p-0"
+      >
+        <TurmasFormSteps
+          formData={formData}
+          onClose={() => {
+            setOpenFormDialog(false);
+            setFormData(undefined);
+          }}
+          entity={entity}
+        />
+      </Dialog>
 
       {/* Listagem de items */}
       <div className="space-y-2 mt-4">
@@ -147,9 +177,10 @@ function List() {
                 key={item.id} 
                 item={item} 
                 entity={entity}
-                index={i} 
-                setFormData={setFormData} 
-                setOpenForm={setOpenForm}
+                index={i}
+                setFormData={setFormData}
+                setOpenForm={() => {}} // Dummy function para compatibilidade
+                setOpenFormDialog={setOpenFormDialog}
                 openInstructorsModal={setOpenInstrutoresModal}
                 openSubscriptionsModal={setOpenSubscriptionsModal}
               />

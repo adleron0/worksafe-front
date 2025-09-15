@@ -220,6 +220,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
+import DatePickerInput from "@/components/general-components/Calendar"; // Para campos de data
 
 interface SearchData {
   field1?: string;
@@ -264,6 +265,18 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Campos do formulário */}
+
+      {/* Exemplo de campo de data */}
+      <div className="space-y-2">
+        <Label htmlFor="dataField">Data</Label>
+        <DatePickerInput
+          name="dataField"
+          value={searchData.dataField || ""}
+          onValueChange={handleChange}
+          placeholder="Selecione uma data"
+        />
+      </div>
+
       <div className="flex gap-2">
         <Button type="submit" className="flex-1">Buscar</Button>
         <Button type="button" variant="outline" onClick={handleClear} className="flex-1">Limpar</Button>
@@ -460,6 +473,9 @@ const ParentItem = ({ item }) => {
 - `@/services/api` - Funções de API (get, post, put, patch, del)
 - `@/hooks/use-verify` - Verificação de permissões
 - `@/components/general-components/*` - Componentes reutilizáveis
+  - `Input` - Campo de entrada de texto
+  - `Select` - Campo de seleção
+  - `Calendar` (importado como DatePickerInput) - Campo de seleção de data
 - `@/components/ui/*` - Componentes UI base (shadcn)
 
 ## 🚀 Criando uma Nova Feature

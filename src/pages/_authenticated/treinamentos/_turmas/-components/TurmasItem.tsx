@@ -40,7 +40,8 @@ interface ItemsProps {
   index: number;
   entity: IDefaultEntity;
   setFormData: (data: IEntity) => void;
-  setOpenForm: (open: boolean) => void;
+  setOpenForm: (open: boolean) => void; // Mantido para compatibilidade
+  setOpenFormDialog: (open: boolean) => void;
   openInstructorsModal: (open: boolean) => void;
   openSubscriptionsModal: (open: boolean) => void;
 }
@@ -50,7 +51,8 @@ const SiteServicesItem = ({
   index,
   entity,
   setFormData,
-  setOpenForm,
+  setOpenForm: _setOpenForm, // eslint-disable-line @typescript-eslint/no-unused-vars
+  setOpenFormDialog,
   openInstructorsModal,
   openSubscriptionsModal,
 }: ItemsProps) => {
@@ -203,14 +205,14 @@ const SiteServicesItem = ({
               )}
 
               {/* Badge Mínimo de Alunos */}
-              {item.minimumQuorum && Number(item.minimumQuorum) > 0 && (
+              {item.minimumQuorum && Number(item.minimumQuorum) > 0 ? (
                 <ResponsiveBadge
                   icon="arrow-big-down-dash"
                   text={`Mínimo: ${item.minimumQuorum} alunos`}
                   shortText={item.minimumQuorum.toString()}
                   colorClass="text-inverse-foreground bg-primary"
                 />
-              )}
+              ): null}
 
               {/* Badge Inscritos Ilimitados ou Máximo */}
               {(item as any).unlimitedSubscriptions ? (
@@ -379,7 +381,7 @@ const SiteServicesItem = ({
                   className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
                   onClick={() => {
                     setFormData(item);
-                    setOpenForm(true);
+                    setOpenFormDialog(true); // Abre o Dialog em vez do SideForm
                   }}
                 >
                   <Icon name="edit-3" className="w-3 h-3" />

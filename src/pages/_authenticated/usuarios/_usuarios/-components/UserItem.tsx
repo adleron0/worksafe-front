@@ -17,6 +17,7 @@ import PermissionsForm from "./UserFormPermissions";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
+import ResponsiveBadge from "@/components/general-components/ResponsiveBadge";
 
 interface UserItemProps {
   user: IEntity;
@@ -120,6 +121,27 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+        {/* Badges com ScrollArea */}
+        <div className="absolute -top-1.5 left-4 right-14 lg:right-auto lg:left-4">
+          { user.isSeller && (
+              <ResponsiveBadge
+                icon="user-round-check"
+                text="Vendedor"
+                colorClass="text-inverse-foreground bg-primary"
+              />
+            )
+          }
+
+          { user.isSeller && user.sellerStatus && (
+              <ResponsiveBadge
+                icon={user.sellerStatus === 'PENDING' ? 'clock' : user.sellerStatus === 'ACTIVE' ? 'check-circle' : user.sellerStatus === 'SUSPENDED' ? 'ban' : user.sellerStatus === 'BLOCKED' ? 'x-circle' : 'x-circle'}
+                text={user.sellerStatus === 'PENDING' ? 'Pendente' : user.sellerStatus === 'ACTIVE' ? 'Ativo' : user.sellerStatus === 'SUSPENDED' ? 'Suspenso' : 'Bloqueado'}
+                colorClass={user.sellerStatus === 'PENDING' ? 'text-yellow-900 bg-yellow-200' : user.sellerStatus === 'ACTIVE' ? 'text-green-900 bg-green-200' : user.sellerStatus === 'SUSPENDED' ? 'text-orange-900 bg-orange-200' : 'text-red-900 bg-red-200'}
+              />
+            )
+          }
+        </div>
+        
         {/* Avatar e Nome */}
         <div className="w-full lg:w-3/12 flex items-center space-x-4">
           <Avatar className="border">

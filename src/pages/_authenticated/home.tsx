@@ -1,11 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, ResponsiveContainer } from "recharts";
-import { useState, useEffect } from 'react';
-import Dialog from '@/components/general-components/Dialog';
-import RichTextEditor from '@/components/general-components/RichTextEditor';
-import { Button } from '@/components/ui/button';
-import { checkFirstSteps, FirstStepsResponse } from '@/services/firstSteps.service';
 import Icon from '@/components/general-components/Icon';
 import { useNavigate } from '@tanstack/react-router';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,53 +9,134 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-
-const dataUsuarios = [
-  { name: "Seg", usuários: 3 },
-  { name: "Ter", usuários: 5 },
-  { name: "Qua", usuários: 7 },
-  { name: "Qui", usuários: 6 },
-  { name: "Sex", usuários: 4 },
-];
-
-const dataFinanceiro = [
-  { name: "Jan", receita: 4000, despesas: 2400 },
-  { name: "Fev", receita: 3000, despesas: 1398 },
-  { name: "Mar", receita: 2000, despesas: 9800 },
-  { name: "Abr", receita: 2780, despesas: 3908 },
-  { name: "Mai", receita: 1890, despesas: 4800 },
-];
-
-const dataModulos = [
-  { name: "Estoque", value: 300 },
-  { name: "Financeiro", value: 400 },
-  { name: "CRM", value: 200 },
-];
-
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28"];
+import { useQuery } from '@tanstack/react-query';
+import { get } from '@/services/api';
+import { ApiError } from '@/general-interfaces/api.interface';
+import { GraduationCap, Users, UserCheck, Clock, Award, UserPlus } from 'lucide-react';
 
 export const Route = createFileRoute('/_authenticated/home')({
   component: Home,
 })
 
+interface FirstStepsResponse {
+  hasCourse: boolean;
+  hasInstructor: boolean;
+  hasInstructorSignature: boolean;
+  hasCertificate: boolean;
+  hasAsaasToken: boolean;
+  hasClass: boolean;
+  allCompleted: boolean;
+}
+
+interface Turma {
+  id: number;
+  name: string;
+  finalDate: string;
+  initialDate: string;
+  status: string;
+}
+
+interface TurmasResponse {
+  rows: Turma[];
+  total: number;
+}
+
+interface Subscription {
+  id: number;
+  name: string;
+  email: string;
+  createdAt: string;
+  subscribeStatus: string;
+  class: {
+    name: string;
+    courseId: number;
+  };
+}
+
+interface SubscriptionsResponse {
+  rows: Subscription[];
+  total: number;
+}
+
 function Home() {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editorContent, setEditorContent] = useState<string>('');
-  const [steps, setSteps] = useState<FirstStepsResponse | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const loadFirstSteps = async () => {
-      const stepsData = await checkFirstSteps();
-      setSteps(stepsData);
-    };
-    loadFirstSteps();
-  }, []);
+  // Query para buscar primeiros passos
+  const { data: steps, isLoading: stepsLoading } = useQuery<FirstStepsResponse | undefined, ApiError>({
+    queryKey: ['firstSteps'],
+    queryFn: async () => {
+      return get('companies', 'first-steps');
+    },
+  });
 
-  const handleEditorChange = (content: string) => {
-    setEditorContent(content);
-    console.log('Conteúdo do editor:', content);
+  // Query para buscar todas as turmas
+  const { data: turmasData, isLoading: turmasLoading, isError: turmasError } = useQuery<TurmasResponse | undefined, ApiError>({
+    queryKey: ['dashboardTurmas'],
+    queryFn: async () => {
+      return get('classes', '', [{ key: 'limit', value: 'all' }]);
+    },
+  });
+
+  // Query para buscar últimas inscrições confirmadas
+  const { data: subscriptionsData, isLoading: subscriptionsLoading, isError: subscriptionsError } = useQuery<SubscriptionsResponse | undefined, ApiError>({
+    queryKey: ['dashboardSubscriptions'],
+    queryFn: async () => {
+      return get('subscription', '', [
+        { key: 'limit', value: 10 },
+        { key: 'order-createdAt', value: 'desc' },
+        { key: 'subscribeStatus', value: 'confirmed' },
+        { key: 'show', value: ['class'] }
+      ]);
+    },
+  });
+
+  // Query para buscar total de certificados
+  const { data: certificatesData, isLoading: certificatesLoading, isError: certificatesError } = useQuery<{ total: number } | undefined, ApiError>({
+    queryKey: ['dashboardCertificates'],
+    queryFn: async () => {
+      return get('trainee-certificate', '', [
+        { key: 'limit', value: 1 },
+        { key: 'page', value: 0 },
+        { key: 'active', value: true }
+      ]);
+    },
+  });
+
+  // Query para buscar total de alunos
+  const { data: traineesData, isLoading: traineesLoading, isError: traineesError } = useQuery<{ total: number } | undefined, ApiError>({
+    queryKey: ['dashboardTrainees'],
+    queryFn: async () => {
+      return get('trainee', '', [
+        { key: 'limit', value: 1 },
+        { key: 'page', value: 0 }
+      ]);
+    },
+  });
+
+  // Separar turmas realizadas e em andamento
+  const today = new Date();
+  const turmasRealizadas = turmasData?.rows.filter(turma =>
+    new Date(turma.finalDate) < today
+  ).length || 0;
+
+  const turmasEmAndamento = turmasData?.rows.filter(turma =>
+    new Date(turma.finalDate) >= today
+  ).length || 0;
+
+  // Formatar data
+  const formatDate = (date: string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - d.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Hoje';
+    if (diffDays === 1) return 'Ontem';
+    if (diffDays < 7) return `${diffDays} dias atrás`;
+
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
   };
+
 
   const checklistItems = [
     {
@@ -75,14 +150,14 @@ function Home() {
       key: 'hasInstructor' as keyof FirstStepsResponse,
       label: 'Cadastrar instrutores',
       icon: 'users',
-      route: '/cadastros/instrutores',
-      help: 'Vá em Cadastros > Instrutores e adicione pelo menos um instrutor com nome, CPF e dados de contato.'
+      route: '/treinamentos/instrutores',
+      help: 'Vá em Treinamentos > Instrutores e adicione pelo menos um instrutor com nome, CPF e dados de contato.'
     },
     {
       key: 'hasInstructorSignature' as keyof FirstStepsResponse,
       label: 'Adicionar assinatura digital de pelo menos 1 instrutor',
       icon: 'pen-tool',
-      route: '/cadastros/instrutores',
+      route: '/treinamentos/instrutores',
       help: 'Na lista de instrutores, clique em "Editar" e faça upload da assinatura digital (imagem PNG com fundo transparente).'
     },
     {
@@ -96,8 +171,8 @@ function Home() {
       key: 'hasAsaasToken' as keyof FirstStepsResponse,
       label: 'Configurar conta do Asaas (gateway de pagamento)',
       icon: 'credit-card',
-      route: '/comercial/gateway',
-      help: 'Acesse Comercial > Gateway e configure sua conta Asaas inserindo o token de API para processar pagamentos.'
+      route: '/integracoes',
+      help: 'Acesse Integrações e configure sua conta Asaas inserindo o token de API para processar pagamentos.'
     },
     {
       key: 'hasClass' as keyof FirstStepsResponse,
@@ -109,13 +184,12 @@ function Home() {
   ];
 
   return (
-      <div className="p-8 bg-background/5 min-h-screen">
+      <div className="py-8 bg-background/5 min-h-screen">
         {/* Título da Dashboard */}
-        <h1 className="text-3xl font-bold mb-6">Dashboard - Hub do Sistema</h1>
+        <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
 
         {/* Timeline de Primeiros Passos - com Skeleton */}
-        {/* TEMPORÁRIO: Removido !steps.allCompleted para sempre exibir durante testes */}
-        {steps === null ? (
+        {stepsLoading ? (
           // Skeleton Loader
           <Card className="mb-4 border-0 shadow-sm">
             <CardHeader className="pb-2 pt-3">
@@ -229,122 +303,216 @@ function Home() {
             </CardContent>
           </Card>
         )}
-        
-        {/* Botão para abrir o editor */}
-        <div className="mb-6">
-          <Button onClick={() => setDialogOpen(true)} className="mb-4">
-            Abrir Editor de Texto Rico
-          </Button>
-          
-          <Dialog
-            title="Editor de Texto Rico"
-            description="Crie e edite conteúdo para blogs, aulas e artigos"
-            open={dialogOpen}
-            onOpenChange={setDialogOpen}
-            showBttn={false}
-            className="max-w-5xl"
-          >
-            <div className="space-y-4">
-              <RichTextEditor 
-                value={editorContent}
-                onChange={handleEditorChange}
-                placeholder="Comece a escrever seu conteúdo aqui..."
-                height="50vh"
-                // onImageUpload customizado é opcional - por padrão usa S3
-              />
+
+        {/* Cards de Estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+          {/* Card Turmas Realizadas */}
+          <Card className="border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-emerald-900 dark:text-emerald-100">
+                  Turmas Realizadas
+                </CardTitle>
+                <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                  <GraduationCap className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {turmasLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ) : turmasError ? (
+                <div className="opacity-50">
+                  <p className="text-2xl font-bold text-slate-400">-</p>
+                  <p className="text-xs text-muted-foreground mt-1">Sem permissão</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">
+                    {turmasRealizadas}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Concluídas com sucesso
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Card Turmas em Andamento */}
+          <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  Turmas em Andamento
+                </CardTitle>
+                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                  <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {turmasLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ) : turmasError ? (
+                <div className="opacity-50">
+                  <p className="text-2xl font-bold text-slate-400">-</p>
+                  <p className="text-xs text-muted-foreground mt-1">Sem permissão</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+                    {turmasEmAndamento}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Atualmente ativas
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Card Certificados Emitidos */}
+          <Card className="border-0 shadow-sm bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                  Certificados Emitidos
+                </CardTitle>
+                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                  <Award className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {certificatesLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ) : certificatesError ? (
+                <div className="opacity-50">
+                  <p className="text-2xl font-bold text-slate-400">-</p>
+                  <p className="text-xs text-muted-foreground mt-1">Sem permissão</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-3xl font-bold text-amber-700 dark:text-amber-300">
+                    {certificatesData?.total || 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Total de certificados
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Card Total de Alunos */}
+          <Card className="border-0 shadow-sm bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                  Total de Alunos
+                </CardTitle>
+                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                  <UserPlus className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {traineesLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ) : traineesError ? (
+                <div className="opacity-50">
+                  <p className="text-2xl font-bold text-slate-400">-</p>
+                  <p className="text-xs text-muted-foreground mt-1">Sem permissão</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">
+                    {traineesData?.total || 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Alunos cadastrados
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Card de Últimos Inscritos */}
+        <Card className="border-0 shadow-sm mt-6">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-violet-100 dark:bg-violet-900/30">
+                  <UserCheck className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                </div>
+                <CardTitle className="text-base font-semibold">Últimas Inscrições Confirmadas</CardTitle>
+              </div>
+              <span className="text-xs text-muted-foreground">10 mais recentes</span>
             </div>
-          </Dialog>
-        </div>
-  
-        {/* Cards principais */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Avisos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Sistema em manutenção programada para o próximo sábado, das 02:00 às 04:00.</p>
-              <p>Novos módulos disponíveis para compra!</p>
-            </CardContent>
-          </Card>
-  
-          <Card>
-            <CardHeader>
-              <CardTitle>Usuários Online</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>5 usuários conectados.</p>
-              <p>Último acesso: 21/10/2024 às 10:00.</p>
-            </CardContent>
-          </Card>
-  
-          <Card>
-            <CardHeader>
-              <CardTitle>Mensagens Recentes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>1. João: "Consegui acessar o módulo financeiro!"</p>
-              <p>2. Maria: "O suporte está muito rápido, parabéns!"</p>
-            </CardContent>
-          </Card>
-        </div>
-  
-        {/* Gráficos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Gráfico de Barras - Usuários */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Usuários por Dia</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={dataUsuarios}>
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="usuários" fill="#8884d8" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-  
-          {/* Gráfico de Linhas - Financeiro */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Receita vs Despesas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={dataFinanceiro}>
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="receita" stroke="#82ca9d" />
-                  <Line type="monotone" dataKey="despesas" stroke="#ff7300" />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-  
-          {/* Gráfico de Pizza - Módulos */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Distribuição de Módulos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie data={dataModulos} dataKey="value" nameKey="name" outerRadius={80} fill="#8884d8">
-                    {dataModulos.map((_entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+          </CardHeader>
+          <CardContent className="pb-4">
+            {subscriptionsLoading ? (
+              <div className="space-y-1">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-2 py-1.5 px-2">
+                    <Skeleton className="h-7 w-7 rounded-full" />
+                    <div className="flex-1 space-y-1">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-2.5 w-32" />
+                    </div>
+                    <Skeleton className="h-2.5 w-12" />
+                  </div>
+                ))}
+              </div>
+            ) : subscriptionsError ? (
+              <div className="text-center py-8 opacity-50">
+                <UserCheck className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-700 mb-3" />
+                <p className="text-sm text-muted-foreground">Sem permissão para visualizar inscrições</p>
+              </div>
+            ) : subscriptionsData?.rows && subscriptionsData.rows.length > 0 ? (
+              <div className="space-y-1">
+                {subscriptionsData.rows.map((subscription) => (
+                  <div key={subscription.id} className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+                    <div className="h-7 w-7 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-medium text-xs shadow-sm flex-shrink-0">
+                      {subscription.name?.charAt(0).toUpperCase() || 'A'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate">
+                        {subscription.name || 'Aluno'}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {subscription.class?.name || 'Turma'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                      <Clock className="h-2.5 w-2.5" />
+                      <span>{formatDate(subscription.createdAt)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <UserCheck className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-700 mb-3" />
+                <p className="text-sm text-muted-foreground">Nenhuma inscrição confirmada recente</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   };

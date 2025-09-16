@@ -50,6 +50,7 @@ import { Route as AuthenticatedTreinamentosAlunosAlunosRouteImport } from './pag
 import { Route as AuthenticatedSiteServicosServicosRouteImport } from './pages/_authenticated/site/_servicos/servicos'
 import { Route as AuthenticatedSiteProdutosProdutosRouteImport } from './pages/_authenticated/site/_produtos/produtos'
 import { Route as AuthenticatedInventariosAreasAreaIdRouteImport } from './pages/_authenticated/inventarios/areas/$areaId'
+import { Route as AuthenticatedFinanceiroReceberReceberRouteImport } from './pages/_authenticated/financeiro/_receber/receber'
 import { Route as AuthenticatedComercialVendedoresVendedoresRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores'
 import { Route as AuthenticatedComercialCuponsCuponsRouteImport } from './pages/_authenticated/comercial/_cupons/cupons'
 
@@ -284,6 +285,12 @@ const AuthenticatedInventariosAreasAreaIdRoute =
     path: '/inventarios/areas/$areaId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanceiroReceberReceberRoute =
+  AuthenticatedFinanceiroReceberReceberRouteImport.update({
+    id: '/financeiro/_receber/receber',
+    path: '/financeiro/receber',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComercialVendedoresVendedoresRoute =
   AuthenticatedComercialVendedoresVendedoresRouteImport.update({
     id: '/comercial/_vendedores/vendedores',
@@ -319,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/certificados': typeof IndexCertificadosIndexRoute
   '/comercial/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
+  '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/site/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
   '/site/servicos': typeof AuthenticatedSiteServicosServicosRoute
@@ -361,6 +369,7 @@ export interface FileRoutesByTo {
   '/certificados': typeof IndexCertificadosIndexRoute
   '/comercial/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
+  '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/site/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
   '/site/servicos': typeof AuthenticatedSiteServicosServicosRoute
@@ -407,6 +416,7 @@ export interface FileRoutesById {
   '/_index/certificados/': typeof IndexCertificadosIndexRoute
   '/_authenticated/comercial/_cupons/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
   '/_authenticated/comercial/_vendedores/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
+  '/_authenticated/financeiro/_receber/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/_authenticated/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/_authenticated/site/_produtos/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
   '/_authenticated/site/_servicos/servicos': typeof AuthenticatedSiteServicosServicosRoute
@@ -452,6 +462,7 @@ export interface FileRouteTypes {
     | '/certificados'
     | '/comercial/cupons'
     | '/comercial/vendedores'
+    | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
     | '/site/produtos'
     | '/site/servicos'
@@ -494,6 +505,7 @@ export interface FileRouteTypes {
     | '/certificados'
     | '/comercial/cupons'
     | '/comercial/vendedores'
+    | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
     | '/site/produtos'
     | '/site/servicos'
@@ -539,6 +551,7 @@ export interface FileRouteTypes {
     | '/_index/certificados/'
     | '/_authenticated/comercial/_cupons/cupons'
     | '/_authenticated/comercial/_vendedores/vendedores'
+    | '/_authenticated/financeiro/_receber/receber'
     | '/_authenticated/inventarios/areas/$areaId'
     | '/_authenticated/site/_produtos/produtos'
     | '/_authenticated/site/_servicos/servicos'
@@ -856,6 +869,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventariosAreasAreaIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/financeiro/_receber/receber': {
+      id: '/_authenticated/financeiro/_receber/receber'
+      path: '/financeiro/receber'
+      fullPath: '/financeiro/receber'
+      preLoaderRoute: typeof AuthenticatedFinanceiroReceberReceberRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_vendedores/vendedores': {
       id: '/_authenticated/comercial/_vendedores/vendedores'
       path: '/comercial/vendedores'
@@ -886,6 +906,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTreinamentosIndexRoute: typeof AuthenticatedTreinamentosIndexRoute
   AuthenticatedComercialCuponsCuponsRoute: typeof AuthenticatedComercialCuponsCuponsRoute
   AuthenticatedComercialVendedoresVendedoresRoute: typeof AuthenticatedComercialVendedoresVendedoresRoute
+  AuthenticatedFinanceiroReceberReceberRoute: typeof AuthenticatedFinanceiroReceberReceberRoute
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
   AuthenticatedSiteProdutosProdutosRoute: typeof AuthenticatedSiteProdutosProdutosRoute
   AuthenticatedSiteServicosServicosRoute: typeof AuthenticatedSiteServicosServicosRoute
@@ -922,6 +943,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialCuponsCuponsRoute,
   AuthenticatedComercialVendedoresVendedoresRoute:
     AuthenticatedComercialVendedoresVendedoresRoute,
+  AuthenticatedFinanceiroReceberReceberRoute:
+    AuthenticatedFinanceiroReceberReceberRoute,
   AuthenticatedInventariosAreasAreaIdRoute:
     AuthenticatedInventariosAreasAreaIdRoute,
   AuthenticatedSiteProdutosProdutosRoute:

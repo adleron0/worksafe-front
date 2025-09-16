@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import GatewaysGrid from "../financeiro/-gateways/-components/GatewaysGrid";
+import GatewaysGrid from "./-gateways/-components/GatewaysGrid";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import Icon from "@/components/general-components/Icon";

@@ -143,7 +143,7 @@ function List() {
         open={openFormDialog}
         onOpenChange={setOpenFormDialog}
         showBttn={false}
-        showHeader={true}
+        showHeader={false}
         title={formData
           ? `Editar ${entity.name} ${formData.name}`
           : `Cadastrar Nova ${entity.name}`}

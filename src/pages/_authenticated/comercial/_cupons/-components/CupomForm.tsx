@@ -306,7 +306,7 @@ const CupomForm: React.FC<FormProps> = ({ formData, setOpenForm, entity }) => {
             value={data.code}
             onValueChange={handleChange}
             placeholder="Digite o código do cupom"
-            disabled={!!formData}
+            // disabled={!!formData}
           />
           {errors.code && (
             <p className="text-sm text-destructive mt-1">{errors.code}</p>
@@ -589,14 +589,14 @@ const CupomForm: React.FC<FormProps> = ({ formData, setOpenForm, entity }) => {
         )}
       </div>
 
-      {formData && (
+      {/* {formData && (
         <>
           <Separator />
           <div className="text-sm text-muted-foreground">
             <p>Uso atual: {data.usageCount} vez(es)</p>
           </div>
         </>
-      )}
+      )} */}
 
       <div className="flex gap-2">
         <Button type="submit" className="flex-1">

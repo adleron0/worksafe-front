@@ -88,7 +88,8 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
     if (item.discountType === 'percentage') {
       return `${item.discountValue}%`;
     }
-    return `R$ ${item.discountValue.toFixed(2).replace('.', ',')}`;
+    const value = Number(item.discountValue);
+    return `R$ ${value.toFixed(2).replace('.', ',')}`;
   };
 
   const formatUsage = () => {
@@ -211,7 +212,7 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
           <p className="font-medium">{formatDiscount()}</p>
           {item.minPurchaseValue && (
             <p className="text-xs text-muted-foreground">
-              Mín: R$ {item.minPurchaseValue.toFixed(2).replace('.', ',')}
+              Mín: R$ {Number(item.minPurchaseValue).toFixed(2).replace('.', ',')}
             </p>
           )}
         </div>
@@ -223,7 +224,7 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
               <p className="text-sm font-medium">{item.seller.name}</p>
               {item.commissionType && item.commissionValue && (
                 <p className="text-xs text-muted-foreground">
-                  Comissão: {item.commissionType === 'percentage' ? `${item.commissionValue}%` : `R$ ${item.commissionValue.toFixed(2).replace('.', ',')}`}
+                  Comissão: {item.commissionType === 'percentage' ? `${item.commissionValue}%` : `R$ ${Number(item.commissionValue).toFixed(2).replace('.', ',')}`}
                 </p>
               )}
             </div>

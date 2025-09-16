@@ -20,16 +20,19 @@ export const items = [
     subitems: [
       {
         title: "Vendedores",
+        ability: "vendedores",
         icon: "user-round-check",
         path: "/comercial/vendedores",
       },
       {
         title: "Comissões",
+        ability: "comissoes",
         icon: "hand-coins",
         path: "/comercial/comissaoes",
       },
       {
         title: "Cupons",
+        ability: "cupoms",
         icon: "ticket-percent",
         path: "/comercial/cupons",
       },

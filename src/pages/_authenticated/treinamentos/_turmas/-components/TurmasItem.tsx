@@ -301,12 +301,12 @@ const SiteServicesItem = ({
                 <p className="text-sm text-muted-foreground dark:text-gray-100">
                   {new Date(
                     item.initialDate || "2024-01-01",
-                  ).toLocaleDateString()}
+                  ).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                 </p>
                 <p className="text-sm text-muted-foreground dark:text-gray-100">
                   {new Date(
                     item.finalDate || "2024-01-01",
-                  ).toLocaleDateString()}
+                  ).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                 </p>
               </>
             )}
@@ -335,14 +335,14 @@ const SiteServicesItem = ({
                   {(item as any).periodSubscriptionsInitialDate
                     ? new Date(
                         (item as any).periodSubscriptionsInitialDate,
-                      ).toLocaleDateString()
+                      ).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
                     : "-"}
                 </p>
                 <p className="text-xs text-muted-foreground dark:text-gray-100">
                   {(item as any).periodSubscriptionsFinalDate
                     ? new Date(
                         (item as any).periodSubscriptionsFinalDate,
-                      ).toLocaleDateString()
+                      ).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
                     : "-"}
                 </p>
               </>

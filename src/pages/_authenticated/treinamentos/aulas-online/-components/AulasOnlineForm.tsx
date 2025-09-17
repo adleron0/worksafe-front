@@ -377,7 +377,7 @@ const Form = ({ formData, setOpenForm, entity }: FormProps) => {
               />
             </div>
 
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <Label htmlFor="isRequired" className="cursor-pointer">
                 Lição Obrigatória
               </Label>
@@ -386,7 +386,7 @@ const Form = ({ formData, setOpenForm, entity }: FormProps) => {
                 checked={dataForm.progressConfig?.isRequired || true}
                 onCheckedChange={(checked) => handleProgressConfigChange('isRequired', checked)}
               />
-            </div>
+            </div> */}
           </div>
         )}
       </div>

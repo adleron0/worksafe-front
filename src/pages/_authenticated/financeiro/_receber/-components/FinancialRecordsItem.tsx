@@ -1,13 +1,13 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { patch } from "@/services/api";
-import { useLoader } from "@/context/GeneralContext";
-import { toast } from "@/hooks/use-toast";
-import useVerify from "@/hooks/use-verify";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+// import { useMutation, useQueryClient } from "@tanstack/react-query";
+// import { patch } from "@/services/api";
+// import { useLoader } from "@/context/GeneralContext";
+// import { toast } from "@/hooks/use-toast";
+// import useVerify from "@/hooks/use-verify";
+// import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+// import { Button } from "@/components/ui/button";
 import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
-import ConfirmDialog from "@/components/general-components/ConfirmDialog";
-import Icon from "@/components/general-components/Icon";
+// import ConfirmDialog from "@/components/general-components/ConfirmDialog";
+// import Icon from "@/components/general-components/Icon";
 import ResponsiveBadge from "@/components/general-components/ResponsiveBadge";
 import { IFinancialRecord } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -20,65 +20,71 @@ interface ItemsProps {
   setOpenForm: (open: boolean) => void;
 }
 
-const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => {
-  const { can } = useVerify();
-  const queryClient = useQueryClient();
-  const { showLoader, hideLoader } = useLoader();
+const Item = ({ 
+  item, 
+  index, 
+  // entity, 
+  // setFormData, 
+  // setOpenForm 
+}: ItemsProps) => {
+  // const { can } = useVerify();
+  // const queryClient = useQueryClient();
+  // const { showLoader, hideLoader } = useLoader();
 
-  const activateMutation = useMutation({
-    mutationFn: async (id: number) => {
-      showLoader();
-      const response = await patch(entity.model, id.toString(), { active: true });
-      return response;
-    },
-    onSuccess: () => {
-      hideLoader();
-      toast({
-        title: "Sucesso",
-        description: `${entity.name} reativada com sucesso!`,
-        variant: "success",
-      });
-      queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
-    },
-    onError: (error: any) => {
-      hideLoader();
-      toast({
-        title: "Erro",
-        description: error.response?.data?.message || `Erro ao reativar ${entity.name}`,
-        variant: "destructive",
-      });
-    },
-  });
+  // const activateMutation = useMutation({
+  //   mutationFn: async (id: number) => {
+  //     showLoader();
+  //     const response = await patch(entity.model, id.toString(), { active: true });
+  //     return response;
+  //   },
+  //   onSuccess: () => {
+  //     hideLoader();
+  //     toast({
+  //       title: "Sucesso",
+  //       description: `${entity.name} reativada com sucesso!`,
+  //       variant: "success",
+  //     });
+  //     queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
+  //   },
+  //   onError: (error: any) => {
+  //     hideLoader();
+  //     toast({
+  //       title: "Erro",
+  //       description: error.response?.data?.message || `Erro ao reativar ${entity.name}`,
+  //       variant: "destructive",
+  //     });
+  //   },
+  // });
 
-  const inactivateMutation = useMutation({
-    mutationFn: async (id: number) => {
-      showLoader();
-      const response = await patch(entity.model, id.toString(), { active: false });
-      return response;
-    },
-    onSuccess: () => {
-      hideLoader();
-      toast({
-        title: "Sucesso",
-        description: `${entity.name} inativada com sucesso!`,
-        variant: "success",
-      });
-      queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
-    },
-    onError: (error: any) => {
-      hideLoader();
-      toast({
-        title: "Erro",
-        description: error.response?.data?.message || `Erro ao inativar ${entity.name}`,
-        variant: "destructive",
-      });
-    },
-  });
+  // const inactivateMutation = useMutation({
+  //   mutationFn: async (id: number) => {
+  //     showLoader();
+  //     const response = await patch(entity.model, id.toString(), { active: false });
+  //     return response;
+  //   },
+  //   onSuccess: () => {
+  //     hideLoader();
+  //     toast({
+  //       title: "Sucesso",
+  //       description: `${entity.name} inativada com sucesso!`,
+  //       variant: "success",
+  //     });
+  //     queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
+  //   },
+  //   onError: (error: any) => {
+  //     hideLoader();
+  //     toast({
+  //       title: "Erro",
+  //       description: error.response?.data?.message || `Erro ao inativar ${entity.name}`,
+  //       variant: "destructive",
+  //     });
+  //   },
+  // });
 
-  const handleEdit = () => {
-    setFormData(item);
-    setOpenForm(true);
-  };
+  // const handleEdit = () => {
+  //   setFormData(item);
+  //   setOpenForm(true);
+  // };
 
   const getStatusColor = (status: string) => {
     switch (status) {

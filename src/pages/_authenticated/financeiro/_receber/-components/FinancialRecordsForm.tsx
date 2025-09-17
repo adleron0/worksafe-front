@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,6 +14,7 @@ import DatePickerInput from "@/components/general-components/Calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { IFinancialRecord } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
+import { Response } from "@/general-interfaces/api.interface";
 
 const formSchema = z.object({
   accrualDate: z.string().min(1, "Data de competência é obrigatória"),
@@ -72,38 +73,42 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
     },
   });
 
-  const { data: companies } = useQuery({
+  const { data: companies } = useQuery<Response>({
     queryKey: ['listCompanies'],
     queryFn: async () => {
-      return get('companies', '', [{ key: 'limit', value: 1000 }]);
+      const result = await get<Response>('companies', '', [{ key: 'limit', value: 1000 }]);
+      return result || { rows: [], total: 0 };
     },
   });
 
-  const { data: trainees } = useQuery({
+  const { data: trainees } = useQuery<Response>({
     queryKey: ['listTrainees'],
     queryFn: async () => {
-      return get('trainees', '', [{ key: 'limit', value: 1000 }]);
+      const result = await get<Response>('trainees', '', [{ key: 'limit', value: 1000 }]);
+      return result || { rows: [], total: 0 };
     },
   });
 
-  const { data: customers } = useQuery({
+  const { data: customers } = useQuery<Response>({
     queryKey: ['listCustomers'],
     queryFn: async () => {
-      return get('customers', '', [{ key: 'limit', value: 1000 }]);
+      const result = await get<Response>('customers', '', [{ key: 'limit', value: 1000 }]);
+      return result || { rows: [], total: 0 };
     },
   });
 
-  const { data: sellers } = useQuery({
+  const { data: sellers } = useQuery<Response>({
     queryKey: ['listSellers'],
     queryFn: async () => {
-      return get('users', '', [{ key: 'limit', value: 1000 }, { key: 'role', value: 'seller' }]);
+      const result = await get<Response>('users', '', [{ key: 'limit', value: 1000 }, { key: 'role', value: 'seller' }]);
+      return result || { rows: [], total: 0 };
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      showLoader();
-      return post(entity.model, data);
+      showLoader("Criando registro financeiro...");
+      return post(entity.model, '', data);
     },
     onSuccess: () => {
       hideLoader();
@@ -128,7 +133,7 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
 
   const updateMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      showLoader();
+      showLoader("Atualizando registro financeiro...");
       return put(entity.model, formData!.id.toString(), data);
     },
     onSuccess: () => {
@@ -242,12 +247,12 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
                 <FormControl>
                   <Select
                     name="companyId"
-                    value={field.value}
-                    onValueChange={(value) => field.onChange(Number(value))}
+                    state={field.value.toString()}
+                    onChange={(_name, value) => field.onChange(Number(value))}
                     placeholder="Selecione uma empresa"
                     options={companies?.rows?.map((company: any) => ({
-                      value: company.id,
-                      label: company.name,
+                      id: company.id,
+                      name: company.name,
                     })) || []}
                   />
                 </FormControl>
@@ -265,10 +270,13 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
                 <FormControl>
                   <Select
                     name="gateway"
-                    value={field.value}
-                    onValueChange={field.onChange}
+                    state={field.value}
+                    onChange={(_name, value) => field.onChange(value)}
                     placeholder="Selecione um gateway"
-                    options={gatewayOptions}
+                    options={gatewayOptions.map(option => ({
+                      id: option.value,
+                      name: option.label,
+                    }))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -285,10 +293,13 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
                 <FormControl>
                   <Select
                     name="status"
-                    value={field.value}
-                    onValueChange={field.onChange}
+                    state={field.value}
+                    onChange={(_name, value) => field.onChange(value)}
                     placeholder="Selecione um status"
-                    options={statusOptions}
+                    options={statusOptions.map(option => ({
+                      id: option.value,
+                      name: option.label,
+                    }))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -305,10 +316,13 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
                 <FormControl>
                   <Select
                     name="paymentMethod"
-                    value={field.value}
-                    onValueChange={field.onChange}
+                    state={field.value}
+                    onChange={(_name, value) => field.onChange(value)}
                     placeholder="Selecione um método"
-                    options={paymentMethodOptions}
+                    options={paymentMethodOptions.map(option => ({
+                      id: option.value,
+                      name: option.label,
+                    }))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -346,7 +360,7 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
                   <DatePickerInput
                     name="dueDate"
                     value={field.value || ""}
-                    onValueChange={(name, value) => field.onChange(value)}
+                    onValueChange={(_name, value) => field.onChange(value)}
                     placeholder="Selecione uma data"
                   />
                 </FormControl>
@@ -364,12 +378,12 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
                 <FormControl>
                   <Select
                     name="traineeId"
-                    value={field.value || ""}
-                    onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                    state={field.value?.toString() || ""}
+                    onChange={(_name, value) => field.onChange(value ? Number(value) : undefined)}
                     placeholder="Selecione um aluno"
                     options={trainees?.rows?.map((trainee: any) => ({
-                      value: trainee.id,
-                      label: trainee.name,
+                      id: trainee.id,
+                      name: trainee.name,
                     })) || []}
                   />
                 </FormControl>
@@ -387,12 +401,12 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
                 <FormControl>
                   <Select
                     name="customerId"
-                    value={field.value || ""}
-                    onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                    state={field.value?.toString() || ""}
+                    onChange={(_name, value) => field.onChange(value ? Number(value) : undefined)}
                     placeholder="Selecione um cliente"
                     options={customers?.rows?.map((customer: any) => ({
-                      value: customer.id,
-                      label: customer.name,
+                      id: customer.id,
+                      name: customer.name,
                     })) || []}
                   />
                 </FormControl>
@@ -410,12 +424,12 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
                 <FormControl>
                   <Select
                     name="sellerId"
-                    value={field.value || ""}
-                    onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                    state={field.value?.toString() || ""}
+                    onChange={(_name, value) => field.onChange(value ? Number(value) : undefined)}
                     placeholder="Selecione um vendedor"
                     options={sellers?.rows?.map((seller: any) => ({
-                      value: seller.id,
-                      label: seller.name,
+                      id: seller.id,
+                      name: seller.name,
                     })) || []}
                   />
                 </FormControl>

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import CalendarPicker from "@/components/general-components/Calendar";
+import { Response } from "@/general-interfaces/api.interface";
 
 interface SearchData {
   companyId?: number;
@@ -53,31 +54,35 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
     active: undefined,
   });
 
-  const { data: companies } = useQuery({
+  const { data: companies } = useQuery<Response>({
     queryKey: ['listCompanies'],
     queryFn: async () => {
-      return get('companies', '', [{ key: 'limit', value: 1000 }]);
+      const result = await get<Response>('companies', '', [{ key: 'limit', value: 1000 }]);
+      return result || { rows: [], total: 0 };
     },
   });
 
-  const { data: trainees } = useQuery({
+  const { data: trainees } = useQuery<Response>({
     queryKey: ['listTrainees'],
     queryFn: async () => {
-      return get('trainees', '', [{ key: 'limit', value: 1000 }]);
+      const result = await get<Response>('trainees', '', [{ key: 'limit', value: 1000 }]);
+      return result || { rows: [], total: 0 };
     },
   });
 
-  const { data: customers } = useQuery({
+  const { data: customers } = useQuery<Response>({
     queryKey: ['listCustomers'],
     queryFn: async () => {
-      return get('customers', '', [{ key: 'limit', value: 1000 }]);
+      const result = await get<Response>('customers', '', [{ key: 'limit', value: 1000 }]);
+      return result || { rows: [], total: 0 };
     },
   });
 
-  const { data: sellers } = useQuery({
+  const { data: sellers } = useQuery<Response>({
     queryKey: ['listSellers'],
     queryFn: async () => {
-      return get('users', '', [{ key: 'limit', value: 1000 }, { key: 'role', value: 'seller' }]);
+      const result = await get<Response>('users', '', [{ key: 'limit', value: 1000 }, { key: 'role', value: 'seller' }]);
+      return result || { rows: [], total: 0 };
     },
   });
 
@@ -102,7 +107,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
     });
   }, [params]);
 
-  const handleChange = (name: string, value: string | number | null) => {
+  const handleChange = (name: string, value: string | number | boolean | null | undefined) => {
     setSearchData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -181,14 +186,14 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
         <Label htmlFor="companyId">Empresa</Label>
         <Select
           name="companyId"
-          value={searchData.companyId || ""}
-          onValueChange={(value) => handleChange("companyId", value ? Number(value) : null)}
+          state={searchData.companyId?.toString() || ""}
+          onChange={(_name, value) => handleChange("companyId", value ? Number(value) : null)}
           placeholder="Selecione uma empresa"
           options={[
-            { value: "", label: "Todas" },
+            { id: "", name: "Todas" },
             ...(companies?.rows?.map((company: any) => ({
-              value: company.id,
-              label: company.name,
+              id: company.id,
+              name: company.name,
             })) || [])
           ]}
         />
@@ -198,10 +203,13 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
         <Label htmlFor="gateway">Gateway</Label>
         <Select
           name="gateway"
-          value={searchData.gateway || ""}
-          onValueChange={(value) => handleChange("gateway", value)}
+          state={searchData.gateway || ""}
+          onChange={(_name, value) => handleChange("gateway", value as string)}
           placeholder="Selecione um gateway"
-          options={gatewayOptions}
+          options={gatewayOptions.map(option => ({
+            id: option.value,
+            name: option.label,
+          }))}
         />
       </div>
 
@@ -209,10 +217,13 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
         <Label htmlFor="status">Status</Label>
         <Select
           name="status"
-          value={searchData.status || ""}
-          onValueChange={(value) => handleChange("status", value)}
+          state={searchData.status || ""}
+          onChange={(_name, value) => handleChange("status", value as string)}
           placeholder="Selecione um status"
-          options={statusOptions}
+          options={statusOptions.map(option => ({
+            id: option.value,
+            name: option.label,
+          }))}
         />
       </div>
 
@@ -220,10 +231,13 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
         <Label htmlFor="paymentMethod">Método de Pagamento</Label>
         <Select
           name="paymentMethod"
-          value={searchData.paymentMethod || ""}
-          onValueChange={(value) => handleChange("paymentMethod", value)}
+          state={searchData.paymentMethod || ""}
+          onChange={(_name, value) => handleChange("paymentMethod", value as string)}
           placeholder="Selecione um método"
-          options={paymentMethodOptions}
+          options={paymentMethodOptions.map(option => ({
+            id: option.value,
+            name: option.label,
+          }))}
         />
       </div>
 
@@ -231,14 +245,14 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
         <Label htmlFor="traineeId">Aluno</Label>
         <Select
           name="traineeId"
-          value={searchData.traineeId || ""}
-          onValueChange={(value) => handleChange("traineeId", value ? Number(value) : null)}
+          state={searchData.traineeId?.toString() || ""}
+          onChange={(_name, value) => handleChange("traineeId", value ? Number(value) : null)}
           placeholder="Selecione um aluno"
           options={[
-            { value: "", label: "Todos" },
+            { id: "", name: "Todos" },
             ...(trainees?.rows?.map((trainee: any) => ({
-              value: trainee.id,
-              label: trainee.name,
+              id: trainee.id,
+              name: trainee.name,
             })) || [])
           ]}
         />
@@ -248,14 +262,14 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
         <Label htmlFor="customerId">Cliente</Label>
         <Select
           name="customerId"
-          value={searchData.customerId || ""}
-          onValueChange={(value) => handleChange("customerId", value ? Number(value) : null)}
+          state={searchData.customerId?.toString() || ""}
+          onChange={(_name, value) => handleChange("customerId", value ? Number(value) : null)}
           placeholder="Selecione um cliente"
           options={[
-            { value: "", label: "Todos" },
+            { id: "", name: "Todos" },
             ...(customers?.rows?.map((customer: any) => ({
-              value: customer.id,
-              label: customer.name,
+              id: customer.id,
+              name: customer.name,
             })) || [])
           ]}
         />
@@ -265,14 +279,14 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
         <Label htmlFor="sellerId">Vendedor</Label>
         <Select
           name="sellerId"
-          value={searchData.sellerId || ""}
-          onValueChange={(value) => handleChange("sellerId", value ? Number(value) : null)}
+          state={searchData.sellerId?.toString() || ""}
+          onChange={(_name, value) => handleChange("sellerId", value ? Number(value) : null)}
           placeholder="Selecione um vendedor"
           options={[
-            { value: "", label: "Todos" },
+            { id: "", name: "Todos" },
             ...(sellers?.rows?.map((seller: any) => ({
-              value: seller.id,
-              label: seller.name,
+              id: seller.id,
+              name: seller.name,
             })) || [])
           ]}
         />
@@ -369,10 +383,13 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
         <Label htmlFor="active">Status do Registro</Label>
         <Select
           name="active"
-          value={searchData.active !== undefined ? searchData.active.toString() : ""}
-          onValueChange={(value) => handleChange("active", value === "" ? null : value === "true")}
+          state={searchData.active !== undefined ? searchData.active.toString() : ""}
+          onChange={(_name, value) => handleChange("active", value === "" ? undefined : (value as string) === "true")}
           placeholder="Selecione o status"
-          options={activeOptions}
+          options={activeOptions.map(option => ({
+            id: option.value,
+            name: option.label,
+          }))}
         />
       </div>
 

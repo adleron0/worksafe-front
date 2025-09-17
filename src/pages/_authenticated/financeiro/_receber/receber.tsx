@@ -6,6 +6,10 @@ import useVerify from "@/hooks/use-verify";
 import Pagination from "@/components/general-components/Pagination";
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
+import CalendarPicker from "@/components/general-components/Calendar";
+import Select from "@/components/general-components/Select";
+import StatusCards from "./-components/StatusCards";
+import StatusCardsSkeleton from "./-components/StatusCardsSkeleton";
 import ItemSkeleton from "./-skeletons/ItemSkeleton";
 import ItemList from "./-components/FinancialRecordsItem";
 import Form from "./-components/FinancialRecordsForm";
@@ -22,11 +26,30 @@ function List() {
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<IFinancialRecord | null>(null);
-  const [searchParams, setSearchParams] = useState({
+
+  // Get current month in YYYY-MM format
+  const getCurrentMonth = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  };
+
+  const [searchParams, setSearchParams] = useState<{
+    limit: number;
+    page: number;
+    show: string[];
+    'order-createdAt': string;
+    accrualDate: string | null;
+    '-aggregate': string;
+    'in-status'?: string[];
+  }>({
     limit: 10,
     page: 0,
     show: ['trainee', 'subscription'],
     'order-createdAt': 'desc',
+    accrualDate: getCurrentMonth(), // Default to current month
+    '-aggregate': 'status:count:sum:value'
   });
   const initialFormRef = useRef(searchParams);
 
@@ -40,15 +63,25 @@ function List() {
   interface Response {
     rows: IFinancialRecord[];
     total: number;
+    aggregations?: {
+      [key: string]: {
+        _count: number;
+        _sum: {
+          value: string;
+        };
+      };
+    };
   }
 
   const { data, isLoading, isError, error } = useQuery<Response | undefined, ApiError>({
     queryKey: [`list${entity.pluralName}`, searchParams],
     queryFn: async () => {
-      const params = Object.keys(searchParams).map((key) => ({
-        key,
-        value: searchParams[key as keyof typeof searchParams]
-      }));
+      const params = Object.keys(searchParams)
+        .filter((key) => searchParams[key as keyof typeof searchParams] !== null)
+        .map((key) => ({
+          key,
+          value: searchParams[key as keyof typeof searchParams]
+        }));
       return get(entity.model, '', params);
     },
   });
@@ -56,6 +89,34 @@ function List() {
   const handleSearch = async (params: { [key: string]: any }) => {
     setSearchParams((prev) => ({ ...prev, ...params }));
   };
+
+  const handleMonthChange = (_name: string, value: string | null) => {
+    setSearchParams((prev) => ({
+      ...prev,
+      accrualDate: value || null, // When cleared, set to null to show all
+      page: 0 // Reset page when changing month
+    }));
+  };
+
+  const handleStatusChange = (_name: string, selectedStatus: string | string[]) => {
+    const statusArray = Array.isArray(selectedStatus) ? selectedStatus : [selectedStatus];
+    setSearchParams((prev) => ({
+      ...prev,
+      'in-status': statusArray.length > 0 && statusArray[0] !== '' ? statusArray : undefined,
+      page: 0 // Reset page when changing filter
+    }));
+  };
+
+  // Status options for the select
+  const statusOptions = [
+    { id: 'processing', name: 'Processando' },
+    { id: 'waiting', name: 'Aguardando' },
+    { id: 'received', name: 'Recebido' },
+    { id: 'declined', name: 'Recusado' },
+    { id: 'chargeback', name: 'Estorno' },
+    { id: 'cancelled', name: 'Cancelado' },
+    { id: 'overdue', name: 'Vencido' },
+  ];
 
   const handleClear = () => {
     setSearchParams(initialFormRef.current);
@@ -87,7 +148,42 @@ function List() {
         setFormData={setFormData}
         setFormType={() => {}}
         iconForm="plus"
+        showCreate={false}
+        titlePage='Contas a Receber'
+        descriptionPage='Gerencie todas as contas a receber.'
       />
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 my-4 p-4 rounded-lg border">
+        <div className="flex items-center gap-2">
+          <CalendarPicker
+            mode="month"
+            name="monthSelector"
+            value={searchParams.accrualDate}
+            onValueChange={handleMonthChange}
+            placeholder="Selecione o mês"
+            fromYear={2020}
+            toYear={2030}
+          />
+        </div>
+        <div className="w-full sm:w-64">
+          <Select
+            name="statusFilter"
+            options={statusOptions}
+            state={searchParams['in-status'] || []}
+            onChange={handleStatusChange}
+            placeholder="Filtrar por status..."
+            multiple={true}
+          />
+        </div>
+      </div>
+
+      {/* Status Cards */}
+      {isLoading ? (
+        <StatusCardsSkeleton />
+      ) : (
+        <StatusCards aggregations={data?.aggregations} />
+      )}
 
       <SideForm
         openSheet={openSearch}

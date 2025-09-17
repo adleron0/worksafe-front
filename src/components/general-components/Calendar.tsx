@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { format, parse, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 
 interface CalendarPickerProps {
-  mode?: "single" | "range" | "multiple" | "natural";
+  mode?: "single" | "range" | "multiple" | "natural" | "month";
   name: string;
   value?: string | null;
   onValueChange?: (name: string, value: string | null) => void;
@@ -55,13 +55,13 @@ const CalendarPicker = ({
         // Extract YYYY-MM-DD from the ISO string
         const datePart = dateStr.split('T')[0];
         const [year, month, day] = datePart.split('-').map(Number);
-        // Create a date in local timezone with the exact date values
-        return new Date(year, month - 1, day, 12, 0, 0); // Set to noon to avoid DST issues
+        // Create a date in local timezone with the exact date values at midnight
+        return new Date(year, month - 1, day, 0, 0, 0, 0);
       }
       // If it's already in YYYY-MM-DD format
       if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
         const [year, month, day] = dateStr.split('-').map(Number);
-        return new Date(year, month - 1, day, 12, 0, 0); // Set to noon to avoid DST issues
+        return new Date(year, month - 1, day, 0, 0, 0, 0);
       }
       // Fallback to regular parsing
       return new Date(dateStr);
@@ -88,6 +88,23 @@ const CalendarPicker = ({
   const [inputValue, setInputValue] = useState("");
   const [month, setMonth] = useState<Date | undefined>(date);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // For month mode
+  const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number } | undefined>(() => {
+    if (mode === "month" && value) {
+      // Parse YYYY-MM format
+      const match = value.match(/^(\d{4})-(\d{2})$/);
+      if (match) {
+        const year = parseInt(match[1]);
+        const month = parseInt(match[2]) - 1; // month is 0-indexed
+        return { month, year };
+      }
+    }
+    return undefined;
+  });
+  const [yearForMonth, setYearForMonth] = useState<number>(
+    selectedMonth?.year || new Date().getFullYear()
+  );
 
   // Date mask function for DD/MM/YYYY format
   const applyDateMask = (value: string): string => {
@@ -131,13 +148,26 @@ const CalendarPicker = ({
         setMonth(undefined);
         setInputValue("");
       }
+    } else if (mode === "month") {
+      if (value) {
+        // Parse YYYY-MM format
+        const match = value.match(/^(\d{4})-(\d{2})$/);
+        if (match) {
+          const year = parseInt(match[1]);
+          const month = parseInt(match[2]) - 1; // month is 0-indexed
+          setSelectedMonth({ month, year });
+          setYearForMonth(year);
+        }
+      } else {
+        setSelectedMonth(undefined);
+      }
     } else if (mode === "range" && value) {
       try {
         // Expect value to be in format "startDate|endDate"
         const [startStr, endStr] = value.split('|');
         setDateRange({
-          from: startStr ? new Date(startStr) : undefined,
-          to: endStr ? new Date(endStr) : undefined,
+          from: startStr ? parseDate(startStr) : undefined,
+          to: endStr ? parseDate(endStr) : undefined,
         });
       } catch {
         console.error("Invalid date range format:", value);
@@ -148,7 +178,7 @@ const CalendarPicker = ({
         const dateStrings = value.split(',');
         const parsedDates = dateStrings
           .map(d => {
-            try { return new Date(d); } 
+            try { return parseDate(d); }
             catch { return null; }
           })
           .filter((d): d is Date => d !== null);
@@ -167,9 +197,11 @@ const CalendarPicker = ({
     if (onValueChange) {
       // Format as YYYY-MM-DD to maintain consistency
       if (selectedDate) {
-        const year = selectedDate.getFullYear();
-        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-        const day = String(selectedDate.getDate()).padStart(2, '0');
+        // Create a new date at midnight to ensure consistent formatting
+        const localDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+        const year = localDate.getFullYear();
+        const month = String(localDate.getMonth() + 1).padStart(2, '0');
+        const day = String(localDate.getDate()).padStart(2, '0');
         onValueChange(name, `${year}-${month}-${day}`);
       } else {
         onValueChange(name, null);
@@ -191,9 +223,11 @@ const CalendarPicker = ({
         // Format dates as YYYY-MM-DD
         const formatDate = (date: Date | undefined) => {
           if (!date) return '';
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
+          // Create a new date at midnight to ensure consistent formatting
+          const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+          const year = localDate.getFullYear();
+          const month = String(localDate.getMonth() + 1).padStart(2, '0');
+          const day = String(localDate.getDate()).padStart(2, '0');
           return `${year}-${month}-${day}`;
         };
         const rangeStr = `${formatDate(range.from)}|${formatDate(range.to)}`;
@@ -226,9 +260,11 @@ const CalendarPicker = ({
       if (onValueChange) {
         // Format dates as YYYY-MM-DD
         const datesStr = selectedDates.map(d => {
-          const year = d.getFullYear();
-          const month = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
+          // Create a new date at midnight to ensure consistent formatting
+          const localDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+          const year = localDate.getFullYear();
+          const month = String(localDate.getMonth() + 1).padStart(2, '0');
+          const day = String(localDate.getDate()).padStart(2, '0');
           return `${year}-${month}-${day}`;
         }).join(',');
         onValueChange(name, datesStr || null);
@@ -265,9 +301,11 @@ const CalendarPicker = ({
 
         if (onValueChange) {
           // Format as YYYY-MM-DD to maintain consistency
-          const year = parsedDate.getFullYear();
-          const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
-          const day = String(parsedDate.getDate()).padStart(2, '0');
+          // Create a new date at midnight to ensure consistent formatting
+          const localDate = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate());
+          const year = localDate.getFullYear();
+          const month = String(localDate.getMonth() + 1).padStart(2, '0');
+          const day = String(localDate.getDate()).padStart(2, '0');
           onValueChange(name, `${year}-${month}-${day}`);
         }
 
@@ -287,9 +325,11 @@ const CalendarPicker = ({
     if (onValueChange) {
       // Format as YYYY-MM-DD to maintain consistency
       if (selectedDate) {
-        const year = selectedDate.getFullYear();
-        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-        const day = String(selectedDate.getDate()).padStart(2, '0');
+        // Create a new date at midnight to ensure consistent formatting
+        const localDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+        const year = localDate.getFullYear();
+        const month = String(localDate.getMonth() + 1).padStart(2, '0');
+        const day = String(localDate.getDate()).padStart(2, '0');
         onValueChange(name, `${year}-${month}-${day}`);
       } else {
         onValueChange(name, null);
@@ -298,6 +338,23 @@ const CalendarPicker = ({
 
     if (form && formField) {
       form.setValue(formField, selectedDate);
+    }
+  };
+
+  // Handler for month mode selection
+  const handleMonthSelect = (month: number, year: number) => {
+    setSelectedMonth({ month, year });
+
+    if (onValueChange) {
+      // Format as YYYY-MM
+      const monthStr = String(month + 1).padStart(2, '0');
+      onValueChange(name, `${year}-${monthStr}`);
+    }
+
+    if (form && formField) {
+      // Pass the formatted string YYYY-MM
+      const monthStr = String(month + 1).padStart(2, '0');
+      form.setValue(formField, `${year}-${monthStr}`);
     }
   };
 
@@ -311,9 +368,15 @@ const CalendarPicker = ({
         return format(dateRange.from, "dd/MM/yyyy", { locale: ptBR });
       }
     } else if (mode === "multiple" && dates.length > 0) {
-      return dates.length === 1 
+      return dates.length === 1
         ? format(dates[0], "dd/MM/yyyy", { locale: ptBR })
         : `${dates.length} datas selecionadas`;
+    } else if (mode === "month" && selectedMonth) {
+      const monthNames = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+      ];
+      return `${monthNames[selectedMonth.month]} ${selectedMonth.year}`;
     }
     return placeholder;
   };
@@ -321,7 +384,7 @@ const CalendarPicker = ({
   // Função para limpar todas as seleções
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation(); // Evita que o popover abra/feche
-    
+
     if (mode === "single" || mode === "natural") {
       setDate(undefined);
       setInputValue("");
@@ -329,13 +392,15 @@ const CalendarPicker = ({
       setDateRange({ from: undefined, to: undefined });
     } else if (mode === "multiple") {
       setDates([]);
+    } else if (mode === "month") {
+      setSelectedMonth(undefined);
     }
-    
+
     // Chamar callback para notificar o componente pai
     if (onValueChange) {
       onValueChange(name, null);
     }
-    
+
     // Atualizar form se fornecido
     if (form && formField) {
       form.setValue(formField, undefined);
@@ -350,6 +415,8 @@ const CalendarPicker = ({
       return !!(dateRange.from || dateRange.to);
     } else if (mode === "multiple") {
       return dates.length > 0;
+    } else if (mode === "month") {
+      return !!selectedMonth;
     }
     return false;
   };
@@ -398,6 +465,65 @@ const CalendarPicker = ({
           fromYear={fromYear}
           toYear={toYear}
         />
+      );
+    } else if (mode === "month") {
+      const monthNames = [
+        "Jan", "Fev", "Mar", "Abr",
+        "Mai", "Jun", "Jul", "Ago",
+        "Set", "Out", "Nov", "Dez"
+      ];
+
+      return (
+        <div className="p-3">
+          {/* Navegação de ano */}
+          <div className="flex items-center justify-between mb-4">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setYearForMonth(yearForMonth - 1)}
+              disabled={fromYear !== undefined && yearForMonth <= fromYear}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="font-medium text-sm">{yearForMonth}</div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setYearForMonth(yearForMonth + 1)}
+              disabled={toYear !== undefined && yearForMonth >= toYear}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Grid de meses */}
+          <div className="grid grid-cols-3 gap-2">
+            {monthNames.map((monthName, index) => {
+              const isSelected = selectedMonth?.month === index &&
+                selectedMonth?.year === yearForMonth;
+              const isCurrentMonth = new Date().getMonth() === index &&
+                new Date().getFullYear() === yearForMonth;
+
+              return (
+                <Button
+                  key={index}
+                  type="button"
+                  variant={isSelected ? "default" : "outline"}
+                  className={cn(
+                    "h-10 text-sm",
+                    isCurrentMonth && !isSelected && "border-primary",
+                    isSelected && "bg-primary text-primary-foreground"
+                  )}
+                  onClick={() => handleMonthSelect(index, yearForMonth)}
+                >
+                  {monthName}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
       );
     }
     return null;

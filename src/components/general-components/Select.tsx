@@ -92,7 +92,9 @@ const Select = ({
   };
 
   const handleClearAll = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent dropdown from opening/closing
+    e.preventDefault();
+    e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
     setSelectedItems([]);
     onChange(name, []);
     // Execute all callback functions after onChange
@@ -130,18 +132,21 @@ const Select = ({
     return (
       <DropdownMenu modal={modal}>
         <DropdownMenuTrigger asChild>
-          <Button 
+          <Button
             disabled={disabled}
-            variant="outline" 
+            variant="outline"
             className="w-full justify-between font-normal"
           >
             <span className="truncate">{getSelectedLabels()}</span>
-            <div className="flex items-center">
+            <div className="flex items-center pointer-events-auto">
               {selectedItems.length > 0 && (
-                <Cross2Icon 
-                  className="h-3 w-3 opacity-50 mr-0.5 hover:opacity-100 cursor-pointer" 
+                <button
+                  type="button"
                   onClick={handleClearAll}
-                />
+                  className="h-4 w-4 mr-1 flex items-center justify-center hover:bg-background p-0.5 rounded transition-colors cursor-pointer"
+                >
+                  <Cross2Icon className="h-3 w-3 opacity-50 hover:opacity-100" />
+                </button>
               )}
               <ChevronDownIcon className="h-4 w-4 opacity-50" />
             </div>

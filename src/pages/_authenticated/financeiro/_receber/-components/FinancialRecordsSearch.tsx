@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
-import DatePickerInput from "@/components/general-components/Calendar";
+import CalendarPicker from "@/components/general-components/Calendar";
 
 interface SearchData {
   companyId?: number;
@@ -15,7 +15,6 @@ interface SearchData {
   traineeId?: number;
   customerId?: number;
   sellerId?: number;
-  accrualDate?: string;
   dueDateStart?: string;
   dueDateEnd?: string;
   paidAtStart?: string;
@@ -43,7 +42,6 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
     traineeId: undefined,
     customerId: undefined,
     sellerId: undefined,
-    accrualDate: "",
     dueDateStart: "",
     dueDateEnd: "",
     paidAtStart: "",
@@ -92,7 +90,6 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
       traineeId: params.traineeId as number || undefined,
       customerId: params.customerId as number || undefined,
       sellerId: params.sellerId as number || undefined,
-      accrualDate: params.accrualDate as string || "",
       dueDateStart: params.dueDateStart as string || "",
       dueDateEnd: params.dueDateEnd as string || "",
       paidAtStart: params.paidAtStart as string || "",
@@ -129,7 +126,6 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
       traineeId: undefined,
       customerId: undefined,
       sellerId: undefined,
-      accrualDate: "",
       dueDateStart: "",
       dueDateEnd: "",
       paidAtStart: "",
@@ -282,21 +278,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="accrualDate">Data de Competência (YYYY-MM)</Label>
-        <Input
-          name="accrualDate"
-          value={searchData.accrualDate || ""}
-          onValueChange={handleChange}
-          placeholder="2024-01"
-          pattern="[0-9]{4}-[0-9]{2}"
-        />
-      </div>
-
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-2">
           <Label htmlFor="dueDateStart">Vencimento de</Label>
-          <DatePickerInput
+          <CalendarPicker
             name="dueDateStart"
             value={searchData.dueDateStart || ""}
             onValueChange={handleChange}
@@ -305,7 +290,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
         </div>
         <div className="space-y-2">
           <Label htmlFor="dueDateEnd">Vencimento até</Label>
-          <DatePickerInput
+          <CalendarPicker
             name="dueDateEnd"
             value={searchData.dueDateEnd || ""}
             onValueChange={handleChange}
@@ -317,7 +302,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-2">
           <Label htmlFor="paidAtStart">Pagamento de</Label>
-          <DatePickerInput
+          <CalendarPicker
             name="paidAtStart"
             value={searchData.paidAtStart || ""}
             onValueChange={handleChange}
@@ -326,7 +311,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
         </div>
         <div className="space-y-2">
           <Label htmlFor="paidAtEnd">Pagamento até</Label>
-          <DatePickerInput
+          <CalendarPicker
             name="paidAtEnd"
             value={searchData.paidAtEnd || ""}
             onValueChange={handleChange}

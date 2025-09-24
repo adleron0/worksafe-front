@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/kibo-ui/status";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import ListHeader from "@/components/general-components/ListHeader";
 import tailwindUtils from "@/utils/tailwind.utils";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
@@ -142,16 +143,14 @@ const Item = ({
   return (
     <>
       {/* Header apenas no primeiro item */}
-      {index === 0 && (
-        <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
-          <p className="w-3/12">Título</p>
-          <p className="w-2/12">Cursos Associados</p>
-          <p className="w-3/12">Configuração Progresso</p>
-          <p className="w-1/12">Versão</p>
-          <p className="w-2/12">Status</p>
-          <p className="w-1/12 text-center">Ações</p>
-        </div>
-      )}
+      <ListHeader show={index === 0}>
+        <p className="w-3/12">Título</p>
+        <p className="w-2/12">Cursos Associados</p>
+        <p className="w-3/12">Configuração Progresso</p>
+        <p className="w-1/12">Versão</p>
+        <p className="w-2/12">Status</p>
+        <p className="w-1/12 text-center">Ações</p>
+      </ListHeader>
 
       {/* Conteúdo do item */}
       <div

@@ -29,6 +29,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   ChartContainer,
   ChartTooltip,
@@ -479,14 +480,21 @@ function Dashboard() {
           <CardHeader className="space-y-0 pb-2 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-t-lg">
             <CardDescription className="text-blue-700 dark:text-blue-300 font-medium">Período Atual</CardDescription>
             <CardTitle className="text-4xl tabular-nums text-blue-900 dark:text-blue-100">
-              {stats.turmasAtivas}{" "}
-              <span className="font-sans text-sm font-normal tracking-normal text-muted-foreground">
-                turmas ativas
-              </span>
+              {classesData ? (
+                <>
+                  {stats.turmasAtivas}{" "}
+                  <span className="font-sans text-sm font-normal tracking-normal text-muted-foreground">
+                    turmas ativas
+                  </span>
+                </>
+              ) : (
+                <Skeleton className="h-10 w-48" />
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer
+            {classesData ? (
+              <ChartContainer
               config={{
                 turmas: {
                   label: "Turmas",
@@ -548,15 +556,29 @@ function Dashboard() {
                 </ReferenceLine>
               </BarChart>
             </ChartContainer>
+            ) : (
+              <div className="h-[200px] w-full">
+                <Skeleton className="h-full w-full" />
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex-col items-start gap-1">
-            <CardDescription>
-              Total de <span className="font-medium text-foreground">{stats.totalTurmas}</span> turmas
-              nos últimos {dateFilter} dias
-            </CardDescription>
-            <CardDescription>
-              Taxa de ocupação média: <span className="font-medium text-foreground">{stats.taxaOcupacao}%</span>
-            </CardDescription>
+            {classesData ? (
+              <>
+                <CardDescription>
+                  Total de <span className="font-medium text-foreground">{stats.totalTurmas}</span> turmas
+                  nos últimos {dateFilter} dias
+                </CardDescription>
+                <CardDescription>
+                  Taxa de ocupação média: <span className="font-medium text-foreground">{stats.taxaOcupacao}%</span>
+                </CardDescription>
+              </>
+            ) : (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-36" />
+              </div>
+            )}
           </CardFooter>
         </Card>
 
@@ -566,24 +588,37 @@ function Dashboard() {
             <div>
               <CardDescription className="text-emerald-700 dark:text-emerald-300 font-medium">Total</CardDescription>
               <CardTitle className="flex items-baseline gap-1 text-4xl tabular-nums text-emerald-900 dark:text-emerald-100">
-                {stats.totalCertificados}
-                <span className="text-sm font-normal tracking-normal text-muted-foreground">
-                  certificados
-                </span>
+                {certificatesData ? (
+                  <>
+                    {stats.totalCertificados}
+                    <span className="text-sm font-normal tracking-normal text-muted-foreground">
+                      certificados
+                    </span>
+                  </>
+                ) : (
+                  <Skeleton className="h-10 w-32" />
+                )}
               </CardTitle>
             </div>
             <div>
               <CardDescription className="text-teal-700 dark:text-teal-300 font-medium">Este mês</CardDescription>
               <CardTitle className="flex items-baseline gap-1 text-4xl tabular-nums text-teal-900 dark:text-teal-100">
-                {stats.certificadosEsteMes}
-                <span className="text-sm font-normal tracking-normal text-muted-foreground">
-                  novos
-                </span>
+                {certificatesData ? (
+                  <>
+                    {stats.certificadosEsteMes}
+                    <span className="text-sm font-normal tracking-normal text-muted-foreground">
+                      novos
+                    </span>
+                  </>
+                ) : (
+                  <Skeleton className="h-10 w-24" />
+                )}
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent className="flex flex-1 items-center">
-            <ChartContainer
+            {certificatesData ? (
+              <ChartContainer
               config={{
                 certificados: {
                   label: "Certificados",
@@ -638,6 +673,11 @@ function Dashboard() {
                 />
               </LineChart>
             </ChartContainer>
+            ) : (
+              <div className="h-[150px] w-full">
+                <Skeleton className="h-full w-full" />
+              </div>
+            )}
           </CardContent>
         </Card>
         {/* Card de Taxa de Ocupação com Gráfico de Rosca */}
@@ -648,20 +688,21 @@ function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-center">
-              <ChartContainer
-                config={{
-                  ocupado: {
-                    label: "Ocupado",
-                    color: "hsl(var(--chart-1))",
-                  },
-                  disponivel: {
-                    label: "Disponível",
-                    color: "hsl(var(--muted))",
-                  },
-                }}
-                className="h-[180px] w-[180px]"
-              >
-                <PieChart>
+              {classesData && subscriptionsData ? (
+                <ChartContainer
+                  config={{
+                    ocupado: {
+                      label: "Ocupado",
+                      color: "hsl(var(--chart-1))",
+                    },
+                    disponivel: {
+                      label: "Disponível",
+                      color: "hsl(var(--muted))",
+                    },
+                  }}
+                  className="h-[180px] w-[180px]"
+                >
+                  <PieChart>
                   <Pie
                     data={[
                       { name: "Ocupado", value: stats.taxaOcupacao, fill: "url(#gradientOcupado)" },
@@ -700,8 +741,13 @@ function Dashboard() {
                       return null
                     }}
                   />
-                </PieChart>
-              </ChartContainer>
+                  </PieChart>
+                </ChartContainer>
+              ) : (
+                <div className="h-[180px] w-[180px]">
+                  <Skeleton className="h-full w-full rounded-full" />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -715,16 +761,18 @@ function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
-            {/* Mini Card Turmas */}
-            <div className="rounded-lg bg-gradient-to-r from-violet-500 to-purple-600 p-4 text-white shadow-md">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium opacity-90">Turmas</p>
-                  <p className="text-2xl font-bold">
-                    {stats.turmasAtivas}/{stats.totalTurmas}
-                  </p>
-                  <p className="text-xs opacity-75">ativas</p>
-                </div>
+            {classesData && studentsData && certificatesData ? (
+              <>
+                {/* Mini Card Turmas */}
+                <div className="rounded-lg bg-gradient-to-r from-violet-500 to-purple-600 p-4 text-white shadow-md">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium opacity-90">Turmas</p>
+                      <p className="text-2xl font-bold">
+                        {stats.turmasAtivas}/{stats.totalTurmas}
+                      </p>
+                      <p className="text-xs opacity-75">ativas</p>
+                    </div>
                 <div className="rounded-full bg-white/20 p-3">
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -764,6 +812,14 @@ function Dashboard() {
                 </div>
               </div>
             </div>
+              </>
+            ) : (
+              <>
+                <Skeleton className="h-24 w-full rounded-lg" />
+                <Skeleton className="h-24 w-full rounded-lg" />
+                <Skeleton className="h-24 w-full rounded-lg" />
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -774,7 +830,8 @@ function Dashboard() {
             <CardDescription>Taxa de conclusão por curso</CardDescription>
           </CardHeader>
           <CardContent>
-            {processedData.taxaConclusao.length > 0 ? (
+            {coursesData && certificatesData && subscriptionsData ? (
+              processedData.taxaConclusao.length > 0 ? (
               <ChartContainer
                 config={{
                   conclusao: {
@@ -824,9 +881,14 @@ function Dashboard() {
                   />
                 </BarChart>
               </ChartContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+                  <p>Sem dados de conclusão disponíveis</p>
+                </div>
+              )
             ) : (
-              <div className="flex items-center justify-center h-[250px] text-muted-foreground">
-                <p>Sem dados de conclusão disponíveis</p>
+              <div className="h-[250px] w-full">
+                <Skeleton className="h-full w-full" />
               </div>
             )}
           </CardContent>
@@ -839,7 +901,8 @@ function Dashboard() {
             <CardDescription>Comparativo mensal de certificados</CardDescription>
           </CardHeader>
           <CardContent>
-            {processedData.certificadosPorMes.length > 0 && processedData.alunosPorMes.length > 0 ? (
+            {certificatesData && studentsData ? (
+              processedData.certificadosPorMes.length > 0 && processedData.alunosPorMes.length > 0 ? (
               <ChartContainer
                 config={{
                   certificados: {
@@ -916,9 +979,14 @@ function Dashboard() {
                   />
                 </LineChart>
               </ChartContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                  <p>Sem dados disponíveis</p>
+                </div>
+              )
             ) : (
-              <div className="flex items-center justify-center h-[200px] text-muted-foreground">
-                <p>Sem dados disponíveis</p>
+              <div className="h-[200px] w-full">
+                <Skeleton className="h-full w-full" />
               </div>
             )}
           </CardContent>
@@ -933,13 +1001,15 @@ function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-row items-baseline gap-4 p-4 pt-2">
-            <div className="flex items-baseline gap-2 text-3xl font-bold tabular-nums leading-none">
-              {processedData.turmasRecentes.reduce((acc, t) => acc + t.alunos, 0)}
-              <span className="text-sm font-normal text-muted-foreground">
-                alunos
-              </span>
-            </div>
-            <ChartContainer
+            {classesData && subscriptionsData ? (
+              <>
+                <div className="flex items-baseline gap-2 text-3xl font-bold tabular-nums leading-none">
+                  {processedData.turmasRecentes.reduce((acc, t) => acc + t.alunos, 0)}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    alunos
+                  </span>
+                </div>
+                <ChartContainer
               config={{
                 alunos: {
                   label: "Alunos",
@@ -975,6 +1045,10 @@ function Dashboard() {
                 />
               </BarChart>
             </ChartContainer>
+              </>
+            ) : (
+              <Skeleton className="h-16 w-full" />
+            )}
           </CardContent>
         </Card>
 
@@ -983,14 +1057,21 @@ function Dashboard() {
           <CardHeader className="space-y-0 pb-0">
             <CardDescription>Novos Alunos</CardDescription>
             <CardTitle className="flex items-baseline gap-1 text-4xl tabular-nums">
-              {stats.alunosEsteMes}
-              <span className="font-sans text-sm font-normal tracking-normal text-muted-foreground">
-                este mês
-              </span>
+              {studentsData ? (
+                <>
+                  {stats.alunosEsteMes}
+                  <span className="font-sans text-sm font-normal tracking-normal text-muted-foreground">
+                    este mês
+                  </span>
+                </>
+              ) : (
+                <Skeleton className="h-10 w-24" />
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <ChartContainer
+            {studentsData ? (
+              <ChartContainer
               config={{
                 alunos: {
                   label: "Alunos",
@@ -1048,6 +1129,11 @@ function Dashboard() {
                 />
               </AreaChart>
             </ChartContainer>
+            ) : (
+              <div className="h-[120px] w-full">
+                <Skeleton className="h-full w-full" />
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

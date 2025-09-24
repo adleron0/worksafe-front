@@ -2,12 +2,13 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  getStudentToken, 
-  setStudentToken, 
-  clearStudentAuth, 
+import api from '@/services/api-s';
+import {
+  getStudentToken,
+  setStudentToken,
+  clearStudentAuth,
   isTokenValid,
-  getTokenPayload 
+  getTokenPayload
 } from '@/utils/studentAuth';
 
 export interface StudentData {
@@ -161,6 +162,37 @@ export const StudentAuthProvider: React.FC<StudentAuthProviderProps> = ({ childr
 
     return () => clearInterval(interval);
   }, [logout, toast]);
+
+  // Configura interceptor do axios para verificar 401
+  useEffect(() => {
+    const responseInterceptor = api.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        // Se receber 401 (Unauthorized), remove o token e faz logout
+        if (error.response?.status === 401) {
+          clearStudentAuth();
+          setIsAuthenticated(false);
+          setStudentData(null);
+
+          toast({
+            title: "Sessão inválida",
+            description: "Sua sessão expirou. Faça login novamente.",
+            variant: "destructive",
+          });
+
+          // Redireciona para login do student
+          navigate({ to: '/auth/student/login' });
+        }
+
+        return Promise.reject(error);
+      }
+    );
+
+    // Remove o interceptor quando o componente é desmontado
+    return () => {
+      api.interceptors.response.eject(responseInterceptor);
+    };
+  }, [navigate, toast]);
 
   return (
     <StudentAuthContext.Provider 

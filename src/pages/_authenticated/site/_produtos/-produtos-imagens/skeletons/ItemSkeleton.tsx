@@ -5,7 +5,7 @@ const ItemSkeleton = ({ index }: { index: number }) => {
   return (
     <>
       {/* Header para o primeiro item */}
-      <ListHeader show={index === 0} >
+      <ListHeader show={index === 0} skeleton>
         <div className="w-3/12">Usuário</div>
         <div className="w-2/12">Função</div>
         <div className="w-2/12">Contatos</div>
@@ -18,7 +18,7 @@ const ItemSkeleton = ({ index }: { index: number }) => {
       <div className="shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b space-y-4 lg:space-y-0">
         {/* Avatar e Nome */}
         <div className="w-full lg:w-3/12 flex items-center space-x-4">
-          <Skeleton className="h-12 w-12 rounded-full" />
+          <Skeleton className="h-12 w-12 rounded" />
           <div className="space-y-2">
             <Skeleton className="h-4 w-[150px]" />
             <Skeleton className="h-4 w-[100px]" />

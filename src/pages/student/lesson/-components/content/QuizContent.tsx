@@ -322,18 +322,21 @@ export function QuizContent({ step, onCompleteStep }: ContentComponentProps) {
                         key={optionIndex}
                         value={optionIndex.toString()}
                         className={cn(
-                          "w-full justify-start gap-3 h-auto p-3 text-left rounded-lg",
+                          "w-full justify-start gap-3 h-auto p-3 text-left rounded-lg cursor-pointer",
+                          "hover:bg-accent/50 transition-colors",
                           "data-[state=on]:bg-primary/10 data-[state=on]:border-primary",
                           // Resposta correta (após enviar)
                           showResults && isCorrect && "border-green-500 bg-green-50 hover:bg-green-50 dark:bg-green-900/20",
                           // Resposta errada (após enviar)
                           showResults && isWrong && "border-red-500 bg-red-50 hover:bg-red-50 dark:bg-red-900/20",
                           // Outras opções após enviar
-                          showResults && !isCorrect && !isWrong && "opacity-60"
+                          showResults && !isCorrect && !isWrong && "opacity-60",
+                          // Desabilitado após enviar
+                          showResults && "cursor-default"
                         )}
                       >
                         <div className={cn(
-                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-md font-semibold text-sm",
+                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border font-semibold text-sm",
                           "bg-muted text-muted-foreground",
                           // Selecionado (antes de enviar)
                           answers[question.id] === optionIndex && !showResults && "bg-primary text-primary-foreground",

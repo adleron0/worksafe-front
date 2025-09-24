@@ -83,7 +83,7 @@ function LessonPlayer() {
     setCurrentStepIndex
   } = useStepNavigation({ lessonData, startStep });
   
-  const { completeStep } = useStepCompletion(lessonId, currentStep, checkLessonCompletion);
+  const { completeStep, isCompletingStep } = useStepCompletion(lessonId, currentStep, checkLessonCompletion);
 
   // Reset imediato do step quando mudar de lição
   useEffect(() => {
@@ -244,19 +244,20 @@ function LessonPlayer() {
     switch (stepType) {
       case 'video':
         return (
-          <VideoContent 
+          <VideoContent
             step={currentStep}
             onProgress={handleVideoProgress}
             progressConfig={lessonData?.lesson?.progressConfig}
+            isCompletingStep={isCompletingStep}
           />
         );
       case 'text':
         return (
-          <TextContent 
+          <TextContent
             step={currentStep}
             onUpdateProgress={updateStepProgress}
             onCompleteStep={(data) => {
-              completeStep({
+              return completeStep({
                 stepId: data.stepId,
                 contentType: 'TEXT' as const,
                 progressData: data.progressData || data.data
@@ -264,6 +265,7 @@ function LessonPlayer() {
             }}
             progressConfig={lessonData?.lesson?.progressConfig}
             completedStepIds={completedStepIds}
+            isCompletingStep={isCompletingStep}
           />
         );
       case 'quiz':

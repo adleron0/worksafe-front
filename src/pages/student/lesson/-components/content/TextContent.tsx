@@ -1,7 +1,7 @@
 import { memo, useRef, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Loader2 } from 'lucide-react';
 import RichTextViewer from '@/components/general-components/RichTextViewer';
 import type { ContentComponentProps } from '../../types';
 
@@ -36,12 +36,13 @@ const cleanupOldComponents = () => {
   });
 };
 
-export const TextContent = memo(({ 
-  step, 
-  onUpdateProgress, 
-  onCompleteStep, 
-  progressConfig, 
-  completedStepIds 
+export const TextContent = memo(({
+  step,
+  onUpdateProgress,
+  onCompleteStep,
+  progressConfig,
+  completedStepIds,
+  isCompletingStep
 }: ContentComponentProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const lastProgressRef = useRef(0);
@@ -82,7 +83,10 @@ export const TextContent = memo(({
   const [readingProgress, setReadingProgress] = useState(0);
   const [canComplete, setCanComplete] = useState(false);
   const [isSmallContent, setIsSmallContent] = useState(false);
-  const [, setEstimatedReadTime] = useState(0);
+  const [estimatedReadTime, setEstimatedReadTime] = useState(0);
+  const [hasScroll, setHasScroll] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const scrollElementRef = useRef<HTMLElement | null>(null);
   
   // Guardar o ID do step atual para detectar mudanças reais
   const currentStepIdRef = useRef(step.id);
@@ -106,7 +110,6 @@ export const TextContent = memo(({
       
       // Limpar interval de progresso visual se existir
       if (progressIntervalRef.current) {
-        console.log('🧹 Limpando interval de progresso visual do step anterior');
         clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = null;
       }
@@ -150,14 +153,11 @@ export const TextContent = memo(({
   }, [step.id, step.status, step.progress, onUpdateProgress]);
   
   useEffect(() => {
-    console.log('🔄 TextContent useEffect - Step:', step.id, 'Status:', step.status, 'Progress:', step.progress);
-    
     // Se já está processando ou não tem conteúdo, ignorar
     const hasTextContent = step.content?.content || step.content?.text || step.content?.html;
     if (hasCompletedRef.current || !hasTextContent || step.status === 'completed' || step.status === 'COMPLETED') {
       // Se o step já está completo, marcar como já processado
       if (step.status === 'completed' || step.status === 'COMPLETED') {
-        console.log('✅ Step já completo, marcando visual');
         hasCompletedRef.current = true;
         setCanComplete(true);
         setReadingProgress(100);
@@ -170,16 +170,13 @@ export const TextContent = memo(({
     
     // Se já iniciou o processamento para este step E o status não mudou, não reiniciar
     if (hasStartedProcessingRef.current && currentStepIdRef.current === step.id && !isNowActive) {
-      console.log('⏸️ Já iniciou processamento para este step');
       return;
     }
     
     // Se o status mudou para in_progress, resetar o flag para permitir reprocessamento
     if (isNowActive && !hasStartedProcessingRef.current) {
-      console.log('🔄 Status mudou para IN_PROGRESS, iniciando processamento');
       hasStartedProcessingRef.current = false;
     }
-    console.log('▶️ Iniciando processamento do step:', step.id);
     hasStartedProcessingRef.current = true;
     
     // Capturar valores necessários para as closures
@@ -191,15 +188,18 @@ export const TextContent = memo(({
     
     const handleScroll = () => {
       if (!contentRef.current || hasCompletedRef.current) return;
-      
-      const element = contentRef.current;
+
+      // Pegar o viewport interno do ScrollArea
+      const scrollViewport = contentRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+      const element = scrollViewport || contentRef.current;
+
       const scrollHeight = element.scrollHeight - element.clientHeight;
-      
+
       // Se não há scroll (conteúdo pequeno), não processar aqui
       if (scrollHeight <= 0) {
         return;
       }
-      
+
       const scrollPercentage = (element.scrollTop / scrollHeight) * 100;
       
       
@@ -229,48 +229,38 @@ export const TextContent = memo(({
       
       // Atualizar progresso visual
       setReadingProgress(scrollPercentage);
-      
-      // Se chegou ao final (95% ou mais), marcar como completo após delay
-      if (scrollPercentage >= textCompletePercent && !hasCompletedRef.current) {
+
+      // Se chegou ao final (90% ou mais), marcar como pode completar
+      if (scrollPercentage >= textCompletePercent && !canComplete) {
+        // Usar um pequeno delay para evitar triggers muito rápidos
         clearTimeout(completionTimerRef.current);
         completionTimerRef.current = setTimeout(() => {
-          if (!hasCompletedRef.current && onCompleteCallback) {
-            console.log('📚 TextContent: Completando por scroll - Step:', stepId, 'Percent:', scrollPercentage);
-            hasCompletedRef.current = true;
-            onCompleteCallback({
-              stepId: stepId,
-              data: {
-                completedPercent: scrollPercentage,
-                action: 'completed_by_scroll',
-                timestamp: new Date().toISOString(),
-                timeSpent: Math.round((Date.now() - startTimeRef.current) / 1000)
-              }
-            });
-          } else {
-            console.log('📚 TextContent: Não pode completar - hasCompleted:', hasCompletedRef.current, 'onCompleteStep:', !!onCompleteCallback);
-          }
-        }, 2000);
+          setCanComplete(true);
+          setReadingProgress(100);
+        }, 300); // Delay menor para resposta mais rápida
       }
     };
     
     // Aguardar o elemento estar pronto
     let checkAttempts = 0;
-    
+
     const checkElement = () => {
       checkAttempts++;
       const contentElement = contentRef.current;
-      console.log(`📋 ContentElement (tentativa ${checkAttempts}):`, !!contentElement);
-      
+
       if (!contentElement) {
         // Se o elemento não está pronto, tentar novamente em 100ms (máximo 10 tentativas)
         if (checkAttempts < 10) {
           setTimeout(checkElement, 100);
-        } else {
-          console.log('❌ Elemento não encontrado após 10 tentativas');
         }
         return;
       }
-      const hasScroll = contentElement.scrollHeight > contentElement.clientHeight + 10;
+
+      // IMPORTANTE: ScrollArea do Radix UI tem estrutura especial
+      // Precisamos pegar o viewport interno que realmente tem o scroll
+      const scrollViewport = contentElement.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+      const actualScrollElement = scrollViewport || contentElement;
+      const hasScroll = actualScrollElement.scrollHeight > actualScrollElement.clientHeight + 10;
       
       if (!hasScroll) {
         setIsSmallContent(true);
@@ -279,32 +269,17 @@ export const TextContent = memo(({
         const minReadingTime = stepDuration * 60 * 1000; // Converter para ms
         const requiredTime = (minReadingTime * textCompletePercent) / 100;
         
-        // IMPORTANTE: O timer deve executar no tempo configurado (90% = 54s), não em 100%
-        
-        console.log('📚 TextContent configurado:', {
-          tipo: 'Sem scroll (tempo)',
-          duration: stepDuration + ' min',
-          textCompletePercent: textCompletePercent + '%',
-          tempoTotal: minReadingTime / 1000 + 's',
-          tempoParaCompletar: requiredTime / 1000 + 's',
-          stepId: stepId
-        });
-        
         setEstimatedReadTime(requiredTime / 1000); // Para exibição em segundos
         
         // Timer para completar baseado no tempo mínimo
         // Função para criar/recriar o timer de conclusão
         const createCompletionTimer = (remainingTime: number) => {
           const timerKey = `timer_${stepId}`;
-          
-          console.log('⏰ Criando timer de conclusão para', remainingTime / 1000, 'segundos');
-          
+
           const timerId = setTimeout(() => {
-            console.log('🔔 Timer de conclusão EXECUTADO após', remainingTime / 1000, 'segundos');
             
             // IMPORTANTE: Verificar se o componente ainda está montado
             if (!isMountedRef.current) {
-              console.log('⚠️ Componente foi desmontado, cancelando conclusão');
               activeTimersRef.current.delete(timerKey);
               return;
             }
@@ -314,41 +289,11 @@ export const TextContent = memo(({
             const currentTextCompletePercent = textCompletePercentRef.current;
             const currentOnCompleteStep = onCompleteStepRef.current;
             
-            console.log('🔍 Estado atual:', {
-              hasCompleted: hasCompletedRef.current,
-              hasCallback: !!currentOnCompleteStep,
-              stepId: currentStepId,
-              textCompletePercent: currentTextCompletePercent,
-              isMounted: isMountedRef.current
-            });
-            
             // Quando este timer executar, já passou o tempo necessário
-            // Não precisa verificar porcentagem, pode completar diretamente
-            if (!hasCompletedRef.current && currentOnCompleteStep && isMountedRef.current) {
-              console.log('⏱️ TextContent: Completando por tempo - Step:', currentStepId, 'Required time:', requiredTime / 1000, 's', 'Percent:', currentTextCompletePercent + '%');
-              hasCompletedRef.current = true;
+            // Marcar como pode completar - o useEffect cuidará do envio
+            if (!hasCompletedRef.current && isMountedRef.current) {
               setCanComplete(true);
               setReadingProgress(100);
-              
-              console.log('📤 Chamando onCompleteCallback com dados:', {
-                stepId: currentStepId,
-                completedPercent: currentTextCompletePercent
-              });
-              
-              currentOnCompleteStep({
-                stepId: currentStepId,
-                contentType: 'TEXT',
-                progressData: {
-                  readingTime: Math.round((Date.now() - startTimeRef.current - pausedTimeRef.current) / 1000),
-                  scrollPercentage: 100,
-                  completedPercent: currentTextCompletePercent,
-                  action: 'completed_by_time'
-                }
-              });
-              
-              console.log('✔️ onCompleteCallback chamado com sucesso');
-            } else {
-              console.log('❌ TextContent: Não pode completar por tempo - hasCompleted:', hasCompletedRef.current, 'onCompleteStep:', !!currentOnCompleteStep);
             }
             
             // Remover do set de timers ativos
@@ -367,18 +312,14 @@ export const TextContent = memo(({
           componentData.minReadingTimer = timerId;
           componentData.lastActivity = Date.now();
           mountedComponents.set(componentInstanceRef.current, componentData);
-          
-          console.log('📌 Timer adicionado ao Set. Total de timers ativos:', activeTimersRef.current.size);
           return timerId;
         };
         
         // Verificar se já existe um timer para este step específico
         const timerKey = `timer_${stepId}`;
-        
+
         if (!activeTimersRef.current.has(timerKey)) {
           createCompletionTimer(requiredTime);
-        } else {
-          console.log('⚠️ Timer de conclusão já existe para step', stepId, ', não criando novo')
         }
         
         // Timer visual para mostrar progresso - atualizar a cada 100ms para ser mais preciso
@@ -395,53 +336,20 @@ export const TextContent = memo(({
           
           // Forçar atualização do estado
           setReadingProgress(progress);
-          
+
           // Log a cada 10% de progresso
           if (Math.floor(progress / 10) > Math.floor(lastLoggedProgress / 10)) {
-            console.log(`📊 Progresso: ${progress.toFixed(1)}% - Tempo decorrido: ${(elapsed/1000).toFixed(1)}s de ${(requiredTime/1000).toFixed(1)}s`);
-            console.log(`⏲️ Timer ainda ativo? ${activeTimersRef.current.has(timerKey)} - Total timers: ${activeTimersRef.current.size}`);
             lastLoggedProgress = progress;
           }
-          
+
           // Quando atingir 100% do progresso visual, marcar como pode completar
           if (progress >= 100) {
-            console.log('✅ Progresso visual 100% atingido');
-            console.log(`⏲️ Timer de conclusão ainda ativo? ${activeTimersRef.current.has(timerKey)}`);
-            console.log(`📍 Timer ID: ${minReadingTimeRef.current}`);
             if (progressIntervalRef.current) {
               clearInterval(progressIntervalRef.current);
               progressIntervalRef.current = null;
             }
             setCanComplete(true);
-            
-            // Forçar execução se o timer falhou
-            if (!hasCompletedRef.current && isMountedRef.current) {
-              console.log('⚠️ Timer pode ter falhado, aguardando mais 2 segundos...');
-              setTimeout(() => {
-                // Verificar novamente se ainda está montado
-                if (!hasCompletedRef.current && isMountedRef.current) {
-                  console.log('🚨 Timer definitivamente falhou! Executando manualmente...');
-                  const currentOnCompleteStep = onCompleteStepRef.current;
-                  const currentStepId = stepIdRef.current;
-                  const currentTextCompletePercent = textCompletePercentRef.current;
-                  
-                  if (currentOnCompleteStep && isMountedRef.current) {
-                    hasCompletedRef.current = true;
-                    currentOnCompleteStep({
-                      stepId: currentStepId,
-                      data: {
-                        completedPercent: currentTextCompletePercent,
-                        action: 'completed_by_time_fallback',
-                        timestamp: new Date().toISOString(),
-                        timeSpent: Math.round((Date.now() - startTimeRef.current) / 1000),
-                        minReadingTime: minReadingTime / 1000,
-                        configuredPercent: currentTextCompletePercent
-                      }
-                    });
-                  }
-                }
-              }, 2000);
-            }
+            // O useEffect irá cuidar de enviar o complete
           }
         }, 100); // Atualizar a cada 100ms para precisão visual
         
@@ -463,16 +371,13 @@ export const TextContent = memo(({
             // Calcular tempo restante
             const elapsedTime = Date.now() - startTimeRef.current - pausedTimeRef.current;
             const remainingTime = Math.max(0, requiredTime - elapsedTime);
-            
+
             if (remainingTime > 0) {
-              console.log('🔄 Retomando timer de conclusão - Tempo restante:', remainingTime / 1000, 's');
-              
               // Recriar timer de conclusão com tempo restante
               createCompletionTimer(remainingTime);
               
               // Reiniciar interval de progresso
               if (!progressIntervalRef.current) {
-                console.log('🔄 Retomando progresso visual');
                 progressIntervalRef.current = setInterval(() => {
                   if (!isMountedRef.current || isPausedRef.current) {
                     return;
@@ -490,22 +395,10 @@ export const TextContent = memo(({
                 }, 100);
               }
             } else {
-              console.log('⏰ Tempo já expirou durante a pausa - completando agora');
-              // Se o tempo já passou, completar imediatamente
-              if (!hasCompletedRef.current && onCompleteStepRef.current) {
-                hasCompletedRef.current = true;
+              // Se o tempo já passou, marcar como pode completar
+              if (!hasCompletedRef.current) {
                 setCanComplete(true);
                 setReadingProgress(100);
-                onCompleteStepRef.current({
-                  stepId: stepIdRef.current,
-                  contentType: 'TEXT',
-                  progressData: {
-                    readingTime: Math.round((Date.now() - startTimeRef.current - pausedTimeRef.current) / 1000),
-                    scrollPercentage: 100,
-                    completedPercent: textCompletePercentRef.current,
-                    action: 'completed_by_time_after_pause'
-                  }
-                });
               }
             }
           }
@@ -513,13 +406,57 @@ export const TextContent = memo(({
         
         // NÃO retornar cleanup aqui pois sobrescreve o cleanup geral
       } else {
-        // Para conteúdo com scroll, adicionar event listener
-        contentElement.addEventListener('scroll', handleScroll);
-        
-        // Guardar cleanup para executar depois
-        return () => {
-          contentElement.removeEventListener('scroll', handleScroll);
-        };
+        // Para conteúdo com scroll
+        setHasScroll(true);
+        setIsSmallContent(false);
+
+        // Adicionar event listener no elemento correto
+        actualScrollElement.addEventListener('scroll', handleScroll);
+        scrollElementRef.current = actualScrollElement;
+
+        // Configurar timer baseado na duração mesmo com scroll
+        // Isso permite sincronizar o progresso visual
+        const minReadingTime = stepDuration * 60 * 1000;
+        const requiredTime = (minReadingTime * textCompletePercent) / 100;
+        setEstimatedReadTime(requiredTime / 1000);
+
+        // Timer visual híbrido (combina tempo e scroll)
+        let lastScrollPercent = 0;
+        const hybridIntervalId = setInterval(() => {
+          if (!isMountedRef.current || isPausedRef.current || hasCompletedRef.current) {
+            return;
+          }
+
+          // Calcular progresso baseado em tempo
+          const elapsed = Date.now() - startTimeRef.current - pausedTimeRef.current;
+          const timeProgress = Math.min((elapsed / requiredTime) * 100, 100);
+
+          // Pegar progresso de scroll atual
+          const scrollViewport = contentRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+          const element = scrollViewport || contentRef.current;
+          if (element) {
+            const scrollHeight = element.scrollHeight - element.clientHeight;
+            if (scrollHeight > 0) {
+              lastScrollPercent = (element.scrollTop / scrollHeight) * 100;
+            }
+          }
+
+          // Usar o MAIOR entre tempo e scroll (quem estiver mais avançado)
+          const combinedProgress = Math.max(timeProgress, lastScrollPercent);
+          setReadingProgress(combinedProgress);
+
+          // Se atingiu 100% por tempo OU scroll
+          if (combinedProgress >= 100) {
+            clearInterval(hybridIntervalId);
+            progressIntervalRef.current = null;
+            setCanComplete(true);
+            // O useEffect irá cuidar de enviar o complete
+          }
+        }, 100);
+
+        progressIntervalRef.current = hybridIntervalId;
+
+        // NÃO retornar cleanup aqui - será feito no cleanup geral
       }
     };
     
@@ -529,11 +466,15 @@ export const TextContent = memo(({
     return () => {
       // Este cleanup só deve executar quando o componente desmontar ou o step mudar
       // No React StrictMode, o cleanup é chamado imediatamente, então precisamos proteger
-      console.log('🧹 Cleanup do useEffect principal chamado');
-      
-      // Não fazer nada no cleanup - deixar os timers rodarem
-      // Os timers serão limpos quando o step realmente mudar (no outro useEffect)
-      // ou quando o componente desmontar (no useEffect de cleanup final)
+
+      // Limpar event listener de scroll se existir
+      if (scrollElementRef.current) {
+        // Remover usando a mesma função que foi adicionada
+        scrollElementRef.current.removeEventListener('scroll', handleScroll);
+        scrollElementRef.current = null;
+      }
+
+      // Não limpar timers aqui - serão limpos quando o step mudar ou componente desmontar
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step.id, step.status]); // Executar quando mudar de step ou quando o status mudar
@@ -542,19 +483,14 @@ export const TextContent = memo(({
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        console.log('📱 Página ficou oculta (mudou de aba ou minimizou)');
-        
         // Marcar como pausado e salvar o momento da pausa
         if (!isPausedRef.current) {
           isPausedRef.current = true;
           lastPauseRef.current = Date.now();
-          console.log('⏸️ Pausando timers - Tempo decorrido até agora:', 
-            Math.round((lastPauseRef.current - startTimeRef.current - pausedTimeRef.current) / 1000), 's');
         }
         
         // Pausar o interval de progresso visual
         if (progressIntervalRef.current) {
-          console.log('⏸️ Pausando progresso visual');
           clearInterval(progressIntervalRef.current);
           progressIntervalRef.current = null;
         }
@@ -562,7 +498,6 @@ export const TextContent = memo(({
         // Cancelar o timer de conclusão atual
         const componentData = mountedComponents.get(componentInstanceRef.current);
         if (componentData?.minReadingTimer) {
-          console.log('⏸️ Pausando timer de conclusão');
           clearTimeout(componentData.minReadingTimer);
           componentData.minReadingTimer = undefined;
         }
@@ -571,17 +506,12 @@ export const TextContent = memo(({
           minReadingTimeRef.current = undefined;
         }
       } else {
-        console.log('📱 Página ficou visível novamente');
-        
         // Calcular tempo pausado e retomar
         if (isPausedRef.current) {
           const pauseDuration = Date.now() - lastPauseRef.current;
           pausedTimeRef.current += pauseDuration;
           isPausedRef.current = false;
-          
-          console.log('▶️ Retomando timers - Tempo pausado:', Math.round(pauseDuration / 1000), 's');
-          console.log('⏱️ Tempo total pausado acumulado:', Math.round(pausedTimeRef.current / 1000), 's');
-          
+
           // Recalcular e reiniciar timers se necessário
           if (window.resumeTimersAfterPause) {
             window.resumeTimersAfterPause();
@@ -589,9 +519,8 @@ export const TextContent = memo(({
         }
       }
     };
-    
+
     const handleBeforeUnload = () => {
-      console.log('🚪 Usuário está saindo da página');
       // Limpar todos os timers ao sair
       if (minReadingTimeRef.current) {
         clearTimeout(minReadingTimeRef.current);
@@ -614,8 +543,7 @@ export const TextContent = memo(({
   useEffect(() => {
     const instanceId = componentInstanceRef.current;
     isMountedRef.current = true;
-    console.log('✅ TextContent montado - Instance:', instanceId);
-    
+
     // Registrar ou atualizar componente como montado
     const existingData = mountedComponents.get(instanceId) || {};
     mountedComponents.set(instanceId, {
@@ -626,10 +554,8 @@ export const TextContent = memo(({
     
     // Limpar componentes antigos periodicamente
     cleanupOldComponents();
-    
+
     return () => {
-      console.log('⚠️ TextContent cleanup chamado - Instance:', instanceId);
-      
       // NO STRICTMODE: Este cleanup é chamado e o componente remonta imediatamente
       // Então NÃO vamos limpar os timers aqui!
       
@@ -648,21 +574,15 @@ export const TextContent = memo(({
         setTimeout(() => {
           const data = mountedComponents.get(instanceId);
           if (data && !data.isMounted) {
-            console.log('🛑 Componente não remontou após 500ms - limpando timers');
-            
             if (data.minReadingTimer) {
-              console.log('🛑 Limpando timer de conclusão:', data.minReadingTimer);
               clearTimeout(data.minReadingTimer);
             }
             if (data.progressInterval) {
-              console.log('🛑 Limpando interval de progresso:', data.progressInterval);
               clearInterval(data.progressInterval);
             }
             
             // Remover do Map
             mountedComponents.delete(instanceId);
-          } else if (data && data.isMounted) {
-            console.log('✅ Componente remontou (StrictMode) - mantendo timers');
           }
         }, 500); // Aguardar 500ms para verificar se é StrictMode ou desmontagem real
       }
@@ -673,27 +593,80 @@ export const TextContent = memo(({
     };
   }, []); // Não depende de nada - executa uma vez
   
-  // Log para debug da barra de progresso
+  // UseEffect para garantir que complete seja enviado quando atingir 100%
+  useEffect(() => {
+    // Se já está marcado como pode completar E ainda não completou
+    if (canComplete && !hasCompletedRef.current && onCompleteStep) {
+      // Aguardar um pouco para evitar chamadas duplicadas
+      const completeTimer = setTimeout(() => {
+        if (!hasCompletedRef.current && isMountedRef.current) {
+          hasCompletedRef.current = true;
+          setIsCompleting(true);
+
+          // Determinar se foi por scroll ou tempo
+          const element = scrollElementRef.current || contentRef.current;
+          let completionType = 'completed_by_progress';
+
+          if (element) {
+            const scrollHeight = element.scrollHeight - element.clientHeight;
+            if (scrollHeight > 0) {
+              const scrollPercentage = (element.scrollTop / scrollHeight) * 100;
+              if (scrollPercentage >= (progressConfig?.textCompletePercent || 90)) {
+                completionType = 'completed_by_scroll';
+              }
+            }
+          }
+
+          // Chamar onCompleteStep e tratar como Promise se retornar uma
+          const completePromise = onCompleteStep({
+            stepId: step.id,
+            contentType: 'TEXT',
+            progressData: {
+              completedPercent: 100,
+              action: completionType,
+              timestamp: new Date().toISOString(),
+              timeSpent: Math.round((Date.now() - startTimeRef.current - pausedTimeRef.current) / 1000),
+              scrollPercentage: readingProgress,
+              readingTime: Math.round((Date.now() - startTimeRef.current - pausedTimeRef.current) / 1000)
+            }
+          });
+
+          // Se retornar uma Promise, aguardar e limpar loading
+          if (completePromise && typeof completePromise.finally === 'function') {
+            completePromise.finally(() => {
+              setIsCompleting(false);
+            });
+          } else {
+            // Se não for Promise, limpar após um delay
+            setTimeout(() => setIsCompleting(false), 2000);
+          }
+        }
+      }, 500); // Aguarda 500ms para evitar duplicação
+
+      return () => clearTimeout(completeTimer);
+    }
+  }, [canComplete, onCompleteStep, step.id, readingProgress, progressConfig?.textCompletePercent]);
+
+  // UseEffect adicional para monitorar quando readingProgress atinge 100%
+  useEffect(() => {
+    // Se o progresso visual atingiu 100% mas ainda não está marcado como pode completar
+    if (readingProgress >= 100 && !canComplete && !hasCompletedRef.current) {
+      // Forçar marcação como pode completar após um pequeno delay
+      const forceCompleteTimer = setTimeout(() => {
+        if (!hasCompletedRef.current && isMountedRef.current) {
+          setCanComplete(true);
+        }
+      }, 1000); // Aguarda 1 segundo antes de forçar
+
+      return () => clearTimeout(forceCompleteTimer);
+    }
+  }, [readingProgress, canComplete]);
+
   // WORKAROUND: Também mostrar se o progresso começou (readingProgress > 0) mesmo que o status não tenha atualizado
-  const shouldShowProgress = step.status === 'in_progress' || 
-                            step.status === 'IN_PROGRESS' || 
+  const shouldShowProgress = step.status === 'in_progress' ||
+                            step.status === 'IN_PROGRESS' ||
                             completedStepIds?.has(step.id.toString()) ||
                             readingProgress > 0;
-  
-  // Log apenas quando mudar significativamente
-  useEffect(() => {
-    const statusLower = step.status?.toLowerCase();
-    console.log('🎯 Debug barra de progresso:', {
-      statusOriginal: step.status,
-      statusLower,
-      isInProgress: statusLower === 'in_progress',
-      shouldShowProgress,
-      readingProgress: Math.round(readingProgress),
-      isSmallContent,
-      hasCompletedStepId: completedStepIds?.has(step.id.toString()),
-      completedStepIdsSize: completedStepIds?.size
-    });
-  }, [step.status, Math.floor(readingProgress / 10), shouldShowProgress]); // Log a cada 10%
   
   return (
     <Card>
@@ -734,7 +707,9 @@ export const TextContent = memo(({
                     fill="none"
                     strokeDasharray={`${readingProgress * 0.88} 88`}
                     strokeLinecap="round"
-                    className="text-primary transition-all duration-300 ease-out"
+                    className={`transition-all duration-300 ease-out ${
+                      (isCompleting || isCompletingStep) ? 'text-primary/50 animate-pulse' : 'text-primary'
+                    }`}
                   />
                 </svg>
                 {/* Porcentagem no centro */}
@@ -749,16 +724,25 @@ export const TextContent = memo(({
           
           {/* Status de conclusão */}
           {canComplete && (
-            <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
-              <CheckCircle className="h-3.5 w-3.5" />
-              <span>Leitura concluída!</span>
+            <div className="flex items-center gap-1.5 text-xs">
+              {(isCompleting || isCompletingStep) ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                  <span className="text-primary">Salvando progresso...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                  <span className="text-green-600 dark:text-green-400">Leitura concluída!</span>
+                </>
+              )}
             </div>
           )}
         </div>
       </CardHeader>
       <CardContent>
-        <ScrollArea 
-          className="h-[500px] w-full pr-4" 
+        <ScrollArea
+          className="h-[500px] w-full pr-4"
           ref={contentRef}
         >
           <RichTextViewer 

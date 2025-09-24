@@ -6,7 +6,7 @@ import RichTextViewer from '@/components/general-components/RichTextViewer';
 import { VideoCompletedBanner } from '../shared/VideoCompletedBanner';
 import type { VideoContentProps } from '../../types';
 
-export const VideoContent = memo(({ step, onProgress, progressConfig }: VideoContentProps) => {
+export const VideoContent = memo(({ step, onProgress, progressConfig, isCompletingStep }: VideoContentProps) => {
   console.log('🎬 VideoContent renderizado para step:', step.id, 'Status:', step.status);
   
   // Parse do conteúdo do vídeo uma única vez
@@ -52,9 +52,10 @@ export const VideoContent = memo(({ step, onProgress, progressConfig }: VideoCon
   if (youtubeId) {
     return (
       <div className="space-y-4">
-        <VideoCompletedBanner 
-          stepId={step.id} 
-          isCompleted={step.status === 'completed'} 
+        <VideoCompletedBanner
+          stepId={step.id}
+          isCompleted={step.status === 'completed'}
+          isCompletingStep={isCompletingStep}
         />
         <YouTubePlayerClean
           videoId={youtubeId}
@@ -85,9 +86,10 @@ export const VideoContent = memo(({ step, onProgress, progressConfig }: VideoCon
   // Para outros vídeos, usar VideoPlayer normal
   return (
     <div className="space-y-4">
-      <VideoCompletedBanner 
-        stepId={step.id} 
-        isCompleted={step.status === 'completed'} 
+      <VideoCompletedBanner
+        stepId={step.id}
+        isCompleted={step.status === 'completed'}
+        isCompletingStep={isCompletingStep}
       />
       <div className="aspect-video bg-black rounded-lg overflow-hidden">
         {url ? (

@@ -123,14 +123,15 @@ export interface LessonDataWithSteps extends LessonResponse {
 export interface ContentComponentProps {
   step: MergedStep;
   onUpdateProgress?: (data: { stepId: number; progress: number; data?: any }) => void;
-  onCompleteStep?: (data: { 
-    stepId: number; 
+  onCompleteStep?: (data: {
+    stepId: number;
     contentType?: string;
     progressData?: any;
     data?: any;
   }) => Promise<any> | void;
   progressConfig?: ProgressConfig;
   completedStepIds?: Set<string>;
+  isCompletingStep?: boolean;
 }
 
 // Props for video content
@@ -138,4 +139,5 @@ export interface VideoContentProps {
   step: MergedStep;
   onProgress: (progress: number) => void;
   progressConfig?: ProgressConfig;
+  isCompletingStep?: boolean;
 }

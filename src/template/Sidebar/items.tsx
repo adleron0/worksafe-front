@@ -20,7 +20,7 @@ export const items = [
     subitems: [
       {
         title: "Vendedores",
-        ability: "vendedores",
+        ability: "comercial",
         icon: "user-round-check",
         path: "/comercial/vendedores",
       },

@@ -42,7 +42,7 @@ function List() {
     name: "Usuário",
     pluralName: "Vendedores",
     model: "user",
-    ability: "user",
+    ability: "comercial",
   }
   interface Response {
     rows: IEntity[];

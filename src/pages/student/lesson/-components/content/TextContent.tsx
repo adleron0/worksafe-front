@@ -1,5 +1,6 @@
 import { memo, useRef, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import RichTextViewer from '@/components/general-components/RichTextViewer';
@@ -82,9 +83,6 @@ export const TextContent = memo(({
   // Estados para controle de leitura
   const [readingProgress, setReadingProgress] = useState(0);
   const [canComplete, setCanComplete] = useState(false);
-  const [isSmallContent, setIsSmallContent] = useState(false);
-  const [estimatedReadTime, setEstimatedReadTime] = useState(0);
-  const [hasScroll, setHasScroll] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const scrollElementRef = useRef<HTMLElement | null>(null);
   
@@ -96,7 +94,15 @@ export const TextContent = memo(({
     // Só resetar se mudou de step
     if (currentStepIdRef.current !== step.id) {
       currentStepIdRef.current = step.id;
-      
+
+      // Scroll para o topo do ScrollArea quando mudar de step
+      // O scrollElementRef é definido mais tarde pelo useEffect do scroll
+      setTimeout(() => {
+        if (scrollElementRef.current) {
+          scrollElementRef.current.scrollTop = 0;
+        }
+      }, 50); // Pequeno delay para garantir que o elemento está montado
+
       // Limpar timers antigos EXCETO o timer de conclusão se ainda não completou
       clearTimeout(progressTimerRef.current);
       clearTimeout(completionTimerRef.current);
@@ -124,8 +130,6 @@ export const TextContent = memo(({
       // Reset estados visuais
       setReadingProgress(0);
       setCanComplete(false);
-      setIsSmallContent(false);
-      setEstimatedReadTime(0);
     }
     
     // Só enviar progresso inicial se ainda não foi inicializado para este step
@@ -183,7 +187,6 @@ export const TextContent = memo(({
     const stepId = step.id;
     const stepDuration = step.duration || 1;
     const textCompletePercent = progressConfig?.textCompletePercent || 90;
-    const onCompleteCallback = onCompleteStep;
     const onUpdateCallback = onUpdateProgress;
     
     const handleScroll = () => {
@@ -263,13 +266,9 @@ export const TextContent = memo(({
       const hasScroll = actualScrollElement.scrollHeight > actualScrollElement.clientHeight + 10;
       
       if (!hasScroll) {
-        setIsSmallContent(true);
-        
         // Para conteúdo pequeno, usar tempo baseado na duração do step
         const minReadingTime = stepDuration * 60 * 1000; // Converter para ms
         const requiredTime = (minReadingTime * textCompletePercent) / 100;
-        
-        setEstimatedReadTime(requiredTime / 1000); // Para exibição em segundos
         
         // Timer para completar baseado no tempo mínimo
         // Função para criar/recriar o timer de conclusão
@@ -285,10 +284,6 @@ export const TextContent = memo(({
             }
             
             // Usar refs para valores atualizados
-            const currentStepId = stepIdRef.current;
-            const currentTextCompletePercent = textCompletePercentRef.current;
-            const currentOnCompleteStep = onCompleteStepRef.current;
-            
             // Quando este timer executar, já passou o tempo necessário
             // Marcar como pode completar - o useEffect cuidará do envio
             if (!hasCompletedRef.current && isMountedRef.current) {
@@ -407,8 +402,6 @@ export const TextContent = memo(({
         // NÃO retornar cleanup aqui pois sobrescreve o cleanup geral
       } else {
         // Para conteúdo com scroll
-        setHasScroll(true);
-        setIsSmallContent(false);
 
         // Adicionar event listener no elemento correto
         actualScrollElement.addEventListener('scroll', handleScroll);
@@ -418,7 +411,7 @@ export const TextContent = memo(({
         // Isso permite sincronizar o progresso visual
         const minReadingTime = stepDuration * 60 * 1000;
         const requiredTime = (minReadingTime * textCompletePercent) / 100;
-        setEstimatedReadTime(requiredTime / 1000);
+        // Estimated time calculated
 
         // Timer visual híbrido (combina tempo e scroll)
         let lastScrollPercent = 0;
@@ -593,8 +586,55 @@ export const TextContent = memo(({
     };
   }, []); // Não depende de nada - executa uma vez
   
+  // Handler para conclusão manual
+  const handleManualComplete = async () => {
+    if (!onCompleteStep || isCompleting || hasCompletedRef.current || step.status === 'completed' || step.status === 'COMPLETED') return;
+
+    setIsCompleting(true);
+    hasCompletedRef.current = true;
+
+    try {
+      const element = scrollElementRef.current || contentRef.current;
+      let completionType = 'completed_manually';
+      let scrollPercentage = readingProgress;
+
+      if (element) {
+        const scrollHeight = element.scrollHeight - element.clientHeight;
+        if (scrollHeight > 0) {
+          scrollPercentage = (element.scrollTop / scrollHeight) * 100;
+        }
+      }
+
+      const completePromise = onCompleteStep({
+        stepId: step.id,
+        contentType: 'TEXT',
+        progressData: {
+          completedPercent: 100,
+          action: completionType,
+          timestamp: new Date().toISOString(),
+          timeSpent: Math.round((Date.now() - startTimeRef.current - pausedTimeRef.current) / 1000),
+          scrollPercentage,
+          readingTime: Math.round((Date.now() - startTimeRef.current - pausedTimeRef.current) / 1000),
+          completedManually: true,
+          allowSkipUsed: true
+        }
+      });
+
+      if (completePromise && typeof completePromise.finally === 'function') {
+        await completePromise;
+      }
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
   // UseEffect para garantir que complete seja enviado quando atingir 100%
   useEffect(() => {
+    // Se allowSkip = true, não completar automaticamente
+    if (progressConfig?.allowSkip) {
+      return;
+    }
+
     // Se já está marcado como pode completar E ainda não completou
     if (canComplete && !hasCompletedRef.current && onCompleteStep) {
       // Aguardar um pouco para evitar chamadas duplicadas
@@ -670,7 +710,7 @@ export const TextContent = memo(({
   
   return (
     <Card>
-      {step.status === 'completed' && (
+      {(step.status === 'completed' || step.status === 'COMPLETED') && (
         <div className="m-4 mb-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
           <p className="text-sm text-green-700 dark:text-green-400 flex items-center">
             <CheckCircle className="h-4 w-4 mr-2" />
@@ -750,6 +790,35 @@ export const TextContent = memo(({
             className="px-2"
           />
         </ScrollArea>
+
+        {/* Botão Concluir Etapa quando allowSkip = true */}
+        {progressConfig?.allowSkip && step.status !== 'completed' && step.status !== 'COMPLETED' && onCompleteStep && (
+          <div className="p-4 border-t">
+            <Button
+              onClick={handleManualComplete}
+              disabled={isCompleting || isCompletingStep}
+              className="w-full"
+              variant={canComplete ? "default" : "outline"}
+            >
+              {(isCompleting || isCompletingStep) ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Concluir Etapa
+                </>
+              )}
+            </Button>
+            {!canComplete && (
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                Você pode concluir a etapa a qualquer momento
+              </p>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

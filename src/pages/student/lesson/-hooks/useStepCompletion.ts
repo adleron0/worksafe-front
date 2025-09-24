@@ -49,43 +49,75 @@ export function useStepCompletion(lessonId: string, _currentStep: MergedStep | n
     },
     onSuccess: async (_, variables) => {
       console.log('✅ Step concluído com sucesso:', variables.stepId);
-      
-      // Atualizar cache do React Query manualmente
+
+      // Atualizar cache do React Query manualmente - IMEDIATO para UI responsiva
       queryClient.setQueryData(['student-lesson', lessonId], (oldData: any) => {
         if (!oldData) return oldData;
-        
+
+        const completedAt = new Date().toISOString();
+
+        // Atualizar stepsOverview
+        const updatedStepsOverview = oldData.stepsOverview.map((step: StepOverview) =>
+          step.id === variables.stepId
+            ? { ...step, status: 'completed', progress: 100, completedAt }
+            : step
+        );
+
+        // Atualizar stepsContent para incluir o progresso
+        const updatedStepsContent = oldData.stepsContent?.map((content: any) =>
+          content.id === variables.stepId
+            ? {
+                ...content,
+                stepProgress: {
+                  progressPercent: 100,
+                  progressData: variables.progressData || {}
+                }
+              }
+            : content
+        );
+
+        // Atualizar steps (merged) - MAIS IMPORTANTE para UI
+        const updatedSteps = oldData.steps?.map((step: MergedStep) =>
+          step.id === variables.stepId
+            ? {
+                ...step,
+                status: 'completed',
+                progress: 100,
+                completedAt,
+                stepProgress: {
+                  progressPercent: 100,
+                  progressData: variables.progressData || {}
+                }
+              }
+            : step
+        );
+
         return {
           ...oldData,
-          stepsOverview: oldData.stepsOverview.map((step: StepOverview) =>
-            step.id === variables.stepId 
-              ? { ...step, status: 'completed', progress: 100, completedAt: new Date().toISOString() }
-              : step
-          ),
-          steps: oldData.steps?.map((step: MergedStep) =>
-            step.id === variables.stepId 
-              ? { ...step, status: 'completed', progress: 100, completedAt: new Date().toISOString() }
-              : step
-          ),
+          stepsOverview: updatedStepsOverview,
+          stepsContent: updatedStepsContent,
+          steps: updatedSteps,
           lessonProgress: {
             ...oldData.lessonProgress,
-            completedSteps: oldData.lessonProgress.completedSteps + 1
+            completedSteps: oldData.lessonProgress.completedSteps + 1,
+            progress: Math.round(((oldData.lessonProgress.completedSteps + 1) / oldData.lessonProgress.totalSteps) * 100)
           }
         };
       });
-      
+
       // IMPORTANTE: Invalidar e refetch imediatamente para atualizar o conteúdo
       // Isso garante que o próximo step seja liberado instantaneamente
-      await queryClient.invalidateQueries({ 
+      await queryClient.invalidateQueries({
         queryKey: ['student-lesson', lessonId],
         refetchType: 'all' // Força refetch imediato
       });
-      
+
       // Aguardar um pouco para garantir que os dados foram atualizados
       await queryClient.refetchQueries({
         queryKey: ['student-lesson', lessonId],
         type: 'active'
       });
-      
+
       console.log('🔄 Dados da lição atualizados após completar step');
       
       // Mostrar notificação de sucesso

@@ -2,12 +2,11 @@ import { memo } from 'react';
 import { CheckCircle, Loader2 } from 'lucide-react';
 
 interface VideoCompletedBannerProps {
-  stepId: number;
   isCompleted: boolean;
   isCompletingStep?: boolean;
 }
 
-export const VideoCompletedBanner = memo(({ stepId, isCompleted, isCompletingStep }: VideoCompletedBannerProps) => {
+export const VideoCompletedBanner = memo(({ isCompleted, isCompletingStep }: VideoCompletedBannerProps) => {
   // Se está completando, mostrar loading
   if (isCompletingStep) {
     return (

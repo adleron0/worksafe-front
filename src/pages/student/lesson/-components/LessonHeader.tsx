@@ -35,11 +35,11 @@ export function LessonHeader({ lessonData, isCompleted, classId }: LessonHeaderP
         );
       case 'IN_PROGRESS':
         return (
-          <Badge className="bg-blue-500 hover:bg-blue-600 text-xs">
+          <Badge variant="outline" className="text-xs">
             <Clock className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1" />
-            <span className="hidden md:inline">Em Progresso - {lessonData.lessonProgress.progress}%</span>
-            <span className="md:hidden">Em Progresso</span>
-            <span className="md:hidden ml-1">- {lessonData.lessonProgress.progress}%</span>
+            {/* <span className="hidden md:inline">Em Progresso - {lessonData.lessonProgress.progress}%</span> */}
+            <span className="">Em Progresso</span>
+            {/* <span className="md:hidden ml-1">- {lessonData.lessonProgress.progress}%</span> */}
           </Badge>
         );
       case 'NOT_STARTED':
@@ -56,7 +56,7 @@ export function LessonHeader({ lessonData, isCompleted, classId }: LessonHeaderP
   };
   
   return (
-    <div className="border-b">
+    <div id="lesson-header" className="border-b">
       <div className="container mx-auto px-3 md:px-4 py-3 md:py-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div className="flex items-start md:items-center gap-3 md:gap-4">

@@ -153,12 +153,12 @@ function LessonPlayer() {
   // Manipular progresso do vídeo
   const handleVideoProgress = useCallback((progress: number, currentTime?: number, duration?: number) => {
     if (!currentStep) return;
-    
+
     // Se o step já está completo, não fazer nada para evitar reset do vídeo
     if (currentStep.status === ('completed' as any) || currentStep.status === ('COMPLETED' as any)) {
       return;
     }
-    
+
     // Atualizar progresso do step com debounce
     if (progress > (currentStep.progress || 0)) {
       clearTimeout(progressDebounceRef.current);
@@ -170,27 +170,29 @@ function LessonPlayer() {
         });
       }, 1000); // Aguarda 1 segundo antes de enviar
     }
-    
-    // Marcar step como concluído se assistiu o percentual mínimo configurado
-    const videoCompletePercent = lessonData?.lesson?.progressConfig?.videoCompletePercent || 85;
-    
+
+    // Só completar automaticamente se allowSkip = false
+    const progressConfig = lessonData?.lesson?.progressConfig;
+    const videoCompletePercent = progressConfig?.videoCompletePercent || 85;
+    const allowSkip = progressConfig?.allowSkip || false;
+
     // Verificar se atingiu o percentual e ainda não está marcado como completo
     // e também não está processando a conclusão
-    if (progress >= videoCompletePercent) {
+    if (progress >= videoCompletePercent && !allowSkip) {
       // Verificar se já está processando a conclusão deste vídeo
       if (isCompletingVideoRef.current.has(currentStep.id)) {
         return;
       }
-      
+
       // Se já está completo, não fazer nada
       if (currentStep.status === ('completed' as any) || currentStep.status === ('COMPLETED' as any)) {
         return;
       }
-      
-      
+
+
       // Marcar que está processando
       isCompletingVideoRef.current.add(currentStep.id);
-      
+
       // Enviar dados conforme nova estrutura do backend
       completeStep({
         stepId: currentStep.id,
@@ -202,7 +204,7 @@ function LessonPlayer() {
           completedPercent: progress
         }
       });
-      
+
       // Limpar após alguns segundos para permitir retry se necessário
       setTimeout(() => {
         isCompletingVideoRef.current.delete(currentStep.id);
@@ -247,6 +249,13 @@ function LessonPlayer() {
           <VideoContent
             step={currentStep}
             onProgress={handleVideoProgress}
+            onCompleteStep={(data) => {
+              return completeStep({
+                stepId: data.stepId,
+                contentType: 'VIDEO' as const,
+                progressData: data.progressData
+              });
+            }}
             progressConfig={lessonData?.lesson?.progressConfig}
             isCompletingStep={isCompletingStep}
           />
@@ -382,11 +391,13 @@ function LessonPlayer() {
 
           {/* Sidebar */}
           <div className="lg:col-span-4">
-            <LessonSidebar
-              lessonData={lessonData}
-              currentStepIndex={currentStepIndex}
-              onStepClick={navigateToStep}
-            />
+            <div className="sticky top-6">
+              <LessonSidebar
+                lessonData={lessonData}
+                currentStepIndex={currentStepIndex}
+                onStepClick={navigateToStep}
+              />
+            </div>
           </div>
         </div>
       </div>

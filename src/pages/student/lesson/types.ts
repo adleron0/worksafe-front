@@ -137,7 +137,12 @@ export interface ContentComponentProps {
 // Props for video content
 export interface VideoContentProps {
   step: MergedStep;
-  onProgress: (progress: number) => void;
+  onProgress: (progress: number, currentTime?: number, duration?: number) => void;
+  onCompleteStep?: (data: {
+    stepId: number;
+    contentType?: string;
+    progressData?: any;
+  }) => Promise<any> | void;
   progressConfig?: ProgressConfig;
   isCompletingStep?: boolean;
 }

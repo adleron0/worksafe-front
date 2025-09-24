@@ -39,27 +39,72 @@ export function useStepNavigation({ lessonData, startStep }: UseStepNavigationPr
   // Definir step inicial quando os dados carregarem
   useEffect(() => {
     if (!lessonData || lessonData.steps.length === 0) return;
-    
+
     // Só definir step se não houver um ou se o step atual não pertence à lição atual
     const stepBelongsToCurrentLesson = currentStep && lessonData.steps.some(s => s.id === currentStep.id);
     if (currentStep && stepBelongsToCurrentLesson) {
       console.log('✅ Step atual pertence à lição atual, mantendo');
       return;
     }
-    
+
     console.log('🎯 Definindo step inicial para a lição', lessonData.lesson.id);
-    
+
     // Encontrar o primeiro step disponível ou em progresso
     const firstAvailable = lessonData.steps.find(
       s => s.status === 'in_progress' || s.status === 'available'
     ) || lessonData.steps[0];
-    
+
     console.log('📍 Primeiro step disponível:', firstAvailable?.id, 'de', lessonData.steps.length, 'steps');
-    
+
     setCurrentStep(firstAvailable);
     const index = lessonData.steps.findIndex(s => s.id === firstAvailable.id);
     setCurrentStepIndex(index >= 0 ? index : 0);
   }, [lessonData, currentStep]);
+
+  // IMPORTANTE: Sincronizar o currentStep com dados atualizados do React Query
+  // Quando o step é completado, o React Query atualiza lessonData mas currentStep mantém referência antiga
+  useEffect(() => {
+    if (!currentStep || !lessonData) return;
+
+    // Encontrar o step atualizado nos dados mais recentes
+    const updatedStep = lessonData.steps.find(s => s.id === currentStep.id);
+
+    if (updatedStep && updatedStep !== currentStep) {
+      // Verificar se houve mudança relevante (status, progress, etc)
+      if (updatedStep.status !== currentStep.status ||
+          updatedStep.progress !== currentStep.progress ||
+          updatedStep.completedAt !== currentStep.completedAt) {
+        console.log('🔄 Atualizando currentStep com dados mais recentes:', {
+          old: { status: currentStep.status, progress: currentStep.progress },
+          new: { status: updatedStep.status, progress: updatedStep.progress }
+        });
+        setCurrentStep(updatedStep);
+      }
+    }
+  }, [lessonData?.steps, currentStep?.id]); // Monitorar mudanças nos steps
+
+  // Scroll para o header da lição sempre que o currentStep mudar
+  useEffect(() => {
+    if (currentStep) {
+      // Função para fazer scroll até o header
+      const scrollToHeader = () => {
+        const headerElement = document.getElementById('lesson-header');
+        if (headerElement) {
+          headerElement.scrollIntoView({ behavior: 'instant', block: 'start' });
+        } else {
+          // Fallback para o topo se não encontrar o header
+          window.scrollTo(0, 0);
+        }
+      };
+
+      // Executar imediatamente
+      scrollToHeader();
+      // Executar novamente após renderização para garantir
+      requestAnimationFrame(() => {
+        scrollToHeader();
+      });
+    }
+  }, [currentStep?.id]); // Executar quando ID do step mudar
 
   // Iniciar step quando mudar o currentStep
   useEffect(() => {
@@ -83,7 +128,7 @@ export function useStepNavigation({ lessonData, startStep }: UseStepNavigationPr
   // Função para navegar para um step específico
   const navigateToStep = (index: number) => {
     if (!lessonData) return;
-    
+
     const targetStep = lessonData.steps[index];
     if (!targetStep) return;
 
@@ -91,7 +136,7 @@ export function useStepNavigation({ lessonData, startStep }: UseStepNavigationPr
     const progressConfig = lessonData.lesson?.progressConfig;
     const isSequential = progressConfig?.mode === 'sequential' || progressConfig?.requireSequential;
     const allowSkip = progressConfig?.allowSkip;
-    
+
     // Se está tentando pular para um step posterior
     if (index > currentStepIndex) {
       // Se modo sequencial sem skip, verificar se todos os steps anteriores foram completados
@@ -106,7 +151,7 @@ export function useStepNavigation({ lessonData, startStep }: UseStepNavigationPr
           });
           return;
         }
-        
+
         // Verificar se todos os steps entre o atual e o desejado foram completados
         for (let i = currentStepIndex; i < index; i++) {
           if (lessonData.steps[i]?.status !== 'completed') {
@@ -120,7 +165,7 @@ export function useStepNavigation({ lessonData, startStep }: UseStepNavigationPr
         }
       }
     }
-    
+
     if (targetStep.status === 'locked') {
       toast({
         title: 'Step bloqueado',
@@ -146,6 +191,23 @@ export function useStepNavigation({ lessonData, startStep }: UseStepNavigationPr
 
     setCurrentStep(targetStep);
     setCurrentStepIndex(index);
+
+    // Scroll para o header da lição ao mudar de step
+    const scrollToHeader = () => {
+      const headerElement = document.getElementById('lesson-header');
+      if (headerElement) {
+        headerElement.scrollIntoView({ behavior: 'instant', block: 'start' });
+      } else {
+        // Fallback para o topo se não encontrar o header
+        window.scrollTo(0, 0);
+      }
+    };
+
+    // Executar imediatamente e após renderização
+    scrollToHeader();
+    requestAnimationFrame(() => {
+      scrollToHeader();
+    });
   };
 
   // Navegação para o próximo step

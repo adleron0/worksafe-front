@@ -17,7 +17,7 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Dialog from "@/components/general-components/Dialog";
 import VisualizadorCertificados from "@/components/general-components/visualizadorCertificados";
-import ListHeader from "@/components/general-components/ListHeader";
+import HeaderRow from "@/components/general-components/HeaderRow";
 
 // Interfaces
 import { ICertificate } from "../-interfaces/entity.interface";
@@ -259,14 +259,14 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
   return (
     <>
       {/* Renderiza o Header apenas no primeiro item */}
-      <ListHeader show={index === 0}>
+      <HeaderRow show={index === 0}>
         <div className="w-3/12">Aluno</div>
         <div className="w-2/12">Turma</div>
         <div className="w-2/12">Emissão</div>
         <div className="w-2/12">Validade</div>
         <div className="w-2/12">Status</div>
         <div className="w-1/12">Ações</div>
-      </ListHeader>
+      </HeaderRow>
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>

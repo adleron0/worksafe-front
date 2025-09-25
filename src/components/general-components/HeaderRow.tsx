@@ -2,7 +2,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
-interface ListHeaderProps {
+interface HeaderRowProps {
   children: React.ReactNode;
   className?: string;
   show?: boolean; // Para controlar se deve ser exibido ou não
@@ -10,42 +10,42 @@ interface ListHeaderProps {
 }
 
 /**
- * ListHeader Component
+ * HeaderRow Component
  * 
  * Componente genérico para headers de listagens em formato de tabela.
  * Centraliza a estilização padrão para headers de listas.
  * 
  * @example
  * ```tsx
- * <ListHeader>
+ * <HeaderRow>
  *   <div className="w-3/12">Curso</div>
  *   <div className="w-2/12">Turma</div>
  *   <div className="w-2/12">Data</div>
  *   <div className="w-2/12">Status</div>
  *   <div className="w-1/12">Ações</div>
- * </ListHeader>
+ * </HeaderRow>
  * ```
  * 
  * @example Com propriedades customizadas
  * ```tsx
- * <ListHeader className="bg-secondary" show={index === 0}>
+ * <HeaderRow className="bg-secondary" show={index === 0}>
  *   <div className="w-4/12">Nome</div>
  *   <div className="w-4/12">Email</div>
  *   <div className="w-4/12">Ações</div>
- * </ListHeader>
+ * </HeaderRow>
  * ```
  *
  * @example Com modo skeleton
  * ```tsx
- * <ListHeader skeleton>
+ * <HeaderRow skeleton>
  *   <div className="w-3/12" />
  *   <div className="w-3/12" />
  *   <div className="w-3/12" />
  *   <div className="w-3/12" />
- * </ListHeader>
+ * </HeaderRow>
  * ```
  */
-const ListHeader: React.FC<ListHeaderProps> = ({
+const HeaderRow: React.FC<HeaderRowProps> = ({
   children,
   className,
   show = true,
@@ -102,4 +102,4 @@ const ListHeader: React.FC<ListHeaderProps> = ({
   );
 };
 
-export default ListHeader;
+export default HeaderRow;

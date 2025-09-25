@@ -28,4 +28,6 @@ export interface IEntity {
   city?: string | null;
   state?: string | null;
   zipCode?: string | null;
+  // Campo bankAccount (JSON string com dados PIX)
+  bankAccount?: string | null;
 }

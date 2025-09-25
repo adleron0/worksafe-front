@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/kibo-ui/status";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
-import ListHeader from "@/components/general-components/ListHeader";
+import HeaderRow from "@/components/general-components/HeaderRow";
 import tailwindUtils from "@/utils/tailwind.utils";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
@@ -143,17 +143,18 @@ const Item = ({
   return (
     <>
       {/* Header apenas no primeiro item */}
-      <ListHeader show={index === 0}>
+      <HeaderRow show={index === 0}>
         <p className="w-3/12">Título</p>
         <p className="w-2/12">Cursos Associados</p>
         <p className="w-3/12">Configuração Progresso</p>
         <p className="w-1/12">Versão</p>
         <p className="w-2/12">Status</p>
         <p className="w-1/12 text-center">Ações</p>
-      </ListHeader>
+      </HeaderRow>
 
       {/* Conteúdo do item */}
       <div
+        title={`Configurar ${entity.name}`}
         className={`
           ${index % 2 === 0 ? "bg-background" : "bg-background/50"}
           group relative shadow-sm rounded gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full

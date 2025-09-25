@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
-import ListHeader from "@/components/general-components/ListHeader";
+import HeaderRow from "@/components/general-components/HeaderRow";
 import ResponsiveBadge from "@/components/general-components/ResponsiveBadge";
 import { QRCode } from "@/components/ui/kibo-ui/qr-code";
 import Dialog from "@/components/general-components/Dialog";
@@ -170,14 +170,14 @@ const SiteServicesItem = ({
   return (
     <>
       {/* Renderiza o Header apenas no primeiro item */}
-      <ListHeader show={index === 0}>
+      <HeaderRow show={index === 0}>
         <div className="w-3/12">Turma</div>
         <div className="w-2/12">Detalhes</div>
         <div className="w-2/12">Período</div>
         <div className="w-2/12">Inscrições</div>
         <div className="w-2/12">Status</div>
         <div className="w-1/12">Ações</div>
-      </ListHeader>
+      </HeaderRow>
 
       {/* Conteúdo do item */}
       <div

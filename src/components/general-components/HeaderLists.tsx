@@ -5,13 +5,14 @@ import { Button } from "../ui/button";
 import Icon from "../general-components/Icon";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
+import Show from "../general-components/Show";
 
 interface HeaderListsProps {
   // Propriedades
   titlePage?: string;
   descriptionPage?: string;
   entityName: string;
-  ability: string;
+  ability?: string;
   limit: number;
   searchParams?: any;
   showSearch?: boolean;
@@ -23,9 +24,9 @@ interface HeaderListsProps {
   // Funções
   onlimitChange: (name: string, value: string | number) => void;
   openSearch: (open: boolean) => void;
-  openForm: (open: boolean) => void;
-  setFormData: (data: any) => void;
-  setFormType: (type: string) => void;
+  openForm?: (open: boolean) => void;
+  setFormData?: (data: any) => void;
+  setFormType?: (type: string) => void;
   onTextSearch?: (searchText: string) => void;
 }
 
@@ -90,25 +91,27 @@ const HeaderLists = ({
         {/* Main controls row */}
         <div className="flex gap-2 items-start justify-between md:items-center">
           <div className="flex flex-wrap justify-start items-center gap-2">
-            <div className="flex items-baseline gap-2">
-              <Label htmlFor="limit">Itens</Label>
-              <Select
-                onValueChange={(value) => onlimitChange("limit", Number(value))}
-                value={searchParams.limit.toString()}
-                
-              >
-                <SelectTrigger className="h-9 w-[70px]">
-                  <SelectValue placeholder="" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="30">30</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                  <SelectItem value={`${limit > 100 ? limit : 200}`}>{limit > 100 ? limit : 200}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Show when={searchParams?.limit !== 'all'}>
+              <div className="flex items-baseline gap-2">
+                <Label htmlFor="limit">Itens</Label>
+                <Select
+                  onValueChange={(value) => onlimitChange("limit", Number(value))}
+                  value={searchParams.limit.toString()}
+
+                >
+                  <SelectTrigger className="h-9 w-[70px]">
+                    <SelectValue placeholder="" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="30">30</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                    <SelectItem value={`${limit > 100 ? limit : 200}`}>{limit > 100 ? limit : 200}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </Show>
 
             {showSearch && (
               <Button onClick={() => openSearch(true)} variant="default" className="text-muted h-9 bg-primary flex items-center">
@@ -136,7 +139,7 @@ const HeaderLists = ({
           </div>
           
           {can(`create_${ability}`) && showCreate && (
-            <Button onClick={() =>{ openForm(true); setFormData(null); setFormType("both")}} variant="outline" className="flex gap-2 items-center">
+            <Button onClick={() =>{ openForm?.(true); setFormData?.(null); setFormType?.("both")}} variant="outline" className="flex gap-2 items-center">
               <Icon name={iconForm || "plus"} className="w-3 h-3" />
               <span className="hidden md:block">{addButtonName} {entityName}</span>
             </Button>

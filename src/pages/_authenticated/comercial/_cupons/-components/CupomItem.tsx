@@ -13,6 +13,7 @@ import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ResponsiveBadge from "@/components/general-components/ResponsiveBadge";
+import HeaderRow from "@/components/general-components/HeaderRow";
 
 interface ItemsProps {
   item: ICupom;
@@ -156,17 +157,16 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
 
   return (
     <>
-      {index === 0 && (
-        <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
-          <p className="lg:w-3/12">Cupom</p>
-          <p className="lg:w-2/12">Desconto</p>
-          <p className="lg:w-3/12">Vendedor</p>
-          <p className="lg:w-1/12">Uso</p>
-          <p className="lg:w-2/12">Validade</p>
-          <p className="lg:w-1/12">Status</p>
-          <p className="lg:w-1/12 text-center">Ações</p>
-        </div>
-      )}
+      {/* Renderiza o Header apenas no primeiro item */}
+      <HeaderRow show={index === 0}>
+        <p className="lg:w-3/12">Cupom</p>
+        <p className="lg:w-2/12">Desconto</p>
+        <p className="lg:w-3/12">Vendedor</p>
+        <p className="lg:w-1/12">Uso</p>
+        <p className="lg:w-2/12">Validade</p>
+        <p className="lg:w-1/12">Status</p>
+        <p className="lg:w-1/12 text-center">Ações</p>
+      </HeaderRow>
 
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
         {/* Badges com ScrollArea */}

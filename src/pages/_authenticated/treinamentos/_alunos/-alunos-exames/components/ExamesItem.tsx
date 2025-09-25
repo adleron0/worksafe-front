@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
-import ListHeader from "@/components/general-components/ListHeader";
+import HeaderRow from "@/components/general-components/HeaderRow";
 // Interfaces
 import { IEntity } from "../interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -126,13 +126,13 @@ const ExamesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
   return (
     <>
       {/* Renderiza o Header apenas no primeiro item */}
-      <ListHeader show={index === 0}>
+      <HeaderRow show={index === 0}>
         <div className="w-3/12">Curso</div>
         <div className="w-3/12">Turma</div>
         <div className="w-3/12">Nota / Acertos</div>
         <div className="w-2/12">Resultado</div>
         <div className="w-1/12">Ações</div>
-      </ListHeader>
+      </HeaderRow>
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>

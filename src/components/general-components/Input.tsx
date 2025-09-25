@@ -7,6 +7,7 @@ import { formatCPF, unformatCPF } from "@/utils/cpf-mask";
 import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
 import { formatPHONE } from "@/utils/phone-mask";
 import { formatCEP } from "@/utils/cep-mask";
+import Icon from "@/components/general-components/Icon";
 
 // Create a union type that includes both input and textarea attributes
 type InputAttributes = React.InputHTMLAttributes<HTMLInputElement>;
@@ -20,6 +21,9 @@ export interface FormattedInputProps extends MergedAttributes {
   onValueChange?: (name: string, value: string | number) => void; // Allow number for currency unformat
   unformat?: boolean;
   type?: string; // Include "textArea"
+  icon?: string; // Nome do ícone Lucide
+  iconPosition?: "left" | "right"; // Posição do ícone
+  iconClassName?: string; // Classes adicionais para o ícone
 }
 
 // Helper function for currency formatting
@@ -39,7 +43,7 @@ const formatCurrencyValue = (val: number | string | undefined): string => {
 
 
 const Input = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, FormattedInputProps>(
-  ({ className, format = "none", onValueChange, onChange, value, name = "", unformat = true, type, ...props }, ref) => {
+  ({ className, format = "none", onValueChange, onChange, value, name = "", unformat = true, type, icon, iconPosition = "left", iconClassName, ...props }, ref) => {
     const [displayValue, setDisplayValue] = useState<string>("");
     // Removed rawValue state as it wasn't used
 
@@ -159,9 +163,32 @@ const Input = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, Formatted
 
     // --- Rendering Logic ---
 
+    // Helper para renderizar input com ícone opcional
+    const renderInputWithIcon = (inputElement: React.ReactElement) => {
+      if (!icon) return inputElement;
+
+      return (
+        <div className="relative">
+          {icon && iconPosition === "left" && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none">
+              <Icon name={icon} className={iconClassName || "w-4 h-4"} />
+            </div>
+          )}
+          {React.cloneElement(inputElement, {
+            className: `${inputElement.props.className || ''} ${icon && iconPosition === 'left' ? 'pl-10' : ''} ${icon && iconPosition === 'right' ? 'pr-10' : ''}`.trim()
+          })}
+          {icon && iconPosition === "right" && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none">
+              <Icon name={icon} className={iconClassName || "w-4 h-4"} />
+            </div>
+          )}
+        </div>
+      );
+    };
+
     if (format === "currency") {
       // Spread all props, then override value and onChange
-      return (
+      const inputElement = (
         <ShadInput
           {...props} // Spread original props first
           ref={ref as React.Ref<HTMLInputElement>}
@@ -173,6 +200,7 @@ const Input = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, Formatted
           inputMode="decimal"
         />
       );
+      return renderInputWithIcon(inputElement);
     }
 
     if (type === "textArea") {
@@ -191,7 +219,7 @@ const Input = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, Formatted
 
     // Default: Use generic handler for other formats or 'none'
     // Spread all props, then override value and onChange
-    return (
+    const inputElement = (
       <ShadInput
         {...props} // Spread original props first
         className={className}
@@ -202,6 +230,7 @@ const Input = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, Formatted
         type={type}
       />
     );
+    return renderInputWithIcon(inputElement);
   }
 );
 

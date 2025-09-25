@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
-import ListHeader from "@/components/general-components/ListHeader";
+import HeaderRow from "@/components/general-components/HeaderRow";
 // Interfaces
 import { IEntity } from "../interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -100,13 +100,13 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPr
   return (
     <>
       {/* Renderiza o Header apenas no primeiro item */}
-      <ListHeader show={index === 0}>
+      <HeaderRow show={index === 0}>
         <div className="w-4/12">Nome</div>
         <div className="w-2/12">Setor</div>
         <div className="w-3/12">Contatos</div>
         <div className="w-2/12">Status</div>
         <div className="w-1/12">Ações</div>
-      </ListHeader>
+      </HeaderRow>
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} relative shadow-sm rounded gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>

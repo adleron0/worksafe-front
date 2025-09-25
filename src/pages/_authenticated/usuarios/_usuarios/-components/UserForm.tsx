@@ -19,9 +19,10 @@ interface UserFormProps {
   onlyPassword?: string;
   openSheet: (open: boolean) => void;
   self?: boolean;
+  defaultIsSeller?: boolean;
 }
 
-const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) => {
+const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = false }: UserFormProps) => {
   const queryClient = useQueryClient();
 
   // Schema
@@ -53,6 +54,9 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
       (val) => !val || val.length === 8 || val.length === 9,
       { message: "CEP deve ter 8 ou 9 caracteres" }
     ),
+    pixType: z.string().optional(),
+    pixKey: z.string().optional(),
+    bankAccount: z.string().optional(),
   }).refine((data) => {
     if (!formData && !data.password) {
       return false;
@@ -72,6 +76,38 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
   }, {
     message: "Data de nascimento é obrigatória para vendedores.",
     path: ["birthDate"],
+  }).refine((data) => {
+    // Se isSeller for true, os campos de PIX são obrigatórios
+    if (data.isSeller) {
+      if (!data.pixType || data.pixType === "") {
+        return false;
+      }
+    }
+    return true;
+  }, {
+    message: "Tipo de chave PIX é obrigatório para vendedores.",
+    path: ["pixType"],
+  }).refine((data) => {
+    if (data.isSeller) {
+      if (!data.pixKey || data.pixKey === "") {
+        return false;
+      }
+    }
+    return true;
+  }, {
+    message: "Chave PIX é obrigatória para vendedores.",
+    path: ["pixKey"],
+  }).refine((data) => {
+    // Valida chave EVP com exatamente 32 caracteres
+    if (data.isSeller && data.pixType === 'EVP' && data.pixKey) {
+      if (data.pixKey.length !== 32) {
+        return false;
+      }
+    }
+    return true;
+  }, {
+    message: "Chave aleatória (EVP) deve ter exatamente 32 caracteres.",
+    path: ["pixKey"],
   }).refine((data) => {
     if (data.isSeller) {
       if (!data.address || data.address === "") {
@@ -145,7 +181,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
     profileId: formData?.profileId || 3,
     imageUrl: formData?.imageUrl || null,
     image: null,
-    isSeller: formData?.isSeller || false,
+    isSeller: formData?.isSeller ?? defaultIsSeller,
     birthDate: formData?.birthDate || null,
     address: formData?.address || "",
     addressNumber: formData?.addressNumber || "",
@@ -154,6 +190,29 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
     city: formData?.city || "",
     state: formData?.state || "",
     zipCode: formData?.zipCode || "",
+    pixType: (() => {
+      if (formData?.bankAccount) {
+        try {
+          const parsed = JSON.parse(formData.bankAccount);
+          return parsed.pixType || "CPF";
+        } catch {
+          return "CPF";
+        }
+      }
+      return "CPF";
+    })(),
+    pixKey: (() => {
+      if (formData?.bankAccount) {
+        try {
+          const parsed = JSON.parse(formData.bankAccount);
+          return parsed.pixKey || "";
+        } catch {
+          return "";
+        }
+      }
+      return "";
+    })(),
+    bankAccount: formData?.bankAccount || "",
   });
   const initialFormRef = useRef(dataForm);
 
@@ -186,7 +245,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
     onError: (error: any) => {
       toast({
         title: "Erro ao registrar usuário",
-        description: error.response?.data?.message || "Erro desconhecido.",
+        description: (error as any).response?.data?.message || "Erro desconhecido.",
         variant: "destructive",
       });
     },
@@ -208,7 +267,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
     onError: (error: any) => {
       toast({
         title: "Erro ao atualizar usuário",
-        description: error.response?.data?.message || "Erro desconhecido.",
+        description: (error as any).response?.data?.message || "Erro desconhecido.",
         variant: "destructive",
       });
     },
@@ -280,7 +339,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
     const result = userSchema.safeParse(dataForm);
 
     if (!result.success) {
-      const formattedErrors: any = result.error.format();
+      const formattedErrors: Record<string, any> = result.error.format();
       const newErrors: { [key: string]: string } = {};
       for (const key in formattedErrors) {
         if (key !== "_errors") {
@@ -291,12 +350,27 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
       return;
     }
 
-    if (!onlyPassword) delete dataForm.password;
+    // Prepara os dados para envio
+    const dataToSend: any = { ...dataForm };
+
+    // Converte pixType e pixKey para bankAccount JSON string
+    if (dataForm.pixType && dataForm.pixKey) {
+      dataToSend.bankAccount = JSON.stringify({
+        pixType: dataForm.pixType,
+        pixKey: dataForm.pixKey
+      });
+    }
+
+    // Remove os campos individuais do PIX
+    delete dataToSend.pixType;
+    delete dataToSend.pixKey;
+
+    if (!onlyPassword) delete dataToSend.password;
 
     if (formData) {
-      updateUserMutation(dataForm);
+      updateUserMutation(dataToSend);
     } else {
-      registerUser(dataForm);
+      registerUser(dataToSend);
     }
   };
 
@@ -493,6 +567,69 @@ const UserForm = ({ formData, onlyPassword, openSheet, self }: UserFormProps) =>
                 {errors.state && <p className="text-red-500 text-sm">{errors.state}</p>}
               </div>
             </div>
+            {dataForm.isSeller && (
+              <>
+                <div>
+                  <Label htmlFor="pixType">Tipo de Chave PIX <span>*</span></Label>
+                  <Select
+                    name="pixType"
+                    options={[
+                      { id: 'CPF', name: 'CPF' },
+                      { id: 'CNPJ', name: 'CNPJ' },
+                      { id: 'EMAIL', name: 'E-mail' },
+                      { id: 'PHONE', name: 'Telefone' },
+                      { id: 'EVP', name: 'Chave Aleatória (EVP)' },
+                    ]}
+                    onChange={(name, value) => handleChange(name, typeof value === 'string' ? value : value[0])}
+                    state={dataForm.pixType || "CPF"}
+                    placeholder="Selecione o tipo de chave"
+                  />
+                  {errors.pixType && <p className="text-red-500 text-sm">{errors.pixType}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="pixKey">Chave PIX <span>*</span></Label>
+                  <Input
+                    id="pixKey"
+                    name="pixKey"
+                    placeholder={
+                      dataForm.pixType === 'CPF' ? '000.000.000-00' :
+                      dataForm.pixType === 'CNPJ' ? '00.000.000/0000-00' :
+                      dataForm.pixType === 'EMAIL' ? 'email@exemplo.com' :
+                      dataForm.pixType === 'PHONE' ? '(00) 00000-0000' :
+                      dataForm.pixType === 'EVP' ? 'Chave aleatória de 32 caracteres' :
+                      'Digite a chave PIX'
+                    }
+                    format={
+                      dataForm.pixType === 'CPF' ? 'cpf' :
+                      dataForm.pixType === 'CNPJ' ? 'cnpj' :
+                      dataForm.pixType === 'PHONE' ? 'phone' :
+                      'none'
+                    }
+                    type={dataForm.pixType === 'EMAIL' ? 'email' : 'text'}
+                    value={dataForm.pixKey}
+                    onValueChange={handleChange}
+                    className="mt-1"
+                    disabled={!dataForm.pixType}
+                    maxLength={dataForm.pixType === 'EVP' ? 32 : undefined}
+                    icon={
+                      dataForm.pixType === 'CPF' ? 'user' :
+                      dataForm.pixType === 'CNPJ' ? 'building' :
+                      dataForm.pixType === 'EMAIL' ? 'mail' :
+                      dataForm.pixType === 'PHONE' ? 'phone' :
+                      dataForm.pixType === 'EVP' ? 'key' :
+                      dataForm.pixType ? 'wallet' : undefined
+                    }
+                    iconPosition="left"
+                  />
+                  {errors.pixKey && <p className="text-red-500 text-sm">{errors.pixKey}</p>}
+                  {dataForm.pixType === 'EVP' && dataForm.pixKey && (
+                    <span className={`text-xs ${dataForm.pixKey.length === 32 ? 'text-green-500' : 'text-amber-500'}`}>
+                      {dataForm.pixKey.length}/32 caracteres
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
             {
               !self &&
               <div>

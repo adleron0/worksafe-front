@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-
+import HeaderRow from "@/components/general-components/HeaderRow";
 interface ItemSkeletonProps {
   index: number;
 }
@@ -7,17 +7,15 @@ interface ItemSkeletonProps {
 const ItemSkeleton = ({ index }: ItemSkeletonProps) => {
   return (
     <>
-      {index === 0 && (
-        <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
-          <p className="lg:w-3/12">Cupom</p>
-          <p className="lg:w-2/12">Desconto</p>
-          <p className="lg:w-3/12">Vendedor</p>
-          <p className="lg:w-1/12">Uso</p>
-          <p className="lg:w-2/12">Validade</p>
-          <p className="lg:w-1/12">Status</p>
-          <p className="lg:w-1/12 text-center">Ações</p>
-        </div>
-      )}
+      {/* Header para o primeiro item */}
+      <HeaderRow show={index === 0} skeleton>
+        <div className="w-3/12">Usuário</div>
+        <div className="w-2/12">Função</div>
+        <div className="w-2/12">Contatos</div>
+        <div className="w-2/12">Criado em</div>
+        <div className="w-2/12">Status</div>
+        <div className="w-1/12">Ações</div>
+      </HeaderRow>
 
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b animate-pulse`}>
         <div className="flex flex-col lg:w-3/12">

@@ -1,18 +1,18 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import ListHeader from "@/components/general-components/ListHeader";
+import HeaderRow from "@/components/general-components/HeaderRow";
 
 const ItemSkeleton = ({ index }: { index: number }) => {
   return (
     <>
       {/* Header para o primeiro item */}
-      <ListHeader show={index === 0} skeleton>
+      <HeaderRow show={index === 0} skeleton>
         <div className="w-3/12">Usuário</div>
         <div className="w-2/12">Função</div>
         <div className="w-2/12">Contatos</div>
         <div className="w-2/12">Criado em</div>
         <div className="w-2/12">Status</div>
         <div className="w-1/12">Ações</div>
-      </ListHeader>
+      </HeaderRow>
 
       {/* Estrutura do Skeleton */}
       <div className="shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b space-y-4 lg:space-y-0">

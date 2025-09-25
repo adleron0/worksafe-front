@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/kibo-ui/status";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
-import ListHeader from "@/components/general-components/ListHeader";
+import HeaderRow from "@/components/general-components/HeaderRow";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -133,13 +133,13 @@ const Item = ({
   return (
     <>
       {/* Header apenas no primeiro item */}
-      <ListHeader show={index === 0}>
+      <HeaderRow show={index === 0}>
         <p className="w-4/12">Nome</p>
         <p className="w-3/12">Curso</p>
         <p className="w-2/12">Aulas</p>
         <p className="w-2/12">Status</p>
         <p className="w-1/12 text-center">Ações</p>
-      </ListHeader>
+      </HeaderRow>
 
       {/* Conteúdo do item */}
       <div

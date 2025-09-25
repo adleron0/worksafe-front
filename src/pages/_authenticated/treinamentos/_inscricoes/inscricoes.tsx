@@ -44,7 +44,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
   
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>(getStoredViewMode());
   const [searchParams, setSearchParams] = useState({
-    limit: getStoredViewMode() === 'kanban' ? 999 : 10,
+    limit: getStoredViewMode() === 'kanban' ? 'all' : 10,
     page: 0,
     show: ['class', 'financialRecords'],
     classId: classId ? Number(classId) : undefined,
@@ -146,7 +146,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
     setSearchParams((prev) => ({ ...prev, page }));
   };
 
-  const totalPages = data ? Math.ceil(data.total / searchParams.limit) : 0;
+  const totalPages = data && searchParams.limit !== 'all' ? Math.ceil(data.total / Number(searchParams.limit)) : 0;
 
   const skeletons = Array(5).fill(null);
 
@@ -220,7 +220,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
           descriptionPage={`Administrar nossos ${entity.pluralName}`}
           entityName={entity.name}
           ability={entity.ability}
-          limit={searchParams.limit || data?.total || 0}
+          limit={searchParams.limit === 'all' ? (data?.total || 0) : Number(searchParams.limit || 0)}
           searchParams={searchParams}
           onlimitChange={handleLimitChange}
           openSearch={setOpenSearch}
@@ -324,7 +324,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
               <Pagination
                 currentPage={searchParams.page}
                 totalItems={data.total}
-                itemsPerPage={searchParams.limit}
+                itemsPerPage={searchParams.limit === 'all' ? data.total : Number(searchParams.limit)}
                 onPageChange={handlePageChange}
               />
             )}

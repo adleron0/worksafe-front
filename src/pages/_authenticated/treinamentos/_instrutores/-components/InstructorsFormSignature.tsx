@@ -140,15 +140,17 @@ const SignatureForm = ({ formData, openSheet, entity }: FormProps) => {
   // Buscas de valores para variaveis de formulário
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
-      <Label>Assinatura do instrutor </Label>
-      <DropUpload
-        setImage={setDataForm}
-        EditPreview={preview}
-        itemFormData="signature"
-        cover={false}
-        acceptedFiles="image/png"
-      />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-8 w-full mt-4">
+      <div className="h-60">
+        <Label>Assinatura do instrutor </Label>
+        <DropUpload
+          setImage={setDataForm}
+          EditPreview={preview}
+          itemFormData="signature"
+          cover={false}
+          acceptedFiles="image/png"
+        />
+      </div>
 
       <Button
         type="submit"

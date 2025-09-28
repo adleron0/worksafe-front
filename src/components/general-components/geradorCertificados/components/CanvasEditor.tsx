@@ -1420,7 +1420,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       {/* Controls */}
       <div className="mb-4 flex items-center justify-between gap-4 flex-shrink-0">
         {/* Orientation toggle */}
-        <div className="inline-flex rounded-lg border bg-gray-100 dark:bg-gray-800 p-1">
+        <div className="inline-flex rounded-lg border bg-muted p-1">
           <Button
             size="sm"
             variant={orientation === 'landscape' ? 'default' : 'ghost'}
@@ -1476,7 +1476,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       {/* Canvas container */}
       <div 
         ref={containerRef}
-        className={`canvas-container flex-1 min-h-0 border rounded-lg bg-muted dark:bg-gray-800 p-4 overflow-auto relative transition-colors ${
+        className={`canvas-container flex-1 min-h-0 border rounded-lg bg-muted p-4 overflow-auto relative transition-colors ${
           isDragging ? 'border-primary border-2' : ''
         } ${!isActive ? 'opacity-0 pointer-events-none' : ''}`}
         data-page-active={isActive}

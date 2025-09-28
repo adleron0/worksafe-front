@@ -36,7 +36,13 @@ function List() {
     limit: 10,
     page: 0,
     'order-name': 'asc',
-    'gte-initialDate': new Date().toISOString(), // Data atual
+    // 'gte-initialDate': new Date().toISOString(), // Data atual
+    // or: [
+    //   { "periodClass": "UNLIMITED" }, 
+    //   { "gte-initialDate": new Date().toISOString() }
+    // ],
+    'or-gte-initialDate': new Date().toISOString().split('T')[0], // Data atual no formato YYYY-MM-DD
+    'or-periodClass': 'UNLIMITED',
   });
   const initialFormRef = useRef(searchParams);
 

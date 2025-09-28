@@ -45,10 +45,19 @@ Permite passar um array de condições, onde pelo menos uma deve ser satisfeita.
   ]
 }
 ```
-
-### Exemplo via query string (usando array):
+### O api tbm aceita passar os or separadamente para facilitar seu uso em formulários:
 ```
-?or[0][name]=João&or[1][not-status]=inativo&or[2][in-id]=1,2,3&or[3][like-nome]=joao&or[4][notlike-nome]=maria
+ const [searchParams, setSearchParams] = useState({
+    limit: 10,
+    page: 0,
+    'or-gte-initialDate': new Date().toISOString(),
+    'or-periodClass': 'UNLIMITED',
+  });
+```
+
+### Exemplo via query string (usando array), mesmo enviando separado no api ele junta tudo e transforma em string:
+```
+?or=[{"gte-initialDate":"2025-09-28T17:11:46.221Z"},{"periodClass":"UNLIMITED"}]
 ```
 
 ## Filtros Especiais

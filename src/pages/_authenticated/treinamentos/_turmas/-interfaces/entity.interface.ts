@@ -39,4 +39,5 @@ export interface IEntity {
   maxSubscriptions?: number | null;
   daysDuration?: number | null;
   hasOnlineCourse?: boolean;
+  periodClass?: string | null;
 }

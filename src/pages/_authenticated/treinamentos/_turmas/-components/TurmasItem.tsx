@@ -263,7 +263,7 @@ const SiteServicesItem = ({
               {item.hoursDuration} horas
             </p>
             <p className="text-xs text-muted-foreground dark:text-gray-100">
-              {item.landingPagesDates}
+              {item.periodClass === 'LIMITED' && item.landingPagesDates}
             </p>
           </div>
         </div>
@@ -327,7 +327,7 @@ const SiteServicesItem = ({
             ) : (item as any).periodSubscriptionsType === "UNLIMITED" ? (
               <Badge variant="outline" className="text-xs font-medium">
                 <Icon name="infinity" className="w-3 h-3 mr-1" />
-                Sempre abertas
+                Sempre aberta
               </Badge>
             ) : (
               <>

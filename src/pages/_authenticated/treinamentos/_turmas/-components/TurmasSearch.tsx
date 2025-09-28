@@ -11,7 +11,7 @@ import Select from "@/components/general-components/Select";
 interface SearchData {
   name: string;
   active?: boolean;
-  "gte-initialDate"?: string;
+  "or-gte-initialDate"?: string;
 }
 
 interface SearchFormProps {
@@ -26,7 +26,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
   const [searchData, setSearchData] = useState<SearchData>({
     name: "",
     active: undefined as boolean | undefined,
-    "gte-initialDate": undefined as string | undefined,
+    "or-gte-initialDate": undefined as string | undefined,
   });
 
   // Load params into form state
@@ -42,8 +42,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
         newSearchData.active = value as boolean | undefined;
       } else if (paramKey === 'name' && (typeof value === 'string' || value === undefined)) {
         newSearchData.name = value as string;
-      } else if (paramKey === 'gte-initialDate' && (typeof value === 'string' || value === undefined)) {
-        newSearchData["gte-initialDate"] = value as string | undefined;
+      } else if (paramKey === 'or-gte-initialDate' && (typeof value === 'string' || value === undefined)) {
+        newSearchData["or-gte-initialDate"] = value as string | undefined;
       }
     });
     
@@ -63,9 +63,9 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
   const handleDateChange = (_name: string, value: string | null) => {
     if (value) {
       // For single date picker, value is an ISO string
-      setSearchData(prev => ({ ...prev, "gte-initialDate": value }));
+      setSearchData(prev => ({ ...prev, "or-gte-initialDate": value }));
     } else {
-      setSearchData(prev => ({ ...prev, "gte-initialDate": undefined }));
+      setSearchData(prev => ({ ...prev, "or-gte-initialDate": undefined }));
     }
   };
 
@@ -80,7 +80,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
     setSearchData({
       name: "",
       active: undefined,
-      "gte-initialDate": undefined,
+      "or-gte-initialDate": undefined,
     });
     onClear();
     openSheet(false);
@@ -124,7 +124,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
         <CalendarPicker
           mode="single"
           name="initialDate"
-          value={searchData["gte-initialDate"] || null}
+          value={searchData["or-gte-initialDate"] || null}
           onValueChange={handleDateChange}
           placeholder="Selecione a data inicial"
           numberOfMonths={1}

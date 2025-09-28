@@ -48,6 +48,7 @@ interface queryParams {
 const paramsCompose = (params: queryParams[]) => {
   if (!params) return;
   const query = new URLSearchParams();
+  let orFilter = [];
   for (let i = 0; i < params.length; i++) {
     const param = params[i];
     if (param.value !== null && param.value !== undefined && param.value.toString().trim() !== "") {
@@ -58,10 +59,19 @@ const paramsCompose = (params: queryParams[]) => {
         } else {
           query.append('startedAt', formatToISOString(param.value[0]));
         }
+      } else if (param.key === 'or') {
+        // Suporte para parâmetros 'or' que são arrays de objetos
+        orFilter = param.value;
+      } else if (param.key.includes('or-')) {
+        // Suporte para parâmetros 'or-' separados
+        orFilter.push({ [param.key.replace('or-', '')]: param.value } );
       } else {
         query.append(param.key, param.value);
       }
     }
+  }
+  if (orFilter.length > 0) {
+    query.append('or', JSON.stringify(orFilter));
   }
   return query;
 };

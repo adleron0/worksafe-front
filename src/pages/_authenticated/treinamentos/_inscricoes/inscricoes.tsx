@@ -43,6 +43,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
   };
   
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>(getStoredViewMode());
+  const [courseId, setCourseId] = useState<number | string | undefined>(undefined);
   const [searchParams, setSearchParams] = useState({
     limit: getStoredViewMode() === 'kanban' ? 'all' : 10,
     page: 0,
@@ -66,31 +67,48 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
   }
 
   const { 
-    data: classesData, 
+    data: courseData, 
   } = useQuery<SelectOption[], ApiError>({
-    queryKey: [`listClasses`],
+    queryKey: [`listCoursesOptions`],
     queryFn: async () => {
       const params = [
         { key: 'all', value: true },
         { key: 'order-name', value: 'asc' },
+      ];
+      const response = await get('courses', '', params) as { rows: ClassItem[] };
+      if (!response.rows.length) {
+          return [];
+        }
+      
+      return response?.rows?.map((item: ClassItem) => ({
+        id: item.id,
+        name: `${item.name} (${new Date(item.initialDate).toLocaleDateString('pt-BR')})`,
+      }));
+    },
+    enabled: !classId
+  });
+
+  const { 
+    data: classesData, 
+  } = useQuery<SelectOption[], ApiError>({
+    queryKey: [`listClassesOptions`, courseId],
+    queryFn: async () => {
+      const params = [
+        { key: 'all', value: true },
+        { key: 'order-name', value: 'asc' },
+        { key: 'courseId', value: courseId || undefined },
       ];
       const response = await get('classes', '', params) as { rows: ClassItem[] };
       if (!response.rows.length) {
           return [];
         }
       
-      const classes = response?.rows?.map((item: ClassItem) => ({
+      return response?.rows?.map((item: ClassItem) => ({
         id: item.id,
         name: `${item.name} (${new Date(item.initialDate).toLocaleDateString('pt-BR')})`,
       }));
-      
-      // Adiciona opção "Todas as turmas" no início com valor especial
-      return [
-        { id: "all", name: "Todas as turmas" },
-        ...classes
-      ];
     },
-    enabled: !classId
+    enabled: !classId && !!courseId
   });
   
   // Salvar preferência quando mudar
@@ -125,6 +143,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
       }));
       return get(entity.model, '', params);
     },
+    enabled: !!searchParams.classId || !!classId,
   });
 
   const handleSearch = async (params: any) => {
@@ -216,8 +235,8 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
     <>
       <div className="space-y-4">
         <HeaderLists
-          titlePage={`${entity.pluralName}`}
-          descriptionPage={`Administrar nossos ${entity.pluralName}`}
+          titlePage={classId ? undefined : `${entity.pluralName}`}
+          descriptionPage={classId ? undefined : `Administrar ${entity.pluralName}`}
           entityName={entity.name}
           ability={entity.ability}
           limit={searchParams.limit === 'all' ? (data?.total || 0) : Number(searchParams.limit || 0)}
@@ -262,6 +281,27 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
             </Button>
           </div>
 
+          {/* Select de curso - só aparece se não houver classId fixo */}
+          {!classId && courseData && (
+            <div className="flex items-center gap-2">
+              {/* <label className="text-sm font-medium">Turma:</label> */}
+              <div className="w-[250px]">
+                <Select
+                  name="courseId"
+                  options={courseData}
+                  state={courseId?.toString()}
+                  label="name"
+                  value="id"
+                  placeholder="Selecione um curso"
+                  onChange={(_name, value) => {
+                    const selectedValue = value === "all" ? undefined : value ? Number(value) : undefined;
+                    setCourseId(selectedValue);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Select de turmas - só aparece se não houver classId fixo */}
           {!classId && classesData && (
             <div className="flex items-center gap-2">
@@ -270,7 +310,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
                 <Select
                   name="classId"
                   options={classesData}
-                  state={searchParams.classId?.toString() || "all"}
+                  state={searchParams.classId?.toString()}
                   label="name"
                   value="id"
                   placeholder="Selecione uma turma"

@@ -53,6 +53,11 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   const orientationRef = useRef(orientation);
   const isActiveRef = useRef(isActive);
 
+  // Store callbacks in refs to avoid stale closures
+  const onObjectSelectedRef = useRef(onObjectSelected);
+  const onSelectionClearedRef = useRef(onSelectionCleared);
+  const onContextMenuRef = useRef(onContextMenu);
+
   useEffect(() => {
     zoomLevelRef.current = zoomLevel;
   }, [zoomLevel]);
@@ -64,6 +69,12 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   useEffect(() => {
     isActiveRef.current = isActive;
   }, [isActive]);
+
+  useEffect(() => {
+    onObjectSelectedRef.current = onObjectSelected;
+    onSelectionClearedRef.current = onSelectionCleared;
+    onContextMenuRef.current = onContextMenu;
+  }, [onObjectSelected, onSelectionCleared, onContextMenu]);
 
   const updateCanvasSize = (orient: 'landscape' | 'portrait', customZoom?: number) => {
     if (!fabricCanvasRef.current) return;
@@ -241,23 +252,32 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
           width: size,
           height: size,
           rx: shapeSettings.cornerRadius,
-          ry: shapeSettings.cornerRadius
+          ry: shapeSettings.cornerRadius,
+          strokeUniform: true,  // Mantém a espessura da borda uniforme ao redimensionar
+          absolutePositioned: true  // Mantém proporções absolutas
         });
+        // Armazenar o raio base para referência futura
+        (shape as any)._baseRadius = shapeSettings.cornerRadius;
         break;
         
       case 'circle':
         shape = new fabric.Circle({
           ...baseProps,
-          radius: size / 2
+          radius: size / 2,
+          strokeUniform: true  // Mantém a espessura da borda uniforme ao redimensionar
         });
         break;
         
       case 'triangle':
+        // Triângulo - Fabric.js não suporta arredondamento nativo
         shape = new fabric.Triangle({
           ...baseProps,
           width: size,
-          height: size
+          height: size,
+          strokeUniform: true
         });
+        // Armazenar informações para referência futura
+        (shape as any)._originalSize = size;
         break;
         
       case 'line':
@@ -265,7 +285,8 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
           ...baseProps,
           fill: undefined,
           lockScalingY: true,
-          lockSkewingY: true
+          lockSkewingY: true,
+          strokeUniform: true  // Mantém a espessura da linha uniforme ao redimensionar
         });
         shape.setControlsVisibility({
           mt: false,
@@ -284,12 +305,22 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
     // Adicionar ID único ao objeto
     (shape as any).__uniqueID = uniqueId;
     (shape as any).id = uniqueId;
-    
+
+    // Ensure shape is selectable
+    shape.set({
+      selectable: true,
+      evented: true
+    });
+
+    console.log('🟦 Adding shape to canvas:', shapeType);
+    console.log('🟦 Shape selectable:', shape.selectable);
+    console.log('🟦 Shape evented:', shape.evented);
+
     canvas.add(shape);
     canvas.setActiveObject(shape);
     canvas.renderAll();
-    
-    onObjectSelected(shape);
+
+    onObjectSelectedRef.current(shape);
     selectedShapeRef.current = shape;
   };
 
@@ -356,8 +387,8 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
     canvas.add(fabricText);
     canvas.setActiveObject(fabricText);
     canvas.renderAll();
-    
-    onObjectSelected(fabricText);
+
+    onObjectSelectedRef.current(fabricText);
     selectedShapeRef.current = fabricText;
     
     // Sair do modo de edição de qualquer outro texto primeiro
@@ -418,8 +449,8 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
     canvas.add(placeholder);
     canvas.setActiveObject(placeholder);
     canvas.renderAll();
-    
-    onObjectSelected(placeholder);
+
+    onObjectSelectedRef.current(placeholder);
   };
 
   useImperativeHandle(ref, () => ({
@@ -431,14 +462,17 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   }));
 
   useEffect(() => {
+    console.log('🟡 Canvas useEffect - isActive:', isActive, 'pageId:', pageId);
+
     if (canvasRef.current && !fabricCanvasRef.current) {
       // Verificar se já não existe um canvas no elemento
       const existingCanvas = canvasRef.current.querySelector('canvas');
       if (existingCanvas && existingCanvas.classList.contains('lower-canvas')) {
-        console.log('Canvas já existe, pulando inicialização');
+        console.log('🟡 Canvas já existe, pulando inicialização');
         return;
       }
-      
+
+      console.log('🟡 Inicializando novo canvas para página:', pageId);
       const canvas = new fabric.Canvas(canvasRef.current, {
         backgroundColor: '#ffffff',
         preserveObjectStacking: true,
@@ -509,7 +543,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
               fabricCanvasRef.current.remove(activeObject);
               fabricCanvasRef.current.discardActiveObject();
               fabricCanvasRef.current.requestRenderAll();
-              onSelectionCleared();
+              onSelectionClearedRef.current();
               selectedShapeRef.current = null;
             } else {
               console.log('Não é permitido deletar o background');
@@ -610,7 +644,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
           currentCanvas.renderAll();
         }
         
-        onContextMenu(mouseEvent, target);
+        onContextMenuRef.current(mouseEvent, target);
         return false;
       };
       
@@ -655,27 +689,67 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       canvas.on('mouse:wheel', handleWheel);
       
       const handleShapeSelection = (obj: fabric.Object) => {
+        console.log('🟣 handleShapeSelection called');
+        console.log('🟣 Object:', obj);
+        console.log('🟣 Object type:', obj.type);
+
         const objWithName = obj as fabric.Object & { name?: string };
         const objName = objWithName.name;
-        
+        console.log('🟣 Object name:', objName);
+
         // Se for texto, sair do modo de edição primeiro
         if (obj.type === 'textbox' || obj.type === 'i-text') {
+          console.log('🟣 Is text object');
           const textObj = obj as fabric.Textbox;
           if (textObj.isEditing) {
             textObj.exitEditing();
           }
-          onObjectSelected(obj);
+          onObjectSelectedRef.current(obj);
           selectedShapeRef.current = obj;
         } else if (['rectangle', 'circle', 'triangle', 'line', 'rect'].includes(objName || obj.type || '')) {
-          onObjectSelected(obj);
+          console.log('🟣 Is shape object - calling onObjectSelected');
+          onObjectSelectedRef.current(obj);
           selectedShapeRef.current = obj;
         } else {
-          onSelectionCleared();
+          console.log('🟣 Unknown object type - clearing selection');
+          onSelectionClearedRef.current();
           selectedShapeRef.current = null;
         }
       };
       
+      console.log('🟡 Anexando eventos ao canvas:', canvas);
+      console.log('🟡 Canvas ID/Page:', pageId);
+
+      // Debug: Test if events are working
+      canvas.on('mouse:down:before', (e) => {
+        console.log('🟠 mouse:down:before event - target:', e.target);
+        if (e.target) {
+          console.log('🟠 Target type:', e.target.type);
+          console.log('🟠 Target name:', (e.target as any).name);
+          console.log('🟠 Target selectable:', e.target.selectable);
+          console.log('🟠 Target evented:', e.target.evented);
+
+          // Manually trigger selection for shapes
+          const objName = (e.target as any).name;
+          if (['rectangle', 'circle', 'triangle', 'line'].includes(objName) || e.target.type === 'rect') {
+            console.log('🟢 Manually triggering shape selection');
+            handleShapeSelection(e.target);
+          }
+        }
+        // Log all objects on canvas
+        const allObjects = canvas.getObjects();
+        console.log('🟠 Total objects on canvas:', allObjects.length);
+        allObjects.forEach((obj, index) => {
+          if ((obj as any).name !== 'backgroundRect') {
+            console.log(`  - Object ${index}: type=${obj.type}, name=${(obj as any).name}, selectable=${obj.selectable}`);
+          }
+        });
+      });
+
       canvas.on('selection:created', (e) => {
+        console.log('🔴 selection:created event fired for page:', pageId);
+        console.log('🔴 isActive:', isActiveRef.current);
+        console.log('🔴 e.selected:', e.selected);
         if (e.selected && e.selected[0]) {
           // Sair do modo de edição de qualquer texto ativo
           const objects = canvas.getObjects();
@@ -687,12 +761,14 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
               }
             }
           });
-          
+
           handleShapeSelection(e.selected[0]);
         }
       });
-      
+
       canvas.on('selection:updated', (e) => {
+        console.log('🔴 selection:updated event fired');
+        console.log('🔴 e.selected:', e.selected);
         if (e.selected && e.selected[0]) {
           // Sair do modo de edição de qualquer texto ativo
           const objects = canvas.getObjects();
@@ -704,14 +780,90 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
               }
             }
           });
-          
+
           handleShapeSelection(e.selected[0]);
         }
       });
-      
+
       canvas.on('selection:cleared', () => {
-        onSelectionCleared();
+        console.log('🔴 selection:cleared event fired');
+        onSelectionClearedRef.current();
         selectedShapeRef.current = null;
+      });
+
+      // Adicionar evento para detectar quando objetos são modificados (redimensionados)
+      canvas.on('object:modified', (e) => {
+        if (e.target && e.target.type === 'rect') {
+          const rect = e.target as fabric.Rect;
+          // Se o retângulo tem cornerRadius definido, ajustar proporcionalmente
+          if (rect.rx || rect.ry || (rect as any)._baseRadius) {
+            // Inicializar _baseRadius se não existir
+            if (!(rect as any)._baseRadius) {
+              (rect as any)._baseRadius = Math.max(rect.rx || 0, rect.ry || 0);
+            }
+            // Obter as dimensões atuais do retângulo com escala aplicada
+            const width = rect.width! * rect.scaleX!;
+            const height = rect.height! * rect.scaleY!;
+
+            // Obter o raio base armazenado
+            const baseRadius = (rect as any)._baseRadius;
+
+            // Calcular o menor lado
+            const minSide = Math.min(width, height);
+
+            // Limitar o raio a no máximo 50% do menor lado
+            const maxRadius = minSide / 2;
+            const targetRadius = Math.min(baseRadius, maxRadius);
+
+            // SOLUÇÃO: Para manter cantos circulares, não elípticos,
+            // precisamos que o raio visual seja o mesmo em ambas as direções.
+            // Como o Fabric.js estica rx horizontalmente e ry verticalmente,
+            // precisamos compensar pela proporção inversa do retângulo.
+
+            // Se o retângulo é mais largo que alto, rx precisa ser menor
+            // Se o retângulo é mais alto que largo, ry precisa ser menor
+            const widthRatio = width / Math.max(width, height);
+            const heightRatio = height / Math.max(width, height);
+
+            rect.set({
+              rx: targetRadius * heightRatio,  // Compensar pela altura
+              ry: targetRadius * widthRatio     // Compensar pela largura
+            });
+
+            canvas.renderAll();
+          }
+        }
+      });
+
+      // Adicionar evento para detectar durante o redimensionamento
+      canvas.on('object:scaling', (e) => {
+        if (e.target && e.target.type === 'rect') {
+          const rect = e.target as fabric.Rect;
+          // Se o retângulo tem cornerRadius, ajustá-lo durante o redimensionamento
+          if (rect.rx || rect.ry || (rect as any)._baseRadius) {
+            // Inicializar _baseRadius se não existir
+            if (!(rect as any)._baseRadius) {
+              (rect as any)._baseRadius = Math.max(rect.rx || 0, rect.ry || 0);
+            }
+            // Obter as dimensões atuais com escala
+            const width = rect.width! * rect.scaleX!;
+            const height = rect.height! * rect.scaleY!;
+
+            const baseRadius = (rect as any)._baseRadius;
+            const minSide = Math.min(width, height);
+            const maxRadius = minSide / 2;
+            const targetRadius = Math.min(baseRadius, maxRadius);
+
+            // Aplicar a mesma lógica de compensação proporcional
+            const widthRatio = width / Math.max(width, height);
+            const heightRatio = height / Math.max(width, height);
+
+            rect.set({
+              rx: targetRadius * heightRatio,  // Compensar pela altura
+              ry: targetRadius * widthRatio     // Compensar pela largura
+            });
+          }
+        }
       });
       
       // Variável para rastrear cliques
@@ -720,26 +872,54 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       // @ts-ignore - Used in event handlers
       let currentEditingText: fabric.Textbox | null = null;
       
-      // Adicionar evento de clique direito
+      // Adicionar evento de clique direito e duplo-clique para edição de texto
       canvas.on('mouse:down', (opt) => {
         const target = opt.target;
-        
+
+        // Handle text editing exit first
+        if (!target) {
+          // Clicou no canvas vazio - sair de edição
+          const objects = canvas.getObjects();
+          objects.forEach(obj => {
+            if ((obj.type === 'i-text' || obj.type === 'textbox')) {
+              const textObj = obj as fabric.Textbox;
+              if (textObj.isEditing) {
+                textObj.exitEditing();
+              }
+            }
+          });
+        } else if (target && (target.type === 'i-text' || target.type === 'textbox')) {
+          // Clicou em um texto - garantir que outros textos saiam de edição
+          const clickedText = target as fabric.Textbox;
+          const objects = canvas.getObjects();
+
+          objects.forEach(obj => {
+            if ((obj.type === 'i-text' || obj.type === 'textbox') && obj !== clickedText) {
+              const textObj = obj as fabric.Textbox;
+              if (textObj.isEditing) {
+                console.log('Saindo de edição ao clicar em outro texto:', textObj.text);
+                textObj.exitEditing();
+              }
+            }
+          });
+        }
+
         // Verificar se é clique direito
         if ('button' in opt.e && (opt.e as MouseEvent).button === 2) {
           opt.e.preventDefault();
           opt.e.stopPropagation();
-          
+
           // Selecionar o objeto se houver um sob o cursor
           if (target && (target as fabric.Object & { name?: string }).name !== 'backgroundRect') {
             canvas.setActiveObject(target);
             canvas.renderAll();
           }
-          
+
           // Chamar o menu de contexto
-          onContextMenu(opt.e as MouseEvent, target || null);
+          onContextMenuRef.current(opt.e as MouseEvent, target || null);
           return;
         }
-        
+
         if (target && (target.type === 'i-text' || target.type === 'textbox')) {
           clickCount++;
           console.log('Click count:', clickCount);
@@ -805,7 +985,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
               }
               
               // Notificar seleção
-              onObjectSelected(itext);
+              onObjectSelectedRef.current(itext);
             }, 200);
           }
         } else {
@@ -876,7 +1056,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
             canvas.renderAll();
           }
           
-          onObjectSelected(target);
+          onObjectSelectedRef.current(target);
           
           // Para listas, atualizar marcadores após mudanças
           const listTextbox = target as any;
@@ -950,35 +1130,7 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
         currentEditingText = null;
       });
       
-      // Sair do modo de edição ao clicar em outro lugar
-      canvas.on('mouse:down', (opt) => {
-        if (!opt.target) {
-          // Clicou no canvas vazio - sair de edição
-          const objects = canvas.getObjects();
-          objects.forEach(obj => {
-            if ((obj.type === 'i-text' || obj.type === 'textbox')) {
-              const textObj = obj as fabric.Textbox;
-              if (textObj.isEditing) {
-                textObj.exitEditing();
-              }
-            }
-          });
-        } else if (opt.target && (opt.target.type === 'i-text' || opt.target.type === 'textbox')) {
-          // Clicou em um texto - garantir que outros textos saiam de edição
-          const clickedText = opt.target as fabric.Textbox;
-          const objects = canvas.getObjects();
-          
-          objects.forEach(obj => {
-            if ((obj.type === 'i-text' || obj.type === 'textbox') && obj !== clickedText) {
-              const textObj = obj as fabric.Textbox;
-              if (textObj.isEditing) {
-                console.log('Saindo de edição ao clicar em outro texto:', textObj.text);
-                textObj.exitEditing();
-              }
-            }
-          });
-        }
-      });
+      // This handler is now merged into the main mouse:down handler above
       
       // Debug - verificar se algo está bloqueando a edição
       canvas.on('mouse:up', (e) => {
@@ -1335,6 +1487,8 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
           fabricCanvasRef.current.off('text:editing:entered');
           fabricCanvasRef.current.off('text:editing:exited');
           fabricCanvasRef.current.off('mouse:up');
+          fabricCanvasRef.current.off('object:modified');
+          fabricCanvasRef.current.off('object:scaling');
           
           if (fabricCanvasRef.current.upperCanvasEl) {
             fabricCanvasRef.current.upperCanvasEl.removeEventListener('contextmenu', handleContextMenu);

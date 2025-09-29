@@ -24,12 +24,12 @@ export function createImagePlaceholder(options: PlaceholderOptions): fabric.Grou
   const finalWidth = isQRCode ? Math.min(width, height) : width;
   const finalHeight = isQRCode ? Math.min(width, height) : height;
 
-  // Criar retângulo de fundo
+  // Criar retângulo de fundo com transparência
   const background = new fabric.Rect({
     width: finalWidth,
     height: finalHeight,
-    fill: isQRCode ? '#f8f8f8' : '#f0f0f0',
-    stroke: isQRCode ? '#333333' : '#cccccc',
+    fill: isQRCode ? 'rgba(248, 248, 248, 0.3)' : 'rgba(240, 240, 240, 0.3)', // 30% de opacidade
+    stroke: isQRCode ? 'rgba(51, 51, 51, 0.5)' : 'rgba(204, 204, 204, 0.5)', // 50% de opacidade na borda
     strokeWidth: 2,
     strokeDashArray: isQRCode ? [3, 3] : [5, 5],
     rx: isQRCode ? 8 : 4,
@@ -59,7 +59,7 @@ export function createImagePlaceholder(options: PlaceholderOptions): fabric.Grou
       M20,20 L24,20 L24,24 L20,24 Z
     `;
     icon = new fabric.Path(qrPattern, {
-      fill: '#333333',
+      fill: 'rgba(51, 51, 51, 0.6)', // 60% de opacidade para melhor visibilidade
       scaleX: iconSize / 24,
       scaleY: iconSize / 24,
       originX: 'center',
@@ -72,7 +72,7 @@ export function createImagePlaceholder(options: PlaceholderOptions): fabric.Grou
     icon = new fabric.Path(
       'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z',
       {
-        fill: '#999999',
+        fill: 'rgba(102, 102, 102, 0.6)', // 60% de opacidade para melhor visibilidade
         scaleX: iconSize / 24,
         scaleY: iconSize / 24,
         originX: 'center',
@@ -87,7 +87,7 @@ export function createImagePlaceholder(options: PlaceholderOptions): fabric.Grou
   const displayText = isQRCode ? 'QR Code' : name;
   const text = new fabric.Text(displayText, {
     fontSize: isQRCode ? 11 : 12,
-    fill: isQRCode ? '#333333' : '#666666',
+    fill: isQRCode ? 'rgba(51, 51, 51, 0.7)' : 'rgba(102, 102, 102, 0.7)', // 70% de opacidade
     fontFamily: 'Arial',
     fontWeight: isQRCode ? 'bold' : 'normal',
     originX: 'center',

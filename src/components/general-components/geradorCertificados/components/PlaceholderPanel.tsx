@@ -63,132 +63,89 @@ const PlaceholderPanel: React.FC<PlaceholderPanelProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Custom placeholder - COMENTADO PARA USO FUTURO */}
-      {/*
-      <Card>
-        <div className="p-4">
-          <h3 className="text-sm font-semibold mb-3">Adicionar Placeholder Personalizado</h3>
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs font-medium mb-1 block">
-                Nome do Placeholder
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  value={placeholderName}
-                  onChange={(e) => setPlaceholderName(e.target.value)}
-                  placeholder="ex: logo_personalizada"
-                  className="flex-1"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleAddCustom();
-                    }
-                  }}
-                />
-                <Button
-                  size="sm"
-                  onClick={handleAddCustom}
-                  disabled={!placeholderName.trim()}
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Este nome será usado para identificar a imagem na geração
-              </p>
-            </div>
+      {/* Placeholders de Imagem Disponíveis - Sem Card, direto no content */}
+      <div className="space-y-4">
+        <p className="text-xs text-muted-foreground">
+          Clique para adicionar uma área de imagem dinâmica ao certificado
+        </p>
+
+        {/* Foto do Aluno */}
+        <div>
+          <h4 className="text-xs font-medium text-muted-foreground mb-2">Aluno</h4>
+          <div className="space-y-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start overflow-hidden"
+              onClick={() => onAddPlaceholder(alunoVariable.name)}
+              title={`Adicionar: {{${alunoVariable.name}}}`}
+            >
+              <User className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span className="text-xs truncate flex-1 text-left">{alunoVariable.label}</span>
+              <code className="text-[10px] text-muted-foreground ml-2">{`{{${alunoVariable.name}}}`}</code>
+            </Button>
           </div>
         </div>
-      </Card>
-      */}
 
-      {/* Placeholders de Imagem Disponíveis */}
-      <Card>
-        <div className="p-4">
-          <h3 className="text-sm font-semibold mb-3">Placeholders de Imagem</h3>
-          <p className="text-xs text-muted-foreground mb-3">
-            Clique para adicionar uma área de imagem dinâmica ao certificado
-          </p>
-          
-          {/* Foto do Aluno */}
-          <div className="mb-4">
-            <h4 className="text-xs font-medium text-muted-foreground mb-2">Aluno</h4>
-            <div className="space-y-1">
+        {/* Assinaturas dos Instrutores */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-medium text-muted-foreground">Instrutores</h4>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleAddInstructor}
+              className="h-6 px-2 text-xs"
+              title="Adicionar mais um instrutor"
+            >
+              <Plus className="w-3 h-3 mr-1" />
+              Instrutor
+            </Button>
+          </div>
+          <div className="space-y-1">
+            {instructorVariables.map((variable) => (
               <Button
+                key={variable.name}
                 variant="outline"
                 size="sm"
                 className="w-full justify-start overflow-hidden"
-                onClick={() => onAddPlaceholder(alunoVariable.name)}
-                title={`Adicionar: {{${alunoVariable.name}}}`}
+                onClick={() => onAddPlaceholder(variable.name)}
+                title={`Adicionar: {{${variable.name}}}`}
               >
-                <User className="w-4 h-4 mr-2 flex-shrink-0" />
-                <span className="text-xs truncate flex-1 text-left">{alunoVariable.label}</span>
-                <code className="text-[10px] text-muted-foreground ml-2">{`{{${alunoVariable.name}}}`}</code>
+                <Edit3 className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="text-xs truncate flex-1 text-left">{variable.label}</span>
+                <code className="text-[10px] text-muted-foreground ml-2">{`{{${variable.name}}}`}</code>
               </Button>
-            </div>
+            ))}
           </div>
-
-          {/* Assinaturas dos Instrutores */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs font-medium text-muted-foreground">Instrutores</h4>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleAddInstructor}
-                className="h-6 px-2 text-xs"
-                title="Adicionar mais um instrutor"
-              >
-                <Plus className="w-3 h-3 mr-1" />
-                Instrutor
-              </Button>
-            </div>
-            <div className="space-y-1">
-              {instructorVariables.map((variable) => (
-                <Button
-                  key={variable.name}
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start overflow-hidden"
-                  onClick={() => onAddPlaceholder(variable.name)}
-                  title={`Adicionar: {{${variable.name}}}`}
-                >
-                  <Edit3 className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span className="text-xs truncate flex-1 text-left">{variable.label}</span>
-                  <code className="text-[10px] text-muted-foreground ml-2">{`{{${variable.name}}}`}</code>
-                </Button>
-              ))}
-            </div>
-            {instructorCount > 1 && (
-              <p className="text-xs text-muted-foreground mt-2">
-                {instructorCount} instrutores configurados
-              </p>
-            )}
-          </div>
-          
-          {/* QR Code de Validação */}
-          <div>
-            <h4 className="text-xs font-medium text-muted-foreground mb-2">Validação</h4>
-            <div className="space-y-1">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start overflow-hidden"
-                onClick={() => onAddPlaceholder(qrcodeVariable.name)}
-                title={`Adicionar: {{${qrcodeVariable.name}}}`}
-              >
-                <QrCode className="w-4 h-4 mr-2 flex-shrink-0" />
-                <span className="text-xs truncate flex-1 text-left">{qrcodeVariable.label}</span>
-                <code className="text-[10px] text-muted-foreground ml-2">{`{{${qrcodeVariable.name}}}`}</code>
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Gera um QR Code para validação online do certificado
+          {instructorCount > 1 && (
+            <p className="text-xs text-muted-foreground mt-2">
+              {instructorCount} instrutores configurados
             </p>
-          </div>
+          )}
         </div>
-      </Card>
+
+        {/* QR Code de Validação */}
+        <div>
+          <h4 className="text-xs font-medium text-muted-foreground mb-2">Validação</h4>
+          <div className="space-y-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start overflow-hidden"
+              onClick={() => onAddPlaceholder(qrcodeVariable.name)}
+              title={`Adicionar: {{${qrcodeVariable.name}}}`}
+            >
+              <QrCode className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span className="text-xs truncate flex-1 text-left">{qrcodeVariable.label}</span>
+              <code className="text-[10px] text-muted-foreground ml-2">{`{{${qrcodeVariable.name}}}`}</code>
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Gera um QR Code para validação online do certificado
+          </p>
+        </div>
+      </div>
 
       {/* Instructions */}
       <Card>

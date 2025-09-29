@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Eye, EyeOff, Trash2, Image as ImageIcon, Type, Shapes, GripVertical } from 'lucide-react';
+import { Eye, EyeOff, Trash2, Image as ImageIcon, Type, Shapes, GripVertical, Lock, Unlock } from 'lucide-react';
 import * as fabric from 'fabric';
 
 interface LayersPanelProps {
@@ -16,6 +15,7 @@ interface LayerItem {
   name: string;
   type: string;
   visible: boolean;
+  locked: boolean;
   zIndex: number;
 }
 
@@ -109,6 +109,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
         name: getLayerName(obj, elementCounts[elementType]),
         type: obj.type || 'object',
         visible: obj.visible !== false,
+        locked: obj.selectable === false,
         zIndex: index
       });
     });
@@ -150,10 +151,25 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
     updateLayers();
   };
 
+  // Toggle bloqueio
+  const toggleLock = (layer: LayerItem) => {
+    const isLocked = layer.object.selectable === false;
+    layer.object.selectable = isLocked;
+    layer.object.evented = isLocked;
+
+    // Se o objeto estiver selecionado e for bloqueado, desselecionar
+    if (!isLocked && canvas?.getActiveObject() === layer.object) {
+      canvas.discardActiveObject();
+    }
+
+    canvas?.renderAll();
+    updateLayers();
+  };
+
   // Selecionar objeto
   const selectLayer = (layer: LayerItem) => {
-    if (!canvas) return;
-    
+    if (!canvas || layer.locked) return;
+
     canvas.setActiveObject(layer.object);
     canvas.renderAll();
     onSelectObject(layer.object);
@@ -252,13 +268,15 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
                   <div
                     key={layer.id}
                     className={`
-                      flex items-center gap-2 p-2 rounded-md cursor-pointer
+                      flex items-center gap-2 p-2 rounded-md
                       transition-all duration-200
-                      ${isSelected ? 'bg-primary/10 border border-primary/30' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}
+                      ${layer.locked ? 'bg-gray-50 dark:bg-gray-900' : 'cursor-grab active:cursor-grabbing'}
+                      ${isSelected && !layer.locked ? 'bg-primary/10 border border-primary/30' : ''}
+                      ${!layer.locked && !isSelected ? 'hover:bg-gray-100 dark:hover:bg-gray-800' : ''}
                       ${dragOverIndex === index ? 'border-t-2 border-primary' : ''}
                     `}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, layer)}
+                    draggable={!layer.locked}
+                    onDragStart={(e) => !layer.locked && handleDragStart(e, layer)}
                     onDragOver={(e) => handleDragOver(e, index)}
                     onDragEnter={handleDragEnter}
                     onDragLeave={handleDragLeave}
@@ -266,14 +284,12 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
                     onDragEnd={handleDragEnd}
                     onClick={() => selectLayer(layer)}
                   >
-                    <GripVertical className="w-4 h-4 text-gray-400 cursor-grab active:cursor-grabbing" />
-                    <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    <span className="flex-1 text-xs truncate">{layer.name}</span>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0"
+                    <GripVertical className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 ${layer.locked ? 'opacity-50' : 'cursor-grab active:cursor-grabbing'}`} />
+                    <Icon className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
+                    <span className={`flex-1 text-xs truncate ${layer.locked ? 'opacity-50' : ''}`}>{layer.name}</span>
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        className="p-1 hover:bg-muted rounded transition-colors cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleVisibility(layer);
@@ -284,18 +300,30 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
                         ) : (
                           <EyeOff className="w-3 h-3" />
                         )}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0 hover:text-destructive"
+                      </button>
+                      <button
+                        className={`p-1 hover:bg-muted rounded transition-colors cursor-pointer ${layer.locked ? 'text-primary' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleLock(layer);
+                        }}
+                      >
+                        {layer.locked ? (
+                          <Lock className="w-3 h-3" />
+                        ) : (
+                          <Unlock className="w-3 h-3" />
+                        )}
+                      </button>
+                      <button
+                        className="p-1 hover:bg-destructive/10 rounded hover:text-destructive transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={(e) => {
                           e.stopPropagation();
                           deleteLayer(layer);
                         }}
+                        disabled={layer.locked}
                       >
                         <Trash2 className="w-3 h-3" />
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 );

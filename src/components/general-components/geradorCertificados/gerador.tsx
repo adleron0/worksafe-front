@@ -1,11 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { get, del } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Image as ImageIcon, Loader2, Shapes, Frame, Trash2, Type, Layers, ImagePlus, Copy } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Image as ImageIcon, Loader2, Shapes, Frame, Trash2, Type, Layers, Copy, ChevronDown, ChevronRight, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import * as fabric from 'fabric';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Components
 import ImageUploadForm from './components/ImageUploadForm';
@@ -27,6 +38,10 @@ import { useCertificateApi } from './hooks/useCertificateApi';
 
 // Types
 import { ImageListResponse, ShapeSettings, ContextMenuData } from './types';
+
+// Templates
+import { certificateTemplates, TemplateGrid } from './templates';
+import type { CertificateTemplate } from './templates';
 
 interface GeradorCertificadosProps {
   editingData?: {
@@ -81,8 +96,11 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
   const selectedShapeRef = useRef<fabric.Object | null>(null);
   const [selectedText, setSelectedText] = useState<fabric.Textbox | null>(null);
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>('layers');
-  
+  const [activeTab, setActiveTab] = useState<string>(editingData ? 'layers' : 'templates');
+  const [isPlaceholderOpen, setIsPlaceholderOpen] = useState(false);
+  const [showTemplateConfirmDialog, setShowTemplateConfirmDialog] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<CertificateTemplate | null>(null);
+
   const queryClient = useQueryClient();
 
   // Carregar fontes do Google no início
@@ -540,13 +558,33 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         });
         
         if ((shapeWithName.name === 'rectangle' || activeObject.type === 'rect') && 'rx' in activeObject) {
-          (activeObject as fabric.Rect).set({
-            rx: mergedSettings.cornerRadius,
-            ry: mergedSettings.cornerRadius
+          const rect = activeObject as fabric.Rect;
+
+          const cornerRadius = mergedSettings.cornerRadius || 0;
+
+          // Armazenar o novo raio base
+          (rect as any)._baseRadius = cornerRadius;
+
+          // Obter dimensões atuais com escala
+          const width = rect.width! * rect.scaleX!;
+          const height = rect.height! * rect.scaleY!;
+
+          // Calcular proporções para manter cantos circulares
+          const widthRatio = width / Math.max(width, height);
+          const heightRatio = height / Math.max(width, height);
+
+          // Aplicar compensação proporcional
+          rect.set({
+            rx: cornerRadius * heightRatio,
+            ry: cornerRadius * widthRatio
           });
+        } else if (shapeWithName.name === 'triangle' || activeObject.type === 'triangle') {
+          // Triângulos - apenas atualizar propriedades básicas
+          // Fabric.js não suporta arredondamento em triângulos
+          console.log('ℹ️ Triângulo selecionado - arredondamento não disponível');
         }
       }
-      
+
       activeObject.setCoords();
       canvas.renderAll();
       
@@ -579,58 +617,77 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
     }
   }, [showContextMenu]);
 
-  const handleObjectSelected = (obj: fabric.Object) => {
+  const handleObjectSelected = useCallback((obj: fabric.Object) => {
+    console.log('🔵 handleObjectSelected called');
+    console.log('🔵 Object type:', obj.type);
+    console.log('🔵 Object:', obj);
+
     // Check if it's a text object
     if (obj.type === 'i-text' || obj.type === 'textbox') {
       const textObj = obj as fabric.Textbox;
-      
+
       // Usar ID para garantir referência correta
       const textId = (textObj as any).__uniqueID || `text_${Date.now()}`;
       if (!(textObj as any).__uniqueID) {
         (textObj as any).__uniqueID = textId;
       }
-      
+
       setSelectedTextId(textId);
       setSelectedShape(null);
       selectedShapeRef.current = null;
     } else {
+      console.log('🟢 Setting selected shape');
       setSelectedShape(obj);
       selectedShapeRef.current = obj;
       setSelectedTextId(null);
       setSelectedText(null);
-      
+
       // Get current shape settings
       const fill = obj.fill as string || '#000000';
       const stroke = obj.stroke as string || '#000000';
       const strokeWidth = obj.strokeWidth || 0;
       const opacity = (obj.opacity || 1) * 100;
-      
+
+      console.log('🟢 Current shape settings:');
+      console.log('  - fill:', fill);
+      console.log('  - stroke:', stroke);
+      console.log('  - strokeWidth:', strokeWidth);
+      console.log('  - opacity:', opacity);
+
       // Get corner radius for rectangles
       let cornerRadius = 0;
       if (obj.type === 'rect') {
         const rect = obj as fabric.Rect;
-        cornerRadius = rect.rx || 0;
+        // Tentar obter o raio base armazenado ou usar o rx atual
+        cornerRadius = (rect as any)._baseRadius || rect.rx || rect.ry || 0;
+        console.log('🟢 Rectangle corner radius:');
+        console.log('  - _baseRadius:', (rect as any)._baseRadius);
+        console.log('  - rx:', rect.rx);
+        console.log('  - ry:', rect.ry);
+        console.log('  - final cornerRadius:', cornerRadius);
       }
-      
+
       // Update settings to match selected shape
-      setShapeSettings({
-        fill,
+      const newSettings = {
+        fill: fill === 'transparent' ? 'transparent' : fill,
         stroke,
         strokeWidth,
         opacity,
         cornerRadius
-      });
+      };
+      console.log('🟢 Setting new shape settings:', newSettings);
+      setShapeSettings(newSettings);
     }
-  };
+  }, []);
 
-  const handleSelectionCleared = () => {
+  const handleSelectionCleared = useCallback(() => {
     setSelectedShape(null);
     selectedShapeRef.current = null;
     setSelectedTextId(null);
     setSelectedText(null);
-  };
+  }, []);
 
-  const handleContextMenu = (e: MouseEvent, target: fabric.Object | null) => {
+  const handleContextMenu = useCallback((e: MouseEvent, target: fabric.Object | null) => {
     if (target) {
       setContextMenu({
         x: e.clientX,
@@ -641,7 +698,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
     } else {
       setShowContextMenu(false);
     }
-  };
+  }, []);
 
   const getContextMenuItems = () => {
     if (!contextMenu.target) return { title: '', items: [] };
@@ -1015,12 +1072,15 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
                     textObj.setCoords();
                   }
                   
-                  // Configurar propriedades
+                  // Configurar propriedades (preservar selectable e evented se já existirem)
+                  const currentSelectable = textObj.selectable;
+                  const currentEvented = textObj.evented;
                   textObj.set({
-                    editable: true,
-                    selectable: true,
-                    hasControls: true,
-                    hasBorders: true
+                    editable: currentSelectable !== false, // Se estiver bloqueado, não editar
+                    selectable: currentSelectable !== false ? true : false, // Preservar estado de bloqueio
+                    evented: currentEvented !== false ? true : false, // Preservar estado de eventos
+                    hasControls: currentSelectable !== false,
+                    hasBorders: currentSelectable !== false
                   });
                   
                   // Recalcular o width baseado no texto real
@@ -1096,6 +1156,63 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
       }
     }
   }, [getCurrentCanvasRef, certificateInfo.id, isInitialLoad]);
+
+  // Função para aplicar template
+  const handleApplyTemplate = async (template: CertificateTemplate) => {
+    // Se estiver editando um certificado existente, mostrar confirmação
+    if (certificateInfo.id) {
+      setSelectedTemplate(template);
+      setShowTemplateConfirmDialog(true);
+    } else {
+      // Se for novo certificado, aplicar direto
+      await applyTemplate(template);
+    }
+  };
+
+  // Função auxiliar para aplicar o template
+  const applyTemplate = async (template: CertificateTemplate) => {
+    try {
+      setIsLoadingTemplate(true);
+      setShouldShowSkeleton(false);
+
+      // Carregar dados do template no canvas
+      await loadCanvasData({
+        fabricJsonFront: template.fabricJsonFront,
+        fabricJsonBack: template.fabricJsonBack || null,
+        canvasWidth: template.canvasWidth,
+        canvasHeight: template.canvasHeight
+      });
+
+      // Atualizar informações do certificado
+      setCertificateInfo(prev => ({
+        ...prev,
+        // Preservar ID se existir (modo edição)
+        id: prev.id,
+        // Se não tiver ID (novo), usar nome do template
+        name: prev.id ? prev.name : template.name,
+        isModified: true
+      }));
+
+      // Mudar para aba de layers após aplicar
+      setActiveTab('layers');
+
+      toast.success('Modelo aplicado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao aplicar template:', error);
+      toast.error('Erro ao aplicar modelo');
+    } finally {
+      setIsLoadingTemplate(false);
+      setShowTemplateConfirmDialog(false);
+      setSelectedTemplate(null);
+    }
+  };
+
+  // Função para confirmar aplicação de template
+  const handleConfirmApplyTemplate = async () => {
+    if (selectedTemplate) {
+      await applyTemplate(selectedTemplate);
+    }
+  };
 
   // Função para salvar certificado
   const handleSaveCertificate = async (data: {
@@ -1242,10 +1359,10 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
       <div className="flex gap-6 flex-1 pt-1 pb-4 overflow-hidden">
       {/* Left column - Tabs and content */}
       <div className="flex flex-col h-full w-64 border-r pr-2 flex-shrink-0">
-        <Tabs defaultValue="layers" value={activeTab} className="w-full flex flex-col h-full" onValueChange={setActiveTab}>
+        <Tabs defaultValue={editingData ? "layers" : "templates"} value={activeTab} className="w-full flex flex-col h-full" onValueChange={setActiveTab}>
           <TabsList className="flex gap-2 w-fit bg-transparent p-0 flex-shrink-0">
-            <TabsTrigger value="layers" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
-              <Layers className="w-4 h-4" />
+            <TabsTrigger value="templates" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
+              <FileText className="w-4 h-4" />
             </TabsTrigger>
             <TabsTrigger value="images" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
               <ImageIcon className="w-4 h-4" />
@@ -1256,11 +1373,19 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
             <TabsTrigger value="text" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
               <Type className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="placeholder" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
-              <ImagePlus className="w-4 h-4" />
+            <TabsTrigger value="layers" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
+              <Layers className="w-4 h-4" />
             </TabsTrigger>
           </TabsList>
-          
+
+          <TabsContent value="templates" className="mt-4 flex-1 overflow-y-auto pr-2">
+            <TemplateGrid
+              templates={certificateTemplates}
+              onSelectTemplate={handleApplyTemplate}
+              isEditing={!!certificateInfo.id}
+            />
+          </TabsContent>
+
           <TabsContent value="layers" className="mt-4 flex-1 overflow-y-auto pr-2">
             <LayersPanel
               canvas={getCurrentCanvasRef()?.getCanvas() || null}
@@ -1271,8 +1396,36 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
           
           <TabsContent value="images" className="mt-4 flex-1 overflow-y-auto pr-2">
             <div className="space-y-6">
+              {/* Placeholders Section - Collapsible */}
+              <Collapsible
+                open={isPlaceholderOpen}
+                onOpenChange={setIsPlaceholderOpen}
+                className="border rounded-lg"
+              >
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                      isPlaceholderOpen ? 'rounded-b-none' : ''
+                    }`}
+                  >
+                    <span className="font-semibold">Imagens Dinâmicas</span>
+                    {isPlaceholderOpen ? (
+                      <ChevronDown className="w-4 h-4" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="p-4 pt-0">
+                  <PlaceholderPanel
+                    onAddPlaceholder={addPlaceholderToCanvas}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
+
               <ImageUploadForm imageType={imageType} />
-              
+
               {/* Images section */}
               <div>
                 <h3 className="text-base font-semibold mb-4">Imagens Cadastradas</h3>
@@ -1290,7 +1443,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
                       onDragStart={handleDragStart}
                       onDragEnd={() => setIsDragging(false)}
                     />
-                    
+
                     {/* Pagination */}
                     {imagesData.total > 6 && (
                       <div className="flex justify-center gap-2 mt-6">
@@ -1342,12 +1495,6 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
               onAddText={handleAddText}
               onUpdateText={handleUpdateText}
               canvas={getCurrentCanvasRef()?.getCanvas()}
-            />
-          </TabsContent>
-          
-          <TabsContent value="placeholder" className="mt-4 flex-1 overflow-y-auto pr-2">
-            <PlaceholderPanel
-              onAddPlaceholder={addPlaceholderToCanvas}
             />
           </TabsContent>
         </Tabs>
@@ -1434,7 +1581,26 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         mode={certificateInfo.id ? 'update' : 'create'}
         lastSaved={lastSavedTime}
       />
-      
+
+      {/* Template Confirmation Dialog */}
+      <AlertDialog open={showTemplateConfirmDialog} onOpenChange={setShowTemplateConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Aplicar Modelo de Certificado</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação substituirá todo o conteúdo atual do certificado com o modelo selecionado.
+              As suas alterações atuais serão perdidas. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmApplyTemplate}>
+              Aplicar Modelo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
     </div>
   );

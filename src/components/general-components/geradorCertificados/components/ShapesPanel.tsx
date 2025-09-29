@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { Square, Circle, Triangle, Minus } from 'lucide-react';
+import { Square, Circle, Triangle, Minus, EyeOff } from 'lucide-react';
 import { ShapeSettings } from '../types';
 import * as fabric from 'fabric';
 
@@ -23,6 +23,9 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
   onDragStart,
   onDragEnd
 }) => {
+  console.log('🔶 ShapesPanel render');
+  console.log('🔶 shapeSettings:', shapeSettings);
+  console.log('🔶 selectedShape:', selectedShape);
   const shapes = [
     { type: 'rectangle' as const, icon: Square, label: 'Quadrado' },
     { type: 'circle' as const, icon: Circle, label: 'Círculo' },
@@ -71,16 +74,34 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
           {/* Fill color */}
           <div>
             <label className="text-xs font-medium mb-1 block">Cor de Preenchimento</label>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <input
                 type="color"
-                value={shapeSettings.fill}
+                value={shapeSettings.fill === 'transparent' ? '#ffffff' : shapeSettings.fill}
                 onChange={(e) => {
                   console.log('Changing fill color to:', e.target.value);
                   onUpdateSettings({ fill: e.target.value });
                 }}
-                className="w-full h-8 rounded cursor-pointer"
+                className="flex-1 h-8 rounded cursor-pointer"
+                title={shapeSettings.fill === 'transparent' ? 'Transparente' : shapeSettings.fill}
+                disabled={shapeSettings.fill === 'transparent'}
               />
+              <button
+                type="button"
+                onClick={() => {
+                  const newFill = shapeSettings.fill === 'transparent' ? '#000000' : 'transparent';
+                  console.log('Toggling fill:', newFill);
+                  onUpdateSettings({ fill: newFill });
+                }}
+                className={`h-6 w-6 rounded border flex items-center justify-center transition-colors ${
+                  shapeSettings.fill === 'transparent'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background hover:bg-accent hover:text-accent-foreground border-input'
+                }`}
+                title={shapeSettings.fill === 'transparent' ? 'Ativar preenchimento' : 'Remover preenchimento'}
+              >
+                <EyeOff className="w-3 h-3" />
+              </button>
             </div>
           </div>
           
@@ -134,23 +155,25 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
             />
           </div>
           
-          {/* Border radius */}
-          <div>
-            <label className="text-xs font-medium mb-1 block">
-              Arredondamento: {shapeSettings.cornerRadius || 0}px
-            </label>
-            <Slider
-              value={[shapeSettings.cornerRadius || 0]}
-              onValueChange={(value) => {
-                console.log('Changing corner radius to:', value[0]);
-                onUpdateSettings({ cornerRadius: value[0] });
-              }}
-              min={0}
-              max={50}
-              step={1}
-              className="w-full"
-            />
-          </div>
+          {/* Border radius - Only show for rectangles */}
+          {selectedShape && (selectedShape.type === 'rect' || (selectedShape as any).name === 'rectangle') && (
+            <div>
+              <label className="text-xs font-medium mb-1 block">
+                Arredondamento: {shapeSettings.cornerRadius || 0}px
+              </label>
+              <Slider
+                value={[shapeSettings.cornerRadius || 0]}
+                onValueChange={(value) => {
+                  console.log('Changing corner radius to:', value[0]);
+                  onUpdateSettings({ cornerRadius: value[0] });
+                }}
+                min={0}
+                max={50}
+                step={1}
+                className="w-full"
+              />
+            </div>
+          )}
         </div>
       </Card>
     </div>

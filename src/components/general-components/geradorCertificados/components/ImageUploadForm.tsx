@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
-import { Upload, Loader2, ChevronDown, ChevronUp, FileImage, Type } from 'lucide-react';
+import { Upload, Loader2, ChevronDown, ChevronRight, FileImage, Type } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { post } from '@/services/api';
 import { toast } from 'sonner';
@@ -62,16 +62,28 @@ const ImageUploadForm: React.FC<ImageUploadFormProps> = ({ imageType, onUploadSu
   };
 
   return (
-    <Card className="overflow-hidden">
-      <div 
-        className="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
-        onClick={() => setIsFormCollapsed(!isFormCollapsed)}
-      >
-        <h3 className="text-sm font-semibold">Adicionar Nova Imagem</h3>
-        {isFormCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-      </div>
-      {!isFormCollapsed && (
-        <div className="px-4 pb-4 space-y-3">
+    <Collapsible
+      open={!isFormCollapsed}
+      onOpenChange={(open) => setIsFormCollapsed(!open)}
+      className="border rounded-lg"
+    >
+      <CollapsibleTrigger asChild>
+        <Button
+          variant="ghost"
+          className={`w-full justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 ${
+            !isFormCollapsed ? 'rounded-b-none' : ''
+          }`}
+        >
+          <span className="font-semibold">Adicionar Nova Imagem</span>
+          {isFormCollapsed ? (
+            <ChevronRight className="w-4 h-4" />
+          ) : (
+            <ChevronDown className="w-4 h-4" />
+          )}
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="p-4 pt-0">
+        <div className="space-y-3">
           <div>
             <label className="flex text-xs font-medium mb-1 items-center gap-1">
               <FileImage className="w-3 h-3" />
@@ -131,8 +143,8 @@ const ImageUploadForm: React.FC<ImageUploadFormProps> = ({ imageType, onUploadSu
             Enviar
           </Button>
         </div>
-      )}
-    </Card>
+      </CollapsibleContent>
+    </Collapsible>
   );
 };
 

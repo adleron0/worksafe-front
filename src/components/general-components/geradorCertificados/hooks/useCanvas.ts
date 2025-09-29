@@ -578,7 +578,7 @@ export const useCanvas = () => {
       // Serializar o canvas
       // No Fabric.js v6, precisamos adicionar a propriedade ao objeto antes de serializar
       // IMPORTANTE: incluir 'width' e 'splitByGrapheme' para preservar configurações de textbox
-      const canvasJSON = frontCanvas.toObject(['name', '_originalUrl', 'originY', 'targetHeight', 'targetWidth', 'placeholderNameDebug', 'width', 'splitByGrapheme']);
+      const canvasJSON = frontCanvas.toObject(['name', '_originalUrl', 'originY', 'targetHeight', 'targetWidth', 'placeholderNameDebug', 'width', 'splitByGrapheme', 'selectable', 'evented']);
       
       // Processar objetos no JSON para garantir URLs originais
       if (canvasJSON.objects) {
@@ -658,7 +658,7 @@ export const useCanvas = () => {
             // Serializar o canvas do verso
             const backObjectsWithNames = backCanvas.getObjects();
             // IMPORTANTE: incluir 'width' e 'splitByGrapheme' para preservar configurações de textbox
-            const backCanvasJSON = backCanvas.toObject(['name', '_originalUrl', 'originY', 'targetHeight', 'targetWidth', 'placeholderNameDebug', 'width', 'splitByGrapheme']);
+            const backCanvasJSON = backCanvas.toObject(['name', '_originalUrl', 'originY', 'targetHeight', 'targetWidth', 'placeholderNameDebug', 'width', 'splitByGrapheme', 'selectable', 'evented']);
             
             // Processar objetos no JSON para garantir URLs originais
             if (backCanvasJSON.objects) {

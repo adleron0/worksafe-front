@@ -8,6 +8,7 @@ export interface CertificateTemplate {
   fabricJsonBack?: string;
   canvasWidth: number;
   canvasHeight: number;
+  orientation?: 'horizontal' | 'vertical';
   defaultVariables?: Record<string, any>;
   previewBackgroundColor?: string;
 }

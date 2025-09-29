@@ -33,7 +33,6 @@ const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal 
     occupation: "",
     subscribeStatus: "pending",
     classId: classId,
-    companyId: 1,
   });
 
   useEffect(() => {
@@ -53,7 +52,6 @@ const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal 
         occupation: "",
         subscribeStatus: "pending",
         classId: classId,
-        companyId: 1,
       });
     }
   }, [formData, classId]);

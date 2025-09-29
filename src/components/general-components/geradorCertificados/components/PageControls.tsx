@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Download } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 interface PageControlsProps {
   pages: Array<{ id: string; name: string }>;
@@ -18,7 +18,7 @@ const PageControls: React.FC<PageControlsProps> = ({
   onPageSelect,
   onPageAdd,
   onPageRemove,
-  onExportPDF,
+  // onExportPDF,
   maxPages = 2
 }) => {
   const canAddPage = pages.length < maxPages;
@@ -76,7 +76,7 @@ const PageControls: React.FC<PageControlsProps> = ({
         </span>
       </div>
       
-      {onExportPDF && (
+      {/* {onExportPDF && (
         <Button
           variant="outline"
           size="sm"
@@ -86,7 +86,7 @@ const PageControls: React.FC<PageControlsProps> = ({
           <Download className="w-4 h-4" />
           Exportar PDF
         </Button>
-      )}
+      )} */}
     </div>
   );
 };

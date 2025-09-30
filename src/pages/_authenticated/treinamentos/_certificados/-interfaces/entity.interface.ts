@@ -10,6 +10,8 @@ export interface ICertificate {
   fabricJsonBack?: any;
   variableToReplace?: any;
   pdfUrl?: string;
+  canvasWidth?: number;
+  canvasHeight?: number;
   inactiveAt?: Date | string;
   createdAt?: Date | string;
   updatedAt?: Date | string;

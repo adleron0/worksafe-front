@@ -540,6 +540,8 @@ function CertificadoPublico() {
                     name: variables.curso_nome?.value || 'Certificado',
                     fabricJsonFront: certificate.fabricJsonFront,
                     fabricJsonBack: certificate.fabricJsonBack,
+                    canvasWidth: certificate.canvasWidth,
+                    canvasHeight: certificate.canvasHeight,
                     certificateId: String(certificate.key),
                     pdfUrl: certificate.pdfUrl // Passando o pdfUrl para o visualizador
                   }}

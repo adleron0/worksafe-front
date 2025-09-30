@@ -25,6 +25,7 @@ import tailwindUtils from "@/utils/tailwind.utils";
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
+import { cn } from "@/lib/utils";
 
 interface ItemsProps {
   item: IEntity;
@@ -185,7 +186,7 @@ const Item = ({
         {/* Cursos Associados */}
         <div className="flex flex-col lg:w-2/12 relative z-10">
           <p className="text-xs text-muted-foreground lg:hidden">Cursos</p>
-          <p className="text-sm text-muted-foreground">
+          <p className={cn("text-sm text-muted-foreground", !item?.course?.name && "text-xs italic text-muted-foreground/50")}>
             {item?.course?.name || "não associado"}
           </p>
         </div>

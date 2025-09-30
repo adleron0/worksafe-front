@@ -249,7 +249,7 @@ const Select = ({
         <button
           type="button"
           onClick={handleClearSingle}
-          className="absolute right-8 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
+          className="absolute right-8 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded cursor-pointer"
           disabled={disabled}
         >
           <Cross2Icon className="h-3 w-3 opacity-50 hover:opacity-100" />

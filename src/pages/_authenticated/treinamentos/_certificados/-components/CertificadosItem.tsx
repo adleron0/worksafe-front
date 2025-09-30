@@ -129,6 +129,8 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
         name: item.course?.name || 'Certificado',
         fabricJsonFront: item.fabricJsonFront,
         fabricJsonBack: item.fabricJsonBack || null,
+        canvasWidth: item.canvasWidth,
+        canvasHeight: item.canvasHeight,
         certificateId: item.key?.toString() || 'CERT-001'
       };
 
@@ -467,6 +469,8 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
               name: item.course?.name || 'Certificado',
               fabricJsonFront: item.fabricJsonFront,
               fabricJsonBack: item.fabricJsonBack,
+              canvasWidth: item.canvasWidth,
+              canvasHeight: item.canvasHeight,
               certificateId: item.key?.toString() || 'CERT-001'
             }}
             variableToReplace={item.variableToReplace || {}}

@@ -76,6 +76,8 @@ interface Certificate {
   expirationDate?: string | null;
   fabricJsonFront: string;
   fabricJsonBack: string | null;
+  canvasWidth?: number;
+  canvasHeight?: number;
   variableToReplace: any;
   showOnWebsiteConsent: boolean;
   pdfUrl?: string | null;
@@ -164,6 +166,8 @@ function StudentDashboard() {
         name: certificate.variableToReplace?.curso_nome?.value || 'Certificado',
         fabricJsonFront: certificate.fabricJsonFront,
         fabricJsonBack: certificate.fabricJsonBack,
+        canvasWidth: certificate.canvasWidth,
+        canvasHeight: certificate.canvasHeight,
         certificateId: certificate.key || 'CERT-001'
       };
 
@@ -501,6 +505,8 @@ function StudentDashboard() {
                           name: cert.variableToReplace?.curso_nome?.value || 'Certificado',
                           fabricJsonFront: cert.fabricJsonFront,
                           fabricJsonBack: cert.fabricJsonBack,
+                          canvasWidth: cert.canvasWidth,
+                          canvasHeight: cert.canvasHeight,
                           certificateId: cert.key || 'CERT-001'
                         }}
                         variableToReplace={cert.variableToReplace || {}}
@@ -610,6 +616,8 @@ function StudentDashboard() {
                 name: selectedCertificate.variableToReplace?.curso_nome?.value || 'Certificado',
                 fabricJsonFront: selectedCertificate.fabricJsonFront,
                 fabricJsonBack: selectedCertificate.fabricJsonBack,
+                canvasWidth: selectedCertificate.canvasWidth,
+                canvasHeight: selectedCertificate.canvasHeight,
                 certificateId: selectedCertificate.key || 'CERT-001'
               }}
               variableToReplace={selectedCertificate.variableToReplace || {}}

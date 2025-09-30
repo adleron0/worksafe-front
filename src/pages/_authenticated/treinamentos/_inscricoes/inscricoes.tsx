@@ -68,6 +68,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
 
   const { 
     data: courseData, 
+    isLoading: isLoadingCourses,
   } = useQuery<SelectOption[], ApiError>({
     queryKey: [`listCoursesOptions`],
     queryFn: async () => {
@@ -82,7 +83,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
       
       return response?.rows?.map((item: ClassItem) => ({
         id: item.id,
-        name: `${item.name} (${new Date(item.initialDate).toLocaleDateString('pt-BR')})`,
+        name: item.name,
       }));
     },
     enabled: !classId
@@ -90,6 +91,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
 
   const { 
     data: classesData, 
+    isLoading: isLoadingClasses,
   } = useQuery<SelectOption[], ApiError>({
     queryKey: [`listClassesOptions`, courseId],
     queryFn: async () => {
@@ -209,16 +211,11 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
     },
-    onError: (error: unknown) => {
+    onError: (error: ApiError) => {
       hideLoader();
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : typeof error === 'object' && error !== null && 'response' in error 
-          ? ((error as ApiError).response?.data?.message || "Erro ao atualizar status")
-          : "Erro ao atualizar status";
       toast({
         title: "Erro ao atualizar status",
-        description: errorMessage,
+        description: error.response?.data?.message || "Erro desconhecido.",
         variant: "destructive",
       });
     }
@@ -251,6 +248,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
           setFormType={() => {}}
           iconForm="plus"
           addButtonName="Nova"
+          showCreate={!!classId || !!searchParams.classId}
         />
         {/* Toggle para alternar entre visualizações e Select de turmas */}
         <div className="flex justify-start items-center px-2 gap-4">
@@ -272,7 +270,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
               size="sm"
               onClick={() => {
                 setViewMode('kanban');
-                setSearchParams(prev => ({ ...prev, limit: 999 }));
+                setSearchParams(prev => ({ ...prev, limit: 'all' }));
               }}
               className="gap-2"
             >
@@ -282,7 +280,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
           </div>
 
           {/* Select de curso - só aparece se não houver classId fixo */}
-          {!classId && courseData && (
+          {!classId && (
             <div className="flex items-center gap-2">
               {/* <label className="text-sm font-medium">Turma:</label> */}
               <div className="w-[250px]">
@@ -292,7 +290,9 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
                   state={courseId?.toString()}
                   label="name"
                   value="id"
+                  isLoading={isLoadingCourses}
                   placeholder="Selecione um curso"
+                  clearable
                   onChange={(_name, value) => {
                     const selectedValue = value === "all" ? undefined : value ? Number(value) : undefined;
                     setCourseId(selectedValue);
@@ -303,7 +303,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
           )}
 
           {/* Select de turmas - só aparece se não houver classId fixo */}
-          {!classId && classesData && (
+          {!classId && (
             <div className="flex items-center gap-2">
               {/* <label className="text-sm font-medium">Turma:</label> */}
               <div className="w-[250px]">
@@ -313,6 +313,9 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
                   state={searchParams.classId?.toString()}
                   label="name"
                   value="id"
+                  isLoading={isLoadingClasses}
+                  disabled={!courseId}
+                  clearable
                   placeholder="Selecione uma turma"
                   onChange={(name, value) => {
                     const selectedValue = value === "all" ? undefined : value ? Number(value) : undefined;
@@ -347,7 +350,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
       {viewMode === 'list' ? (
         // Visualização em Lista
         data && data.rows.length > 0 ? (
-          <div className="p-2">
+          <div className="space-y-2 mt-2">
             {data.rows.map((item, index) => (
               <ItemList
                 key={item.id}
@@ -426,7 +429,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
             formData={formData}
             openSheet={setOpenForm}
             entity={entity}
-            classId={Number(classId)}
+            classId={Number(searchParams.classId) || Number(classId)}
           />
         }
       />

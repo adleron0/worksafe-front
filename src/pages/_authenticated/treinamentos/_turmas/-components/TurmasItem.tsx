@@ -141,17 +141,11 @@ const SiteServicesItem = ({
         variant: "success",
       });
     },
-    onError: (error: unknown) => {
+    onError: (error: ApiError) => {
       hideLoader();
       toast({
         title: "Erro ao gerar certificados",
-        description:
-          error instanceof Error
-            ? error.message
-            : typeof error === "object" && error !== null && "response" in error
-              ? (error as ApiError).response?.data?.message ||
-                "Erro ao gerar certificados"
-              : "Erro ao gerar certificados",
+        description: error.response?.data?.message || "Erro desconhecido.",
         variant: "destructive",
       });
     },

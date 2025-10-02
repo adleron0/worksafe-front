@@ -251,8 +251,8 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
           showCreate={!!classId || !!searchParams.classId}
         />
         {/* Toggle para alternar entre visualizações e Select de turmas */}
-        <div className="flex justify-start items-center px-2 gap-4">
-          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+        <div className="flex flex-col md:flex-row justify-start md:items-center px-2 gap-4">
+          <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
             <Button
               variant={viewMode === 'list' ? 'default' : 'ghost'}
               size="sm"
@@ -283,7 +283,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
           {!classId && (
             <div className="flex items-center gap-2">
               {/* <label className="text-sm font-medium">Turma:</label> */}
-              <div className="w-[250px]">
+              <div className="w-full md:w-[250px]">
                 <Select
                   name="courseId"
                   options={courseData}
@@ -306,7 +306,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
           {!classId && (
             <div className="flex items-center gap-2">
               {/* <label className="text-sm font-medium">Turma:</label> */}
-              <div className="w-[250px]">
+              <div className="w-full md:w-[250px]">
                 <Select
                   name="classId"
                   options={classesData}

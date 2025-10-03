@@ -620,10 +620,10 @@ function CertificadoPublico() {
                       />
                       PNG
                     </Button>
-                    <Button
+                    {/* <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {/* Mock - adicionar funcionalidade depois */}}
+                      onClick={() => {}}
                     >
                       <Icon name="info" className="w-4 h-4 mr-2" />
                       Informações
@@ -631,11 +631,11 @@ function CertificadoPublico() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {/* Mock - adicionar funcionalidade depois */}}
+                      onClick={() => {}}
                     >
                       <Icon name="help-circle" className="w-4 h-4 mr-2" />
                       Ajuda
-                    </Button>
+                    </Button> */}
                   </div>
 
                   {/* Nome do Aluno e Link de Credenciais */}

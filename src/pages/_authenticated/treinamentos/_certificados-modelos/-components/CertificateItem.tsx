@@ -279,12 +279,14 @@ const CertificateItem = ({ item, index, entity, setFormData, setOpenForm, isDesk
         <Dialog
           open={openViewModal}
           onOpenChange={setOpenViewModal}
-          title={`Visualizar Certificado: ${item.name}`}
-          description="Pré-visualização do template do certificado"
+          title={`Modelo: ${item.name}`}
+          description="Pré-visualização do template"
           showBttn={false}
-          showHeader={false}
+          showHeader={true}
+          className="md:w-fit"
+          classNameContent="h-fit md:h-[80vh]"
         >
-          <div className="h-[70vh] w-full">
+          <div className="h-fit md:h-full w-full">
             <VisualizadorCertificados
               certificateData={item}
               variableToReplace={{}}

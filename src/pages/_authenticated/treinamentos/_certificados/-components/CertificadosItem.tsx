@@ -457,12 +457,14 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
       <Dialog
         open={showViewer}
         onOpenChange={setShowViewer}
-        title={`Certificado - ${item.course?.name || 'Certificado'}`}
-        description="Visualização do certificado do aluno"
+        title={`${item.trainee?.name || ''}`}
+        description={`Certificado - ${item.course?.name || 'Certificado'}`}
         showBttn={false}
-        showHeader={false}
+        showHeader={true}
+        className="md:w-fit"
+        classNameContent="h-fit md:h-[80vh]"
       >
-        <div className="h-[70vh] w-full">
+        <div className="h-fit md:h-full w-full">
           <VisualizadorCertificados
             certificateData={{
               id: item.id || 0,

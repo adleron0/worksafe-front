@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -100,7 +99,7 @@ const VisitanteForm = ({ formData, openSheet }: FormProps) => {
           </div>
           <div>
             <Label className="text-muted-foreground">Atualizado em</Label>
-            <p className="text-sm mt-1">{formatDate(formData.updatedAt)}</p>
+            <p className="text-sm mt-1">{formatDate(formData.updatedAt ?? undefined)}</p>
           </div>
         </div>
       </div>

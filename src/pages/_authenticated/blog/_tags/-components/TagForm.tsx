@@ -53,7 +53,7 @@ const TagForm = ({ formData, openSheet, entity }: FormProps) => {
   const { mutate: createTag, isPending } = useMutation({
     mutationFn: (newTag: TagFormData) => {
       showLoader(`Criando ${entity.name}...`);
-      return post<ITag>(entity.model, '', newTag);
+      return post<ITag>(entity.model, '', newTag as any);
     },
     onSuccess: () => {
       hideLoader();
@@ -79,7 +79,7 @@ const TagForm = ({ formData, openSheet, entity }: FormProps) => {
   const { mutate: updateTag, isPending: isPendingUpdate } = useMutation({
     mutationFn: (updatedTag: TagFormData) => {
       showLoader(`Atualizando ${entity.name}...`);
-      return put<ITag>(entity.model, `${formData?.id}`, updatedTag);
+      return put<ITag>(entity.model, `${formData?.id}`, updatedTag as any);
     },
     onSuccess: () => {
       hideLoader();

@@ -1,4 +1,3 @@
-import React from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { patch } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
@@ -29,7 +28,7 @@ const ComentarioForm = ({ formData, openSheet, entity }: FormProps) => {
   const { mutate: updateStatus } = useMutation({
     mutationFn: (status: 'published' | 'rejected') => {
       showLoader(`${status === 'published' ? 'Aprovando' : 'Rejeitando'} comentário...`);
-      return patch(`${entity.model}/${formData?.id}`, '', { status });
+      return patch(`${entity.model}/${status}`, `${formData?.id}`);
     },
     onSuccess: (_, status) => {
       hideLoader();

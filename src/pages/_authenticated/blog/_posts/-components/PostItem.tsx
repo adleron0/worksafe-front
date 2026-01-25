@@ -6,7 +6,6 @@ import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Dialog from "@/components/general-components/Dialog";
 import { Button } from "@/components/ui/button";
@@ -119,7 +118,7 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps)
           )}
           <div className="break-words flex-1">
             <h2 className="text-sm font-semibold line-clamp-2">{item.title}</h2>
-            <p className="text-xs text-muted-foreground">{formatDate(item.publishedAt)}</p>
+            <p className="text-xs text-muted-foreground">{formatDate(item.publishedAt ?? undefined)}</p>
           </div>
         </div>
 
@@ -276,7 +275,7 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps)
             {item.publishedAt && (
               <>
                 <span>•</span>
-                <span>{formatDate(item.publishedAt)}</span>
+                <span>{formatDate(item.publishedAt ?? undefined)}</span>
               </>
             )}
             {item.category && (

@@ -136,7 +136,7 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
         return acc;
       }, {} as Record<string, unknown>);
 
-      return post<IPost>(entity.model, '', cleanPayload);
+      return post<IPost>(entity.model, '', cleanPayload as any);
     },
     onSuccess: () => {
       hideLoader();
@@ -169,7 +169,7 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
         return acc;
       }, {} as Record<string, unknown>);
 
-      return put<IPost>(entity.model, `${formData?.id}`, cleanPayload);
+      return put<IPost>(entity.model, `${formData?.id}`, cleanPayload as any);
     },
     onSuccess: () => {
       hideLoader();
@@ -231,7 +231,7 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
     const result = postSchema.safeParse(dataForm);
 
     if (!result.success) {
-      const formattedErrors: Record<string, { _errors: string[] }> = result.error.format() as Record<string, { _errors: string[] }>;
+      const formattedErrors = result.error.format() as any;
       const newErrors: { [key: string]: string } = {};
       for (const key in formattedErrors) {
         if (key !== "_errors") {

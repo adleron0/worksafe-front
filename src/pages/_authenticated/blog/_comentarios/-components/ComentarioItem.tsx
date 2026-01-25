@@ -32,7 +32,7 @@ const ComentarioItem = ({ item, index, entity, setFormData, setOpenForm }: Items
   const { mutate: updateStatus } = useMutation({
     mutationFn: (status: 'published' | 'rejected') => {
       showLoader(`${status === 'published' ? 'Aprovando' : 'Rejeitando'} ${entity.name}...`);
-      return patch(`${entity.model}/${item.id}`, '', { status });
+      return patch(`${entity.model}/${status}`, `${item.id}`);
     },
     onSuccess: (_, status) => {
       hideLoader();

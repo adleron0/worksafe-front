@@ -2,25 +2,6 @@ import { Phone } from "lucide-react";
 import DynamicLogo from "@/components/general-components/DynamicLogo";
 import { useTheme } from "@/context/ThemeContext";
 
-// Função para formatar número de telefone
-const formatPhoneNumber = (phoneNumber: string | null | undefined) => {
-  if (!phoneNumber) return "Não informado";
-  const numerosLimpos = phoneNumber.replace(/\D/g, "");
-  if (numerosLimpos.length === 11) {
-    return `(${numerosLimpos.slice(0, 2)}) ${numerosLimpos[2]}-${numerosLimpos.slice(
-      3,
-      7
-    )}-${numerosLimpos.slice(7)}`;
-  } else if (numerosLimpos.length === 10) {
-    return `(${numerosLimpos.slice(0, 2)}) ${numerosLimpos.slice(
-      2,
-      6
-    )}-${numerosLimpos.slice(6)}`;
-  } else {
-    return "Número inválido";
-  }
-};
-
 export default function Footer() {
   const { theme } = useTheme();
   const company = theme.companyData;

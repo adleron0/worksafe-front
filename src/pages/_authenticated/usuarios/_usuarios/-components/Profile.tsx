@@ -18,9 +18,10 @@ interface ProfileProps {
   showTrigger?: boolean;
   open: boolean;
   openChange?: () => void;
+  mode?: 'profile' | 'password';
 }
 
-const Profile: FC<ProfileProps> = ({ showTrigger = true, open = false, openChange }) => {
+const Profile: FC<ProfileProps> = ({ showTrigger = true, open = false, openChange, mode = 'profile' }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [usersData, setUsersData] = useState<UsersResponse | undefined>();
   const searchParams ={
@@ -70,12 +71,19 @@ const Profile: FC<ProfileProps> = ({ showTrigger = true, open = false, openChang
         }
         <SheetContent side="right" className="w-11/12 overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Meu Perfil</SheetTitle>
+            <SheetTitle>{mode === 'password' ? 'Alterar Senha' : 'Meu Perfil'}</SheetTitle>
             <SheetDescription>
-              Por favor, preencha todas as informações necessárias para atualizar seu perfil.
+              {mode === 'password'
+                ? 'Digite sua nova senha abaixo.'
+                : 'Por favor, preencha todas as informações necessárias para atualizar seu perfil.'}
             </SheetDescription>
           </SheetHeader>
-          <Form openSheet={() => console.log("fechou")} self={true} formData={usersData?.rows[0]} onlyPassword={'both'} />
+          <Form
+            openSheet={() => openChange?.()}
+            self={true}
+            formData={usersData?.rows[0]}
+            onlyPassword={mode === 'password' ? 'only' : ''}
+          />
         </SheetContent>
       </Sheet>
     </>

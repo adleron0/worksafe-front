@@ -48,6 +48,7 @@ export function Toaster() {
           alert: "bg-yellow-500",
           destructive: "bg-destructive",
           success: "bg-green-500",
+          loading: "bg-blue-500",
         }
 
         // Função para retornar o ícone correto com base na variante
@@ -63,6 +64,8 @@ export function Toaster() {
               return <Icon name="circle-x" className="w-5 h-5 text-destructive animate-fade-in"/>
             case "success":
               return <Icon name="circle-check-big" className="w-5 h-5 text-green-500 animate-fade-in"/>
+            case "loading":
+              return <Icon name="loader-circle" className="w-5 h-5 text-blue-500 animate-spin"/>
             default:
               return null
           }

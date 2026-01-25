@@ -9,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { LockKeyholeOpen } from "lucide-react";
 // import { DialogDescription } from "@/components/ui/dialog"; // Keep if used elsewhere, remove if not. Assuming it's not needed directly anymore.
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Loader from "@/components/general-components/Loader";
 import { IEntity } from "../-interfaces/entity.interface";
 import { Permission, ProfilePermission } from "../-interfaces/permission.interface";
@@ -19,7 +19,7 @@ import SideForm from "@/components/general-components/SideForm"; // Import SideF
 
 const PermissionsForm = ({ profile }: { profile: IEntity }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [description, setDescription] = useState("");
+  const toastRef = useRef<{ dismiss: () => void; update: (props: { title: string; description: string; variant: string; duration: number }) => void } | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -28,22 +28,30 @@ const PermissionsForm = ({ profile }: { profile: IEntity }) => {
 
   const errorMessage = (error as ApiError)?.response?.data?.message || "Erro ao carregar permissões.";
 
-  const { mutate: grantPermission, isPending: isLoadingGrant } = useMutation({
-    mutationFn: (permissionId: number | undefined) => grantsProfilePermission(permissionId, profile.id),
-    onSuccess: () => {
-      toast({
+  const { mutate: grantPermission } = useMutation({
+    mutationFn: ({ permissionId }: { permissionId: number | undefined; description: string }) =>
+      grantsProfilePermission(permissionId, profile.id),
+    onMutate: ({ description }) => {
+      toastRef.current = toast({
+        title: "Concedendo permissão...",
+        description: `Aguarde enquanto ${profile.name} recebe permissão para ${description}.`,
+        variant: "loading",
+        duration: Infinity,
+      });
+    },
+    onSuccess: (_, { description }) => {
+      toastRef.current?.update({
         title: "Permissão Concedida",
         description: `${profile.name} agora pode ${description}.`,
         variant: "success",
-        duration: 5000,
+        duration: 3000,
       });
-      setDescription("");
       queryClient.invalidateQueries({ queryKey: ["listPermissions"] });
       queryClient.invalidateQueries({ queryKey: ["listPerfis"] });
     },
     onError: (error: unknown) => {
       const err = error as ApiError;
-      toast({
+      toastRef.current?.update({
         title: "Erro ao conceder permissão!",
         description: `${err.response?.data?.message}`,
         variant: "destructive",
@@ -52,22 +60,30 @@ const PermissionsForm = ({ profile }: { profile: IEntity }) => {
     },
   });
 
-  const { mutate: revokePermission, isPending: isLoadingRevoke } = useMutation({
-    mutationFn: (permissionId: number | undefined) => revokesProfilePermission(permissionId, profile.id),
-    onSuccess: () => {
-      toast({
+  const { mutate: revokePermission } = useMutation({
+    mutationFn: ({ permissionId }: { permissionId: number | undefined; description: string }) =>
+      revokesProfilePermission(permissionId, profile.id),
+    onMutate: ({ description }) => {
+      toastRef.current = toast({
+        title: "Revogando permissão...",
+        description: `Aguarde enquanto ${profile.name} perde permissão para ${description}.`,
+        variant: "loading",
+        duration: Infinity,
+      });
+    },
+    onSuccess: (_, { description }) => {
+      toastRef.current?.update({
         title: "Permissão Revogada",
         description: `${profile.name} não pode mais ${description}.`,
         variant: "success",
-        duration: 5000,
+        duration: 3000,
       });
-      setDescription("");
       queryClient.invalidateQueries({ queryKey: ["listPermissions"] });
       queryClient.invalidateQueries({ queryKey: ["listPerfis"] });
     },
     onError: (error: unknown) => {
       const err = error as ApiError;
-      toast({
+      toastRef.current?.update({
         title: "Erro ao revogar permissão!",
         description: `${err.response?.data?.message}`,
         variant: "destructive",
@@ -152,9 +168,8 @@ const PermissionsForm = ({ profile }: { profile: IEntity }) => {
                             permission={permission}
                             profile={profile}
                             isGranted={profile.permissions?.some((p: ProfilePermission) => p.permissionId === permission.id)}
-                            onGrant={() => grantPermission(permission.id)}
-                            onRevoke={() => revokePermission(permission.id)}
-                            setDescription={setDescription}
+                            onGrant={() => grantPermission({ permissionId: permission.id, description: permission.description })}
+                            onRevoke={() => revokePermission({ permissionId: permission.id, description: permission.description })}
                           />
                         ))}
                       </ul>
@@ -172,9 +187,8 @@ const PermissionsForm = ({ profile }: { profile: IEntity }) => {
                                 permission={permission}
                                 profile={profile}
                                 isGranted={profile.permissions?.some((p: ProfilePermission) => p.permissionId === permission.id)}
-                                onGrant={() => grantPermission(permission.id)}
-                                onRevoke={() => revokePermission(permission.id)}
-                                setDescription={setDescription}
+                                onGrant={() => grantPermission({ permissionId: permission.id, description: permission.description })}
+                                onRevoke={() => revokePermission({ permissionId: permission.id, description: permission.description })}
                               />
                             ))}
                           </ul>
@@ -189,8 +203,6 @@ const PermissionsForm = ({ profile }: { profile: IEntity }) => {
         ) : isError && (
           <p className="text-red-500 my-4">Erro ao carregar permissões: {errorMessage}</p>
         )}
-        {isLoadingGrant && <Loader title="Concedendo permissão..." />}
-        {isLoadingRevoke && <Loader title="Revogando permissão..." />}
     </>
   );
 
@@ -217,14 +229,12 @@ const PermissionItem = ({
   isGranted,
   onGrant,
   onRevoke,
-  setDescription,
 }: {
   permission: Permission;
   profile: IEntity;
   isGranted: boolean;
   onGrant: () => void;
   onRevoke: () => void;
-  setDescription: (description: string) => void;
 }) => {
   return (
     <li className="flex items-center gap-2 cursor-pointer">
@@ -237,7 +247,6 @@ const PermissionItem = ({
           } else {
             onGrant();
           }
-          setDescription(permission.description);
         }}
       />
       <Label className="cursor-pointer text-xs" htmlFor={permission.name}>{permission.description}</Label>

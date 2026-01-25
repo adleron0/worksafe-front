@@ -22,9 +22,15 @@ const AvatarMenu = () => {
   const { setAccessTokenState, setIsLogged, user } = useAuth();
   const { can } = useVerify();
   const [openProfile, setOpenProfile] = useState(false);
+  const [profileMode, setProfileMode] = useState<'profile' | 'password'>('profile');
 
-  const handleOpenProfile = () => {
-    setOpenProfile(!openProfile);
+  const handleOpenProfile = (mode: 'profile' | 'password' = 'profile') => {
+    setProfileMode(mode);
+    setOpenProfile(true);
+  };
+
+  const handleCloseProfile = () => {
+    setOpenProfile(false);
   };
 
   const { mutate: logoutMutation, isPending } = useMutation<
@@ -77,10 +83,17 @@ const AvatarMenu = () => {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="cursor-pointer flex gap-2"
-            onClick={handleOpenProfile}
+            onClick={() => handleOpenProfile('profile')}
           >
             <Icon name="user-pen" className="h-4 w-4" />
             Meu Perfil
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="cursor-pointer flex gap-2"
+            onClick={() => handleOpenProfile('password')}
+          >
+            <Icon name="lock-keyhole" className="h-4 w-4" />
+            Alterar Senha
           </DropdownMenuItem>
           <DropdownMenuItem
             className={`flex gap-2 ${can('view_company') ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
@@ -101,7 +114,7 @@ const AvatarMenu = () => {
         </DropdownMenuContent>
       </DropdownMenu>
       {isPending && <Loader title={"Deslogando..."} />}
-      <Profile showTrigger={false} open={openProfile} openChange={handleOpenProfile} />
+      <Profile showTrigger={false} open={openProfile} openChange={handleCloseProfile} mode={profileMode} />
     </div>
   );
 };

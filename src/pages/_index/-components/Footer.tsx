@@ -113,6 +113,11 @@ export default function Footer() {
                   Treinamentos
                 </a>
               </li>
+              <li>
+                <a href="https://worksafebrasil.com.br/blog" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">
+                  Blog
+                </a>
+              </li>
             </ul>
           </div>
           <div>
@@ -121,8 +126,23 @@ export default function Footer() {
               <li className="flex items-start gap-3">
                 <Phone className="w-5 h-5 mt-1 text-muted-foreground" />
                 <div>
-                  <p className="text-muted-foreground">Comercial</p>
-                  <p className="text-foreground font-medium">{formatPhoneNumber(company?.representative_contact)}</p>
+                  <p className="text-muted-foreground">Telefones</p>
+                  <a
+                    href="https://wa.me/5581992275570"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-foreground font-medium hover:text-primary transition-colors block"
+                  >
+                    Serviços - (81) 99227-5570
+                  </a>
+                  <a
+                    href="https://wa.me/5581989479259"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-foreground font-medium hover:text-primary transition-colors block"
+                  >
+                    Treinamentos - (81) 98947-9259
+                  </a>
                 </div>
               </li>
               <li className="flex items-start gap-3">
@@ -130,8 +150,19 @@ export default function Footer() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 <div>
-                  <p className="text-muted-foreground">E-mail</p>
-                  <p className="text-foreground font-medium">{company?.representative_email || "contato@worksafebrasil.com.br"}</p>
+                  <p className="text-muted-foreground">E-mails</p>
+                  <a
+                    href="mailto:comercial@worksafebrasil.com.br"
+                    className="text-foreground font-medium hover:text-primary transition-colors block"
+                  >
+                    Serviços - comercial@worksafebrasil.com.br
+                  </a>
+                  <a
+                    href="mailto:treinamentos@worksafebrasil.com.br"
+                    className="text-foreground font-medium hover:text-primary transition-colors block"
+                  >
+                    Treinamentos - treinamentos@worksafebrasil.com.br
+                  </a>
                 </div>
               </li>
               <li className="flex items-start gap-3">

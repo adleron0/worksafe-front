@@ -191,6 +191,12 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
               >
                 Sobre Nós
               </a>
+              <a
+                href="https://worksafebrasil.com.br/blog"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                Blog
+              </a>
               <ThemeToggle variant="ghost" size="icon" className="ml-2" />
               <Button
                 onClick={() => {
@@ -241,6 +247,13 @@ export default function NavBar({ cart, setCart, handleWhatsApp }: NavBarProps) {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Sobre Nós
+                </a>
+                <a
+                  href="https://worksafebrasil.com.br/blog"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Blog
                 </a>
                 <a
                   href="https://www.worksafebrasil.com.br#servicos"

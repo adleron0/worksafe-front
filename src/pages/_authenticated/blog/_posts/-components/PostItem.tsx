@@ -1,3 +1,4 @@
+import { useState } from "react";
 import useVerify from "@/hooks/use-verify";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { patch } from "@/services/api";
@@ -7,11 +8,13 @@ import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import Dialog from "@/components/general-components/Dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import HeaderRow from "@/components/general-components/HeaderRow";
+import RichTextViewer from "@/components/general-components/RichTextViewer";
 import { IPost } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
@@ -29,6 +32,7 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps)
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
 
   const { mutate: changeStatus } = useMutation({
     mutationFn: (action: 'publish' | 'archive' | 'draft') => {
@@ -179,6 +183,17 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps)
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <Button
+                  variant="ghost"
+                  className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
+                  onClick={() => setViewDialogOpen(true)}
+                >
+                  <Icon name="eye" className="w-3 h-3" />
+                  <p>Visualizar</p>
+                </Button>
+              </DropdownMenuItem>
+
               {can(`update_${entity.ability}`) && (
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                   <Button
@@ -237,6 +252,71 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps)
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Dialog de Visualização */}
+      <Dialog
+        open={viewDialogOpen}
+        onOpenChange={setViewDialogOpen}
+        showBttn={false}
+        title={item.title}
+        description=""
+        className="sm:max-w-4xl"
+      >
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            {item.author && (
+              <div className="flex items-center gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={item.author.imageUrl || undefined} />
+                  <AvatarFallback className="text-xs">{item.author.name?.[0]}</AvatarFallback>
+                </Avatar>
+                <span>{item.author.name}</span>
+              </div>
+            )}
+            {item.publishedAt && (
+              <>
+                <span>•</span>
+                <span>{formatDate(item.publishedAt)}</span>
+              </>
+            )}
+            {item.category && (
+              <>
+                <span>•</span>
+                <Badge variant="outline">{item.category.name}</Badge>
+              </>
+            )}
+            {getStatusBadge()}
+          </div>
+
+          {item.coverImage && (
+            <img
+              src={item.coverImage}
+              alt={item.title}
+              className="w-full h-64 object-cover rounded-lg"
+            />
+          )}
+
+          {item.excerpt && (
+            <p className="text-muted-foreground italic border-l-4 border-primary pl-4">
+              {item.excerpt}
+            </p>
+          )}
+
+          <div className="border-t pt-4">
+            <RichTextViewer content={item.content} />
+          </div>
+
+          {item.tags && item.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-4 border-t">
+              {item.tags.map((tagItem) => (
+                <Badge key={tagItem.tag.id} variant="secondary">
+                  {tagItem.tag.name}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      </Dialog>
     </>
   );
 };

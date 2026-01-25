@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
 import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -16,6 +15,7 @@ import { IPost } from "../-interfaces/entity.interface";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { useLoader } from "@/context/GeneralContext";
+import AIAssistant from "./AIAssistant";
 
 interface FormProps {
   formData?: IPost;
@@ -30,14 +30,24 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
   const postSchema = z.object({
     title: z.string().min(3, { message: "Título deve ter pelo menos 3 caracteres" }),
     slug: z.string().min(3, { message: "Slug deve ter pelo menos 3 caracteres" }),
-    categoryId: z.number().nullable().optional(),
-    excerpt: z.string().optional().or(z.literal('')),
+    categoryId: z.number().nullable(),
+    authorId: z.number().nullable().optional(),
+    excerpt: z.string().min(10, { message: "Resumo deve ter pelo menos 10 caracteres" }),
     content: z.string().min(10, { message: "Conteúdo deve ter pelo menos 10 caracteres" }),
     coverImage: z.string().nullable().optional(),
     image: z.instanceof(File).nullable().or(z.literal(null)).optional(),
     status: z.enum(['draft', 'published', 'archived']),
     featured: z.boolean(),
-    tagIds: z.array(z.number()).optional(),
+    tagIds: z.array(z.number()),
+  }).refine((data) => data.image || data.coverImage, {
+    message: "Imagem de capa é obrigatória",
+    path: ["image"],
+  }).refine((data) => data.categoryId !== null, {
+    message: "Categoria é obrigatória",
+    path: ["categoryId"],
+  }).refine((data) => data.tagIds.length > 0, {
+    message: "Selecione pelo menos uma tag",
+    path: ["tagIds"],
   });
 
   type PostFormData = z.infer<typeof postSchema>;
@@ -46,6 +56,7 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
     title: formData?.title || "",
     slug: formData?.slug || "",
     categoryId: formData?.categoryId || null,
+    authorId: formData?.authorId || null,
     excerpt: formData?.excerpt || "",
     content: formData?.content || "",
     coverImage: formData?.coverImage || null,
@@ -100,6 +111,18 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
         { key: 'order-name', value: 'asc' },
       ];
       return get('blog/tags', '', params);
+    },
+  });
+
+  // Busca de usuários para autor
+  const { data: userOptions, isFetching: isFetchingUsers } = useQuery<Response | undefined, ApiError>({
+    queryKey: [`listUsersForAuthor`],
+    queryFn: async () => {
+      const params = [
+        { key: 'limit', value: 'all' },
+        { key: 'order-name', value: 'asc' },
+      ];
+      return get('user', '', params);
     },
   });
 
@@ -176,6 +199,12 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
   const handleCategoryChange = (_name: string, value: string | string[]) => {
     if (typeof value === 'string') {
       setDataForm(prev => ({ ...prev, categoryId: value ? Number(value) : null }));
+    }
+  };
+
+  const handleAuthorChange = (_name: string, value: string | string[]) => {
+    if (typeof value === 'string') {
+      setDataForm(prev => ({ ...prev, authorId: value ? Number(value) : null }));
     }
   };
 
@@ -278,11 +307,11 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
         </div>
       </div>
 
-      {/* Segunda linha - Tags, Categoria, Destaque */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+      {/* Segunda linha - Tags, Categoria, Autor, Destaque */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         {/* Tags */}
         <div>
-          <Label htmlFor="tagIds">Tags</Label>
+          <Label htmlFor="tagIds">Tags *</Label>
           <Select
             name="tagIds"
             disabled={isFetchingTags}
@@ -297,7 +326,7 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
 
         {/* Categoria */}
         <div>
-          <Label htmlFor="categoryId">Categoria</Label>
+          <Label htmlFor="categoryId">Categoria *</Label>
           <Select
             name="categoryId"
             disabled={isFetchingCategories}
@@ -307,6 +336,22 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
             placeholder="Selecione a categoria"
           />
           {errors.categoryId && <p className="text-red-500 text-sm">{errors.categoryId}</p>}
+        </div>
+
+        {/* Autor */}
+        <div>
+          <Label htmlFor="authorId">Autor</Label>
+          <Select
+            name="authorId"
+            disabled={isFetchingUsers}
+            options={userOptions?.rows || []}
+            state={dataForm.authorId?.toString() || ""}
+            onChange={handleAuthorChange}
+            placeholder="Usuário logado"
+            label="name"
+            clearable
+          />
+          {errors.authorId && <p className="text-red-500 text-sm">{errors.authorId}</p>}
         </div>
 
         {/* Destaque */}
@@ -324,7 +369,7 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
         {/* Resumo */}
         <div className="md:col-span-3">
-          <Label htmlFor="excerpt">Resumo</Label>
+          <Label htmlFor="excerpt">Resumo *</Label>
           <Textarea
             id="excerpt"
             name="excerpt"
@@ -338,7 +383,7 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
 
         {/* Imagem de Capa */}
         <div>
-          <Label htmlFor="image">Imagem de Capa</Label>
+          <Label htmlFor="image">Imagem de Capa *</Label>
           <DropUpload
             setImage={setDataForm}
             EditPreview={preview}
@@ -351,8 +396,21 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
 
       {/* Conteúdo - Full width */}
       <div>
-        <Label htmlFor="content">Conteúdo *</Label>
-        <div className="mt-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+          <Label htmlFor="content">Conteúdo *</Label>
+          <AIAssistant
+            currentTitle={dataForm.title}
+            currentExcerpt={dataForm.excerpt}
+            currentContent={dataForm.content}
+            currentCategory={
+              categoryOptions?.rows?.find(
+                (c: { id: number; name: string }) => c.id === dataForm.categoryId
+              )?.name
+            }
+            onApplyContent={handleContentChange}
+          />
+        </div>
+        <div>
           <RichTextEditor
             value={dataForm.content}
             onChange={handleContentChange}

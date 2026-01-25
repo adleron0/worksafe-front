@@ -3,6 +3,7 @@ import {
   Dialog as UiDialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -16,6 +17,7 @@ interface DialogProps {
   titleBttn?: string;
   iconBttn?: string;
   children?: React.ReactNode;
+  footer?: React.ReactNode;
   title: string;
   description: string;
   open?: boolean;
@@ -30,6 +32,7 @@ const Dialog: React.FC<DialogProps> = ({
   titleBttn,
   iconBttn,
   children,
+  footer,
   title,
   description,
   open,
@@ -68,12 +71,17 @@ const Dialog: React.FC<DialogProps> = ({
         </DialogHeader>
         <div
           className={cn(
-            `h-[80vh] overflow-y-auto pr-4 ${showHeader && "pb-20"}`,
+            `${footer ? "max-h-[65vh]" : "h-[80vh]"} overflow-y-auto pr-4 ${showHeader && !footer && "pb-20"}`,
             classNameContent,
           )}
         >
           {children}
         </div>
+        {footer && (
+          <DialogFooter className="pr-4 pt-4 border-t">
+            {footer}
+          </DialogFooter>
+        )}
       </DialogContent>
     </UiDialog>
   );

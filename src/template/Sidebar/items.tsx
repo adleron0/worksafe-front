@@ -204,6 +204,44 @@ export const items = [
     ],
   },
   {
+    title: "Blog",
+    icon: "newspaper",
+    path: "/blog",
+    ability: "blog",
+    subitems: [
+      {
+        title: "Posts",
+        ability: "blog",
+        icon: "file-text",
+        path: "/blog/posts",
+      },
+      {
+        title: "Categorias",
+        ability: "blog",
+        icon: "folder",
+        path: "/blog/categorias",
+      },
+      {
+        title: "Tags",
+        ability: "blog",
+        icon: "tags",
+        path: "/blog/tags",
+      },
+      {
+        title: "Visitantes",
+        ability: "blog",
+        icon: "users",
+        path: "/blog/visitantes",
+      },
+      {
+        title: "Comentários",
+        ability: "blog",
+        icon: "message-circle",
+        path: "/blog/comentarios",
+      },
+    ],
+  },
+  {
     title: "Integrações",
     icon: "unplug",
     path: "/integracoes",

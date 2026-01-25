@@ -59,6 +59,7 @@ function List() {
         key,
         value: searchParams[key as keyof typeof searchParams]
       }));
+      params.push({ key: 'show', value: '_count' });
       return get(entity.model, '', params);
     },
   });

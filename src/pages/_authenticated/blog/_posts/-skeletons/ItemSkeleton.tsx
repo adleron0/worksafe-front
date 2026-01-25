@@ -11,7 +11,7 @@ const ItemSkeleton = ({ index }: { index: number }) => {
         <div className="w-1/12">Destaque</div>
         <div className="w-1/12">Views</div>
         <div className="w-1/12">Status</div>
-        <div className="w-2/12">Ações</div>
+        <div className="w-2/12 text-right">Ações</div>
       </HeaderRow>
 
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b space-y-4 lg:space-y-0`}>
@@ -51,7 +51,7 @@ const ItemSkeleton = ({ index }: { index: number }) => {
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-2/12">
+        <div className="absolute top-2 right-2 lg:static lg:w-2/12 flex justify-end">
           <Skeleton className="h-8 w-8 rounded-full" />
         </div>
       </div>

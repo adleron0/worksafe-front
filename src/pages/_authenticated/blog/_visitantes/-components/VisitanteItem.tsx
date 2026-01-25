@@ -63,7 +63,7 @@ const VisitanteItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsP
         <div className="w-3/12">Email</div>
         <div className="w-2/12">Comentários</div>
         <div className="w-2/12">Status</div>
-        <div className="w-2/12">Ações</div>
+        <div className="w-2/12 text-right">Ações</div>
       </HeaderRow>
 
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
@@ -113,7 +113,7 @@ const VisitanteItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsP
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-2/12">
+        <div className="absolute top-2 right-2 lg:static lg:w-2/12 flex justify-end">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button

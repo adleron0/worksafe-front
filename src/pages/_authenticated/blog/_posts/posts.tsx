@@ -63,6 +63,8 @@ function List() {
         key,
         value: searchParams[key as keyof typeof searchParams]
       }));
+      // Adiciona os relacionamentos
+      params.push({ key: 'show', value: '[author,category,tags,_count]' });
       return get(entity.model, '', params);
     },
   });

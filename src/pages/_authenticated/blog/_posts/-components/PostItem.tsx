@@ -30,16 +30,26 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps)
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
 
-  const { mutate: toggleStatus } = useMutation({
-    mutationFn: (action: 'active' | 'inactive') => {
-      showLoader(`${action === 'active' ? 'Ativando' : 'Inativando'} ${entity.name}...`);
+  const { mutate: changeStatus } = useMutation({
+    mutationFn: (action: 'publish' | 'archive' | 'draft') => {
+      const actionLabels = {
+        publish: 'Publicando',
+        archive: 'Arquivando',
+        draft: 'Voltando para rascunho'
+      };
+      showLoader(`${actionLabels[action]} ${entity.name}...`);
       return patch(`${entity.model}/${action}/${item.id}`, '');
     },
     onSuccess: (_, action) => {
       hideLoader();
+      const successLabels = {
+        publish: 'publicado',
+        archive: 'arquivado',
+        draft: 'movido para rascunho'
+      };
       toast({
-        title: `${entity.name} ${action === 'active' ? 'ativado' : 'inativado'}!`,
-        description: `${entity.name} ${action === 'active' ? 'ativado' : 'inativado'} com sucesso.`,
+        title: `${entity.name} ${successLabels[action]}!`,
+        description: `${entity.name} ${successLabels[action]} com sucesso.`,
         variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
@@ -54,8 +64,8 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps)
     },
   });
 
-  const handleConfirmAction = (action: "activate" | "deactivate") => {
-    toggleStatus(action === "activate" ? "active" : "inactive");
+  const handleStatusChange = (action: 'publish' | 'archive' | 'draft') => {
+    changeStatus(action);
   };
 
   const getStatusBadge = () => {
@@ -85,7 +95,7 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps)
         <div className="w-1/12">Destaque</div>
         <div className="w-1/12">Views</div>
         <div className="w-1/12">Status</div>
-        <div className="w-2/12">Ações</div>
+        <div className="w-2/12 text-right">Ações</div>
       </HeaderRow>
 
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
@@ -158,7 +168,7 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps)
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-2/12">
+        <div className="absolute top-2 right-2 lg:static lg:w-2/12 flex justify-end">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
@@ -185,30 +195,43 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps)
                 </DropdownMenuItem>
               )}
 
-              {!item.inactiveAt ? (
-                can(`inactive_${entity.ability}`) && (
-                  <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                    <ConfirmDialog
-                      title={`Inativar ${entity.name} ${item.title}?`}
-                      description={`Ao prosseguir, ${entity.name} "${item.title}" será inativado.`}
-                      onConfirm={() => handleConfirmAction("deactivate")}
-                      titleBttn="Inativar"
-                      iconBttn="power-off"
-                    />
-                  </DropdownMenuItem>
-                )
-              ) : (
-                can(`activate_${entity.ability}`) && (
-                  <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                    <ConfirmDialog
-                      title={`Reativar ${entity.name} ${item.title}?`}
-                      description={`Ao prosseguir, ${entity.name} "${item.title}" será reativado.`}
-                      onConfirm={() => handleConfirmAction("activate")}
-                      titleBttn="Reativar"
-                      iconBttn="power"
-                    />
-                  </DropdownMenuItem>
-                )
+              {/* Se rascunho → Publicar */}
+              {item.status === 'draft' && can(`update_${entity.ability}`) && (
+                <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                  <ConfirmDialog
+                    title={`Publicar "${item.title}"?`}
+                    description={`Ao prosseguir, o post será publicado e ficará visível no blog.`}
+                    onConfirm={() => handleStatusChange("publish")}
+                    titleBttn="Publicar"
+                    iconBttn="send"
+                  />
+                </DropdownMenuItem>
+              )}
+
+              {/* Se publicado → Arquivar */}
+              {item.status === 'published' && can(`update_${entity.ability}`) && (
+                <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                  <ConfirmDialog
+                    title={`Arquivar "${item.title}"?`}
+                    description={`Ao prosseguir, o post será arquivado e não ficará mais visível no blog.`}
+                    onConfirm={() => handleStatusChange("archive")}
+                    titleBttn="Arquivar"
+                    iconBttn="archive"
+                  />
+                </DropdownMenuItem>
+              )}
+
+              {/* Se arquivado → Publicar novamente */}
+              {item.status === 'archived' && can(`update_${entity.ability}`) && (
+                <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                  <ConfirmDialog
+                    title={`Republicar "${item.title}"?`}
+                    description={`Ao prosseguir, o post será publicado novamente e ficará visível no blog.`}
+                    onConfirm={() => handleStatusChange("publish")}
+                    titleBttn="Republicar"
+                    iconBttn="refresh-cw"
+                  />
+                </DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>

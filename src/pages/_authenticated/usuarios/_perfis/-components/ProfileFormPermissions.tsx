@@ -19,7 +19,7 @@ import SideForm from "@/components/general-components/SideForm"; // Import SideF
 
 const PermissionsForm = ({ profile }: { profile: IEntity }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const toastRef = useRef<{ dismiss: () => void; update: (props: { title: string; description: string; variant: string; duration: number }) => void } | null>(null);
+  const toastRef = useRef<ReturnType<typeof toast> | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -40,23 +40,29 @@ const PermissionsForm = ({ profile }: { profile: IEntity }) => {
       });
     },
     onSuccess: (_, { description }) => {
-      toastRef.current?.update({
-        title: "Permissão Concedida",
-        description: `${profile.name} agora pode ${description}.`,
-        variant: "success",
-        duration: 3000,
-      });
+      if (toastRef.current) {
+        toastRef.current.update({
+          id: toastRef.current.id,
+          title: "Permissão Concedida",
+          description: `${profile.name} agora pode ${description}.`,
+          variant: "success",
+          duration: 3000,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["listPermissions"] });
       queryClient.invalidateQueries({ queryKey: ["listPerfis"] });
     },
     onError: (error: unknown) => {
       const err = error as ApiError;
-      toastRef.current?.update({
-        title: "Erro ao conceder permissão!",
-        description: `${err.response?.data?.message}`,
-        variant: "destructive",
-        duration: 5000,
-      });
+      if (toastRef.current) {
+        toastRef.current.update({
+          id: toastRef.current.id,
+          title: "Erro ao conceder permissão!",
+          description: `${err.response?.data?.message}`,
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
     },
   });
 
@@ -72,23 +78,29 @@ const PermissionsForm = ({ profile }: { profile: IEntity }) => {
       });
     },
     onSuccess: (_, { description }) => {
-      toastRef.current?.update({
-        title: "Permissão Revogada",
-        description: `${profile.name} não pode mais ${description}.`,
-        variant: "success",
-        duration: 3000,
-      });
+      if (toastRef.current) {
+        toastRef.current.update({
+          id: toastRef.current.id,
+          title: "Permissão Revogada",
+          description: `${profile.name} não pode mais ${description}.`,
+          variant: "success",
+          duration: 3000,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["listPermissions"] });
       queryClient.invalidateQueries({ queryKey: ["listPerfis"] });
     },
     onError: (error: unknown) => {
       const err = error as ApiError;
-      toastRef.current?.update({
-        title: "Erro ao revogar permissão!",
-        description: `${err.response?.data?.message}`,
-        variant: "destructive",
-        duration: 5000,
-      });
+      if (toastRef.current) {
+        toastRef.current.update({
+          id: toastRef.current.id,
+          title: "Erro ao revogar permissão!",
+          description: `${err.response?.data?.message}`,
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
     },
   });
 

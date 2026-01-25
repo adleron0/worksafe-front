@@ -12,4 +12,10 @@ export interface IVisitante {
   createdAt?: string;
   updatedAt?: string | null;
   _count?: { comments: number };
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    imageUrl?: string;
+  };
 }

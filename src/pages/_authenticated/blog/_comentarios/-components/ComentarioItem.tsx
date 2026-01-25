@@ -7,7 +7,8 @@ import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
+import ResponsiveBadge from "@/components/general-components/ResponsiveBadge";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import HeaderRow from "@/components/general-components/HeaderRow";
@@ -30,15 +31,15 @@ const ComentarioItem = ({ item, index, entity, setFormData, setOpenForm }: Items
   const { showLoader, hideLoader } = useLoader();
 
   const { mutate: updateStatus } = useMutation({
-    mutationFn: (status: 'published' | 'rejected') => {
-      showLoader(`${status === 'published' ? 'Aprovando' : 'Rejeitando'} ${entity.name}...`);
-      return patch(`${entity.model}/${status}`, `${item.id}`);
+    mutationFn: (action: 'approve' | 'disapprove') => {
+      showLoader(`${action === 'approve' ? 'Aprovando' : 'Desaprovando'} ${entity.name}...`);
+      return patch(`${entity.model}/${action}`, `${item.id}`);
     },
-    onSuccess: (_, status) => {
+    onSuccess: (_, action) => {
       hideLoader();
       toast({
-        title: `${entity.name} ${status === 'published' ? 'aprovado' : 'rejeitado'}!`,
-        description: `${entity.name} ${status === 'published' ? 'aprovado' : 'rejeitado'} com sucesso.`,
+        title: `${entity.name} ${action === 'approve' ? 'aprovado' : 'desaprovado'}!`,
+        description: `${entity.name} ${action === 'approve' ? 'aprovado' : 'desaprovado'} com sucesso.`,
         variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
@@ -53,20 +54,40 @@ const ComentarioItem = ({ item, index, entity, setFormData, setOpenForm }: Items
     },
   });
 
-  const handleModeration = (status: 'published' | 'rejected') => {
-    updateStatus(status);
+  const handleModeration = (action: 'approve' | 'disapprove') => {
+    updateStatus(action);
   };
 
-  const getStatusBadge = () => {
+  const getStatusComponent = () => {
     switch (item.status) {
       case 'published':
-        return <Badge className="bg-green-500">Aprovado</Badge>;
+        return (
+          <Status status="online" className="w-fit">
+            <StatusIndicator />
+            <StatusLabel>Aprovado</StatusLabel>
+          </Status>
+        );
       case 'pending':
-        return <Badge variant="secondary">Pendente</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejeitado</Badge>;
+        return (
+          <Status status="waiting" className="w-fit">
+            <StatusIndicator />
+            <StatusLabel>Pendente</StatusLabel>
+          </Status>
+        );
+      case 'hidden':
+        return (
+          <Status status="offline" className="w-fit">
+            <StatusIndicator />
+            <StatusLabel>Oculto</StatusLabel>
+          </Status>
+        );
       default:
-        return <Badge variant="secondary">{item.status}</Badge>;
+        return (
+          <Status status="waiting" className="w-fit">
+            <StatusIndicator />
+            <StatusLabel>{item.status}</StatusLabel>
+          </Status>
+        );
     }
   };
 
@@ -76,15 +97,15 @@ const ComentarioItem = ({ item, index, entity, setFormData, setOpenForm }: Items
   };
 
   const renderRating = () => {
-    if (!item.rating) return <span className="text-muted-foreground text-sm">Sem rating</span>;
+    if (!item.rating) return <span className="text-muted-foreground text-xs">-</span>;
 
     return (
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
         {[1, 2, 3, 4, 5].map((star) => (
           <Icon
             key={star}
             name="star"
-            className={`w-4 h-4 ${star <= item.rating! ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground'}`}
+            className={`w-3 h-3 ${star <= item.rating! ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground'}`}
           />
         ))}
       </div>
@@ -104,10 +125,18 @@ const ComentarioItem = ({ item, index, entity, setFormData, setOpenForm }: Items
 
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
 
+        {/* Data Badge Flutuante */}
+        <div className="absolute -top-1 left-4 right-14 lg:right-auto lg:left-4 flex gap-1">
+          <ResponsiveBadge
+            icon="clock"
+            text={formatDate(item.createdAt)}
+            colorClass="bg-background text-muted-foreground"
+          />
+        </div>
+
         {/* Conteúdo */}
         <div className="w-full lg:w-3/12 flex flex-col md:pr-2">
-          <p className="text-sm line-clamp-2">{item.content}</p>
-          <p className="text-xs text-muted-foreground">{formatDate(item.createdAt)}</p>
+          <p className="text-sm max-h-16 overflow-y-auto">{item.content}</p>
         </div>
 
         {/* Visitante */}
@@ -140,7 +169,7 @@ const ComentarioItem = ({ item, index, entity, setFormData, setOpenForm }: Items
         {/* Status */}
         <div className="flex flex-col lg:w-2/12">
           <p className="text-xs text-muted-foreground lg:hidden">Status</p>
-          {getStatusBadge()}
+          {getStatusComponent()}
         </div>
 
         {/* Ações */}
@@ -171,28 +200,28 @@ const ComentarioItem = ({ item, index, entity, setFormData, setOpenForm }: Items
                 </DropdownMenuItem>
               )}
 
-              {item.status === 'pending' && (
+              {can(`update_${entity.ability}`) && (
                 <>
-                  {can(`update_${entity.ability}`) && (
+                  {item.status !== 'published' && (
                     <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
                       <ConfirmDialog
                         title={`Aprovar comentário?`}
                         description={`Ao prosseguir, o comentário será aprovado e ficará visível no post.`}
-                        onConfirm={() => handleModeration("published")}
+                        onConfirm={() => handleModeration("approve")}
                         titleBttn="Aprovar"
                         iconBttn="check"
                       />
                     </DropdownMenuItem>
                   )}
 
-                  {can(`update_${entity.ability}`) && (
+                  {item.status !== 'hidden' && (
                     <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
                       <ConfirmDialog
-                        title={`Rejeitar comentário?`}
-                        description={`Ao prosseguir, o comentário será rejeitado e não ficará visível no post.`}
-                        onConfirm={() => handleModeration("rejected")}
-                        titleBttn="Rejeitar"
-                        iconBttn="x"
+                        title={`Desaprovar comentário?`}
+                        description={`Ao prosseguir, o comentário será desaprovado e ficará oculto no post.`}
+                        onConfirm={() => handleModeration("disapprove")}
+                        titleBttn="Desaprovar"
+                        iconBttn="eye-off"
                       />
                     </DropdownMenuItem>
                   )}

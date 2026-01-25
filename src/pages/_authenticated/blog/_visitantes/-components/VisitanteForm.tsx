@@ -79,6 +79,25 @@ const VisitanteForm = ({ formData, openSheet }: FormProps) => {
         </div>
       )}
 
+      {/* Usuário Vinculado */}
+      {formData.user && (
+        <div className="border-t pt-4">
+          <Label className="text-muted-foreground">Usuário do Sistema Vinculado</Label>
+          <div className="flex items-center space-x-3 mt-2 p-3 bg-muted/50 rounded-lg">
+            <Avatar className="h-10 w-10 border">
+              <AvatarImage src={formData.user.imageUrl || undefined} alt={formData.user.name} />
+              <AvatarFallback className="uppercase">
+                {formData.user.name?.[0] || "?"}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm font-medium">{formData.user.name}</p>
+              <p className="text-xs text-muted-foreground">{formData.user.email}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Informações adicionais */}
       <div className="space-y-4 border-t pt-4">
         <div className="grid grid-cols-2 gap-4">

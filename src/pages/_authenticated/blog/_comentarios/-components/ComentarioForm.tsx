@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import useVerify from "@/hooks/use-verify";
@@ -26,15 +27,15 @@ const ComentarioForm = ({ formData, openSheet, entity }: FormProps) => {
   const { showLoader, hideLoader } = useLoader();
 
   const { mutate: updateStatus } = useMutation({
-    mutationFn: (status: 'published' | 'rejected') => {
-      showLoader(`${status === 'published' ? 'Aprovando' : 'Rejeitando'} comentário...`);
-      return patch(`${entity.model}/${status}`, `${formData?.id}`);
+    mutationFn: (action: 'approve' | 'disapprove') => {
+      showLoader(`${action === 'approve' ? 'Aprovando' : 'Desaprovando'} comentário...`);
+      return patch(`${entity.model}/${action}`, `${formData?.id}`);
     },
-    onSuccess: (_, status) => {
+    onSuccess: (_, action) => {
       hideLoader();
       toast({
-        title: `Comentário ${status === 'published' ? 'aprovado' : 'rejeitado'}!`,
-        description: `Comentário ${status === 'published' ? 'aprovado' : 'rejeitado'} com sucesso.`,
+        title: `Comentário ${action === 'approve' ? 'aprovado' : 'desaprovado'}!`,
+        description: `Comentário ${action === 'approve' ? 'aprovado' : 'desaprovado'} com sucesso.`,
         variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
@@ -55,16 +56,36 @@ const ComentarioForm = ({ formData, openSheet, entity }: FormProps) => {
     return format(new Date(date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   };
 
-  const getStatusBadge = () => {
+  const getStatusComponent = () => {
     switch (formData?.status) {
       case 'published':
-        return <Badge className="bg-green-500">Aprovado</Badge>;
+        return (
+          <Status status="online" className="w-fit">
+            <StatusIndicator />
+            <StatusLabel>Aprovado</StatusLabel>
+          </Status>
+        );
       case 'pending':
-        return <Badge variant="secondary">Pendente</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejeitado</Badge>;
+        return (
+          <Status status="waiting" className="w-fit">
+            <StatusIndicator />
+            <StatusLabel>Pendente</StatusLabel>
+          </Status>
+        );
+      case 'hidden':
+        return (
+          <Status status="offline" className="w-fit">
+            <StatusIndicator />
+            <StatusLabel>Oculto</StatusLabel>
+          </Status>
+        );
       default:
-        return <Badge variant="secondary">{formData?.status}</Badge>;
+        return (
+          <Status status="waiting" className="w-fit">
+            <StatusIndicator />
+            <StatusLabel>{formData?.status}</StatusLabel>
+          </Status>
+        );
     }
   };
 
@@ -133,7 +154,7 @@ const ComentarioForm = ({ formData, openSheet, entity }: FormProps) => {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label className="text-muted-foreground">Status</Label>
-          <div className="mt-2">{getStatusBadge()}</div>
+          <div className="mt-2">{getStatusComponent()}</div>
         </div>
         <div>
           <Label className="text-muted-foreground">Data</Label>
@@ -149,34 +170,63 @@ const ComentarioForm = ({ formData, openSheet, entity }: FormProps) => {
         </div>
       )}
 
+      {/* Respostas */}
+      {formData.replies && formData.replies.length > 0 && (
+        <div>
+          <Label className="text-muted-foreground">Respostas ({formData.replies.length})</Label>
+          <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">
+            {formData.replies.map((reply) => (
+              <div key={reply.id} className="p-3 bg-muted/50 rounded-lg border-l-2 border-primary">
+                <div className="flex items-center gap-2 mb-1">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={reply.visitor?.avatarUrl || undefined} alt={reply.visitor?.name} />
+                    <AvatarFallback className="text-xs uppercase">
+                      {reply.visitor?.name?.[0] || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs font-medium">{reply.visitor?.name || "Anônimo"}</span>
+                  <Badge variant="outline" className="text-xs h-5">
+                    {reply.status === 'published' ? 'Aprovado' : reply.status === 'pending' ? 'Pendente' : 'Rejeitado'}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-2">{reply.content}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Botões de Ação */}
       <div className="flex gap-2 pt-4 border-t">
-        {formData.status === 'pending' && can(`update_${entity.ability}`) && (
+        {can(`update_${entity.ability}`) && (
           <>
-            <Button
-              type="button"
-              className="flex-1 bg-green-500 hover:bg-green-600"
-              onClick={() => updateStatus('published')}
-            >
-              <Icon name="check" className="w-4 h-4 mr-2" />
-              Aprovar
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              className="flex-1"
-              onClick={() => updateStatus('rejected')}
-            >
-              <Icon name="x" className="w-4 h-4 mr-2" />
-              Rejeitar
-            </Button>
+            {formData.status !== 'published' && (
+              <Button
+                type="button"
+                className="flex-1 bg-green-500 hover:bg-green-600"
+                onClick={() => updateStatus('approve')}
+              >
+                <Icon name="check" className="w-4 h-4 mr-2" />
+                Aprovar
+              </Button>
+            )}
+            {formData.status !== 'hidden' && (
+              <Button
+                type="button"
+                variant="destructive"
+                className="flex-1"
+                onClick={() => updateStatus('disapprove')}
+              >
+                <Icon name="eye-off" className="w-4 h-4 mr-2" />
+                Desaprovar
+              </Button>
+            )}
           </>
         )}
         <Button
           type="button"
           variant="outline"
           onClick={() => openSheet(false)}
-          className={formData.status === 'pending' ? "" : "flex-1"}
         >
           Fechar
         </Button>

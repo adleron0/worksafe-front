@@ -8,7 +8,7 @@ export interface IComentario {
   visitorId: number;
   content: string;
   rating?: number;
-  status: 'pending' | 'published' | 'rejected';
+  status: 'pending' | 'published' | 'hidden';
   active: boolean;
   inactiveAt?: Date | string | null;
   createdAt?: string;

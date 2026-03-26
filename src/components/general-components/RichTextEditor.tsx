@@ -3,7 +3,7 @@ import ReactQuill, { Quill } from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import ImageResize from "quill-image-resize-module-react";
 import { post } from "@/services/api";
-import { Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Trash2 } from "lucide-react";
 
 // Registrar o módulo de redimensionamento
 Quill.register("modules/imageResize", ImageResize);
@@ -286,6 +286,92 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     "margin",
   ];
 
+  // Overlay de deletar imagem
+  const [selectedImage, setSelectedImage] = useState<HTMLImageElement | null>(null);
+  const [overlayPos, setOverlayPos] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  // Calcula a posição do overlay relativa ao container
+  const updateOverlayPos = useCallback(() => {
+    if (!selectedImage || !quillRef.current) {
+      setOverlayPos(null);
+      return;
+    }
+    // Verifica se a imagem ainda está no DOM
+    if (!document.contains(selectedImage)) {
+      setSelectedImage(null);
+      setOverlayPos(null);
+      return;
+    }
+    const containerEl = quillRef.current.getEditor()?.root?.closest('.rich-text-editor');
+    if (!containerEl) return;
+    const imgRect = selectedImage.getBoundingClientRect();
+    const containerRect = containerEl.getBoundingClientRect();
+    setOverlayPos({
+      top: imgRect.top - containerRect.top + containerEl.scrollTop,
+      left: imgRect.left - containerRect.left + containerEl.scrollLeft,
+      width: imgRect.width,
+      height: imgRect.height,
+    });
+  }, [selectedImage]);
+
+  useEffect(() => {
+    if (readOnly) return;
+    const editor = quillRef.current?.getEditor();
+    if (!editor) return;
+
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'IMG' && editor.root.contains(target)) {
+        setSelectedImage(target as HTMLImageElement);
+      } else if (!overlayRef.current?.contains(target)) {
+        setSelectedImage(null);
+      }
+    };
+
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [readOnly]);
+
+  // Atualiza posição do overlay quando a imagem selecionada muda, ao scrollar, redimensionar janela ou resize da imagem
+  useEffect(() => {
+    updateOverlayPos();
+    if (!selectedImage) return;
+
+    const editorContainer = quillRef.current?.getEditor()?.root?.parentElement;
+    const handleUpdate = () => updateOverlayPos();
+
+    // Observa mudanças de tamanho na imagem (ex: imageResize drag)
+    const resizeObserver = new ResizeObserver(handleUpdate);
+    resizeObserver.observe(selectedImage);
+
+    // Observa mudanças de atributos (style, width, height) na imagem
+    const mutationObserver = new MutationObserver(handleUpdate);
+    mutationObserver.observe(selectedImage, { attributes: true, attributeFilter: ['style', 'width', 'height'] });
+
+    window.addEventListener('resize', handleUpdate);
+    editorContainer?.addEventListener('scroll', handleUpdate);
+    return () => {
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+      window.removeEventListener('resize', handleUpdate);
+      editorContainer?.removeEventListener('scroll', handleUpdate);
+    };
+  }, [selectedImage, updateOverlayPos]);
+
+  const handleDeleteImage = useCallback(() => {
+    if (!selectedImage || !quillRef.current) return;
+    const editor = quillRef.current.getEditor();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const blot = Quill.find(selectedImage) as any;
+    if (blot) {
+      const index = editor.getIndex(blot);
+      editor.deleteText(index, 1);
+    }
+    setSelectedImage(null);
+    setOverlayPos(null);
+  }, [selectedImage]);
+
   // Aplicar estilos após o conteúdo ser carregado
   useEffect(() => {
     if (!quillRef.current || !processedValue) return;
@@ -388,6 +474,32 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       {uploadStatus !== "idle" && (
         <div className="absolute top-4 right-4 z-50 bg-popover rounded-lg shadow-lg border border-border px-4 py-3 flex items-center gap-3 animate-in slide-in-from-top-2">
           {getUploadStatusContent()}
+        </div>
+      )}
+
+      {selectedImage && overlayPos && (
+        <div
+          ref={overlayRef}
+          className="image-delete-overlay"
+          style={{
+            position: 'absolute',
+            top: `${overlayPos.top}px`,
+            left: `${overlayPos.left}px`,
+            width: `${overlayPos.width}px`,
+            height: `${overlayPos.height}px`,
+            pointerEvents: 'none',
+            zIndex: 100,
+          }}
+        >
+          <button
+            type="button"
+            onClick={handleDeleteImage}
+            className="image-delete-btn"
+            title="Remover imagem"
+            style={{ pointerEvents: 'auto' }}
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       )}
 
@@ -678,6 +790,30 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           margin: 1rem 0;
           cursor: pointer;
           transition: all 0.2s;
+        }
+
+        .image-delete-btn {
+          position: absolute;
+          top: 6px;
+          right: 6px;
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: hsl(var(--destructive));
+          color: hsl(var(--destructive-foreground, 0 0% 100%));
+          border: none;
+          border-radius: calc(var(--radius) - 2px);
+          cursor: pointer;
+          opacity: 0.9;
+          transition: opacity 0.15s, transform 0.15s;
+          box-shadow: 0 2px 6px rgb(0 0 0 / 0.25);
+        }
+
+        .image-delete-btn:hover {
+          opacity: 1;
+          transform: scale(1.1);
         }
 
         .rich-text-editor .ql-editor img:hover {

@@ -124,7 +124,7 @@ function CertificadosPublicos() {
         params.push({ key: 'like-trainee.name', value: debouncedSearchName });
       }
       
-      const response = await get('trainee-certificate', '', params);
+      const response = await get('trainee-certificate', 'public', params);
       return response as ICertificateResponse;
     },
     retry: 1

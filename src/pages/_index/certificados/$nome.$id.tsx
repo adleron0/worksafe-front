@@ -123,7 +123,7 @@ function TraineeCertificatesPage() {
         { key: 'showOnWebsiteConsent', value: true },
       ];
       
-      const response = await get('trainee-certificate', '', params);
+      const response = await get('trainee-certificate', 'public', params);
       return response as ICertificateResponse;
     },
     enabled: !!id,

@@ -23,23 +23,14 @@ interface ProfileProps {
 
 const Profile: FC<ProfileProps> = ({ showTrigger = true, open = false, openChange, mode = 'profile' }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [usersData, setUsersData] = useState<UsersResponse | undefined>();
-  const searchParams ={
-    limit: 10,
-    page: 0,
-  };
-
-  interface UsersResponse {
-    rows: IEntity[];
-    total: number;
-  }
+  const [profile, setProfile] = useState<IEntity | undefined>();
     
   const fetchProfile = async () => {
     try {
       setIsLoading(true);
-      const params = Object.keys(searchParams).map((key) => ({ key, value: searchParams[key as keyof typeof searchParams] }));
-      const response = await get('user', 'self', params);
-      setUsersData(response as UsersResponse);
+      // GET /user/self devolve o próprio usuário (objeto), não uma listagem.
+      const response = await get<IEntity>('user', 'self');
+      setProfile(response);
     } catch (error) {
       console.error('Erro ao buscar o perfil:', error);
     } finally {
@@ -81,7 +72,7 @@ const Profile: FC<ProfileProps> = ({ showTrigger = true, open = false, openChang
           <Form
             openSheet={() => openChange?.()}
             self={true}
-            formData={usersData?.rows[0]}
+            formData={profile}
             onlyPassword={mode === 'password' ? 'only' : ''}
           />
         </SheetContent>

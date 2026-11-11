@@ -94,7 +94,7 @@ export const participacaoEventoTemplate: CertificateTemplate = {
         fill: "#4b5563",
         fontSize: 16,
         fontFamily: "Open Sans",
-        text: "Participou do evento {{curso_nome}} realizado por {{inscricao_empresa}}, com duração de {{turma_carga_horaria}} horas.",
+        text: "Participou do evento {{curso_nome}} realizado por {{instituicao_nome}}, com duração de {{turma_carga_horaria}} horas.",
         textAlign: "center",
         lineHeight: 1.5
       },
@@ -166,7 +166,7 @@ export const participacaoEventoTemplate: CertificateTemplate = {
   defaultVariables: {
     aluno_nome: 'Nome do Aluno',
     curso_nome: 'Workshop de Inovação',
-    inscricao_empresa: 'Empresa Organizadora',
+    instituicao_nome: 'Empresa Organizadora',
     turma_carga_horaria: '8',
     turma_data_fim_extenso: '15 de Janeiro de 2025',
     instrutor_nome_1: 'Nome do Responsável'

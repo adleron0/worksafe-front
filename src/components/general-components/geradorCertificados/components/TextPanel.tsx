@@ -3,9 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignVerticalSpaceAround, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Plus, List, ListOrdered, ChevronRight, IndentDecrease, IndentIncrease, Info, Variable } from 'lucide-react';
+import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify, AlignVerticalSpaceAround, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Plus, List, ListOrdered, ChevronRight, IndentDecrease, IndentIncrease, Info, Variable } from 'lucide-react';
 import * as fabric from 'fabric';
 import { toast } from '@/hooks/use-toast';
+import { applyFontOverrides, FONT_OPTIONS } from '../utils/fontConfig';
+import { ensureFontLoaded } from '../utils/fontLoader';
 
 interface TextPanelProps {
   selectedText: fabric.Textbox | null;
@@ -22,30 +24,19 @@ export interface TextSettings {
   fontStyle: 'normal' | 'italic';
   underline: boolean;
   fill: string;
-  textAlign: 'left' | 'center' | 'right';
+  textAlign: 'left' | 'center' | 'right' | 'justify';
   originY?: 'top' | 'center' | 'bottom';
   lineHeight: number;
   letterSpacing: number;
   listType: 'none' | 'bullet' | 'arrow' | 'numbered';
   listIndent: number;
   listItemSpacing: number;
+  stroke: string;
+  strokeWidth: number;
 }
 
-// Lista de fontes do Google Fonts populares e Bebas Neue
-const googleFonts = [
-  { name: 'Arial', value: 'Arial', fallback: 'Arial, sans-serif' },
-  { name: 'Bebas Neue', value: 'Bebas Neue', fallback: '"Bebas Neue", sans-serif' },
-  { name: 'Roboto', value: 'Roboto', fallback: 'Roboto, sans-serif' },
-  { name: 'Open Sans', value: 'Open Sans', fallback: '"Open Sans", sans-serif' },
-  { name: 'Lato', value: 'Lato', fallback: 'Lato, sans-serif' },
-  { name: 'Montserrat', value: 'Montserrat', fallback: 'Montserrat, sans-serif' },
-  { name: 'Poppins', value: 'Poppins', fallback: 'Poppins, sans-serif' },
-  { name: 'Raleway', value: 'Raleway', fallback: 'Raleway, sans-serif' },
-  { name: 'Inter', value: 'Inter', fallback: 'Inter, sans-serif' },
-  { name: 'Playfair Display', value: 'Playfair Display', fallback: '"Playfair Display", serif' },
-  { name: 'Oswald', value: 'Oswald', fallback: 'Oswald, sans-serif' },
-  { name: 'Merriweather', value: 'Merriweather', fallback: 'Merriweather, serif' },
-];
+// Fontes disponíveis — importadas da fonte única de verdade
+const googleFonts = FONT_OPTIONS;
 
 const TextPanel: React.FC<TextPanelProps> = ({
   selectedText,
@@ -67,7 +58,9 @@ const TextPanel: React.FC<TextPanelProps> = ({
     letterSpacing: 0,
     listType: 'none',
     listIndent: 0,
-    listItemSpacing: 8
+    listItemSpacing: 8,
+    stroke: '',
+    strokeWidth: 0
   });
 
   // As fontes do Google são carregadas centralmente no componente pai (gerador.tsx)
@@ -85,13 +78,15 @@ const TextPanel: React.FC<TextPanelProps> = ({
         fontStyle: selectedText.fontStyle === 'italic' ? 'italic' : 'normal' as 'normal' | 'italic',
         underline: selectedText.underline || false,
         fill: selectedText.fill as string || '#000000',
-        textAlign: (selectedText.textAlign || 'left') as 'left' | 'center' | 'right',
+        textAlign: (selectedText.textAlign || 'left') as 'left' | 'center' | 'right' | 'justify',
         originY: (selectedText.originY || 'center') as 'top' | 'center' | 'bottom',
         lineHeight: selectedText.lineHeight || 1.16,
         letterSpacing: (selectedText as any).charSpacing || 0,
         listType: (selectedText as any).listType || 'none',
         listIndent: (selectedText as any).listIndent || 0,
-        listItemSpacing: (selectedText as any).listItemSpacing || 8
+        listItemSpacing: (selectedText as any).listItemSpacing || 8,
+        stroke: (selectedText.stroke as string) || '',
+        strokeWidth: selectedText.strokeWidth || 0
       };
       
       setTextSettings(newSettings);
@@ -107,65 +102,28 @@ const TextPanel: React.FC<TextPanelProps> = ({
   const updateSetting = (key: keyof TextSettings, value: any) => {
     const newSettings = { ...textSettings, [key]: value };
     setTextSettings(newSettings);
-    
+
     if (selectedText) {
       // Aplicar mudança diretamente
       onUpdateText({ [key]: value });
       
-      // Para fontes, aplicar com estratégia robusta
+      // Para fontes, garantir carregamento e aplicar overrides
       if (key === 'fontFamily') {
-        const applyFontRobustly = async (targetFont: string) => {
+        const applyFont = async (targetFont: string) => {
           if (!selectedText || !selectedText.canvas) return;
-          
           const canvas = selectedText.canvas;
-          
-          // Verificar se a fonte está disponível
-          const isFontAvailable = document.fonts.check(`12px "${targetFont}"`);
-          
-          if (!isFontAvailable) {
-            console.warn(`⚠️ Fonte ${targetFont} não está disponível ainda`);
-            // Tentar aguardar que a fonte carregue
-            await new Promise(resolve => setTimeout(resolve, 200));
-          }
-          
-          // Estratégia de aplicação robusta
-          console.log(`🔄 Aplicando fonte ${targetFont} com estratégia robusta`);
-          
-          // 1. Aplicar fallback temporário para forçar re-renderização
-          selectedText.set('fontFamily', 'Arial');
-          canvas.renderAll();
-          
-          // 2. Aguardar frame
-          await new Promise(resolve => requestAnimationFrame(resolve));
-          
-          // 3. Aplicar a fonte desejada
+
+          await ensureFontLoaded(targetFont);
+
           selectedText.set('fontFamily', targetFont);
           selectedText.dirty = true;
-          
-          // 4. Forçar limpeza de cache e recálculo
-          if ('_clearCache' in selectedText) {
-            (selectedText as any)._clearCache();
-          }
+          selectedText._clearCache();
           selectedText.setCoords();
-          
-          // 5. Renderizar
-          canvas.renderAll();
+          applyFontOverrides(selectedText);
           canvas.requestRenderAll();
-          
-          // 6. Verificação final após um delay
-          setTimeout(() => {
-            if (selectedText.fontFamily !== targetFont) {
-              console.warn(`⚠️ Fonte ${targetFont} ainda não aplicada, tentando novamente...`);
-              selectedText.set('fontFamily', targetFont);
-              selectedText.dirty = true;
-              canvas.renderAll();
-            } else {
-              console.log(`✅ Fonte ${targetFont} aplicada com sucesso`);
-            }
-          }, 150);
         };
-        
-        applyFontRobustly(value);
+
+        applyFont(value);
       }
     }
   };
@@ -334,6 +292,14 @@ const TextPanel: React.FC<TextPanelProps> = ({
               >
                 <AlignRight className="w-4 h-4" />
               </Button>
+              <Button
+                size="sm"
+                variant={textSettings.textAlign === 'justify' ? 'default' : 'outline'}
+                onClick={() => updateSetting('textAlign', 'justify')}
+                className="flex-1"
+              >
+                <AlignJustify className="w-4 h-4" />
+              </Button>
             </div>
           </div>
 
@@ -462,6 +428,28 @@ const TextPanel: React.FC<TextPanelProps> = ({
             />
           </div>
 
+          {/* Contorno do texto (stroke) */}
+          <div>
+            <label className="text-xs font-medium mb-1 block">Contorno do Texto</label>
+            <div className="flex gap-2 items-center">
+              <input
+                type="color"
+                value={textSettings.stroke || '#000000'}
+                onChange={(e) => updateSetting('stroke', e.target.value)}
+                className="w-10 h-8 rounded cursor-pointer flex-shrink-0"
+              />
+              <Slider
+                value={[textSettings.strokeWidth]}
+                onValueChange={(value) => updateSetting('strokeWidth', value[0])}
+                min={0}
+                max={5}
+                step={0.5}
+                className="flex-1"
+              />
+              <span className="text-xs text-gray-500 w-6 text-right">{textSettings.strokeWidth}</span>
+            </div>
+          </div>
+
           {/* Espaçamento entre linhas */}
           <div>
             <label className="text-xs font-medium mb-1 block">
@@ -518,6 +506,28 @@ const TextPanel: React.FC<TextPanelProps> = ({
                   { key: 'aluno_cidade', label: 'Cidade' },
                   { key: 'aluno_estado', label: 'Estado' },
                   { key: 'aluno_estado_uf', label: 'UF' },
+                ].map(variable => (
+                  <Button
+                    key={variable.key}
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] hover:bg-primary/10 hover:text-primary hover:border-primary"
+                    onClick={() => handleVariableClick(variable.key)}
+                  >
+                    {variable.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Dados da Instituição */}
+            <div>
+              <h4 className="text-xs font-medium text-muted-foreground mb-1">Instituição</h4>
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { key: 'instituicao_nome', label: 'Nome Comercial' },
+                  { key: 'instituicao_cnpj', label: 'CNPJ' },
+                  { key: 'instituicao_razao_social', label: 'Razão Social' },
                 ].map(variable => (
                   <Button
                     key={variable.key}
@@ -643,7 +653,7 @@ const TextPanel: React.FC<TextPanelProps> = ({
                 {[
                   { key: 'inscricao_nome', label: 'Nome' },
                   { key: 'inscricao_ocupacao', label: 'Ocupação' },
-                  { key: 'inscricao_empresa', label: 'Empresa' },
+                  { key: 'inscricao_empresa', label: 'Empresa que Trabalha' },
                   { key: 'inscricao_data_confirmacao', label: 'Confirmação' },
                 ].map(variable => (
                   <Button

@@ -1,10 +1,17 @@
 import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { RectangleHorizontal, RectangleVertical, ZoomIn, ZoomOut, Loader2 } from 'lucide-react';
+import { RectangleHorizontal, RectangleVertical, ZoomIn, ZoomOut, Loader2, RotateCcw } from 'lucide-react';
 import * as fabric from 'fabric';
-import { createListTextbox, cleanListMarkers } from '../utils/ListTextbox';
+import { createListTextbox } from '../utils/ListTextbox';
 import { createImagePlaceholder } from '../utils/PlaceholderImage';
+import { applyFontOverrides } from '../utils/fontConfig';
+import { isTextObject } from '../types';
+import { useCanvasSetup, getA4Dimensions } from '../hooks/useCanvasSetup';
+import { useZoomControls } from '../hooks/useZoomControls';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useContextMenuSetup } from '../hooks/useContextMenuSetup';
+import { useTextEditing } from '../hooks/useTextEditing';
 import './CanvasEditor.css';
 
 export interface CanvasEditorRef {
@@ -33,7 +40,7 @@ interface CanvasEditorProps {
 
 const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   pageId,
-  pageIndex,
+  pageIndex: _pageIndex,
   orientation,
   zoomLevel,
   isDragging,
@@ -47,192 +54,275 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   isActive
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomLevelRef = useRef(zoomLevel);
   const orientationRef = useRef(orientation);
   const isActiveRef = useRef(isActive);
+  const isEditingTextRef = useRef(false);
 
-  // Store callbacks in refs to avoid stale closures
+  // Callback refs para evitar stale closures
   const onObjectSelectedRef = useRef(onObjectSelected);
   const onSelectionClearedRef = useRef(onSelectionCleared);
   const onContextMenuRef = useRef(onContextMenu);
+  const onZoomChangeRef = useRef(onZoomChange);
 
-  useEffect(() => {
-    zoomLevelRef.current = zoomLevel;
-  }, [zoomLevel]);
-
-  useEffect(() => {
-    orientationRef.current = orientation;
-  }, [orientation]);
-
-  useEffect(() => {
-    isActiveRef.current = isActive;
-  }, [isActive]);
-
+  // Manter refs sincronizadas
+  useEffect(() => { zoomLevelRef.current = zoomLevel; }, [zoomLevel]);
+  useEffect(() => { orientationRef.current = orientation; }, [orientation]);
+  useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
   useEffect(() => {
     onObjectSelectedRef.current = onObjectSelected;
     onSelectionClearedRef.current = onSelectionCleared;
     onContextMenuRef.current = onContextMenu;
-  }, [onObjectSelected, onSelectionCleared, onContextMenu]);
+    onZoomChangeRef.current = onZoomChange;
+  }, [onObjectSelected, onSelectionCleared, onContextMenu, onZoomChange]);
 
-  const updateCanvasSize = (orient: 'landscape' | 'portrait', customZoom?: number) => {
-    if (!fabricCanvasRef.current) return;
+  // ========== HOOKS EXTRAÍDOS ==========
 
-    const canvas = fabricCanvasRef.current;
-    const baseScale = 0.6;
-    const zoomScale = customZoom ? customZoom / 100 : zoomLevelRef.current / 100;
-    const finalScale = baseScale * zoomScale;
-    
-    const a4Width = 842;
-    const a4Height = 595;
+  // 1. Inicialização do canvas e background rect
+  const canvas = useCanvasSetup(canvasRef, orientation, zoomLevel);
 
-    // Calcular as dimensões base do canvas (sem zoom)
-    let baseWidth: number;
-    let baseHeight: number;
-    
-    if (orient === 'landscape') {
-      baseWidth = a4Width;
-      baseHeight = a4Height;
-    } else {
-      baseWidth = a4Height;
-      baseHeight = a4Width;
+  // Ref para acesso imperativo (useImperativeHandle, addImage, etc.)
+  const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
+  useEffect(() => { fabricCanvasRef.current = canvas; }, [canvas]);
+
+  // 2. Zoom (wheel, pinch, applyZoom)
+  const { applyZoom, MIN_ZOOM_PERCENT, MAX_ZOOM_PERCENT } = useZoomControls({
+    canvas,
+    containerRef,
+    orientationRef,
+    zoomLevelRef,
+    isEditingTextRef,
+    onZoomChangeRef,
+  });
+
+  // 3. Atalhos de teclado (Delete, Ctrl+D/B/I/U)
+  useKeyboardShortcuts({
+    canvas,
+    isActiveRef,
+    onSelectionClearedRef,
+    selectedShapeRef,
+  });
+
+  // 4. Menu de contexto
+  useContextMenuSetup({
+    canvas,
+    onContextMenuRef,
+  });
+
+  // 5. Edição de texto (dblclick, text:changed, editing:entered/exited, listas)
+  useTextEditing({
+    canvas,
+    containerRef,
+    isEditingTextRef,
+    onObjectSelectedRef,
+    onContextMenuRef,
+  });
+
+  // ========== SELEÇÃO + FORMAS (useEffect pequeno) ==========
+
+  useEffect(() => {
+    if (!canvas) return;
+
+    // Configurar canvas wrapper
+    if (canvas.wrapperEl) {
+      canvas.wrapperEl.setAttribute('data-page-id', pageId);
+      canvas.wrapperEl.tabIndex = 1;
     }
-    
-    // Aplicar o zoom ao canvas
-    canvas.setZoom(finalScale);
-    
-    // Definir as dimensões do canvas considerando o zoom
-    canvas.setDimensions({
-      width: baseWidth * finalScale,
-      height: baseHeight * finalScale
-    });
-    
-    // Atualizar o background para corresponder às dimensões base (sem zoom)
-    const bgRect = canvas.getObjects().find(obj => (obj as fabric.Object & { name?: string }).name === 'backgroundRect');
-    if (bgRect) {
-      bgRect.set({
-        width: baseWidth,
-        height: baseHeight,
-        scaleX: 1,
-        scaleY: 1
+
+    const handleShapeSelection = (obj: fabric.Object) => {
+      const objWithName = obj as fabric.Object & { name?: string };
+      const objName = objWithName.name;
+      if (isTextObject(obj)) {
+        if (obj.isEditing) obj.exitEditing();
+        onObjectSelectedRef.current(obj);
+        selectedShapeRef.current = obj;
+      } else if (['rectangle', 'circle', 'triangle', 'line', 'rect'].includes(objName || obj.type || '')) {
+        onObjectSelectedRef.current(obj);
+        selectedShapeRef.current = obj;
+      } else {
+        onSelectionClearedRef.current();
+        selectedShapeRef.current = null;
+      }
+    };
+
+    const handleMouseDownBefore = (e: any) => {
+      if (e.target) {
+        const objName = (e.target as any).name;
+        if (['rectangle', 'circle', 'triangle', 'line'].includes(objName) || e.target.type === 'rect') {
+          handleShapeSelection(e.target);
+        }
+      }
+    };
+
+    const exitOtherEditing = (except: fabric.Object) => {
+      canvas.getObjects().forEach((obj) => {
+        if (isTextObject(obj) && obj !== except) {
+          if (obj.isEditing) obj.exitEditing();
+        }
       });
+    };
+
+    const handleSelectionCreated = (e: { selected: fabric.Object[] }) => {
+      if (e.selected?.[0]) {
+        exitOtherEditing(e.selected[0]);
+        handleShapeSelection(e.selected[0]);
+      }
+    };
+
+    const handleSelectionUpdated = (e: { selected: fabric.Object[] }) => {
+      if (e.selected?.[0]) {
+        exitOtherEditing(e.selected[0]);
+        handleShapeSelection(e.selected[0]);
+      }
+    };
+
+    const handleSelectionCleared = () => {
+      onSelectionClearedRef.current();
+      selectedShapeRef.current = null;
+    };
+
+    // Corner radius para retângulos
+    const adjustRectCorners = (rect: fabric.Rect) => {
+      if (!rect.rx && !rect.ry && !(rect as any)._baseRadius) return;
+      if (!(rect as any)._baseRadius) {
+        (rect as any)._baseRadius = Math.max(rect.rx || 0, rect.ry || 0);
+      }
+      const width = rect.width! * rect.scaleX!;
+      const height = rect.height! * rect.scaleY!;
+      const baseRadius = (rect as any)._baseRadius;
+      const minSide = Math.min(width, height);
+      const targetRadius = Math.min(baseRadius, minSide / 2);
+      const widthRatio = width / Math.max(width, height);
+      const heightRatio = height / Math.max(width, height);
+      rect.set({ rx: targetRadius * heightRatio, ry: targetRadius * widthRatio });
+    };
+
+    const handleObjectModified = (e: { target: fabric.Object }) => {
+      if (e.target?.type === 'rect') {
+        adjustRectCorners(e.target as fabric.Rect);
+        canvas.renderAll();
+      }
+    };
+
+    const handleObjectScaling = (e: { target: fabric.Object }) => {
+      if (e.target?.type === 'rect') {
+        adjustRectCorners(e.target as fabric.Rect);
+      }
+    };
+
+    canvas.on('mouse:down:before', handleMouseDownBefore);
+    canvas.on('selection:created', handleSelectionCreated as any);
+    canvas.on('selection:updated', handleSelectionUpdated as any);
+    canvas.on('selection:cleared', handleSelectionCleared);
+    canvas.on('object:modified', handleObjectModified as any);
+    canvas.on('object:scaling', handleObjectScaling as any);
+
+    return () => {
+      canvas.off('mouse:down:before', handleMouseDownBefore);
+      canvas.off('selection:created', handleSelectionCreated as any);
+      canvas.off('selection:updated', handleSelectionUpdated as any);
+      canvas.off('selection:cleared', handleSelectionCleared);
+      canvas.off('object:modified', handleObjectModified as any);
+      canvas.off('object:scaling', handleObjectScaling as any);
+    };
+  }, [canvas, pageId, selectedShapeRef, onObjectSelectedRef, onSelectionClearedRef]);
+
+  // ========== ORIENTAÇÃO ==========
+
+  useEffect(() => {
+    if (!canvas) return;
+    const currentZoom = canvas.getZoom();
+    const { width: baseWidth, height: baseHeight } = getA4Dimensions(orientation);
+    canvas.setWidth(baseWidth * currentZoom);
+    canvas.setHeight(baseHeight * currentZoom);
+
+    const bgRect = canvas.getObjects().find((obj) => (obj as any).name === 'backgroundRect');
+    if (bgRect) {
+      bgRect.set({ width: baseWidth, height: baseHeight, scaleX: 1, scaleY: 1 });
       bgRect.setCoords();
     }
-    
-    canvas.renderAll();
-  };
+    canvas.requestRenderAll();
+  }, [canvas, orientation]);
+
+  // ========== MÉTODOS IMPERATIVOS ==========
 
   const addImageToCanvas = (imageUrl: string, imageName: string) => {
     if (!fabricCanvasRef.current) return;
 
     let processedUrl = imageUrl;
-    
-    // Se for URL externa (S3 ou outra), usar o proxy
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      // Construir URL do proxy diretamente
       const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
       processedUrl = `${BASE_URL}/images/proxy?url=${encodeURIComponent(imageUrl)}`;
-      console.log('🖼️ Using proxy URL:', processedUrl);
-      console.log('📍 Original URL:', imageUrl);
     }
 
-    // Usar Fabric.js para carregar a imagem
-    // O proxy retorna a imagem binária com CORS correto
-    fabric.FabricImage.fromURL(processedUrl, {
-      crossOrigin: 'anonymous' // Importante para permitir exportação para PDF
-    }).then((fabricImage) => {
-      if (!fabricCanvasRef.current) return;
-      
-      fabricImage.set({
-        left: fabricCanvasRef.current.width! / 2,
-        top: fabricCanvasRef.current.height! / 2,
-        originX: 'center',
-        originY: 'center',
-        name: imageName
-      });
-      
-      const maxSize = 200;
-      if (fabricImage.width! > fabricImage.height!) {
-        fabricImage.scaleToWidth(maxSize);
-      } else {
-        fabricImage.scaleToHeight(maxSize);
-      }
-      
-      // IMPORTANTE: Preservar URL original para não salvar proxy no JSON
-      (fabricImage as any)._originalUrl = imageUrl;
-      
-      // Sobrescrever o src para manter URL original ao salvar
-      Object.defineProperty(fabricImage, 'src', {
-        get: function() { return imageUrl; },
-        set: function() { /* ignorar mudanças */ },
-        configurable: true
-      });
-      
-      fabricCanvasRef.current.add(fabricImage);
-      fabricCanvasRef.current.setActiveObject(fabricImage);
-      fabricCanvasRef.current.renderAll();
-      
-      console.log('✅ Imagem adicionada ao canvas com sucesso');
-    }).catch((error) => {
-      console.error('❌ Erro ao carregar imagem:', error);
-      
-      // Se falhar com proxy, tentar URL original (fallback)
-      if (processedUrl !== imageUrl) {
-        console.log('🔄 Tentando sem proxy:', imageUrl);
-        
-        fabric.FabricImage.fromURL(imageUrl, {
-          crossOrigin: 'anonymous'
-        }).then((fabricImage) => {
-          if (!fabricCanvasRef.current) return;
-          
-          fabricImage.set({
-            left: fabricCanvasRef.current.width! / 2,
-            top: fabricCanvasRef.current.height! / 2,
-            originX: 'center',
-            originY: 'center',
-            name: imageName
-          });
-          
-          const maxSize = 200;
-          if (fabricImage.width! > fabricImage.height!) {
-            fabricImage.scaleToWidth(maxSize);
-          } else {
-            fabricImage.scaleToHeight(maxSize);
-          }
-          
-          (fabricImage as any)._originalUrl = imageUrl;
-          
-          fabricCanvasRef.current.add(fabricImage);
-          fabricCanvasRef.current.setActiveObject(fabricImage);
-          fabricCanvasRef.current.renderAll();
-          
-          console.log('✅ Imagem adicionada sem proxy');
-        }).catch((fallbackError) => {
-          console.error('❌ Erro ao carregar imagem sem proxy:', fallbackError);
-          alert('Erro ao carregar imagem. Verifique se a URL está acessível.');
+    fabric.FabricImage.fromURL(processedUrl, { crossOrigin: 'anonymous' })
+      .then((fabricImage) => {
+        if (!fabricCanvasRef.current) return;
+        fabricImage.set({
+          left: fabricCanvasRef.current.width! / 2,
+          top: fabricCanvasRef.current.height! / 2,
+          originX: 'center',
+          originY: 'center',
+          name: imageName,
         });
-      } else {
-        alert('Erro ao carregar imagem local.');
-      }
-    });
+        const maxSize = 200;
+        if (fabricImage.width! > fabricImage.height!) {
+          fabricImage.scaleToWidth(maxSize);
+        } else {
+          fabricImage.scaleToHeight(maxSize);
+        }
+        (fabricImage as any)._originalUrl = imageUrl;
+        Object.defineProperty(fabricImage, 'src', {
+          get: () => imageUrl,
+          set: () => {},
+          configurable: true,
+        });
+        fabricCanvasRef.current.add(fabricImage);
+        fabricCanvasRef.current.setActiveObject(fabricImage);
+        fabricCanvasRef.current.renderAll();
+      })
+      .catch(() => {
+        if (processedUrl !== imageUrl) {
+          fabric.FabricImage.fromURL(imageUrl, { crossOrigin: 'anonymous' })
+            .then((fabricImage) => {
+              if (!fabricCanvasRef.current) return;
+              fabricImage.set({
+                left: fabricCanvasRef.current.width! / 2,
+                top: fabricCanvasRef.current.height! / 2,
+                originX: 'center',
+                originY: 'center',
+                name: imageName,
+              });
+              const maxSize = 200;
+              if (fabricImage.width! > fabricImage.height!) {
+                fabricImage.scaleToWidth(maxSize);
+              } else {
+                fabricImage.scaleToHeight(maxSize);
+              }
+              (fabricImage as any)._originalUrl = imageUrl;
+              fabricCanvasRef.current.add(fabricImage);
+              fabricCanvasRef.current.setActiveObject(fabricImage);
+              fabricCanvasRef.current.renderAll();
+            })
+            .catch(() => {
+              alert('Erro ao carregar imagem. Verifique se a URL está acessível.');
+            });
+        } else {
+          alert('Erro ao carregar imagem local.');
+        }
+      });
   };
 
   const addShapeToCanvas = (shapeType: 'rectangle' | 'circle' | 'triangle' | 'line', shapeSettings: any) => {
     if (!fabricCanvasRef.current) return;
-    
-    const canvas = fabricCanvasRef.current;
-    const centerX = canvas.width! / 2;
-    const centerY = canvas.height! / 2;
+    const canvasInstance = fabricCanvasRef.current;
+    const centerX = canvasInstance.width! / 2;
+    const centerY = canvasInstance.height! / 2;
     const size = 100;
-    
-    // Criar ID único para a forma
     const uniqueId = `${shapeType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    let shape: fabric.Object;
-    
     const strokeWidth = shapeType === 'line' ? Math.max(2, shapeSettings.strokeWidth) : shapeSettings.strokeWidth;
-    
+
     const baseProps = {
       left: centerX,
       top: centerY,
@@ -240,11 +330,13 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       originY: 'center' as const,
       fill: shapeSettings.fill,
       stroke: shapeSettings.stroke,
-      strokeWidth: strokeWidth,
+      strokeWidth,
       opacity: shapeSettings.opacity / 100,
-      name: shapeType
+      name: shapeType,
     };
-    
+
+    let shape: fabric.Object;
+
     switch (shapeType) {
       case 'rectangle':
         shape = new fabric.Rect({
@@ -253,93 +345,50 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
           height: size,
           rx: shapeSettings.cornerRadius,
           ry: shapeSettings.cornerRadius,
-          strokeUniform: true,  // Mantém a espessura da borda uniforme ao redimensionar
-          absolutePositioned: true  // Mantém proporções absolutas
+          strokeUniform: true,
+          absolutePositioned: true,
         });
-        // Armazenar o raio base para referência futura
         (shape as any)._baseRadius = shapeSettings.cornerRadius;
         break;
-        
       case 'circle':
-        shape = new fabric.Circle({
-          ...baseProps,
-          radius: size / 2,
-          strokeUniform: true  // Mantém a espessura da borda uniforme ao redimensionar
-        });
+        shape = new fabric.Circle({ ...baseProps, radius: size / 2, strokeUniform: true });
         break;
-        
       case 'triangle':
-        // Triângulo - Fabric.js não suporta arredondamento nativo
-        shape = new fabric.Triangle({
-          ...baseProps,
-          width: size,
-          height: size,
-          strokeUniform: true
-        });
-        // Armazenar informações para referência futura
+        shape = new fabric.Triangle({ ...baseProps, width: size, height: size, strokeUniform: true });
         (shape as any)._originalSize = size;
         break;
-        
       case 'line':
         shape = new fabric.Line([centerX - 50, centerY, centerX + 50, centerY], {
           ...baseProps,
           fill: undefined,
           lockScalingY: true,
           lockSkewingY: true,
-          strokeUniform: true  // Mantém a espessura da linha uniforme ao redimensionar
+          strokeUniform: true,
         });
-        shape.setControlsVisibility({
-          mt: false,
-          mb: false,
-          tl: false,
-          tr: false,
-          bl: false,
-          br: false,
-        });
+        shape.setControlsVisibility({ mt: false, mb: false, tl: false, tr: false, bl: false, br: false });
         break;
-        
       default:
         return;
     }
-    
-    // Adicionar ID único ao objeto
+
     (shape as any).__uniqueID = uniqueId;
     (shape as any).id = uniqueId;
+    shape.set({ selectable: true, evented: true });
 
-    // Ensure shape is selectable
-    shape.set({
-      selectable: true,
-      evented: true
-    });
-
-    console.log('🟦 Adding shape to canvas:', shapeType);
-    console.log('🟦 Shape selectable:', shape.selectable);
-    console.log('🟦 Shape evented:', shape.evented);
-
-    canvas.add(shape);
-    canvas.setActiveObject(shape);
-    canvas.renderAll();
-
+    canvasInstance.add(shape);
+    canvasInstance.setActiveObject(shape);
+    canvasInstance.renderAll();
     onObjectSelectedRef.current(shape);
     selectedShapeRef.current = shape;
   };
 
   const addTextToCanvas = (text: string, textSettings: any) => {
     if (!fabricCanvasRef.current) return;
-    
-    const canvas = fabricCanvasRef.current;
-    const centerX = canvas.width! / 2;
-    const centerY = canvas.height! / 2;
-    
-    // Criar ID único para o texto
+    const canvasInstance = fabricCanvasRef.current;
+    const centerX = canvasInstance.width! / 2;
+    const centerY = canvasInstance.height! / 2;
     const uniqueId = `text_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Correção específica para Bebas Neue
-    const isBebas = textSettings.fontFamily && textSettings.fontFamily.toLowerCase().includes('bebas');
-    const adjustedCharSpacing = isBebas ? 0 : textSettings.letterSpacing;
-    // Bebas Neue não deve usar bold (já é bold por natureza)
-    const adjustedFontWeight = isBebas ? 'normal' : textSettings.fontWeight;
-    
+
     const fabricText = createListTextbox(text, {
       left: centerX,
       top: centerY,
@@ -347,109 +396,85 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
       originY: textSettings.originY || 'center',
       fontFamily: textSettings.fontFamily,
       fontSize: textSettings.fontSize,
-      fontWeight: adjustedFontWeight,
+      fontWeight: textSettings.fontWeight,
       fontStyle: textSettings.fontStyle,
       underline: textSettings.underline,
       fill: textSettings.fill,
       textAlign: textSettings.textAlign,
       lineHeight: textSettings.lineHeight,
-      charSpacing: adjustedCharSpacing,
+      charSpacing: textSettings.letterSpacing,
       listType: textSettings.listType || 'none',
       listIndent: textSettings.listIndent || 0,
       listItemSpacing: textSettings.listItemSpacing || 8,
       name: 'text',
-      editable: true,
-      cursorWidth: 2,
-      cursorColor: '#333',
-      cursorDelay: 500,
-      cursorDuration: 500,
-      selectionColor: 'rgba(100, 100, 255, 0.3)',
-      editingBorderColor: '#333',
       hasControls: true,
       lockScalingFlip: true,
-    });
-    
-    // Adicionar ID único ao objeto
+    } as any);
+
     (fabricText as any).__uniqueID = uniqueId;
     (fabricText as any).id = uniqueId;
-    
-    // Correção específica para Bebas Neue após criação
-    if (isBebas) {
-      (fabricText as any).splitByGrapheme = false;
-      fabricText._clearCache();
-      fabricText.initDimensions();
-      
-      // Definir width fixo para evitar espaços extras
-      (fabricText as any).fixedWidth = false;
-      (fabricText as any).dynamicMinWidth = 2;
-    }
-    
-    canvas.add(fabricText);
-    canvas.setActiveObject(fabricText);
-    canvas.renderAll();
+    applyFontOverrides(fabricText as any);
 
+    canvasInstance.add(fabricText);
+    canvasInstance.setActiveObject(fabricText);
+    canvasInstance.renderAll();
     onObjectSelectedRef.current(fabricText);
     selectedShapeRef.current = fabricText;
-    
-    // Sair do modo de edição de qualquer outro texto primeiro
-    const objects = canvas.getObjects();
-    objects.forEach(obj => {
-      if ((obj.type === 'i-text' || obj.type === 'textbox') && obj !== fabricText) {
-        const textObj = obj as fabric.Textbox;
-        if (textObj.isEditing) {
-          textObj.exitEditing();
-        }
+
+    // Sair de edição de outros textos
+    canvasInstance.getObjects().forEach((obj) => {
+      if (isTextObject(obj) && obj !== fabricText) {
+        if (obj.isEditing) obj.exitEditing();
       }
     });
-    
-    // Entrar em modo de edição imediatamente
+
+    // Entrar em edição imediatamente
     setTimeout(() => {
-      console.log('Tentando entrar em modo de edição');
-      console.log('fabricText:', fabricText);
-      
-      // Garantir que o objeto está selecionado
-      canvas.setActiveObject(fabricText);
-      
-      // Entrar em modo de edição
+      const container = containerRef.current;
+      const scrollTop = container?.scrollTop ?? 0;
+      const scrollLeft = container?.scrollLeft ?? 0;
+      const winX = window.scrollX;
+      const winY = window.scrollY;
+
+      canvasInstance.setActiveObject(fabricText);
       fabricText.enterEditing();
       fabricText.selectAll();
-      
-      // Focar no canvas wrapper
-      if (canvas.wrapperEl) {
-        canvas.wrapperEl.focus();
+
+      if (canvasInstance.wrapperEl) {
+        canvasInstance.wrapperEl.focus({ preventScroll: true });
       }
-      
-      canvas.renderAll();
-      
-      console.log('isEditing depois:', fabricText.isEditing);
-      console.log('Texto em edição:', fabricText.text);
+
+      // Restaurar scroll (enterEditing + focus podem causar scroll indesejado)
+      if (container) {
+        container.scrollTop = scrollTop;
+        container.scrollLeft = scrollLeft;
+      }
+      window.scrollTo(winX, winY);
+
+      canvasInstance.renderAll();
     }, 200);
   };
 
   const addPlaceholderToCanvas = (placeholderName: string) => {
     if (!fabricCanvasRef.current) return;
-    
-    const canvas = fabricCanvasRef.current;
-    const centerX = canvas.width! / 2;
-    const centerY = canvas.height! / 2;
-    
-    // Detectar se é um QR Code pelo nome
+    const canvasInstance = fabricCanvasRef.current;
+    const centerX = canvasInstance.width! / 2;
+    const centerY = canvasInstance.height! / 2;
     const isQRCode = placeholderName.toLowerCase().includes('qrcode');
-    const size = isQRCode ? 120 : 200; // QR Code menor e quadrado
-    
+    const size = isQRCode ? 120 : 200;
+
     const placeholder = createImagePlaceholder({
       name: placeholderName,
       left: centerX - size / 2,
       top: centerY - size / 2,
       width: size,
-      height: isQRCode ? size : 100, // QR Code sempre quadrado
-      type: isQRCode ? 'qrcode' : 'image'
+      height: isQRCode ? size : 100,
+      type: isQRCode ? 'qrcode' : 'image',
     });
-    
-    canvas.add(placeholder);
-    canvas.setActiveObject(placeholder);
-    canvas.renderAll();
 
+    canvasInstance.add(placeholder);
+    canvasInstance.setActiveObject(placeholder);
+    canvasInstance.renderAll();
     onObjectSelectedRef.current(placeholder);
   };
 
@@ -458,1116 +483,37 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
     addShapeToCanvas,
     addTextToCanvas,
     addPlaceholderToCanvas,
-    getCanvas: () => fabricCanvasRef.current
+    getCanvas: () => fabricCanvasRef.current,
   }));
 
-  useEffect(() => {
-    console.log('🟡 Canvas useEffect - isActive:', isActive, 'pageId:', pageId);
+  // ========== ZOOM UI HANDLERS ==========
 
-    if (canvasRef.current && !fabricCanvasRef.current) {
-      // Verificar se já não existe um canvas no elemento
-      const existingCanvas = canvasRef.current.querySelector('canvas');
-      if (existingCanvas && existingCanvas.classList.contains('lower-canvas')) {
-        console.log('🟡 Canvas já existe, pulando inicialização');
-        return;
-      }
-
-      console.log('🟡 Inicializando novo canvas para página:', pageId);
-      const canvas = new fabric.Canvas(canvasRef.current, {
-        backgroundColor: '#ffffff',
-        preserveObjectStacking: true,
-        enableRetinaScaling: true,
-        stopContextMenu: true,
-        fireRightClick: true,
-      });
-      
-      fabricCanvasRef.current = canvas;
-      
-      // Definir dimensões baseadas na orientação inicial
-      const a4Width = 842;
-      const a4Height = 595;
-      let bgWidth = orientation === 'landscape' ? a4Width : a4Height;
-      let bgHeight = orientation === 'landscape' ? a4Height : a4Width;
-      
-      const bgRect = new fabric.Rect({
-        left: 0,
-        top: 0,
-        width: bgWidth,
-        height: bgHeight,
-        fill: 'white',
-        selectable: false,
-        evented: false,
-        name: 'backgroundRect'
-      });
-      
-      canvas.add(bgRect);
-      updateCanvasSize(orientation);
-      
-      const handleKeyDown = (e: KeyboardEvent) => {
-        // Só processar eventos de teclado se esta página estiver ativa
-        if (!isActiveRef.current) return;
-        
-        console.log(`Key pressed on page ${pageIndex + 1}:`, e.key, 'Ctrl:', e.ctrlKey, 'Meta:', e.metaKey);
-        
-        // Prevenir comportamento padrão para atalhos com Ctrl/Cmd
-        if (e.ctrlKey || e.metaKey) {
-          switch(e.key.toLowerCase()) {
-            case 'd':
-            case 'b':
-            case 'i':
-            case 'u':
-              e.preventDefault();
-              e.stopPropagation();
-              break;
-          }
-        }
-        
-        if ((e.key === 'Delete' || e.key === 'Backspace') && fabricCanvasRef.current) {
-          const activeObject = fabricCanvasRef.current.getActiveObject();
-          
-          // Se for um texto em modo de edição, não fazer nada
-          if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
-            const itext = activeObject as fabric.IText;
-            if (itext.isEditing) {
-              console.log('Texto em edição, permitindo tecla:', e.key);
-              return; // Deixar o texto processar o evento normalmente
-            }
-          }
-          
-          e.preventDefault();
-          
-          if (activeObject) {
-            const objWithName = activeObject as fabric.Object & { name?: string };
-            // Não permitir deletar o retângulo branco de background nem a imagem de background
-            if (objWithName.name !== 'backgroundRect' && objWithName.name !== 'backgroundImage') {
-              fabricCanvasRef.current.remove(activeObject);
-              fabricCanvasRef.current.discardActiveObject();
-              fabricCanvasRef.current.requestRenderAll();
-              onSelectionClearedRef.current();
-              selectedShapeRef.current = null;
-            } else {
-              console.log('Não é permitido deletar o background');
-            }
-          }
-        } else if ((e.ctrlKey || e.metaKey) && fabricCanvasRef.current) {
-          const activeObject = fabricCanvasRef.current.getActiveObject();
-          
-          if (activeObject) {
-            switch(e.key.toLowerCase()) {
-              case 'd': // Duplicar
-                e.preventDefault();
-                e.stopPropagation();
-                activeObject.clone().then((cloned: fabric.Object) => {
-                  fabricCanvasRef.current!.discardActiveObject();
-                  cloned.set({
-                    left: (cloned.left || 0) + 10,
-                    top: (cloned.top || 0) + 10,
-                    evented: true,
-                  });
-                  if (cloned.type === 'activeSelection') {
-                    (cloned as fabric.ActiveSelection).canvas = fabricCanvasRef.current!;
-                    (cloned as fabric.ActiveSelection).forEachObject((obj: fabric.Object) => {
-                      fabricCanvasRef.current!.add(obj);
-                    });
-                    cloned.setCoords();
-                  } else {
-                    fabricCanvasRef.current!.add(cloned);
-                  }
-                  fabricCanvasRef.current!.setActiveObject(cloned);
-                  fabricCanvasRef.current!.requestRenderAll();
-                });
-                break;
-                
-              case 'b': // Bold
-                e.preventDefault();
-                e.stopPropagation();
-                if (activeObject.type === 'i-text' || activeObject.type === 'textbox') {
-                  const textObj = activeObject as fabric.Textbox;
-                  const currentWeight = textObj.get('fontWeight') as string || 'normal';
-                  textObj.set('fontWeight', currentWeight === 'bold' ? 'normal' : 'bold');
-                  fabricCanvasRef.current!.renderAll();
-                }
-                break;
-                
-              case 'i': // Italic
-                e.preventDefault();
-                e.stopPropagation();
-                if (activeObject.type === 'i-text' || activeObject.type === 'textbox') {
-                  const textObj = activeObject as fabric.Textbox;
-                  const currentStyle = textObj.get('fontStyle') as string || 'normal';
-                  textObj.set('fontStyle', currentStyle === 'italic' ? 'normal' : 'italic');
-                  fabricCanvasRef.current!.renderAll();
-                }
-                break;
-                
-              case 'u': // Underline
-                e.preventDefault();
-                e.stopPropagation();
-                if (activeObject.type === 'i-text' || activeObject.type === 'textbox') {
-                  const textObj = activeObject as fabric.Textbox;
-                  const currentUnderline = textObj.get('underline') as boolean || false;
-                  textObj.set('underline', !currentUnderline);
-                  fabricCanvasRef.current!.renderAll();
-                }
-                break;
-            }
-          }
-        }
-      };
-      
-      window.addEventListener('keydown', handleKeyDown);
-      
-      const handleContextMenu = (e: Event) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const mouseEvent = e as MouseEvent;
-        const currentCanvas = fabricCanvasRef.current;
-        if (!currentCanvas) return false;
-        
-        // Usar getPointer com o evento original para considerar o zoom
-        const pointer = currentCanvas.getPointer(mouseEvent);
-        const objects = currentCanvas.getObjects();
-        let target = null;
-        
-        // Verificar se algum objeto está sob o ponteiro
-        for (let i = objects.length - 1; i >= 0; i--) {
-          const obj = objects[i];
-          if (obj.containsPoint(pointer) && (obj as fabric.Object & { name?: string }).name !== 'backgroundRect') {
-            target = obj;
-            break;
-          }
-        }
-        
-        if (target) {
-          currentCanvas.setActiveObject(target);
-          currentCanvas.renderAll();
-        }
-        
-        onContextMenuRef.current(mouseEvent, target);
-        return false;
-      };
-      
-      const attachContextMenuListeners = () => {
-        if (canvas.upperCanvasEl) {
-          canvas.upperCanvasEl.removeEventListener('contextmenu', handleContextMenu);
-          canvas.upperCanvasEl.addEventListener('contextmenu', handleContextMenu);
-        }
-        if (canvas.lowerCanvasEl) {
-          canvas.lowerCanvasEl.removeEventListener('contextmenu', handleContextMenu);
-          canvas.lowerCanvasEl.addEventListener('contextmenu', handleContextMenu);
-        }
-        
-        const wrapperEl = canvas.wrapperEl;
-        if (wrapperEl) {
-          wrapperEl.removeEventListener('contextmenu', handleContextMenu);
-          wrapperEl.addEventListener('contextmenu', handleContextMenu);
-        }
-      };
-      
-      setTimeout(() => {
-        attachContextMenuListeners();
-      }, 200);
-      
-      const handleWheel = (opt: fabric.TEvent<WheelEvent>) => {
-        const delta = opt.e.deltaY;
-        let currentZoom = zoomLevelRef.current;
-        
-        if (delta > 0) {
-          currentZoom = Math.max(30, currentZoom - 5);
-        } else {
-          currentZoom = Math.min(300, currentZoom + 5);
-        }
-        
-        onZoomChange(currentZoom);
-        updateCanvasSize(orientationRef.current, currentZoom);
-        
-        opt.e.preventDefault();
-        opt.e.stopPropagation();
-      };
-      
-      canvas.on('mouse:wheel', handleWheel);
-      
-      const handleShapeSelection = (obj: fabric.Object) => {
-        console.log('🟣 handleShapeSelection called');
-        console.log('🟣 Object:', obj);
-        console.log('🟣 Object type:', obj.type);
-
-        const objWithName = obj as fabric.Object & { name?: string };
-        const objName = objWithName.name;
-        console.log('🟣 Object name:', objName);
-
-        // Se for texto, sair do modo de edição primeiro
-        if (obj.type === 'textbox' || obj.type === 'i-text') {
-          console.log('🟣 Is text object');
-          const textObj = obj as fabric.Textbox;
-          if (textObj.isEditing) {
-            textObj.exitEditing();
-          }
-          onObjectSelectedRef.current(obj);
-          selectedShapeRef.current = obj;
-        } else if (['rectangle', 'circle', 'triangle', 'line', 'rect'].includes(objName || obj.type || '')) {
-          console.log('🟣 Is shape object - calling onObjectSelected');
-          onObjectSelectedRef.current(obj);
-          selectedShapeRef.current = obj;
-        } else {
-          console.log('🟣 Unknown object type - clearing selection');
-          onSelectionClearedRef.current();
-          selectedShapeRef.current = null;
-        }
-      };
-      
-      console.log('🟡 Anexando eventos ao canvas:', canvas);
-      console.log('🟡 Canvas ID/Page:', pageId);
-
-      // Debug: Test if events are working
-      canvas.on('mouse:down:before', (e) => {
-        console.log('🟠 mouse:down:before event - target:', e.target);
-        if (e.target) {
-          console.log('🟠 Target type:', e.target.type);
-          console.log('🟠 Target name:', (e.target as any).name);
-          console.log('🟠 Target selectable:', e.target.selectable);
-          console.log('🟠 Target evented:', e.target.evented);
-
-          // Manually trigger selection for shapes
-          const objName = (e.target as any).name;
-          if (['rectangle', 'circle', 'triangle', 'line'].includes(objName) || e.target.type === 'rect') {
-            console.log('🟢 Manually triggering shape selection');
-            handleShapeSelection(e.target);
-          }
-        }
-        // Log all objects on canvas
-        const allObjects = canvas.getObjects();
-        console.log('🟠 Total objects on canvas:', allObjects.length);
-        allObjects.forEach((obj, index) => {
-          if ((obj as any).name !== 'backgroundRect') {
-            console.log(`  - Object ${index}: type=${obj.type}, name=${(obj as any).name}, selectable=${obj.selectable}`);
-          }
-        });
-      });
-
-      canvas.on('selection:created', (e) => {
-        console.log('🔴 selection:created event fired for page:', pageId);
-        console.log('🔴 isActive:', isActiveRef.current);
-        console.log('🔴 e.selected:', e.selected);
-        if (e.selected && e.selected[0]) {
-          // Sair do modo de edição de qualquer texto ativo
-          const objects = canvas.getObjects();
-          objects.forEach(obj => {
-            if ((obj.type === 'i-text' || obj.type === 'textbox') && obj !== e.selected[0]) {
-              const textObj = obj as fabric.Textbox;
-              if (textObj.isEditing) {
-                textObj.exitEditing();
-              }
-            }
-          });
-
-          handleShapeSelection(e.selected[0]);
-        }
-      });
-
-      canvas.on('selection:updated', (e) => {
-        console.log('🔴 selection:updated event fired');
-        console.log('🔴 e.selected:', e.selected);
-        if (e.selected && e.selected[0]) {
-          // Sair do modo de edição de qualquer texto ativo
-          const objects = canvas.getObjects();
-          objects.forEach(obj => {
-            if ((obj.type === 'i-text' || obj.type === 'textbox') && obj !== e.selected[0]) {
-              const textObj = obj as fabric.Textbox;
-              if (textObj.isEditing) {
-                textObj.exitEditing();
-              }
-            }
-          });
-
-          handleShapeSelection(e.selected[0]);
-        }
-      });
-
-      canvas.on('selection:cleared', () => {
-        console.log('🔴 selection:cleared event fired');
-        onSelectionClearedRef.current();
-        selectedShapeRef.current = null;
-      });
-
-      // Adicionar evento para detectar quando objetos são modificados (redimensionados)
-      canvas.on('object:modified', (e) => {
-        if (e.target && e.target.type === 'rect') {
-          const rect = e.target as fabric.Rect;
-          // Se o retângulo tem cornerRadius definido, ajustar proporcionalmente
-          if (rect.rx || rect.ry || (rect as any)._baseRadius) {
-            // Inicializar _baseRadius se não existir
-            if (!(rect as any)._baseRadius) {
-              (rect as any)._baseRadius = Math.max(rect.rx || 0, rect.ry || 0);
-            }
-            // Obter as dimensões atuais do retângulo com escala aplicada
-            const width = rect.width! * rect.scaleX!;
-            const height = rect.height! * rect.scaleY!;
-
-            // Obter o raio base armazenado
-            const baseRadius = (rect as any)._baseRadius;
-
-            // Calcular o menor lado
-            const minSide = Math.min(width, height);
-
-            // Limitar o raio a no máximo 50% do menor lado
-            const maxRadius = minSide / 2;
-            const targetRadius = Math.min(baseRadius, maxRadius);
-
-            // SOLUÇÃO: Para manter cantos circulares, não elípticos,
-            // precisamos que o raio visual seja o mesmo em ambas as direções.
-            // Como o Fabric.js estica rx horizontalmente e ry verticalmente,
-            // precisamos compensar pela proporção inversa do retângulo.
-
-            // Se o retângulo é mais largo que alto, rx precisa ser menor
-            // Se o retângulo é mais alto que largo, ry precisa ser menor
-            const widthRatio = width / Math.max(width, height);
-            const heightRatio = height / Math.max(width, height);
-
-            rect.set({
-              rx: targetRadius * heightRatio,  // Compensar pela altura
-              ry: targetRadius * widthRatio     // Compensar pela largura
-            });
-
-            canvas.renderAll();
-          }
-        }
-      });
-
-      // Adicionar evento para detectar durante o redimensionamento
-      canvas.on('object:scaling', (e) => {
-        if (e.target && e.target.type === 'rect') {
-          const rect = e.target as fabric.Rect;
-          // Se o retângulo tem cornerRadius, ajustá-lo durante o redimensionamento
-          if (rect.rx || rect.ry || (rect as any)._baseRadius) {
-            // Inicializar _baseRadius se não existir
-            if (!(rect as any)._baseRadius) {
-              (rect as any)._baseRadius = Math.max(rect.rx || 0, rect.ry || 0);
-            }
-            // Obter as dimensões atuais com escala
-            const width = rect.width! * rect.scaleX!;
-            const height = rect.height! * rect.scaleY!;
-
-            const baseRadius = (rect as any)._baseRadius;
-            const minSide = Math.min(width, height);
-            const maxRadius = minSide / 2;
-            const targetRadius = Math.min(baseRadius, maxRadius);
-
-            // Aplicar a mesma lógica de compensação proporcional
-            const widthRatio = width / Math.max(width, height);
-            const heightRatio = height / Math.max(width, height);
-
-            rect.set({
-              rx: targetRadius * heightRatio,  // Compensar pela altura
-              ry: targetRadius * widthRatio     // Compensar pela largura
-            });
-          }
-        }
-      });
-      
-      // Variável para rastrear cliques
-      let clickCount = 0;
-      let clickTimer: NodeJS.Timeout | null = null;
-      // @ts-ignore - Used in event handlers
-      let currentEditingText: fabric.Textbox | null = null;
-      
-      // Adicionar evento de clique direito e duplo-clique para edição de texto
-      canvas.on('mouse:down', (opt) => {
-        const target = opt.target;
-
-        // Handle text editing exit first
-        if (!target) {
-          // Clicou no canvas vazio - sair de edição
-          const objects = canvas.getObjects();
-          objects.forEach(obj => {
-            if ((obj.type === 'i-text' || obj.type === 'textbox')) {
-              const textObj = obj as fabric.Textbox;
-              if (textObj.isEditing) {
-                textObj.exitEditing();
-              }
-            }
-          });
-        } else if (target && (target.type === 'i-text' || target.type === 'textbox')) {
-          // Clicou em um texto - garantir que outros textos saiam de edição
-          const clickedText = target as fabric.Textbox;
-          const objects = canvas.getObjects();
-
-          objects.forEach(obj => {
-            if ((obj.type === 'i-text' || obj.type === 'textbox') && obj !== clickedText) {
-              const textObj = obj as fabric.Textbox;
-              if (textObj.isEditing) {
-                console.log('Saindo de edição ao clicar em outro texto:', textObj.text);
-                textObj.exitEditing();
-              }
-            }
-          });
-        }
-
-        // Verificar se é clique direito
-        if ('button' in opt.e && (opt.e as MouseEvent).button === 2) {
-          opt.e.preventDefault();
-          opt.e.stopPropagation();
-
-          // Selecionar o objeto se houver um sob o cursor
-          if (target && (target as fabric.Object & { name?: string }).name !== 'backgroundRect') {
-            canvas.setActiveObject(target);
-            canvas.renderAll();
-          }
-
-          // Chamar o menu de contexto
-          onContextMenuRef.current(opt.e as MouseEvent, target || null);
-          return;
-        }
-
-        if (target && (target.type === 'i-text' || target.type === 'textbox')) {
-          clickCount++;
-          console.log('Click count:', clickCount);
-          
-          if (clickCount === 1) {
-            clickTimer = setTimeout(() => {
-              clickCount = 0;
-            }, 350);
-          } else if (clickCount === 2) {
-            if (clickTimer) {
-              clearTimeout(clickTimer);
-            }
-            clickCount = 0;
-            
-            console.log('Duplo clique detectado em IText');
-            const itext = target as fabric.Textbox;
-            
-            // IMPORTANTE: Sair de edição de TODOS os textos primeiro
-            const objects = canvas.getObjects();
-            objects.forEach(obj => {
-              if ((obj.type === 'i-text' || obj.type === 'textbox')) {
-                const textObj = obj as fabric.Textbox;
-                if (textObj.isEditing) {
-                  console.log('Saindo de edição do texto:', textObj.text);
-                  textObj.exitEditing();
-                }
-              }
-            });
-            
-            // Limpar referência anterior
-            currentEditingText = null;
-            
-            // Forçar entrada em modo de edição do texto correto
-            setTimeout(() => {
-              console.log('Duplo clique - entrando em modo de edição');
-              console.log('Texto selecionado:', itext.text);
-              console.log('ID do texto selecionado:', (itext as any).__uniqueID);
-              
-              // Descartar qualquer seleção anterior
-              canvas.discardActiveObject();
-              canvas.renderAll();
-              
-              // Garantir seleção do texto correto
-              canvas.setActiveObject(itext);
-              canvas.renderAll();
-              
-              // Verificar se realmente é o objeto ativo
-              const activeNow = canvas.getActiveObject();
-              console.log('Objeto ativo após seleção:', activeNow);
-              console.log('É o mesmo objeto?', activeNow === itext);
-              
-              // Entrar em modo de edição
-              itext.enterEditing();
-              itext.selectAll();
-              
-              // Guardar referência do texto em edição
-              currentEditingText = itext;
-              
-              // Focar no canvas wrapper para capturar teclas
-              if (canvas.wrapperEl) {
-                canvas.wrapperEl.focus();
-                console.log('Canvas wrapper focado para edição');
-              }
-              
-              // Notificar seleção
-              onObjectSelectedRef.current(itext);
-            }, 200);
-          }
-        } else {
-          clickCount = 0;
-        }
-      });
-      
-      // Atualizar quando o texto for modificado
-      let textChangeTimer: NodeJS.Timeout | null = null;
-      canvas.on('text:changed', (e) => {
-        console.log('Texto modificado:', e);
-        const target = e.target;
-        if (target && (target.type === 'i-text' || target.type === 'textbox')) {
-          const textObj = target as fabric.Textbox;
-          
-          // Correção específica para Bebas Neue durante digitação
-          if (textObj.fontFamily && textObj.fontFamily.toLowerCase().includes('bebas')) {
-            console.log('🔧 Aplicando correção Bebas Neue durante digitação');
-            
-            // Forçar configurações corretas
-            (textObj as any).splitByGrapheme = false;
-            (textObj as any).charSpacing = 0;
-            
-            // Correção específica para Bebas Neue + Bold
-            // Bebas Neue já é uma fonte bold por natureza, aplicar bold causa problemas
-            if (textObj.fontWeight === 'bold' || textObj.fontWeight === 700 || textObj.fontWeight === '700') {
-              console.log('⚠️ Bebas Neue com bold detectado - aplicando correção');
-              // Para Bebas Neue, usar normal mesmo quando bold é solicitado
-              // pois a fonte já é naturalmente bold
-              textObj.set('fontWeight', 'normal');
-            }
-            
-            // Limpar texto de caracteres invisíveis e espaços extras
-            let currentText = textObj.text || '';
-            
-            // Remover caracteres de largura zero e espaços não-quebráveis
-            currentText = currentText
-              .replace(/\u200B/g, '') // Zero-width space
-              .replace(/\u200C/g, '') // Zero-width non-joiner
-              .replace(/\u200D/g, '') // Zero-width joiner
-              .replace(/\uFEFF/g, '') // Zero-width no-break space
-              .replace(/\u00A0/g, ' '); // Non-breaking space para espaço normal
-            
-            // Se o texto mudou, atualizar
-            if (currentText !== textObj.text) {
-              console.log(`Limpando caracteres invisíveis: "${textObj.text}" -> "${currentText}"`);
-              textObj.set('text', currentText);
-            }
-            
-            // Forçar width correto baseado no texto visível
-            const ctx = canvas.getContext();
-            ctx.save();
-            ctx.font = `${textObj.fontSize}px ${textObj.fontFamily}`;
-            const measuredWidth = ctx.measureText(currentText).width;
-            ctx.restore();
-            
-            // Ajustar width se necessário
-            if (Math.abs(textObj.width - measuredWidth) > 5) {
-              console.log(`Ajustando width: ${textObj.width} -> ${measuredWidth}`);
-              textObj.set('width', measuredWidth + 10); // +10 para pequena margem
-            }
-            
-            // Recalcular dimensões
-            textObj._clearCache();
-            textObj.initDimensions();
-            
-            // Forçar atualização visual
-            canvas.renderAll();
-          }
-          
-          onObjectSelectedRef.current(target);
-          
-          // Para listas, atualizar marcadores após mudanças
-          const listTextbox = target as any;
-          if (listTextbox.listType && listTextbox.listType !== 'none' && listTextbox.isEditing) {
-            // Cancelar timer anterior se existir
-            if (textChangeTimer) {
-              clearTimeout(textChangeTimer);
-            }
-            
-            // Aguardar um pouco antes de reprocessar para evitar muitas atualizações
-            textChangeTimer = setTimeout(() => {
-              // Salvar posição atual do cursor
-              const currentPos = listTextbox.selectionStart || 0;
-              const currentText = listTextbox.text || '';
-              
-              // Encontrar posição relativa na linha atual
-              const textBeforeCursor = currentText.substring(0, currentPos);
-              const linesBeforeCursor = textBeforeCursor.split('\n');
-              const currentLineIndex = linesBeforeCursor.length - 1;
-              const lastLine = linesBeforeCursor[linesBeforeCursor.length - 1];
-              const cleanLastLine = lastLine.replace(/^[\s]*[•▸\d]+\.?\s*/, '');
-              const posInCleanLine = cleanLastLine.length;
-              
-              // Salvar posição para restaurar após reprocessamento
-              listTextbox._pendingCursorLine = currentLineIndex;
-              listTextbox._pendingCursorPos = posInCleanLine;
-              
-              // Reprocessar lista
-              if (listTextbox.updateListProperties) {
-                listTextbox.updateListProperties({});
-              }
-            }, 300);
-          }
-        }
-      });
-      
-      // Evento para quando entrar/sair do modo de edição
-      canvas.on('text:editing:entered', (e) => {
-        console.log('Entrou em modo de edição:', e);
-        const target = e.target as fabric.Textbox;
-        if (target) {
-          // Correção específica para Bebas Neue ao entrar em edição
-          if (target.fontFamily && target.fontFamily.toLowerCase().includes('bebas')) {
-            console.log('🔧 Configurando Bebas Neue para edição');
-            (target as any).splitByGrapheme = false;
-            (target as any).charSpacing = 0;
-            
-            // Corrigir bold para Bebas Neue
-            if (target.fontWeight === 'bold' || target.fontWeight === 700 || target.fontWeight === '700') {
-              console.log('⚠️ Removendo bold de Bebas Neue ao entrar em edição');
-              target.set('fontWeight', 'normal');
-            }
-            
-            target._clearCache();
-          }
-          
-          // Atualizar referência do texto em edição
-          currentEditingText = target;
-          console.log('Texto em edição atualizado:', (target as any).__uniqueID);
-          
-          if (target.hiddenTextarea) {
-            console.log('Forçando foco no textarea durante editing:entered');
-            target.hiddenTextarea.focus();
-          }
-        }
-      });
-      
-      canvas.on('text:editing:exited', (e) => {
-        console.log('Saiu do modo de edição:', e);
-        // Limpar referência quando sair de edição
-        currentEditingText = null;
-      });
-      
-      // This handler is now merged into the main mouse:down handler above
-      
-      // Debug - verificar se algo está bloqueando a edição
-      canvas.on('mouse:up', (e) => {
-        if (e.target && e.target.type === 'i-text') {
-          console.log('Mouse up em IText, editable:', (e.target as fabric.IText).editable);
-          console.log('isEditing:', (e.target as fabric.IText).isEditing);
-        }
-      });
-      
-      // Adicionar listener de teclado direto no canvas wrapper
-      const canvasWrapper = canvas.wrapperEl;
-      if (canvasWrapper) {
-        // Adicionar identificação única para cada canvas
-        canvasWrapper.setAttribute('data-page-id', pageId);
-        canvasWrapper.tabIndex = 1; // Tornar focável
-        
-        // Criar um input oculto para capturar caracteres compostos
-        const hiddenInput = document.createElement('input');
-        hiddenInput.style.position = 'absolute';
-        hiddenInput.style.left = '-9999px';
-        hiddenInput.style.opacity = '0';
-        hiddenInput.setAttribute('type', 'text');
-        canvasWrapper.appendChild(hiddenInput);
-        
-        // Variável para rastrear se estamos em composição
-        let isComposing = false;
-        let compositionText = '';
-        
-        // Eventos de composição para acentos
-        hiddenInput.addEventListener('compositionstart', () => {
-          isComposing = true;
-          compositionText = '';
-          console.log('Iniciando composição');
-        });
-        
-        hiddenInput.addEventListener('compositionupdate', (e) => {
-          compositionText = (e as CompositionEvent).data || '';
-          console.log('Atualizando composição:', compositionText);
-        });
-        
-        hiddenInput.addEventListener('compositionend', (e) => {
-          isComposing = false;
-          const finalText = (e as CompositionEvent).data || '';
-          console.log('Finalizando composição:', finalText);
-          
-          // Sempre pegar o objeto ativo atual
-          const activeObject = canvas.getActiveObject();
-          if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
-            const textObj = activeObject as fabric.Textbox;
-            if (textObj.isEditing && finalText) {
-              const currentText = textObj.text || '';
-              const selectionStart = textObj.selectionStart || 0;
-              const selectionEnd = textObj.selectionEnd || 0;
-              
-              const newText = currentText.slice(0, selectionStart) + finalText + currentText.slice(selectionEnd);
-              textObj.set('text', newText);
-              textObj.setSelectionStart(selectionStart + finalText.length);
-              textObj.setSelectionEnd(selectionStart + finalText.length);
-              
-              canvas.renderAll();
-              hiddenInput.value = '';
-            }
-          }
-        });
-        
-        canvasWrapper.addEventListener('keydown', (e) => {
-          // Sempre pegar o objeto ativo atual
-          const activeObject = canvas.getActiveObject();
-          console.log('Objeto ativo no keydown:', activeObject);
-          
-          if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
-            const textObj = activeObject as fabric.Textbox;
-            console.log('isEditing:', textObj.isEditing, 'ID do objeto:', (textObj as any).__uniqueID);
-            console.log('Tecla pressionada no canvas wrapper:', e.key);
-            console.log('Texto ativo:', textObj.text);
-            
-            // Focar no input oculto para capturar acentos
-            if (!isComposing) {
-              hiddenInput.focus();
-              hiddenInput.value = '';
-            }
-            
-            // Não processar teclas durante composição
-            if (isComposing) {
-              return;
-            }
-            
-            // Manipular atalhos de teclado
-            if (e.ctrlKey || e.metaKey) {
-              if (e.key === 'a' || e.key === 'A') {
-                // Selecionar tudo
-                e.preventDefault();
-                textObj.selectAll();
-                canvas.renderAll();
-                return;
-              } else if (e.key === 'c' || e.key === 'C') {
-                // Copiar
-                e.preventDefault();
-                if (textObj.selectionStart !== textObj.selectionEnd) {
-                  const selectedText = textObj.text.substring(textObj.selectionStart || 0, textObj.selectionEnd || 0);
-                  navigator.clipboard.writeText(selectedText);
-                }
-                return;
-              } else if (e.key === 'x' || e.key === 'X') {
-                // Recortar
-                e.preventDefault();
-                if (textObj.selectionStart !== textObj.selectionEnd) {
-                  const selectedText = textObj.text.substring(textObj.selectionStart || 0, textObj.selectionEnd || 0);
-                  navigator.clipboard.writeText(selectedText);
-                  
-                  // Remover texto selecionado
-                  const currentText = textObj.text || '';
-                  const selectionStart = textObj.selectionStart || 0;
-                  const selectionEnd = textObj.selectionEnd || 0;
-                  const newText = currentText.slice(0, selectionStart) + currentText.slice(selectionEnd);
-                  textObj.set('text', newText);
-                  textObj.setSelectionStart(selectionStart);
-                  textObj.setSelectionEnd(selectionStart);
-                  
-                  // Atualizar lista se necessário
-                  const listTextbox = textObj as any;
-                  if (listTextbox.listType && listTextbox.listType !== 'none' && listTextbox.updateListProperties) {
-                    setTimeout(() => {
-                      listTextbox._pendingCursorLine = Math.max(0, newText.substring(0, selectionStart).split('\n').length - 1);
-                      listTextbox._pendingCursorPos = selectionStart - newText.lastIndexOf('\n', selectionStart - 1) - 1;
-                      listTextbox.updateListProperties({});
-                    }, 10);
-                  }
-                  
-                  canvas.renderAll();
-                }
-                return;
-              } else if (e.key === 'v' || e.key === 'V') {
-                // Colar
-                e.preventDefault();
-                navigator.clipboard.readText().then(pastedText => {
-                  if (!pastedText) return;
-                  
-                  const currentText = textObj.text || '';
-                  const selectionStart = textObj.selectionStart || 0;
-                  const selectionEnd = textObj.selectionEnd || 0;
-                  
-                  // Para listas, processar o texto colado
-                  const listTextbox = textObj as any;
-                  if (listTextbox.listType && listTextbox.listType !== 'none') {
-                    // Limpar o texto colado de marcadores e ponto-e-vírgulas
-                    const cleanPastedText = cleanListMarkers(pastedText);
-                    
-                    // Limpar o texto atual também
-                    const cleanCurrentText = currentText.replace(/^[\s]*[•▸\d]+\.?\s*/gm, '');
-                    
-                    // Calcular posição no texto limpo
-                    const textBeforeSelection = currentText.substring(0, selectionStart);
-                    const linesBeforeSelection = textBeforeSelection.split('\n');
-                    let cleanSelectionStart = 0;
-                    
-                    // Mapear posição para o texto limpo
-                    for (let i = 0; i < linesBeforeSelection.length - 1; i++) {
-                      const cleanLine = linesBeforeSelection[i].replace(/^[\s]*[•▸\d]+\.?\s*/, '');
-                      cleanSelectionStart += cleanLine.length + 1;
-                    }
-                    const lastLine = linesBeforeSelection[linesBeforeSelection.length - 1];
-                    const cleanLastLine = lastLine.replace(/^[\s]*[•▸\d]+\.?\s*/, '');
-                    cleanSelectionStart += cleanLastLine.length;
-                    
-                    // Inserir texto limpo na posição correta
-                    const newCleanText = cleanCurrentText.slice(0, cleanSelectionStart) + cleanPastedText + cleanCurrentText.slice(cleanSelectionStart);
-                    textObj.set('text', newCleanText);
-                    
-                    // Calcular nova posição do cursor
-                    const newCursorPos = cleanSelectionStart + cleanPastedText.length;
-                    
-                    // Reprocessar lista
-                    if (listTextbox.updateListProperties) {
-                      setTimeout(() => {
-                        const lines = newCleanText.substring(0, newCursorPos).split('\n');
-                        listTextbox._pendingCursorLine = lines.length - 1;
-                        const lastLine = lines[lines.length - 1];
-                        listTextbox._pendingCursorPos = lastLine.length;
-                        listTextbox.updateListProperties({});
-                      }, 10);
-                    }
-                  } else {
-                    // Texto normal
-                    const newText = currentText.slice(0, selectionStart) + pastedText + currentText.slice(selectionEnd);
-                    textObj.set('text', newText);
-                    textObj.setSelectionStart(selectionStart + pastedText.length);
-                    textObj.setSelectionEnd(selectionStart + pastedText.length);
-                  }
-                  
-                  canvas.renderAll();
-                }).catch(err => {
-                  console.error('Erro ao colar:', err);
-                });
-                return;
-              }
-            }
-            
-            // Manipular teclas especiais
-            if (e.key === 'Backspace') {
-              // Apagar caractere
-              const currentText = textObj.text || '';
-              const selectionStart = textObj.selectionStart || 0;
-              const selectionEnd = textObj.selectionEnd || 0;
-              
-              if (selectionStart !== selectionEnd) {
-                // Apagar seleção
-                const newText = currentText.slice(0, selectionStart) + currentText.slice(selectionEnd);
-                textObj.set('text', newText);
-                textObj.setSelectionStart(selectionStart);
-                textObj.setSelectionEnd(selectionStart);
-              } else if (selectionStart > 0) {
-                // Apagar caractere anterior
-                const newText = currentText.slice(0, selectionStart - 1) + currentText.slice(selectionStart);
-                textObj.set('text', newText);
-                textObj.setSelectionStart(selectionStart - 1);
-                textObj.setSelectionEnd(selectionStart - 1);
-              }
-              
-              canvas.renderAll();
-              e.preventDefault();
-            } else if (e.key === 'Enter') {
-              // Adicionar nova linha
-              const currentText = textObj.text || '';
-              const selectionStart = textObj.selectionStart || 0;
-              const selectionEnd = textObj.selectionEnd || 0;
-              
-              // Verificar se o textbox tem propriedades de lista
-              const listTextbox = textObj as any;
-              if (listTextbox.listType && listTextbox.listType !== 'none') {
-                // Primeiro, limpar o texto de marcadores existentes
-                const cleanText = currentText.replace(/^[\s]*[•▸\d]+\.?\s*/gm, '');
-                const cleanLines = cleanText.split('\n');
-                
-                // Encontrar em qual linha limpa estamos
-                let cleanLineIndex = 0;
-                let posInCleanLine = 0;
-                
-                // Mapear posição do cursor no texto com marcadores para o texto limpo
-                const textBeforeCursor = currentText.substring(0, selectionStart);
-                const linesBeforeCursor = textBeforeCursor.split('\n');
-                
-                for (let i = 0; i < linesBeforeCursor.length - 1; i++) {
-                  cleanLineIndex++;
-                }
-                
-                // Posição na última linha (linha atual)
-                const lastLine = linesBeforeCursor[linesBeforeCursor.length - 1];
-                const cleanLastLine = lastLine.replace(/^[\s]*[•▸\d]+\.?\s*/, '');
-                posInCleanLine = cleanLastLine.length;
-                
-                const currentCleanLine = cleanLines[cleanLineIndex] || '';
-                
-                if (currentCleanLine.trim() === '' && cleanLineIndex > 0) {
-                  // Se a linha atual está vazia, remover ela e sair do modo lista
-                  cleanLines.splice(cleanLineIndex, 1);
-                  const newCleanText = cleanLines.join('\n');
-                  textObj.set('text', newCleanText);
-                  
-                  // Calcular nova posição do cursor
-                  let newCursorPos = 0;
-                  for (let i = 0; i < cleanLineIndex; i++) {
-                    newCursorPos += cleanLines[i].length + 1;
-                  }
-                  
-                  textObj.setSelectionStart(newCursorPos - 1);
-                  textObj.setSelectionEnd(newCursorPos - 1);
-                } else {
-                  // Inserir nova linha no texto limpo
-                  const beforeLine = currentCleanLine.substring(0, posInCleanLine);
-                  const afterLine = currentCleanLine.substring(posInCleanLine);
-                  
-                  cleanLines[cleanLineIndex] = beforeLine;
-                  cleanLines.splice(cleanLineIndex + 1, 0, afterLine);
-                  
-                  const newCleanText = cleanLines.join('\n');
-                  
-                  // Atualizar o texto limpo primeiro
-                  textObj.set('text', newCleanText);
-                  
-                  // Calcular onde o cursor deve estar no texto limpo
-                  let newCursorPos = 0;
-                  for (let i = 0; i <= cleanLineIndex; i++) {
-                    newCursorPos += cleanLines[i].length + 1;
-                  }
-                  
-                  // Aplicar marcadores e calcular nova posição
-                  if (listTextbox.updateListProperties) {
-                    // Salvar que queremos posicionar o cursor no início da próxima linha
-                    listTextbox._pendingCursorLine = cleanLineIndex + 1;
-                    listTextbox._pendingCursorPos = 0;
-                    listTextbox.updateListProperties({});
-                  }
-                }
-              } else {
-                // Texto normal sem lista
-                const newText = currentText.slice(0, selectionStart) + '\n' + currentText.slice(selectionEnd);
-                textObj.set('text', newText);
-                textObj.setSelectionStart(selectionStart + 1);
-                textObj.setSelectionEnd(selectionStart + 1);
-              }
-              
-              canvas.renderAll();
-              e.preventDefault();
-            }
-          }
-        });
-        
-        // Capturar input real (incluindo acentos)
-        hiddenInput.addEventListener('input', (e) => {
-          // Não processar durante composição
-          if (isComposing) {
-            return;
-          }
-          
-          // Sempre pegar o objeto ativo atual
-          const activeObject = canvas.getActiveObject();
-          if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
-            const textObj = activeObject as fabric.Textbox;
-            if (textObj.isEditing) {
-              const inputValue = (e.target as HTMLInputElement).value;
-              
-              // Verificar se é um caractere normal (não acento)
-              if (inputValue && inputValue.length === 1 && !['´', '`', '^', '~', '¨'].includes(inputValue)) {
-                const currentText = textObj.text || '';
-                const selectionStart = textObj.selectionStart || 0;
-                const selectionEnd = textObj.selectionEnd || 0;
-                
-                const newText = currentText.slice(0, selectionStart) + inputValue + currentText.slice(selectionEnd);
-                textObj.set('text', newText);
-                textObj.setSelectionStart(selectionStart + inputValue.length);
-                textObj.setSelectionEnd(selectionStart + inputValue.length);
-                
-                canvas.renderAll();
-                
-                // Limpar o input
-                (e.target as HTMLInputElement).value = '';
-              }
-            }
-          }
-        });
-      }
-      
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-        
-        if (fabricCanvasRef.current) {
-          fabricCanvasRef.current.off('mouse:wheel');
-          fabricCanvasRef.current.off('selection:created');
-          fabricCanvasRef.current.off('selection:updated');
-          fabricCanvasRef.current.off('selection:cleared');
-          fabricCanvasRef.current.off('mouse:down');
-          fabricCanvasRef.current.off('text:changed');
-          fabricCanvasRef.current.off('text:editing:entered');
-          fabricCanvasRef.current.off('text:editing:exited');
-          fabricCanvasRef.current.off('mouse:up');
-          fabricCanvasRef.current.off('object:modified');
-          fabricCanvasRef.current.off('object:scaling');
-          
-          if (fabricCanvasRef.current.upperCanvasEl) {
-            fabricCanvasRef.current.upperCanvasEl.removeEventListener('contextmenu', handleContextMenu);
-          }
-          if (fabricCanvasRef.current.lowerCanvasEl) {
-            fabricCanvasRef.current.lowerCanvasEl.removeEventListener('contextmenu', handleContextMenu);
-          }
-          const wrapperEl = fabricCanvasRef.current.wrapperEl;
-          if (wrapperEl) {
-            wrapperEl.removeEventListener('contextmenu', handleContextMenu);
-          }
-        }
-      };
-    }
-
-    return () => {
-      if (fabricCanvasRef.current) {
-        try {
-          fabricCanvasRef.current.dispose();
-        } catch (error) {
-          console.error('Error disposing canvas:', error);
-        }
-        fabricCanvasRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    updateCanvasSize(orientation, zoomLevel);
-    
-    // Centralizar o scroll quando o zoom mudar
-    if (containerRef.current) {
-      const container = containerRef.current;
-      const scrollWidth = container.scrollWidth;
-      const scrollHeight = container.scrollHeight;
-      const clientWidth = container.clientWidth;
-      const clientHeight = container.clientHeight;
-      
-      // Calcular posição central
-      const scrollLeft = (scrollWidth - clientWidth) / 2;
-      const scrollTop = (scrollHeight - clientHeight) / 2;
-      
-      // Aplicar scroll suavemente
-      container.scrollTo({
-        left: scrollLeft,
-        top: scrollTop,
-        behavior: 'smooth'
-      });
-    }
-  }, [orientation, zoomLevel]);
-
-  const handleZoomChange = (value: number[]) => {
-    onZoomChange(value[0]);
-  };
+  const handleZoomChange = (value: number[]) => applyZoom(value[0]);
+  const handleZoomIn = () => applyZoom(Math.min(MAX_ZOOM_PERCENT, zoomLevel + 10));
+  const handleZoomOut = () => applyZoom(Math.max(MIN_ZOOM_PERCENT, zoomLevel - 10));
+  const handleZoomReset = () => applyZoom(100);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    
     const imageUrl = e.dataTransfer.getData('imageUrl');
     const imageName = e.dataTransfer.getData('imageName');
     if (imageUrl) {
-      // addImageToCanvas já vai aplicar o proxy internamente
       addImageToCanvas(imageUrl, imageName);
       return;
     }
-    
     const shapeType = e.dataTransfer.getData('shapeType');
     if (shapeType && fabricCanvasRef.current) {
-      // Get shape settings from parent
-      const shapeSettings = {
+      addShapeToCanvas(shapeType as any, {
         fill: '#000000',
         stroke: '#000000',
         strokeWidth: 0,
         opacity: 100,
-        cornerRadius: 0
-      };
-      addShapeToCanvas(shapeType as any, shapeSettings);
+        cornerRadius: 0,
+      });
     }
   };
+
+  // ========== RENDER ==========
 
   return (
     <div className="h-full flex flex-col">
@@ -1594,81 +540,65 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
             <RectangleVertical className="w-4 h-4" />
           </Button>
         </div>
-        
+
         {/* Zoom controls */}
         <div className="flex items-center gap-2">
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => onZoomChange(Math.max(30, zoomLevel - 1))}
+            onClick={handleZoomOut}
             className="h-6 w-6 p-0"
-            disabled={zoomLevel <= 30}
+            disabled={zoomLevel <= MIN_ZOOM_PERCENT}
           >
             <ZoomOut className="w-4 h-4" />
           </Button>
           <Slider
             value={[zoomLevel]}
             onValueChange={handleZoomChange}
-            min={30}
-            max={300}
+            min={MIN_ZOOM_PERCENT}
+            max={MAX_ZOOM_PERCENT}
             step={1}
             className="w-32"
           />
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => onZoomChange(Math.min(300, zoomLevel + 1))}
+            onClick={handleZoomIn}
             className="h-6 w-6 p-0"
-            disabled={zoomLevel >= 300}
+            disabled={zoomLevel >= MAX_ZOOM_PERCENT}
           >
             <ZoomIn className="w-4 h-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleZoomReset}
+            className="h-6 px-2 text-xs"
+            title="Reset zoom para 100%"
+          >
+            <RotateCcw className="w-3 h-3 mr-1" />
+            100%
           </Button>
           <span className="text-xs text-gray-500 min-w-[3rem] text-right">{zoomLevel}%</span>
         </div>
       </div>
-      
+
       {/* Canvas container */}
-      <div 
+      <div
         ref={containerRef}
         className={`canvas-container flex-1 min-h-0 border rounded-lg bg-muted p-4 overflow-auto relative transition-colors ${
           isDragging ? 'border-primary border-2' : ''
         } ${!isActive ? 'opacity-0 pointer-events-none' : ''}`}
         data-page-active={isActive}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          return false;
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'copy';
-        }}
+        onContextMenu={(e) => { e.preventDefault(); return false; }}
+        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
         onDrop={handleDrop}
-        onKeyDown={(e) => {
-          // Prevenir que o modal capture eventos de teclado quando estiver editando texto
-          e.stopPropagation();
-        }}
-        onKeyUp={(e) => {
-          e.stopPropagation();
-        }}
-        onKeyPress={(e) => {
-          e.stopPropagation();
-        }}
       >
-        <div 
-          className="inline-flex min-w-full min-h-full items-center justify-center" 
-          style={{ 
-            padding: zoomLevel > 100 ? `${Math.max(100, zoomLevel * 0.5)}px` : '50px'
-          }}
-        >
-          <div className="relative">
-            <canvas 
+        <div className="canvas-scroll-area">
+          <div className="canvas-wrapper">
+            <canvas
               ref={canvasRef}
-              style={{ 
-                maxWidth: 'none', 
-                maxHeight: 'none',
-                position: 'relative',
-                zIndex: 10
-              }}
+              style={{ maxWidth: 'none', maxHeight: 'none', display: 'block' }}
             />
             {isLoadingCanvas && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-lg">

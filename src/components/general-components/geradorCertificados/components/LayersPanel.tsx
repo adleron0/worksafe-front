@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Eye, EyeOff, Trash2, Image as ImageIcon, Type, Shapes, GripVertical, Lock, Unlock } from 'lucide-react';
 import * as fabric from 'fabric';
+import { isTextObject } from '../types';
 
 interface LayersPanelProps {
   canvas: fabric.Canvas | null;
@@ -35,7 +36,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
     
     if (obj.type === 'image' || obj.constructor.name === 'FabricImage') {
       return ImageIcon;
-    } else if (obj.type === 'i-text' || obj.type === 'textbox') {
+    } else if (isTextObject(obj)) {
       return Type;
     } else if (['rectangle', 'circle', 'triangle', 'line', 'rect'].includes(objWithName.name || obj.type || '')) {
       return Shapes;
@@ -49,7 +50,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
     
     if (obj.type === 'image' || obj.constructor.name === 'FabricImage') {
       return objWithName.name || `Imagem ${index}`;
-    } else if (obj.type === 'i-text' || obj.type === 'textbox') {
+    } else if (isTextObject(obj)) {
       const textObj = obj as fabric.Textbox;
       const text = textObj.text || '';
       const truncatedText = text.length > 20 ? text.substring(0, 20) + '...' : text;
@@ -83,7 +84,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
       let elementType = '';
       if (obj.type === 'image' || obj.constructor.name === 'FabricImage') {
         elementType = 'image';
-      } else if (obj.type === 'i-text' || obj.type === 'textbox') {
+      } else if (isTextObject(obj)) {
         elementType = 'text';
       } else if (objWithName.name === 'rectangle' || obj.type === 'rect') {
         elementType = 'rectangle';
@@ -153,14 +154,36 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
 
   // Toggle bloqueio
   const toggleLock = (layer: LayerItem) => {
-    const isLocked = layer.object.selectable === false;
-    layer.object.selectable = isLocked;
-    layer.object.evented = isLocked;
+    const isCurrentlyLocked = layer.object.selectable === false;
+    const shouldUnlock = isCurrentlyLocked;
+
+    // Definir propriedades básicas
+    layer.object.selectable = shouldUnlock;
+    layer.object.evented = shouldUnlock;
+
+    // Definir propriedades de controle - importante para resize funcionar
+    layer.object.hasControls = shouldUnlock;
+    layer.object.hasBorders = shouldUnlock;
+
+    // Definir propriedades de bloqueio de movimento/escala/rotação
+    layer.object.lockMovementX = !shouldUnlock;
+    layer.object.lockMovementY = !shouldUnlock;
+    layer.object.lockScalingX = !shouldUnlock;
+    layer.object.lockScalingY = !shouldUnlock;
+    layer.object.lockRotation = !shouldUnlock;
+
+    // Para textos, também restaurar a propriedade editable
+    if (isTextObject(layer.object)) {
+      (layer.object as fabric.Textbox).editable = shouldUnlock;
+    }
 
     // Se o objeto estiver selecionado e for bloqueado, desselecionar
-    if (!isLocked && canvas?.getActiveObject() === layer.object) {
+    if (!shouldUnlock && canvas?.getActiveObject() === layer.object) {
       canvas.discardActiveObject();
     }
+
+    // Forçar atualização das coordenadas e controles
+    layer.object.setCoords();
 
     canvas?.renderAll();
     updateLayers();

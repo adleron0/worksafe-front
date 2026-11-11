@@ -35,9 +35,12 @@ import { CertificateSaveModal } from './components/CertificateSaveModal';
 // Hooks
 import { useCanvas } from './hooks/useCanvas';
 import { useCertificateApi } from './hooks/useCertificateApi';
+import { useCanvasHistory } from './hooks/useCanvasHistory';
+import { applyFontOverrides } from './utils/fontConfig';
+import { loadAllFonts, ensureFontLoaded, clearFabricFontCache } from './utils/fontLoader';
 
 // Types
-import { ImageListResponse, ShapeSettings, ContextMenuData } from './types';
+import { ImageListResponse, ShapeSettings, ContextMenuData, isTextObject } from './types';
 
 // Templates
 import { certificateTemplates, TemplateGrid } from './templates';
@@ -105,185 +108,9 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
 
   // Carregar fontes do Google no início
   useEffect(() => {
-    const loadGoogleFonts = async () => {
-      try {
-        // Lista de fontes para carregar
-        const fontsToLoad = [
-          'Bebas Neue',
-          'Roboto',
-          'Open Sans', 
-          'Lato',
-          'Montserrat',
-          'Poppins',
-          'Raleway',
-          'Inter',
-          'Playfair Display',
-          'Oswald',
-          'Merriweather'
-        ];
-
-        // Adicionar estilos CSS para garantir importação das fontes
-        const styleId = 'google-fonts-import-styles';
-        if (!document.getElementById(styleId)) {
-          const style = document.createElement('style');
-          style.id = styleId;
-          style.textContent = `
-            @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Inter:wght@400;700&family=Playfair+Display:wght@400;700&family=Oswald:wght@400;700&family=Merriweather:wght@400;700&display=swap');
-            
-            /* Teste específico para Bebas Neue */
-            .bebas-neue-test {
-              font-family: 'Bebas Neue', sans-serif !important;
-            }
-          `;
-          document.head.appendChild(style);
-          console.log('🎨 Estilos de importação de fontes adicionados');
-        }
-
-        // Verificar se já existe o link das fontes
-        let link = document.querySelector('link[href*="fonts.googleapis.com"]') as HTMLLinkElement;
-        
-        if (!link) {
-          // Criar link para as fontes
-          link = document.createElement('link');
-          // Importante: Bebas+Neue com + para espaço e display=swap para carregamento mais rápido
-          link.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Inter:wght@400;700&family=Playfair+Display:wght@400;700&family=Oswald:wght@400;700&family=Merriweather:wght@400;700&display=swap';
-          link.rel = 'stylesheet';
-          link.crossOrigin = 'anonymous'; // Adicionar crossOrigin para evitar problemas de CORS
-          document.head.appendChild(link);
-          console.log('📝 Link de fontes do Google adicionado ao documento');
-        } else {
-          console.log('🔗 Link de fontes já existe no documento');
-        }
-
-        // Aguardar o carregamento usando Font Loading API
-        if ('fonts' in document) {
-          console.log('Aguardando carregamento de fontes...');
-          
-          // Aguardar que o documento esteja pronto para fontes
-          await document.fonts.ready;
-          
-          // Verificar individualmente cada fonte
-          const fontPromises = fontsToLoad.map(async (fontFamily) => {
-            try {
-              // Criar uma string de teste para verificação
-              const testString = `12px "${fontFamily}"`;
-              console.log(`🔍 Verificando fonte: ${testString}`);
-              
-              // Tentar carregar a fonte explicitamente primeiro
-              try {
-                await document.fonts.load(testString, 'Test');
-                console.log(`📥 Fonte ${fontFamily} carregada via fonts.load()`);
-              } catch (loadError) {
-                console.warn(`⚠️ Não foi possível carregar ${fontFamily} via fonts.load():`, loadError);
-              }
-              
-              // Verificar se a fonte está disponível
-              if (document.fonts.check(testString, 'Test')) {
-                console.log(`✅ Fonte ${fontFamily} confirmada como disponível`);
-                return true;
-              }
-
-              // Se não estiver disponível, aguardar um pouco mais
-              return new Promise<boolean>((resolve) => {
-                let attempts = 0;
-                const maxAttempts = 30; // 3 segundos
-                
-                const checkFont = () => {
-                  attempts++;
-                  if (document.fonts.check(testString, 'Test')) {
-                    console.log(`✅ Fonte ${fontFamily} carregada após ${attempts} tentativas`);
-                    resolve(true);
-                  } else if (attempts >= maxAttempts) {
-                    console.warn(`⚠️ Timeout ao carregar fonte ${fontFamily} após ${attempts} tentativas`);
-                    // Ainda assim retornar true para não bloquear o resto
-                    resolve(true);
-                  } else {
-                    setTimeout(checkFont, 100);
-                  }
-                };
-                checkFont();
-              });
-            } catch (error) {
-              console.warn(`⚠️ Erro ao verificar fonte ${fontFamily}:`, error);
-              return true; // Não bloquear por erro
-            }
-          });
-
-          // Aguardar todas as fontes ou timeout
-          await Promise.allSettled(fontPromises);
-          
-          // Testar especificamente a Bebas Neue
-          const testBebasNeue = async () => {
-            // Forçar carregamento da fonte antes do teste
-            if ('fonts' in document) {
-              try {
-                await document.fonts.load('400 50px "Bebas Neue"');
-                await document.fonts.load('700 50px "Bebas Neue"');
-              } catch (e) {
-                console.log('Tentativa adicional de carregar Bebas Neue:', e);
-              }
-            }
-            
-            // Pequeno delay para garantir aplicação da fonte
-            await new Promise(resolve => setTimeout(resolve, 50));
-            
-            const testDiv = document.createElement('div');
-            testDiv.style.position = 'absolute';
-            testDiv.style.left = '-9999px';
-            testDiv.style.fontSize = '50px'; // Tamanho maior para melhor detecção
-            testDiv.style.fontFamily = 'monospace';
-            testDiv.textContent = 'IIIIIIIIII'; // Bebas Neue tem letras estreitas
-            document.body.appendChild(testDiv);
-            const monoWidth = testDiv.offsetWidth;
-            
-            testDiv.style.fontFamily = '"Bebas Neue", monospace';
-            // Forçar recálculo do layout
-            testDiv.offsetHeight;
-            const bebasWidth = testDiv.offsetWidth;
-            
-            document.body.removeChild(testDiv);
-            
-            // Bebas Neue é condensada, deve ser significativamente mais estreita
-            const isLoaded = bebasWidth < monoWidth * 0.8; // Deve ser pelo menos 20% mais estreita
-            console.log(`🔍 Teste Bebas Neue: ${isLoaded ? '✅ Carregada' : '❌ Não carregada'} (mono: ${monoWidth}px, bebas: ${bebasWidth}px, ratio: ${(bebasWidth/monoWidth).toFixed(2)})`);
-            return isLoaded;
-          };
-          
-          // Tentar algumas vezes até a fonte carregar corretamente
-          let bebasLoaded = false;
-          for (let i = 0; i < 8; i++) { // Aumentar tentativas
-            bebasLoaded = await testBebasNeue();
-            if (bebasLoaded) break;
-            await new Promise(resolve => setTimeout(resolve, 400)); // Aumentar delay entre tentativas
-          }
-          
-          if (!bebasLoaded) {
-            console.warn('⚠️ Bebas Neue não carregou pelo método padrão. Verificando disponibilidade...');
-            
-            // Verificar se a fonte está na lista de fontes disponíveis
-            if ('fonts' in document) {
-              const availableFonts: string[] = [];
-              for (const font of document.fonts) {
-                availableFonts.push((font as FontFace).family);
-              }
-              console.log('📋 Fontes disponíveis no documento:', availableFonts);
-            }
-          }
-          
-          // Aguardar um pouco adicional para garantir estabilidade
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          console.log('✅ Processo de carregamento de fontes concluído');
-        }
-        
-        setFontsLoaded(true);
-      } catch (error) {
-        console.error('Erro no carregamento de fontes:', error);
-        setFontsLoaded(true); // Continuar mesmo com erro
-      }
-    };
-
-    loadGoogleFonts();
+    loadAllFonts()
+      .then(() => setFontsLoaded(true))
+      .catch(() => setFontsLoaded(true)); // Continuar mesmo com erro
   }, []);
   
   // Canvas hook
@@ -319,6 +146,46 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
     prepareDataForSave
   } = useCertificateApi();
 
+  // Undo/Redo — rastrear canvas ativo e conectar ao hook de histórico
+  const [activeCanvas, setActiveCanvas] = useState<fabric.Canvas | null>(null);
+
+  useEffect(() => {
+    const canvasRef = getCurrentCanvasRef();
+    if (canvasRef) {
+      const canvas = canvasRef.getCanvas();
+      setActiveCanvas(canvas ?? null);
+    } else {
+      setActiveCanvas(null);
+    }
+  }, [getCurrentCanvasRef, currentPageIndex]);
+
+  const { undo, redo, canUndo, canRedo } = useCanvasHistory(activeCanvas);
+
+  // Atalhos de teclado para Undo/Redo (Ctrl+Z / Ctrl+Shift+Z)
+  useEffect(() => {
+    const handleUndoRedo = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
+
+      // Se um texto está em modo edição, deixar o Fabric.js tratar internamente
+      if (activeCanvas) {
+        const activeObj = activeCanvas.getActiveObject();
+        if (isTextObject(activeObj)) {
+          if (activeObj.isEditing) return;
+        }
+      }
+
+      e.preventDefault();
+      if (e.shiftKey) {
+        redo();
+      } else {
+        undo();
+      }
+    };
+
+    window.addEventListener('keydown', handleUndoRedo);
+    return () => window.removeEventListener('keydown', handleUndoRedo);
+  }, [activeCanvas, undo, redo]);
+
   // Sincronizar selectedText com o objeto real no canvas usando o ID
   useEffect(() => {
     if (selectedTextId) {
@@ -326,16 +193,14 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
       if (canvasRef) {
         const canvas = canvasRef.getCanvas();
         const objects = canvas.getObjects();
-        const textObj = objects.find((obj: fabric.Object) => 
-          (obj.type === 'textbox' || obj.type === 'i-text') && 
+        const textObj = objects.find((obj: fabric.Object) =>
+          isTextObject(obj) &&
           (obj as any).__uniqueID === selectedTextId
         ) as fabric.Textbox | undefined;
         
         if (textObj) {
-          console.log('🟪 Objeto de texto encontrado pelo ID:', selectedTextId);
           setSelectedText(textObj);
         } else {
-          console.log('🟪 AVISO: Objeto de texto não encontrado para ID:', selectedTextId);
           setSelectedText(null);
         }
       }
@@ -349,23 +214,22 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
     const canvasRef = getCurrentCanvasRef();
     if (canvasRef) {
       const canvas = canvasRef.getCanvas();
-      
+      if (!canvas) return;
+
       const handleDirectSelection = () => {
         const activeObj = canvas.getActiveObject();
-        
-        if (activeObj && (activeObj.type === 'textbox' || activeObj.type === 'i-text')) {
-          const textObj = activeObj as fabric.Textbox;
-          const textId = (textObj as any).__uniqueID || `text_${Date.now()}`;
-          
-          if (!(textObj as any).__uniqueID) {
-            (textObj as any).__uniqueID = textId;
+        if (isTextObject(activeObj)) {
+          const textId = (activeObj as any).__uniqueID || `text_${Date.now()}`;
+
+          if (!(activeObj as any).__uniqueID) {
+            (activeObj as any).__uniqueID = textId;
           }
-          
+
           setSelectedTextId(textId);
-          setSelectedText(textObj);
+          setSelectedText(activeObj);
         }
       };
-      
+
       // Adicionar múltiplos listeners para garantir detecção
       canvas.on('selection:created', handleDirectSelection);
       canvas.on('selection:updated', handleDirectSelection);
@@ -381,49 +245,25 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
     }
   }, [getCurrentCanvasRef, currentPageIndex]);
 
-  // Verificar periodicamente quando a aba de texto está ativa
+  // Quando a aba de texto ficar ativa, sincronizar seleção imediatamente
   useEffect(() => {
     if (activeTab === 'text') {
-      const checkTextSelection = () => {
-        const canvasRef = getCurrentCanvasRef();
-        if (canvasRef) {
-          const canvas = canvasRef.getCanvas();
-          const activeObj = canvas.getActiveObject();
-          
-          if (activeObj && (activeObj.type === 'textbox' || activeObj.type === 'i-text')) {
-            const textObj = activeObj as fabric.Textbox;
-            const textId = (textObj as any).__uniqueID;
-            
-            // Só atualizar se for um texto diferente ou se não há texto selecionado
-            if (textId && textId !== selectedTextId) {
-              setSelectedTextId(textId);
-              setSelectedText(textObj);
-            } else if (!textId) {
-              // Atribuir ID se não tiver
-              const newId = `text_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-              (textObj as any).__uniqueID = newId;
-              setSelectedTextId(newId);
-              setSelectedText(textObj);
-            }
-          } else if (selectedText && !activeObj) {
-            // Se não há objeto ativo mas temos um texto selecionado, limpar
-            setSelectedTextId(null);
-            setSelectedText(null);
+      const canvasRef = getCurrentCanvasRef();
+      if (canvasRef) {
+        const canvas = canvasRef.getCanvas();
+        const activeObj = canvas.getActiveObject();
+
+        if (isTextObject(activeObj)) {
+          const textId = (activeObj as any).__uniqueID || `text_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+          if (!(activeObj as any).__uniqueID) {
+            (activeObj as any).__uniqueID = textId;
           }
+          setSelectedTextId(textId);
+          setSelectedText(activeObj);
         }
-      };
-      
-      // Verificar imediatamente
-      checkTextSelection();
-      
-      // Verificar a cada 500ms
-      const interval = setInterval(checkTextSelection, 500);
-      
-      return () => {
-        clearInterval(interval);
-      };
+      }
     }
-  }, [activeTab, getCurrentCanvasRef, selectedTextId, selectedText]);
+  }, [activeTab, getCurrentCanvasRef]);
 
 
   // Query for fetching images
@@ -434,15 +274,12 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         { key: 'page', value: currentPage.toString() },
         { key: 'limit', value: '6' }
       ];
-      
+
       const response = await get<ImageListResponse>('images', '', params);
-      console.log('Images API raw response:', response);
-      console.log('Response type:', typeof response);
-      console.log('Response is array?:', Array.isArray(response));
-      
+
       // Verificar se a resposta é um array direto (sem wrapper)
       let processedResponse: ImageListResponse;
-      
+
       if (Array.isArray(response)) {
         // Se for um array direto, criar a estrutura esperada
         processedResponse = {
@@ -450,7 +287,6 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
           total: (response as any).length,
           rows: response as any
         };
-        console.log('Response was array, converted to:', processedResponse);
       } else if (response && 'rows' in response) {
         // Se já tem a estrutura esperada, mas garantir que images exista
         processedResponse = {
@@ -458,40 +294,35 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
           total: (response as any).total || 0,
           rows: (response as any).rows || []
         };
-        console.log('Response has expected structure');
       } else if (response && typeof response === 'object') {
         // Tentar encontrar os dados em outras propriedades
         const possibleDataKeys = ['data', 'items', 'results', 'images'];
         let foundData = null;
-        
+
         for (const key of possibleDataKeys) {
           if (key in response && Array.isArray((response as any)[key])) {
             foundData = (response as any)[key];
             break;
           }
         }
-        
+
         if (foundData) {
           processedResponse = {
             images: foundData,
             total: foundData.length,
             rows: foundData
           };
-          console.log('Found data in alternative structure:', processedResponse);
         } else {
           // Se não encontrar, assumir estrutura vazia
           processedResponse = { images: [], total: 0, rows: [] };
-          console.log('Could not find data, using empty structure');
         }
       } else {
         // Fallback para estrutura vazia
         processedResponse = { images: [], total: 0, rows: [] };
-        console.log('Unknown response format, using empty structure');
       }
-      
+
       // NÃO processar URLs aqui para manter as imagens aparecendo na galeria
       // O proxy será aplicado apenas quando adicionar ao canvas
-      console.log('Returning response (proxy will be applied on canvas):', processedResponse);
       return processedResponse;
     }
   });
@@ -581,7 +412,6 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         } else if (shapeWithName.name === 'triangle' || activeObject.type === 'triangle') {
           // Triângulos - apenas atualizar propriedades básicas
           // Fabric.js não suporta arredondamento em triângulos
-          console.log('ℹ️ Triângulo selecionado - arredondamento não disponível');
         }
       }
 
@@ -618,25 +448,18 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
   }, [showContextMenu]);
 
   const handleObjectSelected = useCallback((obj: fabric.Object) => {
-    console.log('🔵 handleObjectSelected called');
-    console.log('🔵 Object type:', obj.type);
-    console.log('🔵 Object:', obj);
-
     // Check if it's a text object
-    if (obj.type === 'i-text' || obj.type === 'textbox') {
-      const textObj = obj as fabric.Textbox;
-
+    if (isTextObject(obj)) {
       // Usar ID para garantir referência correta
-      const textId = (textObj as any).__uniqueID || `text_${Date.now()}`;
-      if (!(textObj as any).__uniqueID) {
-        (textObj as any).__uniqueID = textId;
+      const textId = (obj as any).__uniqueID || `text_${Date.now()}`;
+      if (!(obj as any).__uniqueID) {
+        (obj as any).__uniqueID = textId;
       }
 
       setSelectedTextId(textId);
       setSelectedShape(null);
       selectedShapeRef.current = null;
     } else {
-      console.log('🟢 Setting selected shape');
       setSelectedShape(obj);
       selectedShapeRef.current = obj;
       setSelectedTextId(null);
@@ -648,23 +471,12 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
       const strokeWidth = obj.strokeWidth || 0;
       const opacity = (obj.opacity || 1) * 100;
 
-      console.log('🟢 Current shape settings:');
-      console.log('  - fill:', fill);
-      console.log('  - stroke:', stroke);
-      console.log('  - strokeWidth:', strokeWidth);
-      console.log('  - opacity:', opacity);
-
       // Get corner radius for rectangles
       let cornerRadius = 0;
       if (obj.type === 'rect') {
         const rect = obj as fabric.Rect;
         // Tentar obter o raio base armazenado ou usar o rx atual
         cornerRadius = (rect as any)._baseRadius || rect.rx || rect.ry || 0;
-        console.log('🟢 Rectangle corner radius:');
-        console.log('  - _baseRadius:', (rect as any)._baseRadius);
-        console.log('  - rx:', rect.rx);
-        console.log('  - ry:', rect.ry);
-        console.log('  - final cornerRadius:', cornerRadius);
       }
 
       // Update settings to match selected shape
@@ -675,7 +487,6 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         opacity,
         cornerRadius
       };
-      console.log('🟢 Setting new shape settings:', newSettings);
       setShapeSettings(newSettings);
     }
   }, []);
@@ -784,45 +595,22 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
   };
 
   const handleUpdateText = (settings: Partial<any>) => {
-    console.log('🔵 handleUpdateText - INÍCIO');
-    console.log('🔵 Settings recebidos:', JSON.stringify(settings, null, 2));
-    
     const canvasRef = getCurrentCanvasRef();
-    console.log('🔵 CanvasRef obtido:', !!canvasRef);
-    
     const canvas = canvasRef?.getCanvas();
-    console.log('🔵 Canvas obtido:', !!canvas);
-    
+
     if (!canvas) {
-      console.log('❌ Canvas não encontrado - abortando');
       return;
     }
-    
+
     // Pegar o objeto atualmente selecionado no canvas
     const activeObject = canvas.getActiveObject();
-    console.log('🔵 Objeto ativo:', activeObject);
-    console.log('🔵 Tipo do objeto ativo:', activeObject?.type);
-    console.log('🔵 Objeto é texto?', activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox'));
-    
-    if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
+
+    if (isTextObject(activeObject)) {
       const textObj = activeObject as fabric.Textbox & {
         updateListProperties?: (props: Record<string, unknown>) => void;
         charSpacing?: number;
       };
-      console.log('✅ Texto encontrado para atualização');
-      console.log('🔵 Propriedades ANTES da atualização:', {
-        fontFamily: textObj.fontFamily,
-        fontSize: textObj.fontSize,
-        fontWeight: textObj.fontWeight,
-        fontStyle: textObj.fontStyle,
-        fill: textObj.fill,
-        underline: textObj.underline,
-        textAlign: textObj.textAlign,
-        originY: textObj.originY,
-        lineHeight: textObj.lineHeight,
-        charSpacing: textObj.charSpacing
-      });
-      
+
       // Check if it's a ListTextbox
       if (textObj.updateListProperties) {
         // Update list-specific properties
@@ -830,12 +618,12 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         if ('listType' in settings) listProps.listType = settings.listType;
         if ('listIndent' in settings) listProps.listIndent = settings.listIndent;
         if ('listItemSpacing' in settings) listProps.listItemSpacing = settings.listItemSpacing;
-        
+
         if (Object.keys(listProps).length > 0) {
           textObj.updateListProperties(listProps);
         }
       }
-      
+
       // Update text properties one by one
       if ('letterSpacing' in settings) {
         textObj.set('charSpacing', settings.letterSpacing);
@@ -844,7 +632,13 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         textObj.set('text', settings.text);
       }
       if ('fontWeight' in settings) {
+        // Limpar cache GLOBAL de larguras do Fabric.js para esta fonte
+        // (evita reuso de medições feitas com peso diferente ou faux bold)
+        clearFabricFontCache(textObj.fontFamily);
         textObj.set('fontWeight', settings.fontWeight);
+        textObj.dirty = true;
+        textObj._clearCache();
+        textObj.initDimensions();
       }
       if ('fontStyle' in settings) {
         textObj.set('fontStyle', settings.fontStyle);
@@ -860,47 +654,41 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
       }
       if ('fontFamily' in settings) {
         const newFont = settings.fontFamily;
-        const currentFont = textObj.fontFamily;
-        
-        console.log(`🔄 Mudando fonte de "${currentFont}" para "${newFont}"`);
-        
+
         // Aplicar estratégia robusta sempre
         const applyFontChange = async () => {
           // Verificar se a fonte está disponível
           const isFontAvailable = document.fonts.check(`12px "${newFont}"`);
-          
+
           if (!isFontAvailable) {
-            console.warn(`⚠️ Fonte ${newFont} não disponível, aguardando...`);
             // Aguardar um pouco para a fonte carregar
             await new Promise(resolve => setTimeout(resolve, 200));
           }
-          
+
           // 1. Aplicar fallback temporário
           textObj.set('fontFamily', 'Arial');
           textObj.dirty = true;
           canvas.renderAll();
-          
+
           // 2. Aguardar frame
           await new Promise(resolve => requestAnimationFrame(resolve));
-          
+
           // 3. Aplicar nova fonte
           textObj.set('fontFamily', newFont);
           textObj.dirty = true;
-          
+
           // 4. Forçar limpeza de cache se disponível
           if ('_clearCache' in textObj && typeof textObj['_clearCache' as keyof typeof textObj] === 'function') {
             const clearCacheMethod = textObj['_clearCache' as keyof typeof textObj] as () => void;
             clearCacheMethod.call(textObj);
           }
           textObj.setCoords();
-          
+
           // 5. Renderizar
           canvas.renderAll();
           canvas.requestRenderAll();
-          
-          console.log(`✅ Fonte ${newFont} aplicada`);
         };
-        
+
         applyFontChange();
       }
       if ('underline' in settings) {
@@ -910,36 +698,22 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         textObj.set('lineHeight', settings.lineHeight);
       }
       if ('originY' in settings) {
-        console.log('🔵 Atualizando originY:', settings.originY);
         textObj.set('originY', settings.originY);
       }
-      
+      if ('stroke' in settings) {
+        textObj.set('stroke', settings.stroke || '');
+      }
+      if ('strokeWidth' in settings) {
+        textObj.set('strokeWidth', settings.strokeWidth || 0);
+      }
+
       // Force update
-      console.log('🔵 Forçando atualização do canvas...');
       textObj.setCoords();
       canvas.renderAll();
       canvas.requestRenderAll();
-      
-      console.log('✅ Texto atualizado com sucesso');
-      console.log('🔵 Propriedades DEPOIS da atualização:', {
-        fontFamily: textObj.fontFamily,
-        fontSize: textObj.fontSize,
-        fontWeight: textObj.fontWeight,
-        fontStyle: textObj.fontStyle,
-        fill: textObj.fill,
-        underline: textObj.underline,
-        textAlign: textObj.textAlign,
-        originY: textObj.originY,
-        lineHeight: textObj.lineHeight,
-        charSpacing: textObj.charSpacing
-      });
-      console.log('🔵 handleUpdateText - FIM');
-      
+
       // Update the selected text reference
       setSelectedText(textObj);
-    } else {
-      console.log('❌ Nenhum texto ativo no canvas ou objeto não é texto');
-      console.log('🔵 handleUpdateText - FIM (sem texto)');
     }
   };
 
@@ -950,24 +724,10 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         try {
           setIsLoadingTemplate(true); // Start loading
           setShouldShowSkeleton(false); // Hide skeleton to allow canvas to render
-          
-          // Garantir que a fonte Bebas Neue está completamente carregada antes de prosseguir
-          if ('fonts' in document) {
-            const bebasCheck = document.fonts.check('12px "Bebas Neue"');
-            if (!bebasCheck) {
-              console.log('⏳ Aguardando Bebas Neue estar completamente pronta...');
-              try {
-                await document.fonts.load('400 12px "Bebas Neue"');
-                await document.fonts.load('700 12px "Bebas Neue"');
-                // Aguardar um momento adicional para garantir aplicação
-                await new Promise(resolve => setTimeout(resolve, 200));
-                console.log('✅ Bebas Neue confirmada como pronta');
-              } catch (e) {
-                console.warn('Aviso ao confirmar Bebas Neue:', e);
-              }
-            }
-          }
-          
+
+          // Garantir que todas as fontes estão carregadas (já deve ter sido feito pelo useEffect inicial)
+          await ensureFontLoaded('Bebas Neue');
+
           // Aguardar o canvas estar pronto
           await new Promise(resolve => setTimeout(resolve, 300));
           
@@ -989,13 +749,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
             canvasWidth: (editingData as any).canvasWidth || 842, // Usar dimensão real ou A4 landscape como padrão
             canvasHeight: (editingData as any).canvasHeight || 595
           };
-          
-          console.log('📐 Carregando certificado com dimensões:', {
-            width: canvasData.canvasWidth,
-            height: canvasData.canvasHeight,
-            orientation: canvasData.canvasWidth > canvasData.canvasHeight ? 'landscape' : 'portrait'
-          });
-          
+
           await loadCanvasData(canvasData);
           
           // Aguardar um pouco para garantir que o canvas foi carregado
@@ -1007,86 +761,43 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
               
               // Primeiro, configurar propriedades básicas
               objects.forEach((obj: fabric.Object) => {
-                if (obj.type === 'textbox' || obj.type === 'i-text') {
-                  const textObj = obj as fabric.Textbox;
-                  
+                if (isTextObject(obj)) {
                   // Salvar o texto original e limpar espaços extras
-                  const originalText = textObj.text || '';
+                  const originalText = obj.text || '';
                   const cleanText = originalText.trim();
-                  
+
                   // Se o texto tem espaços extras, limpar
                   if (originalText !== cleanText) {
-                    textObj.set('text', cleanText);
-                    console.log(`Texto limpo: "${originalText}" -> "${cleanText}"`);
+                    obj.set('text', cleanText);
                   }
-                  
+
                   // Verificar charSpacing - o problema dos espaços entre letras
-                  const currentCharSpacing = (textObj as any).charSpacing || 0;
-                  console.log(`CharSpacing atual para "${cleanText}": ${currentCharSpacing}`);
-                  
+                  const currentCharSpacing = (obj as any).charSpacing || 0;
+
                   // Se charSpacing estiver muito alto, resetar para 0
                   if (currentCharSpacing !== 0) {
-                    console.log(`⚠️ Resetando charSpacing de ${currentCharSpacing} para 0`);
-                    (textObj as any).charSpacing = 0;
-                    textObj.set('charSpacing' as keyof fabric.Textbox, 0 as any);
+                    (obj as any).charSpacing = 0;
+                    obj.set('charSpacing' as keyof fabric.Textbox, 0 as any);
                   }
-                  
-                  // Correção específica para Bebas Neue
-                  const fontFamily = textObj.fontFamily;
-                  if (fontFamily && fontFamily.toLowerCase().includes('bebas')) {
-                    console.log(`🔧 Aplicando correção específica para Bebas Neue no carregamento`);
-                    
-                    // Forçar recarregamento da fonte para garantir que está disponível
-                    if ('fonts' in document && !document.fonts.check('12px "Bebas Neue"')) {
-                      console.log('⚠️ Bebas Neue ainda não está carregada, forçando carregamento...');
-                      document.fonts.load('400 12px "Bebas Neue"').then(() => {
-                        console.log('✅ Bebas Neue carregada com sucesso');
-                        // Aplicar correções após carregamento
-                        (textObj as any).splitByGrapheme = false;
-                        (textObj as any).charSpacing = 0;
-                        textObj.dirty = true;
-                        canvas.renderAll();
-                      }).catch(err => {
-                        console.error('Erro ao carregar Bebas Neue:', err);
-                      });
-                    }
-                    
-                    // Bebas Neue tem problemas com splitByGrapheme
-                    (textObj as any).splitByGrapheme = false;
-                    // Forçar charSpacing 0
-                    (textObj as any).charSpacing = 0;
-                    
-                    // Bebas Neue + Bold = problemas de espaçamento
-                    if (textObj.fontWeight === 'bold' || textObj.fontWeight === 700 || textObj.fontWeight === '700') {
-                      console.log('⚠️ Removendo bold de Bebas Neue no carregamento');
-                      textObj.set('fontWeight', 'normal');
-                    }
-                    
-                    // Limpar cache para forçar recálculo
-                    if ('_clearCache' in textObj && typeof (textObj as any)._clearCache === 'function') {
-                      (textObj as any)._clearCache();
-                    }
-                    
-                    // Forçar atualização do texto
-                    textObj.initDimensions();
-                    textObj.setCoords();
-                  }
-                  
+
+                  // Aplicar overrides de fonte (ex: Bebas Neue)
+                  applyFontOverrides(obj);
+
                   // Configurar propriedades (preservar selectable e evented se já existirem)
-                  const currentSelectable = textObj.selectable;
-                  const currentEvented = textObj.evented;
-                  textObj.set({
+                  const currentSelectable = obj.selectable;
+                  const currentEvented = obj.evented;
+                  obj.set({
                     editable: currentSelectable !== false, // Se estiver bloqueado, não editar
                     selectable: currentSelectable !== false ? true : false, // Preservar estado de bloqueio
                     evented: currentEvented !== false ? true : false, // Preservar estado de eventos
                     hasControls: currentSelectable !== false,
                     hasBorders: currentSelectable !== false
                   });
-                  
+
                   // Recalcular o width baseado no texto real
                   // Isso corrige o problema de espaços em branco extras
-                  textObj.initDimensions();
-                  textObj.setCoords();
+                  obj.initDimensions();
+                  obj.setCoords();
                 }
               });
               
@@ -1097,18 +808,12 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
               // Depois de um delay, verificar e corrigir fontes se necessário
               setTimeout(() => {
                 objects.forEach((obj: fabric.Object) => {
-                  if (obj.type === 'textbox' || obj.type === 'i-text') {
-                    const textObj = obj as fabric.Textbox;
-                    const currentFont = textObj.fontFamily || 'Arial';
-                    
-                    // Apenas logar para debug
-                    console.log(`Texto "${textObj.text}" com fonte: ${currentFont}`);
-                    
+                  if (isTextObject(obj)) {
                     // Marcar como dirty para garantir renderização
-                    textObj.dirty = true;
+                    obj.dirty = true;
                   }
                 });
-                
+
                 canvas.renderAll();
               }, 800);
             }
@@ -1354,6 +1059,10 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         onSaveClick={() => setShowSaveModal(true)}
         certificateInfo={certificateInfo}
         isLoading={createCertificate.isPending || updateCertificate.isPending}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
       />
       
       <div className="flex gap-6 flex-1 pt-1 pb-4 overflow-hidden">

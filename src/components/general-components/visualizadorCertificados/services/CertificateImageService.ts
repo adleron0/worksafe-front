@@ -211,6 +211,11 @@ class CertificateImageService {
         // Carregar o JSON no canvas
         await canvas.loadFromJSON(jsonToLoad);
 
+        // Garantir background branco se não houver imagem de background
+        if (!canvas.backgroundImage) {
+          canvas.set('backgroundColor', '#ffffff');
+        }
+
         // Processar QR Codes
         const objects = [...canvas.getObjects()];
         for (const obj of objects) {

@@ -23,9 +23,6 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
   onDragStart,
   onDragEnd
 }) => {
-  console.log('🔶 ShapesPanel render');
-  console.log('🔶 shapeSettings:', shapeSettings);
-  console.log('🔶 selectedShape:', selectedShape);
   const shapes = [
     { type: 'rectangle' as const, icon: Square, label: 'Quadrado' },
     { type: 'circle' as const, icon: Circle, label: 'Círculo' },
@@ -79,7 +76,6 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
                 type="color"
                 value={shapeSettings.fill === 'transparent' ? '#ffffff' : shapeSettings.fill}
                 onChange={(e) => {
-                  console.log('Changing fill color to:', e.target.value);
                   onUpdateSettings({ fill: e.target.value });
                 }}
                 className="flex-1 h-8 rounded cursor-pointer"
@@ -90,7 +86,6 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
                 type="button"
                 onClick={() => {
                   const newFill = shapeSettings.fill === 'transparent' ? '#000000' : 'transparent';
-                  console.log('Toggling fill:', newFill);
                   onUpdateSettings({ fill: newFill });
                 }}
                 className={`h-6 w-6 rounded border flex items-center justify-center transition-colors ${
@@ -112,7 +107,6 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
               type="color"
               value={shapeSettings.stroke}
               onChange={(e) => {
-                console.log('Changing stroke color to:', e.target.value);
                 onUpdateSettings({ stroke: e.target.value });
               }}
               className="w-full h-8 rounded cursor-pointer"
@@ -127,7 +121,6 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
             <Slider
               value={[shapeSettings.strokeWidth]}
               onValueChange={(value) => {
-                console.log('Changing stroke width to:', value[0]);
                 onUpdateSettings({ strokeWidth: value[0] });
               }}
               min={0}
@@ -145,7 +138,6 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
             <Slider
               value={[shapeSettings.opacity]}
               onValueChange={(value) => {
-                console.log('Changing opacity to:', value[0]);
                 onUpdateSettings({ opacity: value[0] });
               }}
               min={0}
@@ -164,7 +156,6 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
               <Slider
                 value={[shapeSettings.cornerRadius || 0]}
                 onValueChange={(value) => {
-                  console.log('Changing corner radius to:', value[0]);
                   onUpdateSettings({ cornerRadius: value[0] });
                 }}
                 min={0}

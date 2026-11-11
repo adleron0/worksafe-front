@@ -33,6 +33,15 @@ export interface ShapeSettings {
 
 import * as fabric from 'fabric';
 
+/**
+ * Verifica se um objeto Fabric.js é um objeto de texto (Textbox, IText ou ListTextbox).
+ */
+export function isTextObject(obj: fabric.Object | null | undefined): obj is fabric.Textbox {
+  if (!obj) return false;
+  const t = obj.type;
+  return t === 'textbox' || t === 'i-text' || t === 'ListTextbox' || t === 'listtextbox';
+}
+
 export interface ContextMenuData {
   x: number;
   y: number;

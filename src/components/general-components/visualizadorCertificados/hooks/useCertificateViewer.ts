@@ -586,7 +586,7 @@ export const useCertificateViewer = (
                   
                   // Mapear textboxes esperados com múltiplas linhas
                   const expectedMultiline: Record<string, number> = {
-                    'Realizado pela WORKSAFE': 3,
+                    'Realizado pela CERTFIELD': 3,
                     'Descrição: Em conformidade': 5,
                     'JÚLIO ADLER FERREIRA': 2,
                     'RTO - RESGATE TÉCNICO': 2
@@ -693,7 +693,7 @@ export const useCertificateViewer = (
                 const verificacaoContinua = setInterval(() => {
                   
                   const expectedMultiline: Record<string, number> = {
-                    'Realizado pela WORKSAFE': 3,
+                    'Realizado pela CERTFIELD': 3,
                     'Descrição: Em conformidade': 5,
                     'JÚLIO ADLER FERREIRA': 2,
                     'RTO - RESGATE TÉCNICO': 2

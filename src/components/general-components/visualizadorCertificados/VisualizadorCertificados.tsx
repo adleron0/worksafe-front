@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { CertificateViewerProps } from './types';
 import { useCertificateViewer } from './hooks/useCertificateViewer';
-import { useAutoGenerateThumbnail } from './hooks/useAutoGenerateThumbnail';
+// import { useAutoGenerateThumbnail } from './hooks/useAutoGenerateThumbnail'; // DESABILITADO TEMPORARIAMENTE
 import CertificateCanvas, { CertificateCanvasRef } from './components/CertificateCanvas';
 import * as fabric from 'fabric';
 
@@ -35,15 +35,16 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
   } = useCertificateViewer(certificateData, variableToReplace, studentData);
 
   // Hook para gerar thumbnail automaticamente em background
-  const { isGenerating: isGeneratingThumbnail } = useAutoGenerateThumbnail(
-    certificateData,
-    variableToReplace,
-    studentData,
-    {
-      enabled: true, // Sempre habilitado
-      delay: 2000 // Aguardar 2 segundos após renderização
-    }
-  );
+  // DESABILITADO TEMPORARIAMENTE - será reativado no futuro
+  // const { isGenerating: isGeneratingThumbnail } = useAutoGenerateThumbnail(
+  //   certificateData,
+  //   variableToReplace,
+  //   studentData,
+  //   {
+  //     enabled: true, // Sempre habilitado
+  //     delay: 2000 // Aguardar 2 segundos após renderização
+  //   }
+  // );
 
   // Carregar fontes do Google (reutilizado do gerador)
   useEffect(() => {
@@ -370,14 +371,15 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
   return (
     <div ref={containerRef} className={`flex flex-col h-full ${className} relative`}>
       {/* Indicador sutil de geração de thumbnail */}
-      {isGeneratingThumbnail && (
+      {/* DESABILITADO TEMPORARIAMENTE - será reativado no futuro */}
+      {/* {isGeneratingThumbnail && (
         <div className="absolute top-2 right-2 z-50 bg-background/80 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-sm border border-border/50">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <div className="w-2 h-2 bg-primary/60 rounded-full animate-pulse" />
             <span>Salvando preview...</span>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* <DownloadToolbar
         onDownloadPDF={handleDownloadPDF}

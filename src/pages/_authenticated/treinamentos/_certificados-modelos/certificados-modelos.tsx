@@ -174,6 +174,7 @@ function CertificadosPage() {
       <Dialog
         showBttn={false}
         showHeader={false}
+        preventDismiss
         title={editingCertificate ? "Editar Certificado" : "Criar Novo Certificado"}
         description={
           editingCertificate 

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { 
-  Save, 
-  FileText, 
-  Check, 
+import {
+  Save,
+  FileText,
+  Check,
   AlertCircle,
-  Edit
+  Edit,
+  Undo2,
+  Redo2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -25,12 +27,20 @@ interface CertificateToolbarProps {
     isModified?: boolean;
   };
   isLoading?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 }
 
 export const CertificateToolbar: React.FC<CertificateToolbarProps> = ({
   onSaveClick,
   certificateInfo,
-  isLoading = false
+  isLoading = false,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false
 }) => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const isEditMode = !!certificateInfo?.id;
@@ -113,8 +123,46 @@ export const CertificateToolbar: React.FC<CertificateToolbarProps> = ({
         </div>
       </div>
 
-      {/* Botão de salvar */}
+      {/* Undo/Redo e Botão de salvar */}
       <div className="flex items-center gap-2">
+        {/* Undo/Redo */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onUndo}
+                disabled={!canUndo}
+                className="h-8 w-8 p-0"
+              >
+                <Undo2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Desfazer (Ctrl+Z)</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRedo}
+                disabled={!canRedo}
+                className="h-8 w-8 p-0"
+              >
+                <Redo2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Refazer (Ctrl+Shift+Z)</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        <div className="w-px h-6 bg-border" />
+
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

@@ -24,6 +24,12 @@ interface DialogProps {
   className?: string;
   classNameContent?: string;
   onOpenChange?: (open: boolean) => void;
+  /**
+   * Ignora Esc e clique fora — fecha só pelo X. Para telas de edição longas
+   * (editor de certificados), onde Esc também serve para sair de um campo e
+   * fechar o diálogo jogaria fora o trabalho não salvo.
+   */
+  preventDismiss?: boolean;
 }
 
 const Dialog: React.FC<DialogProps> = ({
@@ -39,6 +45,7 @@ const Dialog: React.FC<DialogProps> = ({
   className,
   classNameContent,
   onOpenChange,
+  preventDismiss = false,
 }) => {
   return (
     <UiDialog open={open} onOpenChange={onOpenChange}>
@@ -60,6 +67,8 @@ const Dialog: React.FC<DialogProps> = ({
         )}
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => preventDismiss && e.preventDefault()}
+        onInteractOutside={(e) => preventDismiss && e.preventDefault()}
       >
         <DialogHeader className="w-11/12 pr-2 md:w-full">
           <DialogTitle className={`${!showHeader && "hidden"}`}>

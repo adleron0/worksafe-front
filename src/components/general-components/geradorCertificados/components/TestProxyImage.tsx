@@ -25,12 +25,10 @@ const TestProxyImage: React.FC = () => {
     const img = new Image();
     img.onload = () => {
       setLoading(false);
-      console.log('✅ Imagem carregada com sucesso através do proxy!');
     };
     img.onerror = () => {
       setLoading(false);
       setError('❌ Erro ao carregar imagem através do proxy');
-      console.error('Erro ao carregar imagem:', proxiedUrl);
     };
     img.src = proxiedUrl;
   };

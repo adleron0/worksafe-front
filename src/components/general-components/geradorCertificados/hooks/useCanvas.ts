@@ -2,6 +2,8 @@ import { useRef, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import * as fabric from 'fabric';
 import jsPDF from 'jspdf';
+import { applyFontOverrides } from '../utils/fontConfig';
+import { isTextObject } from '../types';
 
 interface CanvasPage {
   id: string;
@@ -19,47 +21,16 @@ export interface CanvasData {
 
 // Função helper para processar imagens no JSON e aplicar proxy
 const processImagesInJSON = (jsonData: any): any => {
-  console.log('🔍 processImagesInJSON called with:', typeof jsonData);
-  
   // Se for string, fazer parse
   const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-  
-  console.log('📊 JSON structure:', {
-    hasObjects: !!data.objects,
-    objectsLength: data.objects ? data.objects.length : 0,
-    keys: Object.keys(data)
-  });
-  
-  // Debug: mostrar tipos de objetos no JSON
-  if (data.objects && Array.isArray(data.objects)) {
-    const objectTypes = data.objects.map((obj: any) => obj.type);
-    console.log('📋 Object types in JSON:', objectTypes);
-    
-    // Procurar por todos os campos que podem conter URLs de imagem
-    data.objects.forEach((obj: any, index: number) => {
-      // Verificar tanto 'image' quanto 'Image' (case insensitive)
-      if (obj.type && obj.type.toLowerCase() === 'image') {
-        console.log(`🔍 Image object [${index}]:`, {
-          type: obj.type,
-          src: obj.src,
-          _element: obj._element,
-          crossOrigin: obj.crossOrigin,
-          allKeys: Object.keys(obj)
-        });
-      }
-    });
-  }
-  
+
   // Se houver objetos no JSON
   if (data.objects && Array.isArray(data.objects)) {
-    let imageCount = 0;
     data.objects = data.objects.map((obj: any) => {
       // Se for uma imagem (verificar case insensitive)
       if (obj.type && obj.type.toLowerCase() === 'image') {
-        console.log(`🖼️ Processing image object:`, obj);
-        
         let originalSrc = obj.src;
-        
+
         // IMPORTANTE: Detectar se a URL já tem proxy e extrair a URL original
         if (obj.src && obj.src.includes('/images/proxy')) {
           try {
@@ -69,34 +40,24 @@ const processImagesInJSON = (jsonData: any): any => {
             const encodedOriginal = urlObj.searchParams.get('url');
             if (encodedOriginal) {
               originalSrc = decodeURIComponent(encodedOriginal);
-              console.log(`🔍 Extracted original URL from proxy:`, originalSrc);
             }
           } catch (e) {
-            console.error('Error extracting original URL:', e);
+            // Error extracting original URL
           }
         }
-        
+
         // Aplicar proxy apenas se for URL externa e não tiver proxy
         if (originalSrc && (originalSrc.startsWith('http://') || originalSrc.startsWith('https://'))) {
           const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
           obj.src = `${BASE_URL}/images/proxy?url=${encodeURIComponent(originalSrc)}`;
           // Guardar URL original para referência
           obj._originalUrl = originalSrc;
-          imageCount++;
-          console.log(`✅ [${imageCount}] Processed image in JSON:`);
-          console.log('   Original:', originalSrc);
-          console.log('   Proxy:', obj.src);
-        } else {
-          console.log('⚠️ Image does not have external src:', originalSrc);
         }
       }
       return obj;
     });
-    console.log(`📝 Total images processed: ${imageCount}`);
-  } else {
-    console.log('⚠️ No objects found in JSON data');
   }
-  
+
   return data;
 };
 
@@ -121,15 +82,12 @@ export const useCanvas = () => {
   const getCurrentCanvasRef = useCallback(() => {
     const currentPage = getCurrentPage();
     const ref = canvasRefs.current.get(currentPage.id);
-    console.log('getCurrentCanvasRef - Page ID:', currentPage.id, 'Ref:', ref);
     return ref;
   }, [getCurrentPage]);
 
   const handleApplyAsBackground = useCallback(async (target: fabric.Object) => {
-    console.log('handleApplyAsBackground called, current page index:', currentPageIndex);
     const canvasRef = getCurrentCanvasRef();
     if (!canvasRef) {
-      console.error('No canvas ref found for current page');
       return;
     }
     
@@ -140,15 +98,6 @@ export const useCanvas = () => {
     
     if (image) {
       try {
-        console.log('Original image dimensions:', {
-          width: image.width,
-          height: image.height,
-          scaleX: image.scaleX,
-          scaleY: image.scaleY,
-          scaledWidth: image.getScaledWidth(),
-          scaledHeight: image.getScaledHeight()
-        });
-
         // Remover da camada de objetos primeiro
         canvas.remove(image);
         
@@ -168,56 +117,23 @@ export const useCanvas = () => {
           const scaleY = whiteBackgroundRect.scaleY || 1;
           canvasWidth = (whiteBackgroundRect.width || 842) * scaleX;
           canvasHeight = (whiteBackgroundRect.height || 595) * scaleY;
-          console.log('Using white backgroundRect dimensions:', { 
-            width: whiteBackgroundRect.width,
-            height: whiteBackgroundRect.height,
-            scaleX,
-            scaleY,
-            finalWidth: canvasWidth,
-            finalHeight: canvasHeight
-          });
         } else {
           // Fallback para dimensões padrão A4 landscape
           canvasWidth = 842;
           canvasHeight = 595;
-          console.log('Using default A4 landscape dimensions');
         }
-        
-        console.log('Canvas real dimensions:', { 
-          width: canvas.width,
-          height: canvas.height,
-          getWidth: canvas.getWidth(),
-          getHeight: canvas.getHeight(),
-          finalWidth: canvasWidth,
-          finalHeight: canvasHeight
-        });
         
         // Obter dimensões originais da imagem
         const originalWidth = clonedImage.width || clonedImage.getScaledWidth();
         const originalHeight = clonedImage.height || clonedImage.getScaledHeight();
-        
-        console.log('Image dimensions:', { 
-          width: clonedImage.width,
-          height: clonedImage.height,
-          scaledWidth: clonedImage.getScaledWidth(),
-          scaledHeight: clonedImage.getScaledHeight(),
-          finalWidth: originalWidth,
-          finalHeight: originalHeight
-        });
-        
+
         // Calcular escala para cobrir todo o canvas
         const scaleToFitWidth = canvasWidth / originalWidth;
         const scaleToFitHeight = canvasHeight / originalHeight;
         
         // Usar a maior escala para garantir cobertura total
         const finalScale = Math.max(scaleToFitWidth, scaleToFitHeight);
-        
-        console.log('Scale calculations:', { 
-          scaleToFitWidth, 
-          scaleToFitHeight, 
-          finalScale 
-        });
-        
+
         // Aplicar configurações à imagem
         clonedImage.set({
           left: 0,
@@ -251,14 +167,7 @@ export const useCanvas = () => {
           const offsetY = -(finalHeight - canvasHeight) / 2;
           clonedImage.set('top', offsetY);
         }
-        
-        console.log('Final positioning:', { 
-          finalWidth, 
-          finalHeight,
-          left: clonedImage.left,
-          top: clonedImage.top
-        });
-        
+
         // Remover qualquer imagem de background existente (não o retângulo branco)
         const objects = canvas.getObjects();
         const existingBgImage = objects.find((obj: fabric.Object) => 
@@ -306,16 +215,9 @@ export const useCanvas = () => {
         }
         
         canvas.renderAll();
-        
-        console.log('Background added as first object');
-        console.log('Total objects:', canvas.getObjects().length);
-        
-        console.log('Background applied successfully');
-        console.log('Canvas backgroundImage:', canvas.backgroundImage);
-        
+
         toast.success('Imagem aplicada ao fundo!');
       } catch (error) {
-        console.error('Error applying background:', error);
         toast.error('Erro ao aplicar imagem como fundo');
       }
     }
@@ -369,17 +271,14 @@ export const useCanvas = () => {
       canvas.renderAll();
       
       toast.success('Item duplicado com sucesso!');
-    }).catch((error) => {
-      console.error('Erro ao duplicar objeto:', error);
+    }).catch(() => {
       toast.error('Erro ao duplicar item');
     });
   }, [getCurrentCanvasRef]);
 
   const addImageToCanvas = useCallback((imageUrl: string, imageName: string): Promise<void> => {
-    console.log('addImageToCanvas called, current page index:', currentPageIndex);
     const canvasRef = getCurrentCanvasRef();
     if (!canvasRef) {
-      console.error('No canvas ref found for current page');
       return Promise.reject('No canvas ref found');
     }
     
@@ -401,10 +300,8 @@ export const useCanvas = () => {
   }, [getCurrentCanvasRef, currentPageIndex]);
 
   const addShapeToCanvas = useCallback((shapeType: 'rectangle' | 'circle' | 'triangle' | 'line', shapeSettings: any) => {
-    console.log('addShapeToCanvas called, current page index:', currentPageIndex);
     const canvasRef = getCurrentCanvasRef();
     if (!canvasRef) {
-      console.error('No canvas ref found for current page');
       return;
     }
     
@@ -412,10 +309,8 @@ export const useCanvas = () => {
   }, [getCurrentCanvasRef, currentPageIndex]);
 
   const addTextToCanvas = useCallback((text: string, textSettings: any) => {
-    console.log('addTextToCanvas called, current page index:', currentPageIndex);
     const canvasRef = getCurrentCanvasRef();
     if (!canvasRef) {
-      console.error('No canvas ref found for current page');
       return;
     }
     
@@ -423,10 +318,8 @@ export const useCanvas = () => {
   }, [getCurrentCanvasRef, currentPageIndex]);
 
   const addPlaceholderToCanvas = useCallback((placeholderName: string) => {
-    console.log('addPlaceholderToCanvas called, current page index:', currentPageIndex);
     const canvasRef = getCurrentCanvasRef();
     if (!canvasRef) {
-      console.error('No canvas ref found for current page');
       return;
     }
     
@@ -496,20 +389,17 @@ export const useCanvas = () => {
   }, [currentPageIndex]);
 
   const registerCanvasRef = useCallback((pageId: string, ref: any) => {
-    console.log('Registering canvas ref for page:', pageId, ref);
     canvasRefs.current.set(pageId, ref);
   }, []);
 
   const checkCanvasTainted = useCallback(() => {
     const canvasRef = getCurrentCanvasRef();
     if (!canvasRef) {
-      console.log('No canvas ref found');
       return false;
     }
-    
+
     const canvas = canvasRef.getCanvas();
     if (!canvas) {
-      console.log('No canvas found');
       return false;
     }
 
@@ -518,126 +408,93 @@ export const useCanvas = () => {
       const canvasElement = canvas.lowerCanvasEl;
       const ctx = canvasElement.getContext('2d');
       if (!ctx) {
-        console.log('No 2D context found');
         return false;
       }
-      
+
       // Tentar obter dados de imagem - isso falhará se o canvas estiver tainted
       ctx.getImageData(0, 0, 1, 1);
-      console.log('✅ Canvas NÃO está tainted - exportação PDF funcionará');
       return false;
     } catch (e) {
-      console.error('❌ Canvas está tainted - exportação PDF falhará:', e);
-      console.error('Verifique se todas as imagens foram carregadas com crossOrigin="anonymous"');
       return true;
     }
   }, [getCurrentCanvasRef]);
 
+  // Propriedades customizadas a incluir na serialização
+  const SERIALIZE_PROPS = [
+    'name', '_originalUrl', 'originY', 'targetHeight', 'targetWidth',
+    'placeholderNameDebug', 'width', 'splitByGrapheme', 'selectable',
+    'evented', 'hasControls', 'hasBorders', 'lockMovementX', 'lockMovementY',
+    'lockScalingX', 'lockScalingY', 'lockRotation', 'editable',
+    'listType', 'listIndent', 'listItemSpacing',
+  ];
+
+  /**
+   * Serializa um canvas: filtra backgroundRect do JSON e limpa URLs de proxy.
+   * Não muta o canvas (sem remove/re-add).
+   */
+  const serializeCanvas = useCallback((canvasInstance: fabric.Canvas) => {
+    const liveObjects = canvasInstance.getObjects();
+    const canvasJSON = canvasInstance.toObject(SERIALIZE_PROPS);
+
+    // Filtrar backgroundRect do JSON (sem remover do canvas)
+    if (canvasJSON.objects) {
+      // Mapa de objetos originais (por índice) antes de filtrar
+      const indexedLive = liveObjects.map((obj, i) => ({ obj, i }));
+
+      canvasJSON.objects = canvasJSON.objects.filter((_objData: any, index: number) => {
+        const liveObj = liveObjects[index];
+        return !((liveObj as any).name === 'backgroundRect' && liveObj.fill === 'white');
+      });
+
+      // Limpar URLs de proxy nas imagens
+      const filteredLive = indexedLive.filter(({ obj }) =>
+        !((obj as any).name === 'backgroundRect' && obj.fill === 'white')
+      );
+
+      canvasJSON.objects.forEach((objData: any, idx: number) => {
+        const liveObj = filteredLive[idx]?.obj;
+        if (!liveObj) return;
+
+        if (objData.type && objData.type.toLowerCase() === 'image') {
+          if ((liveObj as any)._originalUrl) {
+            objData.src = (liveObj as any)._originalUrl;
+          } else if (objData.src && objData.src.includes('/images/proxy')) {
+            try {
+              const fullUrl = objData.src.startsWith('http') ? objData.src : `${window.location.origin}${objData.src}`;
+              const parsed = new URL(fullUrl);
+              const encoded = parsed.searchParams.get('url');
+              if (encoded) objData.src = decodeURIComponent(encoded);
+            } catch {
+              // Ignore URL parse errors
+            }
+          }
+        }
+      });
+    }
+
+    return canvasJSON;
+  }, []);
+
   // Função para coletar dados dos canvas para salvamento
   const getCanvasData = useCallback((): CanvasData | null => {
     try {
-      // Pegar o canvas da frente (primeira página)
       const frontPage = pages[0];
-      if (!frontPage) {
-        toast.error('Nenhuma página encontrada');
-        return null;
-      }
+      if (!frontPage) { toast.error('Nenhuma página encontrada'); return null; }
 
       const frontCanvasRef = canvasRefs.current.get(frontPage.id);
-      if (!frontCanvasRef) {
-        toast.error('Canvas da frente não encontrado');
-        return null;
-      }
+      if (!frontCanvasRef) { toast.error('Canvas da frente não encontrado'); return null; }
 
       const frontCanvas = frontCanvasRef.getCanvas();
-      if (!frontCanvas) {
-        toast.error('Canvas da frente não está inicializado');
-        return null;
-      }
+      if (!frontCanvas) { toast.error('Canvas da frente não está inicializado'); return null; }
 
-      // Serializar o canvas da frente, mas excluir o retângulo branco de background
-      const originalObjects = frontCanvas.getObjects();
-      
-      // Temporariamente remover o retângulo branco
-      const whiteRect = originalObjects.find((obj: any) => 
-        (obj as any).name === 'backgroundRect' && obj.fill === 'white'
-      );
-      
-      if (whiteRect) {
-        frontCanvas.remove(whiteRect);
-      }
-      
-      // Antes de serializar, verificar se os objetos têm a propriedade name
-      const objectsWithNames = frontCanvas.getObjects();
-      console.log('Objetos antes de serializar:', objectsWithNames.map((obj: any) => ({
-        type: obj.type,
-        name: (obj as any).name,
-        fill: obj.fill
-      })));
-      
-      // Serializar o canvas
-      // No Fabric.js v6, precisamos adicionar a propriedade ao objeto antes de serializar
-      // IMPORTANTE: incluir 'width' e 'splitByGrapheme' para preservar configurações de textbox
-      const canvasJSON = frontCanvas.toObject(['name', '_originalUrl', 'originY', 'targetHeight', 'targetWidth', 'placeholderNameDebug', 'width', 'splitByGrapheme', 'selectable', 'evented']);
-      
-      // Processar objetos no JSON para garantir URLs originais
-      if (canvasJSON.objects) {
-        canvasJSON.objects.forEach((objData: any, index: number) => {
-          const originalObj = objectsWithNames[index];
-          
-          // Adicionar propriedade name
-          if ((originalObj as any).name) {
-            objData.name = (originalObj as any).name;
-          }
-          
-          // IMPORTANTE: Se for imagem e tiver _originalUrl, usar como src
-          if (objData.type && objData.type.toLowerCase() === 'image') {
-            // Se tiver _originalUrl, usar ela
-            if ((originalObj as any)._originalUrl) {
-              objData.src = (originalObj as any)._originalUrl;
-              console.log(`🔄 Restored original URL for image:`, objData.src);
-            } 
-            // Se a src já tem proxy, extrair URL original
-            else if (objData.src && objData.src.includes('/images/proxy')) {
-              try {
-                const fullUrl = objData.src.startsWith('http') ? objData.src : `${window.location.origin}${objData.src}`;
-                const urlObj = new URL(fullUrl);
-                const encodedOriginal = urlObj.searchParams.get('url');
-                if (encodedOriginal) {
-                  const originalUrl = decodeURIComponent(encodedOriginal);
-                  objData.src = originalUrl;
-                  console.log(`🔍 Extracted original URL from proxy:`, originalUrl);
-                }
-              } catch (e) {
-                console.error('Error extracting original URL:', e);
-              }
-            }
-          }
-        });
-      }
-      
-      const fabricJsonFront = canvasJSON;
-      
-      console.log('JSON final:', fabricJsonFront);
-      console.log('Objetos no JSON final:', fabricJsonFront.objects?.map((obj: any) => ({
-        type: obj.type,
-        name: obj.name
-      })));
-      
-      // Re-adicionar o retângulo branco
-      if (whiteRect) {
-        // Re-adicionar como primeiro objeto
-        const currentObjects = frontCanvas.getObjects();
-        frontCanvas.clear();
-        frontCanvas.add(whiteRect);
-        currentObjects.forEach((obj: fabric.Object) => frontCanvas.add(obj));
-      }
+      const fabricJsonFront = serializeCanvas(frontCanvas);
 
-      // Pegar as dimensões do canvas
-      const canvasWidth = frontCanvas.width || 800;
-      const canvasHeight = frontCanvas.height || 600;
+      // Dimensões A4
+      const currentOrientation = frontPage.orientation || 'landscape';
+      const canvasWidth = currentOrientation === 'landscape' ? 842 : 595;
+      const canvasHeight = currentOrientation === 'landscape' ? 595 : 842;
 
-      // Verificar se existe segunda página
+      // Segunda página (verso)
       let fabricJsonBack = null;
       if (pages.length > 1) {
         const backPage = pages[1];
@@ -645,82 +502,17 @@ export const useCanvas = () => {
         if (backCanvasRef) {
           const backCanvas = backCanvasRef.getCanvas();
           if (backCanvas) {
-            // Temporariamente remover o retângulo branco do verso
-            const backOriginalObjects = backCanvas.getObjects();
-            const backWhiteRect = backOriginalObjects.find((obj: any) => 
-              (obj as any).name === 'backgroundRect' && obj.fill === 'white'
-            );
-            
-            if (backWhiteRect) {
-              backCanvas.remove(backWhiteRect);
-            }
-            
-            // Serializar o canvas do verso
-            const backObjectsWithNames = backCanvas.getObjects();
-            // IMPORTANTE: incluir 'width' e 'splitByGrapheme' para preservar configurações de textbox
-            const backCanvasJSON = backCanvas.toObject(['name', '_originalUrl', 'originY', 'targetHeight', 'targetWidth', 'placeholderNameDebug', 'width', 'splitByGrapheme', 'selectable', 'evented']);
-            
-            // Processar objetos no JSON para garantir URLs originais
-            if (backCanvasJSON.objects) {
-              backCanvasJSON.objects.forEach((objData: any, index: number) => {
-                const originalObj = backObjectsWithNames[index];
-                
-                // Adicionar propriedade name
-                if ((originalObj as any).name) {
-                  objData.name = (originalObj as any).name;
-                }
-                
-                // IMPORTANTE: Se for imagem e tiver _originalUrl, usar como src
-                if (objData.type && objData.type.toLowerCase() === 'image') {
-                  // Se tiver _originalUrl, usar ela
-                  if ((originalObj as any)._originalUrl) {
-                    objData.src = (originalObj as any)._originalUrl;
-                    console.log(`🔄 [Back] Restored original URL for image:`, objData.src);
-                  } 
-                  // Se a src já tem proxy, extrair URL original
-                  else if (objData.src && objData.src.includes('/images/proxy')) {
-                    try {
-                      const fullUrl = objData.src.startsWith('http') ? objData.src : `${window.location.origin}${objData.src}`;
-                      const urlObj = new URL(fullUrl);
-                      const encodedOriginal = urlObj.searchParams.get('url');
-                      if (encodedOriginal) {
-                        const originalUrl = decodeURIComponent(encodedOriginal);
-                        objData.src = originalUrl;
-                        console.log(`🔍 [Back] Extracted original URL from proxy:`, originalUrl);
-                      }
-                    } catch (e) {
-                      console.error('[Back] Error extracting original URL:', e);
-                    }
-                  }
-                }
-              });
-            }
-            
-            fabricJsonBack = backCanvasJSON;
-            
-            // Re-adicionar o retângulo branco
-            if (backWhiteRect) {
-              const backCurrentObjects = backCanvas.getObjects();
-              backCanvas.clear();
-              backCanvas.add(backWhiteRect);
-              backCurrentObjects.forEach((obj: fabric.Object) => backCanvas.add(obj));
-            }
+            fabricJsonBack = serializeCanvas(backCanvas);
           }
         }
       }
 
-      return {
-        fabricJsonFront,
-        fabricJsonBack,
-        canvasWidth,
-        canvasHeight
-      };
+      return { fabricJsonFront, fabricJsonBack, canvasWidth, canvasHeight };
     } catch (error) {
-      console.error('Erro ao coletar dados do canvas:', error);
       toast.error('Erro ao preparar dados para salvamento');
       return null;
     }
-  }, [pages]);
+  }, [pages, serializeCanvas]);
 
   // Função para carregar dados nos canvas
   const loadCanvasData = useCallback(async (data: CanvasData) => {
@@ -729,13 +521,7 @@ export const useCanvas = () => {
       const width = data.canvasWidth || 842;
       const height = data.canvasHeight || 595;
       const detectedOrientation: 'landscape' | 'portrait' = width > height ? 'landscape' : 'portrait';
-      
-      console.log('📐 Orientação detectada ao carregar:', {
-        width,
-        height,
-        orientation: detectedOrientation
-      });
-      
+
       // Atualizar a orientação das páginas existentes se necessário
       const updatedPages = pages.map(page => ({
         ...page,
@@ -744,7 +530,6 @@ export const useCanvas = () => {
       
       // Se houver mudança na orientação, atualizar as páginas
       if (pages[0] && pages[0].orientation !== detectedOrientation) {
-        console.log('🔄 Atualizando orientação das páginas de', pages[0].orientation, 'para', detectedOrientation);
         setPages(updatedPages);
       }
       
@@ -776,20 +561,29 @@ export const useCanvas = () => {
         // Extrair fontes do JSON antes de carregar
         if (data.fabricJsonFront.objects) {
           data.fabricJsonFront.objects.forEach((objData: any, index: number) => {
-            if ((objData.type === 'textbox' || objData.type === 'i-text') && objData.fontFamily) {
+            if ((objData.type === 'textbox' || objData.type === 'i-text' || objData.type === 'ListTextbox') && objData.fontFamily) {
               const tempId = `temp_${index}_${objData.text?.substring(0, 10)}`;
               fontsToPreserve.set(tempId, objData.fontFamily);
-              console.log(`Fonte a preservar [${tempId}]: ${objData.fontFamily}`);
             }
           });
         }
         
         // Processar as imagens para usar o proxy antes de carregar
-        console.log('🎯 About to process fabricJsonFront');
         const processedJsonFront = processImagesInJSON(data.fabricJsonFront);
-        
-        console.log('🎯 Loading processed JSON into front canvas');
-        
+
+        // Backward compat: promover Textbox com listType para ListTextbox
+        if (processedJsonFront.objects) {
+          processedJsonFront.objects = processedJsonFront.objects.map((obj: any) => {
+            if (
+              (obj.type === 'Textbox' || obj.type === 'textbox') &&
+              obj.listType && obj.listType !== 'none'
+            ) {
+              return { ...obj, type: 'ListTextbox' };
+            }
+            return obj;
+          });
+        }
+
         // IMPORTANTE: Configurar o Fabric.js para usar o proxy ANTES de carregar o JSON
         const originalFromURL = fabric.FabricImage.fromURL;
         fabric.FabricImage.fromURL = function(url: string, ...args: any[]) {
@@ -801,9 +595,6 @@ export const useCanvas = () => {
             // Adicionar timestamp para evitar cache
             const timestamp = Date.now();
             processedUrl = `${BASE_URL}/images/proxy?url=${encodeURIComponent(url)}&t=${timestamp}`;
-            console.log('🔄 Intercepting Fabric.js image load:');
-            console.log('   Original:', url);
-            console.log('   Proxy:', processedUrl);
           }
           
           // Garantir crossOrigin anonymous
@@ -831,23 +622,13 @@ export const useCanvas = () => {
         };
         
         frontCanvas.loadFromJSON(processedJsonFront, async () => {
-          console.log('✅ Front canvas loaded from JSON');
-          
           // Restaurar o método original após carregar
           fabric.FabricImage.fromURL = originalFromURL;
-          
-          // Adicionar listener para verificar quando imagens são carregadas
-          frontCanvas.on('after:render', () => {
-            console.log('🎨 Canvas renderizado - imagens devem estar visíveis agora');
-          });
-          
+
           // Adicionar IDs únicos aos objetos carregados se não tiverem
           let idCounter = 0;
           const textObjects: fabric.Textbox[] = [];
-          
-          // Verificar as imagens carregadas
-          console.log('🔍 Checking loaded objects:');
-          
+
           frontCanvas.getObjects().forEach((obj: fabric.Object, index: number) => {
             const type = obj.type || 'object';
             const timestamp = Date.now();
@@ -859,22 +640,12 @@ export const useCanvas = () => {
             if (obj.type && obj.type.toLowerCase() === 'image') {
               const imageObj = obj as fabric.FabricImage;
               let src = (imageObj as any).src || imageObj.getSrc();
-              
-              console.log(`🖼️ Loaded image [${index}]:`, {
-                src: src,
-                hasProxy: src ? src.includes('/images/proxy') : false,
-                originalUrl: (imageObj as any)._originalUrl
-              });
-              
+
               // FORÇAR o uso do proxy se a URL for externa e não estiver usando proxy
               if (src && (src.startsWith('http://') || src.startsWith('https://')) && !src.includes('/images/proxy')) {
                 const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
                 const proxiedUrl = `${BASE_URL}/images/proxy?url=${encodeURIComponent(src)}`;
-                
-                console.log('⚠️ Image not using proxy, recreating with proxy URL:');
-                console.log('   From:', src);
-                console.log('   To:', proxiedUrl);
-                
+
                 // Guardar propriedades da imagem atual
                 const props = {
                   left: imageObj.left,
@@ -906,9 +677,7 @@ export const useCanvas = () => {
                   // Adicionar ao canvas na mesma posição
                   frontCanvas.insertAt(newImage, index);
                   frontCanvas.renderAll();
-                  console.log('✅ Image recreated with proxy URL');
-                }).catch(error => {
-                  console.error('❌ Error loading image with proxy:', error);
+                }).catch(() => {
                   // Re-adicionar imagem original em caso de erro
                   frontCanvas.insertAt(imageObj, index);
                 });
@@ -916,111 +685,77 @@ export const useCanvas = () => {
             }
             
             // Coletar objetos de texto
-            if (obj.type === 'textbox' || obj.type === 'i-text') {
-              const textObj = obj as fabric.Textbox;
-              
+            if (isTextObject(obj)) {
               // Limpar texto de espaços extras que podem ter vindo do JSON
-              const originalText = textObj.text || '';
+              const originalText = obj.text || '';
               const cleanText = originalText.trim();
               if (originalText !== cleanText) {
-                textObj.set('text', cleanText);
-                console.log(`🧹 Texto limpo: "${originalText}" -> "${cleanText}"`);
+                obj.set('text', cleanText);
               }
-              
+
               // Verificar e corrigir charSpacing se estiver com valor errado
-              const currentCharSpacing = (textObj as any).charSpacing || 0;
+              const currentCharSpacing = (obj as any).charSpacing || 0;
               if (currentCharSpacing > 100 || currentCharSpacing < -50) {
-                console.log(`⚠️ CharSpacing anormal detectado: ${currentCharSpacing}. Resetando para 0`);
-                textObj.set('charSpacing' as keyof fabric.Textbox, 0 as any);
+                obj.set('charSpacing' as keyof fabric.Textbox, 0 as any);
               }
-              
-              // Correção específica para Bebas Neue
-              const fontFamily = textObj.fontFamily;
-              if (fontFamily && fontFamily.toLowerCase().includes('bebas')) {
-                console.log(`🔧 Aplicando correção específica para Bebas Neue`);
-                // Bebas Neue precisa de charSpacing 0 e splitByGrapheme false
-                textObj.set('charSpacing' as keyof fabric.Textbox, 0 as any);
-                (textObj as any).splitByGrapheme = false;
-                
-                // Bebas Neue + Bold = problemas de espaçamento
-                if (textObj.fontWeight === 'bold' || textObj.fontWeight === 700 || textObj.fontWeight === '700') {
-                  console.log('⚠️ Removendo bold de Bebas Neue durante carregamento do JSON');
-                  textObj.set('fontWeight', 'normal');
-                }
-                
-                // Forçar atualização das métricas de texto
-                textObj._clearCache();
-              }
-              
+
+              // Aplicar overrides de fonte (ex: Bebas Neue)
+              applyFontOverrides(obj);
+
               // Recalcular dimensões do textbox baseado no texto real
-              // Isso previne espaços em branco extras na renderização
-              textObj.initDimensions();
-              
-              const tempId = `temp_${index}_${textObj.text?.substring(0, 10)}`;
+              obj.initDimensions();
+
+              const tempId = `temp_${index}_${obj.text?.substring(0, 10)}`;
               const originalFont = fontsToPreserve.get(tempId);
-              
+
               if (originalFont) {
-                console.log(`📝 Preparando fonte ${originalFont} para texto: "${textObj.text?.substring(0, 20)}..."`);
                 // Armazenar a fonte desejada para aplicação posterior
-                (textObj as any)._targetFontFamily = originalFont;
-                textObjects.push(textObj);
+                (obj as any)._targetFontFamily = originalFont;
+                textObjects.push(obj);
               }
             }
           });
           
           // Função para aplicar fontes com verificação robusta
           const applyFontsWithRetry = async (attempts = 0, maxAttempts = 5) => {
-            console.log(`🔄 Tentativa ${attempts + 1} de aplicação de fontes`);
-            
             let fontsApplied = 0;
             let fontsTotal = textObjects.length;
-            
+
             for (const textObj of textObjects) {
               const targetFont = (textObj as any)._targetFontFamily;
               if (!targetFont) continue;
-              
+
               // Verificar se a fonte está disponível
               const isFontAvailable = document.fonts.check(`12px "${targetFont}"`);
-              
+
               if (isFontAvailable) {
                 // Estratégia robusta de aplicação de fonte
-                console.log(`✅ Aplicando fonte ${targetFont} ao texto`);
-                
                 // 1. Forçar fallback temporário
                 textObj.set('fontFamily', 'Arial');
                 frontCanvas.renderAll();
-                
+
                 // 2. Aguardar frame para garantir que o fallback foi aplicado
                 await new Promise(resolve => requestAnimationFrame(resolve));
-                
+
                 // 3. Aplicar a fonte desejada
                 textObj.set('fontFamily', targetFont);
                 textObj.dirty = true;
-                
+
                 // 4. Forçar recálculo de dimensões
                 textObj._clearCache();
                 textObj.setCoords();
-                
+
                 fontsApplied++;
-              } else {
-                console.warn(`⚠️ Fonte ${targetFont} não disponível ainda`);
               }
             }
-            
+
             // Renderizar após todas as mudanças
             frontCanvas.renderAll();
             frontCanvas.requestRenderAll();
-            
-            console.log(`📊 Fontes aplicadas: ${fontsApplied}/${fontsTotal}`);
-            
+
             // Se nem todas as fontes foram aplicadas e ainda temos tentativas
             if (fontsApplied < fontsTotal && attempts < maxAttempts - 1) {
-              console.log(`⏳ Aguardando 200ms antes da próxima tentativa...`);
               setTimeout(() => applyFontsWithRetry(attempts + 1, maxAttempts), 200);
-            } else if (fontsApplied === fontsTotal) {
-              console.log(`🎉 Todas as fontes foram aplicadas com sucesso!`);
-            } else {
-              console.warn(`⚠️ Nem todas as fontes puderam ser aplicadas após ${maxAttempts} tentativas`);
             }
           };
           
@@ -1069,17 +804,6 @@ export const useCanvas = () => {
             );
             
             if (backgroundObj) {
-              console.log('Background image found:', {
-                name: (backgroundObj as any).name,
-                type: backgroundObj.type,
-                visible: backgroundObj.visible,
-                opacity: backgroundObj.opacity,
-                left: backgroundObj.left,
-                top: backgroundObj.top,
-                width: backgroundObj.width,
-                height: backgroundObj.height
-              });
-              
               // Configurar como não selecionável mas visível
               backgroundObj.set({
                 selectable: false,
@@ -1116,18 +840,14 @@ export const useCanvas = () => {
                 otherObjects.forEach((obj: fabric.Object) => frontCanvas.add(obj)); // Outros objetos
               }
               
-              console.log('Background configured successfully');
-            } else {
-              console.log('No background image found');
             }
-            
+
             frontCanvas.renderAll();
             // Forçar atualização do canvas
             frontCanvas.requestRenderAll();
             resolve();
           }, 100);
         }, (error: any) => {
-          console.error('Erro ao carregar JSON:', error);
           reject(error);
         });
       });
@@ -1164,6 +884,19 @@ export const useCanvas = () => {
               await new Promise<void>((resolve, reject) => {
                 // Processar as imagens para usar o proxy antes de carregar
               const processedJsonBack = processImagesInJSON(data.fabricJsonBack);
+
+              // Backward compat: promover Textbox com listType para ListTextbox
+              if (processedJsonBack.objects) {
+                processedJsonBack.objects = processedJsonBack.objects.map((obj: any) => {
+                  if (
+                    (obj.type === 'Textbox' || obj.type === 'textbox') &&
+                    obj.listType && obj.listType !== 'none'
+                  ) {
+                    return { ...obj, type: 'ListTextbox' };
+                  }
+                  return obj;
+                });
+              }
               
               // Interceptar carregamento de imagens do verso também
               const originalFromURLBack = fabric.FabricImage.fromURL;
@@ -1175,7 +908,6 @@ export const useCanvas = () => {
                   const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
                   const timestamp = Date.now();
                   processedUrl = `${BASE_URL}/images/proxy?url=${encodeURIComponent(url)}&t=${timestamp}`;
-                  console.log('🔄 [Back] Intercepting Fabric.js image load:', url, '->', processedUrl);
                 }
                 
                 // Garantir crossOrigin anonymous
@@ -1221,9 +953,7 @@ export const useCanvas = () => {
                       if (src && (src.startsWith('http://') || src.startsWith('https://')) && !src.includes('/images/proxy')) {
                         const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3001';
                         const proxiedUrl = `${BASE_URL}/images/proxy?url=${encodeURIComponent(src)}`;
-                        
-                        console.log('⚠️ [Back] Image not using proxy, recreating:', src);
-                        
+
                         const props = {
                           left: imageObj.left,
                           top: imageObj.top,
@@ -1249,7 +979,6 @@ export const useCanvas = () => {
                           (newImage as any).id = uniqueId;
                           backCanvas.insertAt(newImage, objIndex);
                           backCanvas.renderAll();
-                          console.log('✅ [Back] Image recreated with proxy');
                         });
                       }
                     }
@@ -1329,16 +1058,14 @@ export const useCanvas = () => {
                         otherObjects.forEach((obj: fabric.Object) => backCanvas.add(obj)); // Outros objetos
                       }
                       
-                      console.log('Background object found and configured for back page');
                     }
-                    
+
                     backCanvas.renderAll();
                     // Forçar atualização do canvas
                     backCanvas.requestRenderAll();
                     resolve();
                   }, 100);
                 }, (error: any) => {
-                  console.error('Erro ao carregar JSON do verso:', error);
                   reject(error);
                 });
               });
@@ -1349,7 +1076,6 @@ export const useCanvas = () => {
 
       toast.success('Modelo carregado com sucesso!');
     } catch (error) {
-      console.error('Erro ao carregar dados no canvas:', error);
       toast.error('Erro ao carregar modelo no canvas');
     }
   }, [pages, addPage]);
@@ -1381,13 +1107,11 @@ export const useCanvas = () => {
         const canvasRef = canvasRefs.current.get(page.id);
         
         if (!canvasRef) {
-          console.error(`No canvas ref found for page ${i + 1}`);
           continue;
         }
 
         const canvas = canvasRef.getCanvas();
         if (!canvas) {
-          console.error(`No canvas found for page ${i + 1}`);
           continue;
         }
 
@@ -1409,8 +1133,6 @@ export const useCanvas = () => {
           
           pdf.addImage(dataURL, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'NONE');
         } catch (error) {
-          console.error('Erro ao exportar canvas:', error);
-          
           // Se falhar, verificar se é problema de CORS
           if (error instanceof DOMException && error.name === 'SecurityError') {
             toast.error(`Erro de CORS na página ${i + 1}. Verifique se todas as imagens foram carregadas com crossOrigin="anonymous"`);
@@ -1423,8 +1145,7 @@ export const useCanvas = () => {
       // Save the PDF
       pdf.save('certificado.pdf');
       toast.success('PDF exportado com sucesso!');
-    } catch (error) {
-      console.error('Error exporting to PDF:', error);
+    } catch {
       toast.error('Erro ao exportar PDF. Tente remover imagens externas que podem estar bloqueando a exportação.');
     }
   }, [pages]);

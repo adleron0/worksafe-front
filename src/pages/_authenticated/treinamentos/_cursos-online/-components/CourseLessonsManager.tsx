@@ -251,7 +251,9 @@ const CourseLessonsManager: React.FC<CourseLessonsManagerProps> = ({
       queryFn: async () => {
         if (!courseId) return { rows: [], total: 0 };
         const params = [
-          { key: "or", value: `[{ "courseId": ${courseId} }, { "courseId": null }]` },
+          // Grupos OR por chave indexada: aulas do curso OU aulas sem curso (avulsas).
+          { key: "or.0.courseId", value: courseId },
+          { key: "or.1.null-courseId", value: true },
           { key: "limit", value: 'all' },
           { key: "active", value: true },
         ];

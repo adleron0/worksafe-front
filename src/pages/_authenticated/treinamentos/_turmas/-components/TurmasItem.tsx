@@ -1,5 +1,6 @@
 // Serviços
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { patch, post } from "@/services/api";
 import { useLoader } from "@/context/GeneralContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -40,8 +41,6 @@ interface ItemsProps {
   index: number;
   entity: IDefaultEntity;
   setFormData: (data: IEntity) => void;
-  setOpenForm: (open: boolean) => void; // Mantido para compatibilidade
-  setOpenFormDialog: (open: boolean) => void;
   openInstructorsModal: (open: boolean) => void;
   openSubscriptionsModal: (open: boolean) => void;
 }
@@ -51,18 +50,31 @@ const SiteServicesItem = ({
   index,
   entity,
   setFormData,
-  setOpenForm: _setOpenForm, // eslint-disable-line @typescript-eslint/no-unused-vars
-  setOpenFormDialog,
   openInstructorsModal,
   openSubscriptionsModal,
 }: ItemsProps) => {
   const { can } = useVerify();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
   const { theme } = useTheme();
   const [openQrModal, setOpenQrModal] = useState(false);
   const [openDuplicateModal, setOpenDuplicateModal] = useState(false);
   const [openAttendanceModal, setOpenAttendanceModal] = useState(false);
+
+  // Links públicos do WorkSafe (sem slug: uma empresa por domínio).
+  const generateProvaLink = (classId: number) =>
+    `${process.env.NODE_ENV === "development" ? "http://localhost:5173" : window.location.origin}/prova/${classId}`;
+
+  const generateEnrollmentLink = (classId: number) => {
+    const baseUrl =
+      process.env.NODE_ENV === "development"
+        ? "http://localhost:5173"
+        : theme.companyData?.lp_domain
+          ? `https://${theme.companyData.lp_domain}`
+          : "https://worksafebrasil.com.br";
+    return `${baseUrl}/turma/${classId}`;
+  };
 
   // Mutation para inativar
   const { mutate: deactivate } = useMutation({
@@ -374,8 +386,10 @@ const SiteServicesItem = ({
                   variant="ghost"
                   className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
                   onClick={() => {
-                    setFormData(item);
-                    setOpenFormDialog(true); // Abre o Dialog em vez do SideForm
+                    navigate({
+                      to: "/treinamentos/turmas/$turmaId",
+                      params: { turmaId: String(item.id) },
+                    });
                   }}
                 >
                   <Icon name="edit-3" className="w-3 h-3" />
@@ -436,13 +450,7 @@ const SiteServicesItem = ({
                   variant="ghost"
                   className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
                   onClick={() => {
-                    const baseUrl =
-                      process.env.NODE_ENV === "development"
-                        ? "http://localhost:5173"
-                        : theme.companyData?.lp_domain
-                          ? `https://${theme.companyData.lp_domain}`
-                          : "https://worksafebrasil.com.br";
-                    const enrollmentLink = `${baseUrl}/turma/${item.id}`;
+                    const enrollmentLink = generateEnrollmentLink(item.id!);
 
                     navigator.clipboard
                       .writeText(enrollmentLink)
@@ -567,7 +575,7 @@ const SiteServicesItem = ({
           </div>
           {/* QR Code */}
           <QRCode
-            data={`${process.env.NODE_ENV === "development" ? "http://localhost:5173" : window.location.origin}/prova/${item.id}`}
+            data={generateProvaLink(item.id!)}
           />
           {/* Link da prova com botão de copiar */}
           <div className="w-full space-y-2">
@@ -578,7 +586,7 @@ const SiteServicesItem = ({
               <input
                 type="text"
                 readOnly
-                value={`${process.env.NODE_ENV === "development" ? "http://localhost:5173" : window.location.origin}/prova/${item.id}`}
+                value={generateProvaLink(item.id!)}
                 className="flex-1 px-3 py-2 text-sm border rounded-md bg-background cursor-pointer"
                 onClick={(e) => e.currentTarget.select()}
               />
@@ -587,7 +595,7 @@ const SiteServicesItem = ({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const provaLink = `${process.env.NODE_ENV === "development" ? "http://localhost:5173" : window.location.origin}/prova/${item.id}`;
+                  const provaLink = generateProvaLink(item.id!);
                   navigator.clipboard
                     .writeText(provaLink)
                     .then(() => {

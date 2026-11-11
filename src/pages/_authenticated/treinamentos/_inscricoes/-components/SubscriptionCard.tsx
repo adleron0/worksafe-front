@@ -104,6 +104,20 @@ const SubscriptionCard = ({
             </p>
           </div>
         )}
+        {item.createdAt && (
+          <div className="flex items-center gap-2">
+            <Icon name="calendar" className="w-3 h-3 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground truncate">
+              {new Date(item.createdAt).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Informações da Turma/Empresa */}

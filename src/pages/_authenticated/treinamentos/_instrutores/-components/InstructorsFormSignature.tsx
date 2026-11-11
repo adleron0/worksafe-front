@@ -149,6 +149,7 @@ const SignatureForm = ({ formData, openSheet, entity }: FormProps) => {
           itemFormData="signature"
           cover={false}
           acceptedFiles="image/png"
+          clearFields={["signatureUrl"]}
         />
       </div>
 

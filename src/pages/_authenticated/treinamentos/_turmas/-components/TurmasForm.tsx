@@ -409,6 +409,16 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     }
   }, []);
 
+  // Efeito para auto-preencher landingPagesDates quando as datas mudarem
+  useEffect(() => {
+    if (dataForm.initialDate && dataForm.finalDate && dataForm.periodClass === "LIMITED") {
+      const formatted = formatDateRange(dataForm.initialDate, dataForm.finalDate);
+      if (formatted && formatted !== dataForm.landingPagesDates) {
+        setDataForm(prev => ({ ...prev, landingPagesDates: formatted }));
+      }
+    }
+  }, [dataForm.initialDate, dataForm.finalDate, dataForm.periodClass]);
+
   const { mutate: registerCustomer, isPending } = useMutation({
     mutationFn: (newItem: FormData) => {
       showLoader(`Registrando ${entity.name}...`);
@@ -666,6 +676,55 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       const course = findCourseById(courseId) as Course | null;
       return course ? propertyGetter(course) : undefined;
     });
+
+  // Função para formatar o intervalo de datas para texto
+  const formatDateRange = (initialDate: string | null, finalDate: string | null): string => {
+    if (!initialDate || !finalDate) return "";
+
+    // Parse das datas de forma segura (evita problemas de timezone)
+    const parseDate = (dateStr: string) => {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return { year, month, day };
+    };
+
+    const start = parseDate(initialDate);
+    const end = parseDate(finalDate);
+
+    const months = [
+      "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+      "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
+    ];
+
+    const startDay = start.day;
+    const endDay = end.day;
+    const startMonth = months[start.month - 1]; // month vem de 1-12, array é 0-11
+    const endMonth = months[end.month - 1];
+    const startYear = start.year;
+    const endYear = end.year;
+
+    // Mesmo dia
+    if (initialDate === finalDate) {
+      return `${startDay} de ${startMonth}`;
+    }
+
+    // Mesmo mês e ano
+    if (start.month === end.month && start.year === end.year) {
+      // Se for apenas 2 dias consecutivos
+      if (endDay - startDay === 1) {
+        return `${startDay} e ${endDay} de ${startMonth}`;
+      }
+      // Se for mais de 2 dias
+      return `${startDay} a ${endDay} de ${startMonth}`;
+    }
+
+    // Meses diferentes mas mesmo ano
+    if (start.year === end.year) {
+      return `${startDay} de ${startMonth} a ${endDay} de ${endMonth}`;
+    }
+
+    // Anos diferentes
+    return `${startDay} de ${startMonth} de ${startYear} a ${endDay} de ${endMonth} de ${endYear}`;
+  };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
@@ -1030,7 +1089,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
                   mode="single"
                   name="initialDate"
                   value={dataForm.initialDate}
-                  onValueChange={(name, value) => handleChange(name, value)}
+                  onValueChange={handleChange}
                   formField="initialDate"
                   placeholder="Selecione a data de início"
                   className="mt-1"
@@ -1048,7 +1107,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
                   mode="single"
                   name="finalDate"
                   value={dataForm.finalDate}
-                  onValueChange={(name, value) => handleChange(name, value)}
+                  onValueChange={handleChange}
                   formField="finalDate"
                   placeholder="Selecione a data de fim"
                   className="mt-1"
@@ -1062,6 +1121,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
                 <Label htmlFor="landingPagesDates">
                   Datas Exatas para Divulgação <span>*</span>
                 </Label>
+                <p className="text-xs text-muted-foreground font-medium mb-2">
+                  Gerado automaticamente ou edite manualmente conforme necessário
+                </p>
                 <Input
                   id="landingPagesDates"
                   name="landingPagesDates"
@@ -1447,7 +1509,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
                   mode="single"
                   name="initialDate"
                   value={dataForm.initialDate}
-                  onValueChange={(name, value) => handleChange(name, value)}
+                  onValueChange={handleChange}
                   formField="initialDate"
                   placeholder="Selecione a data de início"
                   className="mt-1"
@@ -1465,7 +1527,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
                   mode="single"
                   name="finalDate"
                   value={dataForm.finalDate}
-                  onValueChange={(name, value) => handleChange(name, value)}
+                  onValueChange={handleChange}
                   formField="finalDate"
                   placeholder="Selecione a data de fim"
                   className="mt-1"
@@ -1479,6 +1541,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
                 <Label htmlFor="landingPagesDates">
                   Datas Exatas para Divulgação <span>*</span>
                 </Label>
+                <p className="text-xs text-muted-foreground font-medium mb-2">
+                  Gerado automaticamente ou edite manualmente conforme necessário
+                </p>
                 <Input
                   id="landingPagesDates"
                   name="landingPagesDates"

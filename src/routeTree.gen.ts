@@ -59,6 +59,8 @@ import { Route as AuthenticatedBlogTagsTagsRouteImport } from './pages/_authenti
 import { Route as AuthenticatedBlogPostsPostsRouteImport } from './pages/_authenticated/blog/_posts/posts'
 import { Route as AuthenticatedBlogComentariosComentariosRouteImport } from './pages/_authenticated/blog/_comentarios/comentarios'
 import { Route as AuthenticatedBlogCategoriasCategoriasRouteImport } from './pages/_authenticated/blog/_categorias/categorias'
+import { Route as AuthenticatedTreinamentosTurmasTurmasNovaRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.nova'
+import { Route as AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.$turmaId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/_index',
@@ -344,6 +346,18 @@ const AuthenticatedBlogCategoriasCategoriasRoute =
     path: '/blog/categorias',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedTreinamentosTurmasTurmasNovaRoute =
+  AuthenticatedTreinamentosTurmasTurmasNovaRouteImport.update({
+    id: '/treinamentos/_turmas/turmas_/nova',
+    path: '/treinamentos/turmas/nova',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute =
+  AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport.update({
+    id: '/treinamentos/_turmas/turmas_/$turmaId',
+    path: '/treinamentos/turmas/$turmaId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/student': typeof StudentRouteWithChildren
@@ -394,6 +408,8 @@ export interface FileRoutesByFullPath {
   '/treinamentos/aulas-online': typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/student/course/$courseId': typeof StudentCourseCourseIdIndexRoute
+  '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
+  '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
 export interface FileRoutesByTo {
   '/building': typeof AuthenticatedBuildingRoute
@@ -443,6 +459,8 @@ export interface FileRoutesByTo {
   '/treinamentos/aulas-online': typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/student/course/$courseId': typeof StudentCourseCourseIdIndexRoute
+  '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
+  '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -496,6 +514,8 @@ export interface FileRoutesById {
   '/_authenticated/treinamentos/aulas-online/': typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
   '/_authenticated/usuarios/_usuarios/': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/student/course/$courseId/': typeof StudentCourseCourseIdIndexRoute
+  '/_authenticated/treinamentos/_turmas/turmas_/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
+  '/_authenticated/treinamentos/_turmas/turmas_/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -548,6 +568,8 @@ export interface FileRouteTypes {
     | '/treinamentos/aulas-online'
     | '/usuarios'
     | '/student/course/$courseId'
+    | '/treinamentos/turmas/$turmaId'
+    | '/treinamentos/turmas/nova'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/building'
@@ -597,6 +619,8 @@ export interface FileRouteTypes {
     | '/treinamentos/aulas-online'
     | '/usuarios'
     | '/student/course/$courseId'
+    | '/treinamentos/turmas/$turmaId'
+    | '/treinamentos/turmas/nova'
   id:
     | '__root__'
     | '/_authenticated'
@@ -649,6 +673,8 @@ export interface FileRouteTypes {
     | '/_authenticated/treinamentos/aulas-online/'
     | '/_authenticated/usuarios/_usuarios/'
     | '/student/course/$courseId/'
+    | '/_authenticated/treinamentos/_turmas/turmas_/$turmaId'
+    | '/_authenticated/treinamentos/_turmas/turmas_/nova'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1009,6 +1035,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBlogCategoriasCategoriasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/treinamentos/_turmas/turmas_/nova': {
+      id: '/_authenticated/treinamentos/_turmas/turmas_/nova'
+      path: '/treinamentos/turmas/nova'
+      fullPath: '/treinamentos/turmas/nova'
+      preLoaderRoute: typeof AuthenticatedTreinamentosTurmasTurmasNovaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/treinamentos/_turmas/turmas_/$turmaId': {
+      id: '/_authenticated/treinamentos/_turmas/turmas_/$turmaId'
+      path: '/treinamentos/turmas/$turmaId'
+      fullPath: '/treinamentos/turmas/$turmaId'
+      preLoaderRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -1048,6 +1088,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedInventariosAreasIndexRoute: typeof AuthenticatedInventariosAreasIndexRoute
   AuthenticatedTreinamentosAulasOnlineIndexRoute: typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
   AuthenticatedUsuariosUsuariosIndexRoute: typeof AuthenticatedUsuariosUsuariosIndexRoute
+  AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
+  AuthenticatedTreinamentosTurmasTurmasNovaRoute: typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -1111,6 +1153,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedTreinamentosAulasOnlineIndexRoute,
   AuthenticatedUsuariosUsuariosIndexRoute:
     AuthenticatedUsuariosUsuariosIndexRoute,
+  AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute:
+    AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute,
+  AuthenticatedTreinamentosTurmasTurmasNovaRoute:
+    AuthenticatedTreinamentosTurmasTurmasNovaRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

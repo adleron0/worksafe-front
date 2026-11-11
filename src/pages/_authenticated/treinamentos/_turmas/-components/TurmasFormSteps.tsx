@@ -815,26 +815,26 @@ const TurmasFormSteps = ({ formData, onClose, entity }: FormProps) => {
       {/* Footer com botões de navegação */}
       <div className="px-4 md:px-6 py-3 md:py-4 border-t bg-background">
         <div className="flex flex-col sm:flex-row gap-3 sm:justify-between">
-          {/* Botão Anterior - Mobile: ocupa largura total */}
+          {/* Botão Cancelar - Esquerda */}
           <Button
             variant="outline"
-            onClick={handlePrevious}
-            disabled={currentStep === 1}
-            className="w-full sm:w-auto order-2 sm:order-1"
+            onClick={onClose}
+            className="w-full sm:w-auto order-1"
           >
-            <ChevronLeft className="w-4 h-4 mr-1" />
-            <span className="sm:inline">Anterior</span>
+            <span className="sm:hidden">Sair</span>
+            <span className="hidden sm:inline">Cancelar</span>
           </Button>
 
-          {/* Botões de ação - Mobile: em linha */}
-          <div className="flex gap-2 order-1 sm:order-2">
+          {/* Botões de navegação - Direita */}
+          <div className="flex gap-2 order-2">
             <Button
               variant="outline"
-              onClick={onClose}
+              onClick={handlePrevious}
+              disabled={currentStep === 1}
               className="flex-1 sm:flex-initial"
             >
-              <span className="sm:hidden">Sair</span>
-              <span className="hidden sm:inline">Cancelar</span>
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              <span className="sm:inline">Anterior</span>
             </Button>
 
             {currentStep === totalSteps ? (

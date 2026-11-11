@@ -61,7 +61,7 @@ const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal 
       showLoader(`Criando ${entity.name}...`);
       return post("subscription", "", data);
     },
-    onSuccess: () => {
+    onSuccess: (_response, variables) => {
       hideLoader();
       toast({
         title: `${entity.name} criada com sucesso!`,
@@ -69,6 +69,11 @@ const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal 
         variant: "default",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
+
+      // Invalidar créditos se a inscrição foi criada como confirmada
+      if (variables.subscribeStatus === "confirmed") {
+      }
+
       openSheet(false);
     },
     onError: (error: any) => {
@@ -86,7 +91,7 @@ const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal 
       showLoader(`Atualizando ${entity.name}...`);
       return put("subscription", `${data.id}`, data);
     },
-    onSuccess: () => {
+    onSuccess: (_response, variables) => {
       hideLoader();
       toast({
         title: `${entity.name} atualizada com sucesso!`,
@@ -94,6 +99,15 @@ const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal 
         variant: "default",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
+
+      // Invalidar créditos se houve mudança no status de confirmação
+      const statusAnterior = formData?.subscribeStatus;
+      const statusNovo = variables.subscribeStatus;
+
+      if (statusAnterior !== statusNovo &&
+          (statusNovo === "confirmed" || statusAnterior === "confirmed")) {
+      }
+
       openSheet(false);
     },
     onError: (error: any) => {

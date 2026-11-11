@@ -6,10 +6,13 @@ import { get, put } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
 import { useLoader } from "@/context/GeneralContext";
 import { toast } from "@/hooks/use-toast";
+import { useSelection } from "@/hooks/useSelection";
+import { generateSelectiveCertificates } from "@/services/certificateService";
 import Pagination from "@/components/general-components/Pagination";
 // Template Page list-form
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
+import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import ItemSkeleton from "./-skeletons/ItemSkeleton";
 import ItemList from "./-components/SubscriptionItem";
 import SearchForm from "./-components/SubscriptionSearch";
@@ -148,7 +151,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
     enabled: !!searchParams.classId || !!classId,
   });
 
-  const handleSearch = async (params: any) => {
+  const handleSearch = async (params: Record<string, unknown>) => {
     setSearchParams((prev) => ({
       ...prev,
       ...params,
@@ -207,7 +210,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
       toast({
         title: "Status atualizado!",
         description: "O status foi atualizado com sucesso.",
-        variant: "default",
+        variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
     },
@@ -225,6 +228,58 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
   const handleKanbanStatusChange = (newStatus: string | number, itemId: string | number, item: IEntity) => {
     changeStatus({ newStatus, itemId, item });
   };
+
+  // Sistema de seleção (filtrar items sem id)
+  const selection = useSelection(
+    (data?.rows || []).filter((item): item is IEntity & { id: number } => typeof item.id === 'number')
+  );
+
+  // Mutation para gerar certificados seletivamente
+  const { mutate: generateCertificates } = useMutation({
+    mutationFn: () => {
+      if (!selection.selectedIds.length) {
+        throw new Error('Nenhuma inscrição selecionada');
+      }
+
+      const classIdToUse = Number(searchParams.classId) || Number(classId);
+      if (!classIdToUse) {
+        throw new Error('ID da turma não encontrado');
+      }
+
+      showLoader('Gerando certificados...');
+      return generateSelectiveCertificates(
+        classIdToUse,
+        selection.selectedIds.map(id => Number(id))
+      );
+    },
+    onSuccess: (response) => {
+      hideLoader();
+
+      const { newCertificates, updatedCertificates, skippedStudents } = response.data;
+
+      toast({
+        title: "Certificados gerados!",
+        description: `${newCertificates} novo(s), ${updatedCertificates} atualizado(s)${
+          skippedStudents.length > 0 ? `, ${skippedStudents.length} ignorado(s)` : ''
+        }`,
+        variant: "default",
+      });
+
+      // Limpar seleção após sucesso
+      selection.clearSelection();
+
+      // Invalidar queries relacionadas
+      queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
+    },
+    onError: (error: Error) => {
+      hideLoader();
+      toast({
+        title: "Erro ao gerar certificados",
+        description: error.message || "Ocorreu um erro ao processar a solicitação",
+        variant: "destructive",
+      });
+    }
+  });
 
   if (!can(`view_${entity.ability}`)) return null;
 
@@ -244,14 +299,15 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
             setFormData(undefined);
             setOpenForm(true);
           }}
-          setFormData={setFormData} 
+          setFormData={setFormData}
           setFormType={() => {}}
           iconForm="plus"
           addButtonName="Nova"
           showCreate={!!classId || !!searchParams.classId}
         />
-        {/* Toggle para alternar entre visualizações e Select de turmas */}
+
         <div className="flex flex-col md:flex-row justify-start md:items-center px-2 gap-4">
+          {/* Toggle para alternar entre visualizações e Select de turmas */}
           <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
             <Button
               variant={viewMode === 'list' ? 'default' : 'ghost'}
@@ -326,8 +382,47 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
             </div>
           )}
         </div>
-      </div>
 
+        {/* Barra de ações quando houver seleção */}
+        {selection.hasSelection && (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-primary/10 rounded-lg border border-primary/20">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium">
+                {selection.selectedCount} inscrição(ões) selecionada(s)
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+              <ConfirmDialog
+                title="Gerar Certificados"
+                description={`Você está prestes a gerar ou atualizar certificados para ${selection.selectedCount} inscrição(ões) selecionada(s).
+
+Os certificados novos serão criados e os existentes serão atualizados mantendo a data de vencimento original (primeira emissão).
+
+Deseja continuar?`}
+                onConfirm={() => generateCertificates()}
+              >
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="gap-2 flex-1 sm:flex-initial"
+                >
+                  <Icon name="award" className="w-4 h-4" />
+                  <span className="hidden sm:inline">Gerar Certificados</span>
+                  <span className="sm:hidden">Gerar</span>
+                </Button>
+              </ConfirmDialog>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={selection.clearSelection}
+                className="flex-1 sm:flex-initial"
+              >
+                Limpar Seleção
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
       {/* Error */}
       {isError && (
         <div className="p-6 text-center">
@@ -336,7 +431,6 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
           </p>
         </div>
       )}
-
       {/* Loading */}
       {isLoading && (
         <div className="p-2">
@@ -345,43 +439,42 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
           ))}
         </div>
       )}
-
       {/* Content */}
       {viewMode === 'list' ? (
         // Visualização em Lista
-        data && data.rows.length > 0 ? (
-          <div className="space-y-2 mt-2">
-            {data.rows.map((item, index) => (
-              <ItemList
-                key={item.id}
-                item={item}
-                index={index}
-                entity={entity}
-                setFormData={setFormData}
-                setOpenForm={setOpenForm}
-                onStatusChange={handleKanbanStatusChange}
-                modalPopover={modalPopover}
-              />
-            ))}
-            {totalPages > 1 && (
-              <Pagination
-                currentPage={searchParams.page}
-                totalItems={data.total}
-                itemsPerPage={searchParams.limit === 'all' ? data.total : Number(searchParams.limit)}
-                onPageChange={handlePageChange}
-              />
-            )}
-          </div>
-        ) : (
-          !isLoading && (
-            <div className="p-6 text-center">
-              <p className="text-gray-500">Nenhuma inscrição encontrada</p>
-            </div>
-          )
-        )
+        (data && data.rows.length > 0 ? (<div className='space-y-2 mt-2'>
+          {data.rows.map((item, index) => (
+            <ItemList
+              key={item.id}
+              item={item}
+              index={index}
+              entity={entity}
+              setFormData={setFormData}
+              setOpenForm={setOpenForm}
+              onStatusChange={handleKanbanStatusChange}
+              modalPopover={modalPopover}
+              selectable
+              isSelected={item.id ? selection.isSelected(item.id) : false}
+              onToggleSelection={selection.toggleSelection}
+              allSelected={selection.isAllSelected}
+              isIndeterminate={selection.isIndeterminate}
+              onSelectAll={selection.toggleSelectAll}
+            />
+          ))}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={searchParams.page}
+              totalItems={data.total}
+              itemsPerPage={searchParams.limit === 'all' ? data.total : Number(searchParams.limit)}
+              onPageChange={handlePageChange}
+            />
+          )}
+        </div>) : (!isLoading && (<div className='p-6 text-center'>
+          <p className="text-gray-500">Nenhuma inscrição encontrada</p>
+        </div>)))
       ) : (
         // Visualização em Kanban
-        <div className="p-2">
+        (<div className="p-2">
           <KanbanView
             data={data?.rows || []}
             columns={kanbanColumns}
@@ -401,9 +494,8 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
               />
             )}
           </KanbanView>
-        </div>
+        </div>)
       )}
-
       {/* Search Form */}
       <SideForm
         openSheet={openSearch}
@@ -412,7 +504,6 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
         side="left"
         form={<SearchForm onSearch={handleSearch} onClear={handleClear} searchParams={searchParams} />}
       />
-
       {/* Formulário de cadastro */}
       <SideForm
         openSheet={openForm}
@@ -434,7 +525,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
         }
       />
     </>
-  );
+  )
 };
 
 export default List;

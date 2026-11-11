@@ -76,11 +76,31 @@ const paramsCompose = (params: queryParams[]) => {
   return query;
 };
 
+/**
+ * Serializa um valor para FormData sem perder estrutura:
+ * - File/Blob vão como arquivo;
+ * - Date vai como ISO;
+ * - objeto ou lista de objetos vai como JSON (antes virava "[object Object]"
+ *   e a API recusava — ex.: duplicar turma com faq/whyUs);
+ * - lista de valores simples continua "a,b" (a API aceita CSV).
+ */
+const toFormValue = (value: any): string | Blob => {
+  if (value instanceof Blob) return value;
+  if (value instanceof Date) return value.toISOString();
+  if (Array.isArray(value)) {
+    return value.some((item) => item !== null && typeof item === "object")
+      ? JSON.stringify(value)
+      : value.join(",");
+  }
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+};
+
 const createFormData = (data: any): FormData => {
   const formData = new FormData();
   Object.keys(data).forEach((key) => {
     if (data[key] === null || data[key] === undefined) return;
-    formData.append(key, data[key]);
+    formData.append(key, toFormValue(data[key]));
   });
   return formData;
 };

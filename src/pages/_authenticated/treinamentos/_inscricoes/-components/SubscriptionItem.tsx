@@ -3,16 +3,17 @@ import useVerify from "@/hooks/use-verify";
 // Template Page
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  // DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  // DropdownMenuItem,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 // import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import HeaderRow from "@/components/general-components/HeaderRow";
 import OptionSelector from "@/components/general-components/OptionSelector";
+import { Selectable } from "@/components/general-components/Selectable";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -25,9 +26,31 @@ interface ItemsProps {
   setOpenForm: (open: boolean) => void;
   onStatusChange: (newStatus: string | number, itemId: string | number, item: IEntity) => void;
   modalPopover?: boolean;
+
+  // Props para seleção (opcionais)
+  selectable?: boolean;
+  isSelected?: boolean;
+  onToggleSelection?: (id: string | number) => void;
+  allSelected?: boolean;
+  isIndeterminate?: boolean;
+  onSelectAll?: () => void;
 }
 
-const SubscriptionItem = ({ item, index, entity, setFormData, setOpenForm, onStatusChange, modalPopover = false }: ItemsProps) => {
+const SubscriptionItem = ({
+  item,
+  index,
+  entity,
+  setFormData,
+  setOpenForm,
+  onStatusChange,
+  modalPopover = false,
+  selectable = false,
+  isSelected = false,
+  onToggleSelection,
+  allSelected = false,
+  isIndeterminate = false,
+  onSelectAll,
+}: ItemsProps) => {
   const { can } = useVerify();
 
   const status = [
@@ -44,18 +67,34 @@ const SubscriptionItem = ({ item, index, entity, setFormData, setOpenForm, onSta
   return (
     <>
       {/* Renderiza o Header apenas no primeiro item */}
-      <HeaderRow show={index === 0}>
-        <div className="w-4/12">Nome</div>
-        <div className="w-4/12">Contato</div>
+      <HeaderRow
+        show={index === 0}
+        selectable={selectable}
+        allSelected={allSelected}
+        isIndeterminate={isIndeterminate}
+        onSelectAll={onSelectAll}
+      >
+        <div className="w-3/12">Nome</div>
+        <div className="w-3/12">Contato</div>
+        <div className="w-2/12">Data de Inscrição</div>
         <div className="w-2/12">Status</div>
         <div className="w-1/12">Ações</div>
       </HeaderRow>
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
-        
+        {/* Checkbox de seleção (opcional) */}
+        {selectable && onToggleSelection && item.id && (
+          <Selectable
+            id={item.id}
+            checked={isSelected}
+            onToggle={onToggleSelection}
+            label={item.name}
+          />
+        )}
+
         {/* Avatar e Nome com CPF */}
-        <div className="w-full lg:w-4/12 flex items-center space-x-4 md:pr-2">
+        <div className="w-full lg:w-3/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border rounded-full">
             <AvatarImage src={undefined} alt={item.name} />
             <AvatarFallback className="rounded-full">{item.name?.[0] || "?"}</AvatarFallback>
@@ -72,7 +111,7 @@ const SubscriptionItem = ({ item, index, entity, setFormData, setOpenForm, onSta
         </div>
 
         {/* Contato (Telefone e E-mail) */}
-        <div className="w-full lg:w-4/12 flex flex-col gap-1 md:pr-2">
+        <div className="w-full lg:w-3/12 flex flex-col gap-1 md:pr-2">
           <div className="flex items-center gap-2">
             <Icon name="phone" className="w-3 h-3 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
@@ -83,6 +122,24 @@ const SubscriptionItem = ({ item, index, entity, setFormData, setOpenForm, onSta
             <Icon name="mail" className="w-3 h-3 text-muted-foreground" />
             <p className="text-sm text-muted-foreground truncate">
               {item.email || 'E-mail não informado'}
+            </p>
+          </div>
+        </div>
+
+        {/* Data de Inscrição */}
+        <div className="w-full lg:w-2/12 flex flex-col gap-1 md:pr-2">
+          <div className="flex items-center gap-2">
+            <Icon name="calendar" className="w-3 h-3 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              {item.createdAt
+                ? new Date(item.createdAt).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })
+                : 'Data não disponível'}
             </p>
           </div>
         </div>

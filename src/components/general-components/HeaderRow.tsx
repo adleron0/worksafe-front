@@ -1,12 +1,19 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface HeaderRowProps {
   children: React.ReactNode;
   className?: string;
   show?: boolean; // Para controlar se deve ser exibido ou não
   skeleton?: boolean; // Para ativar o modo skeleton
+
+  // Props para seleção
+  selectable?: boolean;
+  onSelectAll?: () => void;
+  allSelected?: boolean;
+  isIndeterminate?: boolean;
 }
 
 /**
@@ -49,7 +56,11 @@ const HeaderRow: React.FC<HeaderRowProps> = ({
   children,
   className,
   show = true,
-  skeleton = false
+  skeleton = false,
+  selectable = false,
+  onSelectAll,
+  allSelected = false,
+  isIndeterminate = false,
 }) => {
   if (!show) return null;
 
@@ -61,6 +72,11 @@ const HeaderRow: React.FC<HeaderRowProps> = ({
           className
         )}
       >
+        {selectable && (
+          <div className="w-12 flex items-center justify-center flex-shrink-0">
+            <Skeleton className="h-4 w-4" />
+          </div>
+        )}
         {React.Children.map(children, (child, index) => {
           if (React.isValidElement(child)) {
             const childClassName = child.props.className || '';
@@ -97,6 +113,16 @@ const HeaderRow: React.FC<HeaderRowProps> = ({
         className
       )}
     >
+      {selectable && (
+        <div className="w-12 flex items-center justify-center flex-shrink-0">
+          <Checkbox
+            checked={isIndeterminate ? "indeterminate" : allSelected}
+            onCheckedChange={onSelectAll}
+            aria-label="Selecionar todos os itens"
+            className="cursor-pointer data-[state=indeterminate]:bg-primary"
+          />
+        </div>
+      )}
       {children}
     </div>
   );

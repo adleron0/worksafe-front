@@ -12,7 +12,7 @@ import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { z } from "zod";
 import { HelpCircle } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { decodeBase64Variables } from "@/utils/decodeBase64Variables";
 
@@ -34,8 +34,33 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   type FormData = z.infer<typeof Schema>;
 
+  // Função para extrair apenas a parte da data (YYYY-MM-DD) sem conversão de timezone
+  const extractDatePart = (dateValue: string | Date | undefined | null): string | null => {
+    if (!dateValue) return null;
+
+    // Se for um objeto Date
+    if (dateValue instanceof Date) {
+      const year = dateValue.getFullYear();
+      const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+      const day = String(dateValue.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Se for uma string ISO com timestamp
+    if (typeof dateValue === 'string' && dateValue.includes('T')) {
+      return dateValue.split('T')[0]; // Retorna apenas YYYY-MM-DD
+    }
+
+    // Se já for YYYY-MM-DD
+    if (typeof dateValue === 'string' && dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return dateValue;
+    }
+
+    return String(dateValue);
+  };
+
   const [dataForm, setDataForm] = useState<FormData>({
-    expirationDate: formData?.expirationDate ? String(formData.expirationDate) : null,
+    expirationDate: extractDatePart(formData?.expirationDate),
     showOnWebsiteConsent: formData?.showOnWebsiteConsent || false,
   });
 
@@ -45,7 +70,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   useEffect(() => {
     if (formData) {
       setDataForm({
-        expirationDate: formData.expirationDate ? String(formData.expirationDate) : null,
+        expirationDate: extractDatePart(formData.expirationDate),
         showOnWebsiteConsent: formData.showOnWebsiteConsent || false,
       });
     }
@@ -63,7 +88,8 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       
       // Se tiver expirationDate, atualizar também o certificado_validade no variableToReplace
       if (values.expirationDate && formData?.variableToReplace) {
-        const expDate = new Date(values.expirationDate);
+        // Usar parseISO para evitar problemas de timezone
+        const expDate = parseISO(values.expirationDate);
         const formattedDate = format(expDate, 'dd/MM/yyyy');
         const formattedDateExtenso = format(expDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
         

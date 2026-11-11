@@ -16,8 +16,9 @@ import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Dialog from "@/components/general-components/Dialog";
-import VisualizadorCertificados from "@/components/general-components/visualizadorCertificados";
+import VisualizadorCertificados, { CertificateThumbnail } from "@/components/general-components/visualizadorCertificados";
 import HeaderRow from "@/components/general-components/HeaderRow";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 // Interfaces
 import { ICertificate } from "../-interfaces/entity.interface";
@@ -239,22 +240,38 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
 
   const formatDate = (date: string | Date | undefined) => {
     if (!date) return "Não informado";
-    return format(new Date(date), "dd/MM/yyyy", { locale: ptBR });
+
+    // Se for string ISO, extrair apenas a parte da data para evitar problemas de timezone
+    if (typeof date === 'string') {
+      const dateOnly = date.split('T')[0]; // "2027-10-13"
+      const [year, month, day] = dateOnly.split('-');
+      return `${day}/${month}/${year}`;
+    }
+
+    // Para objetos Date, usar format
+    return format(date, "dd/MM/yyyy", { locale: ptBR });
   };
 
   const getStatusBadge = () => {
     if (item.inactiveAt) {
       return false;
     }
-    
+
     if (item.expirationDate) {
-      const expDate = new Date(item.expirationDate);
-      const today = new Date();
-      if (expDate < today) {
+      // Extrair apenas a parte da data para evitar problemas de timezone
+      const expDateStr = typeof item.expirationDate === 'string'
+        ? item.expirationDate.split('T')[0]
+        : format(item.expirationDate, 'yyyy-MM-dd');
+
+      // Obter data de hoje no formato YYYY-MM-DD
+      const today = format(new Date(), 'yyyy-MM-dd');
+
+      // Comparar strings de data
+      if (expDateStr < today) {
         return false;
       }
     }
-    
+
     return true;
   };
 
@@ -262,22 +279,51 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
     <>
       {/* Renderiza o Header apenas no primeiro item */}
       <HeaderRow show={index === 0}>
-        <div className="w-3/12">Aluno</div>
+        <div className="w-4/12">Aluno</div>
         <div className="w-2/12">Turma</div>
-        <div className="w-2/12">Emissão</div>
-        <div className="w-2/12">Validade</div>
+        <div className="w-3/12">Datas</div>
         <div className="w-2/12">Status</div>
         <div className="w-1/12">Ações</div>
       </HeaderRow>
 
       {/* Conteúdo do item */}
       <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
-        
-        {/* Aluno */}
-        <div className="w-full lg:w-3/12 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Aluno: </p>
-          <p className="text-sm font-medium">{item.trainee?.name || "Não informado"}</p>
-          <p className="text-xs text-muted-foreground">{item.course?.name || "Não informado"}</p>
+
+        {/* Aluno com Preview */}
+        <div className="w-full lg:w-4/12 flex items-center space-x-4 md:pr-2">
+          {/* Thumbnail do Certificado */}
+          {item.fabricJsonFront && item.variableToReplace ? (
+            <div className="w-30 rounded-md overflow-hidden border bg-background flex-shrink-0">
+              <CertificateThumbnail
+                certificateData={{
+                  id: item.id || 0,
+                  name: item.course?.name || 'Certificado',
+                  fabricJsonFront: item.fabricJsonFront,
+                  fabricJsonBack: item.fabricJsonBack,
+                  canvasWidth: item.canvasWidth,
+                  canvasHeight: item.canvasHeight,
+                  certificateId: item.key?.toString() || 'CERT-001'
+                }}
+                variableToReplace={item.variableToReplace || {}}
+                className="w-full h-fit"
+                zoom={20}
+                showLoader={false}
+              />
+            </div>
+          ) : (
+            <Avatar className="border rounded-md bg-primary/10 flex-shrink-0">
+              <AvatarFallback className="rounded-md bg-primary/10 text-primary font-bold">
+                {item.trainee?.name?.charAt(0).toUpperCase() || 'A'}
+              </AvatarFallback>
+            </Avatar>
+          )}
+
+          {/* Informações do Aluno */}
+          <div className="break-words flex-1">
+            <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Aluno: </p>
+            <p className="text-sm font-medium">{item.trainee?.name || "Não informado"}</p>
+            <p className="text-xs text-muted-foreground">{item.course?.name || "Não informado"}</p>
+          </div>
         </div>
 
         {/* Turma */}
@@ -291,20 +337,23 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
           </p>
         </div>
 
-        {/* Emissão */}
-        <div className="w-full lg:w-2/12 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Emissão: </p>
-          <p className="text-sm text-muted-foreground">
-            {formatDate(item.createdAt)}
-          </p>
-        </div>
-
-        {/* Validade */}
-        <div className="w-full lg:w-2/12 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Validade: </p>
-          <p className="text-sm text-muted-foreground">
-            {formatDate(item.expirationDate)}
-          </p>
+        {/* Datas (Emissão e Validade) */}
+        <div className="w-full lg:w-3/12 md:pr-2">
+          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Datas: </p>
+          <div className="flex flex-col gap-1">
+            <div>
+              <p className="text-xs text-muted-foreground/70">Emissão:</p>
+              <p className="text-sm text-muted-foreground">
+                {formatDate(item.createdAt)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground/70">Validade:</p>
+              <p className="text-sm text-muted-foreground">
+                {formatDate(item.expirationDate)}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Status */}
@@ -331,19 +380,16 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
             </DropdownMenuTrigger>
             <DropdownMenuContent>
 
-              {/* Visualizar Detalhes */}
-              {can(`view_${entity.ability}`) && (
+              {/* Visualizar Certificado */}
+              {item.variableToReplace && item.fabricJsonFront && (
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
-                    onClick={() => {
-                      setFormData(item);
-                      setOpenForm(true);
-                    }}
+                    onClick={() => setShowViewer(true)}
                   >
-                    <Icon name="info" className="w-3 h-3" /> 
-                    <p>Ver Detalhes</p>
+                    <Icon name="eye" className="w-3 h-3" />
+                    <p>Visualizar Certificado</p>
                   </Button>
                 </DropdownMenuItem>
               )}
@@ -351,30 +397,33 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
               {/* Editar Certificado */}
               {can(`update_${entity.ability}`) && setEditData && setOpenEditForm && (
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
                     onClick={() => {
                       setEditData(item);
                       setOpenEditForm(true);
                     }}
                   >
-                    <Icon name="edit" className="w-3 h-3" /> 
+                    <Icon name="edit" className="w-3 h-3" />
                     <p>Editar</p>
                   </Button>
                 </DropdownMenuItem>
               )}
 
-              {/* Visualizar Certificado */}
-              {item.variableToReplace && item.fabricJsonFront && (
+              {/* Visualizar Detalhes */}
+              {can(`view_${entity.ability}`) && (
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
-                    onClick={() => setShowViewer(true)}
+                    onClick={() => {
+                      setFormData(item);
+                      setOpenForm(true);
+                    }}
                   >
-                    <Icon name="eye" className="w-3 h-3" /> 
-                    <p>Visualizar Certificado</p>
+                    <Icon name="info" className="w-3 h-3" />
+                    <p>Ver Detalhes</p>
                   </Button>
                 </DropdownMenuItem>
               )}
@@ -401,8 +450,8 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
                     className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
                     onClick={() => window.open(item.pdfUrl, '_blank')}
                   >
-                    <Icon name="download" className="w-3 h-3" /> 
-                    <p>Baixar PDF Salvo</p>
+                    <Icon name="image" className="w-3 h-3" /> 
+                    <p>Imagem Preview</p>
                   </Button>
                 </DropdownMenuItem>
               )}

@@ -13,20 +13,31 @@ import IconPicker from "@/components/general-components/IconPicker";
 import ColorPickerInput from "@/components/general-components/ColorPickerInput";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 // Interfaces and validations
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
+import { useFormDraft } from "@/hooks/use-form-draft";
 import { z } from "zod";
-import { Switch } from "@/components/ui/switch";
+// import { Switch } from "@/components/ui/switch";
 
 interface FormProps {
   formData?: IEntity;
   openSheet: (open: boolean) => void;
   entity: IDefaultEntity;
+  // Registra função guarda no parent. Retorno true bloqueia o close (X/ESC/click-fora).
+  registerCloseGuard?: (guard: (() => boolean) | null) => void;
 }
 
-const Form = ({ formData, openSheet, entity }: FormProps) => {
+const Form = ({ formData, openSheet, entity, registerCloseGuard }: FormProps) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
 
@@ -34,8 +45,8 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const Schema = z.object({
     name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     hoursDuration: z.number().min(1, { message: "Duração deve ser maior que 0" }),
-    yearOfValidation: z.number().min(1, { message: "Anos de validade deve ser maior que 0" }).optional(),
-    flags: z.string().min(3, { message: "Curso deve ter pelo menos 1 bandeira" }),
+    yearOfValidation: z.number().optional(),
+    flags: z.string().optional(),
     icon: z.string().optional(),
     color: z.string().optional(),
     description: z.string().min(10, { message: "Descrição deve ter pelo menos 10 caracteres" }),
@@ -83,6 +94,14 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const [preview, setPreview] = useState<string | null>(''); // Preview da imagem quando for editar
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
+  // Rascunho em localStorage (apenas criação)
+  const { clearDraft } = useFormDraft({
+    storageKey: formData ? null : "curso-draft-new",
+    dataForm,
+    setDataForm,
+    excludeKeys: ["image"],
+  });
+
   // Efeito para preview de imagem se necessário
   useEffect(() => {
     if (formData) {
@@ -113,6 +132,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       queryClient.refetchQueries({ queryKey: [`list${entity.pluralName}`] });
       // Limpa o formulário e fecha o Sheet
       setDataForm(initialFormRef.current);
+      clearDraft();
       openSheet(false);
     },
     onError: (error: ApiError) => {
@@ -146,6 +166,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       queryClient.refetchQueries({ queryKey: [`list${entity.pluralName}`] });
       // Limpa o formulário e fecha o Sheet
       setDataForm(initialFormRef.current);
+      clearDraft();
       openSheet(false);
     },
     onError: (error: ApiError) => {
@@ -161,6 +182,38 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const handleChange = (name: string, value: string | number) => {
     setDataForm((prev) => ({ ...prev, [name]: value }));
   };
+
+  // ── Fechar com guarda de rascunho ─────────────────────────────────────────
+  const isCreating = !formData;
+  const hasChanges =
+    JSON.stringify(dataForm) !== JSON.stringify(initialFormRef.current);
+  const [backDialogOpen, setBackDialogOpen] = useState(false);
+
+  const closeKeepDraft = () => openSheet(false);
+  const closeDiscardDraft = () => {
+    clearDraft();
+    openSheet(false);
+  };
+  const handleCancelClick = () => {
+    if (isCreating && hasChanges) {
+      setBackDialogOpen(true);
+    } else {
+      closeDiscardDraft();
+    }
+  };
+
+  // Registra guarda no parent: bloqueia X/ESC/click-fora se há rascunho a confirmar
+  useEffect(() => {
+    if (!registerCloseGuard) return;
+    registerCloseGuard(() => {
+      if (isCreating && hasChanges) {
+        setBackDialogOpen(true);
+        return true;
+      }
+      return false;
+    });
+    return () => registerCloseGuard(null);
+  }, [isCreating, hasChanges, registerCloseGuard]);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -256,7 +309,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         <Number
           id="yearOfValidation"
           name="yearOfValidation"
-          min={1}
+          min={0}
           max={100}
           value={dataForm.yearOfValidation || 0}
           onValueChange={handleChange}
@@ -333,7 +386,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {errors.gradePracticle && <p className="text-red-500 text-sm">{errors.gradePracticle}</p>}
       </div>
 
-      <div className="space-y-2 flex items-center gap-2">
+      {/* <div className="space-y-2 flex items-center gap-2">
         <Label htmlFor="weekly">Curso semanal?</Label>
         <Switch
           id="weekly"
@@ -342,7 +395,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           onCheckedChange={() => setDataForm((prev) => ({ ...prev, weekly: !prev.weekly }))}
           className="mt-1"
         />
-      </div>
+      </div> */}
 
       {
         dataForm.weekly && (
@@ -388,19 +441,71 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         {errors.exam && <p className="text-red-500 text-sm">{errors.exam}</p>}
       </div> */}
 
-      <Button
-        type="submit"
-        className="w-full my-4"
-        disabled={isPending || isPendingUpdate}
-      >
-        {isPending || isPendingUpdate
-          ? formData
-            ? "Atualizando..."
-            : "Registrando..."
-          : formData
-          ? `Atualizar ${entity.name}`
-          : `Registrar ${entity.name}`}
-      </Button>
+      <div className="flex gap-2 my-4">
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1"
+          onClick={handleCancelClick}
+        >
+          Cancelar
+        </Button>
+        <Button
+          type="submit"
+          className="flex-1"
+          disabled={isPending || isPendingUpdate}
+        >
+          {isPending || isPendingUpdate
+            ? formData
+              ? "Atualizando..."
+              : "Registrando..."
+            : formData
+            ? `Atualizar ${entity.name}`
+            : `Registrar ${entity.name}`}
+        </Button>
+      </div>
+
+      {/* Dialog de saída com rascunho (só criação) */}
+      {isCreating && (
+        <AlertDialog open={backDialogOpen} onOpenChange={setBackDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Sair sem salvar?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Você tem dados preenchidos. O que deseja fazer com eles?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <Button
+                variant="ghost"
+                className="w-full sm:w-auto"
+                onClick={() => setBackDialogOpen(false)}
+              >
+                Continuar editando
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  setBackDialogOpen(false);
+                  closeDiscardDraft();
+                }}
+              >
+                Descartar
+              </Button>
+              <Button
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  setBackDialogOpen(false);
+                  closeKeepDraft();
+                }}
+              >
+                Salvar rascunho
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </form>
   );
 };

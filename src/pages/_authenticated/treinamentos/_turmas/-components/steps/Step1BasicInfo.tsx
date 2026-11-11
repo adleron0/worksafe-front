@@ -52,6 +52,20 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors }: StepProps) => {
     },
   });
 
+  const { data: customers, isLoading: isLoadingCustomers } = useQuery<
+    Response | undefined,
+    ApiError
+  >({
+    queryKey: [`listClientes`],
+    queryFn: async () => {
+      const params = [
+        { key: "limit", value: 'all' },
+        { key: "order-name", value: "asc" },
+      ];
+      return get("customer", "", params);
+    },
+  });
+
   const { data: certificates, isLoading: isLoadingCertificates } = useQuery<
     Response | undefined,
     ApiError
@@ -146,10 +160,37 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors }: StepProps) => {
           name="openClass"
           checked={dataForm.openClass ? true : false}
           onCheckedChange={() =>
-            setDataForm((prev) => ({ ...prev, openClass: !prev.openClass }))
+            setDataForm((prev) => ({
+              ...prev,
+              openClass: !prev.openClass,
+              customerId: !prev.openClass ? null : prev.customerId
+            }))
           }
         />
       </div>
+
+      {/* Seleção de Cliente - Apenas para turmas fechadas */}
+      {!dataForm.openClass && (
+        <div>
+          <Label htmlFor="customerId">
+            Cliente
+          </Label>
+          <p className="text-xs text-muted-foreground font-medium mb-2">
+            Selecione o cliente para esta turma privada (opcional)
+          </p>
+          <Select
+            name="customerId"
+            disabled={isLoadingCustomers}
+            options={customers?.rows || []}
+            onChange={(name, value) => handleChange(name, value ? +value : null)}
+            state={dataForm.customerId ? String(dataForm.customerId) : ""}
+            placeholder="Selecione o cliente"
+          />
+          {errors.customerId && (
+            <p className="text-red-500 text-sm mt-1">{errors.customerId}</p>
+          )}
+        </div>
+      )}
 
       {/* Seleção de Curso */}
       <div>

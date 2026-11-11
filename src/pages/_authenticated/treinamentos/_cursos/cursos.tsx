@@ -26,6 +26,12 @@ function List() {
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
+  // Guard de fechamento: Form registra função que decide se bloqueia close (X/ESC/click-fora)
+  const closeGuardRef = useRef<(() => boolean) | null>(null);
+  const handleSetOpenForm = (open: boolean) => {
+    if (!open && closeGuardRef.current?.()) return;
+    setOpenForm(open);
+  };
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
@@ -123,21 +129,21 @@ function List() {
       {/* Formulário de cadastro */}
       <SideForm
         openSheet={openForm}
-        setOpenSheet={setOpenForm}
-        title={formData 
+        setOpenSheet={handleSetOpenForm}
+        title={formData
           ? formData.formType === 'exam'
             ? `Exame do ${entity.name} ${formData.name}`
             : `Editar ${entity.name} ${formData.name}`
           : `Cadastrar ${entity.name}`}
-        description={formData 
+        description={formData
           ? formData.formType === 'exam'
             ? `Gerencie as questões do exame para o curso ${formData.name}.`
             : `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
           : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
         side="right"
-        form={formData && formData.formType === 'exam' 
+        form={formData && formData.formType === 'exam'
           ? <ExamForm courseData={formData} openSheet={setOpenForm} entity={entity} />
-          : <Form formData={formData} openSheet={setOpenForm} entity={entity} />
+          : <Form formData={formData} openSheet={setOpenForm} entity={entity} registerCloseGuard={(fn) => { closeGuardRef.current = fn; }} />
         }
       />
 

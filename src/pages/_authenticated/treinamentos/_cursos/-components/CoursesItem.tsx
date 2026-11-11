@@ -138,7 +138,7 @@ const CoursesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPro
                   backgroundColor: item.color || '#000000',
                 }}
               >
-                <Icon name={item.icon} className="w-3 h-3 text-white" />
+                <Icon name={item.icon} className="w-3 h-3 text-foreground" />
               </div>
             )}
           </Avatar>

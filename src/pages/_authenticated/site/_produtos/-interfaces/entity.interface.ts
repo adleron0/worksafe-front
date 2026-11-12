@@ -12,8 +12,10 @@ export interface IEntity {
   image?: File | null;
   featured?: boolean;
   features?: string;
-  category?: string | null;
-  brand?: string | null;
+  categoryId?: number | null;
+  brandId?: number | null;
+  category?: { id: number; name: string } | null;
+  brand?: { id: number; name: string } | null;
   description?: string;
   price?: number;
   oldPrice?: number;

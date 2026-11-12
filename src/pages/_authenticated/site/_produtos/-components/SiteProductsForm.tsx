@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, post, put } from "@/services/api";
-import { Input as TextInput } from "@/components/ui/input";
+import Select from "@/components/general-components/Select";
 import { toast } from "@/hooks/use-toast";
 // Template Components
 import { useLoader } from "@/context/GeneralContext";
@@ -32,8 +32,8 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     featured: z.boolean(),
     features: z.string().optional(),
-    category: z.string().max(100, { message: "Máximo de 100 caracteres" }),
-    brand: z.string().max(100, { message: "Máximo de 100 caracteres" }),
+    categoryId: z.string(),
+    brandId: z.string(),
     description: z.string().min(10, { message: "Descrição deve ter pelo menos 10 caracteres" }),
     price: z.number().optional(),
     oldPrice: z.number().optional(),
@@ -51,8 +51,8 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const [dataForm, setDataForm] = useState<FormData>({
     name: formData?.name || "",
     features: formData?.features || "",
-    category: formData?.category || "",
-    brand: formData?.brand || "",
+    categoryId: formData?.categoryId ? String(formData.categoryId) : "",
+    brandId: formData?.brandId ? String(formData.brandId) : "",
     featured: formData?.featured || false,
     description: formData?.description || "",
     price: Number(formData?.price) || 0,
@@ -159,20 +159,25 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     }
   };
 
-  // Categorias e marcas já usadas viram sugestões: evita "EPI" e "EPIs"
-  // aparecerem como filtros diferentes na loja.
-  const { data: catalog } = useQuery({
-    queryKey: ["siteProductsSuggestions"],
-    queryFn: () =>
-      get<{ rows: IEntity[] }>(entity.model, "", [{ key: "limit", value: 1000 }]),
-    staleTime: 60 * 1000,
-  });
-  const distinct = (key: "category" | "brand") =>
-    Array.from(
-      new Set((catalog?.rows ?? []).map((p) => p[key]?.trim()).filter((v): v is string => Boolean(v))),
-    ).sort((a, b) => a.localeCompare(b, "pt-BR"));
-  const categoryOptions = distinct("category");
-  const brandOptions = distinct("brand");
+  // Categorias e marcas vêm dos cadastros em Site → Categorias da Loja / Marcas.
+  // Só as ativas viram opção; a atual do produto continua visível mesmo inativa.
+  const useOptions = (model: string, current?: { id: number; name: string } | null) =>
+    useQuery({
+      queryKey: [`options${model}`],
+      queryFn: () =>
+        get<{ rows: { id: number; name: string }[] }>(model, "", [
+          { key: "limit", value: 1000 },
+          { key: "active", value: true },
+          { key: "order-name", value: "asc" },
+        ]),
+      staleTime: 60 * 1000,
+      select: (data) => {
+        const rows = data?.rows ?? [];
+        return current && !rows.some((r) => r.id === current.id) ? [...rows, current] : rows;
+      },
+    });
+  const { data: categoryOptions = [], isLoading: loadingCategories } = useOptions("site-product-categories", formData?.category);
+  const { data: brandOptions = [], isLoading: loadingBrands } = useOptions("site-product-brands", formData?.brand);
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
@@ -206,40 +211,33 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <Label htmlFor="category">Categoria</Label>
-          <TextInput
-            id="category"
-            list="site-product-categories"
-            placeholder="Ex.: EPIs"
-            value={dataForm.category}
-            onChange={(e) => handleChange("category", e.target.value)}
-            autoComplete="off"
-            className="mt-1"
+          <Label htmlFor="categoryId">Categoria</Label>
+          <Select
+            name="categoryId"
+            options={categoryOptions}
+            state={dataForm.categoryId}
+            onChange={(_, value) => handleChange("categoryId", String(value ?? ""))}
+            placeholder="Sem categoria"
+            isLoading={loadingCategories}
+            clearable
           />
-          <datalist id="site-product-categories">
-            {categoryOptions.map((option) => <option key={option} value={option} />)}
-          </datalist>
-          {errors.category && <p className="text-red-500 text-sm">{errors.category}</p>}
         </div>
         <div>
-          <Label htmlFor="brand">Marca</Label>
-          <TextInput
-            id="brand"
-            list="site-product-brands"
-            placeholder="Ex.: Petzl"
-            value={dataForm.brand}
-            onChange={(e) => handleChange("brand", e.target.value)}
-            autoComplete="off"
-            className="mt-1"
+          <Label htmlFor="brandId">Marca</Label>
+          <Select
+            name="brandId"
+            options={brandOptions}
+            state={dataForm.brandId}
+            onChange={(_, value) => handleChange("brandId", String(value ?? ""))}
+            placeholder="Sem marca"
+            isLoading={loadingBrands}
+            clearable
           />
-          <datalist id="site-product-brands">
-            {brandOptions.map((option) => <option key={option} value={option} />)}
-          </datalist>
-          {errors.brand && <p className="text-red-500 text-sm">{errors.brand}</p>}
         </div>
       </div>
       <p className="text-xs text-muted-foreground font-medium -mt-1">
-        Viram os filtros da loja no site. Escolha uma sugestão para manter o mesmo nome.
+        {/* texto sem link: a lista de opções abre por cima e o clique atravessava */}
+        Viram os filtros da loja no site. Cadastre novas em Site → Categorias da Loja / Marcas.
       </p>
 
       <div>

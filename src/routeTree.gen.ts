@@ -50,6 +50,8 @@ import { Route as AuthenticatedTreinamentosCertificadosModelosCertificadosModelo
 import { Route as AuthenticatedTreinamentosAlunosAlunosRouteImport } from './pages/_authenticated/treinamentos/_alunos/alunos'
 import { Route as AuthenticatedSiteServicosServicosRouteImport } from './pages/_authenticated/site/_servicos/servicos'
 import { Route as AuthenticatedSiteProdutosProdutosRouteImport } from './pages/_authenticated/site/_produtos/produtos'
+import { Route as AuthenticatedSiteMarcasMarcasRouteImport } from './pages/_authenticated/site/_marcas/marcas'
+import { Route as AuthenticatedSiteCategoriasLojaCategoriasLojaRouteImport } from './pages/_authenticated/site/_categorias-loja/categorias-loja'
 import { Route as AuthenticatedInventariosAreasAreaIdRouteImport } from './pages/_authenticated/inventarios/areas/$areaId'
 import { Route as AuthenticatedFinanceiroReceberReceberRouteImport } from './pages/_authenticated/financeiro/_receber/receber'
 import { Route as AuthenticatedComercialVendedoresVendedoresRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores'
@@ -292,6 +294,18 @@ const AuthenticatedSiteProdutosProdutosRoute =
     path: '/site/produtos',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSiteMarcasMarcasRoute =
+  AuthenticatedSiteMarcasMarcasRouteImport.update({
+    id: '/site/_marcas/marcas',
+    path: '/site/marcas',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSiteCategoriasLojaCategoriasLojaRoute =
+  AuthenticatedSiteCategoriasLojaCategoriasLojaRouteImport.update({
+    id: '/site/_categorias-loja/categorias-loja',
+    path: '/site/categorias-loja',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedInventariosAreasAreaIdRoute =
   AuthenticatedInventariosAreasAreaIdRouteImport.update({
     id: '/inventarios/areas/$areaId',
@@ -389,6 +403,8 @@ export interface FileRoutesByFullPath {
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/site/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
+  '/site/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
   '/site/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
   '/site/servicos': typeof AuthenticatedSiteServicosServicosRoute
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
@@ -440,6 +456,8 @@ export interface FileRoutesByTo {
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/site/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
+  '/site/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
   '/site/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
   '/site/servicos': typeof AuthenticatedSiteServicosServicosRoute
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
@@ -495,6 +513,8 @@ export interface FileRoutesById {
   '/_authenticated/comercial/_vendedores/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/_authenticated/financeiro/_receber/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/_authenticated/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/_authenticated/site/_categorias-loja/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
+  '/_authenticated/site/_marcas/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
   '/_authenticated/site/_produtos/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
   '/_authenticated/site/_servicos/servicos': typeof AuthenticatedSiteServicosServicosRoute
   '/_authenticated/treinamentos/_alunos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
@@ -549,6 +569,8 @@ export interface FileRouteTypes {
     | '/comercial/vendedores'
     | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
+    | '/site/categorias-loja'
+    | '/site/marcas'
     | '/site/produtos'
     | '/site/servicos'
     | '/treinamentos/alunos'
@@ -600,6 +622,8 @@ export interface FileRouteTypes {
     | '/comercial/vendedores'
     | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
+    | '/site/categorias-loja'
+    | '/site/marcas'
     | '/site/produtos'
     | '/site/servicos'
     | '/treinamentos/alunos'
@@ -654,6 +678,8 @@ export interface FileRouteTypes {
     | '/_authenticated/comercial/_vendedores/vendedores'
     | '/_authenticated/financeiro/_receber/receber'
     | '/_authenticated/inventarios/areas/$areaId'
+    | '/_authenticated/site/_categorias-loja/categorias-loja'
+    | '/_authenticated/site/_marcas/marcas'
     | '/_authenticated/site/_produtos/produtos'
     | '/_authenticated/site/_servicos/servicos'
     | '/_authenticated/treinamentos/_alunos/alunos'
@@ -972,6 +998,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSiteProdutosProdutosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/site/_marcas/marcas': {
+      id: '/_authenticated/site/_marcas/marcas'
+      path: '/site/marcas'
+      fullPath: '/site/marcas'
+      preLoaderRoute: typeof AuthenticatedSiteMarcasMarcasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/site/_categorias-loja/categorias-loja': {
+      id: '/_authenticated/site/_categorias-loja/categorias-loja'
+      path: '/site/categorias-loja'
+      fullPath: '/site/categorias-loja'
+      preLoaderRoute: typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/inventarios/areas/$areaId': {
       id: '/_authenticated/inventarios/areas/$areaId'
       path: '/inventarios/areas/$areaId'
@@ -1073,6 +1113,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComercialVendedoresVendedoresRoute: typeof AuthenticatedComercialVendedoresVendedoresRoute
   AuthenticatedFinanceiroReceberReceberRoute: typeof AuthenticatedFinanceiroReceberReceberRoute
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
+  AuthenticatedSiteCategoriasLojaCategoriasLojaRoute: typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
+  AuthenticatedSiteMarcasMarcasRoute: typeof AuthenticatedSiteMarcasMarcasRoute
   AuthenticatedSiteProdutosProdutosRoute: typeof AuthenticatedSiteProdutosProdutosRoute
   AuthenticatedSiteServicosServicosRoute: typeof AuthenticatedSiteServicosServicosRoute
   AuthenticatedTreinamentosAlunosAlunosRoute: typeof AuthenticatedTreinamentosAlunosAlunosRoute
@@ -1123,6 +1165,9 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedFinanceiroReceberReceberRoute,
   AuthenticatedInventariosAreasAreaIdRoute:
     AuthenticatedInventariosAreasAreaIdRoute,
+  AuthenticatedSiteCategoriasLojaCategoriasLojaRoute:
+    AuthenticatedSiteCategoriasLojaCategoriasLojaRoute,
+  AuthenticatedSiteMarcasMarcasRoute: AuthenticatedSiteMarcasMarcasRoute,
   AuthenticatedSiteProdutosProdutosRoute:
     AuthenticatedSiteProdutosProdutosRoute,
   AuthenticatedSiteServicosServicosRoute:

@@ -201,6 +201,18 @@ export const items = [
         ability: "loja_site",
         path: "/site/produtos",
       },
+      {
+        title: "Categorias da Loja",
+        icon: "tags",
+        ability: "loja_site",
+        path: "/site/categorias-loja",
+      },
+      {
+        title: "Marcas",
+        icon: "badge-check",
+        ability: "loja_site",
+        path: "/site/marcas",
+      },
     ],
   },
   {

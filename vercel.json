@@ -1,9 +1,12 @@
 {
-  "rewrites": [
+  "redirects": [
     {
       "source": "/share/certificados/:id",
-      "destination": "/share.html"
-    },
+      "destination": "/certificados/:id",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/"

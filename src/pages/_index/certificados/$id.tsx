@@ -19,11 +19,17 @@ import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_index/certificados/$id")({
   component: CertificadoPublico,
-  // Loader para buscar dados do certificado antes de renderizar
+  // Loader: título/meta da aba no navegador. O preview em redes sociais NÃO
+  // depende disto (robôs não executam JS) — é servido pelo middleware.ts da
+  // Vercel a partir de GET /trainee-certificate/public/:key/meta.
+  // (Antes chamava get-trainee-certificate/:id, que não existe na API → 404.)
   loader: async ({ params }) => {
     try {
-      const response = await get('trainee-certificate', `get-trainee-certificate/${params.id}`) as { data: { rows: any[] } };
-      return response.data.rows[0] || null;
+      const response = await get('trainee-certificate', 'public', [
+        { key: 'key', value: params.id },
+        { key: 'show', value: ['company'] },
+      ]) as { rows?: any[] };
+      return response?.rows?.[0] || null;
     } catch (error) {
       console.error('Erro ao buscar certificado:', error);
       return null;

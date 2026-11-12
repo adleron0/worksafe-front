@@ -107,6 +107,23 @@ export class ListTextbox extends fabric.Textbox {
   }
 
   /**
+   * Desserialização — o construtor soma o espaçamento da lista ao lineHeight
+   * recebido, mas o lineHeight salvo no JSON JÁ contém esse espaçamento. Sem
+   * restaurar o valor salvo, o espaço entre linhas crescia a cada salvar/abrir
+   * (e o visualizador mostrava a lista mais espaçada que o editor).
+   */
+  static async fromObject<
+    T extends Parameters<typeof fabric.Textbox.fromObject>[0],
+    S extends fabric.FabricText,
+  >(object: T): Promise<S> {
+    const instance = await super.fromObject<T, S>(object);
+    if (object && typeof object.lineHeight === 'number') {
+      instance.set('lineHeight', object.lineHeight);
+    }
+    return instance;
+  }
+
+  /**
    * Serialização — inclui propriedades de lista.
    */
   toObject(propertiesToInclude?: any[]): any {

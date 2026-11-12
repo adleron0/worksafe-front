@@ -4,6 +4,7 @@ import * as fabric from 'fabric';
 import { CertificateData, StudentData, VariableToReplace, ProcessedCanvasData } from '../types';
 import { VariableReplacer } from '../utils/VariableReplacer';
 import { decodeBase64Variables } from '@/utils/decodeBase64Variables';
+import { isTextboxType, isTextObjectType } from '../utils/fabricSetup';
 
 interface CanvasPage {
   id: string;
@@ -228,7 +229,7 @@ export const useCertificateThumbnail = (
                 // Função simplificada para processar textboxes
                 const processTextboxes = () => {
                   canvas.getObjects().forEach((obj: any) => {
-                    if ((obj.type === 'Textbox' || obj.type === 'textbox')) {
+                    if (isTextboxType(obj.type)) {
                       if (obj.width && obj.width > 0) {
                         const originalWidth = obj.width;
                         
@@ -419,7 +420,7 @@ export const useCertificateThumbnail = (
                     hasBorders: false
                   });
                   
-                  if (obj.type === 'Textbox' || obj.type === 'textbox') {
+                  if (isTextboxType(obj.type)) {
                     if (obj.width !== undefined && obj.width > 0) {
                       if (obj.initDimensions) {
                         obj.initDimensions();
@@ -428,7 +429,7 @@ export const useCertificateThumbnail = (
                   }
                   
                   // Corrigir fonte Bebas Neue
-                  if ((obj.type === 'Textbox' || obj.type === 'Text' || obj.type === 'IText') && 
+                  if (isTextObjectType(obj.type) && 
                       obj.fontFamily && obj.fontFamily.toLowerCase().includes('bebas')) {
                     const originalText = obj.text;
                     obj.set({

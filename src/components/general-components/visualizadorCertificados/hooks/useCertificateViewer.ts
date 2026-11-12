@@ -5,6 +5,7 @@ import * as fabric from 'fabric';
 import { CertificateData, StudentData, VariableToReplace, ProcessedCanvasData } from '../types';
 import { VariableReplacer } from '../utils/VariableReplacer';
 import { decodeBase64Variables } from '@/utils/decodeBase64Variables';
+import { isTextboxType, isTextObjectType } from '../utils/fabricSetup';
 
 interface CanvasPage {
   id: string;
@@ -288,7 +289,7 @@ export const useCertificateViewer = (
                 // Função para processar textboxes garantindo que largura seja respeitada
                 const processTextboxes = () => {
                   frontCanvas.getObjects().forEach((obj: any) => {
-                    if ((obj.type === 'Textbox' || obj.type === 'textbox')) {
+                    if (isTextboxType(obj.type)) {
                       // Se tem largura definida no objeto original
                       if (obj.width && obj.width > 0) {
                         const originalWidth = obj.width;
@@ -538,7 +539,7 @@ export const useCertificateViewer = (
                   });
                   
                   // Correção específica para Textbox - garantir que as dimensões sejam recalculadas
-                  if (obj.type === 'Textbox' || obj.type === 'textbox') {
+                  if (isTextboxType(obj.type)) {
                     // Se tem largura definida, forçar recálculo correto das quebras de linha
                     if (obj.width !== undefined && obj.width > 0) {
                       // Método do Fabric.js para recalcular dimensões de textbox
@@ -550,7 +551,7 @@ export const useCertificateViewer = (
                   }
                   
                   // Verificar e corrigir fonte Bebas Neue em objetos de texto
-                  if ((obj.type === 'Textbox' || obj.type === 'Text' || obj.type === 'IText') && 
+                  if (isTextObjectType(obj.type) && 
                       obj.fontFamily && obj.fontFamily.toLowerCase().includes('bebas')) {
                     // Forçar re-renderização do texto com a fonte correta
                     const originalText = obj.text;
@@ -575,7 +576,7 @@ export const useCertificateViewer = (
                 // Adicionar listener para detectar mudanças nos objetos após o carregamento
                 frontCanvas.on('object:modified', (e: any) => {
                   const obj = e.target;
-                  if (obj && (obj.type === 'Textbox' || obj.type === 'textbox')) {
+                  if (obj && (isTextboxType(obj.type))) {
                     // Listener removido
                   }
                 });
@@ -586,14 +587,14 @@ export const useCertificateViewer = (
                   
                   // Mapear textboxes esperados com múltiplas linhas
                   const expectedMultiline: Record<string, number> = {
-                    'Realizado pela CERTFIELD': 3,
+                    'Realizado pela WORKSAFE': 3,
                     'Descrição: Em conformidade': 5,
                     'JÚLIO ADLER FERREIRA': 2,
                     'RTO - RESGATE TÉCNICO': 2
                   };
                   
                   frontCanvas.getObjects().forEach((obj: any) => {
-                    if (obj.type === 'Textbox' || obj.type === 'textbox') {
+                    if (isTextboxType(obj.type)) {
                       const text = obj.text || '';
                       const lines = obj._textLines?.length || 0;
                       
@@ -665,7 +666,7 @@ export const useCertificateViewer = (
                       let aindasComProblema = 0;
                       
                       frontCanvas.getObjects().forEach((obj: any) => {
-                        if (obj.type === 'Textbox' || obj.type === 'textbox') {
+                        if (isTextboxType(obj.type)) {
                           const text = obj.text || '';
                           const lines = obj._textLines?.length || 0;
                           
@@ -693,7 +694,7 @@ export const useCertificateViewer = (
                 const verificacaoContinua = setInterval(() => {
                   
                   const expectedMultiline: Record<string, number> = {
-                    'Realizado pela CERTFIELD': 3,
+                    'Realizado pela WORKSAFE': 3,
                     'Descrição: Em conformidade': 5,
                     'JÚLIO ADLER FERREIRA': 2,
                     'RTO - RESGATE TÉCNICO': 2
@@ -702,7 +703,7 @@ export const useCertificateViewer = (
                   let problemasDetectados = 0;
                   
                   frontCanvas.getObjects().forEach((obj: any) => {
-                    if (obj.type === 'Textbox' || obj.type === 'textbox') {
+                    if (isTextboxType(obj.type)) {
                       const text = obj.text || '';
                       const lines = obj._textLines?.length || 0;
                       
@@ -817,7 +818,7 @@ export const useCertificateViewer = (
                   let textboxCount = 0;
                   
                   backCanvas.getObjects().forEach((obj: any) => {
-                    if ((obj.type === 'Textbox' || obj.type === 'textbox')) {
+                    if (isTextboxType(obj.type)) {
                       // Se tem largura definida no objeto original
                       if (obj.width && obj.width > 0) {
                         textboxCount++;
@@ -1052,7 +1053,7 @@ export const useCertificateViewer = (
                   });
                   
                   // Correção específica para Textbox - garantir que as dimensões sejam recalculadas
-                  if (obj.type === 'Textbox' || obj.type === 'textbox') {
+                  if (isTextboxType(obj.type)) {
                     // Se tem largura definida, forçar recálculo correto das quebras de linha
                     if (obj.width !== undefined && obj.width > 0) {
                       // Método do Fabric.js para recalcular dimensões de textbox
@@ -1064,7 +1065,7 @@ export const useCertificateViewer = (
                   }
                   
                   // Verificar e corrigir fonte Bebas Neue em objetos de texto
-                  if ((obj.type === 'Textbox' || obj.type === 'Text' || obj.type === 'IText') && 
+                  if (isTextObjectType(obj.type) && 
                       obj.fontFamily && obj.fontFamily.toLowerCase().includes('bebas')) {
                     // Forçar re-renderização do texto com a fonte correta
                     const originalText = obj.text;

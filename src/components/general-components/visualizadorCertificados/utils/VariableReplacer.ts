@@ -1,4 +1,5 @@
 import { StudentData, VariableToReplace } from '../types';
+import { isTextObjectType, isTextboxType } from './fabricSetup';
 
 export class VariableReplacer {
   /**
@@ -80,14 +81,14 @@ export class VariableReplacer {
 
 
     // Substituir em textos (incluindo todos os tipos de texto do Fabric.js)
-    if (obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text' || obj.type === 'IText' || obj.type === 'Text' || obj.type === 'Textbox') {
+    if (isTextObjectType(obj.type)) {
       if (obj.text && typeof obj.text === 'string') {
         // Apenas substituir o texto, mantendo todas as outras propriedades originais
         processedObj.text = this.replaceVariables(obj.text, variables);
         
         // IMPORTANTE: Para Textbox com largura fixa, precisamos garantir que as propriedades
         // de quebra de linha sejam preservadas corretamente
-        if (obj.type === 'textbox' || obj.type === 'Textbox') {
+        if (isTextboxType(obj.type)) {
           // Preservar a largura original se existir
           if (obj.width !== undefined) {
             processedObj.width = obj.width;
@@ -333,7 +334,7 @@ export class VariableReplacer {
     
     const extractFromObject = (obj: any) => {
       // Extrair de textos (incluindo todos os tipos de texto do Fabric.js)
-      if ((obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text' || obj.type === 'IText' || obj.type === 'Text' || obj.type === 'Textbox') && obj.text) {
+      if (isTextObjectType(obj.type) && obj.text) {
         const matches = obj.text.match(/\{\{([^}]+)\}\}/g);
         if (matches) {
           matches.forEach((match: string) => {

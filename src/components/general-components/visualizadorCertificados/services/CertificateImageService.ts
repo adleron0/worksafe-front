@@ -7,6 +7,7 @@ import {
 } from '../types';
 import { VariableReplacer } from '../utils/VariableReplacer';
 import { decodeBase64Variables } from '@/utils/decodeBase64Variables';
+import { getLogicalCanvasSize, isTextboxType } from '../utils/fabricSetup';
 
 export interface ImageGenerationOptions {
   format?: 'png' | 'jpeg' | 'webp';
@@ -306,7 +307,7 @@ class CertificateImageService {
           }
 
           // Processar Textboxes
-          if (obj.type === 'Textbox' || obj.type === 'textbox') {
+          if (isTextboxType(obj.type)) {
             if (obj.width !== undefined && obj.width > 0) {
               if (obj.initDimensions) {
                 obj.initDimensions();
@@ -364,9 +365,13 @@ class CertificateImageService {
       const quality = options.quality || 1.0; // Máxima qualidade por padrão
       const scale = options.scale || 4; // Aumentar para 4x de resolução (muito alta qualidade)
 
-      // Usar dimensões reais do certificado ou padrão A4 landscape
-      const canvasWidth = certificateData.canvasWidth || 842;
-      const canvasHeight = certificateData.canvasHeight || 595;
+      // Tamanho lógico A4 conforme a orientação (mesma regra do visualizador).
+      // O canvasWidth/Height gravado pode estar com zoom (ex.: 1369x967) ou ser
+      // o default 800x600; os objetos estão sempre em coordenadas A4.
+      const { width: canvasWidth, height: canvasHeight } = getLogicalCanvasSize(
+        certificateData.canvasWidth,
+        certificateData.canvasHeight,
+      );
 
       // Criar canvas temporário com resolução aumentada
       const tempCanvas = document.createElement('canvas');

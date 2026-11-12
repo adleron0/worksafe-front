@@ -8,6 +8,7 @@ import {
 } from '../types';
 import { VariableReplacer } from '../utils/VariableReplacer';
 import { decodeBase64Variables } from '@/utils/decodeBase64Variables';
+import { getLogicalCanvasSize, isTextboxType } from '../utils/fabricSetup';
 
 export interface PDFGenerationOptions {
   returnBlob?: boolean;
@@ -320,7 +321,7 @@ class CertificatePDFService {
           }
           
           // Processar Textboxes
-          if (obj.type === 'Textbox' || obj.type === 'textbox') {
+          if (isTextboxType(obj.type)) {
             if (obj.width !== undefined && obj.width > 0) {
               if (obj.initDimensions) {
                 obj.initDimensions();
@@ -389,9 +390,13 @@ class CertificatePDFService {
         backProcessed = VariableReplacer.replaceInCanvasJSON(backJson, variables);
       }
       
-      // Usar dimensões reais do certificado ou padrão A4 landscape
-      const canvasWidth = certificateData.canvasWidth || 842;
-      const canvasHeight = certificateData.canvasHeight || 595;
+      // Tamanho lógico A4 conforme a orientação (mesma regra do visualizador).
+      // O canvasWidth/Height gravado pode estar com zoom (ex.: 1369x967) ou ser
+      // o default 800x600; os objetos estão sempre em coordenadas A4.
+      const { width: canvasWidth, height: canvasHeight } = getLogicalCanvasSize(
+        certificateData.canvasWidth,
+        certificateData.canvasHeight,
+      );
       
       // Detectar orientação baseada nas dimensões reais
       const isLandscape = canvasWidth > canvasHeight;

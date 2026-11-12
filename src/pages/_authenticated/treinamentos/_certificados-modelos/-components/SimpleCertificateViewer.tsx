@@ -1,5 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as fabric from 'fabric';
+// Registra ListTextbox e aplica o patch de bold (mesmo setup do visualizador)
+import '@/components/general-components/visualizadorCertificados/utils/fabricSetup';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';

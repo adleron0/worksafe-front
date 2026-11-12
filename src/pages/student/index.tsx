@@ -22,6 +22,7 @@ import { get } from '@/services/api-s';
 import { CertificateThumbnail } from '@/components/general-components/visualizadorCertificados';
 import VisualizadorCertificados from '@/components/general-components/visualizadorCertificados';
 import CertificatePDFService from '@/components/general-components/visualizadorCertificados/services/CertificatePDFService';
+import { certificatePdfUrl, isIssuedCertificateKey, triggerApiDownload } from '@/components/general-components/visualizadorCertificados/server/certificateRenderUrls';
 import Dialog from '@/components/general-components/Dialog';
 import { toast } from '@/hooks/use-toast';
 import { useLoader } from '@/context/GeneralContext';
@@ -154,6 +155,17 @@ function StudentDashboard() {
         title: "Erro ao gerar PDF",
         description: "Dados incompletos para gerar o certificado",
         variant: "destructive",
+      });
+      return;
+    }
+
+    // Certificado emitido: PDF pronto da API (renderizado no servidor)
+    if (isIssuedCertificateKey(certificate.key)) {
+      triggerApiDownload(certificatePdfUrl(certificate.key, { version: certificate.updatedAt }));
+      toast({
+        title: "Baixando certificado",
+        description: "O PDF será salvo na sua pasta de downloads",
+        variant: "success",
       });
       return;
     }
@@ -507,7 +519,8 @@ function StudentDashboard() {
                           fabricJsonBack: cert.fabricJsonBack,
                           canvasWidth: cert.canvasWidth,
                           canvasHeight: cert.canvasHeight,
-                          certificateId: cert.key || 'CERT-001'
+                          certificateId: cert.key || 'CERT-001',
+                          updatedAt: cert.updatedAt
                         }}
                         variableToReplace={cert.variableToReplace || {}}
                         className="w-full h-full"
@@ -618,7 +631,8 @@ function StudentDashboard() {
                 fabricJsonBack: selectedCertificate.fabricJsonBack,
                 canvasWidth: selectedCertificate.canvasWidth,
                 canvasHeight: selectedCertificate.canvasHeight,
-                certificateId: selectedCertificate.key || 'CERT-001'
+                certificateId: selectedCertificate.key || 'CERT-001',
+                updatedAt: selectedCertificate.updatedAt
               }}
               variableToReplace={selectedCertificate.variableToReplace || {}}
               zoom={50}

@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import CertificatePDFService from "@/components/general-components/visualizadorCertificados/services/CertificatePDFService";
+import { certificatePdfUrl, isIssuedCertificateKey } from '@/components/general-components/visualizadorCertificados/server/certificateRenderUrls';
 
 // Template Page
 import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
@@ -119,6 +120,13 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
         description: "Dados incompletos para gerar o certificado",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Certificado emitido: PDF pronto da API (renderizado no servidor)
+    const key = item.key?.toString();
+    if (isIssuedCertificateKey(key)) {
+      window.open(certificatePdfUrl(key, { download: false, version: item.updatedAt }), '_blank');
       return;
     }
 
@@ -302,7 +310,8 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
                   fabricJsonBack: item.fabricJsonBack,
                   canvasWidth: item.canvasWidth,
                   canvasHeight: item.canvasHeight,
-                  certificateId: item.key?.toString() || 'CERT-001'
+                  certificateId: item.key?.toString() || 'CERT-001',
+                  updatedAt: item.updatedAt
                 }}
                 variableToReplace={item.variableToReplace || {}}
                 className="w-full h-fit"
@@ -522,7 +531,8 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
               fabricJsonBack: item.fabricJsonBack,
               canvasWidth: item.canvasWidth,
               canvasHeight: item.canvasHeight,
-              certificateId: item.key?.toString() || 'CERT-001'
+              certificateId: item.key?.toString() || 'CERT-001',
+              updatedAt: item.updatedAt
             }}
             variableToReplace={item.variableToReplace || {}}
             zoom={50}

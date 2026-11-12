@@ -7,6 +7,8 @@ export interface CertificateData {
   canvasHeight?: number;
   certificateId?: string; // ID do certificado para usar no QR Code
   pdfUrl?: string; // URL da imagem thumbnail do certificado
+  /** updatedAt do certificado emitido: versiona a URL da imagem da API (cache). */
+  updatedAt?: string | Date | null;
 }
 
 // Interface para substituição de variáveis

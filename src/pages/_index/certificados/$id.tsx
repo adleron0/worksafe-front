@@ -14,6 +14,7 @@ import Footer from "../-components/Footer";
 import { decodeBase64Variables } from "@/utils/decodeBase64Variables";
 import CertificatePDFService from "@/components/general-components/visualizadorCertificados/services/CertificatePDFService";
 import CertificateImageService from "@/components/general-components/visualizadorCertificados/services/CertificateImageService";
+import { certificateImageUrl, certificatePdfUrl, isIssuedCertificateKey } from '@/components/general-components/visualizadorCertificados/server/certificateRenderUrls';
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -63,14 +64,10 @@ export const Route = createFileRoute("/_index/certificados/$id")({
     const metaTitle = `Certificado de ${studentName} - ${courseName}`;
     const metaDescription = `Certificado válido emitido por ${companyName} para o curso de ${courseName}. Verifique a autenticidade deste certificado no sistema oficial.`;
 
-    // Usar thumbnail se disponível, senão usar imagem padrão
+    // Imagem renderizada na API (a mesma que os robôs recebem via middleware)
     let metaImage = `${baseUrl}/og-image.jpg`;
-    if (certificate?.pdfUrl) {
-      metaImage = certificate.pdfUrl;
-      // LinkedIn requer HTTPS
-      if (metaImage.startsWith('http://')) {
-        metaImage = metaImage.replace('http://', 'https://');
-      }
+    if (isIssuedCertificateKey(certificateId)) {
+      metaImage = certificateImageUrl(certificateId, 'front', certificate?.updatedAt);
     } else if (certificate?.company?.logoUrl) {
       metaImage = certificate.company.logoUrl;
       if (metaImage.startsWith('http://')) {
@@ -268,6 +265,12 @@ function CertificadoPublico() {
   const handleGeneratePDF = async () => {
     if (!certificate || !certificate.fabricJsonFront || isGeneratingPDF) return;
 
+    // Certificado emitido: PDF pronto da API (renderizado no servidor)
+    if (isIssuedCertificateKey(certificate.key)) {
+      window.open(certificatePdfUrl(certificate.key, { download: false, version: certificate.updatedAt }), '_blank');
+      return;
+    }
+
     setIsGeneratingPDF(true);
     try {
       // Preparar dados do certificado para o serviço de PDF
@@ -322,6 +325,12 @@ function CertificadoPublico() {
 
   const handleGeneratePNG = async () => {
     if (!certificate || !certificate.fabricJsonFront || isGeneratingPNG) return;
+
+    // Certificado emitido: PNG pronto da API, em resolução de impressão
+    if (isIssuedCertificateKey(certificate.key)) {
+      window.open(certificateImageUrl(certificate.key, 'front', certificate.updatedAt, 4), '_blank');
+      return;
+    }
 
     setIsGeneratingPNG(true);
     try {
@@ -549,6 +558,7 @@ function CertificadoPublico() {
                     canvasWidth: certificate.canvasWidth,
                     canvasHeight: certificate.canvasHeight,
                     certificateId: String(certificate.key),
+                    updatedAt: certificate.updatedAt,
                     pdfUrl: certificate.pdfUrl // Passando o pdfUrl para o visualizador
                   }}
                   variableToReplace={variables}
@@ -910,7 +920,7 @@ function CertificadoPublico() {
                 <div className="p-4">
                   <p className="text-sm text-muted-foreground mb-4">
                     Compartilhe sua conquista nas redes sociais
-                    {certificate?.pdfUrl && (
+                    {isIssuedCertificateKey(certificate?.key) && (
                       <span className="block mt-1 text-xs text-green-600">
                         <Icon name="image" className="inline w-3 h-3 mr-1" />
                         Preview do certificado disponível

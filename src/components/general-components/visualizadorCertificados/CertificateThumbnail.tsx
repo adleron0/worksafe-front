@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { CertificateThumbnailProps } from './types';
+import { ServerCertificateThumbnail } from './server/ServerCertificateViewer';
+import { isIssuedCertificateKey } from './server/certificateRenderUrls';
 import { useCertificateThumbnail } from './hooks/useCertificateThumbnail';
 import CertificateCanvas, { CertificateCanvasRef } from './components/CertificateCanvas';
 import * as fabric from 'fabric';
 
-const CertificateThumbnail: React.FC<CertificateThumbnailProps> = ({
+const CanvasCertificateThumbnail: React.FC<CertificateThumbnailProps> = ({
   certificateData,
   variableToReplace,
   className = '',
@@ -263,6 +265,27 @@ const CertificateThumbnail: React.FC<CertificateThumbnailProps> = ({
       )}
     </div>
   );
+};
+
+/** Certificado emitido → miniatura JPEG da API; modelos/falha → canvas local. */
+const CertificateThumbnail: React.FC<CertificateThumbnailProps> = (props) => {
+  const [serverFailed, setServerFailed] = useState(false);
+  const { certificateData } = props;
+  if (isIssuedCertificateKey(certificateData.certificateId) && !serverFailed) {
+    return (
+      <ServerCertificateThumbnail
+        certificateKey={certificateData.certificateId}
+        name={certificateData.name}
+        canvasWidth={certificateData.canvasWidth}
+        canvasHeight={certificateData.canvasHeight}
+        version={certificateData.updatedAt}
+        className={props.className}
+        onClick={props.onClick}
+        onError={() => setServerFailed(true)}
+      />
+    );
+  }
+  return <CanvasCertificateThumbnail {...props} />;
 };
 
 export default CertificateThumbnail;

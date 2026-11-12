@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { CertificateViewerProps } from './types';
+import { ServerCertificateViewer } from './server/ServerCertificateViewer';
+import { isIssuedCertificateKey } from './server/certificateRenderUrls';
 import { useCertificateViewer } from './hooks/useCertificateViewer';
 // import { useAutoGenerateThumbnail } from './hooks/useAutoGenerateThumbnail'; // DESABILITADO TEMPORARIAMENTE
 import CertificateCanvas, { CertificateCanvasRef } from './components/CertificateCanvas';
 import * as fabric from 'fabric';
 
-const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
+const CanvasCertificateViewer: React.FC<CertificateViewerProps> = ({
   certificateData,
   variableToReplace,
   className = '',
@@ -469,6 +471,31 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = ({
       </div>
     </div>
   );
+};
+
+/**
+ * Certificado emitido (chave UUID) → imagem renderizada na API: sem baixar
+ * fontes, assinaturas e desenhar no navegador. Modelos (sem chave) e qualquer
+ * falha da API → desenho local com o Fabric, como antes.
+ */
+const VisualizadorCertificados: React.FC<CertificateViewerProps> = (props) => {
+  const [serverFailed, setServerFailed] = useState(false);
+  const { certificateData } = props;
+  if (isIssuedCertificateKey(certificateData.certificateId) && !serverFailed) {
+    return (
+      <ServerCertificateViewer
+        certificateKey={certificateData.certificateId}
+        name={certificateData.name}
+        fabricJsonBack={certificateData.fabricJsonBack}
+        canvasWidth={certificateData.canvasWidth}
+        canvasHeight={certificateData.canvasHeight}
+        version={certificateData.updatedAt}
+        className={props.className}
+        onError={() => setServerFailed(true)}
+      />
+    );
+  }
+  return <CanvasCertificateViewer {...props} />;
 };
 
 export default VisualizadorCertificados;

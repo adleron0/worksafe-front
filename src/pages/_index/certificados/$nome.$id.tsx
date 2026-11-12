@@ -278,6 +278,7 @@ function TraineeCertificatesPage() {
                         fabricJsonFront: certificate.fabricJsonFront,
                         fabricJsonBack: certificate.fabricJsonBack,
                         certificateId: String(certificate.key),
+                        updatedAt: certificate.updatedAt,
                         canvasWidth: certificate.canvasWidth,
                         canvasHeight: certificate.canvasHeight
                       }}

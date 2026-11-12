@@ -12,6 +12,8 @@ export interface IEntity {
   image?: File | null;
   featured?: boolean;
   features?: string;
+  category?: string | null;
+  brand?: string | null;
   description?: string;
   price?: number;
   oldPrice?: number;

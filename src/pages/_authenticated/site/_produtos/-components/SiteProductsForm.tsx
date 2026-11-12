@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { post, put } from "@/services/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { get, post, put } from "@/services/api";
+import { Input as TextInput } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 // Template Components
 import { useLoader } from "@/context/GeneralContext";
@@ -31,6 +32,8 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     featured: z.boolean(),
     features: z.string().optional(),
+    category: z.string().max(100, { message: "Máximo de 100 caracteres" }),
+    brand: z.string().max(100, { message: "Máximo de 100 caracteres" }),
     description: z.string().min(10, { message: "Descrição deve ter pelo menos 10 caracteres" }),
     price: z.number().optional(),
     oldPrice: z.number().optional(),
@@ -48,6 +51,8 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const [dataForm, setDataForm] = useState<FormData>({
     name: formData?.name || "",
     features: formData?.features || "",
+    category: formData?.category || "",
+    brand: formData?.brand || "",
     featured: formData?.featured || false,
     description: formData?.description || "",
     price: Number(formData?.price) || 0,
@@ -154,7 +159,20 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     }
   };
 
-  // Buscas de valores para variaveis de formulário
+  // Categorias e marcas já usadas viram sugestões: evita "EPI" e "EPIs"
+  // aparecerem como filtros diferentes na loja.
+  const { data: catalog } = useQuery({
+    queryKey: ["siteProductsSuggestions"],
+    queryFn: () =>
+      get<{ rows: IEntity[] }>(entity.model, "", [{ key: "limit", value: 1000 }]),
+    staleTime: 60 * 1000,
+  });
+  const distinct = (key: "category" | "brand") =>
+    Array.from(
+      new Set((catalog?.rows ?? []).map((p) => p[key]?.trim()).filter((v): v is string => Boolean(v))),
+    ).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const categoryOptions = distinct("category");
+  const brandOptions = distinct("brand");
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
@@ -185,6 +203,44 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           className="mt-1"
         />
       </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label htmlFor="category">Categoria</Label>
+          <TextInput
+            id="category"
+            list="site-product-categories"
+            placeholder="Ex.: EPIs"
+            value={dataForm.category}
+            onChange={(e) => handleChange("category", e.target.value)}
+            autoComplete="off"
+            className="mt-1"
+          />
+          <datalist id="site-product-categories">
+            {categoryOptions.map((option) => <option key={option} value={option} />)}
+          </datalist>
+          {errors.category && <p className="text-red-500 text-sm">{errors.category}</p>}
+        </div>
+        <div>
+          <Label htmlFor="brand">Marca</Label>
+          <TextInput
+            id="brand"
+            list="site-product-brands"
+            placeholder="Ex.: Petzl"
+            value={dataForm.brand}
+            onChange={(e) => handleChange("brand", e.target.value)}
+            autoComplete="off"
+            className="mt-1"
+          />
+          <datalist id="site-product-brands">
+            {brandOptions.map((option) => <option key={option} value={option} />)}
+          </datalist>
+          {errors.brand && <p className="text-red-500 text-sm">{errors.brand}</p>}
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground font-medium -mt-1">
+        Viram os filtros da loja no site. Escolha uma sugestão para manter o mesmo nome.
+      </p>
 
       <div>
         <Label htmlFor="price">Valor de venda atual</Label>

@@ -130,6 +130,11 @@ const SiteProductsItem = ({ item, index, entity, setFormData, setOpenForm, openI
           </Avatar>
           <div className="break-words w-9/12 md:w-full">
             <h2 className="text-sm font-semibold">{item.name}</h2>
+            {(item.category || item.brand) && (
+              <p className="text-xs text-muted-foreground">
+                {[item.category, item.brand].filter(Boolean).join(" · ")}
+              </p>
+            )}
           </div>
         </div>
 

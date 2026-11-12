@@ -23,6 +23,29 @@ interface AuthContextProps {
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
+/**
+ * Um único refresh por vez: se várias requisições derem 401 juntas, todas
+ * aguardam a mesma renovação em vez de disparar uma cada.
+ */
+let refreshInFlight: Promise<string | null> | null = null;
+const refreshOnce = () => {
+  if (!refreshInFlight) {
+    refreshInFlight = refreshToken()
+      .then((data) => {
+        const token: string | null = data?.accessToken || null;
+        if (token) {
+          localStorage.setItem("accessToken", token);
+          localStorage.removeItem("secretWord");
+        }
+        return token;
+      })
+      .finally(() => {
+        refreshInFlight = null;
+      });
+  }
+  return refreshInFlight;
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -67,8 +90,11 @@ export const AuthProvider: React.FC<{ children: ReactNode; router: any }> = ({ c
   // Configura os interceptores do Axios
   useEffect(() => {
     const requestInterceptor = api.interceptors.request.use((config) => {
-      if (accessToken) {
-        config.headers.Authorization = `Bearer ${accessToken}`;
+      // localStorage primeiro: logo após um refresh o estado ainda não
+      // re-renderizou e `accessToken` seria o token vencido
+      const token = localStorage.getItem("accessToken") || accessToken;
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
     });
@@ -78,8 +104,20 @@ export const AuthProvider: React.FC<{ children: ReactNode; router: any }> = ({ c
       async (error) => {
         const originalRequest = error.config;
 
-        // Se o erro for 401 (não autorizado) e ainda não tentamos renovar o token
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        const isAuthCall = /\/auth\/(refresh-token|login|logout)/.test(
+          originalRequest?.url || ''
+        );
+
+        // 401 = token vencido/ausente: renova a sessão e repete a requisição
+        // original uma única vez. Antes o refresh era disparado mas a chamada
+        // original já era rejeitada — ações (cancelar, salvar…) falhavam com
+        // "status code 401" mesmo com a sessão válida.
+        if (
+          error.response?.status === 401 &&
+          originalRequest &&
+          !originalRequest._retry &&
+          !isAuthCall
+        ) {
           if (retryCount >= MAX_RETRY_COUNT) {
             console.warn("Máximo de tentativas alcançado, redirecionando para login.");
             setAccessTokenState(null);
@@ -99,7 +137,20 @@ export const AuthProvider: React.FC<{ children: ReactNode; router: any }> = ({ c
           originalRequest._retry = true;
           setRetryCount((prev) => prev + 1);
 
-          refreshTokenMutation();
+          let newToken: string | null = null;
+          try {
+            newToken = await refreshOnce();
+          } catch {
+            return Promise.reject(error);
+          }
+          if (!newToken) return Promise.reject(error);
+
+          setAccessTokenState(newToken);
+          setRetryCount(0);
+          reloadUser();
+          originalRequest.headers = originalRequest.headers || {};
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          return api(originalRequest);
         } else if (error.response?.status === 406) {
           console.log("Sessão expirada, faça login novamente.");
           setAccessTokenState(null);

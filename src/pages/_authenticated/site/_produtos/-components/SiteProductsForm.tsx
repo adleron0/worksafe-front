@@ -104,7 +104,8 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const { mutate: updateCustomerMutation, isPending: isPendingUpdate } = useMutation({
     mutationFn: (updatedItem: FormData) => {
       showLoader(`Atualizando ${entity.name}...`);
-      return put<IEntity>(entity.model, `${formData?.id}`, updatedItem);
+      // o form manda categoryId/brandId como texto (vazio = sem); a API converte
+      return put<FormData>(entity.model, `${formData?.id}`, updatedItem);
     },
     onSuccess: () => {
       hideLoader();

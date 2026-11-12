@@ -57,7 +57,6 @@ const GatewaysGrid: React.FC<GatewaysGridProps> = ({ showHeader = true }) => {
     queryKey: [`list${entity.pluralName}`],
     queryFn: async () => {
       return get(entity.model, "", [
-        { key: "show", value: ["company"] },
         { key: "order-createdAt", value: "desc" },
       ]);
     },

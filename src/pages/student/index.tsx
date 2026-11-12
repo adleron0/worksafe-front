@@ -558,23 +558,13 @@ function StudentDashboard() {
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    {cert.pdfUrl ? (
-                      <Button 
-                        size="icon" 
-                        variant="ghost"
-                        className="h-9 w-9"
-                        onClick={() => cert.pdfUrl && window.open(cert.pdfUrl, '_blank')}
-                        title="Baixar PDF salvo"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    ) : cert.fabricJsonFront && (
+                    {cert.fabricJsonFront && (
                       <Button 
                         size="icon" 
                         variant="ghost"
                         className="h-9 w-9"
                         onClick={() => handleDownloadPDF(cert)}
-                        title="Gerar e baixar PDF"
+                        title="Baixar PDF"
                       >
                         <Download className="h-4 w-4" />
                       </Button>

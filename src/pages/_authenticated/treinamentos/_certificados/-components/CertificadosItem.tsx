@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import CertificatePDFService from "@/components/general-components/visualizadorCertificados/services/CertificatePDFService";
-import { certificatePdfUrl, isIssuedCertificateKey } from '@/components/general-components/visualizadorCertificados/server/certificateRenderUrls';
+import { certificateImageUrl, certificatePdfUrl, isIssuedCertificateKey } from '@/components/general-components/visualizadorCertificados/server/certificateRenderUrls';
 
 // Template Page
 import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
@@ -451,13 +451,13 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
                 </DropdownMenuItem>
               )}
 
-              {/* Baixar PDF (se houver URL) */}
-              {item.pdfUrl && (
+              {/* Imagem do certificado renderizada na API */}
+              {isIssuedCertificateKey(item.key?.toString()) && (
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                   <Button 
                     variant="ghost" 
                     className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
-                    onClick={() => window.open(item.pdfUrl, '_blank')}
+                    onClick={() => window.open(certificateImageUrl(String(item.key), 'front', item.updatedAt), '_blank')}
                   >
                     <Icon name="image" className="w-3 h-3" /> 
                     <p>Imagem Preview</p>

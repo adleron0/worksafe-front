@@ -558,8 +558,7 @@ function CertificadoPublico() {
                     canvasWidth: certificate.canvasWidth,
                     canvasHeight: certificate.canvasHeight,
                     certificateId: String(certificate.key),
-                    updatedAt: certificate.updatedAt,
-                    pdfUrl: certificate.pdfUrl // Passando o pdfUrl para o visualizador
+                    updatedAt: certificate.updatedAt
                   }}
                   variableToReplace={variables}
                   zoom={50}

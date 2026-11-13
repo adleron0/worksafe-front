@@ -7,6 +7,8 @@ import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { Response } from "@/general-interfaces/api.interface";
 import { paymentMethodOptions } from "./options";
+import AccountSelect from "../../-shared/AccountSelect";
+import { descendantIds, useBankAccounts, useChartAccounts, useCostCenters } from "../../-shared/financial";
 
 interface SearchFormProps {
   onSearch: (data: Record<string, unknown>) => void;
@@ -39,7 +41,14 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
     gateway: str(params.gateway),
     paymentMethod: str(params.paymentMethod),
     active: str(params.active),
+    // a conta escolhida fica em um parâmetro só da tela; a API recebe a lista de ids
+    chartAccount: str(params["ui-chartAccount"]),
+    costCenterId: str(params.costCenterId),
+    bankAccountId: str(params.bankAccountId),
   });
+  const { data: accounts } = useChartAccounts({ inactive: true });
+  const { data: costCenters } = useCostCenters();
+  const { data: bankAccounts } = useBankAccounts();
   const set = (name: string, value: string | number | string[]) =>
     setState((prev) => ({ ...prev, [name]: Array.isArray(value) ? value[0] ?? "" : String(value) }));
 
@@ -61,13 +70,18 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
       gateway: state.gateway || null,
       paymentMethod: state.paymentMethod || null,
       active: state.active || null,
+      // conta mãe traz todas as filhas
+      "in-chartAccountId": state.chartAccount ? descendantIds(accounts ?? [], Number(state.chartAccount)) : null,
+      "ui-chartAccount": state.chartAccount || null,
+      costCenterId: state.costCenterId || null,
+      bankAccountId: state.bankAccountId || null,
       page: 0,
     });
     openSheet(false);
   };
 
   const handleClear = () => {
-    setState({ customerId: "", invoiceNumber: "", noInvoice: "", gateway: "", paymentMethod: "", active: "" });
+    setState({ customerId: "", invoiceNumber: "", noInvoice: "", gateway: "", paymentMethod: "", active: "", chartAccount: "", costCenterId: "", bankAccountId: "" });
     onClear();
     openSheet(false);
   };
@@ -78,6 +92,21 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onClear, openSheet, p
         <Label htmlFor="customerId">Cliente</Label>
         <Select name="customerId" options={(customers?.rows ?? []) as never[]} state={state.customerId}
           onChange={set} placeholder="Todos" isLoading={isLoading} clearable modal />
+      </div>
+      <div>
+        <Label>Conta (plano de contas)</Label>
+        <AccountSelect accounts={accounts ?? []} value={state.chartAccount} mode="any" clearable
+          onChange={(value) => set("chartAccount", value)} placeholder="Todas (conta mãe inclui as filhas)" />
+      </div>
+      <div>
+        <Label htmlFor="costCenterId">Centro de custo</Label>
+        <Select name="costCenterId" options={(costCenters?.rows ?? []) as never[]} state={state.costCenterId}
+          onChange={set} placeholder="Todos" clearable modal />
+      </div>
+      <div>
+        <Label htmlFor="bankAccountId">Conta de entrada</Label>
+        <Select name="bankAccountId" options={(bankAccounts?.rows ?? []) as never[]} state={state.bankAccountId}
+          onChange={set} placeholder="Todas" clearable modal />
       </div>
       <div>
         <Label htmlFor="invoiceNumber">Número da NF</Label>

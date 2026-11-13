@@ -62,6 +62,13 @@ export interface IFinancialRecord {
   netValue?: number | null;
   receivedValue?: number | null;
   settledByUserId?: number | null;
+  // Classificação gerencial
+  chartAccountId?: number | null;
+  chartAccount?: { id: number; code: string; name: string } | null;
+  costCenterId?: number | null;
+  costCenter?: { id: number; name: string } | null;
+  bankAccountId?: number | null;
+  bankAccount?: { id: number; name: string; type: string } | null;
   sellerId?: number;
   seller?: {
     id: number;

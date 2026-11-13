@@ -12,6 +12,7 @@ import { ApiError } from "@/general-interfaces/api.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { IFinancialRecord } from "../-interfaces/entity.interface";
 import { formatCurrency, paymentMethodOptions, todayInput } from "./options";
+import { CHART_KEY, useBankAccounts } from "../../-shared/financial";
 
 interface SettleDialogProps {
   item: IFinancialRecord;
@@ -29,17 +30,24 @@ const SettleDialog: React.FC<SettleDialogProps> = ({ item, entity, open, onOpenC
   const [paymentMethod, setPaymentMethod] = useState(item.paymentMethod || "transferencia");
   const [observations, setObservations] = useState(item.observations ?? "");
   const [error, setError] = useState("");
+  const { data: bankAccounts, isLoading: loadingBanks } = useBankAccounts();
+  // conta de gateway recebe sozinha pelo provedor: não é destino de baixa manual
+  const banks = (bankAccounts?.rows ?? []).filter((account) => account.type !== "gateway");
+  const [bankChoice, setBankChoice] = useState<string | null>(null);
+  const bankAccountId = bankChoice ?? String(banks.find((account) => account.isDefault)?.id ?? (banks.length === 1 ? banks[0].id : ""));
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       const response = await api.patch(`${entity.model}/settle/${item.id}`, {
-        paidAt, receivedValue, paymentMethod, observations,
+        paidAt, receivedValue, paymentMethod, observations, bankAccountId: bankAccountId || null,
       });
       return response.data;
     },
     onSuccess: () => {
       toast({ title: "Baixa registrada!", variant: "success" });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
+      queryClient.invalidateQueries({ queryKey: ["financialBankBalances"] });
+      queryClient.invalidateQueries({ queryKey: [CHART_KEY] });
       onOpenChange(false);
     },
     onError: (err: ApiError) => {
@@ -54,6 +62,7 @@ const SettleDialog: React.FC<SettleDialogProps> = ({ item, entity, open, onOpenC
     if (!paidAt) return setError("Informe a data do pagamento");
     if (paidAt > todayInput()) return setError("A data do pagamento não pode ser futura");
     if (!receivedValue || receivedValue <= 0) return setError("Informe o valor recebido");
+    if (banks.length > 0 && !bankAccountId) return setError("Escolha a conta em que o dinheiro entrou");
     setError("");
     mutate();
   };
@@ -92,6 +101,17 @@ const SettleDialog: React.FC<SettleDialogProps> = ({ item, entity, open, onOpenC
             <Label htmlFor="paymentMethod">Forma de pagamento</Label>
             <Select name="paymentMethod" options={paymentMethodOptions} state={paymentMethod}
               onChange={(_, value) => setPaymentMethod(String(value))} placeholder="Selecione" modal />
+          </div>
+          <div>
+            <Label htmlFor="bankAccountId">Conta de entrada {banks.length > 0 && <span>*</span>}</Label>
+            {banks.length > 0 || loadingBanks ? (
+              <Select name="bankAccountId" options={banks as never[]} state={bankAccountId} isLoading={loadingBanks}
+                onChange={(_, value) => setBankChoice(String(value))} placeholder="Selecione a conta" modal />
+            ) : (
+              <p className="text-xs text-muted-foreground mt-1">
+                Nenhuma conta bancária cadastrada. Cadastre em Financeiro → Contas Bancárias para acompanhar o saldo.
+              </p>
+            )}
           </div>
           <div>
             <Label htmlFor="settleObservations">Observações</Label>

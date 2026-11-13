@@ -54,6 +54,9 @@ import { Route as AuthenticatedSiteMarcasMarcasRouteImport } from './pages/_auth
 import { Route as AuthenticatedSiteCategoriasLojaCategoriasLojaRouteImport } from './pages/_authenticated/site/_categorias-loja/categorias-loja'
 import { Route as AuthenticatedInventariosAreasAreaIdRouteImport } from './pages/_authenticated/inventarios/areas/$areaId'
 import { Route as AuthenticatedFinanceiroReceberReceberRouteImport } from './pages/_authenticated/financeiro/_receber/receber'
+import { Route as AuthenticatedFinanceiroPlanoContasPlanoContasRouteImport } from './pages/_authenticated/financeiro/_plano-contas/plano-contas'
+import { Route as AuthenticatedFinanceiroContasBancariasContasBancariasRouteImport } from './pages/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
+import { Route as AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport } from './pages/_authenticated/financeiro/_centros-custo/centros-custo'
 import { Route as AuthenticatedComercialVendedoresVendedoresRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores'
 import { Route as AuthenticatedComercialCuponsCuponsRouteImport } from './pages/_authenticated/comercial/_cupons/cupons'
 import { Route as AuthenticatedBlogVisitantesVisitantesRouteImport } from './pages/_authenticated/blog/_visitantes/visitantes'
@@ -318,6 +321,24 @@ const AuthenticatedFinanceiroReceberReceberRoute =
     path: '/financeiro/receber',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanceiroPlanoContasPlanoContasRoute =
+  AuthenticatedFinanceiroPlanoContasPlanoContasRouteImport.update({
+    id: '/financeiro/_plano-contas/plano-contas',
+    path: '/financeiro/plano-contas',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceiroContasBancariasContasBancariasRoute =
+  AuthenticatedFinanceiroContasBancariasContasBancariasRouteImport.update({
+    id: '/financeiro/_contas-bancarias/contas-bancarias',
+    path: '/financeiro/contas-bancarias',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute =
+  AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport.update({
+    id: '/financeiro/_centros-custo/centros-custo',
+    path: '/financeiro/centros-custo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComercialVendedoresVendedoresRoute =
   AuthenticatedComercialVendedoresVendedoresRouteImport.update({
     id: '/comercial/_vendedores/vendedores',
@@ -401,6 +422,9 @@ export interface FileRoutesByFullPath {
   '/blog/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
   '/comercial/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
+  '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
+  '/financeiro/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
+  '/financeiro/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/site/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
@@ -454,6 +478,9 @@ export interface FileRoutesByTo {
   '/blog/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
   '/comercial/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
+  '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
+  '/financeiro/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
+  '/financeiro/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/site/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
@@ -511,6 +538,9 @@ export interface FileRoutesById {
   '/_authenticated/blog/_visitantes/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
   '/_authenticated/comercial/_cupons/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
   '/_authenticated/comercial/_vendedores/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
+  '/_authenticated/financeiro/_centros-custo/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
+  '/_authenticated/financeiro/_contas-bancarias/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
+  '/_authenticated/financeiro/_plano-contas/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/_authenticated/financeiro/_receber/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/_authenticated/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/_authenticated/site/_categorias-loja/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
@@ -567,6 +597,9 @@ export interface FileRouteTypes {
     | '/blog/visitantes'
     | '/comercial/cupons'
     | '/comercial/vendedores'
+    | '/financeiro/centros-custo'
+    | '/financeiro/contas-bancarias'
+    | '/financeiro/plano-contas'
     | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
     | '/site/categorias-loja'
@@ -620,6 +653,9 @@ export interface FileRouteTypes {
     | '/blog/visitantes'
     | '/comercial/cupons'
     | '/comercial/vendedores'
+    | '/financeiro/centros-custo'
+    | '/financeiro/contas-bancarias'
+    | '/financeiro/plano-contas'
     | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
     | '/site/categorias-loja'
@@ -676,6 +712,9 @@ export interface FileRouteTypes {
     | '/_authenticated/blog/_visitantes/visitantes'
     | '/_authenticated/comercial/_cupons/cupons'
     | '/_authenticated/comercial/_vendedores/vendedores'
+    | '/_authenticated/financeiro/_centros-custo/centros-custo'
+    | '/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
+    | '/_authenticated/financeiro/_plano-contas/plano-contas'
     | '/_authenticated/financeiro/_receber/receber'
     | '/_authenticated/inventarios/areas/$areaId'
     | '/_authenticated/site/_categorias-loja/categorias-loja'
@@ -1026,6 +1065,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceiroReceberReceberRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/financeiro/_plano-contas/plano-contas': {
+      id: '/_authenticated/financeiro/_plano-contas/plano-contas'
+      path: '/financeiro/plano-contas'
+      fullPath: '/financeiro/plano-contas'
+      preLoaderRoute: typeof AuthenticatedFinanceiroPlanoContasPlanoContasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/financeiro/_contas-bancarias/contas-bancarias': {
+      id: '/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
+      path: '/financeiro/contas-bancarias'
+      fullPath: '/financeiro/contas-bancarias'
+      preLoaderRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/financeiro/_centros-custo/centros-custo': {
+      id: '/_authenticated/financeiro/_centros-custo/centros-custo'
+      path: '/financeiro/centros-custo'
+      fullPath: '/financeiro/centros-custo'
+      preLoaderRoute: typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_vendedores/vendedores': {
       id: '/_authenticated/comercial/_vendedores/vendedores'
       path: '/comercial/vendedores'
@@ -1111,6 +1171,9 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBlogVisitantesVisitantesRoute: typeof AuthenticatedBlogVisitantesVisitantesRoute
   AuthenticatedComercialCuponsCuponsRoute: typeof AuthenticatedComercialCuponsCuponsRoute
   AuthenticatedComercialVendedoresVendedoresRoute: typeof AuthenticatedComercialVendedoresVendedoresRoute
+  AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute: typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
+  AuthenticatedFinanceiroContasBancariasContasBancariasRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
+  AuthenticatedFinanceiroPlanoContasPlanoContasRoute: typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   AuthenticatedFinanceiroReceberReceberRoute: typeof AuthenticatedFinanceiroReceberReceberRoute
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
   AuthenticatedSiteCategoriasLojaCategoriasLojaRoute: typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
@@ -1161,6 +1224,12 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialCuponsCuponsRoute,
   AuthenticatedComercialVendedoresVendedoresRoute:
     AuthenticatedComercialVendedoresVendedoresRoute,
+  AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute:
+    AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute,
+  AuthenticatedFinanceiroContasBancariasContasBancariasRoute:
+    AuthenticatedFinanceiroContasBancariasContasBancariasRoute,
+  AuthenticatedFinanceiroPlanoContasPlanoContasRoute:
+    AuthenticatedFinanceiroPlanoContasPlanoContasRoute,
   AuthenticatedFinanceiroReceberReceberRoute:
     AuthenticatedFinanceiroReceberReceberRoute,
   AuthenticatedInventariosAreasAreaIdRoute:

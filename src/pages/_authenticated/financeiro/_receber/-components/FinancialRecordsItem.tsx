@@ -96,6 +96,11 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
           <p className="font-medium">{name}</p>
           {contact && <p className="text-xs text-muted-foreground break-all">{contact}</p>}
           {item.description && <p className="text-xs text-muted-foreground break-words">{item.description}</p>}
+          {(item.chartAccount || item.costCenter) && (
+            <p className="text-xs text-muted-foreground break-words">
+              {[item.chartAccount && `${item.chartAccount.code} ${item.chartAccount.name}`, item.costCenter?.name].filter(Boolean).join(" · ")}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col lg:w-2/12">
@@ -130,7 +135,9 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
               <span className="text-xs text-muted-foreground">Pago:</span> {formatDate(item.paidAt)}
             </p>
           )}
-          <p className="text-xs text-muted-foreground">{paymentMethodLabel(item.paymentMethod)}</p>
+          <p className="text-xs text-muted-foreground">
+            {paymentMethodLabel(item.paymentMethod)}{item.bankAccount ? ` · ${item.bankAccount.name}` : ""}
+          </p>
         </div>
 
         <div className="flex flex-col lg:w-2/12">

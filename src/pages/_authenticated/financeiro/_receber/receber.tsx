@@ -48,7 +48,7 @@ function List() {
   }>({
     limit: 10,
     page: 0,
-    show: ['trainee', 'subscription', 'customer'],
+    show: ['trainee', 'subscription', 'customer', 'chartAccount', 'costCenter', 'bankAccount'],
     'order-createdAt': 'desc',
     accrualDate: getCurrentMonth(), // Default to current month
     '-aggregate': 'status:count:sum:value'
@@ -79,7 +79,8 @@ function List() {
     queryKey: [`list${entity.pluralName}`, searchParams],
     queryFn: async () => {
       const params = Object.keys(searchParams)
-        .filter((key) => searchParams[key] !== null && searchParams[key] !== undefined)
+        // chaves `ui-*` guardam só o estado da busca na tela; não vão para a API
+        .filter((key) => !key.startsWith('ui-') && searchParams[key] !== null && searchParams[key] !== undefined)
         .map((key) => ({ key, value: searchParams[key] as string | number | string[] }));
       return get(entity.model, '', params);
     },

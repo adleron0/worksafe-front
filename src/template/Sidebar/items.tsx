@@ -171,6 +171,21 @@ export const items = [
         icon: "trending-up",
         path: "/financeiro/receber",
       },
+      {
+        title: "Plano de Contas",
+        icon: "list-tree",
+        path: "/financeiro/plano-contas",
+      },
+      {
+        title: "Centros de Custo",
+        icon: "target",
+        path: "/financeiro/centros-custo",
+      },
+      {
+        title: "Contas Bancárias",
+        icon: "landmark",
+        path: "/financeiro/contas-bancarias",
+      },
       // {
       //   title: "Notas Fiscais",
       //   icon: "receipt",

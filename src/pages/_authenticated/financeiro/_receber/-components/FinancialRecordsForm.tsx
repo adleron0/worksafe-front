@@ -12,6 +12,8 @@ import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { IFinancialRecord } from "../-interfaces/entity.interface";
 import { paymentMethodOptions, toDateInput } from "./options";
+import AccountSelect from "../../-shared/AccountSelect";
+import { useChartAccounts, useCostCenters } from "../../-shared/financial";
 
 interface FormProps {
   formData: IFinancialRecord | null;
@@ -32,6 +34,8 @@ interface FormState {
   invoiceNumber: string;
   invoiceIssuedAt: string;
   observations: string;
+  chartAccountId: string;
+  costCenterId: string;
 }
 
 const INVOICE_TYPES = "application/pdf,application/xml,text/xml,image/*";
@@ -57,6 +61,8 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
     invoiceNumber: formData?.invoiceNumber ?? "",
     invoiceIssuedAt: toDateInput(formData?.invoiceIssuedAt),
     observations: formData?.observations ?? "",
+    chartAccountId: formData?.chartAccountId ? String(formData.chartAccountId) : "",
+    costCenterId: formData?.costCenterId ? String(formData.costCenterId) : "",
   });
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
   const [removeInvoice, setRemoveInvoice] = useState(false);
@@ -73,6 +79,9 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
     ]),
     enabled: !gatewayOwned,
   });
+
+  const { data: accounts } = useChartAccounts();
+  const { data: costCenters } = useCostCenters();
 
   const validate = () => {
     const found: Record<string, string> = {};
@@ -99,6 +108,8 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
       netValue: state.netValue > 0 ? state.netValue : "",
       description: state.description.trim(),
       observations: state.observations.trim(),
+      chartAccountId: state.chartAccountId,
+      costCenterId: state.costCenterId,
     };
     if (invoiceFile) invoice.invoiceFile = invoiceFile;
     else if (removeInvoice) invoice.invoiceUrl = "";
@@ -252,6 +263,20 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
             <input id="invoiceFile" type="file" accept={INVOICE_TYPES} className="mt-1 block w-full text-sm"
               onChange={(event) => setInvoiceFile(event.target.files?.[0] ?? null)} />
           )}
+        </div>
+      </div>
+
+      <div className="rounded border p-3 flex flex-col gap-4">
+        <p className="font-medium text-sm">Classificação</p>
+        <div>
+          <Label>Conta (plano de contas)</Label>
+          <AccountSelect accounts={accounts ?? []} value={state.chartAccountId} nature="receita" clearable
+            onChange={(value) => set("chartAccountId", value)} placeholder="Sem conta" />
+        </div>
+        <div>
+          <Label htmlFor="costCenterId">Centro de custo</Label>
+          <Select name="costCenterId" options={(costCenters?.rows ?? []) as never[]} state={state.costCenterId}
+            onChange={set} placeholder="Sem centro de custo" clearable modal />
         </div>
       </div>
 

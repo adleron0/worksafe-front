@@ -57,7 +57,9 @@ const PaginationLink = ({
         size,
       }),
       className,
-      props.disabled ? "cursor-default shadow-sm border opacity-50 bg-transparent hover:bg-transparent rounded" : "shadow-sm border cursor-pointer rounded"
+      props.disabled ? "cursor-default shadow-sm border opacity-50 bg-transparent hover:bg-transparent rounded" : "shadow-sm border cursor-pointer rounded",
+      // página atual em destaque (antes ficava igual às outras)
+      isActive && "border-primary bg-primary font-semibold text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
     )}
     {...props}
   />

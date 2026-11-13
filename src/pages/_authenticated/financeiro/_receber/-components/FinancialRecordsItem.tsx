@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { patch } from "@/services/api";
@@ -87,6 +88,12 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
                 colorClass="text-foreground bg-muted"
                 iconClassName="w-3 h-3"
               />
+            )}
+            {item.contractId && (
+              <Link to="/comercial/contratos/$contractId" params={{ contractId: String(item.contractId) }}
+                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs bg-muted hover:underline" title="Abrir o contrato">
+                <Icon name="file-signature" className="w-3 h-3" /> Contrato
+              </Link>
             )}
           </div>
         </div>

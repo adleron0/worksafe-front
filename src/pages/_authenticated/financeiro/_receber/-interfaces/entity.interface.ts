@@ -58,6 +58,8 @@ export interface IFinancialRecord {
   invoiceIssuedAt?: string | null;
   invoiceUrl?: string | null;
   installmentNumber?: number | null;
+  /** contrato comercial que originou o recebível */
+  contractId?: number | null;
   installmentTotal?: number | null;
   netValue?: number | null;
   receivedValue?: number | null;

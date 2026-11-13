@@ -25,6 +25,12 @@ export const items = [
         path: "/comercial/propostas",
       },
       {
+        title: "Contratos",
+        ability: "comercial",
+        icon: "file-signature",
+        path: "/comercial/contratos",
+      },
+      {
         title: "Vendedores",
         ability: "comercial",
         icon: "user-round-check",

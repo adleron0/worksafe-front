@@ -200,6 +200,9 @@ function ProposalEditorPage() {
             {proposal.sentAt && ` Enviada em ${dateBr(proposal.sentAt)}.`}
             {proposal.decidedAt && ` Decisão em ${dateBr(proposal.decidedAt)}.`}
             {proposal.statusNote && ` Observação: ${proposal.statusNote}`}
+            {proposal.contract && (
+              <> Virou o contrato <Link to="/comercial/contratos/$contractId" params={{ contractId: String(proposal.contract.id) }} className="underline font-medium text-foreground">{proposal.contract.number}</Link>.</>
+            )}
           </p>
         )}
         {proposal.baseOutdated && !readOnly && (

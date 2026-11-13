@@ -59,6 +59,7 @@ export interface Proposal {
   baseOutdated: boolean; baseCapturedAt: string;
   publicKey: string | null; publicUrl: string | null; documentFrozen: boolean; documentHash: string | null; viewedAt: string | null;
   emailConfigured: boolean; events: ProposalEvent[];
+  contract: { id: number; number: string; status: string } | null;
   versions: Array<{ id: number; number: string; revision: number; status: ProposalStatus; total: number }>;
   draft: Omit<ProposalDraft, "sections" | "installments"> & {
     sections: Array<Omit<DraftSection, "uid" | "items"> & { items: Array<Omit<DraftItem, "uid">> }>;

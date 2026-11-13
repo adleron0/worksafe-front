@@ -160,7 +160,10 @@ const SitePageFields = ({
         <p className="text-sm text-muted-foreground line-clamp-2">{previewDescription}</p>
       </div>
 
-      <div className="space-y-1">
+      {/* A altura fixa do editor não conta a barra de ferramentas, que quebra
+          em várias linhas no painel lateral: o editor cresce com ela e só a
+          área de texto tem 300px. */}
+      <div className="space-y-1 [&_.quill]:!h-auto [&_.ql-container]:!h-[300px]">
         <Label>Texto da página</Label>
         <RichTextEditor
           value={values.content ?? ""}

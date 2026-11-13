@@ -130,10 +130,11 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
             </div>
 
             {!readOnly && (
-              <footer className="px-3 py-2 border-t">
+              <footer className="px-3 py-2 border-t flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
                 <Button type="button" variant="ghost" size="sm" className="text-primary" onClick={() => updateSection(section.uid, { items: [...section.items, newItem(section.kind)] })}>
                   <Icon name="plus" className="w-4 h-4 mr-1" /> {ADD_LABEL[section.kind]}
                 </Button>
+                {labor && section.items.length > 0 && <FlagsLegend />}
               </footer>
             )}
           </section>
@@ -165,6 +166,17 @@ interface RowProps {
 
 /** Os três adicionais da planilha: noturno, viagem e fim de semana/feriado. */
 const FLAGS = [["night", "moon", "Noturno"], ["travel", "plane", "Viagem"], ["weekend", "star", "Fim de semana ou feriado"]] as const;
+
+/** Legenda pequena dos adicionais, no rodapé da seção de mão de obra. */
+const FlagsLegend = () => (
+  <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground" aria-label="Legenda dos adicionais">
+    <span>Adicionais:</span>
+    {FLAGS.map(([key, icon, label]) => (
+      <span key={key} className="inline-flex items-center gap-1"><Icon name={icon} className="w-3 h-3" /> {label}</span>
+    ))}
+    <span className="inline-flex items-center gap-1"><Icon name="sliders-horizontal" className="w-3 h-3" /> Dias próprios e horas extras</span>
+  </p>
+);
 
 function ItemRow({ item, line, draft, options, readOnly, canSeeCosts, update, remove }: RowProps) {
   const labor = item.type === "mao_de_obra", training = item.type === "treinamento";

@@ -387,11 +387,14 @@ function ProposalEditorPage() {
   );
 }
 
-const Line = ({ label, value, strong, muted, negative }: { label: string; value: string; strong?: boolean; muted?: boolean; negative?: boolean }) => (
-  <div className={cn("flex items-baseline justify-between gap-3 py-1 text-sm", strong && "font-semibold text-base", muted && "text-muted-foreground")}>
-    <span>{label}</span><span className={cn("tabular-nums", negative && "text-destructive")}>{value}</span>
+/** Rótulo à esquerda (pode quebrar), valor à direita sempre em uma linha só. */
+const Line = ({ label, value, strong, muted, negative, hint, small, bold }: { label: React.ReactNode; value: string; strong?: boolean; muted?: boolean; negative?: boolean; hint?: string; small?: boolean; bold?: boolean }) => (
+  <div title={hint} className={cn("flex items-baseline justify-between gap-3", small ? "py-0.5 text-xs" : "py-1 text-sm", strong && "font-semibold text-base", bold && "font-semibold", muted && "text-muted-foreground")}>
+    <span className="min-w-0">{label}</span><span className={cn("shrink-0 whitespace-nowrap tabular-nums", negative && "text-destructive")}>{value}</span>
   </div>
 );
+/** Percentual discreto ao lado do rótulo, para o valor ficar sozinho na coluna da direita. */
+const Rate = ({ children }: { children: React.ReactNode }) => <span className="ml-1 text-xs text-muted-foreground whitespace-nowrap tabular-nums">{children}</span>;
 
 /**
  * Resumo da proposta. Em tela estreita fica em cima, recolhido (cliente e total),
@@ -442,20 +445,37 @@ function TotalsPanel({ calc, draft, readOnly, canSeeCosts, stale, onDiscount, cu
       {canSeeCosts && t && m && (
         <div className="border-t pt-3">
           <h3 className="text-sm font-semibold">Custos e margem</h3>
-          <p className="text-xs text-muted-foreground mb-1">Só para quem tem a permissão de custos. Não vai para o cliente.</p>
+          <p className="text-xs text-muted-foreground mb-1">Uso interno: não vai para o cliente.</p>
           <Line label="Custo" value={money(t.cost)} />
-          <Line label={`Imposto${calc?.tax.inside != null ? ` (${percent(calc.tax.inside)} por dentro)` : ""}`} value={money(t.tax)} />
-          <Line label="Lucro estimado" value={`${money(t.profit)} · ${percent(t.profitRate, 1)}`} negative={(t.profit ?? 0) < 0} />
+          <Line label={<>Imposto{calc?.tax.inside != null && <Rate>{percent(calc.tax.inside)}</Rate>}</>} value={money(t.tax)} />
           <Line label="Comissão" value={money(t.commission)} />
-          <div className="mt-2 rounded-md bg-muted/50 p-2">
-            <p className="text-xs font-medium">Margem real (imposto efetivo e comissão descontados)</p>
-            <Line label="Sem usar a contingência" value={`${percent(m.unusedRate, 1)} · ${money(m.unused)}`} negative={m.unused < 0} />
-            <Line label="Usando toda a contingência" value={`${percent(m.usedRate, 1)} · ${money(m.used)}`} negative={m.used < 0} />
-            <Line label="Preço mínimo (margem zero)" value={money(m.minTotal)} muted />
-            <Line label="Mínimo sem a parcela de dívida" value={money(m.minTotalOperational)} muted />
-            <Line label="Desconto máximo antes do prejuízo" value={percent(m.maxDiscountRate, 1)} muted />
+          <div className="border-t mt-1 pt-1">
+            <Line label={<>Lucro estimado<Rate>{percent(t.profitRate, 1)}</Rate></>} value={money(t.profit)} negative={(t.profit ?? 0) < 0} bold />
           </div>
-          <p className="text-xs text-muted-foreground mt-2">{calc?.tax.name}{calc?.costBase ? ` · ${calc.costBase}` : ""}</p>
+
+          <div className="mt-3 rounded-md bg-muted/50 px-3 py-2.5">
+            <p className="text-xs font-semibold">Margem real</p>
+            <p className="text-[11px] leading-snug text-muted-foreground">Imposto efetivo e comissão já descontados. A folga é a imprevisibilidade.</p>
+            <div className="mt-2 grid grid-cols-2 gap-2 tabular-nums">
+              {([
+                ["Sem usar a folga", m.unusedRate, m.unused, "Se a imprevisibilidade cobrada não for gasta na obra, ela vira lucro."],
+                ["Usando a folga", m.usedRate, m.used, "Se toda a imprevisibilidade cobrada for gasta na obra."],
+              ] as const).map(([label, rate, value, hint]) => (
+                <div key={label} title={hint} className="rounded-md border bg-background px-2.5 py-2">
+                  <p className="text-[11px] leading-tight text-muted-foreground">{label}</p>
+                  <p className={cn("text-lg font-semibold leading-tight mt-0.5", value < 0 && "text-destructive")}>{percent(rate, 1)}</p>
+                  <p className={cn("text-xs whitespace-nowrap", value < 0 ? "text-destructive" : "text-muted-foreground")}>{money(value)}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 border-t pt-1.5 text-xs">
+              <p className="font-medium text-muted-foreground mb-0.5">Até onde dá para negociar</p>
+              <Line small label="Preço mínimo" value={money(m.minTotal)} muted hint="Total em que a margem real chega a zero." />
+              <Line small label="Mínimo sem a dívida" value={money(m.minTotalOperational)} muted hint="Preço mínimo sem contar a parcela de dívida que entra no custo." />
+              <Line small label="Desconto máximo" value={percent(m.maxDiscountRate, 1)} muted hint="Quanto dá para descontar do total antes de dar prejuízo." />
+            </div>
+          </div>
+          <p className="text-[11px] leading-snug text-muted-foreground mt-2">{[calc?.tax.name, calc?.costBase].filter(Boolean).join(" · ")}</p>
         </div>
       )}
       </div>

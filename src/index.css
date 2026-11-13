@@ -186,6 +186,25 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentColor);
   }
+
+  /*
+    O Tailwind 4 deixou os botões com o cursor padrão. Aqui todo botão clicável
+    volta a mostrar a mãozinha; por estar na camada base, as classes
+    cursor-not-allowed / cursor-default continuam valendo quando usadas.
+  */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"]:not(:disabled),
+  [role="switch"]:not(:disabled),
+  [role="checkbox"]:not(:disabled),
+  [role="radio"]:not(:disabled),
+  [role="option"]:not([aria-disabled="true"]),
+  [role="menuitem"]:not([aria-disabled="true"]),
+  summary,
+  label[for],
+  select:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 @layer utilities {

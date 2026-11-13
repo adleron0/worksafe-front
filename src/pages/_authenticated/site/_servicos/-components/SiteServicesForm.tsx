@@ -7,6 +7,8 @@ import { useLoader } from "@/context/GeneralContext";
 import DropUpload from "@/components/general-components/DropUpload";
 import Input from "@/components/general-components/Input";
 import TagInput from "@/components/general-components/TagInput";
+import FaqGenerator from "@/components/general-components/FaqGenerator";
+import SitePageFields, { SitePageValues } from "@/components/general-components/SitePageFields";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 // Interfaces and validations
@@ -29,6 +31,12 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const Schema = z.object({
     name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     features: z.string().optional(),
+    slug: z.string().max(120).optional(),
+    description: z.string().optional(),
+    content: z.string().optional(),
+    seoTitle: z.string().max(70, { message: "Título no Google com no máximo 70 caracteres" }).optional(),
+    seoDescription: z.string().max(170, { message: "Descrição no Google com no máximo 170 caracteres" }).optional(),
+    faq: z.array(z.object({ question: z.string().min(3), answer: z.string().min(3) })).optional(),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
       (value) => value === null || value instanceof File,
@@ -43,6 +51,12 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const [dataForm, setDataForm] = useState<FormData>({
     name: formData?.name || "",
     features: formData?.features || "",
+    slug: formData?.slug || "",
+    description: formData?.description || "",
+    content: formData?.content || "",
+    seoTitle: formData?.seoTitle || "",
+    seoDescription: formData?.seoDescription || "",
+    faq: FaqGenerator.parseFaqString(formData?.faq),
     imageUrl: formData?.imageUrl || "",
     image: formData?.image || null,
   });
@@ -159,10 +173,16 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       return;
     }
 
+    // FAQ vai como JSON (o envio é multipart por causa da imagem)
+    const submissionData = {
+      ...cleanedData,
+      faq: JSON.stringify(cleanedData.faq || []),
+    } as unknown as FormData;
+
     if (formData) {
-      updateCustomerMutation(cleanedData);
+      updateCustomerMutation(submissionData);
     } else {
-      registerCustomer(cleanedData);
+      registerCustomer(submissionData);
     }
   };
 
@@ -196,6 +216,31 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
           separator="#"
           placeholder="Digite uma característica e pressione Enter"
           className="mt-1"
+        />
+      </div>
+
+      <SitePageFields
+        values={dataForm as SitePageValues}
+        onChange={(field, value) => handleChange(field, value)}
+        name={dataForm.name}
+        basePath="/servicos/"
+        showDescription
+      />
+      {(errors.seoTitle || errors.seoDescription) && (
+        <p className="text-red-500 text-sm">{errors.seoTitle || errors.seoDescription}</p>
+      )}
+
+      <div className="mt-2">
+        <FaqGenerator
+          formData={dataForm}
+          setFormData={setDataForm}
+          fieldName="faq"
+          errors={errors}
+          setErrors={setErrors}
+          title="Perguntas frequentes da página"
+          description="Aparecem na página do serviço e no Google"
+          questionPlaceholder="Ex: Vocês atendem fora de Pernambuco?"
+          answerPlaceholder="Ex: Sim, atendemos todo o Nordeste com equipe própria..."
         />
       </div>
 

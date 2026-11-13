@@ -22,6 +22,10 @@ export interface IEntity {
   weekDays?: string;
   media?: number;
   faq?: string | FaqItem[];
+  slug?: string | null;
+  content?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   exam?: {
     question: string;
     options: {

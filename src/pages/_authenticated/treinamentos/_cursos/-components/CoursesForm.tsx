@@ -9,6 +9,7 @@ import Number from "@/components/general-components/Number";
 import Input from "@/components/general-components/Input";
 import TagInput from "@/components/general-components/TagInput";
 import FaqGenerator from "@/components/general-components/FaqGenerator";
+import SitePageFields, { SitePageValues } from "@/components/general-components/SitePageFields";
 import IconPicker from "@/components/general-components/IconPicker";
 import ColorPickerInput from "@/components/general-components/ColorPickerInput";
 import { Label } from "@/components/ui/label";
@@ -61,6 +62,10 @@ const Form = ({ formData, openSheet, entity, registerCloseGuard }: FormProps) =>
         answer: z.string().min(3, { message: "Resposta deve ter pelo menos 3 caracteres" })
       })
     ).optional(),
+    slug: z.string().max(120).optional(),
+    content: z.string().optional(),
+    seoTitle: z.string().max(70, { message: "Título no Google com no máximo 70 caracteres" }).optional(),
+    seoDescription: z.string().max(170, { message: "Descrição no Google com no máximo 170 caracteres" }).optional(),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
       (value) => value === null || value instanceof File,
@@ -86,6 +91,10 @@ const Form = ({ formData, openSheet, entity, registerCloseGuard }: FormProps) =>
     weekDays: formData?.weekDays || "",
     media: formData?.media || 6,
     faq: FaqGenerator.parseFaqString(formData?.faq),
+    slug: formData?.slug || "",
+    content: formData?.content || "",
+    seoTitle: formData?.seoTitle || "",
+    seoDescription: formData?.seoDescription || "",
     imageUrl: formData?.imageUrl || "",
     image: formData?.image || null,
   });
@@ -414,6 +423,16 @@ const Form = ({ formData, openSheet, entity, registerCloseGuard }: FormProps) =>
           </div>
         )
       }
+
+      <SitePageFields
+        values={dataForm as SitePageValues}
+        onChange={(field, value) => setDataForm((prev) => ({ ...prev, [field]: value }))}
+        name={dataForm.name}
+        basePath="/cursos/"
+      />
+      {(errors.seoTitle || errors.seoDescription) && (
+        <p className="text-red-500 text-sm">{errors.seoTitle || errors.seoDescription}</p>
+      )}
 
       <div className="mt-6">
         <FaqGenerator

@@ -564,6 +564,8 @@ const SiteServicesItem = ({
         description="Escaneie o QR Code para acessar a prova"
         showBttn={false}
         className="w-sm"
+        // altura do conteúdo (o Dialog genérico fixa 80vh sem rodapé)
+        classNameContent="h-auto max-h-[75vh] pb-2"
       >
         <div className="flex flex-col items-center space-y-4 py-4">
           {/* Código do curso */}

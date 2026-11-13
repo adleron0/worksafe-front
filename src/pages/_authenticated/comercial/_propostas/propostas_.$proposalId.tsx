@@ -99,17 +99,24 @@ function ProposalEditorPage() {
 
   // Totais ao vivo: a API calcula o rascunho com a mesma base guardada na proposta.
   const ticket = useRef(0);
+  const [calculating, setCalculating] = useState(false);
   useEffect(() => {
-    if (!payload || !dirty || !proposal) return;
+    if (!payload || !proposal) return;
     const current = ++ticket.current;
+    // voltou ao que está salvo (ex.: marcou e desmarcou um adicional): vale o cálculo salvo,
+    // e qualquer resposta que ainda esteja a caminho é descartada
+    if (!dirty) { setCalc(proposal.calc); setCalcError(""); setCalculating(false); return; }
+    setCalculating(true);
     const timer = setTimeout(async () => {
       try {
         const result = await commercialApi.post<ProposalCalc>("proposals/preview", { ...payload, id: proposal.id });
         if (current === ticket.current) { setCalc(result); setCalcError(""); }
       } catch (err) {
         if (current === ticket.current) setCalcError(errorMessage(err));
+      } finally {
+        if (current === ticket.current) setCalculating(false);
       }
-    }, 400);
+    }, 150);
     return () => clearTimeout(timer);
   // serialized cobre o rascunho inteiro
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -218,7 +225,7 @@ function ProposalEditorPage() {
             <h1 className="text-xl font-bold tabular-nums">{proposal.number}</h1>
             <StatusBadge status={proposal.status} expired={proposal.expired} />
             {proposal.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Inativa</span>}
-            {!readOnly && <span className="text-xs text-muted-foreground">{saving ? "Salvando..." : dirty ? "Alterações não salvas" : "Tudo salvo"}</span>}
+            {!readOnly && <span className="text-xs text-muted-foreground">{saving ? "Salvando..." : calculating ? "Calculando..." : dirty ? "Alterações não salvas" : "Tudo salvo"}</span>}
           </div>
           <p className="text-sm text-muted-foreground truncate">{[customer.name, titled ? draft.title : null, KIND_LABEL[draft.kind]].filter(Boolean).join(" · ")}</p>
         </div>
@@ -376,7 +383,7 @@ function ProposalEditorPage() {
           </div>
         </div>
 
-        <TotalsPanel calc={calc} draft={draft} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} stale={dirty && Boolean(calcError)}
+        <TotalsPanel calc={calc} draft={draft} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} stale={calculating || (dirty && Boolean(calcError))}
           customer={customer.name} wide={tab === "itens"} open={summaryOpen} onToggle={() => setSummaryOpen(!summaryOpen)}
           onDiscount={(discount) => setDraftSafe((d) => ({ ...d, discount }))} />
       </div>
@@ -409,6 +416,22 @@ function TotalsPanel({ calc, draft, readOnly, canSeeCosts, stale, onDiscount, cu
 }) {
   const t = calc?.totals;
   const m = calc?.margin;
+  // Desconto em R$ ou em %: o que fica guardado é sempre o valor em reais.
+  // Em %, o valor acompanha os itens enquanto a tela estiver aberta.
+  const [discountMode, setDiscountMode] = useState<"money" | "percent">("money");
+  const [discountRate, setDiscountRate] = useState(0);
+  const discountBase = t ? Math.round((t.subtotal + t.contingency) * 100) / 100 : 0;
+  const switchDiscount = (mode: "money" | "percent") => {
+    if (mode === "percent") setDiscountRate(discountBase > 0 ? Math.round((draft.discount / discountBase) * 1e4) / 1e4 : 0);
+    setDiscountMode(mode);
+  };
+  useEffect(() => {
+    if (discountMode !== "percent" || readOnly || !discountBase) return;
+    const value = Math.round(discountBase * discountRate * 100) / 100;
+    if (Math.abs(value - draft.discount) > 0.005) onDiscount(value);
+  // só quando a base muda: digitar o percentual já atualiza o valor na hora
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [discountBase]);
   // classes escritas por extenso: o Tailwind só gera as que encontra no código
   const side = wide ? "2xl:order-none 2xl:sticky 2xl:top-4" : "lg:order-none lg:sticky lg:top-4";
   const onlyNarrow = wide ? "2xl:hidden" : "lg:hidden";
@@ -433,10 +456,30 @@ function TotalsPanel({ calc, draft, readOnly, canSeeCosts, stale, onDiscount, cu
         <Line label="Itens" value={money(t?.subtotal)} />
         {t && Math.abs(t.subtotal - t.suggested) > 0.005 && <Line label="Itens pelo sugerido" value={money(t.suggested)} muted />}
         <Line label={`Imprevisibilidade (${percent(draft.contingencyRate, 0)})`} value={money(t?.contingency)} />
-        <div className="flex items-center justify-between gap-3 py-1 text-sm">
+        <div className="flex items-center justify-between gap-2 py-1 text-sm">
           <Label htmlFor="discount" className="font-normal">Desconto</Label>
-          <NumField id="discount" kind="money" className="w-36" value={draft.discount} disabled={readOnly} onChange={onDiscount} onEmpty={() => onDiscount(0)} />
+          <div className="flex items-center gap-1.5">
+            {!readOnly && (
+              <div className="inline-flex rounded-md border overflow-hidden text-xs" role="radiogroup" aria-label="Desconto em reais ou em percentual">
+                {(["money", "percent"] as const).map((mode) => (
+                  <button key={mode} type="button" role="radio" aria-checked={discountMode === mode} onClick={() => switchDiscount(mode)}
+                    className={cn("h-9 w-8 border-l first:border-l-0", discountMode === mode ? "bg-primary text-inverse-foreground" : "text-muted-foreground hover:bg-muted")}>
+                    {mode === "money" ? "R$" : "%"}
+                  </button>
+                ))}
+              </div>
+            )}
+            {discountMode === "percent"
+              ? <NumField id="discount" kind="percent" className="w-28" value={discountRate} disabled={readOnly}
+                  onChange={(rate) => { setDiscountRate(rate); onDiscount(Math.round(discountBase * rate * 100) / 100); }} onEmpty={() => { setDiscountRate(0); onDiscount(0); }} />
+              : <NumField id="discount" kind="money" className="w-28" value={draft.discount} disabled={readOnly} onChange={onDiscount} onEmpty={() => onDiscount(0)} />}
+          </div>
         </div>
+        {draft.discount > 0 && discountBase > 0 && (
+          <p className="text-xs text-muted-foreground text-right -mt-0.5 mb-1 tabular-nums">
+            {discountMode === "percent" ? `= ${money(draft.discount)}` : `= ${percent(draft.discount / discountBase, 1)}`} sobre itens + imprevisibilidade
+          </p>
+        )}
         {t && t.taxOutside > 0 && <>
           <Line label="Valor líquido" value={money(t.net)} />
           <Line label={`Tributos destacados (${percent(calc?.tax.outside)})`} value={money(t.taxOutside)} />
@@ -457,11 +500,13 @@ function TotalsPanel({ calc, draft, readOnly, canSeeCosts, stale, onDiscount, cu
 
           <div className="mt-3 rounded-md bg-muted/50 px-3 py-2.5">
             <p className="text-xs font-semibold">Margem real</p>
-            <p className="text-[11px] leading-snug text-muted-foreground">Imposto efetivo e comissão já descontados. A folga é a imprevisibilidade.</p>
+            <p className="text-[11px] leading-snug text-muted-foreground">
+              Quanto sobra de lucro depois do imposto efetivo e da comissão. A imprevisibilidade ({money(t.contingency)}) é uma reserva cobrada do cliente para imprevistos da obra: se não for gasta, vira lucro.
+            </p>
             <div className="mt-2 grid grid-cols-2 gap-2 tabular-nums">
               {([
-                ["Sem usar a folga", m.unusedRate, m.unused, "Se a imprevisibilidade cobrada não for gasta na obra, ela vira lucro."],
-                ["Usando a folga", m.usedRate, m.used, "Se toda a imprevisibilidade cobrada for gasta na obra."],
+                ["Se a reserva não for gasta", m.unusedRate, m.unused, "Cenário em que a obra não teve imprevistos: a imprevisibilidade cobrada fica inteira como lucro."],
+                ["Se a reserva for toda gasta", m.usedRate, m.used, "Cenário em que os imprevistos consumiram toda a imprevisibilidade cobrada."],
               ] as const).map(([label, rate, value, hint]) => (
                 <div key={label} title={hint} className="rounded-md border bg-background px-2.5 py-2">
                   <p className="text-[11px] leading-tight text-muted-foreground">{label}</p>

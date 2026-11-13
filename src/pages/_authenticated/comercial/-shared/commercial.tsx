@@ -24,7 +24,7 @@ export const errorMessage = (error: unknown) => {
 export interface CostParams {
   daysInYear: number; restDays: number; vacationDays: number; holidays: number;
   hoursPerDay: number; idleRate: number; monthsDivisor: number;
-  additionalDivisor: number; nightRate: number; travelRate: number; weekendRate: number;
+  additionalDivisor: number; nightRate: number; travelRate: number; weekendRate: number; overtimeRate?: number;
   weekendPerWorker: boolean;
   mealPerDay: number; transportFare: number; transportTrips: number; transportDiscount: number;
   fareDiscountRate: number; headcount: number;

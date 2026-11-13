@@ -72,9 +72,12 @@ export function HoursTab({ params, setParam, result, disabled }: TabProps) {
             <Row label="Adicional de FDS/feriado" hint="200% = 100% + o dia de descanso." htmlFor="weekendRate">
               <NumField id="weekendRate" kind="percent" value={params.weekendRate} onChange={(value) => setParam("weekendRate", value)} disabled={disabled} />
             </Row>
-            <Row label="FDS/feriado multiplica pela quantidade" hint="Desligado = igual à planilha (cobra um profissional só, mesmo com vários na linha).">
+            <Row label="Hora extra" hint="Em dia normal: 50% = a hora vale 1,5. Usada no campo Horas extras da proposta." htmlFor="overtimeRate">
+              <NumField id="overtimeRate" kind="percent" value={params.overtimeRate ?? 0.5} onChange={(value) => setParam("overtimeRate", value)} disabled={disabled} />
+            </Row>
+            <Row label="Adicional de FDS/feriado para cada profissional" hint="Ligado: 3 profissionais no fim de semana pagam 3 adicionais. Desligado: cobra o adicional de um só, como a planilha faz hoje.">
               <div className="flex justify-end">
-                <Switch checked={params.weekendPerWorker} disabled={disabled} aria-label="FDS/feriado multiplica pela quantidade"
+                <Switch checked={params.weekendPerWorker} disabled={disabled} aria-label="Adicional de FDS/feriado para cada profissional"
                   onCheckedChange={(checked) => setParam("weekendPerWorker", checked)} />
               </div>
             </Row>

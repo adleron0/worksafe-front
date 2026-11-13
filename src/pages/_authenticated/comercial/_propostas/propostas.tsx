@@ -27,7 +27,7 @@ interface ListResponse { rows: ProposalRow[]; total: number; summary: Partial<Re
 
 const FILTERS: Array<{ value: "" | ProposalStatus; label: string }> = [
   { value: "", label: "Todas" }, { value: "rascunho", label: "Rascunhos" }, { value: "enviada", label: "Enviadas" },
-  { value: "aceita", label: "Aceitas" }, { value: "recusada", label: "Recusadas" }, { value: "cancelada", label: "Canceladas" },
+  { value: "aceita", label: "Aceitas" }, { value: "recusada", label: "Recusadas" }, { value: "expirada", label: "Expiradas" }, { value: "cancelada", label: "Canceladas" },
 ];
 const LIMIT = 20;
 

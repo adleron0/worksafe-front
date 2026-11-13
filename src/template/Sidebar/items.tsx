@@ -43,6 +43,12 @@ export const items = [
         path: "/comercial/cupons",
       },
       {
+        title: "Modelos e termos",
+        ability: "comercial",
+        icon: "file-pen-line",
+        path: "/comercial/modelos",
+      },
+      {
         title: "Base de cálculo",
         ability: "comercial",
         icon: "calculator",

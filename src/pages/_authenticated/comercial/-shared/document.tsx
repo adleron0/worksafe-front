@@ -1,0 +1,35 @@
+import { cn } from "@/lib/utils";
+
+/**
+ * "Folha" do documento da proposta: fundo branco e tipografia própria, igual
+ * na pré-visualização, na página pública e na impressão. O HTML vem pronto e
+ * já limpo da API (o corpo é sanitizado no servidor ao gravar e ao montar).
+ */
+export function DocumentPaper({ html, className }: { html: string; className?: string }) {
+  return (
+    <>
+      <style>{`
+        .proposal-doc { background:#fff; color:#111; font-size:15px; line-height:1.55; }
+        .proposal-doc h1 { font-size:1.6em; font-weight:700; margin:0 0 .6em; line-height:1.25; }
+        .proposal-doc h2 { font-size:1.2em; font-weight:700; margin:1.4em 0 .4em; }
+        .proposal-doc h3 { font-size:1.02em; font-weight:700; margin:1em 0 .3em; }
+        .proposal-doc p { margin:0 0 .6em; }
+        .proposal-doc ul, .proposal-doc ol { margin:0 0 .6em 1.4em; }
+        .proposal-doc ul { list-style:disc; } .proposal-doc ol { list-style:decimal; }
+        .proposal-doc a { color:#1d4ed8; text-decoration:underline; }
+        .proposal-doc img { max-width:100%; height:auto; }
+        .proposal-doc table { max-width:100%; }
+        .proposal-doc blockquote { border-left:3px solid #ccc; padding-left:.8em; color:#444; margin:0 0 .6em; }
+        .proposal-doc .ql-align-center { text-align:center; } .proposal-doc .ql-align-right { text-align:right; } .proposal-doc .ql-align-justify { text-align:justify; }
+        .proposal-doc .ql-size-small { font-size:.8em; } .proposal-doc .ql-size-large { font-size:1.4em; } .proposal-doc .ql-size-huge { font-size:2em; }
+        .proposal-doc .ql-indent-1 { padding-left:2em; } .proposal-doc .ql-indent-2 { padding-left:4em; }
+        @media print {
+          .proposal-doc { font-size:12pt; padding:0 !important; border:0 !important; box-shadow:none !important; }
+          .proposal-doc table { page-break-inside:auto; } .proposal-doc tr { page-break-inside:avoid; }
+          .proposal-doc h2, .proposal-doc h3 { page-break-after:avoid; }
+        }
+      `}</style>
+      <div className={cn("proposal-doc rounded-md border p-6 sm:p-10 overflow-x-auto", className)} dangerouslySetInnerHTML={{ __html: html }} />
+    </>
+  );
+}

@@ -27,6 +27,7 @@ import { Route as AuthenticatedClientesIndexRouteImport } from './pages/_authent
 import { Route as AuthenticatedBlogIndexRouteImport } from './pages/_authenticated/blog/index'
 import { Route as StudentLessonLessonIdRouteImport } from './pages/student/lesson/$lessonId'
 import { Route as IndexProvaClassIdRouteImport } from './pages/_index/prova.$classId'
+import { Route as IndexPropostaKeyRouteImport } from './pages/_index/proposta.$key'
 import { Route as IndexCertificadosIdRouteImport } from './pages/_index/certificados/$id'
 import { Route as AuthenticatedInventariosDashboardRouteImport } from './pages/_authenticated/inventarios/dashboard'
 import { Route as AuthenticatedInventariosAutorizadosRouteImport } from './pages/_authenticated/inventarios/autorizados'
@@ -59,6 +60,7 @@ import { Route as AuthenticatedFinanceiroContasBancariasContasBancariasRouteImpo
 import { Route as AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport } from './pages/_authenticated/financeiro/_centros-custo/centros-custo'
 import { Route as AuthenticatedComercialVendedoresVendedoresRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores'
 import { Route as AuthenticatedComercialPropostasPropostasRouteImport } from './pages/_authenticated/comercial/_propostas/propostas'
+import { Route as AuthenticatedComercialModelosModelosRouteImport } from './pages/_authenticated/comercial/_modelos/modelos'
 import { Route as AuthenticatedComercialCuponsCuponsRouteImport } from './pages/_authenticated/comercial/_cupons/cupons'
 import { Route as AuthenticatedComercialBaseCalculoBaseCalculoRouteImport } from './pages/_authenticated/comercial/_base-calculo/base-calculo'
 import { Route as AuthenticatedBlogVisitantesVisitantesRouteImport } from './pages/_authenticated/blog/_visitantes/visitantes'
@@ -161,6 +163,11 @@ const StudentLessonLessonIdRoute = StudentLessonLessonIdRouteImport.update({
 const IndexProvaClassIdRoute = IndexProvaClassIdRouteImport.update({
   id: '/prova/$classId',
   path: '/prova/$classId',
+  getParentRoute: () => IndexRoute,
+} as any)
+const IndexPropostaKeyRoute = IndexPropostaKeyRouteImport.update({
+  id: '/proposta/$key',
+  path: '/proposta/$key',
   getParentRoute: () => IndexRoute,
 } as any)
 const IndexCertificadosIdRoute = IndexCertificadosIdRouteImport.update({
@@ -354,6 +361,12 @@ const AuthenticatedComercialPropostasPropostasRoute =
     path: '/comercial/propostas',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedComercialModelosModelosRoute =
+  AuthenticatedComercialModelosModelosRouteImport.update({
+    id: '/comercial/_modelos/modelos',
+    path: '/comercial/modelos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComercialCuponsCuponsRoute =
   AuthenticatedComercialCuponsCuponsRouteImport.update({
     id: '/comercial/_cupons/cupons',
@@ -427,6 +440,7 @@ export interface FileRoutesByFullPath {
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/certificados/$id': typeof IndexCertificadosIdRoute
+  '/proposta/$key': typeof IndexPropostaKeyRoute
   '/prova/$classId': typeof IndexProvaClassIdRoute
   '/student/lesson/$lessonId': typeof StudentLessonLessonIdRoute
   '/blog': typeof AuthenticatedBlogIndexRoute
@@ -443,6 +457,7 @@ export interface FileRoutesByFullPath {
   '/blog/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
   '/comercial/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/comercial/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
+  '/comercial/modelos': typeof AuthenticatedComercialModelosModelosRoute
   '/comercial/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -486,6 +501,7 @@ export interface FileRoutesByTo {
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/certificados/$id': typeof IndexCertificadosIdRoute
+  '/proposta/$key': typeof IndexPropostaKeyRoute
   '/prova/$classId': typeof IndexProvaClassIdRoute
   '/student/lesson/$lessonId': typeof StudentLessonLessonIdRoute
   '/blog': typeof AuthenticatedBlogIndexRoute
@@ -502,6 +518,7 @@ export interface FileRoutesByTo {
   '/blog/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
   '/comercial/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/comercial/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
+  '/comercial/modelos': typeof AuthenticatedComercialModelosModelosRoute
   '/comercial/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -549,6 +566,7 @@ export interface FileRoutesById {
   '/_authenticated/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/_authenticated/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/_index/certificados/$id': typeof IndexCertificadosIdRoute
+  '/_index/proposta/$key': typeof IndexPropostaKeyRoute
   '/_index/prova/$classId': typeof IndexProvaClassIdRoute
   '/student/lesson/$lessonId': typeof StudentLessonLessonIdRoute
   '/_authenticated/blog/': typeof AuthenticatedBlogIndexRoute
@@ -565,6 +583,7 @@ export interface FileRoutesById {
   '/_authenticated/blog/_visitantes/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
   '/_authenticated/comercial/_base-calculo/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/_authenticated/comercial/_cupons/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
+  '/_authenticated/comercial/_modelos/modelos': typeof AuthenticatedComercialModelosModelosRoute
   '/_authenticated/comercial/_propostas/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/_authenticated/comercial/_vendedores/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/_authenticated/financeiro/_centros-custo/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -611,6 +630,7 @@ export interface FileRouteTypes {
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
     | '/certificados/$id'
+    | '/proposta/$key'
     | '/prova/$classId'
     | '/student/lesson/$lessonId'
     | '/blog'
@@ -627,6 +647,7 @@ export interface FileRouteTypes {
     | '/blog/visitantes'
     | '/comercial/base-calculo'
     | '/comercial/cupons'
+    | '/comercial/modelos'
     | '/comercial/propostas'
     | '/comercial/vendedores'
     | '/financeiro/centros-custo'
@@ -670,6 +691,7 @@ export interface FileRouteTypes {
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
     | '/certificados/$id'
+    | '/proposta/$key'
     | '/prova/$classId'
     | '/student/lesson/$lessonId'
     | '/blog'
@@ -686,6 +708,7 @@ export interface FileRouteTypes {
     | '/blog/visitantes'
     | '/comercial/base-calculo'
     | '/comercial/cupons'
+    | '/comercial/modelos'
     | '/comercial/propostas'
     | '/comercial/vendedores'
     | '/financeiro/centros-custo'
@@ -732,6 +755,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventarios/autorizados'
     | '/_authenticated/inventarios/dashboard'
     | '/_index/certificados/$id'
+    | '/_index/proposta/$key'
     | '/_index/prova/$classId'
     | '/student/lesson/$lessonId'
     | '/_authenticated/blog/'
@@ -748,6 +772,7 @@ export interface FileRouteTypes {
     | '/_authenticated/blog/_visitantes/visitantes'
     | '/_authenticated/comercial/_base-calculo/base-calculo'
     | '/_authenticated/comercial/_cupons/cupons'
+    | '/_authenticated/comercial/_modelos/modelos'
     | '/_authenticated/comercial/_propostas/propostas'
     | '/_authenticated/comercial/_vendedores/vendedores'
     | '/_authenticated/financeiro/_centros-custo/centros-custo'
@@ -913,6 +938,13 @@ declare module '@tanstack/react-router' {
       path: '/prova/$classId'
       fullPath: '/prova/$classId'
       preLoaderRoute: typeof IndexProvaClassIdRouteImport
+      parentRoute: typeof IndexRoute
+    }
+    '/_index/proposta/$key': {
+      id: '/_index/proposta/$key'
+      path: '/proposta/$key'
+      fullPath: '/proposta/$key'
+      preLoaderRoute: typeof IndexPropostaKeyRouteImport
       parentRoute: typeof IndexRoute
     }
     '/_index/certificados/$id': {
@@ -1139,6 +1171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComercialPropostasPropostasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/comercial/_modelos/modelos': {
+      id: '/_authenticated/comercial/_modelos/modelos'
+      path: '/comercial/modelos'
+      fullPath: '/comercial/modelos'
+      preLoaderRoute: typeof AuthenticatedComercialModelosModelosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_cupons/cupons': {
       id: '/_authenticated/comercial/_cupons/cupons'
       path: '/comercial/cupons'
@@ -1231,6 +1270,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBlogVisitantesVisitantesRoute: typeof AuthenticatedBlogVisitantesVisitantesRoute
   AuthenticatedComercialBaseCalculoBaseCalculoRoute: typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   AuthenticatedComercialCuponsCuponsRoute: typeof AuthenticatedComercialCuponsCuponsRoute
+  AuthenticatedComercialModelosModelosRoute: typeof AuthenticatedComercialModelosModelosRoute
   AuthenticatedComercialPropostasPropostasRoute: typeof AuthenticatedComercialPropostasPropostasRoute
   AuthenticatedComercialVendedoresVendedoresRoute: typeof AuthenticatedComercialVendedoresVendedoresRoute
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute: typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -1287,6 +1327,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialBaseCalculoBaseCalculoRoute,
   AuthenticatedComercialCuponsCuponsRoute:
     AuthenticatedComercialCuponsCuponsRoute,
+  AuthenticatedComercialModelosModelosRoute:
+    AuthenticatedComercialModelosModelosRoute,
   AuthenticatedComercialPropostasPropostasRoute:
     AuthenticatedComercialPropostasPropostasRoute,
   AuthenticatedComercialVendedoresVendedoresRoute:
@@ -1349,6 +1391,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 interface IndexRouteChildren {
   IndexIndexRoute: typeof IndexIndexRoute
   IndexCertificadosIdRoute: typeof IndexCertificadosIdRoute
+  IndexPropostaKeyRoute: typeof IndexPropostaKeyRoute
   IndexProvaClassIdRoute: typeof IndexProvaClassIdRoute
   IndexCertificadosIndexRoute: typeof IndexCertificadosIndexRoute
   IndexAuthStudentLoginRoute: typeof IndexAuthStudentLoginRoute
@@ -1358,6 +1401,7 @@ interface IndexRouteChildren {
 const IndexRouteChildren: IndexRouteChildren = {
   IndexIndexRoute: IndexIndexRoute,
   IndexCertificadosIdRoute: IndexCertificadosIdRoute,
+  IndexPropostaKeyRoute: IndexPropostaKeyRoute,
   IndexProvaClassIdRoute: IndexProvaClassIdRoute,
   IndexCertificadosIndexRoute: IndexCertificadosIndexRoute,
   IndexAuthStudentLoginRoute: IndexAuthStudentLoginRoute,

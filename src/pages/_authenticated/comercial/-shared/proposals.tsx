@@ -8,6 +8,7 @@ import { commercialApi } from "./commercial";
 export type ProposalKind = "servico" | "treinamento" | "misto";
 export type ProposalStatus = "rascunho" | "enviada" | "visualizada" | "aceita" | "recusada" | "expirada" | "cancelada" | "substituida";
 export type ItemType = "mao_de_obra" | "locacao" | "material" | "treinamento" | "avulso";
+export type ItemsMode = "detalhado" | "por_secao" | "global";
 export type DueRule = "data_fixa" | "dias_apos_aceite" | "dias_apos_nf" | "dias_apos_conclusao";
 
 export interface DraftItem {
@@ -15,7 +16,7 @@ export interface DraftItem {
   uid: string;
   id?: number; type: ItemType; description: string; unit: string | null; quantity: number;
   professionalId: number | null; night: boolean; travel: boolean; weekend: boolean;
-  workDays: number | null; weekendDays: number | null; hoursPerDay: number | null;
+  workDays: number | null; weekendDays: number | null; hoursPerDay: number | null; overtimeHours: number;
   courseId: number | null; extra: { students?: number | null; workload?: number | null; dates?: string; location?: string } | null;
   unitCost: number; extraCost: number; margin?: number | null; finalValue: number | null; showInDocument: boolean;
 }
@@ -28,6 +29,7 @@ export interface ProposalDraft {
   validUntil: string | null; referenceDate: string; workDays: number; weekendDays: number;
   contingencyRate: number; commissionRate?: number; commissionBase?: "faturado" | "lucro"; commissionInPrice?: boolean;
   taxRegime: "tradicional" | "hibrido" | null; discount: number; internalNotes: string | null;
+  templateId: number | null; documentBody: string | null; itemsMode: ItemsMode; termIds: number[];
   sections: DraftSection[]; installments: DraftInstallment[];
 }
 
@@ -55,6 +57,8 @@ export interface Proposal {
   expired: boolean; editable: boolean; canSeeCosts: boolean; customer: CustomerOption;
   sentAt: string | null; decidedAt: string | null; statusNote: string | null; createdAt: string; updatedAt: string;
   baseOutdated: boolean; baseCapturedAt: string;
+  publicKey: string | null; publicUrl: string | null; documentFrozen: boolean; documentHash: string | null; viewedAt: string | null;
+  emailConfigured: boolean; events: ProposalEvent[];
   versions: Array<{ id: number; number: string; revision: number; status: ProposalStatus; total: number }>;
   draft: Omit<ProposalDraft, "sections" | "installments"> & {
     sections: Array<Omit<DraftSection, "uid" | "items"> & { items: Array<Omit<DraftItem, "uid">> }>;
@@ -62,6 +66,26 @@ export interface Proposal {
   };
   calc: ProposalCalc;
 }
+
+export interface ProposalEvent {
+  id: number; type: string; at: string; name: string | null; role: string | null; email: string | null; cpf: string | null;
+  ip: string | null; userAgent: string | null; note: string | null; codeVerified: boolean | null; documentHash: string | null;
+}
+
+export interface TemplateOption { id: number; name: string; kind: ProposalKind | null; isDefault: boolean; body: string; itemsMode: ItemsMode; termIds: number[] }
+export interface TermOption { id: number; title: string; kind: string }
+export interface VariableOption { key: string; label: string; block?: boolean }
+
+export const ITEMS_MODE_OPTIONS: Array<{ id: ItemsMode; name: string }> = [
+  { id: "detalhado", name: "Detalhada: cada item com quantidade e valor" },
+  { id: "por_secao", name: "Por seção: só o valor de cada seção" },
+  { id: "global", name: "Global: lista os itens e mostra só o total" },
+];
+
+export const EVENT_LABEL: Record<string, string> = {
+  enviada: "Enviada", visualizada: "Aberta pelo cliente", aceita: "Aceita", recusada: "Recusada", cancelada: "Cancelada", expirada: "Validade vencida",
+  revisada: "Substituída por revisão", email_enviado: "Link enviado por e-mail", codigo_enviado: "Código de confirmação enviado",
+};
 
 export interface ProposalRow {
   id: number; number: string; revision: number; kind: ProposalKind; status: ProposalStatus; title: string; total: number;
@@ -77,6 +101,7 @@ export interface ProposalOptions {
   professionals: Array<{ id: number; name: string; hourCost?: number }>;
   courses: Array<{ id: number; name: string; hoursDuration: number | null; classPrice: number | null; includedStudents: number | null; studentPrice: number | null }>;
   sellers: Array<{ id: number; name: string }>;
+  templates: TemplateOption[]; terms: TermOption[]; variables: VariableOption[];
 }
 
 export const PROPOSALS_KEY = "commercialProposals";

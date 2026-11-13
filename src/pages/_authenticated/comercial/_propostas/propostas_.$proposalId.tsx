@@ -16,6 +16,7 @@ import { COMMERCIAL_ABILITY, NumField, commercialApi, dateBr, errorMessage, mone
 import {
   CustomerOption, DraftSection, KIND_LABEL, PROPOSALS_KEY, PROPOSAL_KEY, Proposal, ProposalCalc, ProposalDraft, ProposalOptions, STATUS_LABEL, StatusBadge,
 } from "../-shared/proposals";
+import ProposalDocumentTab from "./-ProposalDocumentTab";
 import ProposalItemsTab from "./-ProposalItemsTab";
 import { ProposalDataTab, ProposalPaymentTab } from "./-ProposalTabs";
 
@@ -122,7 +123,11 @@ function ProposalEditorPage() {
   });
   const { mutate: setStatus, isPending: changing } = useMutation({
     mutationFn: (body: { status: string; note?: string }) => commercialApi.patch<Proposal>(`proposals/status/${proposalId}`, body),
-    onSuccess: (result) => { apply(result); setDecision(null); toast({ title: `Proposta ${STATUS_LABEL[result.status].toLowerCase()}`, variant: "success" }); },
+    onSuccess: (result) => {
+      apply(result); setDecision(null);
+      if (result.status === "enviada") { setTab("documento"); toast({ title: "Proposta enviada", description: "O link do cliente está na aba Documento.", variant: "success" }); }
+      else toast({ title: `Proposta ${STATUS_LABEL[result.status].toLowerCase()}`, variant: "success" });
+    },
     onError: fail("Não foi possível mudar a situação"),
   });
   const { mutate: copy, isPending: copying } = useMutation({
@@ -165,9 +170,10 @@ function ProposalEditorPage() {
             </Button>
           )}
           {!readOnly && !dirty && (
-            <ConfirmDialog title={`Marcar ${proposal.number} como enviada?`}
-              description="Depois de enviada, a proposta não é mais editada: para mudar algo, cria-se uma revisão." onConfirm={() => setStatus({ status: "enviada" })}>
-              <Button type="button" variant="outline" disabled={changing}><Icon name="send" className="w-4 h-4 mr-1" /> Marcar como enviada</Button>
+            <ConfirmDialog title={`Enviar ${proposal.number}?`}
+              description="O documento é congelado e a proposta ganha um link para o cliente ler e aceitar. Depois de enviada ela não é mais editada: para mudar algo, cria-se uma revisão."
+              onConfirm={() => setStatus({ status: "enviada" })}>
+              <Button type="button" variant="outline" disabled={changing}><Icon name="send" className="w-4 h-4 mr-1" /> Enviar</Button>
             </ConfirmDialog>
           )}
           {sent && canUpdate && <>
@@ -190,6 +196,7 @@ function ProposalEditorPage() {
         {proposal.status !== "rascunho" && (
           <p className="rounded-md border px-3 py-2 text-sm text-muted-foreground">
             {proposal.status === "substituida" ? "Esta versão foi substituída por uma revisão mais nova." : `Proposta ${STATUS_LABEL[proposal.status].toLowerCase()}: somente leitura.`}
+            {(proposal.status === "enviada" || proposal.status === "visualizada") && " O link do cliente está na aba Documento."}
             {proposal.sentAt && ` Enviada em ${dateBr(proposal.sentAt)}.`}
             {proposal.decidedAt && ` Decisão em ${dateBr(proposal.decidedAt)}.`}
             {proposal.statusNote && ` Observação: ${proposal.statusNote}`}
@@ -220,6 +227,7 @@ function ProposalEditorPage() {
             <TabsTrigger value="dados">1. Dados</TabsTrigger>
             <TabsTrigger value="itens">2. Itens <span className="ml-1 opacity-70 tabular-nums">{itemCount}</span></TabsTrigger>
             <TabsTrigger value="pagamento">3. Pagamento <span className="ml-1 opacity-70 tabular-nums">{draft.installments.length}</span></TabsTrigger>
+            <TabsTrigger value="documento">4. Documento</TabsTrigger>
           </TabsList>
           <TabsContent value="dados" className="mt-4">
             <ProposalDataTab draft={draft} setDraft={setDraftSafe} options={options} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} customer={customer} onCustomer={setCustomer} />
@@ -229,6 +237,9 @@ function ProposalEditorPage() {
           </TabsContent>
           <TabsContent value="pagamento" className="mt-4">
             <ProposalPaymentTab draft={draft} setDraft={setDraftSafe} calc={calc ?? undefined} readOnly={readOnly} />
+          </TabsContent>
+          <TabsContent value="documento" className="mt-4">
+            <ProposalDocumentTab proposal={proposal} draft={draft} setDraft={setDraftSafe} options={options} readOnly={readOnly} payload={payload} />
           </TabsContent>
         </Tabs>
 

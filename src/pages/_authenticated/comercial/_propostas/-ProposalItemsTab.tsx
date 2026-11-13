@@ -19,7 +19,7 @@ interface Props {
 
 const newItem = (type: ItemType): DraftItem => ({
   uid: newUid(), type, description: "", unit: null, quantity: 1, professionalId: null, night: false, travel: false, weekend: false,
-  workDays: null, weekendDays: null, hoursPerDay: null, courseId: null, extra: type === "treinamento" ? { students: null, workload: null, dates: "", location: "" } : null,
+  workDays: null, weekendDays: null, hoursPerDay: null, overtimeHours: 0, courseId: null, extra: type === "treinamento" ? { students: null, workload: null, dates: "", location: "" } : null,
   unitCost: 0, extraCost: 0, margin: null, finalValue: null, showInDocument: true,
 });
 
@@ -156,6 +156,10 @@ function ItemRow({ item, line, draft, options, readOnly, canSeeCosts, update, re
             <NumField digits={0} value={item.workDays} disabled={readOnly} ariaLabel="Dias úteis desta linha" placeholder={String(draft.workDays || 0)}
               onChange={(workDays) => update({ workDays })} onEmpty={() => update({ workDays: null })} />
           </Field>
+          <Field label="Horas extras" className="lg:w-28">
+            <NumField digits={1} suffix="h" value={item.overtimeHours || null} disabled={readOnly} ariaLabel="Horas extras por profissional desta linha" placeholder="0"
+              onChange={(overtimeHours) => update({ overtimeHours })} onEmpty={() => update({ overtimeHours: 0 })} />
+          </Field>
           <Field label="Adicionais">
             <div className="flex flex-wrap gap-1.5">{flag("night", "Noturno")}{flag("travel", "Viagem")}{flag("weekend", "FDS/feriado")}</div>
           </Field>
@@ -235,6 +239,7 @@ function ItemRow({ item, line, draft, options, readOnly, canSeeCosts, update, re
         {item.type === "mao_de_obra" && (
           <p className="text-xs text-muted-foreground lg:pb-2 lg:flex-1">
             {line?.hours ? `${decimal(line.hours, 0)} h por profissional` : "Informe o prazo em dias úteis (em Dados) ou os dias desta linha"}
+            {item.overtimeHours > 0 ? ` + ${decimal(item.overtimeHours, 1)} h extras${item.quantity > 1 ? " cada" : ""}` : ""}
             {canSeeCosts && line?.hourCost ? ` · custo hora ${money(line.hourCost)}` : ""}
           </p>
         )}

@@ -83,3 +83,41 @@ export function triggerApiDownload(url: string) {
   link.click();
   document.body.removeChild(link);
 }
+
+/**
+ * Baixa um arquivo da API com nome definido. Entre origens o atributo
+ * `download` é ignorado, então busca como blob (a API libera CORS para o
+ * front) e salva localmente; se falhar, abre em nova aba.
+ */
+export async function downloadFromApi(url: string, filename: string) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = href;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(href), 10_000);
+  } catch (error) {
+    console.warn('Download direto falhou, abrindo em nova aba:', error);
+    window.open(url, '_blank', 'noopener');
+  }
+}
+
+/** Nome de arquivo seguro: "certificado-nome-do-aluno-curso". */
+export function certificateFileName(...parts: (string | undefined | null)[]) {
+  const slug = parts
+    .filter(Boolean)
+    .join(' ')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+  return `certificado${slug ? `-${slug}` : ''}`;
+}

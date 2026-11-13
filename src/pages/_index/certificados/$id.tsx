@@ -14,7 +14,9 @@ import Footer from "../-components/Footer";
 import { decodeBase64Variables } from "@/utils/decodeBase64Variables";
 import CertificatePDFService from "@/components/general-components/visualizadorCertificados/services/CertificatePDFService";
 import CertificateImageService from "@/components/general-components/visualizadorCertificados/services/CertificateImageService";
-import { certificateImageUrl, certificatePdfUrl, isIssuedCertificateKey } from '@/components/general-components/visualizadorCertificados/server/certificateRenderUrls';
+import { certificateFileName, certificateImageUrl, certificatePdfUrl, downloadFromApi, hasBackSide, isIssuedCertificateKey } from '@/components/general-components/visualizadorCertificados/server/certificateRenderUrls';
+import CertificateStage from '@/components/general-components/visualizadorCertificados/server/CertificateStage';
+import CertificateDownloadMenu, { type DownloadFormat } from '@/components/general-components/visualizadorCertificados/server/CertificateDownloadMenu';
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -253,6 +255,8 @@ function CertificadoPublico() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isGeneratingPNG, setIsGeneratingPNG] = useState(false);
+  // se a imagem da API falhar, volta para o desenho local (canvas)
+  const [stageFailed, setStageFailed] = useState(false);
   const navigate = useNavigate();
 
   const handleWhatsApp = (message?: string) => {
@@ -385,6 +389,28 @@ function CertificadoPublico() {
     } finally {
       setIsGeneratingPNG(false);
     }
+  };
+
+  /** Menu "Baixar certificado": emitido → arquivos prontos da API. */
+  const handleDownload = async (format: DownloadFormat) => {
+    if (!certificate) return;
+    if (!isIssuedCertificateKey(certificate.key)) {
+      // modelo/sem chave: gera no navegador como antes
+      return format === 'pdf' ? handleGeneratePDF() : handleGeneratePNG();
+    }
+    const base = certificateFileName(variables.aluno_nome?.value, variables.curso_nome?.value);
+    if (format === 'pdf') {
+      await downloadFromApi(
+        certificatePdfUrl(certificate.key, { version: certificate.updatedAt }),
+        `${base}.pdf`,
+      );
+      return;
+    }
+    const side = format === 'png-back' ? 'back' : 'front';
+    await downloadFromApi(
+      certificateImageUrl(certificate.key, side, certificate.updatedAt, 4),
+      `${base}${side === 'back' ? '-verso' : ''}.png`,
+    );
   };
 
   const { 
@@ -539,14 +565,37 @@ function CertificadoPublico() {
 
   // Extrair informações do variableToReplace e decodificar se necessário
   const variables = decodeBase64Variables(certificate?.variableToReplace) || {};
+  const certificateHasBack = hasBackSide(certificate?.fabricJsonBack);
 
   return (
     <>
       <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
-      <div className="min-h-screen bg-background pt-24 md:pt-18 lg:pt-10 pb-16 px-4">
+      <div className="min-h-screen bg-background pt-24 pb-16 px-4">
         <div className="max-w-7xl mx-auto">
           {/* Visualizador de Certificados */}
-          {certificate?.variableToReplace && certificate?.fabricJsonFront && (
+          {certificate?.variableToReplace && certificate?.fabricJsonFront &&
+            isIssuedCertificateKey(certificate.key) && !stageFailed && (
+            <div className="mb-6">
+              <CertificateStage
+                certificateKey={certificate.key}
+                name={variables.curso_nome?.value || 'Certificado'}
+                fabricJsonBack={certificate.fabricJsonBack}
+                canvasWidth={certificate.canvasWidth}
+                canvasHeight={certificate.canvasHeight}
+                version={certificate.updatedAt}
+                onError={() => setStageFailed(true)}
+                actions={
+                  <CertificateDownloadMenu
+                    size="sm"
+                    hasBack={certificateHasBack}
+                    onDownload={handleDownload}
+                  />
+                }
+              />
+            </div>
+          )}
+          {certificate?.variableToReplace && certificate?.fabricJsonFront &&
+            (!isIssuedCertificateKey(certificate.key) || stageFailed) && (
             <div className="bg-card overflow-hidden mb-6">
               <div className="h-[75vh] w-full">
                 <VisualizadorCertificados
@@ -611,30 +660,13 @@ function CertificadoPublico() {
 
                   {/* Botões de Ação */}
                   <div className="flex gap-2">
-                    <Button
-                      variant="default"
+                    <CertificateDownloadMenu
                       size="sm"
-                      onClick={handleGeneratePDF}
-                      disabled={isGeneratingPDF || !certificate?.fabricJsonFront}
-                    >
-                      <Icon
-                        name={isGeneratingPDF ? "loader-2" : "file-text"}
-                        className={`w-4 h-4 mr-2 ${isGeneratingPDF ? "animate-spin" : ""}`}
-                      />
-                      PDF
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={handleGeneratePNG}
-                      disabled={isGeneratingPNG || !certificate?.fabricJsonFront}
-                    >
-                      <Icon
-                        name={isGeneratingPNG ? "loader-2" : "image"}
-                        className={`w-4 h-4 mr-2 ${isGeneratingPNG ? "animate-spin" : ""}`}
-                      />
-                      PNG
-                    </Button>
+                      align="start"
+                      hasBack={certificateHasBack}
+                      onDownload={handleDownload}
+                      disabled={!certificate?.fabricJsonFront}
+                    />
                     {/* <Button
                       variant="outline"
                       size="sm"

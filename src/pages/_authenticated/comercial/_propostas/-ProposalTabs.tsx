@@ -45,6 +45,7 @@ export function ProposalDataTab({ draft, setDraft, options, readOnly, canSeeCost
   );
   const levels = options.defaults.contingencyLevels;
   const level = levels.find((l) => Math.abs(l.rate - draft.contingencyRate) < 1e-9);
+  const automaticBase = (options.costBases ?? []).find((base) => base.current);
 
   return (
     <div className="grid lg:grid-cols-2 gap-4">
@@ -121,7 +122,15 @@ export function ProposalDataTab({ draft, setDraft, options, readOnly, canSeeCost
 
       <div className="grid gap-4 content-start">
         {canSeeCosts && (
-          <Card title="Imposto e comissão" description="Só quem tem a permissão de custos vê e altera.">
+          <Card title="Base de cálculo, imposto e comissão" description="Só quem tem a permissão de custos vê e altera.">
+            <F label="Base de cálculo" hint={draft.costBaseId
+              ? "Base escolhida à mão: os valores sugeridos usam esta, qualquer que seja a data."
+              : `Automática: usa a base vigente na data prevista do serviço${automaticBase ? ` (hoje, "${automaticBase.name}")` : ""}.`}>
+              <Select name="costBaseId" state={draft.costBaseId ? String(draft.costBaseId) : ""} disabled={readOnly} modal={false} clearable
+                placeholder={automaticBase ? `Automática — ${automaticBase.name}` : "Automática (vigente na data)"}
+                options={(options.costBases ?? []).map((base) => ({ id: base.id, name: `${base.name} · desde ${base.effectiveFrom.split("-").reverse().join("/")}${base.current ? " · vigente" : ""}` }))}
+                onChange={(_, value) => set("costBaseId", Number(value) || null)} />
+            </F>
             <div className="grid sm:grid-cols-2 gap-3">
               <F label="Regime tributário" hint="Vale só para esta proposta.">
                 <Select name="taxRegime" state={draft.taxRegime ?? ""} disabled={readOnly} modal={false} clearable placeholder="Padrão da empresa"

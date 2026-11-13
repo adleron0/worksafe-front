@@ -35,6 +35,8 @@ export interface ProposalDraft {
   validUntil: string | null; referenceDate: string; workDays: number; weekendDays: number;
   contingencyRate: number; commissionRate?: number; commissionBase?: "faturado" | "lucro"; commissionInPrice?: boolean;
   taxRegime: "tradicional" | "hibrido" | null; discount: number; internalNotes: string | null;
+  /** base de cálculo escolhida à mão; nulo = a vigente na data prevista */
+  costBaseId?: number | null;
   templateId: number | null; documentBody: string | null; itemsMode: ItemsMode; termIds: number[];
   images: ProposalImage[];
   sections: DraftSection[]; installments: DraftInstallment[];
@@ -111,6 +113,7 @@ export interface ProposalOptions {
   sellers: Array<{ id: number; name: string }>;
   templates: TemplateOption[]; terms: TermOption[]; variables: VariableOption[];
   brandReady?: boolean;
+  costBases?: Array<{ id: number; name: string; effectiveFrom: string; current: boolean }>;
 }
 
 export const PROPOSALS_KEY = "commercialProposals";

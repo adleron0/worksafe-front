@@ -28,6 +28,20 @@ export interface CertificateResponse {
   updatedAt: string;
 }
 
+/**
+ * Modelo de certificado de um curso (o mais recente). A API não tem
+ * `certificate/course/:id` — essa rota nunca existiu e a busca sempre caía
+ * no catch (sem certificado); usa a listagem filtrada por curso.
+ */
+export async function fetchCertificateByCourse(courseId: number): Promise<CertificateResponse | null> {
+  const response = await get<{ rows?: CertificateResponse[] }>('certificate', '', [
+    { key: 'courseId', value: courseId },
+    { key: 'order-id', value: 'desc' },
+    { key: 'limit', value: 1 },
+  ]);
+  return response?.rows?.[0] ?? null;
+}
+
 export const useCertificateApi = () => {
   const queryClient = useQueryClient();
 
@@ -37,8 +51,7 @@ export const useCertificateApi = () => {
       queryKey: ['certificate', 'course', courseId],
       queryFn: async () => {
         try {
-          const response = await get<CertificateResponse>('certificate/course', `${courseId}`);
-          return response;
+          return await fetchCertificateByCourse(courseId);
         } catch (error) {
           // Se não encontrar certificado, retornar null
           return null;

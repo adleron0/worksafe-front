@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, FolderOpen, FileText } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { get } from '@/services/api';
-import { CertificateResponse } from '../hooks/useCertificateApi';
+import { CertificateResponse, fetchCertificateByCourse } from '../hooks/useCertificateApi';
 
 interface CertificateLoadModalProps {
   open: boolean;
@@ -62,8 +62,7 @@ export const CertificateLoadModal: React.FC<CertificateLoadModalProps> = ({
     queryFn: async () => {
       if (!courseId) return null;
       try {
-        const response = await get<CertificateResponse>('certificate/course', `${courseId}`);
-        return response;
+        return await fetchCertificateByCourse(courseId);
       } catch (error) {
         return null;
       }

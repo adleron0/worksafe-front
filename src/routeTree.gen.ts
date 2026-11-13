@@ -59,6 +59,7 @@ import { Route as AuthenticatedFinanceiroContasBancariasContasBancariasRouteImpo
 import { Route as AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport } from './pages/_authenticated/financeiro/_centros-custo/centros-custo'
 import { Route as AuthenticatedComercialVendedoresVendedoresRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores'
 import { Route as AuthenticatedComercialCuponsCuponsRouteImport } from './pages/_authenticated/comercial/_cupons/cupons'
+import { Route as AuthenticatedComercialBaseCalculoBaseCalculoRouteImport } from './pages/_authenticated/comercial/_base-calculo/base-calculo'
 import { Route as AuthenticatedBlogVisitantesVisitantesRouteImport } from './pages/_authenticated/blog/_visitantes/visitantes'
 import { Route as AuthenticatedBlogTagsTagsRouteImport } from './pages/_authenticated/blog/_tags/tags'
 import { Route as AuthenticatedBlogPostsPostsRouteImport } from './pages/_authenticated/blog/_posts/posts'
@@ -351,6 +352,12 @@ const AuthenticatedComercialCuponsCuponsRoute =
     path: '/comercial/cupons',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedComercialBaseCalculoBaseCalculoRoute =
+  AuthenticatedComercialBaseCalculoBaseCalculoRouteImport.update({
+    id: '/comercial/_base-calculo/base-calculo',
+    path: '/comercial/base-calculo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedBlogVisitantesVisitantesRoute =
   AuthenticatedBlogVisitantesVisitantesRouteImport.update({
     id: '/blog/_visitantes/visitantes',
@@ -420,6 +427,7 @@ export interface FileRoutesByFullPath {
   '/blog/posts': typeof AuthenticatedBlogPostsPostsRoute
   '/blog/tags': typeof AuthenticatedBlogTagsTagsRoute
   '/blog/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
+  '/comercial/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/comercial/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -476,6 +484,7 @@ export interface FileRoutesByTo {
   '/blog/posts': typeof AuthenticatedBlogPostsPostsRoute
   '/blog/tags': typeof AuthenticatedBlogTagsTagsRoute
   '/blog/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
+  '/comercial/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/comercial/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -536,6 +545,7 @@ export interface FileRoutesById {
   '/_authenticated/blog/_posts/posts': typeof AuthenticatedBlogPostsPostsRoute
   '/_authenticated/blog/_tags/tags': typeof AuthenticatedBlogTagsTagsRoute
   '/_authenticated/blog/_visitantes/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
+  '/_authenticated/comercial/_base-calculo/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/_authenticated/comercial/_cupons/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
   '/_authenticated/comercial/_vendedores/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/_authenticated/financeiro/_centros-custo/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -595,6 +605,7 @@ export interface FileRouteTypes {
     | '/blog/posts'
     | '/blog/tags'
     | '/blog/visitantes'
+    | '/comercial/base-calculo'
     | '/comercial/cupons'
     | '/comercial/vendedores'
     | '/financeiro/centros-custo'
@@ -651,6 +662,7 @@ export interface FileRouteTypes {
     | '/blog/posts'
     | '/blog/tags'
     | '/blog/visitantes'
+    | '/comercial/base-calculo'
     | '/comercial/cupons'
     | '/comercial/vendedores'
     | '/financeiro/centros-custo'
@@ -710,6 +722,7 @@ export interface FileRouteTypes {
     | '/_authenticated/blog/_posts/posts'
     | '/_authenticated/blog/_tags/tags'
     | '/_authenticated/blog/_visitantes/visitantes'
+    | '/_authenticated/comercial/_base-calculo/base-calculo'
     | '/_authenticated/comercial/_cupons/cupons'
     | '/_authenticated/comercial/_vendedores/vendedores'
     | '/_authenticated/financeiro/_centros-custo/centros-custo'
@@ -1100,6 +1113,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComercialCuponsCuponsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/comercial/_base-calculo/base-calculo': {
+      id: '/_authenticated/comercial/_base-calculo/base-calculo'
+      path: '/comercial/base-calculo'
+      fullPath: '/comercial/base-calculo'
+      preLoaderRoute: typeof AuthenticatedComercialBaseCalculoBaseCalculoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/blog/_visitantes/visitantes': {
       id: '/_authenticated/blog/_visitantes/visitantes'
       path: '/blog/visitantes'
@@ -1169,6 +1189,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBlogPostsPostsRoute: typeof AuthenticatedBlogPostsPostsRoute
   AuthenticatedBlogTagsTagsRoute: typeof AuthenticatedBlogTagsTagsRoute
   AuthenticatedBlogVisitantesVisitantesRoute: typeof AuthenticatedBlogVisitantesVisitantesRoute
+  AuthenticatedComercialBaseCalculoBaseCalculoRoute: typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   AuthenticatedComercialCuponsCuponsRoute: typeof AuthenticatedComercialCuponsCuponsRoute
   AuthenticatedComercialVendedoresVendedoresRoute: typeof AuthenticatedComercialVendedoresVendedoresRoute
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute: typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -1220,6 +1241,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBlogTagsTagsRoute: AuthenticatedBlogTagsTagsRoute,
   AuthenticatedBlogVisitantesVisitantesRoute:
     AuthenticatedBlogVisitantesVisitantesRoute,
+  AuthenticatedComercialBaseCalculoBaseCalculoRoute:
+    AuthenticatedComercialBaseCalculoBaseCalculoRoute,
   AuthenticatedComercialCuponsCuponsRoute:
     AuthenticatedComercialCuponsCuponsRoute,
   AuthenticatedComercialVendedoresVendedoresRoute:

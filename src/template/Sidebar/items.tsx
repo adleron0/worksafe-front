@@ -36,6 +36,12 @@ export const items = [
         icon: "ticket-percent",
         path: "/comercial/cupons",
       },
+      {
+        title: "Base de cálculo",
+        ability: "comercial",
+        icon: "calculator",
+        path: "/comercial/base-calculo",
+      },
     ],
   },
   // {

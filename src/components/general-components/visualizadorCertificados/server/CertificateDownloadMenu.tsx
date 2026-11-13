@@ -19,6 +19,8 @@ interface CertificateDownloadMenuProps {
   hasBack?: boolean;
   disabled?: boolean;
   size?: 'sm' | 'default';
+  /** solid = botão principal; subtle = discreto (sobre o certificado). */
+  variant?: 'solid' | 'subtle';
   /** Alinhamento do menu em relação ao botão. */
   align?: 'start' | 'end';
   className?: string;
@@ -30,6 +32,7 @@ export const CertificateDownloadMenu: React.FC<CertificateDownloadMenuProps> = (
   hasBack = false,
   disabled = false,
   size = 'default',
+  variant = 'solid',
   align = 'end',
   className = '',
 }) => {
@@ -51,13 +54,22 @@ export const CertificateDownloadMenu: React.FC<CertificateDownloadMenuProps> = (
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button size={size} disabled={disabled} className={`gap-2 shadow-sm ${className}`}>
+        <Button
+          size={size}
+          variant={variant === 'subtle' ? 'ghost' : 'default'}
+          disabled={disabled}
+          className={`gap-2 ${
+            variant === 'subtle'
+              ? 'h-8 rounded-full border border-border/70 bg-card/80 px-3 text-xs font-medium text-muted-foreground backdrop-blur hover:bg-card hover:text-foreground'
+              : 'shadow-sm'
+          } ${className}`}
+        >
           <Icon
             name={busy ? 'loader-2' : 'download'}
             className={`h-4 w-4 ${busy ? 'animate-spin' : ''}`}
           />
-          {busy ? 'Preparando…' : 'Baixar certificado'}
-          <Icon name="chevron-down" className="h-4 w-4 opacity-70" />
+          {busy ? 'Preparando…' : variant === 'subtle' ? 'Baixar' : 'Baixar certificado'}
+          <Icon name="chevron-down" className={`opacity-60 ${variant === 'subtle' ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align={align} className="w-64">

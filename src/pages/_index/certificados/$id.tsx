@@ -587,6 +587,7 @@ function CertificadoPublico() {
                 actions={
                   <CertificateDownloadMenu
                     size="sm"
+                    variant="subtle"
                     hasBack={certificateHasBack}
                     onDownload={handleDownload}
                   />
@@ -659,6 +660,9 @@ function CertificadoPublico() {
                   </div>
 
                   {/* Botões de Ação */}
+                  {/* Com o visualizador da API o botão fica em cima do certificado;
+                      aqui só no modo de desenho local (fallback). */}
+                  {(!isIssuedCertificateKey(certificate.key) || stageFailed) && (
                   <div className="flex gap-2">
                     <CertificateDownloadMenu
                       size="sm"
@@ -684,6 +688,7 @@ function CertificadoPublico() {
                       Ajuda
                     </Button> */}
                   </div>
+                  )}
 
                   {/* Nome do Aluno e Link de Credenciais */}
                   <div className="space-y-2">

@@ -7,6 +7,8 @@ import { Input as ShadInput } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
+import Select from "@/components/general-components/Select";
+import CalendarPicker from "@/components/general-components/Calendar";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
 import {
@@ -206,7 +208,6 @@ function TaxProfileDialog({ profile, onClose, onSaved }: { profile?: TaxProfile;
     onSuccess: () => { toast({ title: profile ? "Perfil atualizado!" : "Perfil criado!", variant: "success" }); onSaved(); onClose(); },
     onError: (err) => setError(errorMessage(err)),
   });
-  const selectClass = "w-full h-9 rounded-md border bg-background px-2 text-sm mt-1";
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -223,19 +224,16 @@ function TaxProfileDialog({ profile, onClose, onSaved }: { profile?: TaxProfile;
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2"><Label htmlFor="taxName">Nome <span>*</span></Label>
               <ShadInput id="taxName" className="mt-1" value={state.name} maxLength={120} onChange={(event) => set("name", event.target.value)} /></div>
-            <div><Label htmlFor="taxRegime">Regime</Label>
-              <select id="taxRegime" className={selectClass} value={state.regime} onChange={(event) => set("regime", event.target.value as TaxProfile["regime"])}>
-                <option value="tradicional">Simples tradicional (tudo no DAS)</option>
-                <option value="hibrido">Simples híbrido (IBS/CBS por fora)</option>
-              </select></div>
-            <div><Label htmlFor="taxFrom">Vale a partir de</Label>
-              <ShadInput id="taxFrom" type="date" className="mt-1" value={state.effectiveFrom} onChange={(event) => set("effectiveFrom", event.target.value)} /></div>
-            <div><Label htmlFor="taxMode">Alíquota usada no preço</Label>
-              <select id="taxMode" className={selectClass} value={state.mode} onChange={(event) => set("mode", event.target.value as TaxProfile["mode"])}>
-                <option value="nominal">Nominal da faixa (como a planilha)</option>
-                <option value="efetiva">Efetiva (desconta a parcela a deduzir)</option>
-                <option value="manual">Manual</option>
-              </select></div>
+            <div><Label>Regime</Label>
+              <div className="mt-1"><Select name="regime" state={state.regime} modal
+                options={[{ id: "tradicional", name: "Simples tradicional (tudo no DAS)" }, { id: "hibrido", name: "Simples híbrido (IBS/CBS por fora)" }]}
+                onChange={(_, value) => set("regime", String(value) as TaxProfile["regime"])} /></div></div>
+            <div><Label>Vale a partir de</Label>
+              <CalendarPicker mode="single" name="taxFrom" className="mt-1 w-full" value={state.effectiveFrom} fromYear={2020} toYear={2040} onValueChange={(_, value) => { if (value) set("effectiveFrom", value); }} /></div>
+            <div><Label>Alíquota usada no preço</Label>
+              <div className="mt-1"><Select name="mode" state={state.mode} modal
+                options={[{ id: "nominal", name: "Nominal da faixa (como a planilha)" }, { id: "efetiva", name: "Efetiva (desconta a parcela a deduzir)" }, { id: "manual", name: "Manual" }]}
+                onChange={(_, value) => set("mode", String(value) as TaxProfile["mode"])} /></div></div>
             {state.mode === "manual"
               ? <div><Label htmlFor="taxManual">Alíquota manual</Label><NumField id="taxManual" kind="percent" className="mt-1" value={state.manualRate} onChange={(value) => set("manualRate", value)} /></div>
               : <div><Label htmlFor="taxRbt">Receita bruta dos últimos 12 meses (RBT12)</Label><NumField id="taxRbt" kind="money" className="mt-1" value={state.rbt12} onChange={(value) => set("rbt12", value)} /></div>}

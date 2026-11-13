@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
+import Select from "@/components/general-components/Select";
+import CalendarPicker from "@/components/general-components/Calendar";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
 import {
@@ -173,12 +175,13 @@ function CostBasePage() {
       <section className="my-4 p-4 rounded-lg border grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
         <div className="grid sm:grid-cols-3 gap-3">
           <div>
-            <Label htmlFor="version" className="text-xs">Versão</Label>
-            <select id="version" className="w-full h-9 rounded-md border bg-background px-2 text-sm mt-1" value={base.id} onChange={(event) => selectVersion(event.target.value)}>
-              {(versions ?? [{ id: base.id, name: base.name, effectiveFrom: base.effectiveFrom, current: true, inactiveAt: null } as CostBaseVersion]).map((v) => (
-                <option key={v.id} value={v.id}>{v.name} · desde {dateBr(v.effectiveFrom)}{v.current ? " · vigente" : ""}{v.inactiveAt ? " · inativa" : ""}</option>
-              ))}
-            </select>
+            <Label className="text-xs">Versão</Label>
+            <div className="mt-1">
+              <Select name="version" state={String(base.id)} onChange={(_, value) => selectVersion(String(value))} modal={false}
+                options={(versions ?? [{ id: base.id, name: base.name, effectiveFrom: base.effectiveFrom, current: true, inactiveAt: null } as CostBaseVersion]).map((v) => ({
+                  id: v.id, name: `${v.name} · desde ${dateBr(v.effectiveFrom)}${v.current ? " · vigente" : ""}${v.inactiveAt ? " · inativa" : ""}`,
+                }))} />
+            </div>
           </div>
           <div>
             <Label htmlFor="versionName" className="text-xs">Nome da versão</Label>
@@ -186,9 +189,9 @@ function CostBasePage() {
               onChange={(event) => setDraft((prev) => (prev ? { ...prev, name: event.target.value } : prev))} />
           </div>
           <div>
-            <Label htmlFor="versionFrom" className="text-xs">Vale a partir de</Label>
-            <ShadInput id="versionFrom" type="date" className="mt-1" value={draft.effectiveFrom} disabled={disabled}
-              onChange={(event) => setDraft((prev) => (prev ? { ...prev, effectiveFrom: event.target.value } : prev))} />
+            <Label className="text-xs">Vale a partir de</Label>
+            <CalendarPicker mode="single" name="versionFrom" className="mt-1 w-full" value={draft.effectiveFrom} disabled={disabled} fromYear={2020} toYear={2040}
+              onValueChange={(_, value) => { if (value) setDraft((prev) => (prev ? { ...prev, effectiveFrom: value } : prev)); }} />
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -295,8 +298,9 @@ function NewVersionDialog({ source, onClose, onCreated }: { source: CostBase; on
         <form className="flex flex-col gap-4" onSubmit={submit}>
           <div><Label htmlFor="newName">Nome <span>*</span></Label>
             <ShadInput id="newName" className="mt-1" value={name} maxLength={120} autoFocus placeholder="Ex.: Jornada de 40 h" onChange={(event) => setName(event.target.value)} /></div>
-          <div><Label htmlFor="newFrom">Vale a partir de <span>*</span></Label>
-            <ShadInput id="newFrom" type="date" className="mt-1" value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} /></div>
+          <div><Label>Vale a partir de <span>*</span></Label>
+            <CalendarPicker mode="single" name="newFrom" className="mt-1 w-full" value={effectiveFrom} fromYear={2020} toYear={2040}
+              onValueChange={(_, value) => setEffectiveFrom(value ?? "")} /></div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>

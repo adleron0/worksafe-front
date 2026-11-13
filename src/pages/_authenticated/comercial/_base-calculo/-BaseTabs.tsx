@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input as ShadInput } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import Select from "@/components/general-components/Select";
+import CalendarPicker from "@/components/general-components/Calendar";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
 import {
@@ -151,7 +153,7 @@ export function ItemsTab({ group, items, setItems, result, disabled, params, set
           <div className="flex-1">Descrição</div>
           {group === "encargo" && <div className="w-28 text-right">% do salário</div>}
           {group === "pessoal_indireto" && <><div className="w-20 text-right">Qtd</div><div className="w-32 text-right">Salário</div><div className="w-24 text-center">Encargos</div><div className="w-28 text-right">Custo</div></>}
-          {group === "outro_custo" && <><div className="w-32 text-right">R$ por mês</div><div className="w-32">Rateio</div><div className="w-16 text-center">Dívida</div><div className="w-36">Termina em</div></>}
+          {group === "outro_custo" && <><div className="w-32 text-right">R$ por mês</div><div className="w-36">Rateio</div><div className="w-16 text-center">Dívida</div><div className="w-36">Termina em</div></>}
           <div className="w-8" />
         </div>
         {rows.length === 0 && <p className="py-3 text-sm text-muted-foreground">Nenhum item.</p>}
@@ -180,18 +182,18 @@ export function ItemsTab({ group, items, setItems, result, disabled, params, set
             {group === "outro_custo" && <>
               <NumField className="xl:w-32" kind="money" ariaLabel={`Valor de ${item.name}`} value={item.amount} disabled={disabled}
                 onChange={(value) => update(item.uid, { amount: value })} />
-              <select className="xl:w-32 h-9 rounded-md border bg-background px-2 text-sm" value={item.kind} disabled={disabled} aria-label={`Rateio de ${item.name}`}
-                onChange={(event) => update(item.uid, { kind: event.target.value as CostItem["kind"] })}>
-                <option value="fixo">Fixo (rateado)</option>
-                <option value="por_pessoa">Por pessoa</option>
-              </select>
+              <div className="xl:w-36">
+                <Select name={`kind-${item.uid}`} state={item.kind} disabled={disabled} modal={false}
+                  options={[{ id: "fixo", name: "Fixo (rateado)" }, { id: "por_pessoa", name: "Por pessoa" }]}
+                  onChange={(_, value) => update(item.uid, { kind: String(value) as CostItem["kind"] })} />
+              </div>
               <label className="xl:w-16 flex items-center xl:justify-center gap-2 text-sm">
                 <input type="checkbox" checked={item.isDebt} disabled={disabled} aria-label={`${item.name} é dívida`}
                   onChange={(event) => update(item.uid, { isDebt: event.target.checked, endsAt: event.target.checked ? item.endsAt : null })} />
                 <span className="xl:hidden">É dívida</span>
               </label>
-              <ShadInput type="date" className="xl:w-36" value={item.endsAt ?? ""} disabled={disabled || !item.isDebt} aria-label={`Término de ${item.name}`}
-                onChange={(event) => update(item.uid, { endsAt: event.target.value || null })} />
+              <CalendarPicker mode="single" name={`endsAt-${item.uid}`} className="xl:w-36" value={item.endsAt} disabled={disabled || !item.isDebt}
+                placeholder="Sem término" fromYear={2020} toYear={2045} onValueChange={(_, value) => update(item.uid, { endsAt: value })} />
             </>}
             {!disabled && (
               <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0 self-end xl:self-auto" aria-label={`Remover ${item.name || "item"}`} onClick={() => remove(item.uid)}>
@@ -285,11 +287,9 @@ export function DefaultsTab({ defaults, setDefaults, disabled }: { defaults: Def
               onChange={(value) => setDefaults((d) => ({ ...d, commission: { ...d.commission, rate: value } }))} />
           </Row>
           <Row label="Calculada sobre">
-            <select className="w-full h-9 rounded-md border bg-background px-2 text-sm" disabled={disabled} value={defaults.commission.base} aria-label="Base da comissão"
-              onChange={(event) => setDefaults((d) => ({ ...d, commission: { ...d.commission, base: event.target.value as "faturado" | "lucro" } }))}>
-              <option value="faturado">Valor faturado</option>
-              <option value="lucro">Lucro</option>
-            </select>
+            <Select name="commissionBase" state={defaults.commission.base} disabled={disabled} modal={false}
+              options={[{ id: "faturado", name: "Valor faturado" }, { id: "lucro", name: "Lucro" }]}
+              onChange={(_, value) => setDefaults((d) => ({ ...d, commission: { ...d.commission, base: String(value) as "faturado" | "lucro" } }))} />
           </Row>
           <Row label="Comissão dentro do preço" hint="Ligado: a margem pedida já é líquida de comissão (só quando a base é o faturado). Desligado = igual à planilha.">
             <div className="flex justify-end">

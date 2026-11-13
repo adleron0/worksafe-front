@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
-import { Input as ShadInput } from "@/components/ui/input";
+import Select from "@/components/general-components/Select";
+import CalendarPicker from "@/components/general-components/Calendar";
 import { cn } from "@/lib/utils";
 import {
   CostBaseVersion, Defaults, NumField, PreviewResult, ProfessionalRow, commercialApi, dateBr, errorMessage, money, percent, todayIso,
@@ -10,8 +11,6 @@ import {
 interface Props { professionals: ProfessionalRow[]; versions: CostBaseVersion[]; defaults: Defaults; headcount: number; dirty: boolean }
 
 interface Scenario { headcount: number | null; regime: "" | "tradicional" | "hibrido"; costBaseId: string; date: string }
-
-const selectClass = "w-full h-9 rounded-md border bg-background px-2 text-sm mt-1";
 
 /** "E se": o mesmo serviço em dois cenários, lado a lado. Nada é gravado. */
 export default function SimulatorTab({ professionals, versions, defaults, headcount, dirty }: Props) {
@@ -65,10 +64,10 @@ export default function SimulatorTab({ professionals, versions, defaults, headco
       <section className="rounded-lg border p-4">
         <h3 className="font-semibold">Serviço de exemplo</h3>
         <div className="mt-2 grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <div className="lg:col-span-2"><Label htmlFor="simPro" className="text-xs">Profissional</Label>
-            <select id="simPro" className={selectClass} value={job.professionalId} onChange={(event) => setJob((j) => ({ ...j, professionalId: Number(event.target.value) }))}>
-              {professionals.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select></div>
+          <div className="lg:col-span-2"><Label className="text-xs">Profissional</Label>
+            <div className="mt-1"><Select name="simPro" state={String(job.professionalId || "")} modal={false} placeholder="Selecione o profissional"
+              options={professionals.map((p) => ({ id: p.id, name: p.name }))}
+              onChange={(_, value) => setJob((j) => ({ ...j, professionalId: Number(value) }))} /></div></div>
           <div><Label htmlFor="simQty" className="text-xs">Quantidade</Label>
             <NumField id="simQty" className="mt-1" digits={0} value={job.quantity} onChange={(quantity) => setJob((j) => ({ ...j, quantity }))} /></div>
           <div><Label htmlFor="simDays" className="text-xs">Dias úteis</Label>
@@ -84,17 +83,16 @@ export default function SimulatorTab({ professionals, versions, defaults, headco
         <div className="mt-2 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div><Label htmlFor="simHead" className="text-xs">Efetivo em campo</Label>
             <NumField id="simHead" className="mt-1" digits={0} value={alt.headcount} onChange={(value) => setAlt((s) => ({ ...s, headcount: value > 0 ? value : null }))} /></div>
-          <div><Label htmlFor="simRegime" className="text-xs">Regime tributário</Label>
-            <select id="simRegime" className={selectClass} value={alt.regime} onChange={(event) => setAlt((s) => ({ ...s, regime: event.target.value as Scenario["regime"] }))}>
-              <option value="">O mesmo de hoje</option><option value="tradicional">Simples tradicional</option><option value="hibrido">Simples híbrido</option>
-            </select></div>
-          <div><Label htmlFor="simBase" className="text-xs">Versão da base</Label>
-            <select id="simBase" className={selectClass} value={alt.costBaseId} onChange={(event) => setAlt((s) => ({ ...s, costBaseId: event.target.value }))}>
-              <option value="">A vigente na data</option>
-              {versions.filter((v) => !v.inactiveAt).map((v) => <option key={v.id} value={v.id}>{v.name} ({dateBr(v.effectiveFrom)})</option>)}
-            </select></div>
-          <div><Label htmlFor="simDate" className="text-xs">Data do serviço</Label>
-            <ShadInput id="simDate" type="date" className="mt-1" value={alt.date} onChange={(event) => setAlt((s) => ({ ...s, date: event.target.value }))} /></div>
+          <div><Label className="text-xs">Regime tributário</Label>
+            <div className="mt-1"><Select name="simRegime" state={alt.regime} modal={false} clearable placeholder="O mesmo de hoje"
+              options={[{ id: "tradicional", name: "Simples tradicional" }, { id: "hibrido", name: "Simples híbrido" }]}
+              onChange={(_, value) => setAlt((s) => ({ ...s, regime: String(value) as Scenario["regime"] }))} /></div></div>
+          <div><Label className="text-xs">Versão da base</Label>
+            <div className="mt-1"><Select name="simBase" state={alt.costBaseId} modal={false} clearable placeholder="A vigente na data"
+              options={versions.filter((v) => !v.inactiveAt).map((v) => ({ id: v.id, name: `${v.name} (${dateBr(v.effectiveFrom)})` }))}
+              onChange={(_, value) => setAlt((s) => ({ ...s, costBaseId: String(value) }))} /></div></div>
+          <div><Label className="text-xs">Data do serviço</Label>
+            <CalendarPicker mode="single" name="simDate" className="mt-1 w-full" value={alt.date} fromYear={2020} toYear={2040} onValueChange={(_, value) => setAlt((s) => ({ ...s, date: value ?? "" }))} /></div>
         </div>
       </section>
 

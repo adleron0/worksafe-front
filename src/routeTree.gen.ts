@@ -72,6 +72,7 @@ import { Route as AuthenticatedBlogComentariosComentariosRouteImport } from './p
 import { Route as AuthenticatedBlogCategoriasCategoriasRouteImport } from './pages/_authenticated/blog/_categorias/categorias'
 import { Route as AuthenticatedTreinamentosTurmasTurmasNovaRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.nova'
 import { Route as AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.$turmaId'
+import { Route as AuthenticatedComercialPropostasPropostasNovaRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.nova'
 import { Route as AuthenticatedComercialPropostasPropostasProposalIdRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.$proposalId'
 import { Route as AuthenticatedComercialContratosContratosContractIdRouteImport } from './pages/_authenticated/comercial/_contratos/contratos_.$contractId'
 
@@ -436,6 +437,12 @@ const AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute =
     path: '/treinamentos/turmas/$turmaId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedComercialPropostasPropostasNovaRoute =
+  AuthenticatedComercialPropostasPropostasNovaRouteImport.update({
+    id: '/comercial/_propostas/propostas_/nova',
+    path: '/comercial/propostas/nova',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComercialPropostasPropostasProposalIdRoute =
   AuthenticatedComercialPropostasPropostasProposalIdRouteImport.update({
     id: '/comercial/_propostas/propostas_/$proposalId',
@@ -511,6 +518,7 @@ export interface FileRoutesByFullPath {
   '/student/course/$courseId': typeof StudentCourseCourseIdIndexRoute
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
+  '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -575,6 +583,7 @@ export interface FileRoutesByTo {
   '/student/course/$courseId': typeof StudentCourseCourseIdIndexRoute
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
+  '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -643,6 +652,7 @@ export interface FileRoutesById {
   '/student/course/$courseId/': typeof StudentCourseCourseIdIndexRoute
   '/_authenticated/comercial/_contratos/contratos_/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
   '/_authenticated/comercial/_propostas/propostas_/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
+  '/_authenticated/comercial/_propostas/propostas_/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/_authenticated/treinamentos/_turmas/turmas_/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -710,6 +720,7 @@ export interface FileRouteTypes {
     | '/student/course/$courseId'
     | '/comercial/contratos/$contractId'
     | '/comercial/propostas/$proposalId'
+    | '/comercial/propostas/nova'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
   fileRoutesByTo: FileRoutesByTo
@@ -774,6 +785,7 @@ export interface FileRouteTypes {
     | '/student/course/$courseId'
     | '/comercial/contratos/$contractId'
     | '/comercial/propostas/$proposalId'
+    | '/comercial/propostas/nova'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
   id:
@@ -841,6 +853,7 @@ export interface FileRouteTypes {
     | '/student/course/$courseId/'
     | '/_authenticated/comercial/_contratos/contratos_/$contractId'
     | '/_authenticated/comercial/_propostas/propostas_/$proposalId'
+    | '/_authenticated/comercial/_propostas/propostas_/nova'
     | '/_authenticated/treinamentos/_turmas/turmas_/$turmaId'
     | '/_authenticated/treinamentos/_turmas/turmas_/nova'
   fileRoutesById: FileRoutesById
@@ -1294,6 +1307,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/comercial/_propostas/propostas_/nova': {
+      id: '/_authenticated/comercial/_propostas/propostas_/nova'
+      path: '/comercial/propostas/nova'
+      fullPath: '/comercial/propostas/nova'
+      preLoaderRoute: typeof AuthenticatedComercialPropostasPropostasNovaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_propostas/propostas_/$proposalId': {
       id: '/_authenticated/comercial/_propostas/propostas_/$proposalId'
       path: '/comercial/propostas/$proposalId'
@@ -1358,6 +1378,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedUsuariosUsuariosIndexRoute: typeof AuthenticatedUsuariosUsuariosIndexRoute
   AuthenticatedComercialContratosContratosContractIdRoute: typeof AuthenticatedComercialContratosContratosContractIdRoute
   AuthenticatedComercialPropostasPropostasProposalIdRoute: typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
+  AuthenticatedComercialPropostasPropostasNovaRoute: typeof AuthenticatedComercialPropostasPropostasNovaRoute
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   AuthenticatedTreinamentosTurmasTurmasNovaRoute: typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -1444,6 +1465,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialContratosContratosContractIdRoute,
   AuthenticatedComercialPropostasPropostasProposalIdRoute:
     AuthenticatedComercialPropostasPropostasProposalIdRoute,
+  AuthenticatedComercialPropostasPropostasNovaRoute:
+    AuthenticatedComercialPropostasPropostasNovaRoute,
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute:
     AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute,
   AuthenticatedTreinamentosTurmasTurmasNovaRoute:

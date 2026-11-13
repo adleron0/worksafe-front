@@ -1,12 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
@@ -16,7 +14,7 @@ import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, dateBr, errorMessage, money } from "../-shared/commercial";
 import {
-  CustomerOption, CustomerPicker, KIND_LABEL, PROPOSALS_KEY, Proposal, ProposalKind, ProposalRow, ProposalStatus, StatusBadge,
+  KIND_LABEL, PROPOSALS_KEY, Proposal, ProposalRow, ProposalStatus, StatusBadge,
 } from "../-shared/proposals";
 
 export const Route = createFileRoute("/_authenticated/comercial/_propostas/propostas")({
@@ -39,7 +37,6 @@ function ProposalsPage() {
   const [kind, setKind] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
-  const [creating, setCreating] = useState(false);
 
   const params = { page, limit: LIMIT, ...(status ? { status } : {}), ...(kind ? { kind } : {}), ...(search.trim() ? { search: search.trim() } : {}) };
   const { data, isLoading, error } = useQuery({
@@ -81,7 +78,7 @@ function ProposalsPage() {
           <h1 className="text-xl font-bold">Propostas</h1>
           <p className="text-sm text-muted-foreground">Propostas comerciais de serviços e de treinamentos para empresas.</p>
         </div>
-        {canCreate && <Button onClick={() => setCreating(true)} className="shrink-0"><Icon name="plus" className="w-4 h-4 mr-1" /> Nova proposta</Button>}
+        {canCreate && <Button onClick={() => navigate({ to: "/comercial/propostas/nova" })} className="shrink-0"><Icon name="plus" className="w-4 h-4 mr-1" /> Nova proposta</Button>}
       </div>
 
       <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-lg border">
@@ -185,73 +182,8 @@ function ProposalsPage() {
         </p>
       )}
 
-      {creating && <NewProposalDialog onClose={() => setCreating(false)} onCreated={(proposal) => { refresh(); open(proposal.id); }} />}
     </>
   );
 }
 
 /** Dados mínimos para a proposta nascer como rascunho numerado; o resto é no editor. */
-function NewProposalDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (proposal: Proposal) => void }) {
-  const [kind, setKind] = useState<ProposalKind>("servico");
-  const [customer, setCustomer] = useState<CustomerOption | null>(null);
-  const [title, setTitle] = useState("");
-  const [error, setError] = useState("");
-  const { mutate, isPending } = useMutation({
-    mutationFn: () => {
-      const contact = customer?.contacts?.[0];
-      return commercialApi.post<Proposal>("proposals", {
-        kind, customerId: customer!.id, title,
-        contactName: contact?.name, contactEmail: contact?.email ?? customer?.email, contactPhone: contact?.phone ?? customer?.phone,
-      });
-    },
-    onSuccess: (proposal) => { toast({ title: `Proposta ${proposal.number} criada`, variant: "success" }); onCreated(proposal); onClose(); },
-    onError: (err) => setError(errorMessage(err)),
-  });
-  const submit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!customer) return setError("Escolha o cliente");
-    if (title.trim().length < 2) return setError("Informe o título da proposta");
-    setError(""); mutate();
-  };
-
-  return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Nova proposta</DialogTitle>
-          <DialogDescription>Ela nasce como rascunho, já numerada. Itens, valores e pagamento vêm na tela seguinte.</DialogDescription>
-        </DialogHeader>
-        <form className="flex flex-col gap-4" onSubmit={submit}>
-          <div>
-            <Label>Tipo</Label>
-            <div className="mt-1 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Tipo de proposta">
-              {(Object.keys(KIND_LABEL) as ProposalKind[]).map((value) => (
-                <button key={value} type="button" role="radio" aria-checked={kind === value} onClick={() => setKind(value)}
-                  className={cn("rounded-md border px-2 py-2 text-sm", kind === value ? "bg-primary text-inverse-foreground border-primary" : "hover:bg-muted")}>
-                  {KIND_LABEL[value]}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">O tipo só define as seções iniciais. Dá para misturar itens depois.</p>
-          </div>
-          <div>
-            <Label>Cliente <span>*</span></Label>
-            <div className="mt-1"><CustomerPicker value={customer?.id ?? null} onChange={setCustomer} modal /></div>
-            <p className="text-xs text-muted-foreground mt-1">Não achou? Cadastre a empresa em Clientes e volte aqui.</p>
-          </div>
-          <div>
-            <Label htmlFor="proposalTitle">Título <span>*</span></Label>
-            <Input id="proposalTitle" name="title" value={title} maxLength={200} className="mt-1" placeholder="Ex.: Pintura industrial do tanque 3"
-              onValueChange={(_, value) => setTitle(String(value))} />
-          </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={isPending}>{isPending ? "Criando..." : "Criar e abrir"}</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-

@@ -1,9 +1,4 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import Input from "@/components/general-components/Input";
-import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
-import { commercialApi } from "./commercial";
 
 export type ProposalKind = "servico" | "treinamento" | "misto";
 export type ProposalStatus = "rascunho" | "enviada" | "visualizada" | "aceita" | "recusada" | "expirada" | "cancelada" | "substituida";
@@ -26,6 +21,10 @@ export interface DraftItem {
   courseId: number | null; extra: { students?: number | null; workload?: number | null; dates?: string; location?: string } | null;
   unitCost: number; extraCost: number; margin?: number | null; finalValue: number | null; showInDocument: boolean;
 }
+/** Linha recém-adicionada e ainda sem nada: não entra no cálculo nem é salva. */
+export const isBlankItem = (item: Pick<DraftItem, "type" | "professionalId" | "courseId" | "description" | "unitCost" | "extraCost" | "finalValue">) =>
+  item.type === "mao_de_obra" ? !item.professionalId
+    : !item.description.trim() && !item.courseId && !item.unitCost && !item.extraCost && (item.finalValue === null || item.finalValue === undefined);
 export interface DraftSection { uid: string; id?: number; title: string; kind: ItemType; margin?: number; showInDocument: boolean; items: DraftItem[] }
 export interface DraftInstallment { uid: string; percent: number | null; amount: number | null; dueRule: DueRule; dueDate: string | null; dueDays: number | null; description: string | null }
 
@@ -156,30 +155,3 @@ export const DUE_RULE_OPTIONS: Array<{ id: DueRule; name: string }> = [
 
 export const formatCnpj = (cnpj?: string) =>
   cnpj && cnpj.length === 14 ? cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5") : cnpj ?? "";
-
-/** Busca de cliente por nome ou CNPJ + lista de resultados no Select do projeto. */
-export function CustomerPicker({ value, onChange, disabled, initial, modal }: {
-  value: number | null; onChange: (customer: CustomerOption | null) => void; disabled?: boolean; initial?: CustomerOption; modal?: boolean;
-}) {
-  const [search, setSearch] = useState("");
-  const { data, isFetching } = useQuery({
-    queryKey: ["commercialCustomers", search],
-    queryFn: () => commercialApi.get<CustomerOption[]>("proposals/customers", search ? { search } : undefined),
-    enabled: !disabled,
-  });
-  // o cliente já escolhido continua na lista mesmo quando a busca não o traz
-  const rows = [...(data ?? [])];
-  if (initial && value === initial.id && !rows.some((row) => row.id === initial.id)) rows.unshift(initial);
-  return (
-    <div className="grid gap-2">
-      {!disabled && (
-        <Input name="customerSearch" value={search} onValueChange={(_, text) => setSearch(String(text))}
-          placeholder="Buscar cliente por nome ou CNPJ..." icon="search" />
-      )}
-      <Select name="customerId" state={value ? String(value) : ""} disabled={disabled} modal={modal}
-        placeholder={isFetching ? "Buscando..." : rows.length ? "Selecione o cliente" : "Nenhum cliente encontrado"}
-        options={rows.map((row) => ({ id: row.id, name: `${row.name} — ${formatCnpj(row.cnpj)}` }))}
-        onChange={(_, id) => onChange(rows.find((row) => String(row.id) === String(id)) ?? null)} />
-    </div>
-  );
-}

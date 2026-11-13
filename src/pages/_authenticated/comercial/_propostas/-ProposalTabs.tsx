@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input as ShadInput } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { NumField, money, newUid, percent } from "../-shared/commercial";
 import {
-  CustomerOption, CustomerPicker, DUE_RULE_OPTIONS, DraftInstallment, DueRule, KIND_LABEL, ProposalCalc, ProposalDraft, ProposalKind, ProposalOptions, formatCnpj,
+  CustomerOption, DUE_RULE_OPTIONS, DraftInstallment, DueRule, ProposalCalc, ProposalDraft, ProposalOptions,
 } from "../-shared/proposals";
 
 type SetDraft = (updater: (draft: ProposalDraft) => ProposalDraft) => void;
@@ -29,13 +30,16 @@ const F = ({ label, hint, className, children }: { label: string; hint?: string;
   </div>
 );
 
-interface HeaderProps {
-  draft: ProposalDraft; setDraft: SetDraft; options: ProposalOptions; readOnly: boolean; canSeeCosts: boolean;
-  customer: CustomerOption; onCustomer: (customer: CustomerOption) => void;
+interface InfoProps {
+  draft: ProposalDraft; setDraft: SetDraft; options: ProposalOptions; readOnly: boolean; canSeeCosts: boolean; customer: CustomerOption;
 }
 
-/** Passo 1: para quem é, o que é, prazos e condições que entram na conta. */
-export function ProposalDataTab({ draft, setDraft, options, readOnly, canSeeCosts, customer, onCustomer }: HeaderProps) {
+/**
+ * Passo 2: o cabeçalho da planilha — o que é, prazo, imprevisibilidade e
+ * validade. O que quase nunca muda fica recolhido em "Mais opções".
+ */
+export function ProposalInfoStep({ draft, setDraft, options, readOnly, canSeeCosts, customer }: InfoProps) {
+  const [more, setMore] = useState(false);
   const set = <K extends keyof ProposalDraft>(key: K, value: ProposalDraft[K]) => setDraft((d) => ({ ...d, [key]: value }));
   const textField = (key: "contactName" | "contactEmail" | "contactPhone" | "requester" | "department", label: string, max: number, placeholder?: string) => (
     <F label={label}>
@@ -44,118 +48,129 @@ export function ProposalDataTab({ draft, setDraft, options, readOnly, canSeeCost
     </F>
   );
   const levels = options.defaults.contingencyLevels;
-  const level = levels.find((l) => Math.abs(l.rate - draft.contingencyRate) < 1e-9);
+  const custom = !levels.some((l) => Math.abs(l.rate - draft.contingencyRate) < 1e-9);
   const automaticBase = (options.costBases ?? []).find((base) => base.current);
 
   return (
-    <div className="grid lg:grid-cols-2 gap-4">
-      <Card title="Cliente">
-        <F label="Empresa">
-          <CustomerPicker value={draft.customerId} initial={customer} disabled={readOnly}
-            onChange={(picked) => { if (picked) { onCustomer(picked); set("customerId", picked.id); } }} />
-          <p className="text-xs text-muted-foreground mt-1">{customer.corporateName} · CNPJ {formatCnpj(customer.cnpj)}</p>
+    <div className="grid gap-4">
+      <div className="grid gap-4">
+        <F label="Título do serviço ou treinamento">
+          <ShadInput value={draft.title === "Nova proposta" ? "" : draft.title} maxLength={200} disabled={readOnly} aria-label="Título da proposta" autoFocus={draft.title === "Nova proposta"}
+            placeholder="Ex.: Jateamento e pintura do tanque 3" onChange={(event) => set("title", event.target.value)} />
         </F>
-        {!readOnly && Boolean(customer.contacts?.length) && (
-          <F label="Usar um contato cadastrado">
-            <Select name="contact" state="" modal={false} placeholder="Escolha para preencher os campos abaixo"
-              options={customer.contacts!.map((c) => ({ id: c.id, name: `${c.name} — ${c.email}` }))}
-              onChange={(_, id) => {
-                const contact = customer.contacts!.find((c) => String(c.id) === String(id));
-                if (contact) setDraft((d) => ({ ...d, contactName: contact.name, contactEmail: contact.email, contactPhone: contact.phone }));
-              }} />
-          </F>
-        )}
-        <div className="grid sm:grid-cols-2 gap-3">
-          {textField("contactName", "Contato", 160, "Quem recebe a proposta")}
-          {textField("contactEmail", "E-mail do contato", 255)}
-          {textField("contactPhone", "Telefone", 60)}
-          {textField("requester", "Solicitante", 160)}
-          {textField("department", "Setor", 160)}
-        </div>
-      </Card>
-
-      <Card title="Proposta">
-        <F label="Título">
-          <ShadInput value={draft.title} maxLength={200} disabled={readOnly} aria-label="Título da proposta" onChange={(event) => set("title", event.target.value)} />
+        <F label="Descrição" hint="O que o cliente pediu e o que será feito. Aparece no começo da proposta.">
+          <Textarea value={draft.description ?? ""} rows={3} disabled={readOnly} aria-label="Descrição" onChange={(event) => set("description", event.target.value || null)} />
         </F>
-        <F label="Descrição do serviço ou treinamento">
-          <Textarea value={draft.description ?? ""} rows={4} disabled={readOnly} aria-label="Descrição" onChange={(event) => set("description", event.target.value || null)} />
-        </F>
-        <div className="grid sm:grid-cols-2 gap-3">
-          <F label="Tipo">
-            <Select name="kind" state={draft.kind} disabled={readOnly} modal={false} options={Object.entries(KIND_LABEL).map(([id, name]) => ({ id, name }))}
-              onChange={(_, value) => set("kind", String(value) as ProposalKind)} />
+        <div className="grid sm:grid-cols-2 gap-4">
+          <F label="Prazo em dias úteis" hint="Quantos dias a equipe trabalha. Usado nas linhas de mão de obra.">
+            <NumField digits={0} value={draft.workDays} disabled={readOnly} ariaLabel="Prazo em dias úteis" onChange={(workDays) => set("workDays", workDays)} />
           </F>
-          <F label="Vendedor">
-            <Select name="sellerId" state={draft.sellerId ? String(draft.sellerId) : ""} disabled={readOnly} modal={false} clearable placeholder="Sem vendedor"
-              options={options.sellers} onChange={(_, value) => set("sellerId", Number(value) || null)} />
-          </F>
-          <F label="Validade da proposta">
+          <F label="Proposta válida até">
             <CalendarPicker mode="single" name="validUntil" className="w-full" value={draft.validUntil} disabled={readOnly} placeholder="Sem validade" fromYear={2024} toYear={2040}
               onValueChange={(_, value) => set("validUntil", value)} />
           </F>
-          <F label="Data prevista do serviço" hint="Define a base de cálculo e o imposto que valem (por vigência).">
-            <CalendarPicker mode="single" name="referenceDate" className="w-full" value={draft.referenceDate} disabled={readOnly} fromYear={2024} toYear={2040}
-              onValueChange={(_, value) => { if (value) set("referenceDate", value); }} />
-          </F>
         </div>
-      </Card>
+        <F label="Imprevisibilidade" hint="Folga somada ao total, depois da margem.">
+          <div className="flex flex-wrap rounded-md border overflow-hidden w-fit" role="radiogroup" aria-label="Imprevisibilidade">
+            {levels.map((l) => {
+              const active = Math.abs(l.rate - draft.contingencyRate) < 1e-9;
+              return (
+                <button key={l.label} type="button" role="radio" aria-checked={active} disabled={readOnly} onClick={() => set("contingencyRate", l.rate)}
+                  className={cn("px-3 py-2 text-sm border-l first:border-l-0 disabled:cursor-not-allowed", active ? "bg-primary text-inverse-foreground" : "hover:bg-muted")}>
+                  {l.label} <span className="opacity-70 tabular-nums">{percent(l.rate, 0)}</span>
+                </button>
+              );
+            })}
+            {custom && <span className="px-3 py-2 text-sm border-l bg-primary text-inverse-foreground">Outra <span className="opacity-80 tabular-nums">{percent(draft.contingencyRate)}</span></span>}
+          </div>
+        </F>
+      </div>
 
-      <Card title="Prazo e condições" description="Entram na conta dos itens de mão de obra e no total.">
-        <div className="grid sm:grid-cols-2 gap-3">
-          <F label="Prazo em dias úteis" hint="Vale para as linhas de mão de obra que não tiverem dias próprios.">
-            <NumField digits={0} value={draft.workDays} disabled={readOnly} ariaLabel="Prazo em dias úteis" onChange={(workDays) => set("workDays", workDays)} />
-          </F>
-          <F label="Dias de FDS/feriado" hint="Só para profissionais marcados com FDS/feriado.">
-            <NumField digits={0} value={draft.weekendDays} disabled={readOnly} ariaLabel="Dias de fim de semana ou feriado" onChange={(weekendDays) => set("weekendDays", weekendDays)} />
-          </F>
-          <F label="Imprevisibilidade" hint="Somada ao total, depois da margem.">
-            <Select name="contingency" state={level ? String(level.rate) : ""} disabled={readOnly} modal={false} placeholder={`Outro: ${percent(draft.contingencyRate)}`}
-              options={levels.map((l) => ({ id: String(l.rate), name: `${l.label} (${percent(l.rate, 0)})` }))}
-              onChange={(_, value) => set("contingencyRate", Number(value))} />
-          </F>
-          <F label="Imprevisibilidade (%)">
-            <NumField kind="percent" value={draft.contingencyRate} disabled={readOnly} ariaLabel="Percentual de imprevisibilidade" onChange={(rate) => set("contingencyRate", rate)} />
-          </F>
-        </div>
-      </Card>
+      <div className="border-t pt-3">
+        <button type="button" className="flex items-center gap-2 text-sm font-medium" aria-expanded={more} onClick={() => setMore(!more)}>
+          <Icon name={more ? "chevron-down" : "chevron-right"} className="w-4 h-4" /> Mais opções
+          <span className="font-normal text-muted-foreground">contato, vendedor, {canSeeCosts ? "base de cálculo, imposto, comissão, " : ""}observações</span>
+        </button>
+      </div>
 
-      <div className="grid gap-4 content-start">
-        {canSeeCosts && (
-          <Card title="Base de cálculo, imposto e comissão" description="Só quem tem a permissão de custos vê e altera.">
-            <F label="Base de cálculo" hint={draft.costBaseId
-              ? "Base escolhida à mão: os valores sugeridos usam esta, qualquer que seja a data."
-              : `Automática: usa a base vigente na data prevista do serviço${automaticBase ? ` (hoje, "${automaticBase.name}")` : ""}.`}>
-              <Select name="costBaseId" state={draft.costBaseId ? String(draft.costBaseId) : ""} disabled={readOnly} modal={false} clearable
-                placeholder={automaticBase ? `Automática — ${automaticBase.name}` : "Automática (vigente na data)"}
-                options={(options.costBases ?? []).map((base) => ({ id: base.id, name: `${base.name} · desde ${base.effectiveFrom.split("-").reverse().join("/")}${base.current ? " · vigente" : ""}` }))}
-                onChange={(_, value) => set("costBaseId", Number(value) || null)} />
-            </F>
+      {more && (
+        <div className="grid lg:grid-cols-2 gap-4">
+          <Card title="Contato no cliente" description="Quem recebe a proposta. Aparece na capa como A/C.">
+            {!readOnly && Boolean(customer.contacts?.length) && (
+              <F label="Usar um contato cadastrado">
+                <Select name="contact" state="" modal={false} placeholder="Escolha para preencher os campos abaixo"
+                  options={customer.contacts!.map((c) => ({ id: c.id, name: `${c.name} — ${c.email}` }))}
+                  onChange={(_, id) => {
+                    const contact = customer.contacts!.find((c) => String(c.id) === String(id));
+                    if (contact) setDraft((d) => ({ ...d, contactName: contact.name, contactEmail: contact.email, contactPhone: contact.phone }));
+                  }} />
+              </F>
+            )}
             <div className="grid sm:grid-cols-2 gap-3">
-              <F label="Regime tributário" hint="Vale só para esta proposta.">
-                <Select name="taxRegime" state={draft.taxRegime ?? ""} disabled={readOnly} modal={false} clearable placeholder="Padrão da empresa"
-                  options={[{ id: "tradicional", name: "Simples tradicional" }, { id: "hibrido", name: "Simples híbrido" }]}
-                  onChange={(_, value) => set("taxRegime", (String(value) || null) as ProposalDraft["taxRegime"])} />
-              </F>
-              <F label="Comissão">
-                <NumField kind="percent" value={draft.commissionRate ?? 0} disabled={readOnly} ariaLabel="Comissão" onChange={(rate) => set("commissionRate", rate)} />
-              </F>
-              <F label="Comissão sobre">
-                <Select name="commissionBase" state={draft.commissionBase ?? "faturado"} disabled={readOnly} modal={false}
-                  options={[{ id: "faturado", name: "Valor faturado" }, { id: "lucro", name: "Lucro" }]}
-                  onChange={(_, value) => set("commissionBase", String(value) as "faturado" | "lucro")} />
-              </F>
-              <label className="flex items-center gap-2 text-sm sm:pt-6">
-                <Switch checked={Boolean(draft.commissionInPrice)} disabled={readOnly} aria-label="Comissão dentro do preço" onCheckedChange={(checked) => set("commissionInPrice", checked)} />
-                Comissão dentro do preço
-              </label>
+              {textField("contactName", "Contato", 160)}
+              {textField("contactEmail", "E-mail do contato", 255)}
+              {textField("contactPhone", "Telefone", 60)}
+              {textField("requester", "Solicitante", 160)}
+              {textField("department", "Setor", 160)}
             </div>
           </Card>
-        )}
-        <Card title="Observações internas" description="Não aparecem para o cliente.">
-          <Textarea value={draft.internalNotes ?? ""} rows={3} disabled={readOnly} aria-label="Observações internas" onChange={(event) => set("internalNotes", event.target.value || null)} />
-        </Card>
-      </div>
+
+          <Card title="Proposta">
+            <div className="grid sm:grid-cols-2 gap-3">
+              <F label="Vendedor">
+                <Select name="sellerId" state={draft.sellerId ? String(draft.sellerId) : ""} disabled={readOnly} modal={false} clearable placeholder="Sem vendedor"
+                  options={options.sellers} onChange={(_, value) => set("sellerId", Number(value) || null)} />
+              </F>
+              <F label="Data prevista do serviço" hint="Define a base de cálculo e o imposto vigentes.">
+                <CalendarPicker mode="single" name="referenceDate" className="w-full" value={draft.referenceDate} disabled={readOnly} fromYear={2024} toYear={2040}
+                  onValueChange={(_, value) => { if (value) set("referenceDate", value); }} />
+              </F>
+              <F label="Dias de FDS/feriado" hint="Só para profissionais marcados com ⭐.">
+                <NumField digits={0} value={draft.weekendDays} disabled={readOnly} ariaLabel="Dias de fim de semana ou feriado" onChange={(weekendDays) => set("weekendDays", weekendDays)} />
+              </F>
+              <F label="Imprevisibilidade (outro %)">
+                <NumField kind="percent" value={draft.contingencyRate} disabled={readOnly} ariaLabel="Percentual de imprevisibilidade" onChange={(rate) => set("contingencyRate", rate)} />
+              </F>
+            </div>
+          </Card>
+
+          {canSeeCosts && (
+            <Card title="Base de cálculo, imposto e comissão" description="Só quem tem a permissão de custos vê e altera.">
+              <F label="Base de cálculo" hint={draft.costBaseId
+                ? "Base escolhida à mão: os valores sugeridos usam esta, qualquer que seja a data."
+                : `Automática: usa a base vigente na data prevista do serviço${automaticBase ? ` (hoje, "${automaticBase.name}")` : ""}.`}>
+                <Select name="costBaseId" state={draft.costBaseId ? String(draft.costBaseId) : ""} disabled={readOnly} modal={false} clearable
+                  placeholder={automaticBase ? `Automática — ${automaticBase.name}` : "Automática (vigente na data)"}
+                  options={(options.costBases ?? []).map((base) => ({ id: base.id, name: `${base.name} · desde ${base.effectiveFrom.split("-").reverse().join("/")}${base.current ? " · vigente" : ""}` }))}
+                  onChange={(_, value) => set("costBaseId", Number(value) || null)} />
+              </F>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <F label="Regime tributário" hint="Vale só para esta proposta.">
+                  <Select name="taxRegime" state={draft.taxRegime ?? ""} disabled={readOnly} modal={false} clearable placeholder="Padrão da empresa"
+                    options={[{ id: "tradicional", name: "Simples tradicional" }, { id: "hibrido", name: "Simples híbrido" }]}
+                    onChange={(_, value) => set("taxRegime", (String(value) || null) as ProposalDraft["taxRegime"])} />
+                </F>
+                <F label="Comissão">
+                  <NumField kind="percent" value={draft.commissionRate ?? 0} disabled={readOnly} ariaLabel="Comissão" onChange={(rate) => set("commissionRate", rate)} />
+                </F>
+                <F label="Comissão sobre">
+                  <Select name="commissionBase" state={draft.commissionBase ?? "faturado"} disabled={readOnly} modal={false}
+                    options={[{ id: "faturado", name: "Valor faturado" }, { id: "lucro", name: "Lucro" }]}
+                    onChange={(_, value) => set("commissionBase", String(value) as "faturado" | "lucro")} />
+                </F>
+                <label className="flex items-center gap-2 text-sm sm:pt-6">
+                  <Switch checked={Boolean(draft.commissionInPrice)} disabled={readOnly} aria-label="Comissão dentro do preço" onCheckedChange={(checked) => set("commissionInPrice", checked)} />
+                  Comissão dentro do preço
+                </label>
+              </div>
+            </Card>
+          )}
+
+          <Card title="Observações internas" description="Não aparecem para o cliente.">
+            <Textarea value={draft.internalNotes ?? ""} rows={3} disabled={readOnly} aria-label="Observações internas" onChange={(event) => set("internalNotes", event.target.value || null)} />
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

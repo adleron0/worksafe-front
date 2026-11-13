@@ -14,20 +14,16 @@ import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, NumField, commercialApi, dateBr, errorMessage, money, newUid, percent } from "../-shared/commercial";
 import {
-  CustomerOption, DraftSection, KIND_LABEL, PROPOSALS_KEY, PROPOSAL_KEY, Proposal, ProposalCalc, ProposalDraft, ProposalOptions, STATUS_LABEL, StatusBadge,
+  CustomerOption, DraftSection, KIND_LABEL, isBlankItem, PROPOSALS_KEY, PROPOSAL_KEY, Proposal, ProposalCalc, ProposalDraft, ProposalOptions, STATUS_LABEL, StatusBadge,
 } from "../-shared/proposals";
+import CustomerStep from "./-CustomerStep";
 import ProposalDocumentTab, { LinkPanel, ProposalHistory } from "./-ProposalDocumentTab";
 import ProposalItemsTab from "./-ProposalItemsTab";
-import { ProposalDataTab, ProposalPaymentTab } from "./-ProposalTabs";
+import { ProposalInfoStep, ProposalPaymentTab } from "./-ProposalTabs";
+import WizardSteps, { STEPS, StepKey, StepState } from "./-WizardSteps";
 
-type StepKey = "dados" | "itens" | "pagamento" | "documento" | "envio";
-const STEPS: Array<{ key: StepKey; title: string; hint: string; heading: string; description: string }> = [
-  { key: "dados", title: "Cliente", hint: "Para quem e o quê", heading: "Para quem é a proposta", description: "Cliente, contato, título e prazos. É o que aparece na capa e no resumo do documento." },
-  { key: "itens", title: "Itens e valores", hint: "O que será entregue", heading: "O que será entregue e quanto custa", description: "Adicione os itens de cada seção. O sistema sugere o valor; você decide o valor final." },
-  { key: "pagamento", title: "Pagamento", hint: "Parcelas e vencimentos", heading: "Como o cliente vai pagar", description: "Use um atalho ou monte as parcelas. Elas viram as contas a receber quando houver contrato." },
-  { key: "documento", title: "Documento", hint: "Texto e imagens", heading: "O documento que o cliente recebe", description: "Já sai pronto com o modelo padrão. Aqui você acrescenta imagens e, se quiser, ajusta o texto." },
-  { key: "envio", title: "Revisar e enviar", hint: "Conferir e mandar o link", heading: "Revisão e envio", description: "Confira o que falta, veja como o cliente vai ver e envie." },
-];
+/** Título provisório de quem acabou de escolher o cliente e ainda não deu nome à proposta. */
+const PLACEHOLDER_TITLE = "Nova proposta";
 
 export const Route = createFileRoute("/_authenticated/comercial/_propostas/propostas_/$proposalId")({
   component: ProposalEditorPage,
@@ -42,8 +38,11 @@ const toDraft = (proposal: Proposal): ProposalDraft => ({
 const strip = <T extends { uid: string }>(row: T) => { const copy: Partial<T> = { ...row }; delete copy.uid; return copy; };
 const payloadOf = (draft: ProposalDraft) => ({
   ...draft,
+  // o título pode ficar em branco enquanto se preenche: a API exige um, então segue o provisório
+  title: draft.title.trim().length >= 2 ? draft.title : PLACEHOLDER_TITLE,
   commission: { rate: draft.commissionRate, base: draft.commissionBase, inPrice: draft.commissionInPrice },
-  sections: draft.sections.map((section) => ({ ...strip(section), items: section.items.map(strip) })),
+  // linhas em branco ficam só na tela
+  sections: draft.sections.map((section) => ({ ...strip(section), items: section.items.filter((item) => !isBlankItem(item)).map(strip) })),
   installments: draft.installments.map(strip),
 });
 
@@ -57,8 +56,9 @@ function ProposalEditorPage() {
   const [calc, setCalc] = useState<ProposalCalc | null>(null);
   const [calcError, setCalcError] = useState("");
   const [customer, setCustomer] = useState<CustomerOption | null>(null);
-  const [tab, setTab] = useState<StepKey>("dados");
+  const [tab, setTab] = useState<StepKey>("proposta");
   const [landed, setLanded] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [decision, setDecision] = useState<"aceita" | "recusada" | null>(null);
 
   const { data: proposal, isLoading, error } = useQuery({
@@ -164,23 +164,38 @@ function ProposalEditorPage() {
 
   const setDraftSafe = (updater: (d: ProposalDraft) => ProposalDraft) => setDraft((prev) => (prev ? updater(prev) : prev));
   const setSections = (updater: (sections: DraftSection[]) => DraftSection[]) => setDraftSafe((d) => ({ ...d, sections: updater(d.sections) }));
+  const titled = draft.title.trim().length >= 2 && draft.title !== PLACEHOLDER_TITLE;
+  // trocar o tipo antes de lançar itens troca também as seções sugeridas
+  const changeKind = (kind: ProposalDraft["kind"]) => setDraftSafe((d) => {
+    if (d.kind === kind) return d;
+    const empty = d.sections.every((section) => section.items.length === 0);
+    return {
+      ...d, kind,
+      sections: empty ? options.presets[kind].map((preset) => ({ uid: newUid(), title: preset.title, kind: preset.kind, margin: preset.margin ?? options.defaults.margins?.[preset.kind] ?? 0, showInDocument: true, items: [] })) : d.sections,
+    };
+  });
   const sent = proposal.status === "enviada" || proposal.status === "visualizada";
-  const itemCount = draft.sections.reduce((sum, section) => sum + section.items.length, 0);
+  const itemCount = draft.sections.reduce((sum, section) => sum + section.items.filter((item) => !isBlankItem(item)).length, 0);
 
   // O que falta em cada passo: alimenta o indicador do passo a passo e a revisão final.
   const total = calc?.totals.total ?? 0;
   const paymentDiff = Math.abs(calc?.installmentsDiff ?? 0);
   const checks: Array<{ step: StepKey; ok: boolean; label: string; fix: string }> = [
-    { step: "dados", ok: draft.title.trim().length >= 2, label: "Cliente e título da proposta", fix: "Informe o título da proposta" },
-    { step: "dados", ok: Boolean(draft.validUntil), label: "Validade da proposta", fix: "Defina até quando a proposta vale (dá urgência ao cliente e evita preço antigo)" },
+    { step: "proposta", ok: titled, label: "Título da proposta", fix: "Dê um título à proposta" },
+    { step: "proposta", ok: Boolean(draft.validUntil), label: "Validade da proposta", fix: "Defina até quando a proposta vale (dá urgência ao cliente e evita preço antigo)" },
     { step: "itens", ok: itemCount > 0 && total > 0, label: "Itens e valores", fix: itemCount === 0 ? "Adicione ao menos um item" : "O total está zerado: informe os valores" },
     { step: "pagamento", ok: draft.installments.length > 0 && paymentDiff < 0.005, label: "Condições de pagamento",
       fix: draft.installments.length === 0 ? "Defina as parcelas" : "As parcelas não fecham o total da proposta" },
   ];
   // a validade é recomendação; o resto impede o envio
   const blocking = checks.filter((check) => !check.ok && check.label !== "Validade da proposta");
-  const stepState = (key: StepKey): "ok" | "attention" => (checks.some((check) => check.step === key && !check.ok) ? "attention" : "ok");
   const stepIndex = STEPS.findIndex((item) => item.key === tab);
+  const isDraft = proposal.status === "rascunho";
+  const states = Object.fromEntries(STEPS.map((step, i): [StepKey, StepState] => {
+    const missing = step.key === "envio" ? blocking.length > 0 : blocking.some((check) => check.step === step.key);
+    // só cobra o que ficou para trás; o que está à frente ainda é "a fazer"
+    return [step.key, !isDraft ? "done" : i >= stepIndex ? "todo" : missing ? "attention" : "done"];
+  })) as Record<StepKey, StepState>;
   const goTo = (key: StepKey) => {
     if (key === tab) return;
     // trocar de passo salva o rascunho (quando dá para calcular): nada se perde no caminho
@@ -203,15 +218,10 @@ function ProposalEditorPage() {
             {proposal.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Inativa</span>}
             {!readOnly && <span className="text-xs text-muted-foreground">{saving ? "Salvando..." : dirty ? "Alterações não salvas" : "Tudo salvo"}</span>}
           </div>
-          <p className="text-sm text-muted-foreground truncate">{customer.name} · {draft.title} · {KIND_LABEL[draft.kind]}</p>
+          <p className="text-sm text-muted-foreground truncate">{[customer.name, titled ? draft.title : null, KIND_LABEL[draft.kind]].filter(Boolean).join(" · ")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Button type="button" variant="outline" onClick={openClientView} disabled={saving}><Icon name="eye" className="w-4 h-4 mr-1" /> Ver como o cliente</Button>
-          {!readOnly && (
-            <Button type="button" variant="outline" onClick={() => save()} disabled={!dirty || saving || Boolean(calcError)}>
-              <Icon name="save" className="w-4 h-4 mr-1" /> Salvar
-            </Button>
-          )}
           {sent && canUpdate && <>
             <Button type="button" onClick={() => setDecision("aceita")}><Icon name="check" className="w-4 h-4 mr-1" /> Registrar aceite</Button>
             <Button type="button" variant="outline" onClick={() => setDecision("recusada")}>Registrar recusa</Button>
@@ -241,33 +251,7 @@ function ProposalEditorPage() {
         </div>
       </div>
 
-      {/* Passo a passo: onde estou, o que já está certo e o que falta */}
-      <nav aria-label="Passos da proposta" className="my-4 overflow-x-auto">
-        <ol className="flex items-stretch min-w-max rounded-lg border bg-background">
-          {STEPS.map((item, index) => {
-            const current = item.key === tab;
-            const state = item.key === "envio" ? (blocking.length ? "attention" : "ok") : item.key === "documento" ? "ok" : stepState(item.key);
-            const visited = index < stepIndex || proposal.status !== "rascunho";
-            return (
-              <li key={item.key} className="flex-1 min-w-[150px]">
-                <button type="button" onClick={() => goTo(item.key)} aria-current={current ? "step" : undefined}
-                  className={cn("w-full h-full flex items-center gap-3 px-4 py-3 text-left border-b-4 transition-colors",
-                    current ? "border-primary bg-primary/5" : "border-transparent hover:bg-muted/50", index > 0 && "border-l")}>
-                  <span className={cn("shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                    current ? "bg-primary text-inverse-foreground" : visited && state === "ok" ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200"
-                      : visited && state === "attention" ? "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200" : "bg-muted text-muted-foreground")}>
-                    {!current && visited && state === "ok" ? <Icon name="check" className="w-4 h-4" /> : !current && visited && state === "attention" ? "!" : index + 1}
-                  </span>
-                  <span className="min-w-0">
-                    <span className={cn("block text-sm font-semibold", !current && "text-muted-foreground")}>{proposal.status !== "rascunho" && item.key === "envio" ? "Acompanhar" : item.title}</span>
-                    <span className="block text-xs text-muted-foreground truncate">{item.hint}</span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      </nav>
+      <WizardSteps current={tab} states={states} titles={isDraft ? undefined : { envio: "Acompanhar" }} onGo={goTo} />
 
       <div className="grid gap-2 mb-4">
         {proposal.status !== "rascunho" && (
@@ -300,14 +284,20 @@ function ProposalEditorPage() {
         {calcError && <p className="rounded-md border border-destructive text-destructive px-3 py-2 text-sm">Não dá para calcular: {calcError}</p>}
       </div>
 
-      <div className="grid xl:grid-cols-[minmax(0,1fr)_320px] gap-4 items-start">
+      {/* No passo de itens a área de trabalho precisa de largura: o resumo só vai para o lado em tela bem larga */}
+      <div className={cn("grid gap-4 items-start", tab === "itens" ? "2xl:grid-cols-[minmax(0,1fr)_320px]" : "lg:grid-cols-[minmax(0,1fr)_320px]")}>
         <div className="min-w-0 grid gap-4">
+          <section className="rounded-lg border bg-background p-4 sm:p-5 grid gap-4">
           <div>
             <h2 className="text-lg font-semibold">{STEPS[stepIndex].heading}</h2>
             <p className="text-sm text-muted-foreground">{STEPS[stepIndex].description}</p>
           </div>
 
-          {tab === "dados" && <ProposalDataTab draft={draft} setDraft={setDraftSafe} options={options} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} customer={customer} onCustomer={setCustomer} />}
+          {tab === "cliente" && (
+            <CustomerStep kind={draft.kind} onKind={changeKind} selected={customer} readOnly={readOnly}
+              onSelect={(picked) => { setCustomer(picked); setDraftSafe((d) => ({ ...d, customerId: picked.id })); }} />
+          )}
+          {tab === "proposta" && <ProposalInfoStep draft={draft} setDraft={setDraftSafe} options={options} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} customer={customer} />}
           {tab === "itens" && <ProposalItemsTab draft={draft} setSections={setSections} calc={calc ?? undefined} options={options} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} />}
           {tab === "pagamento" && <ProposalPaymentTab draft={draft} setDraft={setDraftSafe} calc={calc ?? undefined} readOnly={readOnly} />}
           {tab === "documento" && <ProposalDocumentTab proposal={proposal} draft={draft} setDraft={setDraftSafe} options={options} readOnly={readOnly} payload={payload} />}
@@ -363,19 +353,29 @@ function ProposalEditorPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-2 border-t pt-4">
-            <Button type="button" variant="ghost" disabled={stepIndex === 0 || saving} onClick={() => goTo(STEPS[stepIndex - 1].key)}>
-              <Icon name="arrow-left" className="w-4 h-4 mr-1" /> Voltar
+          </section>
+
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2">
+            <Button type="button" variant="outline" disabled={saving} onClick={() => (stepIndex === 0 ? navigate({ to: "/comercial/propostas" }) : goTo(STEPS[stepIndex - 1].key))}>
+              <Icon name="arrow-left" className="w-4 h-4 mr-1" /> {stepIndex === 0 ? "Propostas" : "Voltar"}
             </Button>
-            {stepIndex < STEPS.length - 1 && (
-              <Button type="button" disabled={saving} onClick={() => goTo(STEPS[stepIndex + 1].key)}>
-                {!readOnly && dirty ? "Salvar e continuar" : "Continuar"} <Icon name="arrow-right" className="w-4 h-4 ml-1" />
-              </Button>
-            )}
+            <div className="grid grid-cols-2 sm:flex gap-2">
+              {!readOnly && (
+                <Button type="button" variant="ghost" className={cn(stepIndex === STEPS.length - 1 && "col-span-2")} onClick={() => save()} disabled={!dirty || saving || Boolean(calcError)}>
+                  {saving ? "Salvando..." : "Salvar rascunho"}
+                </Button>
+              )}
+              {stepIndex < STEPS.length - 1 && (
+                <Button type="button" className={cn(readOnly && "col-span-2")} disabled={saving} onClick={() => goTo(STEPS[stepIndex + 1].key)}>
+                  Avançar <Icon name="arrow-right" className="w-4 h-4 ml-1" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
         <TotalsPanel calc={calc} draft={draft} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} stale={dirty && Boolean(calcError)}
+          customer={customer.name} wide={tab === "itens"} open={summaryOpen} onToggle={() => setSummaryOpen(!summaryOpen)}
           onDiscount={(discount) => setDraftSafe((d) => ({ ...d, discount }))} />
       </div>
 
@@ -393,17 +393,39 @@ const Line = ({ label, value, strong, muted, negative }: { label: string; value:
   </div>
 );
 
-/** Painel fixo de totais; a parte de custo e margem só para quem tem a permissão. */
-function TotalsPanel({ calc, draft, readOnly, canSeeCosts, stale, onDiscount }: {
+/**
+ * Resumo da proposta. Em tela estreita fica em cima, recolhido (cliente e total),
+ * e abre com um toque; com espaço vai para o lado e acompanha a rolagem.
+ * A parte de custo e margem só aparece para quem tem a permissão.
+ */
+function TotalsPanel({ calc, draft, readOnly, canSeeCosts, stale, onDiscount, customer, wide, open, onToggle }: {
   calc: ProposalCalc | null; draft: ProposalDraft; readOnly: boolean; canSeeCosts: boolean; stale: boolean; onDiscount: (value: number) => void;
+  customer: string; wide: boolean; open: boolean; onToggle: () => void;
 }) {
   const t = calc?.totals;
   const m = calc?.margin;
+  // classes escritas por extenso: o Tailwind só gera as que encontra no código
+  const side = wide ? "2xl:order-none 2xl:sticky 2xl:top-4" : "lg:order-none lg:sticky lg:top-4";
+  const onlyNarrow = wide ? "2xl:hidden" : "lg:hidden";
+  const body = wide ? "2xl:grid" : "lg:grid";
   return (
-    <aside className={cn("rounded-lg border p-4 xl:sticky xl:top-4 grid gap-3", stale && "opacity-50")} aria-live="polite">
+    <aside className={cn("order-first rounded-lg border bg-background", side, stale && "opacity-50")} aria-live="polite">
+      <button type="button" onClick={onToggle} aria-expanded={open} className={cn("w-full flex items-center gap-3 px-4 py-2.5 text-left", onlyNarrow)}>
+        <span className="min-w-0 flex-1">
+          <span className="block text-xs text-muted-foreground truncate">{customer}</span>
+          <span className="block font-semibold tabular-nums">{money(t?.total)}</span>
+        </span>
+        <span className="text-xs text-muted-foreground">{open ? "Fechar" : "Ver resumo"}</span>
+        <Icon name={open ? "chevron-up" : "chevron-down"} className="w-4 h-4 text-muted-foreground" />
+      </button>
+      <div className={cn("gap-3 p-4", open ? "grid border-t" : "hidden", body, wide ? "2xl:border-t-0" : "lg:border-t-0")}>
       <div>
-        <h2 className="font-semibold">Totais</h2>
-        <Line label="Itens (valor em uso)" value={money(t?.subtotal)} />
+        <h2 className="font-semibold">Resumo</h2>
+        <p className="text-sm text-muted-foreground truncate mb-1">{customer}</p>
+        <Line label="Prazo" value={draft.workDays ? `${draft.workDays} dia(s) útil(eis)` : "—"} muted />
+        <Line label="Válida até" value={draft.validUntil ? dateBr(draft.validUntil) : "sem validade"} muted />
+        <div className="border-t my-1" />
+        <Line label="Itens" value={money(t?.subtotal)} />
         {t && Math.abs(t.subtotal - t.suggested) > 0.005 && <Line label="Itens pelo sugerido" value={money(t.suggested)} muted />}
         <Line label={`Imprevisibilidade (${percent(draft.contingencyRate, 0)})`} value={money(t?.contingency)} />
         <div className="flex items-center justify-between gap-3 py-1 text-sm">
@@ -436,6 +458,7 @@ function TotalsPanel({ calc, draft, readOnly, canSeeCosts, stale, onDiscount }: 
           <p className="text-xs text-muted-foreground mt-2">{calc?.tax.name}{calc?.costBase ? ` · ${calc.costBase}` : ""}</p>
         </div>
       )}
+      </div>
     </aside>
   );
 }

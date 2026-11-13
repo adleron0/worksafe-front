@@ -8,6 +8,12 @@ import { commercialApi } from "./commercial";
 export type ProposalKind = "servico" | "treinamento" | "misto";
 export type ProposalStatus = "rascunho" | "enviada" | "visualizada" | "aceita" | "recusada" | "expirada" | "cancelada" | "substituida";
 export type ItemType = "mao_de_obra" | "locacao" | "material" | "treinamento" | "avulso";
+/** Marcação sobre a imagem, em percentual da largura e da altura. */
+export type Annotation =
+  | { type: "circulo"; x: number; y: number; w: number; h: number; label: string }
+  | { type: "seta"; x1: number; y1: number; x2: number; y2: number; label: string };
+export interface ProposalImage { url: string; title: string; description: string; annotations: Annotation[] }
+
 export type ItemsMode = "detalhado" | "por_secao" | "global";
 export type DueRule = "data_fixa" | "dias_apos_aceite" | "dias_apos_nf" | "dias_apos_conclusao";
 
@@ -30,6 +36,7 @@ export interface ProposalDraft {
   contingencyRate: number; commissionRate?: number; commissionBase?: "faturado" | "lucro"; commissionInPrice?: boolean;
   taxRegime: "tradicional" | "hibrido" | null; discount: number; internalNotes: string | null;
   templateId: number | null; documentBody: string | null; itemsMode: ItemsMode; termIds: number[];
+  images: ProposalImage[];
   sections: DraftSection[]; installments: DraftInstallment[];
 }
 
@@ -103,6 +110,7 @@ export interface ProposalOptions {
   courses: Array<{ id: number; name: string; hoursDuration: number | null; classPrice: number | null; includedStudents: number | null; studentPrice: number | null }>;
   sellers: Array<{ id: number; name: string }>;
   templates: TemplateOption[]; terms: TermOption[]; variables: VariableOption[];
+  brandReady?: boolean;
 }
 
 export const PROPOSALS_KEY = "commercialProposals";

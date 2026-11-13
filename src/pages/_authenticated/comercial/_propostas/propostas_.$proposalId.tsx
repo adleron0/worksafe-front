@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
@@ -16,9 +16,18 @@ import { COMMERCIAL_ABILITY, NumField, commercialApi, dateBr, errorMessage, mone
 import {
   CustomerOption, DraftSection, KIND_LABEL, PROPOSALS_KEY, PROPOSAL_KEY, Proposal, ProposalCalc, ProposalDraft, ProposalOptions, STATUS_LABEL, StatusBadge,
 } from "../-shared/proposals";
-import ProposalDocumentTab from "./-ProposalDocumentTab";
+import ProposalDocumentTab, { LinkPanel, ProposalHistory } from "./-ProposalDocumentTab";
 import ProposalItemsTab from "./-ProposalItemsTab";
 import { ProposalDataTab, ProposalPaymentTab } from "./-ProposalTabs";
+
+type StepKey = "dados" | "itens" | "pagamento" | "documento" | "envio";
+const STEPS: Array<{ key: StepKey; title: string; hint: string; heading: string; description: string }> = [
+  { key: "dados", title: "Cliente", hint: "Para quem e o quê", heading: "Para quem é a proposta", description: "Cliente, contato, título e prazos. É o que aparece na capa e no resumo do documento." },
+  { key: "itens", title: "Itens e valores", hint: "O que será entregue", heading: "O que será entregue e quanto custa", description: "Adicione os itens de cada seção. O sistema sugere o valor; você decide o valor final." },
+  { key: "pagamento", title: "Pagamento", hint: "Parcelas e vencimentos", heading: "Como o cliente vai pagar", description: "Use um atalho ou monte as parcelas. Elas viram as contas a receber quando houver contrato." },
+  { key: "documento", title: "Documento", hint: "Texto e imagens", heading: "O documento que o cliente recebe", description: "Já sai pronto com o modelo padrão. Aqui você acrescenta imagens e, se quiser, ajusta o texto." },
+  { key: "envio", title: "Revisar e enviar", hint: "Conferir e mandar o link", heading: "Revisão e envio", description: "Confira o que falta, veja como o cliente vai ver e envie." },
+];
 
 export const Route = createFileRoute("/_authenticated/comercial/_propostas/propostas_/$proposalId")({
   component: ProposalEditorPage,
@@ -48,7 +57,8 @@ function ProposalEditorPage() {
   const [calc, setCalc] = useState<ProposalCalc | null>(null);
   const [calcError, setCalcError] = useState("");
   const [customer, setCustomer] = useState<CustomerOption | null>(null);
-  const [tab, setTab] = useState("dados");
+  const [tab, setTab] = useState<StepKey>("dados");
+  const [landed, setLanded] = useState(false);
   const [decision, setDecision] = useState<"aceita" | "recusada" | null>(null);
 
   const { data: proposal, isLoading, error } = useQuery({
@@ -73,6 +83,9 @@ function ProposalEditorPage() {
     setCalc(proposal.calc);
     setCalcError("");
     setCustomer(proposal.customer);
+    // proposta que já saiu do rascunho abre direto no acompanhamento
+    if (!landed) { setLanded(true); if (proposal.status !== "rascunho") setTab("envio"); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [proposal]);
 
   const payload = useMemo(() => (draft ? payloadOf(draft) : null), [draft]);
@@ -114,10 +127,14 @@ function ProposalEditorPage() {
   const fail = (title: string) => (err: unknown) => toast({ title, description: errorMessage(err), variant: "destructive" });
 
   const { mutate: save, isPending: saving } = useMutation({
-    mutationFn: (extra: { refreshBase?: boolean } | void) => commercialApi.put<Proposal>(`proposals/${proposalId}`, { ...payload, ...(extra ?? {}) }),
+    mutationFn: (extra: { refreshBase?: boolean; goTo?: StepKey; openClientView?: boolean } | void) =>
+      commercialApi.put<Proposal>(`proposals/${proposalId}`, { ...payload, ...(extra?.refreshBase ? { refreshBase: true } : {}) }),
     onSuccess: (result, extra) => {
       apply(result);
-      toast({ title: extra && extra.refreshBase ? "Recalculada com a base atual" : "Proposta salva", variant: "success" });
+      if (extra?.goTo) setTab(extra.goTo);
+      if (extra?.openClientView) window.open(`/proposta/rascunho/${proposalId}`, "_blank", "noopener");
+      // avançar de passo já salva: não precisa avisar a cada clique
+      if (!extra?.goTo && !extra?.openClientView) toast({ title: extra?.refreshBase ? "Recalculada com a base atual" : "Proposta salva", variant: "success" });
     },
     onError: fail("Não foi possível salvar"),
   });
@@ -125,7 +142,7 @@ function ProposalEditorPage() {
     mutationFn: (body: { status: string; note?: string }) => commercialApi.patch<Proposal>(`proposals/status/${proposalId}`, body),
     onSuccess: (result) => {
       apply(result); setDecision(null);
-      if (result.status === "enviada") { setTab("documento"); toast({ title: "Proposta enviada", description: "O link do cliente está na aba Documento.", variant: "success" }); }
+      if (result.status === "enviada") { setTab("envio"); toast({ title: "Proposta enviada", description: "Copie o link e mande para o cliente.", variant: "success" }); }
       else toast({ title: `Proposta ${STATUS_LABEL[result.status].toLowerCase()}`, variant: "success" });
     },
     onError: fail("Não foi possível mudar a situação"),
@@ -150,6 +167,31 @@ function ProposalEditorPage() {
   const sent = proposal.status === "enviada" || proposal.status === "visualizada";
   const itemCount = draft.sections.reduce((sum, section) => sum + section.items.length, 0);
 
+  // O que falta em cada passo: alimenta o indicador do passo a passo e a revisão final.
+  const total = calc?.totals.total ?? 0;
+  const paymentDiff = Math.abs(calc?.installmentsDiff ?? 0);
+  const checks: Array<{ step: StepKey; ok: boolean; label: string; fix: string }> = [
+    { step: "dados", ok: draft.title.trim().length >= 2, label: "Cliente e título da proposta", fix: "Informe o título da proposta" },
+    { step: "dados", ok: Boolean(draft.validUntil), label: "Validade da proposta", fix: "Defina até quando a proposta vale (dá urgência ao cliente e evita preço antigo)" },
+    { step: "itens", ok: itemCount > 0 && total > 0, label: "Itens e valores", fix: itemCount === 0 ? "Adicione ao menos um item" : "O total está zerado: informe os valores" },
+    { step: "pagamento", ok: draft.installments.length > 0 && paymentDiff < 0.005, label: "Condições de pagamento",
+      fix: draft.installments.length === 0 ? "Defina as parcelas" : "As parcelas não fecham o total da proposta" },
+  ];
+  // a validade é recomendação; o resto impede o envio
+  const blocking = checks.filter((check) => !check.ok && check.label !== "Validade da proposta");
+  const stepState = (key: StepKey): "ok" | "attention" => (checks.some((check) => check.step === key && !check.ok) ? "attention" : "ok");
+  const stepIndex = STEPS.findIndex((item) => item.key === tab);
+  const goTo = (key: StepKey) => {
+    if (key === tab) return;
+    // trocar de passo salva o rascunho (quando dá para calcular): nada se perde no caminho
+    if (!readOnly && dirty && !calcError) save({ goTo: key });
+    else setTab(key);
+  };
+  const openClientView = () => {
+    if (!readOnly && dirty && !calcError) save({ openClientView: true });
+    else window.open(`/proposta/rascunho/${proposalId}`, "_blank", "noopener");
+  };
+
   return (
     <>
       <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-3">
@@ -159,44 +201,78 @@ function ProposalEditorPage() {
             <h1 className="text-xl font-bold tabular-nums">{proposal.number}</h1>
             <StatusBadge status={proposal.status} expired={proposal.expired} />
             {proposal.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Inativa</span>}
+            {!readOnly && <span className="text-xs text-muted-foreground">{saving ? "Salvando..." : dirty ? "Alterações não salvas" : "Tudo salvo"}</span>}
           </div>
           <p className="text-sm text-muted-foreground truncate">{customer.name} · {draft.title} · {KIND_LABEL[draft.kind]}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {!readOnly && dirty && <Button type="button" variant="ghost" onClick={() => { const next = toDraft(proposal); setDraft(next); setCalc(proposal.calc); setCalcError(""); setCustomer(proposal.customer); }}>Descartar</Button>}
+          <Button type="button" variant="outline" onClick={openClientView} disabled={saving}><Icon name="eye" className="w-4 h-4 mr-1" /> Ver como o cliente</Button>
           {!readOnly && (
-            <Button type="button" onClick={() => save()} disabled={!dirty || saving || Boolean(calcError)}>
-              <Icon name="save" className="w-4 h-4 mr-1" /> {saving ? "Salvando..." : "Salvar"}
+            <Button type="button" variant="outline" onClick={() => save()} disabled={!dirty || saving || Boolean(calcError)}>
+              <Icon name="save" className="w-4 h-4 mr-1" /> Salvar
             </Button>
-          )}
-          {!readOnly && !dirty && (
-            <ConfirmDialog title={`Enviar ${proposal.number}?`}
-              description="O documento é congelado e a proposta ganha um link para o cliente ler e aceitar. Depois de enviada ela não é mais editada: para mudar algo, cria-se uma revisão."
-              onConfirm={() => setStatus({ status: "enviada" })}>
-              <Button type="button" variant="outline" disabled={changing}><Icon name="send" className="w-4 h-4 mr-1" /> Enviar</Button>
-            </ConfirmDialog>
           )}
           {sent && canUpdate && <>
             <Button type="button" onClick={() => setDecision("aceita")}><Icon name="check" className="w-4 h-4 mr-1" /> Registrar aceite</Button>
             <Button type="button" variant="outline" onClick={() => setDecision("recusada")}>Registrar recusa</Button>
           </>}
-          {canCreate && (sent || proposal.status === "recusada") && (
+          {canCreate && (sent || proposal.status === "recusada" || proposal.status === "expirada") && (
             <Button type="button" variant="outline" disabled={copying} onClick={() => copy("revise")}><Icon name="git-branch" className="w-4 h-4 mr-1" /> Criar revisão</Button>
           )}
-          {canCreate && <Button type="button" variant="ghost" disabled={copying || dirty} onClick={() => copy("duplicate")}><Icon name="copy" className="w-4 h-4 mr-1" /> Duplicar</Button>}
-          {canUpdate && (proposal.status === "rascunho" || sent) && !proposal.inactiveAt && (
-            <ConfirmDialog title={`Cancelar ${proposal.number}?`} description="A proposta deixa de valer. Ela continua no histórico." onConfirm={() => setStatus({ status: "cancelada" })}>
-              <Button type="button" variant="ghost">Cancelar proposta</Button>
-            </ConfirmDialog>
-          )}
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="ghost" aria-label="Mais ações"><Icon name="ellipsis" className="w-4 h-4" /></Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {!readOnly && dirty && (
+                <DropdownMenuItem className="gap-2" onSelect={() => { const next = toDraft(proposal); setDraft(next); setCalc(proposal.calc); setCalcError(""); setCustomer(proposal.customer); }}>
+                  <Icon name="undo-2" className="w-3 h-3" /> Descartar alterações
+                </DropdownMenuItem>
+              )}
+              {canCreate && <DropdownMenuItem className="gap-2" disabled={copying || dirty} onSelect={() => copy("duplicate")}><Icon name="copy" className="w-3 h-3" /> Duplicar proposta</DropdownMenuItem>}
+              {canUpdate && (proposal.status === "rascunho" || sent) && !proposal.inactiveAt && (
+                <DropdownMenuItem className="p-0" onSelect={(event) => event.preventDefault()}>
+                  <ConfirmDialog title={`Cancelar ${proposal.number}?`} description="A proposta deixa de valer. Ela continua no histórico." onConfirm={() => setStatus({ status: "cancelada" })}
+                    titleBttn="Cancelar proposta" iconBttn="ban" />
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      <div className="grid gap-2 my-4">
+      {/* Passo a passo: onde estou, o que já está certo e o que falta */}
+      <nav aria-label="Passos da proposta" className="my-4 overflow-x-auto">
+        <ol className="flex items-stretch min-w-max rounded-lg border bg-background">
+          {STEPS.map((item, index) => {
+            const current = item.key === tab;
+            const state = item.key === "envio" ? (blocking.length ? "attention" : "ok") : item.key === "documento" ? "ok" : stepState(item.key);
+            const visited = index < stepIndex || proposal.status !== "rascunho";
+            return (
+              <li key={item.key} className="flex-1 min-w-[150px]">
+                <button type="button" onClick={() => goTo(item.key)} aria-current={current ? "step" : undefined}
+                  className={cn("w-full h-full flex items-center gap-3 px-4 py-3 text-left border-b-4 transition-colors",
+                    current ? "border-primary bg-primary/5" : "border-transparent hover:bg-muted/50", index > 0 && "border-l")}>
+                  <span className={cn("shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                    current ? "bg-primary text-inverse-foreground" : visited && state === "ok" ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200"
+                      : visited && state === "attention" ? "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200" : "bg-muted text-muted-foreground")}>
+                    {!current && visited && state === "ok" ? <Icon name="check" className="w-4 h-4" /> : !current && visited && state === "attention" ? "!" : index + 1}
+                  </span>
+                  <span className="min-w-0">
+                    <span className={cn("block text-sm font-semibold", !current && "text-muted-foreground")}>{proposal.status !== "rascunho" && item.key === "envio" ? "Acompanhar" : item.title}</span>
+                    <span className="block text-xs text-muted-foreground truncate">{item.hint}</span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+
+      <div className="grid gap-2 mb-4">
         {proposal.status !== "rascunho" && (
           <p className="rounded-md border px-3 py-2 text-sm text-muted-foreground">
             {proposal.status === "substituida" ? "Esta versão foi substituída por uma revisão mais nova." : `Proposta ${STATUS_LABEL[proposal.status].toLowerCase()}: somente leitura.`}
-            {(proposal.status === "enviada" || proposal.status === "visualizada") && " O link do cliente está na aba Documento."}
             {proposal.sentAt && ` Enviada em ${dateBr(proposal.sentAt)}.`}
             {proposal.decidedAt && ` Decisão em ${dateBr(proposal.decidedAt)}.`}
             {proposal.statusNote && ` Observação: ${proposal.statusNote}`}
@@ -225,26 +301,79 @@ function ProposalEditorPage() {
       </div>
 
       <div className="grid xl:grid-cols-[minmax(0,1fr)_320px] gap-4 items-start">
-        <Tabs value={tab} onValueChange={setTab} className="min-w-0">
-          <TabsList>
-            <TabsTrigger value="dados">1. Dados</TabsTrigger>
-            <TabsTrigger value="itens">2. Itens <span className="ml-1 opacity-70 tabular-nums">{itemCount}</span></TabsTrigger>
-            <TabsTrigger value="pagamento">3. Pagamento <span className="ml-1 opacity-70 tabular-nums">{draft.installments.length}</span></TabsTrigger>
-            <TabsTrigger value="documento">4. Documento</TabsTrigger>
-          </TabsList>
-          <TabsContent value="dados" className="mt-4">
-            <ProposalDataTab draft={draft} setDraft={setDraftSafe} options={options} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} customer={customer} onCustomer={setCustomer} />
-          </TabsContent>
-          <TabsContent value="itens" className="mt-4">
-            <ProposalItemsTab draft={draft} setSections={setSections} calc={calc ?? undefined} options={options} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} />
-          </TabsContent>
-          <TabsContent value="pagamento" className="mt-4">
-            <ProposalPaymentTab draft={draft} setDraft={setDraftSafe} calc={calc ?? undefined} readOnly={readOnly} />
-          </TabsContent>
-          <TabsContent value="documento" className="mt-4">
-            <ProposalDocumentTab proposal={proposal} draft={draft} setDraft={setDraftSafe} options={options} readOnly={readOnly} payload={payload} />
-          </TabsContent>
-        </Tabs>
+        <div className="min-w-0 grid gap-4">
+          <div>
+            <h2 className="text-lg font-semibold">{STEPS[stepIndex].heading}</h2>
+            <p className="text-sm text-muted-foreground">{STEPS[stepIndex].description}</p>
+          </div>
+
+          {tab === "dados" && <ProposalDataTab draft={draft} setDraft={setDraftSafe} options={options} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} customer={customer} onCustomer={setCustomer} />}
+          {tab === "itens" && <ProposalItemsTab draft={draft} setSections={setSections} calc={calc ?? undefined} options={options} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} />}
+          {tab === "pagamento" && <ProposalPaymentTab draft={draft} setDraft={setDraftSafe} calc={calc ?? undefined} readOnly={readOnly} />}
+          {tab === "documento" && <ProposalDocumentTab proposal={proposal} draft={draft} setDraft={setDraftSafe} options={options} readOnly={readOnly} payload={payload} />}
+          {tab === "envio" && (
+            <div className="grid gap-4">
+              {proposal.publicKey && <LinkPanel proposal={proposal} />}
+              {proposal.status === "rascunho" && (
+                <section className="rounded-lg border p-4 grid gap-3">
+                  <h3 className="font-semibold">Antes de enviar</h3>
+                  <ul className="grid gap-2">
+                    {checks.map((check) => (
+                      <li key={check.label} className="flex items-start gap-3 text-sm">
+                        <span className={cn("mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold",
+                          check.ok ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200" : "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200")}>
+                          {check.ok ? <Icon name="check" className="w-3 h-3" /> : "!"}
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="font-medium">{check.label}</span>
+                          {!check.ok && <span className="block text-muted-foreground">{check.fix}</span>}
+                        </span>
+                        {!check.ok && <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => goTo(check.step)}>Resolver</Button>}
+                      </li>
+                    ))}
+                    <li className="flex items-start gap-3 text-sm">
+                      <span className="mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200"><Icon name="check" className="w-3 h-3" /></span>
+                      <span className="flex-1"><span className="font-medium">Documento</span>
+                        <span className="block text-muted-foreground">{draft.documentBody ? "Texto próprio desta proposta" : "Modelo padrão, com a sua identidade"}{draft.images.length ? ` · ${draft.images.length} imagem(ns)` : ""}</span></span>
+                    </li>
+                  </ul>
+                  <div className="rounded-md bg-muted/50 p-3 text-sm grid sm:grid-cols-3 gap-2">
+                    <div><p className="text-xs text-muted-foreground">Cliente</p><p className="font-medium truncate">{customer.name}</p></div>
+                    <div><p className="text-xs text-muted-foreground">Total da proposta</p><p className="font-semibold tabular-nums">{money(total)}</p></div>
+                    <div><p className="text-xs text-muted-foreground">Válida até</p><p className="font-medium">{draft.validUntil ? dateBr(draft.validUntil) : "sem validade"}</p></div>
+                  </div>
+                  {!readOnly && (
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button type="button" variant="outline" onClick={openClientView} disabled={saving}><Icon name="eye" className="w-4 h-4 mr-1" /> Ver como o cliente vai ver</Button>
+                      <ConfirmDialog title={`Enviar ${proposal.number}?`}
+                        description="O documento é congelado e a proposta ganha um link para o cliente ler e aceitar. Depois de enviada ela não é mais editada: para mudar algo, cria-se uma revisão."
+                        onConfirm={() => setStatus({ status: "enviada" })}>
+                        <Button type="button" disabled={changing || saving || dirty || blocking.length > 0}><Icon name="send" className="w-4 h-4 mr-1" /> Enviar proposta</Button>
+                      </ConfirmDialog>
+                    </div>
+                  )}
+                  {!readOnly && (dirty || blocking.length > 0) && (
+                    <p className="text-xs text-muted-foreground">
+                      {blocking.length > 0 ? "Resolva os itens marcados para liberar o envio." : "Salve as alterações para liberar o envio."}
+                    </p>
+                  )}
+                </section>
+              )}
+              <ProposalHistory proposal={proposal} />
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-2 border-t pt-4">
+            <Button type="button" variant="ghost" disabled={stepIndex === 0 || saving} onClick={() => goTo(STEPS[stepIndex - 1].key)}>
+              <Icon name="arrow-left" className="w-4 h-4 mr-1" /> Voltar
+            </Button>
+            {stepIndex < STEPS.length - 1 && (
+              <Button type="button" disabled={saving} onClick={() => goTo(STEPS[stepIndex + 1].key)}>
+                {!readOnly && dirty ? "Salvar e continuar" : "Continuar"} <Icon name="arrow-right" className="w-4 h-4 ml-1" />
+              </Button>
+            )}
+          </div>
+        </div>
 
         <TotalsPanel calc={calc} draft={draft} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} stale={dirty && Boolean(calcError)}
           onDiscount={(discount) => setDraftSafe((d) => ({ ...d, discount }))} />

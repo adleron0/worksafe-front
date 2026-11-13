@@ -49,7 +49,7 @@ export const items = [
         path: "/comercial/cupons",
       },
       {
-        title: "Modelos e termos",
+        title: "Identidade e modelos",
         ability: "comercial",
         icon: "file-pen-line",
         path: "/comercial/modelos",

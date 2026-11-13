@@ -20,6 +20,14 @@ export function DocumentPaper({ html, className }: { html: string; className?: s
         .proposal-doc img { max-width:100%; height:auto; }
         .proposal-doc table { max-width:100%; }
         .proposal-doc blockquote { border-left:3px solid #ccc; padding-left:.8em; color:#444; margin:0 0 .6em; }
+        /* documentos com identidade: títulos na cor da marca, com um traço ao lado */
+        .proposal-doc .pd-root { --brand:#16A34A; }
+        .proposal-doc .pd-root > h2 { font-size:1.25em; margin:1.8em 0 .6em; padding-left:.6em; border-left:5px solid var(--brand); line-height:1.25; }
+        .proposal-doc .pd-root > h1 { color:var(--brand); }
+        .proposal-doc .pd-root > h3 { margin:1.1em 0 .25em; }
+        .proposal-doc .pd-root th { border-bottom-color:var(--brand) !important; }
+        .proposal-doc figure { margin:0; }
+        .proposal-doc svg { overflow:visible; }
         .proposal-doc .ql-align-center { text-align:center; } .proposal-doc .ql-align-right { text-align:right; } .proposal-doc .ql-align-justify { text-align:justify; }
         .proposal-doc .ql-size-small { font-size:.8em; } .proposal-doc .ql-size-large { font-size:1.4em; } .proposal-doc .ql-size-huge { font-size:2em; }
         .proposal-doc .ql-indent-1 { padding-left:2em; } .proposal-doc .ql-indent-2 { padding-left:4em; }
@@ -29,7 +37,7 @@ export function DocumentPaper({ html, className }: { html: string; className?: s
           .proposal-doc h2, .proposal-doc h3 { page-break-after:avoid; }
         }
       `}</style>
-      <div className={cn("proposal-doc rounded-md border p-6 sm:p-10 overflow-x-auto", className)} dangerouslySetInnerHTML={{ __html: html }} />
+      <div className={cn("proposal-doc rounded-md border p-5 sm:p-10 overflow-x-auto", className)} dangerouslySetInnerHTML={{ __html: html }} />
     </>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import RichTextEditor from "@/components/general-components/RichTextEditor";
 import Select from "@/components/general-components/Select";
 import { commercialApi, errorMessage } from "../-shared/commercial";
 import { DocumentPaper } from "../-shared/document";
+import ProposalImages from "./-ProposalImages";
 import { EVENT_LABEL, ITEMS_MODE_OPTIONS, ItemsMode, Proposal, ProposalDraft, ProposalOptions, VariableOption } from "../-shared/proposals";
 
 interface Props {
@@ -76,8 +78,6 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
 
   return (
     <div className="grid gap-4">
-      {proposal.publicKey && <LinkPanel proposal={proposal} />}
-
       <section className="rounded-lg border p-4 grid gap-3">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div>
@@ -85,13 +85,20 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
             <p className="text-xs text-muted-foreground max-w-2xl">
               {proposal.documentFrozen
                 ? "Este é o documento que foi enviado. Ele ficou congelado no envio: é exatamente o que o cliente lê e aceita."
-                : "O modelo é copiado para esta proposta e pode ser editado à vontade, sem mudar o modelo. Ao enviar, o documento é congelado."}
+                : "A proposta já sai pronta com o modelo padrão, a sua logo e a sua cor. Só mexa aqui se quiser trocar o modelo, os termos ou reescrever o texto desta proposta."}
             </p>
           </div>
           <Button type="button" variant="outline" disabled={previewing} onClick={() => loadPreview()} className="shrink-0">
             <Icon name="eye" className="w-4 h-4 mr-1" /> {previewing ? "Montando..." : proposal.documentFrozen ? "Ver o documento enviado" : "Pré-visualizar"}
           </Button>
         </div>
+
+        {!readOnly && options.brandReady === false && (
+          <p className="rounded-md border border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200 px-3 py-2 text-sm">
+            A seção "Por que nós" ainda está vazia e não aparece na proposta. Preencha quem somos, números e diferenciais em{" "}
+            <Link to="/comercial/modelos" className="underline font-medium">Comercial → Identidade e modelos</Link>: é o que dá confiança ao cliente.
+          </p>
+        )}
 
         {!readOnly && (
           <div className="grid md:grid-cols-3 gap-3">
@@ -137,29 +144,7 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
         )}
       </section>
 
-      {proposal.events.length > 0 && (
-        <section className="rounded-lg border p-4">
-          <h3 className="font-semibold">Histórico</h3>
-          <ol className="mt-2 grid gap-2">
-            {proposal.events.map((event) => (
-              <li key={event.id} className="text-sm border-l-2 pl-3">
-                <p><b>{EVENT_LABEL[event.type] ?? event.type}</b> <span className="text-muted-foreground">· {dateTime(event.at)}</span></p>
-                {(event.name || event.email) && (
-                  <p className="text-muted-foreground">
-                    {[event.name, event.role, event.cpf ? `CPF ${event.cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4")}` : "", event.email].filter(Boolean).join(" · ")}
-                  </p>
-                )}
-                {event.note && <p className="text-muted-foreground">{event.note}</p>}
-                {event.type === "aceita" && event.ip && (
-                  <p className="text-xs text-muted-foreground break-all">
-                    Evidências: IP {event.ip} · {event.codeVerified ? "código confirmado por e-mail" : "sem confirmação por código"} · documento {event.documentHash?.slice(0, 16)}… · {event.userAgent}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
+      <ProposalImages images={draft.images} setImages={(updater) => setDraft((d) => ({ ...d, images: updater(d.images) }))} readOnly={readOnly} />
 
       <Dialog open={preview !== null} onOpenChange={(open) => { if (!open) setPreview(null); }}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -176,8 +161,36 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
   );
 }
 
+/** Trilha da proposta: envio, abertura pelo cliente, aceite com as evidências. */
+export function ProposalHistory({ proposal }: { proposal: Proposal }) {
+  if (!proposal.events.length) return null;
+  return (
+        <section className="rounded-lg border p-4">
+        <h3 className="font-semibold">Histórico</h3>
+        <ol className="mt-2 grid gap-2">
+          {proposal.events.map((event) => (
+            <li key={event.id} className="text-sm border-l-2 pl-3">
+              <p><b>{EVENT_LABEL[event.type] ?? event.type}</b> <span className="text-muted-foreground">· {dateTime(event.at)}</span></p>
+              {(event.name || event.email) && (
+                <p className="text-muted-foreground">
+                  {[event.name, event.role, event.cpf ? `CPF ${event.cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4")}` : "", event.email].filter(Boolean).join(" · ")}
+                </p>
+              )}
+              {event.note && <p className="text-muted-foreground">{event.note}</p>}
+              {event.type === "aceita" && event.ip && (
+                <p className="text-xs text-muted-foreground break-all">
+                  Evidências: IP {event.ip} · {event.codeVerified ? "código confirmado por e-mail" : "sem confirmação por código"} · documento {event.documentHash?.slice(0, 16)}… · {event.userAgent}
+                </p>
+              )}
+            </li>
+          ))}
+        </ol>
+      </section>
+  );
+}
+
 /** Link do cliente: copiar, abrir e (com e-mail configurado) enviar. */
-function LinkPanel({ proposal }: { proposal: Proposal }) {
+export function LinkPanel({ proposal }: { proposal: Proposal }) {
   const [emailing, setEmailing] = useState(false);
   const url = proposal.publicUrl ?? `${window.location.origin}/proposta/${proposal.publicKey}`;
   const copy = async () => {

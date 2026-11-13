@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, errorMessage } from "../-shared/commercial";
 import { ITEMS_MODE_OPTIONS, ItemsMode, KIND_LABEL, ProposalKind, VariableOption } from "../-shared/proposals";
 import { VariablePalette } from "../_propostas/-ProposalDocumentTab";
+import BrandTab from "./-BrandTab";
 
 export const Route = createFileRoute("/_authenticated/comercial/_modelos/modelos")({
   component: TemplatesPage,
@@ -84,9 +85,9 @@ function TemplatesPage() {
     <>
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">Modelos e termos</h1>
+          <h1 className="text-xl font-bold">Identidade, modelos e termos</h1>
           <p className="text-sm text-muted-foreground max-w-2xl">
-            O modelo é o texto-base da proposta; os termos são os textos jurídicos que entram nela. Na proposta, tudo é copiado e pode ser editado sem mexer aqui.
+            A identidade dá cara à proposta, o modelo é o texto-base e os termos são os textos jurídicos. Na proposta, tudo é copiado e pode ser editado sem mexer aqui.
           </p>
         </div>
         <label className="flex items-center gap-2 text-sm cursor-pointer shrink-0">
@@ -94,11 +95,14 @@ function TemplatesPage() {
         </label>
       </div>
 
-      <Tabs defaultValue="modelos" className="mt-4">
+      <Tabs defaultValue="identidade" className="mt-4">
         <TabsList>
+          <TabsTrigger value="identidade">Identidade</TabsTrigger>
           <TabsTrigger value="modelos">Modelos de proposta</TabsTrigger>
           <TabsTrigger value="termos">Termos jurídicos</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="identidade" className="mt-4"><BrandTab canUpdate={canUpdate} /></TabsContent>
 
         <TabsContent value="modelos" className="mt-4 grid gap-3">
           {canCreate && <div><Button type="button" onClick={() => setTemplateForm({})}><Icon name="plus" className="w-4 h-4 mr-1" /> Novo modelo</Button></div>}

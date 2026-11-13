@@ -26,6 +26,14 @@ export function DocumentPaper({ html, className }: { html: string; className?: s
         .proposal-doc .pd-root > h1 { color:var(--brand); }
         .proposal-doc .pd-root > h3 { margin:1.1em 0 .25em; }
         .proposal-doc .pd-root th { border-bottom-color:var(--brand) !important; }
+        /* modelo de orçamento: títulos sóbrios, sem cor nem traço, e texto um pouco menor */
+        .proposal-doc .pd-classic { font-size:.95em; line-height:1.45; }
+        .proposal-doc .pd-classic > h2 { font-size:1.25em; font-weight:400; letter-spacing:.02em; margin:1.5em 0 .5em; padding-left:0; border-left:0; }
+        .proposal-doc .pd-classic > p { font-size:.95em; }
+        .proposal-doc .pd-classic th { border-bottom:0 !important; }
+        .proposal-doc .pd-classic [data-block="termo"] p { margin:0 0 .45em; }
+        .proposal-doc .pd-classic [data-block="termo"] ul { margin:0 0 .45em 1.2em; }
+        .proposal-doc .pd-classic [data-block="termo"] li { margin:0 0 .25em; }
         .proposal-doc figure { margin:0; }
         .proposal-doc svg { overflow:visible; }
         .proposal-doc .ql-align-center { text-align:center; } .proposal-doc .ql-align-right { text-align:right; } .proposal-doc .ql-align-justify { text-align:justify; }

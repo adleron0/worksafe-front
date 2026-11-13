@@ -17,6 +17,7 @@ interface Brand {
   differentials: Array<{ title: string; text: string }>;
   testimonials: Array<{ quote: string; author: string; company: string }>;
   phone: string; email: string; website: string; address: string;
+  registrations: string; payment: string;
 }
 const KEY = "commercialBrand";
 
@@ -122,6 +123,22 @@ export default function BrandTab({ canUpdate }: { canUpdate: boolean }) {
           <p className="text-xs text-muted-foreground">O telefone também vira o botão "Tirar dúvida" (WhatsApp) na página que o cliente abre.</p>
         </Card>
       </div>
+
+      <Card title="Dados do orçamento" description="Aparecem no modelo de orçamento: as inscrições no cabeçalho, ao lado do CNPJ, e os dados bancários depois dos vencimentos.">
+        <div className="grid lg:grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="brandRegistrations" className="text-xs">Inscrições (uma por linha)</Label>
+            <Textarea id="brandRegistrations" className="mt-1" rows={4} maxLength={300} disabled={!canUpdate} value={form.registrations ?? ""} onChange={(event) => set("registrations", event.target.value)}
+              placeholder={"Inscrição Estadual: 0000000-00\nInscrição Municipal: 0000"} />
+          </div>
+          <div>
+            <Label htmlFor="brandPayment" className="text-xs">Dados bancários</Label>
+            <Textarea id="brandPayment" className="mt-1" rows={4} maxLength={1000} disabled={!canUpdate} value={form.payment ?? ""} onChange={(event) => set("payment", event.target.value)}
+              placeholder={"Banco: ...\nAgência: ...\nConta corrente: ...\nChave PIX: ...\nBeneficiário: ..."} />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">Em branco, o bloco de dados bancários não aparece na proposta. O endereço do cabeçalho vem do cadastro da empresa.</p>
+      </Card>
 
       <Card title="Quem somos" description="Um parágrafo curto sobre a empresa. Fale do que o cliente ganha, não só da sua história.">
         <Textarea value={form.about} rows={4} maxLength={2000} disabled={!canUpdate} aria-label="Quem somos" onChange={(event) => set("about", event.target.value)}

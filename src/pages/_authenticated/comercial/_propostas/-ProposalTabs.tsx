@@ -189,6 +189,7 @@ export function ProposalPaymentTab({ draft, setDraft, calc, readOnly }: { draft:
   const setList = (updater: (list: DraftInstallment[]) => DraftInstallment[]) => setDraft((d) => ({ ...d, installments: updater(d.installments) }));
   const update = (uid: string, patch: Partial<DraftInstallment>) => setList((list) => list.map((i) => (i.uid === uid ? { ...i, ...patch } : i)));
   const diff = calc?.installmentsDiff ?? 0;
+  const [nfDays, setNfDays] = useState("30");
   const replace = (list: DraftInstallment[]) => { if (!draft.installments.length || window.confirm("Substituir as parcelas atuais?")) setList(() => list); };
 
   return (
@@ -207,6 +208,19 @@ export function ProposalPaymentTab({ draft, setDraft, calc, readOnly }: { draft:
                 installment({ percent: 0.5, dueRule: "dias_apos_conclusao", dueDays: 0, description: "Na conclusão" }),
               ])}>50% + 50%</Button>
               <Button type="button" variant="outline" size="sm" onClick={() => replace(split(3))}>3 parcelas</Button>
+              <Button type="button" variant="outline" size="sm"
+                onClick={() => replace([installment({ percent: 1, dueRule: "dias_apos_conclusao", dueDays: 0, description: "Na conclusão do serviço" })])}>No fim da obra</Button>
+              {/* à vista depois da nota: o operador só informa quantos dias */}
+              <div className="inline-flex items-center h-8 rounded-md border bg-background shadow-xs text-xs font-medium overflow-hidden">
+                <span className="pl-3 pr-1.5">NF +</span>
+                <ShadInput value={nfDays} inputMode="numeric" maxLength={3} aria-label="Dias após a nota fiscal" className="h-6 w-11 px-1 text-center text-xs"
+                  onChange={(event) => setNfDays(event.target.value.replace(/\D/g, ""))} />
+                <span className="px-1.5">dias</span>
+                <button type="button" className="h-full px-2.5 border-l hover:bg-accent" aria-label="Aplicar pagamento após a nota fiscal"
+                  onClick={() => { const days = Number(nfDays) || 0; replace([installment({ percent: 1, dueRule: "dias_apos_nf", dueDays: days, description: days ? `${days} dias após a nota fiscal` : "Na emissão da nota fiscal" })]); }}>
+                  Aplicar
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -1,3 +1,4 @@
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 import api from "@/services/api";
 import { Input as ShadInput } from "@/components/ui/input";
@@ -198,5 +199,16 @@ export function ResultRow({ label, value, strong }: { label: string; value: stri
       <span className={strong ? "" : "text-muted-foreground"}>{label}</span>
       <span className="tabular-nums">{value}</span>
     </div>
+  );
+}
+
+/** Dica ao passar o mouse, com o balão do sistema (nunca o "title" do navegador). */
+export function Tip({ text, children }: { text?: string; children: React.ReactElement }) {
+  if (!text) return children;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent className="max-w-xs text-left leading-snug">{text}</TooltipContent>
+    </Tooltip>
   );
 }

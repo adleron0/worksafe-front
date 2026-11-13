@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import CalendarPicker from "@/components/general-components/Calendar";
@@ -133,7 +134,7 @@ function ChartOfAccounts() {
             placeholder="Todos os meses" fromYear={2020} toYear={2035} />
         </div>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
-          <input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} />
+          <Checkbox checked={showInactive} onCheckedChange={(checked) => setShowInactive(checked === true)} />
           Mostrar inativas
         </label>
         <Button type="button" variant="ghost" size="sm" className="lg:ml-auto w-fit" disabled={Boolean(term)}

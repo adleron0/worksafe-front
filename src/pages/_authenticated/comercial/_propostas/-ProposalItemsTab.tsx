@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input as ShadInput } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
-import { NumField, decimal, money, newUid, percent } from "../-shared/commercial";
+import { NumField, Tip, decimal, money, newUid, percent } from "../-shared/commercial";
 import { CalcLine, DraftItem, DraftSection, ITEM_LABEL, ItemType, ProposalCalc, ProposalDraft, ProposalOptions, isBlankItem } from "../-shared/proposals";
 
 interface Props {
@@ -48,6 +49,9 @@ const ADD_LABEL: Record<ItemType, string> = {
  */
 export default function ProposalItemsTab({ draft, setSections, calc, options, readOnly, canSeeCosts }: Props) {
   const [newKind, setNewKind] = useState<ItemType>("avulso");
+  // seção com itens pede confirmação antes de sair
+  const [removing, setRemoving] = useState<DraftSection | null>(null);
+  const removeSection = (uid: string) => setSections((list) => list.filter((x) => x.uid !== uid));
   const updateSection = (uid: string, patch: Partial<DraftSection>) => setSections((list) => list.map((s) => (s.uid === uid ? { ...s, ...patch } : s)));
   const updateItem = (sectionUid: string, itemUid: string, patch: Partial<DraftItem>) =>
     setSections((list) => list.map((s) => (s.uid === sectionUid ? { ...s, items: s.items.map((i) => (i.uid === itemUid ? { ...i, ...patch } : i)) } : s)));
@@ -61,6 +65,9 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
 
   return (
     <div className="@container grid gap-4">
+      <ConfirmDialog open={Boolean(removing)} onOpenChange={(open) => { if (!open) setRemoving(null); }}
+        title={`Remover a seção "${removing?.title ?? ""}"?`} description={`Os ${removing?.items.length ?? 0} item(ns) dela saem da proposta junto.`}
+        onConfirm={() => { if (removing) removeSection(removing.uid); setRemoving(null); }} />
       {draft.sections.length === 0 && <p className="rounded-lg border p-4 text-sm text-muted-foreground">Nenhuma seção. Adicione uma abaixo para começar a incluir itens.</p>}
       {draft.sections.map((section, s) => {
         const sectionCalc = calc?.sections[s];
@@ -72,14 +79,15 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
                 className="flex-1 min-w-[140px] h-8 border-transparent bg-transparent shadow-none font-semibold px-1 hover:border-input focus-visible:bg-background disabled:opacity-100"
                 onChange={(event) => updateSection(section.uid, { title: event.target.value })} />
               {canSeeCosts && (
-                <label className="flex items-center gap-2 text-xs text-muted-foreground"
-                  title="Lucro que se quer ter nos itens desta seção. O valor sugerido de cada linha é o custo mais o imposto e esta margem. Mudar aqui muda só o sugerido; valores finais digitados não mudam.">
-                  Margem de lucro
-                  <NumField kind="percent" className="w-24" value={section.margin ?? 0} disabled={readOnly}
-                    ariaLabel={`Margem de lucro de ${section.title}`} onChange={(margin) => updateSection(section.uid, { margin })} />
-                </label>
+                <Tip text="Lucro que se quer ter nos itens desta seção. O valor sugerido de cada linha é o custo mais o imposto e esta margem. Mudar aqui muda só o sugerido; valores finais digitados não mudam.">
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                    Margem de lucro
+                    <NumField kind="percent" className="w-24" value={section.margin ?? 0} disabled={readOnly}
+                      ariaLabel={`Margem de lucro de ${section.title}`} onChange={(margin) => updateSection(section.uid, { margin })} />
+                  </label>
+                </Tip>
               )}
-              <p className="text-sm font-semibold tabular-nums ml-auto" title="Total da seção">{money(sectionCalc?.value)}</p>
+              <Tip text="Total da seção"><p className="text-sm font-semibold tabular-nums ml-auto">{money(sectionCalc?.value)}</p></Tip>
               {!readOnly && (
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
@@ -97,7 +105,7 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
                       <DropdownMenuItem className="gap-2" onSelect={() => updateSection(section.uid, { items: [...section.items, newItem("avulso")] })}><Icon name="plus" className="w-3 h-3" /> Adicionar item avulso</DropdownMenuItem>
                     )}
                     <DropdownMenuItem className="gap-2 text-destructive"
-                      onSelect={() => { if (!section.items.length || window.confirm(`Remover a seção "${section.title}" e os ${section.items.length} item(ns) dela?`)) setSections((list) => list.filter((x) => x.uid !== section.uid)); }}>
+                      onSelect={() => { if (section.items.length) setRemoving(section); else removeSection(section.uid); }}>
                       <Icon name="trash-2" className="w-3 h-3" /> Remover a seção
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -229,10 +237,12 @@ function ItemRow({ item, line, draft, options, readOnly, canSeeCosts, update, re
             <Cell label="Adicionais" className="@3xl:w-[104px]">
               <div className="flex gap-1">
                 {FLAGS.map(([key, icon, label]) => (
-                  <button key={key} type="button" disabled={readOnly} aria-pressed={item[key]} aria-label={label} title={label} onClick={() => update({ [key]: !item[key] })}
-                    className={cn("h-9 w-8 rounded-md border flex items-center justify-center disabled:cursor-not-allowed", item[key] ? "bg-primary text-inverse-foreground border-primary" : "text-muted-foreground hover:bg-muted")}>
-                    <Icon name={icon} className="w-4 h-4" />
-                  </button>
+                  <Tip key={key} text={label}>
+                    <button type="button" disabled={readOnly} aria-pressed={item[key]} aria-label={label} onClick={() => update({ [key]: !item[key] })}
+                      className={cn("h-9 w-8 rounded-md border flex items-center justify-center disabled:cursor-not-allowed", item[key] ? "bg-primary text-inverse-foreground border-primary" : "text-muted-foreground hover:bg-muted")}>
+                      <Icon name={icon} className="w-4 h-4" />
+                    </button>
+                  </Tip>
                 ))}
               </div>
             </Cell>
@@ -264,10 +274,12 @@ function ItemRow({ item, line, draft, options, readOnly, canSeeCosts, update, re
 
         <div className="flex gap-1 @3xl:w-[68px] justify-end">
           {(labor || training) && (
-            <Button type="button" variant={adjusted && !open ? "outline" : "ghost"} size="sm" className="h-9 w-8 p-0" aria-expanded={open}
-              aria-label={open ? "Fechar os ajustes da linha" : "Ajustes da linha"} title={labor ? "Dias próprios e horas extras" : "Datas, local e custo"} onClick={() => setOpen(!open)}>
-              <Icon name={open ? "chevron-up" : "sliders-horizontal"} className="w-4 h-4" />
-            </Button>
+            <Tip text={labor ? "Dias próprios e horas extras" : "Datas, local e custo"}>
+              <Button type="button" variant={adjusted && !open ? "outline" : "ghost"} size="sm" className="h-9 w-8 p-0" aria-expanded={open}
+                aria-label={open ? "Fechar os ajustes da linha" : "Ajustes da linha"} onClick={() => setOpen(!open)}>
+                <Icon name={open ? "chevron-up" : "sliders-horizontal"} className="w-4 h-4" />
+              </Button>
+            </Tip>
           )}
           {!readOnly && (
             <Button type="button" variant="ghost" size="sm" className="h-9 w-8 p-0" aria-label={`Remover ${item.description || "item"}`} onClick={remove}>

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input as ShadInput } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import Select from "@/components/general-components/Select";
@@ -191,8 +192,8 @@ export function ItemsTab({ group, items, setItems, result, disabled, params, set
                   onChange={(_, value) => update(item.uid, { kind: String(value) as CostItem["kind"] })} />
               </div>
               <label className="xl:w-16 flex items-center xl:justify-center gap-2 text-sm">
-                <input type="checkbox" checked={item.isDebt} disabled={disabled} aria-label={`${item.name} é dívida`}
-                  onChange={(event) => update(item.uid, { isDebt: event.target.checked, endsAt: event.target.checked ? item.endsAt : null })} />
+                <Checkbox checked={item.isDebt} disabled={disabled} aria-label={`${item.name} é dívida`}
+                  onCheckedChange={(checked) => update(item.uid, { isDebt: checked === true, endsAt: checked === true ? item.endsAt : null })} />
                 <span className="xl:hidden">É dívida</span>
               </label>
               <CalendarPicker mode="single" name={`endsAt-${item.uid}`} className="xl:w-36" value={item.endsAt} disabled={disabled || !item.isDebt}
@@ -278,8 +279,8 @@ export function DefaultsTab({ defaults, setDefaults, disabled }: { defaults: Def
               <NumField className="w-28" kind="percent" value={level.rate} disabled={disabled} ariaLabel={`Percentual do nível ${level.label}`}
                 onChange={(value) => setDefaults((d) => ({ ...d, contingencyLevels: d.contingencyLevels.map((l, i) => (i === index ? { ...l, rate: value } : l)) }))} />
               <label className="flex items-center gap-1 text-xs w-20">
-                <input type="radio" name="contingencyDefault" disabled={disabled} checked={defaults.contingencyRate === level.rate}
-                  onChange={() => setDefaults((d) => ({ ...d, contingencyRate: level.rate }))} /> Padrão
+                <Checkbox disabled={disabled} checked={defaults.contingencyRate === level.rate} aria-label={`Usar ${level.label} como padrão`}
+                  onCheckedChange={() => setDefaults((d) => ({ ...d, contingencyRate: level.rate }))} /> Padrão
               </label>
             </div>
           ))}

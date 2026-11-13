@@ -5,6 +5,7 @@ import { Input as ShadInput } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
+import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
@@ -193,10 +194,15 @@ export function ProposalPaymentTab({ draft, setDraft, calc, readOnly }: { draft:
   const update = (uid: string, patch: Partial<DraftInstallment>) => setList((list) => list.map((i) => (i.uid === uid ? { ...i, ...patch } : i)));
   const diff = calc?.installmentsDiff ?? 0;
   const [nfDays, setNfDays] = useState("30");
-  const replace = (list: DraftInstallment[]) => { if (!draft.installments.length || window.confirm("Substituir as parcelas atuais?")) setList(() => list); };
+  // atalho com parcelas já montadas: confirma antes de substituir
+  const [pending, setPending] = useState<DraftInstallment[] | null>(null);
+  const replace = (list: DraftInstallment[]) => { if (draft.installments.length) setPending(list); else setList(() => list); };
 
   return (
     <div className="grid gap-4">
+      <ConfirmDialog open={Boolean(pending)} onOpenChange={(open) => { if (!open) setPending(null); }}
+        title="Substituir as parcelas atuais?" description="As parcelas já montadas são trocadas pelas do atalho escolhido."
+        onConfirm={() => { if (pending) setList(() => pending); setPending(null); }} />
       <section className="rounded-lg border p-4">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
           <div>

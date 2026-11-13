@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/services/api";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input as ShadInput } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -218,11 +219,11 @@ function AcceptForm({ proposalKey, data, preview, onCancel, onDone }: { proposal
       )}
 
       <label className="flex items-start gap-2 text-sm">
-        <input type="checkbox" className="mt-1" checked={form.declaration} onChange={(event) => set("declaration", event.target.checked)} />
+        <Checkbox className="mt-0.5" checked={form.declaration} onCheckedChange={(checked) => set("declaration", checked === true)} />
         Declaro que tenho poderes para representar a empresa contratante neste aceite.
       </label>
       <label className="flex items-start gap-2 text-sm">
-        <input type="checkbox" className="mt-1" checked={form.termsAccepted} onChange={(event) => set("termsAccepted", event.target.checked)} />
+        <Checkbox className="mt-0.5" checked={form.termsAccepted} onCheckedChange={(checked) => set("termsAccepted", checked === true)} />
         Li a proposta e concordo com o escopo, os valores, os prazos e as condições descritos nela.
       </label>
       {error && <p className="text-red-600 text-sm" role="alert">{error}</p>}

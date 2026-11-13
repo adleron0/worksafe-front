@@ -20,6 +20,9 @@ interface ConfirmDialogProps {
   title: string;
   description: string;
   onConfirm: () => void;
+  /** Uso controlado (sem botão que abre): quem chama decide quando o diálogo aparece. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -29,8 +32,14 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   titleBttn,
   iconBttn,
   children,
+  open,
+  onOpenChange,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [inner, setInner] = useState(false);
+  const controlled = open !== undefined;
+  const isOpen = controlled ? open : inner;
+  const setIsOpen = (value: boolean) => { if (controlled) onOpenChange?.(value); else setInner(value); };
+  const hasTrigger = Boolean((titleBttn && iconBttn) || children);
 
   const handleConfirm = () => {
     onConfirm();
@@ -39,7 +48,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-      <AlertDialogTrigger asChild>
+      {hasTrigger && <AlertDialogTrigger asChild>
         {
           titleBttn && iconBttn ? (
             <Button
@@ -51,7 +60,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             </Button>
           ) : children
         }
-      </AlertDialogTrigger>
+      </AlertDialogTrigger>}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

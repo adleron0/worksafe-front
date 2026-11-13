@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
@@ -189,7 +190,7 @@ function BankAccountForm({ formData, close, onSaved }: { formData?: BankAccount;
       </p>
 
       <label className="flex items-center gap-2 text-sm cursor-pointer">
-        <input type="checkbox" checked={state.isDefault} onChange={(event) => setState((prev) => ({ ...prev, isDefault: event.target.checked }))} />
+        <Checkbox checked={state.isDefault} onCheckedChange={(checked) => setState((prev) => ({ ...prev, isDefault: checked === true }))} />
         Conta padrão (já vem escolhida na baixa)
       </label>
 

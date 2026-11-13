@@ -4,6 +4,7 @@ import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input as ShadInput } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
 import { Annotation, ProposalImage } from "../-shared/proposals";
@@ -186,8 +187,9 @@ function ImageEditor({ image, index, total, readOnly, onChange, onMove, onRemove
             <div className="flex gap-1">
               <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={index === 0} aria-label="Mover a imagem para cima" onClick={() => onMove(-1)}><Icon name="arrow-up" className="w-4 h-4" /></Button>
               <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={index === total - 1} aria-label="Mover a imagem para baixo" onClick={() => onMove(1)}><Icon name="arrow-down" className="w-4 h-4" /></Button>
-              <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Remover a imagem"
-                onClick={() => { if (window.confirm("Remover esta imagem da proposta?")) onRemove(); }}><Icon name="trash-2" className="w-4 h-4" /></Button>
+              <ConfirmDialog title="Remover esta imagem da proposta?" description="A imagem, a descrição e as marcações dela saem da proposta." onConfirm={onRemove}>
+                <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Remover a imagem"><Icon name="trash-2" className="w-4 h-4" /></Button>
+              </ConfirmDialog>
             </div>
           )}
         </div>

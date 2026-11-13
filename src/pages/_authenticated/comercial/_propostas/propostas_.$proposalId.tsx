@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
-import { COMMERCIAL_ABILITY, NumField, commercialApi, dateBr, errorMessage, money, newUid, percent } from "../-shared/commercial";
+import { COMMERCIAL_ABILITY, NumField, Tip, commercialApi, dateBr, errorMessage, money, newUid, percent } from "../-shared/commercial";
 import {
   CustomerOption, DraftSection, KIND_LABEL, isBlankItem, PROPOSALS_KEY, PROPOSAL_KEY, Proposal, ProposalCalc, ProposalDraft, ProposalOptions, STATUS_LABEL, StatusBadge,
 } from "../-shared/proposals";
@@ -398,9 +398,11 @@ function ProposalEditorPage() {
 
 /** Rótulo à esquerda (pode quebrar), valor à direita sempre em uma linha só. */
 const Line = ({ label, value, strong, muted, negative, hint, small, bold }: { label: React.ReactNode; value: string; strong?: boolean; muted?: boolean; negative?: boolean; hint?: string; small?: boolean; bold?: boolean }) => (
-  <div title={hint} className={cn("flex items-baseline justify-between gap-3", small ? "py-0.5 text-xs" : "py-1 text-sm", strong && "font-semibold text-base", bold && "font-semibold", muted && "text-muted-foreground")}>
-    <span className="min-w-0">{label}</span><span className={cn("shrink-0 whitespace-nowrap tabular-nums", negative && "text-destructive")}>{value}</span>
-  </div>
+  <Tip text={hint}>
+    <div className={cn("flex items-baseline justify-between gap-3", small ? "py-0.5 text-xs" : "py-1 text-sm", strong && "font-semibold text-base", bold && "font-semibold", muted && "text-muted-foreground")}>
+      <span className="min-w-0">{label}</span><span className={cn("shrink-0 whitespace-nowrap tabular-nums", negative && "text-destructive")}>{value}</span>
+    </div>
+  </Tip>
 );
 /** Percentual discreto ao lado do rótulo, para o valor ficar sozinho na coluna da direita. */
 const Rate = ({ children }: { children: React.ReactNode }) => <span className="ml-1 text-xs text-muted-foreground whitespace-nowrap tabular-nums">{children}</span>;
@@ -508,11 +510,13 @@ function TotalsPanel({ calc, draft, readOnly, canSeeCosts, stale, onDiscount, cu
                 ["Se a reserva não for gasta", m.unusedRate, m.unused, "Cenário em que a obra não teve imprevistos: a imprevisibilidade cobrada fica inteira como lucro."],
                 ["Se a reserva for toda gasta", m.usedRate, m.used, "Cenário em que os imprevistos consumiram toda a imprevisibilidade cobrada."],
               ] as const).map(([label, rate, value, hint]) => (
-                <div key={label} title={hint} className="rounded-md border bg-background px-2.5 py-2">
-                  <p className="text-[11px] leading-tight text-muted-foreground">{label}</p>
-                  <p className={cn("text-lg font-semibold leading-tight mt-0.5", value < 0 && "text-destructive")}>{percent(rate, 1)}</p>
-                  <p className={cn("text-xs whitespace-nowrap", value < 0 ? "text-destructive" : "text-muted-foreground")}>{money(value)}</p>
-                </div>
+                <Tip key={label} text={hint}>
+                  <div className="rounded-md border bg-background px-2.5 py-2">
+                    <p className="text-[11px] leading-tight text-muted-foreground">{label}</p>
+                    <p className={cn("text-lg font-semibold leading-tight mt-0.5", value < 0 && "text-destructive")}>{percent(rate, 1)}</p>
+                    <p className={cn("text-xs whitespace-nowrap", value < 0 ? "text-destructive" : "text-muted-foreground")}>{money(value)}</p>
+                  </div>
+                </Tip>
               ))}
             </div>
             <div className="mt-2 border-t pt-1.5 text-xs">

@@ -260,8 +260,12 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
               <Button type="button" variant="outline" size="sm" onClick={() => setRemoveInvoice(true)}>Remover</Button>
             </div>
           ) : (
-            <input id="invoiceFile" type="file" accept={INVOICE_TYPES} className="mt-1 block w-full text-sm"
-              onChange={(event) => setInvoiceFile(event.target.files?.[0] ?? null)} />
+            <div className="mt-1 flex items-center gap-3 text-sm">
+              <input id="invoiceFile" type="file" accept={INVOICE_TYPES} className="hidden"
+                onChange={(event) => setInvoiceFile(event.target.files?.[0] ?? null)} />
+              <Button type="button" variant="outline" size="sm" onClick={() => document.getElementById("invoiceFile")?.click()}>Escolher arquivo</Button>
+              <span className="min-w-0 truncate text-muted-foreground">{invoiceFile?.name ?? "Nenhum arquivo escolhido"}</span>
+            </div>
           )}
         </div>
       </div>

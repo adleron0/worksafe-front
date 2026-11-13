@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input as ShadInput } from "@/components/ui/input";
+import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { NumField } from "../-shared/commercial";
@@ -86,8 +87,12 @@ export default function ProposalSchedule({ schedule, onChange, kind, workDays, r
         {!readOnly ? (
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="ghost" size="sm" className="text-primary" disabled={steps.length >= 20} onClick={add}><Icon name="plus" className="w-4 h-4 mr-1" /> Adicionar etapa</Button>
-            <Button type="button" variant="ghost" size="sm" onClick={() => { if (window.confirm("Trocar as etapas atuais pelas etapas padrão?")) onChange(defaultSchedule(kind, workDays)); }}>Voltar às etapas padrão</Button>
-            <Button type="button" variant="ghost" size="sm" onClick={() => { if (window.confirm("Remover o cronograma desta proposta?")) onChange({ ...schedule, steps: [] }); }}>Remover cronograma</Button>
+            <ConfirmDialog title="Voltar às etapas padrão?" description="As etapas atuais são trocadas pelas etapas padrão, com o prazo da proposta." onConfirm={() => onChange(defaultSchedule(kind, workDays))}>
+              <Button type="button" variant="ghost" size="sm">Voltar às etapas padrão</Button>
+            </ConfirmDialog>
+            <ConfirmDialog title="Remover o cronograma?" description="A seção de cronograma deixa de aparecer nesta proposta." onConfirm={() => onChange({ ...schedule, steps: [] })}>
+              <Button type="button" variant="ghost" size="sm">Remover cronograma</Button>
+            </ConfirmDialog>
           </div>
         ) : <span />}
         <p className="text-xs text-muted-foreground tabular-nums">Duração total: {total} {total === 1 ? unit.one : unit.many}</p>

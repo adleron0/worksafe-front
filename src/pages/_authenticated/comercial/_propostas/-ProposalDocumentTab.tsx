@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Input as ShadInput } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import RichTextEditor from "@/components/general-components/RichTextEditor";
 import Select from "@/components/general-components/Select";
-import { commercialApi, errorMessage } from "../-shared/commercial";
+import { Tip, commercialApi, errorMessage } from "../-shared/commercial";
 import { DocumentPaper } from "../-shared/document";
 import ProposalImages from "./-ProposalImages";
 import { EVENT_LABEL, ITEMS_MODE_OPTIONS, ItemsMode, Proposal, ProposalDraft, ProposalOptions, VariableOption } from "../-shared/proposals";
@@ -39,10 +40,11 @@ export function VariablePalette({ variables }: { variables: VariableOption[] }) 
     }
   };
   const chip = (variable: VariableOption) => (
-    <button key={variable.key} type="button" onClick={() => copy(variable)} title={`Copiar {{${variable.key}}}`}
-      className="rounded border px-2 py-1 text-xs hover:bg-muted text-left">
-      <span className="font-medium">{variable.label}</span> <code className="text-muted-foreground">{`{{${variable.key}}}`}</code>
-    </button>
+    <Tip key={variable.key} text={`Copiar {{${variable.key}}}`}>
+      <button type="button" onClick={() => copy(variable)} className="rounded border px-2 py-1 text-xs hover:bg-muted text-left">
+        <span className="font-medium">{variable.label}</span> <code className="text-muted-foreground">{`{{${variable.key}}}`}</code>
+      </button>
+    </Tip>
   );
   return (
     <div className="grid gap-2">
@@ -68,16 +70,23 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
     onError: (err) => toast({ title: "Não foi possível montar o documento", description: errorMessage(err), variant: "destructive" }),
   });
 
+  const [pendingTemplate, setPendingTemplate] = useState<ProposalOptions["templates"][number] | null>(null);
+  const putTemplate = (template: ProposalOptions["templates"][number]) =>
+    setDraft((d) => ({ ...d, templateId: template.id, documentBody: template.body, itemsMode: template.itemsMode, termIds: template.termIds }));
   const applyTemplate = (id: string) => {
     const template = options.templates.find((t) => String(t.id) === String(id));
     if (!template) return;
-    if (draft.documentBody && !window.confirm(`Trocar o texto atual pelo do modelo "${template.name}"? As edições feitas no texto desta proposta serão perdidas.`)) return;
-    setDraft((d) => ({ ...d, templateId: template.id, documentBody: template.body, itemsMode: template.itemsMode, termIds: template.termIds }));
+    // já existe texto próprio nesta proposta: confirma antes de trocar
+    if (draft.documentBody) setPendingTemplate(template);
+    else putTemplate(template);
   };
   const suggested = options.templates.find((t) => t.kind === draft.kind) ?? options.templates.find((t) => t.isDefault) ?? options.templates[0];
 
   return (
     <div className="grid gap-4">
+      <ConfirmDialog open={Boolean(pendingTemplate)} onOpenChange={(open) => { if (!open) setPendingTemplate(null); }}
+        title={`Trocar o texto pelo do modelo "${pendingTemplate?.name ?? ""}"?`} description="As edições feitas no texto desta proposta serão perdidas."
+        onConfirm={() => { if (pendingTemplate) putTemplate(pendingTemplate); setPendingTemplate(null); }} />
       <section className="rounded-lg border p-4 grid gap-3">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div>

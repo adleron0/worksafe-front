@@ -140,10 +140,17 @@ function CostBasePage() {
     onError: (err) => toast({ title: "Não foi possível concluir", description: errorMessage(err), variant: "destructive" }),
   });
 
+  // trocar de versão com alterações não salvas pede confirmação
+  const [pendingVersion, setPendingVersion] = useState<number | null>(null);
   const selectVersion = (value: string) => {
-    if (dirty && !window.confirm("Há alterações não salvas nesta versão. Trocar de versão descarta essas alterações. Continuar?")) return;
-    setSelectedId(Number(value));
+    if (dirty) setPendingVersion(Number(value));
+    else setSelectedId(Number(value));
   };
+  const versionConfirm = (
+    <ConfirmDialog open={pendingVersion !== null} onOpenChange={(open) => { if (!open) setPendingVersion(null); }}
+      title="Trocar de versão sem salvar?" description="Há alterações não salvas nesta versão. Trocar de versão descarta essas alterações."
+      onConfirm={() => { if (pendingVersion !== null) setSelectedId(pendingVersion); setPendingVersion(null); }} />
+  );
 
   if (!can(`view_${COMMERCIAL_ABILITY}`)) return null;
   if (error) return <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>;
@@ -156,6 +163,7 @@ function CostBasePage() {
 
   return (
     <>
+      {versionConfirm}
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold">Base de cálculo</h1>

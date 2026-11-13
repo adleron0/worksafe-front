@@ -15,6 +15,7 @@ import ItemList from "./-components/FinancialRecordsItem";
 import Form from "./-components/FinancialRecordsForm";
 import SearchForm from "./-components/FinancialRecordsSearch";
 import { IFinancialRecord } from "./-interfaces/entity.interface";
+import { statusOptions } from "./-components/options";
 import { ApiError } from "@/general-interfaces/api.interface";
 
 export const Route = createFileRoute('/_authenticated/financeiro/_receber/receber')(({
@@ -43,10 +44,11 @@ function List() {
     accrualDate: string | null;
     '-aggregate': string;
     'in-status'?: string[];
+    [filter: string]: unknown;
   }>({
     limit: 10,
     page: 0,
-    show: ['trainee', 'subscription'],
+    show: ['trainee', 'subscription', 'customer'],
     'order-createdAt': 'desc',
     accrualDate: getCurrentMonth(), // Default to current month
     '-aggregate': 'status:count:sum:value'
@@ -77,11 +79,8 @@ function List() {
     queryKey: [`list${entity.pluralName}`, searchParams],
     queryFn: async () => {
       const params = Object.keys(searchParams)
-        .filter((key) => searchParams[key as keyof typeof searchParams] !== null)
-        .map((key) => ({
-          key,
-          value: searchParams[key as keyof typeof searchParams]
-        }));
+        .filter((key) => searchParams[key] !== null && searchParams[key] !== undefined)
+        .map((key) => ({ key, value: searchParams[key] as string | number | string[] }));
       return get(entity.model, '', params);
     },
   });
@@ -106,17 +105,6 @@ function List() {
       page: 0 // Reset page when changing filter
     }));
   };
-
-  // Status options for the select
-  const statusOptions = [
-    { id: 'processing', name: 'Processando' },
-    { id: 'waiting', name: 'Aguardando' },
-    { id: 'received', name: 'Recebido' },
-    { id: 'declined', name: 'Recusado' },
-    { id: 'chargeback', name: 'Estorno' },
-    { id: 'cancelled', name: 'Cancelado' },
-    { id: 'overdue', name: 'Vencido' },
-  ];
 
   const handleClear = () => {
     setSearchParams(initialFormRef.current);
@@ -148,7 +136,7 @@ function List() {
         setFormData={setFormData}
         setFormType={() => {}}
         iconForm="plus"
-        showCreate={false}
+        addButtonName="Nova"
         titlePage='Contas a Receber'
         descriptionPage='Gerencie todas as contas a receber.'
       />
@@ -200,7 +188,7 @@ function List() {
         title={formData ? `Editar ${entity.name}` : `Cadastrar ${entity.name}`}
         description={formData ? `Edite as informações da ${entity.name}.` : `Preencha os campos abaixo para cadastrar uma nova ${entity.name}.`}
         side="right"
-        form={ <Form formData={formData} setOpenForm={setOpenForm} entity={entity} /> }
+        form={ <Form key={formData?.id ?? 'new'} formData={formData} setOpenForm={setOpenForm} entity={entity} /> }
       />
 
       <div className="space-y-2 mt-4">

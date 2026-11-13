@@ -24,7 +24,8 @@ export interface IFinancialRecord {
   customer?: {
     id: number;
     name: string;
-    email: string;
+    email?: string;
+    cnpj?: string;
   };
   paymentMethod: string;
   value?: number;
@@ -52,6 +53,15 @@ export interface IFinancialRecord {
   discountApplied?: number;
   commissionPercentage?: number;
   commissionValue?: number;
+  // Nota fiscal emitida fora do sistema
+  invoiceNumber?: string | null;
+  invoiceIssuedAt?: string | null;
+  invoiceUrl?: string | null;
+  installmentNumber?: number | null;
+  installmentTotal?: number | null;
+  netValue?: number | null;
+  receivedValue?: number | null;
+  settledByUserId?: number | null;
   sellerId?: number;
   seller?: {
     id: number;

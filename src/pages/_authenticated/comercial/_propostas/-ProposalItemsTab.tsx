@@ -72,13 +72,14 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
                 className="flex-1 min-w-[140px] h-8 border-transparent bg-transparent shadow-none font-semibold px-1 hover:border-input focus-visible:bg-background disabled:opacity-100"
                 onChange={(event) => updateSection(section.uid, { title: event.target.value })} />
               {canSeeCosts && (
-                <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                  Margem
+                <label className="flex items-center gap-2 text-xs text-muted-foreground"
+                  title="Lucro que se quer ter nos itens desta seção. O valor sugerido de cada linha é o custo mais o imposto e esta margem. Mudar aqui muda só o sugerido; valores finais digitados não mudam.">
+                  Margem de lucro
                   <NumField kind="percent" className="w-24" value={section.margin ?? 0} disabled={readOnly}
-                    ariaLabel={`Margem de ${section.title}`} onChange={(margin) => updateSection(section.uid, { margin })} />
+                    ariaLabel={`Margem de lucro de ${section.title}`} onChange={(margin) => updateSection(section.uid, { margin })} />
                 </label>
               )}
-              <p className="text-sm font-semibold tabular-nums ml-auto">{money(sectionCalc?.value)}</p>
+              <p className="text-sm font-semibold tabular-nums ml-auto" title="Total da seção">{money(sectionCalc?.value)}</p>
               {!readOnly && (
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>

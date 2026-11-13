@@ -19,6 +19,12 @@ export const items = [
     ability: "comercial",
     subitems: [
       {
+        title: "Propostas",
+        ability: "comercial",
+        icon: "file-text",
+        path: "/comercial/propostas",
+      },
+      {
         title: "Vendedores",
         ability: "comercial",
         icon: "user-round-check",

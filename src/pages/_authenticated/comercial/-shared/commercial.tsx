@@ -138,6 +138,9 @@ interface NumFieldProps {
   id?: string;
   ariaLabel?: string;
   suffix?: string;
+  placeholder?: string;
+  /** campo opcional: chamado quando o usuário apaga o conteúdo */
+  onEmpty?: () => void;
 }
 
 const toText = (value: number | null | undefined, kind: string, digits: number) => {
@@ -148,7 +151,7 @@ const toText = (value: number | null | undefined, kind: string, digits: number) 
 };
 
 /** Campo de número com vírgula decimal. Só propaga quando o texto é um número válido. */
-export function NumField({ value, onChange, kind = "number", digits = 2, disabled, className, id, ariaLabel, suffix }: NumFieldProps) {
+export function NumField({ value, onChange, kind = "number", digits = 2, disabled, className, id, ariaLabel, suffix, placeholder, onEmpty }: NumFieldProps) {
   const [text, setText] = useState(() => toText(value, kind, digits));
   const [focused, setFocused] = useState(false);
   useEffect(() => { if (!focused) setText(toText(value, kind, digits)); }, [value, kind, digits, focused]);
@@ -158,7 +161,7 @@ export function NumField({ value, onChange, kind = "number", digits = 2, disable
     <div className={cn("relative", className)}>
       {kind === "money" && <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>}
       <ShadInput
-        id={id} aria-label={ariaLabel} inputMode="decimal" disabled={disabled} value={text}
+        id={id} aria-label={ariaLabel} inputMode="decimal" disabled={disabled} value={text} placeholder={placeholder}
         className={cn("tabular-nums text-right", kind === "money" && "pl-8", adornment && "pr-8")}
         onFocus={(event) => { setFocused(true); event.target.select(); }}
         onBlur={() => setFocused(false)}
@@ -166,7 +169,8 @@ export function NumField({ value, onChange, kind = "number", digits = 2, disable
           const raw = event.target.value.replace(/[^\d,.-]/g, "");
           setText(raw);
           const parsed = Number(raw.replace(/\./g, "").replace(",", "."));
-          if (raw.trim() !== "" && Number.isFinite(parsed)) onChange(kind === "percent" ? parsed / 100 : parsed);
+          if (raw.trim() === "") onEmpty?.();
+          else if (Number.isFinite(parsed)) onChange(kind === "percent" ? parsed / 100 : parsed);
         }}
       />
       {adornment && <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{adornment}</span>}

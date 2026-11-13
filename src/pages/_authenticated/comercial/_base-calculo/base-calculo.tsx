@@ -19,6 +19,7 @@ import {
   commercialApi, dateBr, decimal, errorMessage, money, newUid, percent, todayIso,
 } from "../-shared/commercial";
 import { BenefitsTab, DefaultsTab, HoursTab, ItemsTab } from "./-BaseTabs";
+import CoursePricesTab from "./-CoursePricesTab";
 import ProfessionalsTab from "./-ProfessionalsTab";
 import SimulatorTab from "./-SimulatorTab";
 import TaxTab from "./-TaxTab";
@@ -229,6 +230,7 @@ function CostBasePage() {
             <TabsTrigger value="indireto">Pessoal indireto</TabsTrigger>
             <TabsTrigger value="outros">Outros custos</TabsTrigger>
             <TabsTrigger value="profissionais">Profissionais</TabsTrigger>
+            <TabsTrigger value="treinamentos">Treinamentos</TabsTrigger>
             <TabsTrigger value="imposto">Imposto</TabsTrigger>
             <TabsTrigger value="padroes">Padrões</TabsTrigger>
             <TabsTrigger value="simulador">Simulador</TabsTrigger>
@@ -244,6 +246,7 @@ function CostBasePage() {
             canInactivate={can(`inactive_${COMMERCIAL_ABILITY}`)}
             onChanged={() => { setRecompute((n) => n + 1); queryClient.invalidateQueries({ queryKey: ["commercialSim"] }); }} />
         </TabsContent>
+        <TabsContent value="treinamentos" className="mt-4"><CoursePricesTab canUpdate={canUpdate} /></TabsContent>
         <TabsContent value="imposto" className="mt-4">
           <TaxTab canCreate={canCreate} canUpdate={canUpdate} canInactivate={can(`inactive_${COMMERCIAL_ABILITY}`)} canActivate={can(`activate_${COMMERCIAL_ABILITY}`)} />
         </TabsContent>

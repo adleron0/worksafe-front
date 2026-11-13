@@ -58,6 +58,7 @@ import { Route as AuthenticatedFinanceiroPlanoContasPlanoContasRouteImport } fro
 import { Route as AuthenticatedFinanceiroContasBancariasContasBancariasRouteImport } from './pages/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
 import { Route as AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport } from './pages/_authenticated/financeiro/_centros-custo/centros-custo'
 import { Route as AuthenticatedComercialVendedoresVendedoresRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores'
+import { Route as AuthenticatedComercialPropostasPropostasRouteImport } from './pages/_authenticated/comercial/_propostas/propostas'
 import { Route as AuthenticatedComercialCuponsCuponsRouteImport } from './pages/_authenticated/comercial/_cupons/cupons'
 import { Route as AuthenticatedComercialBaseCalculoBaseCalculoRouteImport } from './pages/_authenticated/comercial/_base-calculo/base-calculo'
 import { Route as AuthenticatedBlogVisitantesVisitantesRouteImport } from './pages/_authenticated/blog/_visitantes/visitantes'
@@ -67,6 +68,7 @@ import { Route as AuthenticatedBlogComentariosComentariosRouteImport } from './p
 import { Route as AuthenticatedBlogCategoriasCategoriasRouteImport } from './pages/_authenticated/blog/_categorias/categorias'
 import { Route as AuthenticatedTreinamentosTurmasTurmasNovaRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.nova'
 import { Route as AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.$turmaId'
+import { Route as AuthenticatedComercialPropostasPropostasProposalIdRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.$proposalId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/_index',
@@ -346,6 +348,12 @@ const AuthenticatedComercialVendedoresVendedoresRoute =
     path: '/comercial/vendedores',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedComercialPropostasPropostasRoute =
+  AuthenticatedComercialPropostasPropostasRouteImport.update({
+    id: '/comercial/_propostas/propostas',
+    path: '/comercial/propostas',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComercialCuponsCuponsRoute =
   AuthenticatedComercialCuponsCuponsRouteImport.update({
     id: '/comercial/_cupons/cupons',
@@ -400,6 +408,12 @@ const AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute =
     path: '/treinamentos/turmas/$turmaId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedComercialPropostasPropostasProposalIdRoute =
+  AuthenticatedComercialPropostasPropostasProposalIdRouteImport.update({
+    id: '/comercial/_propostas/propostas_/$proposalId',
+    path: '/comercial/propostas/$proposalId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/student': typeof StudentRouteWithChildren
@@ -429,6 +443,7 @@ export interface FileRoutesByFullPath {
   '/blog/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
   '/comercial/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/comercial/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
+  '/comercial/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   '/financeiro/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -456,6 +471,7 @@ export interface FileRoutesByFullPath {
   '/treinamentos/aulas-online': typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/student/course/$courseId': typeof StudentCourseCourseIdIndexRoute
+  '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -486,6 +502,7 @@ export interface FileRoutesByTo {
   '/blog/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
   '/comercial/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/comercial/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
+  '/comercial/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   '/financeiro/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -513,6 +530,7 @@ export interface FileRoutesByTo {
   '/treinamentos/aulas-online': typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/student/course/$courseId': typeof StudentCourseCourseIdIndexRoute
+  '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -547,6 +565,7 @@ export interface FileRoutesById {
   '/_authenticated/blog/_visitantes/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
   '/_authenticated/comercial/_base-calculo/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/_authenticated/comercial/_cupons/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
+  '/_authenticated/comercial/_propostas/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/_authenticated/comercial/_vendedores/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/_authenticated/financeiro/_centros-custo/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   '/_authenticated/financeiro/_contas-bancarias/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -574,6 +593,7 @@ export interface FileRoutesById {
   '/_authenticated/treinamentos/aulas-online/': typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
   '/_authenticated/usuarios/_usuarios/': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/student/course/$courseId/': typeof StudentCourseCourseIdIndexRoute
+  '/_authenticated/comercial/_propostas/propostas_/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -607,6 +627,7 @@ export interface FileRouteTypes {
     | '/blog/visitantes'
     | '/comercial/base-calculo'
     | '/comercial/cupons'
+    | '/comercial/propostas'
     | '/comercial/vendedores'
     | '/financeiro/centros-custo'
     | '/financeiro/contas-bancarias'
@@ -634,6 +655,7 @@ export interface FileRouteTypes {
     | '/treinamentos/aulas-online'
     | '/usuarios'
     | '/student/course/$courseId'
+    | '/comercial/propostas/$proposalId'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
   fileRoutesByTo: FileRoutesByTo
@@ -664,6 +686,7 @@ export interface FileRouteTypes {
     | '/blog/visitantes'
     | '/comercial/base-calculo'
     | '/comercial/cupons'
+    | '/comercial/propostas'
     | '/comercial/vendedores'
     | '/financeiro/centros-custo'
     | '/financeiro/contas-bancarias'
@@ -691,6 +714,7 @@ export interface FileRouteTypes {
     | '/treinamentos/aulas-online'
     | '/usuarios'
     | '/student/course/$courseId'
+    | '/comercial/propostas/$proposalId'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
   id:
@@ -724,6 +748,7 @@ export interface FileRouteTypes {
     | '/_authenticated/blog/_visitantes/visitantes'
     | '/_authenticated/comercial/_base-calculo/base-calculo'
     | '/_authenticated/comercial/_cupons/cupons'
+    | '/_authenticated/comercial/_propostas/propostas'
     | '/_authenticated/comercial/_vendedores/vendedores'
     | '/_authenticated/financeiro/_centros-custo/centros-custo'
     | '/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
@@ -751,6 +776,7 @@ export interface FileRouteTypes {
     | '/_authenticated/treinamentos/aulas-online/'
     | '/_authenticated/usuarios/_usuarios/'
     | '/student/course/$courseId/'
+    | '/_authenticated/comercial/_propostas/propostas_/$proposalId'
     | '/_authenticated/treinamentos/_turmas/turmas_/$turmaId'
     | '/_authenticated/treinamentos/_turmas/turmas_/nova'
   fileRoutesById: FileRoutesById
@@ -1106,6 +1132,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComercialVendedoresVendedoresRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/comercial/_propostas/propostas': {
+      id: '/_authenticated/comercial/_propostas/propostas'
+      path: '/comercial/propostas'
+      fullPath: '/comercial/propostas'
+      preLoaderRoute: typeof AuthenticatedComercialPropostasPropostasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_cupons/cupons': {
       id: '/_authenticated/comercial/_cupons/cupons'
       path: '/comercial/cupons'
@@ -1169,6 +1202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/comercial/_propostas/propostas_/$proposalId': {
+      id: '/_authenticated/comercial/_propostas/propostas_/$proposalId'
+      path: '/comercial/propostas/$proposalId'
+      fullPath: '/comercial/propostas/$proposalId'
+      preLoaderRoute: typeof AuthenticatedComercialPropostasPropostasProposalIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -1191,6 +1231,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBlogVisitantesVisitantesRoute: typeof AuthenticatedBlogVisitantesVisitantesRoute
   AuthenticatedComercialBaseCalculoBaseCalculoRoute: typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   AuthenticatedComercialCuponsCuponsRoute: typeof AuthenticatedComercialCuponsCuponsRoute
+  AuthenticatedComercialPropostasPropostasRoute: typeof AuthenticatedComercialPropostasPropostasRoute
   AuthenticatedComercialVendedoresVendedoresRoute: typeof AuthenticatedComercialVendedoresVendedoresRoute
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute: typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   AuthenticatedFinanceiroContasBancariasContasBancariasRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -1214,6 +1255,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedInventariosAreasIndexRoute: typeof AuthenticatedInventariosAreasIndexRoute
   AuthenticatedTreinamentosAulasOnlineIndexRoute: typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
   AuthenticatedUsuariosUsuariosIndexRoute: typeof AuthenticatedUsuariosUsuariosIndexRoute
+  AuthenticatedComercialPropostasPropostasProposalIdRoute: typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   AuthenticatedTreinamentosTurmasTurmasNovaRoute: typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -1245,6 +1287,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialBaseCalculoBaseCalculoRoute,
   AuthenticatedComercialCuponsCuponsRoute:
     AuthenticatedComercialCuponsCuponsRoute,
+  AuthenticatedComercialPropostasPropostasRoute:
+    AuthenticatedComercialPropostasPropostasRoute,
   AuthenticatedComercialVendedoresVendedoresRoute:
     AuthenticatedComercialVendedoresVendedoresRoute,
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute:
@@ -1290,6 +1334,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedTreinamentosAulasOnlineIndexRoute,
   AuthenticatedUsuariosUsuariosIndexRoute:
     AuthenticatedUsuariosUsuariosIndexRoute,
+  AuthenticatedComercialPropostasPropostasProposalIdRoute:
+    AuthenticatedComercialPropostasPropostasProposalIdRoute,
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute:
     AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute,
   AuthenticatedTreinamentosTurmasTurmasNovaRoute:

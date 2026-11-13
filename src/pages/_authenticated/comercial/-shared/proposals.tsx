@@ -9,6 +9,10 @@ export type Annotation =
   | { type: "seta"; x1: number; y1: number; x2: number; y2: number; label: string };
 export interface ProposalImage { url: string; title: string; description: string; annotations: Annotation[] }
 
+/** Cronograma simples: etapas com início e duração, na unidade escolhida. */
+export interface ScheduleStep { title: string; start: number; duration: number }
+export interface Schedule { unit: "dia" | "semana" | "mes"; steps: ScheduleStep[] }
+
 export type ItemsMode = "detalhado" | "por_secao" | "global";
 export type DueRule = "data_fixa" | "dias_apos_aceite" | "dias_apos_nf" | "dias_apos_conclusao";
 
@@ -38,6 +42,7 @@ export interface ProposalDraft {
   costBaseId?: number | null;
   templateId: number | null; documentBody: string | null; itemsMode: ItemsMode; termIds: number[];
   images: ProposalImage[];
+  schedule: Schedule;
   sections: DraftSection[]; installments: DraftInstallment[];
 }
 

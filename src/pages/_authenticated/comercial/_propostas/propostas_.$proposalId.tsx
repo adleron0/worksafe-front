@@ -41,6 +41,8 @@ const payloadOf = (draft: ProposalDraft) => ({
   // o título pode ficar em branco enquanto se preenche: a API exige um, então segue o provisório
   title: draft.title.trim().length >= 2 ? draft.title : PLACEHOLDER_TITLE,
   commission: { rate: draft.commissionRate, base: draft.commissionBase, inPrice: draft.commissionInPrice },
+  // etapa do cronograma ainda sem nome fica só na tela
+  schedule: { unit: draft.schedule?.unit ?? "dia", steps: (draft.schedule?.steps ?? []).filter((step) => step.title.trim()) },
   // linhas em branco ficam só na tela
   sections: draft.sections.map((section) => ({ ...strip(section), items: section.items.filter((item) => !isBlankItem(item)).map(strip) })),
   installments: draft.installments.map(strip),

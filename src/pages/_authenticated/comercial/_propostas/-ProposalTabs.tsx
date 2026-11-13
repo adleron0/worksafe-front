@@ -9,6 +9,7 @@ import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { NumField, money, newUid, percent } from "../-shared/commercial";
+import ProposalSchedule from "./-ProposalSchedule";
 import {
   CustomerOption, DUE_RULE_OPTIONS, DraftInstallment, DueRule, ProposalCalc, ProposalDraft, ProposalOptions,
 } from "../-shared/proposals";
@@ -85,6 +86,8 @@ export function ProposalInfoStep({ draft, setDraft, options, readOnly, canSeeCos
           </div>
         </F>
       </div>
+
+      <ProposalSchedule schedule={draft.schedule ?? { unit: "dia", steps: [] }} onChange={(schedule) => set("schedule", schedule)} kind={draft.kind} workDays={draft.workDays} readOnly={readOnly} />
 
       <div className="border-t pt-3">
         <button type="button" className="flex items-center gap-2 text-sm font-medium" aria-expanded={more} onClick={() => setMore(!more)}>

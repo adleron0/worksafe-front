@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,7 @@ export function BillDialog({ contract, installment, onClose, onDone }: {
  * na venda fechada e, só para leitura, no faturamento.
  */
 export function CustomerOrderCard({ contractId, order, canEdit, onSaved }: { contractId: number; order?: CustomerOrder | null; canEdit: boolean; onSaved: (contract: Contract) => void }) {
+  const queryClient = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
   const [number, setNumber] = useState(order?.number ?? "");
@@ -93,7 +94,13 @@ export function CustomerOrderCard({ contractId, order, canEdit, onSaved }: { con
       else if (removeFile) form.append("removeFile", "true");
       return (await api.put<Contract>(`commercial/contracts/${contractId}/customer-order`, form)).data;
     },
-    onSuccess: (result) => { onSaved(result); setEditing(false); toast({ title: "Pedido do cliente salvo", variant: "success" }); },
+    onSuccess: (result) => {
+      onSaved(result); setEditing(false);
+      // com o pedido em mãos, a ordem de serviço que esperava por ele anda
+      queryClient.invalidateQueries({ queryKey: ["serviceOrders"] });
+      queryClient.invalidateQueries({ queryKey: ["serviceOrder"] });
+      toast({ title: "Pedido do cliente salvo", variant: "success" });
+    },
     onError: (err) => toast({ title: "Não foi possível salvar o pedido do cliente", description: errorMessage(err), variant: "destructive" }),
   });
   const pick = (files: FileList | null) => {

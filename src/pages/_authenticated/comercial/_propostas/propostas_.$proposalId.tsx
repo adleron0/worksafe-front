@@ -19,6 +19,7 @@ import { downloadProposalPdf } from "../-shared/pdf";
 import CustomerStep from "./-CustomerStep";
 import DecisionDialog from "./-DecisionDialog";
 import { CustomerOrderCard } from "../-shared/billing";
+import { OrderStageBadge, OrderStatus } from "../../servicos/-shared/orders";
 import ProposalDocumentTab, { LinkPanel, ProposalHistory } from "./-ProposalDocumentTab";
 import ProposalItemsTab from "./-ProposalItemsTab";
 import { ProposalInfoStep, ProposalPaymentTab } from "./-ProposalTabs";
@@ -318,6 +319,15 @@ function ProposalEditorPage() {
             {proposal.contract && (
               <> Venda fechada <Link to="/comercial/contratos/$contractId" params={{ contractId: String(proposal.contract.id) }} className="underline font-medium text-foreground">{proposal.contract.number}</Link>: parcelas, notas fiscais e turmas.</>
             )}
+          </p>
+        )}
+        {proposal.contract?.serviceOrder && (
+          <p className="rounded-md border px-3 py-2 text-sm text-muted-foreground flex flex-wrap items-center gap-2">
+            <Icon name="hard-hat" className="w-4 h-4 shrink-0" /> Ordem de serviço
+            {can("view_ordens_de_servico")
+              ? <Link to="/servicos/ordens-de-servico/$orderId" params={{ orderId: String(proposal.contract.serviceOrder.id) }} className="underline font-medium text-foreground">{proposal.contract.serviceOrder.number}</Link>
+              : <b className="text-foreground">{proposal.contract.serviceOrder.number}</b>}
+            <OrderStageBadge status={proposal.contract.serviceOrder.status as OrderStatus} />
           </p>
         )}
         {proposal.contract && (

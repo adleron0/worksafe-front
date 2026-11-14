@@ -58,25 +58,26 @@ export const items = [
       },
     ],
   },
-  // {
-  //   title: "Serviços",
-  //   icon: "drill",
-  //   path: "/servicos",
-  //   isProduct: "servicos",
-  //   ability: "servicos",
-  //   subitems: [
-  //     {
-  //       title: "Ordens de Serviço",
-  //       icon: "scroll-text",
-  //       path: "/servicos/ordens-de-servico",
-  //     },
-  //     {
-  //       title: "RDO",
-  //       icon: "calendar-days",
-  //       path: "/servicos/diario-de-obra",
-  //     },
-  //   ],
-  // },
+  {
+    title: "Operação",
+    icon: "drill",
+    path: "/servicos",
+    isProduct: "servicos",
+    ability: "ordens_de_servico",
+    subitems: [
+      {
+        title: "Ordens de Serviço",
+        ability: "ordens_de_servico",
+        icon: "scroll-text",
+        path: "/servicos/ordens-de-servico",
+      },
+      // {
+      //   title: "RDO",
+      //   icon: "calendar-days",
+      //   path: "/servicos/diario-de-obra",
+      // },
+    ],
+  },
   {
     title: "Treinamentos",
     icon: "hard-hat",

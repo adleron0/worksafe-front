@@ -24,7 +24,7 @@ export interface ContractClassSlot {
 
 export interface Contract {
   id: number; number: string; kind: ProposalKind; status: ContractStatus; title: string; value: number; acceptedAt: string;
-  startDate: string | null; endDate: string | null; notes: string | null; statusNote: string | null; customerOrder: CustomerOrder;
+  startDate: string | null; endDate: string | null; notes: string | null; statusNote: string | null; customerOrder: CustomerOrder; serviceOrder?: { id: number; number: string; status: string } | null;
   customer: CustomerOption; proposal: { id: number; number: string } | null; documentHash: string | null; hasDocument: boolean;
   signer: { name?: string; cpf?: string; role?: string; email?: string; ip?: string; userAgent?: string; at?: string; codeVerified?: boolean; manual?: boolean; note?: string } | null;
   billed: number; received: number; toBill: number;

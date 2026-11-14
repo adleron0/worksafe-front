@@ -47,6 +47,7 @@ import { Route as AuthenticatedSiteServicosServicosRouteImport } from './pages/_
 import { Route as AuthenticatedSiteProdutosProdutosRouteImport } from './pages/_authenticated/site/_produtos/produtos'
 import { Route as AuthenticatedSiteMarcasMarcasRouteImport } from './pages/_authenticated/site/_marcas/marcas'
 import { Route as AuthenticatedSiteCategoriasLojaCategoriasLojaRouteImport } from './pages/_authenticated/site/_categorias-loja/categorias-loja'
+import { Route as AuthenticatedServicosOrdensOrdensDeServicoRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico'
 import { Route as AuthenticatedInventariosAreasAreaIdRouteImport } from './pages/_authenticated/inventarios/areas/$areaId'
 import { Route as AuthenticatedFinanceiroReceberReceberRouteImport } from './pages/_authenticated/financeiro/_receber/receber'
 import { Route as AuthenticatedFinanceiroPlanoContasPlanoContasRouteImport } from './pages/_authenticated/financeiro/_plano-contas/plano-contas'
@@ -67,6 +68,7 @@ import { Route as AuthenticatedBlogComentariosComentariosRouteImport } from './p
 import { Route as AuthenticatedBlogCategoriasCategoriasRouteImport } from './pages/_authenticated/blog/_categorias/categorias'
 import { Route as AuthenticatedTreinamentosTurmasTurmasNovaRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.nova'
 import { Route as AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.$turmaId'
+import { Route as AuthenticatedServicosOrdensOrdensDeServicoOrderIdRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico_.$orderId'
 import { Route as AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores_.$sellerId'
 import { Route as AuthenticatedComercialPropostasPropostasNovaRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.nova'
 import { Route as AuthenticatedComercialPropostasPropostasProposalIdRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.$proposalId'
@@ -285,6 +287,12 @@ const AuthenticatedSiteCategoriasLojaCategoriasLojaRoute =
     path: '/site/categorias-loja',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedServicosOrdensOrdensDeServicoRoute =
+  AuthenticatedServicosOrdensOrdensDeServicoRouteImport.update({
+    id: '/servicos/_ordens/ordens-de-servico',
+    path: '/servicos/ordens-de-servico',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedInventariosAreasAreaIdRoute =
   AuthenticatedInventariosAreasAreaIdRouteImport.update({
     id: '/inventarios/areas/$areaId',
@@ -405,6 +413,12 @@ const AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute =
     path: '/treinamentos/turmas/$turmaId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute =
+  AuthenticatedServicosOrdensOrdensDeServicoOrderIdRouteImport.update({
+    id: '/servicos/_ordens/ordens-de-servico_/$orderId',
+    path: '/servicos/ordens-de-servico/$orderId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComercialVendedoresVendedoresSellerIdRoute =
   AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport.update({
     id: '/comercial/_vendedores/vendedores_/$sellerId',
@@ -468,6 +482,7 @@ export interface FileRoutesByFullPath {
   '/financeiro/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/servicos/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
   '/site/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
   '/site/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
   '/site/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
@@ -489,6 +504,7 @@ export interface FileRoutesByFullPath {
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -529,6 +545,7 @@ export interface FileRoutesByTo {
   '/financeiro/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/servicos/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
   '/site/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
   '/site/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
   '/site/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
@@ -550,6 +567,7 @@ export interface FileRoutesByTo {
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -594,6 +612,7 @@ export interface FileRoutesById {
   '/_authenticated/financeiro/_plano-contas/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/_authenticated/financeiro/_receber/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/_authenticated/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/_authenticated/servicos/_ordens/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
   '/_authenticated/site/_categorias-loja/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
   '/_authenticated/site/_marcas/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
   '/_authenticated/site/_produtos/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
@@ -615,6 +634,7 @@ export interface FileRoutesById {
   '/_authenticated/comercial/_propostas/propostas_/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/_authenticated/comercial/_propostas/propostas_/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/_authenticated/comercial/_vendedores/vendedores_/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -658,6 +678,7 @@ export interface FileRouteTypes {
     | '/financeiro/plano-contas'
     | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
+    | '/servicos/ordens-de-servico'
     | '/site/categorias-loja'
     | '/site/marcas'
     | '/site/produtos'
@@ -679,6 +700,7 @@ export interface FileRouteTypes {
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
     | '/comercial/vendedores/$sellerId'
+    | '/servicos/ordens-de-servico/$orderId'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
   fileRoutesByTo: FileRoutesByTo
@@ -719,6 +741,7 @@ export interface FileRouteTypes {
     | '/financeiro/plano-contas'
     | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
+    | '/servicos/ordens-de-servico'
     | '/site/categorias-loja'
     | '/site/marcas'
     | '/site/produtos'
@@ -740,6 +763,7 @@ export interface FileRouteTypes {
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
     | '/comercial/vendedores/$sellerId'
+    | '/servicos/ordens-de-servico/$orderId'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
   id:
@@ -783,6 +807,7 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro/_plano-contas/plano-contas'
     | '/_authenticated/financeiro/_receber/receber'
     | '/_authenticated/inventarios/areas/$areaId'
+    | '/_authenticated/servicos/_ordens/ordens-de-servico'
     | '/_authenticated/site/_categorias-loja/categorias-loja'
     | '/_authenticated/site/_marcas/marcas'
     | '/_authenticated/site/_produtos/produtos'
@@ -804,6 +829,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comercial/_propostas/propostas_/$proposalId'
     | '/_authenticated/comercial/_propostas/propostas_/nova'
     | '/_authenticated/comercial/_vendedores/vendedores_/$sellerId'
+    | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId'
     | '/_authenticated/treinamentos/_turmas/turmas_/$turmaId'
     | '/_authenticated/treinamentos/_turmas/turmas_/nova'
   fileRoutesById: FileRoutesById
@@ -1082,6 +1108,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/servicos/_ordens/ordens-de-servico': {
+      id: '/_authenticated/servicos/_ordens/ordens-de-servico'
+      path: '/servicos/ordens-de-servico'
+      fullPath: '/servicos/ordens-de-servico'
+      preLoaderRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/inventarios/areas/$areaId': {
       id: '/_authenticated/inventarios/areas/$areaId'
       path: '/inventarios/areas/$areaId'
@@ -1222,6 +1255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId': {
+      id: '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId'
+      path: '/servicos/ordens-de-servico/$orderId'
+      fullPath: '/servicos/ordens-de-servico/$orderId'
+      preLoaderRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_vendedores/vendedores_/$sellerId': {
       id: '/_authenticated/comercial/_vendedores/vendedores_/$sellerId'
       path: '/comercial/vendedores/$sellerId'
@@ -1283,6 +1323,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFinanceiroPlanoContasPlanoContasRoute: typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   AuthenticatedFinanceiroReceberReceberRoute: typeof AuthenticatedFinanceiroReceberReceberRoute
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
+  AuthenticatedServicosOrdensOrdensDeServicoRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
   AuthenticatedSiteCategoriasLojaCategoriasLojaRoute: typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
   AuthenticatedSiteMarcasMarcasRoute: typeof AuthenticatedSiteMarcasMarcasRoute
   AuthenticatedSiteProdutosProdutosRoute: typeof AuthenticatedSiteProdutosProdutosRoute
@@ -1301,6 +1342,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComercialPropostasPropostasProposalIdRoute: typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   AuthenticatedComercialPropostasPropostasNovaRoute: typeof AuthenticatedComercialPropostasPropostasNovaRoute
   AuthenticatedComercialVendedoresVendedoresSellerIdRoute: typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   AuthenticatedTreinamentosTurmasTurmasNovaRoute: typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -1354,6 +1396,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedFinanceiroReceberReceberRoute,
   AuthenticatedInventariosAreasAreaIdRoute:
     AuthenticatedInventariosAreasAreaIdRoute,
+  AuthenticatedServicosOrdensOrdensDeServicoRoute:
+    AuthenticatedServicosOrdensOrdensDeServicoRoute,
   AuthenticatedSiteCategoriasLojaCategoriasLojaRoute:
     AuthenticatedSiteCategoriasLojaCategoriasLojaRoute,
   AuthenticatedSiteMarcasMarcasRoute: AuthenticatedSiteMarcasMarcasRoute,
@@ -1389,6 +1433,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialPropostasPropostasNovaRoute,
   AuthenticatedComercialVendedoresVendedoresSellerIdRoute:
     AuthenticatedComercialVendedoresVendedoresSellerIdRoute,
+  AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute:
+    AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute,
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute:
     AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute,
   AuthenticatedTreinamentosTurmasTurmasNovaRoute:

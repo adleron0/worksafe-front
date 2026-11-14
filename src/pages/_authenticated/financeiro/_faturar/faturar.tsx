@@ -10,6 +10,7 @@ import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import KanbanView, { KanbanColumn } from "@/components/general-components/KanbanView";
 import Select from "@/components/general-components/Select";
+import ViewToggle, { useStoredView } from "@/components/general-components/ViewToggle";
 import { cn } from "@/lib/utils";
 import { commercialApi, dateBr, errorMessage, money } from "../../comercial/-shared/commercial";
 import { BillDialog } from "../../comercial/-shared/billing";
@@ -27,8 +28,6 @@ const STAGES: Array<{ id: BillingStage; name: string; color: string; hint: strin
   { id: "recebida", name: "Recebidas", color: "#22c55e", hint: "Pagas recentemente" },
 ];
 const COLUMNS: KanbanColumn[] = STAGES.map(({ id, name, color }) => ({ id, name, value: id, color }));
-type View = "lista" | "kanban";
-const VIEW_KEY = "worksafe.financeiro.faturar.view";
 
 const installmentLabel = (row: BillingRow) => `${row.total > 1 ? `Parcela ${row.number}/${row.total}` : "Pagamento único"}${row.description ? ` · ${row.description}` : ""}`;
 
@@ -45,8 +44,7 @@ function BillingPage() {
   const [billing, setBilling] = useState<BillingRow | null>(null);
   // refaz o quadro quando um cartão é arrastado (a etapa muda pela nota e pela baixa, não por arrasto)
   const [boardKey, setBoardKey] = useState(0);
-  const [view, setView] = useState<View>(() => { try { return localStorage.getItem(VIEW_KEY) === "lista" ? "lista" : "kanban"; } catch { return "kanban"; } });
-  const changeView = (next: View) => { setView(next); try { localStorage.setItem(VIEW_KEY, next); } catch { /* sem armazenamento: vale só nesta visita */ } };
+  const [view, changeView] = useStoredView("worksafe.financeiro.faturar.view");
 
   const params = { ...(search.trim() ? { search: search.trim() } : {}), ...(kind ? { kind } : {}) };
   const { data, isLoading, error } = useQuery({
@@ -119,14 +117,7 @@ function BillingPage() {
       </div>
 
       <div className="flex flex-col xl:flex-row xl:items-center gap-3 mb-4 p-4 rounded-lg border">
-        <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
-          <Button variant={view === "lista" ? "default" : "ghost"} size="sm" onClick={() => changeView("lista")} className="gap-2">
-            <Icon name="list" className="w-4 h-4" /> Lista
-          </Button>
-          <Button variant={view === "kanban" ? "default" : "ghost"} size="sm" onClick={() => changeView("kanban")} className="gap-2">
-            <Icon name="columns" className="w-4 h-4" /> Kanban
-          </Button>
-        </div>
+        <ViewToggle view={view} onChange={changeView} />
         {view === "lista" && (
           <div className="w-full xl:w-56">
             <Select name="stage" state={stage} clearable placeholder="Todas as etapas" modal={false}

@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import KanbanView, { KanbanColumn } from "@/components/general-components/KanbanView";
 import Input from "@/components/general-components/Input";
 import Pagination from "@/components/general-components/Pagination";
 import Select from "@/components/general-components/Select";
@@ -27,13 +28,22 @@ const STATUS_OPTIONS: Array<{ id: ProposalStatus; name: string }> = [
   { id: "rascunho", name: "Rascunhos" }, { id: "enviada", name: "Enviadas" }, { id: "visualizada", name: "Visualizadas" },
   { id: "aceita", name: "Aceitas" }, { id: "recusada", name: "Recusadas" }, { id: "expirada", name: "Expiradas" }, { id: "cancelada", name: "Canceladas" },
 ];
-/** Colunas do kanban: o caminho da proposta, com as que terminaram sem aceite juntas no fim. */
-const COLUMNS: Array<{ key: string; title: string; statuses: ProposalStatus[]; hint: string }> = [
-  { key: "rascunho", title: "Rascunho", statuses: ["rascunho"], hint: "Ainda sendo montadas" },
-  { key: "enviada", title: "Enviadas", statuses: ["enviada", "visualizada"], hint: "Aguardando o cliente" },
-  { key: "aceita", title: "Aceitas", statuses: ["aceita"], hint: "Viraram contrato" },
-  { key: "encerrada", title: "Sem aceite", statuses: ["recusada", "expirada", "cancelada"], hint: "Recusadas, expiradas ou canceladas" },
+/**
+ * Colunas do kanban (o mesmo KanbanView da tela de Inscrições): o caminho da proposta,
+ * com as que terminaram sem aceite juntas no fim.
+ */
+const COLUMNS: KanbanColumn[] = [
+  { id: "rascunho", name: "Rascunho", value: "rascunho", color: "#9ca3af" },
+  { id: "enviada", name: "Enviadas", value: "enviada", color: "#3b82f6" },
+  { id: "aceita", name: "Aceitas", value: "aceita", color: "#22c55e" },
+  { id: "encerrada", name: "Sem aceite", value: "encerrada", color: "#ef4444" },
 ];
+/** Em qual coluna cada situação aparece. */
+const COLUMN_OF: Record<ProposalStatus, string> = {
+  rascunho: "rascunho", enviada: "enviada", visualizada: "enviada", aceita: "aceita",
+  recusada: "encerrada", expirada: "encerrada", cancelada: "encerrada", substituida: "encerrada",
+};
+type BoardRow = ProposalRow & { column: string };
 type View = "lista" | "kanban";
 const VIEW_KEY = "worksafe.comercial.propostas.view";
 const KANBAN_LIMIT = 100;
@@ -47,6 +57,8 @@ function ProposalsPage() {
   const [kind, setKind] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  // refaz o quadro quando um cartão é arrastado (a situação não muda por arrasto)
+  const [boardKey, setBoardKey] = useState(0);
   // a visão escolhida (lista ou kanban) fica guardada neste navegador
   const [view, setView] = useState<View>(() => { try { return localStorage.getItem(VIEW_KEY) === "kanban" ? "kanban" : "lista"; } catch { return "lista"; } });
   const changeView = (next: View) => { setView(next); setPage(0); try { localStorage.setItem(VIEW_KEY, next); } catch { /* sem armazenamento: vale só nesta visita */ } };
@@ -86,10 +98,10 @@ function ProposalsPage() {
   const canCreate = can(`create_${COMMERCIAL_ABILITY}`);
   const canUpdate = can(`update_${COMMERCIAL_ABILITY}`);
   /** Menu de ações de uma proposta: o mesmo na linha da lista e no cartão do kanban. */
-  const rowMenu = (row: ProposalRow) => (
+  const rowMenu = (row: ProposalRow, onCard = false) => (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button className="h-8 w-8 rounded-full p-0" variant="outline" size="sm" aria-label={`Ações de ${row.number}`}>
+        <Button className={onCard ? "h-6 w-6 p-0 shrink-0" : "h-8 w-8 rounded-full p-0"} variant={onCard ? "ghost" : "outline"} size="sm" aria-label={`Ações de ${row.number}`}>
           <Icon name="ellipsis-vertical" className="w-3 h-3" />
         </Button>
       </DropdownMenuTrigger>
@@ -116,6 +128,8 @@ function ProposalsPage() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
+  // cada proposta ganha a coluna do quadro
+  const board: BoardRow[] = (data?.rows ?? []).map((row) => ({ ...row, column: COLUMN_OF[row.status] }));
   const summary = data?.summary ?? {};
   const allCount = Object.entries(summary).reduce((sum, [key, value]) => sum + (key === "substituida" ? 0 : value?.count ?? 0), 0);
 
@@ -130,13 +144,13 @@ function ProposalsPage() {
       </div>
 
       <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-lg border">
-        <div className="inline-flex w-fit rounded-md border overflow-hidden" role="radiogroup" aria-label="Forma de ver as propostas">
-          {([["lista", "list", "Lista"], ["kanban", "columns-3", "Kanban"]] as const).map(([value, icon, label]) => (
-            <button key={value} type="button" role="radio" aria-checked={view === value} onClick={() => changeView(value)}
-              className={cn("flex items-center gap-1.5 px-3 h-9 text-sm border-l first:border-l-0", view === value ? "bg-primary text-inverse-foreground" : "hover:bg-muted")}>
-              <Icon name={icon} className="w-4 h-4" /> {label}
-            </button>
-          ))}
+        <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
+          <Button variant={view === "lista" ? "default" : "ghost"} size="sm" onClick={() => changeView("lista")} className="gap-2">
+            <Icon name="list" className="w-4 h-4" /> Lista
+          </Button>
+          <Button variant={view === "kanban" ? "default" : "ghost"} size="sm" onClick={() => changeView("kanban")} className="gap-2">
+            <Icon name="columns" className="w-4 h-4" /> Kanban
+          </Button>
         </div>
         {!kanban && (
           <div className="w-full xl:w-56">
@@ -161,45 +175,47 @@ function ProposalsPage() {
         )}
       </div>
 
-      {kanban && (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 items-start">
-          {COLUMNS.map((column) => {
-            const rows = (data?.rows ?? []).filter((row) => column.statuses.includes(row.status));
-            const count = column.statuses.reduce((sum, key) => sum + (summary[key]?.count ?? 0), 0);
-            const total = column.statuses.reduce((sum, key) => sum + (summary[key]?.total ?? 0), 0);
-            return (
-              <section key={column.key} className="rounded-lg border bg-muted/30 min-w-0" aria-label={column.title}>
-                <header className="px-3 py-2 border-b">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <h2 className="text-sm font-semibold">{column.title} <span className="font-normal text-muted-foreground tabular-nums">{count}</span></h2>
-                    <span className="text-xs font-medium tabular-nums">{money(total)}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{column.hint}</p>
-                </header>
-                <div className="p-2 grid gap-2">
-                  {isLoading && <Skeleton className="h-20 w-full" />}
-                  {!isLoading && rows.length === 0 && <p className="px-1 py-3 text-xs text-muted-foreground text-center">Nenhuma proposta aqui.</p>}
-                  {rows.map((row) => (
-                    <article key={row.id} className={cn("relative rounded-md border bg-background p-3 text-sm shadow-xs hover:border-primary/60", row.inactiveAt && "opacity-60")}>
-                      <button type="button" className="block w-full text-left pr-8" onClick={() => open(row.id)}>
-                        <span className="block font-semibold tabular-nums">{row.number}</span>
-                        <span className="block font-medium truncate">{row.customer.name}</span>
-                        <span className="block text-xs text-muted-foreground truncate">{row.title}</span>
-                      </button>
-                      <div className="absolute top-2 right-2">{rowMenu(row)}</div>
-                      <div className="mt-2 flex items-center justify-between gap-2">
-                        <span className="font-semibold tabular-nums">{money(row.total)}</span>
-                        {(column.statuses.length > 1 || row.expired) && <StatusBadge status={row.status} expired={row.expired} />}
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground truncate">
-                        {row.validUntil ? `Válida até ${dateBr(row.validUntil)}` : "Sem validade"}{row.seller ? ` · ${row.seller}` : ""}
-                      </p>
-                    </article>
-                  ))}
+      {kanban && !error && (
+        <div className="p-2">
+          <KanbanView key={boardKey} data={board} columns={COLUMNS} statusField="column" isLoading={isLoading}
+            emptyMessage={search || kind ? "Nenhuma proposta com esses filtros." : "Nenhuma proposta ainda. Crie a primeira em \"Nova proposta\"."}
+            onStatusChange={() => {
+              // a situação de uma proposta muda dentro dela (enviar congela o documento, aceitar gera contrato)
+              toast({ title: "A situação muda dentro da proposta", description: "Abra a proposta para enviar, registrar o aceite, a recusa ou cancelar." });
+              setBoardKey((value) => value + 1);
+            }}>
+            {(row: BoardRow) => (
+              <div className={cn("p-3 space-y-3", row.inactiveAt && "opacity-60")}>
+                <div className="flex items-start justify-between gap-2">
+                  <button type="button" className="flex-1 min-w-0 overflow-hidden text-left" onClick={() => open(row.id)}>
+                    <p className="font-medium text-sm truncate">{row.customer.name}</p>
+                    <p className="text-xs text-muted-foreground truncate tabular-nums">{row.number} · {KIND_LABEL[row.kind]}</p>
+                  </button>
+                  {rowMenu(row, true)}
                 </div>
-              </section>
-            );
-          })}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Icon name="file-text" className="w-3 h-3 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground truncate">{row.title}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Icon name="calendar" className="w-3 h-3 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground truncate">{row.validUntil ? `Válida até ${dateBr(row.validUntil)}` : "Sem validade"}</p>
+                  </div>
+                  {row.seller && (
+                    <div className="flex items-center gap-2">
+                      <Icon name="user" className="w-3 h-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground truncate">{row.seller}</p>
+                    </div>
+                  )}
+                </div>
+                <div className="pt-2 border-t flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold tabular-nums">{money(row.total)}</p>
+                  {(row.status !== row.column || row.expired) && <StatusBadge status={row.status} expired={row.expired} />}
+                </div>
+              </div>
+            )}
+          </KanbanView>
         </div>
       )}
       {kanban && error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}

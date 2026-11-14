@@ -6,9 +6,7 @@ import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
@@ -19,6 +17,7 @@ import {
 import { ActivityPanel } from "../-shared/activities";
 import { downloadProposalPdf } from "../-shared/pdf";
 import CustomerStep from "./-CustomerStep";
+import DecisionDialog from "./-DecisionDialog";
 import ProposalDocumentTab, { LinkPanel, ProposalHistory } from "./-ProposalDocumentTab";
 import ProposalItemsTab from "./-ProposalItemsTab";
 import { ProposalInfoStep, ProposalPaymentTab } from "./-ProposalTabs";
@@ -267,21 +266,28 @@ function ProposalEditorPage() {
           <p className="text-sm text-muted-foreground truncate">{[customer.name, titled ? draft.title : null, KIND_LABEL[draft.kind]].filter(Boolean).join(" · ")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <Button type="button" variant="outline" onClick={openClientView} disabled={saving}><Icon name="eye" className="w-4 h-4 mr-1" /> Ver como o cliente</Button>
-          <Button type="button" variant="outline" onClick={downloadPdf} disabled={saving || printing}><Icon name="file-down" className="w-4 h-4 mr-1" /> {printing ? "Gerando..." : "Baixar PDF"}</Button>
-          {proposal.publicKey && <Button type="button" variant="outline" onClick={() => copyLink(proposal)}><Icon name="copy" className="w-4 h-4 mr-1" /> Copiar link do cliente</Button>}
-          {sent && canUpdate && <>
-            <Button type="button" onClick={() => setDecision("aceita")}><Icon name="check" className="w-4 h-4 mr-1" /> Registrar aceite</Button>
-            <Button type="button" variant="outline" onClick={() => setDecision("recusada")}>Registrar recusa</Button>
-          </>}
-          {canCreate && (sent || proposal.status === "recusada" || proposal.status === "expirada") && (
-            <Button type="button" variant="outline" disabled={copying} onClick={() => copy("revise")}><Icon name="git-branch" className="w-4 h-4 mr-1" /> Criar revisão</Button>
+          {/* atalhos em ícone; a ação principal da situação em destaque; o resto no menu */}
+          <Tip text="Ver como o cliente vai ver">
+            <Button type="button" variant="outline" size="icon" aria-label="Ver como o cliente" onClick={openClientView} disabled={saving}><Icon name="eye" className="w-4 h-4" /></Button>
+          </Tip>
+          <Tip text="Baixar PDF">
+            <Button type="button" variant="outline" size="icon" aria-label="Baixar PDF" onClick={downloadPdf} disabled={saving || printing}><Icon name="file-down" className="w-4 h-4" /></Button>
+          </Tip>
+          {proposal.publicKey && (
+            <Tip text="Copiar o link do cliente">
+              <Button type="button" variant="outline" size="icon" aria-label="Copiar link do cliente" onClick={() => copyLink(proposal)}><Icon name="link" className="w-4 h-4" /></Button>
+            </Tip>
           )}
+          {sent && canUpdate && <Button type="button" onClick={() => setDecision("aceita")}><Icon name="check" className="w-4 h-4 mr-1" /> Registrar aceite</Button>}
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button type="button" variant="ghost" aria-label="Mais ações"><Icon name="ellipsis" className="w-4 h-4" /></Button>
+              <Button type="button" variant="outline" className="gap-1">Mais ações <Icon name="chevron-down" className="w-4 h-4" /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {sent && canUpdate && <DropdownMenuItem className="gap-2" onSelect={() => setDecision("recusada")}><Icon name="x" className="w-3 h-3" /> Registrar recusa</DropdownMenuItem>}
+              {canCreate && (sent || proposal.status === "recusada" || proposal.status === "expirada") && (
+                <DropdownMenuItem className="gap-2" disabled={copying} onSelect={() => copy("revise")}><Icon name="git-branch" className="w-3 h-3" /> Criar revisão</DropdownMenuItem>
+              )}
               {!readOnly && dirty && (
                 <DropdownMenuItem className="gap-2" onSelect={() => { const next = toDraft(proposal); setDraft(next); setCalc(proposal.calc); setCalcError(""); setCustomer(proposal.customer); }}>
                   <Icon name="undo-2" className="w-3 h-3" /> Descartar alterações
@@ -631,31 +637,5 @@ function TotalsPanel({ calc, draft, readOnly, canSeeCosts, stale, onDiscount, cu
       )}
       </div>
     </aside>
-  );
-}
-
-function DecisionDialog({ decision, number, pending, onClose, onConfirm }: { decision: "aceita" | "recusada"; number: string; pending: boolean; onClose: () => void; onConfirm: (note: string) => void }) {
-  const [note, setNote] = useState("");
-  const accepted = decision === "aceita";
-  return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{accepted ? `Registrar o aceite de ${number}` : `Registrar a recusa de ${number}`}</DialogTitle>
-          <DialogDescription>
-            {accepted ? "Use quando o cliente aceitou por fora do sistema (e-mail, pedido de compra). Anote como foi." : "Anote o motivo, se souber. Dá para criar uma revisão depois."}
-          </DialogDescription>
-        </DialogHeader>
-        <div>
-          <Label htmlFor="decisionNote">Observação</Label>
-          <Textarea id="decisionNote" className="mt-1" rows={3} maxLength={500} value={note} onChange={(event) => setNote(event.target.value)}
-            placeholder={accepted ? "Ex.: aceite por e-mail em 14/11, pedido de compra 4500123" : "Ex.: preço acima do orçamento do cliente"} />
-        </div>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Voltar</Button>
-          <Button type="button" disabled={pending} onClick={() => onConfirm(note)}>{accepted ? "Registrar aceite" : "Registrar recusa"}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }

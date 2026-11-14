@@ -5,7 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import KanbanView, { KanbanColumn } from "@/components/general-components/KanbanView";
@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, dateBr, errorMessage, money } from "../-shared/commercial";
 import { FollowUpChip } from "../-shared/activities";
 import { downloadProposalPdf } from "../-shared/pdf";
+import DecisionDialog from "./-DecisionDialog";
 import {
   KIND_LABEL, PROPOSALS_KEY, Proposal, ProposalRow, ProposalStatus, StatusBadge,
 } from "../-shared/proposals";
@@ -36,6 +37,8 @@ const STATUS_COLOR: Record<string, string> = {
 };
 /** Colunas do kanban (o KanbanView do sistema): uma para cada situação do filtro da lista, na mesma ordem. */
 const COLUMNS: KanbanColumn[] = STATUS_OPTIONS.map(({ id, name }) => ({ id, name, value: id, color: STATUS_COLOR[id] }));
+/** Situações em que a proposta já tem link do cliente. */
+const LINKED: ProposalStatus[] = ["enviada", "visualizada", "aceita", "recusada", "expirada"];
 type View = "lista" | "kanban";
 const VIEW_KEY = "worksafe.comercial.propostas.view";
 const KANBAN_LIMIT = 100;
@@ -91,6 +94,36 @@ function ProposalsPage() {
     downloadProposalPdf(row.id, row.customer.name).catch((err) => toast({ title: "Não foi possível gerar o PDF", description: errorMessage(err), variant: "destructive" }));
   };
 
+  // enviar, aceite e recusa direto da lista e do kanban
+  const [decision, setDecision] = useState<{ row: ProposalRow; kind: "aceita" | "recusada" } | null>(null);
+  const copyLink = async (source: Proposal) => {
+    const url = source.publicUrl ?? (source.publicKey ? `${window.location.origin}/proposta/${source.publicKey}` : "");
+    if (!url) return false;
+    try { await navigator.clipboard.writeText(url); return true; } catch { return false; }
+  };
+  const { mutate: copyRowLink } = useMutation({
+    mutationFn: (row: ProposalRow) => commercialApi.get<Proposal>(`proposals/${row.id}`),
+    onSuccess: async (proposal) => {
+      if (await copyLink(proposal)) toast({ title: "Link copiado", description: "Cole no e-mail ou no WhatsApp para o cliente.", variant: "success" });
+      else toast({ title: "Não foi possível copiar", description: "Abra a proposta e copie o link no passo Enviar.", variant: "destructive" });
+    },
+    onError: (err) => toast({ title: "Não foi possível copiar o link", description: errorMessage(err), variant: "destructive" }),
+  });
+  const { mutate: changeStatus, isPending: changing } = useMutation({
+    mutationFn: ({ row, ...body }: { row: ProposalRow; status: "enviada" | "aceita" | "recusada"; note?: string; notify?: boolean }) =>
+      commercialApi.patch<Proposal>(`proposals/status/${row.id}`, body),
+    onSuccess: async (result, body) => {
+      refresh(); setDecision(null);
+      if (result.status !== "enviada") { toast({ title: `Proposta ${result.number} ${result.status === "aceita" ? "aceita" : "recusada"}`, variant: "success" }); return; }
+      const copied = await copyLink(result);
+      if (result.emailError) toast({ title: "Proposta enviada, mas o e-mail falhou", description: `${result.emailError} ${copied ? "O link foi copiado: mande por outro canal." : "Abra a proposta para copiar o link."}`, variant: "destructive" });
+      else if (body.notify) toast({ title: "Proposta enviada", description: `O link foi enviado para ${result.draft.contactEmail}${copied ? " e também copiado" : ""}.`, variant: "success" });
+      else toast({ title: "Link criado", description: copied ? "O link foi copiado: cole no e-mail ou no WhatsApp para o cliente." : "Abra a proposta para copiar o link.", variant: "success" });
+    },
+    // o que falta para enviar (parcelas, validade, e-mail do contato) vem na mensagem
+    onError: (err) => toast({ title: "Não foi possível concluir", description: errorMessage(err), variant: "destructive" }),
+  });
+
   if (!can(`view_${COMMERCIAL_ABILITY}`)) return null;
   const canCreate = can(`create_${COMMERCIAL_ABILITY}`);
   const canUpdate = can(`update_${COMMERCIAL_ABILITY}`);
@@ -106,7 +139,28 @@ function ProposalsPage() {
         <DropdownMenuItem className="gap-2" onSelect={() => open(row.id)}>
           <Icon name={row.status === "rascunho" ? "pencil" : "eye"} className="w-3 h-3" /> {row.status === "rascunho" ? "Editar" : "Abrir"}
         </DropdownMenuItem>
+        <DropdownMenuItem className="gap-2" onSelect={() => window.open(`/proposta/rascunho/${row.id}`, "_blank", "noopener")}><Icon name="monitor" className="w-3 h-3" /> Ver como o cliente</DropdownMenuItem>
         <DropdownMenuItem className="gap-2" onSelect={() => pdf(row)}><Icon name="file-down" className="w-3 h-3" /> Baixar PDF</DropdownMenuItem>
+        {LINKED.includes(row.status) && <DropdownMenuItem className="gap-2" onSelect={() => copyRowLink(row)}><Icon name="link" className="w-3 h-3" /> Copiar link do cliente</DropdownMenuItem>}
+        {canUpdate && row.status === "rascunho" && !row.inactiveAt && (<>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="p-0" onSelect={(event) => event.preventDefault()}>
+            <ConfirmDialog title={`Criar o link de ${row.number}?`}
+              description="O documento é congelado e a proposta ganha um link para o cliente ler e aceitar. Nenhum e-mail é enviado: o link é copiado para você mandar por onde quiser. Depois disso ela não é mais editada: para mudar algo, cria-se uma revisão."
+              onConfirm={() => changeStatus({ row, status: "enviada" })} titleBttn="Criar e copiar o link" iconBttn="copy" />
+          </DropdownMenuItem>
+          <DropdownMenuItem className="p-0" onSelect={(event) => event.preventDefault()}>
+            <ConfirmDialog title={`Enviar ${row.number} por e-mail?`}
+              description="O documento é congelado e o link é enviado para o e-mail do contato do cliente desta proposta. Depois de enviada ela não é mais editada: para mudar algo, cria-se uma revisão."
+              onConfirm={() => changeStatus({ row, status: "enviada", notify: true })} titleBttn="Enviar por e-mail" iconBttn="send" />
+          </DropdownMenuItem>
+        </>)}
+        {canUpdate && (row.status === "enviada" || row.status === "visualizada") && !row.inactiveAt && (<>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="gap-2" onSelect={() => setDecision({ row, kind: "aceita" })}><Icon name="check" className="w-3 h-3" /> Registrar aceite</DropdownMenuItem>
+          <DropdownMenuItem className="gap-2" onSelect={() => setDecision({ row, kind: "recusada" })}><Icon name="x" className="w-3 h-3" /> Registrar recusa</DropdownMenuItem>
+        </>)}
+        <DropdownMenuSeparator />
         {canCreate && <DropdownMenuItem className="gap-2" onSelect={() => act({ row, action: "duplicate" })}><Icon name="copy" className="w-3 h-3" /> Duplicar</DropdownMenuItem>}
         {canCreate && ["enviada", "visualizada", "recusada", "expirada"].includes(row.status) && (
           <DropdownMenuItem className="gap-2" onSelect={() => act({ row, action: "revise" })}><Icon name="git-branch" className="w-3 h-3" /> Criar revisão</DropdownMenuItem>
@@ -266,6 +320,10 @@ function ProposalsPage() {
         </p>
       )}
 
+      {decision && (
+        <DecisionDialog decision={decision.kind} number={decision.row.number} pending={changing} onClose={() => setDecision(null)}
+          onConfirm={(note) => changeStatus({ row: decision.row, status: decision.kind, note })} />
+      )}
     </>
   );
 }

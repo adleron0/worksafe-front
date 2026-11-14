@@ -212,3 +212,23 @@ export function Tip({ text, children }: { text?: string; children: React.ReactEl
     </Tooltip>
   );
 }
+
+/**
+ * Moldura do editor de texto: a barra de ferramentas e a área de escrita dividem a altura
+ * pedida. Sem isto a área de escrita usa a altura inteira e passa para fora do cartão,
+ * por baixo do que vem depois.
+ */
+export function EditorFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="editor-frame">
+      <style>{`
+        .editor-frame .quill { display:flex; flex-direction:column; }
+        .editor-frame .ql-toolbar { flex:0 0 auto; }
+        .editor-frame .ql-container { flex:1 1 auto; height:auto; min-height:0; overflow:hidden; }
+        .editor-frame .ql-editor { height:100%; min-height:0; overflow-y:auto; }
+      `}</style>
+      {children}
+    </div>
+  );
+}
+

@@ -15,7 +15,7 @@ import Icon from "@/components/general-components/Icon";
 import RichTextEditor from "@/components/general-components/RichTextEditor";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
-import { COMMERCIAL_ABILITY, commercialApi, errorMessage } from "../-shared/commercial";
+import { COMMERCIAL_ABILITY, EditorFrame, commercialApi, errorMessage } from "../-shared/commercial";
 import { ITEMS_MODE_OPTIONS, ItemsMode, KIND_LABEL, ProposalKind, VariableOption } from "../-shared/proposals";
 import { VariablePalette } from "../_propostas/-ProposalDocumentTab";
 import BrandTab from "./-BrandTab";
@@ -213,7 +213,7 @@ function TemplateDialog({ row, terms, variables, onClose, onSaved }: { row?: Tem
           </label>
           <div>
             <Label>Texto</Label>
-            <div className="mt-1"><RichTextEditor value={body} onChange={setBody} height={360} placeholder="Texto do modelo..." /></div>
+            <div className="mt-1"><EditorFrame><RichTextEditor value={body} onChange={setBody} height={360} placeholder="Texto do modelo..." /></EditorFrame></div>
           </div>
           <VariablePalette variables={variables} />
           {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -259,7 +259,7 @@ function TermDialog({ row, nextOrder, onClose, onSaved }: { row?: Term; nextOrde
           </div>
           <div>
             <Label>Texto</Label>
-            <div className="mt-1"><RichTextEditor value={body} onChange={setBody} height={260} placeholder="Texto do termo..." /></div>
+            <div className="mt-1"><EditorFrame><RichTextEditor value={body} onChange={setBody} height={260} placeholder="Texto do termo..." /></EditorFrame></div>
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <DialogFooter>

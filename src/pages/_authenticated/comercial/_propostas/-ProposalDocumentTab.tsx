@@ -11,7 +11,7 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import RichTextEditor from "@/components/general-components/RichTextEditor";
 import Select from "@/components/general-components/Select";
-import { Tip, commercialApi, errorMessage } from "../-shared/commercial";
+import { EditorFrame, Tip, commercialApi, errorMessage } from "../-shared/commercial";
 import { DocumentPaper } from "../-shared/document";
 import ProposalImages from "./-ProposalImages";
 import { EVENT_LABEL, ITEMS_MODE_OPTIONS, ItemsMode, Proposal, ProposalDraft, ProposalOptions, VariableOption } from "../-shared/proposals";
@@ -179,8 +179,10 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
 
         {!readOnly && draft.documentBody !== null && draft.documentBody !== undefined && draft.documentBody !== "" && (
           <>
-            <RichTextEditor value={draft.documentBody} height={420} placeholder="Texto da proposta..."
-              onChange={(content) => setDraft((d) => (d.documentBody === content ? d : { ...d, documentBody: content }))} />
+            <EditorFrame>
+              <RichTextEditor value={draft.documentBody} height={460} placeholder="Texto da proposta..."
+                onChange={(content) => setDraft((d) => (d.documentBody === content ? d : { ...d, documentBody: content }))} />
+            </EditorFrame>
             <p className="text-xs text-muted-foreground">
               Todo o texto pode ser mudado. O que está entre <code>{"{{ }}"}</code> é preenchido pelo sistema na proposta (cabeçalho, cliente, tabelas, valores e datas):
               mantenha esses trechos onde o conteúdo deve aparecer. Use "Pré-visualizar" para ver o resultado.

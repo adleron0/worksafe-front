@@ -435,6 +435,56 @@ const Line = ({ label, value, strong, muted, negative, hint, small, bold }: { la
     </div>
   </Tip>
 );
+/**
+ * Faixas da margem real. Os limites são um ponto de partida (não vêm da planilha):
+ * abaixo de 5% qualquer imprevisto vira prejuízo; de 5% a 15% a obra se paga com pouca folga.
+ */
+const MARGIN_ZONES = [
+  { upTo: 0.05, label: "Risco de prejuízo", bar: "bg-red-500", text: "text-red-600 dark:text-red-400" },
+  { upTo: 0.15, label: "Apertada", bar: "bg-amber-400", text: "text-amber-600 dark:text-amber-400" },
+  { upTo: 0.3, label: "Saudável", bar: "bg-green-500", text: "text-green-600 dark:text-green-400" },
+  { upTo: Infinity, label: "Excelente", bar: "bg-blue-500", text: "text-blue-600 dark:text-blue-400" },
+] as const;
+const SCALE_MIN = -0.05, SCALE_MAX = 0.45;
+const zoneOf = (rate: number) => MARGIN_ZONES.find((zone) => rate < zone.upTo) ?? MARGIN_ZONES[MARGIN_ZONES.length - 1];
+const scaleAt = (rate: number) => Math.min(100, Math.max(0, ((rate - SCALE_MIN) / (SCALE_MAX - SCALE_MIN)) * 100));
+
+/**
+ * Escala de cores da margem real: vermelho, amarelo, verde e azul. A faixa marcada vai do pior
+ * cenário (reserva toda gasta) ao melhor (reserva não gasta); a palavra ao lado diz em que zona
+ * a proposta está, para não depender só da cor.
+ */
+function MarginScale({ low, high }: { low: number; high: number }) {
+  const worst = zoneOf(low), best = zoneOf(high);
+  const from = scaleAt(Math.min(low, high)), to = scaleAt(Math.max(low, high));
+  let start = SCALE_MIN;
+  return (
+    <div className="mt-2.5" role="img" aria-label={`Margem real entre ${percent(low, 1)} e ${percent(high, 1)}: ${worst.label}${best !== worst ? ` a ${best.label}` : ""}`}>
+      <p className="text-sm font-semibold leading-tight">
+        <span className={worst.text}>{worst.label}</span>
+        {best !== worst && <><span className="text-muted-foreground font-normal"> a </span><span className={best.text}>{best.label}</span></>}
+        <span className="ml-1.5 text-xs font-normal text-muted-foreground tabular-nums">{percent(low, 1)} a {percent(high, 1)}</span>
+      </p>
+      <div className="relative mt-3 mb-1 h-2.5">
+        <div className="absolute inset-0 flex overflow-hidden rounded-full">
+          {MARGIN_ZONES.map((zone) => {
+            const end = Math.min(zone.upTo, SCALE_MAX);
+            const width = ((end - start) / (SCALE_MAX - SCALE_MIN)) * 100;
+            start = end;
+            return <div key={zone.label} className={zone.bar} style={{ width: `${width}%` }} />;
+          })}
+        </div>
+        {/* do pior ao melhor cenário */}
+        <div className="absolute -top-1 -bottom-1 rounded-sm border-2 border-foreground bg-background/40" style={{ left: `${from}%`, width: `${Math.max(to - from, 1.5)}%` }} />
+      </div>
+      {/* os números ficam embaixo de onde cada cor troca */}
+      <div className="relative h-3.5 text-[10px] text-muted-foreground tabular-nums">
+        {[0.05, 0.15, 0.3].map((edge) => <span key={edge} className="absolute -translate-x-1/2" style={{ left: `${scaleAt(edge)}%` }}>{percent(edge, 0)}</span>)}
+      </div>
+    </div>
+  );
+}
+
 /** Percentual discreto ao lado do rótulo, para o valor ficar sozinho na coluna da direita. */
 const Rate = ({ children }: { children: React.ReactNode }) => <span className="ml-1 text-xs text-muted-foreground whitespace-nowrap tabular-nums">{children}</span>;
 
@@ -527,25 +577,23 @@ function TotalsPanel({ calc, draft, readOnly, canSeeCosts, stale, onDiscount, cu
           <Line label="Custo" value={money(t.cost)} />
           <Line label={<>Imposto{calc?.tax.inside != null && <Rate>{percent(calc.tax.inside)}</Rate>}</>} value={money(t.tax)} />
           <Line label="Comissão" value={money(t.commission)} />
-          <div className="border-t mt-1 pt-1">
-            <Line label={<>Lucro estimado<Rate>{percent(t.profitRate, 1)}</Rate></>} value={money(t.profit)} negative={(t.profit ?? 0) < 0} bold />
-          </div>
+          <Line label={<>Lucro estimado<Rate>{percent(t.profitRate, 1)}</Rate></>} value={money(t.profit)} negative={(t.profit ?? 0) < 0} />
 
           <div className="mt-3 rounded-md bg-muted/50 px-3 py-2.5">
             <p className="text-xs font-semibold">Margem real</p>
             <p className="text-[11px] leading-snug text-muted-foreground">
               Quanto sobra de lucro depois do imposto efetivo e da comissão. A imprevisibilidade ({money(t.contingency)}) é uma reserva cobrada do cliente para imprevistos da obra: se não for gasta, vira lucro.
             </p>
-            <div className="mt-2 grid grid-cols-2 gap-2 tabular-nums">
+            <MarginScale low={m.usedRate} high={m.unusedRate} />
+            <div className="mt-2 grid gap-0.5 text-xs tabular-nums">
               {([
-                ["Se a reserva não for gasta", m.unusedRate, m.unused, "Cenário em que a obra não teve imprevistos: a imprevisibilidade cobrada fica inteira como lucro."],
                 ["Se a reserva for toda gasta", m.usedRate, m.used, "Cenário em que os imprevistos consumiram toda a imprevisibilidade cobrada."],
+                ["Se a reserva não for gasta", m.unusedRate, m.unused, "Cenário em que a obra não teve imprevistos: a imprevisibilidade cobrada fica inteira como lucro."],
               ] as const).map(([label, rate, value, hint]) => (
                 <Tip key={label} text={hint}>
-                  <div className="rounded-md border bg-background px-2.5 py-2">
-                    <p className="text-[11px] leading-tight text-muted-foreground">{label}</p>
-                    <p className={cn("text-lg font-semibold leading-tight mt-0.5", value < 0 && "text-destructive")}>{percent(rate, 1)}</p>
-                    <p className={cn("text-xs whitespace-nowrap", value < 0 ? "text-destructive" : "text-muted-foreground")}>{money(value)}</p>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="min-w-0 text-muted-foreground">{label}</span>
+                    <span className={cn("shrink-0 whitespace-nowrap", value < 0 && "text-destructive")}><b className="font-semibold">{percent(rate, 1)}</b> · {money(value)}</span>
                   </div>
                 </Tip>
               ))}

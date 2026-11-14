@@ -48,7 +48,7 @@ export default function ProposalSchedule({ schedule, onChange, kind, workDays, r
   }
 
   return (
-    <section className="rounded-lg border p-4 grid gap-3">
+    <section className="@container rounded-lg border p-4 grid gap-3">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold">Cronograma</h3>
@@ -61,16 +61,16 @@ export default function ProposalSchedule({ schedule, onChange, kind, workDays, r
       </div>
 
       <div className="grid gap-2">
-        <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-muted-foreground">
+        <div className="hidden @xl:flex items-center gap-2 text-xs font-medium text-muted-foreground">
           <div className="flex-1">Etapa</div><div className="w-20">Início</div><div className="w-20">Duração</div><div className="w-40">No tempo</div><div className="w-8" />
         </div>
         {steps.map((step, index) => (
-          <div key={index} className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-            <ShadInput className="basis-full sm:basis-auto sm:flex-1" value={step.title} maxLength={80} disabled={readOnly} placeholder="Nome da etapa" aria-label={`Etapa ${index + 1}`}
+          <div key={index} className="flex flex-wrap @xl:flex-nowrap items-center gap-2">
+            <ShadInput className="basis-full @xl:basis-auto @xl:flex-1" value={step.title} maxLength={80} disabled={readOnly} placeholder="Nome da etapa" aria-label={`Etapa ${index + 1}`}
               onChange={(event) => setStep(index, { title: event.target.value })} />
             <NumField className="w-20" digits={0} value={step.start} disabled={readOnly} ariaLabel={`Início da etapa ${index + 1}`} onChange={(start) => setStep(index, { start: Math.max(1, start) })} />
             <NumField className="w-20" digits={0} value={step.duration} disabled={readOnly} ariaLabel={`Duração da etapa ${index + 1}`} onChange={(duration) => setStep(index, { duration: Math.max(1, duration) })} />
-            <div className="flex-1 sm:flex-none sm:w-40 h-3 rounded bg-muted" aria-hidden="true">
+            <div className="flex-1 @xl:flex-none @xl:w-40 h-3 rounded bg-muted" aria-hidden="true">
               {total > 0 && <div className="h-3 rounded bg-primary" style={{ marginLeft: `${((step.start - 1) / total) * 100}%`, width: `${(step.duration / total) * 100}%` }} />}
             </div>
             {!readOnly && (

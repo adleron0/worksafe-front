@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, ReactNode } from 'react';
+import { useState, useEffect, useRef, ReactNode, MouseEvent as ReactMouseEvent } from 'react';
 import {
   KanbanBoard,
   KanbanCard,
@@ -85,6 +85,31 @@ export default function KanbanView<T extends Record<string, any>>({
   const [kanbanData, setKanbanData] = useState<KanbanItem[]>([]);
   const previousDataRef = useRef<KanbanItem[]>([]);
   const isDraggingRef = useRef<boolean>(false);
+
+  // Arrastar a área vazia do quadro (fora dos cartões) rola as colunas para os lados.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [panning, setPanning] = useState(false);
+  const startPan = (event: ReactMouseEvent<HTMLDivElement>) => {
+    const box = scrollRef.current;
+    if (!box || event.button !== 0 || box.scrollWidth <= box.clientWidth) return;
+    // cartões (arrastar muda de coluna), botões e campos seguem com o comportamento deles
+    if ((event.target as HTMLElement).closest('[aria-roledescription="sortable"], button, a, input, textarea, [role="menuitem"]')) return;
+    // a barra de rolagem fica abaixo da área de conteúdo
+    if (event.clientY > box.getBoundingClientRect().top + box.clientHeight) return;
+    const startX = event.clientX;
+    const startScroll = box.scrollLeft;
+    event.preventDefault();
+    setPanning(true);
+    // 'instant': a página usa rolagem suave, que atrasaria o quadro em relação ao mouse
+    const move = (e: MouseEvent) => { box.scrollTo({ left: startScroll - (e.clientX - startX), behavior: 'instant' }); };
+    const stop = () => {
+      setPanning(false);
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', stop);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', stop);
+  };
 
   // Converter dados para formato Kanban
   useEffect(() => {
@@ -260,7 +285,9 @@ export default function KanbanView<T extends Record<string, any>>({
         }
       `}</style>
       <div 
-        className="kanban-scroll-container overflow-x-auto pb-4 -mx-4 px-4 md:-mx-2 md:px-2"
+        ref={scrollRef}
+        onMouseDown={startPan}
+        className={`kanban-scroll-container overflow-x-auto pb-4 -mx-4 px-4 md:-mx-2 md:px-2 ${panning ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
         style={{
           scrollbarWidth: 'thin',
           scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent'

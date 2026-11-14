@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, post, put } from "@/services/api";
@@ -66,108 +65,13 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
     message: "A senha é obrigatória para novos usuários.",
     path: ["password"],
   }).refine((data) => {
-    // Se isSeller for true, os campos de endereço são obrigatórios
-    if (data.isSeller) {
-      if (!data.birthDate || data.birthDate === "") {
-        return false;
-      }
-    }
+    // Vendedor não exige mais endereço, nascimento nem PIX: é só uma marcação (Comercial → Vendedores).
+    // A única conferência que fica é a do formato da chave aleatória, quando ela é informada.
+    if (data.pixType === 'EVP' && data.pixKey) return data.pixKey.length === 32;
     return true;
   }, {
-    message: "Data de nascimento é obrigatória para vendedores.",
-    path: ["birthDate"],
-  }).refine((data) => {
-    // Se isSeller for true, os campos de PIX são obrigatórios
-    if (data.isSeller) {
-      if (!data.pixType || data.pixType === "") {
-        return false;
-      }
-    }
-    return true;
-  }, {
-    message: "Tipo de chave PIX é obrigatório para vendedores.",
-    path: ["pixType"],
-  }).refine((data) => {
-    if (data.isSeller) {
-      if (!data.pixKey || data.pixKey === "") {
-        return false;
-      }
-    }
-    return true;
-  }, {
-    message: "Chave PIX é obrigatória para vendedores.",
+    message: "Chave aleatória deve ter 32 caracteres",
     path: ["pixKey"],
-  }).refine((data) => {
-    // Valida chave EVP com exatamente 32 caracteres
-    if (data.isSeller && data.pixType === 'EVP' && data.pixKey) {
-      if (data.pixKey.length !== 32) {
-        return false;
-      }
-    }
-    return true;
-  }, {
-    message: "Chave aleatória (EVP) deve ter exatamente 32 caracteres.",
-    path: ["pixKey"],
-  }).refine((data) => {
-    if (data.isSeller) {
-      if (!data.address || data.address === "") {
-        return false;
-      }
-    }
-    return true;
-  }, {
-    message: "Endereço é obrigatório para vendedores.",
-    path: ["address"],
-  }).refine((data) => {
-    if (data.isSeller) {
-      if (!data.addressNumber || data.addressNumber === "") {
-        return false;
-      }
-    }
-    return true;
-  }, {
-    message: "Número é obrigatório para vendedores.",
-    path: ["addressNumber"],
-  }).refine((data) => {
-    if (data.isSeller) {
-      if (!data.neighborhood || data.neighborhood === "") {
-        return false;
-      }
-    }
-    return true;
-  }, {
-    message: "Bairro é obrigatório para vendedores.",
-    path: ["neighborhood"],
-  }).refine((data) => {
-    if (data.isSeller) {
-      if (!data.city || data.city === "") {
-        return false;
-      }
-    }
-    return true;
-  }, {
-    message: "Cidade é obrigatória para vendedores.",
-    path: ["city"],
-  }).refine((data) => {
-    if (data.isSeller) {
-      if (!data.state || data.state === "") {
-        return false;
-      }
-    }
-    return true;
-  }, {
-    message: "Estado é obrigatório para vendedores.",
-    path: ["state"],
-  }).refine((data) => {
-    if (data.isSeller) {
-      if (!data.zipCode || data.zipCode === "") {
-        return false;
-      }
-    }
-    return true;
-  }, {
-    message: "CEP é obrigatório para vendedores.",
-    path: ["zipCode"],
   });
 
   type UserFormData = z.infer<typeof userSchema>;
@@ -401,14 +305,6 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
                 EditPreview={preview}
               />
             </div>
-            <div className="flex items-center justify-between p-4 bg-muted/10 rounded-lg border border-primary dark:border-gray-700">
-              <Label htmlFor="isSeller" className="text-base cursor-pointer font-medium">É vendedor</Label>
-              <Switch
-                id="isSeller"
-                checked={dataForm.isSeller || false}
-                onCheckedChange={(checked) => handleChange('isSeller', checked)}
-              />
-            </div>
             <div>
               <Label htmlFor="name">Nome <span>*</span></Label>
               <Input
@@ -461,7 +357,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
               {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
             </div>
             <div>
-              <Label htmlFor="birthDate">Data de Nascimento {dataForm.isSeller && <span>*</span>}</Label>
+              <Label htmlFor="birthDate">Data de Nascimento</Label>
               <CalendarPicker
                 mode="natural"
                 name="birthDate"
@@ -475,7 +371,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
             </div>
             <div>
               <Label htmlFor="zipCode">
-                CEP {dataForm.isSeller && <span>*</span>}
+                CEP
                 {isLoadingCep && <span className="ml-2 text-xs text-muted-foreground">(buscando...)</span>}
               </Label>
               <Input
@@ -491,7 +387,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
               {errors.zipCode && <p className="text-red-500 text-sm">{errors.zipCode}</p>}
             </div>
             <div>
-              <Label htmlFor="address">Endereço {dataForm.isSeller && <span>*</span>}</Label>
+              <Label htmlFor="address">Endereço</Label>
               <Input
                 id="address"
                 name="address"
@@ -504,7 +400,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label htmlFor="addressNumber">Número {dataForm.isSeller && <span>*</span>}</Label>
+                <Label htmlFor="addressNumber">Número</Label>
                 <Input
                   id="addressNumber"
                   name="addressNumber"
@@ -529,7 +425,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
               </div>
             </div>
             <div>
-              <Label htmlFor="neighborhood">Bairro {dataForm.isSeller && <span>*</span>}</Label>
+              <Label htmlFor="neighborhood">Bairro</Label>
               <Input
                 id="neighborhood"
                 name="neighborhood"
@@ -542,7 +438,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label htmlFor="city">Cidade {dataForm.isSeller && <span>*</span>}</Label>
+                <Label htmlFor="city">Cidade</Label>
                 <Input
                   id="city"
                   name="city"
@@ -554,7 +450,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
                 {errors.city && <p className="text-red-500 text-sm">{errors.city}</p>}
               </div>
               <div>
-                <Label htmlFor="state">Estado {dataForm.isSeller && <span>*</span>}</Label>
+                <Label htmlFor="state">Estado</Label>
                 <Input
                   id="state"
                   name="state"
@@ -567,10 +463,11 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
                 {errors.state && <p className="text-red-500 text-sm">{errors.state}</p>}
               </div>
             </div>
+            {/* chave PIX do vendedor: opcional, só para facilitar o pagamento das comissões */}
             {dataForm.isSeller && (
               <>
                 <div>
-                  <Label htmlFor="pixType">Tipo de Chave PIX <span>*</span></Label>
+                  <Label htmlFor="pixType">Tipo de Chave PIX (opcional)</Label>
                   <Select
                     name="pixType"
                     options={[
@@ -587,7 +484,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
                   {errors.pixType && <p className="text-red-500 text-sm">{errors.pixType}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="pixKey">Chave PIX <span>*</span></Label>
+                  <Label htmlFor="pixKey">Chave PIX</Label>
                   <Input
                     id="pixKey"
                     name="pixKey"

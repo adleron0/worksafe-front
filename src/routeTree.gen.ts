@@ -72,6 +72,7 @@ import { Route as AuthenticatedBlogComentariosComentariosRouteImport } from './p
 import { Route as AuthenticatedBlogCategoriasCategoriasRouteImport } from './pages/_authenticated/blog/_categorias/categorias'
 import { Route as AuthenticatedTreinamentosTurmasTurmasNovaRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.nova'
 import { Route as AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.$turmaId'
+import { Route as AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores_.$sellerId'
 import { Route as AuthenticatedComercialPropostasPropostasNovaRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.nova'
 import { Route as AuthenticatedComercialPropostasPropostasProposalIdRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.$proposalId'
 import { Route as AuthenticatedComercialContratosContratosContractIdRouteImport } from './pages/_authenticated/comercial/_contratos/contratos_.$contractId'
@@ -437,6 +438,12 @@ const AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute =
     path: '/treinamentos/turmas/$turmaId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedComercialVendedoresVendedoresSellerIdRoute =
+  AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport.update({
+    id: '/comercial/_vendedores/vendedores_/$sellerId',
+    path: '/comercial/vendedores/$sellerId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComercialPropostasPropostasNovaRoute =
   AuthenticatedComercialPropostasPropostasNovaRouteImport.update({
     id: '/comercial/_propostas/propostas_/nova',
@@ -519,6 +526,7 @@ export interface FileRoutesByFullPath {
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
+  '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -584,6 +592,7 @@ export interface FileRoutesByTo {
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
+  '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -653,6 +662,7 @@ export interface FileRoutesById {
   '/_authenticated/comercial/_contratos/contratos_/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
   '/_authenticated/comercial/_propostas/propostas_/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/_authenticated/comercial/_propostas/propostas_/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
+  '/_authenticated/comercial/_vendedores/vendedores_/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -721,6 +731,7 @@ export interface FileRouteTypes {
     | '/comercial/contratos/$contractId'
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
+    | '/comercial/vendedores/$sellerId'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
   fileRoutesByTo: FileRoutesByTo
@@ -786,6 +797,7 @@ export interface FileRouteTypes {
     | '/comercial/contratos/$contractId'
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
+    | '/comercial/vendedores/$sellerId'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
   id:
@@ -854,6 +866,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comercial/_contratos/contratos_/$contractId'
     | '/_authenticated/comercial/_propostas/propostas_/$proposalId'
     | '/_authenticated/comercial/_propostas/propostas_/nova'
+    | '/_authenticated/comercial/_vendedores/vendedores_/$sellerId'
     | '/_authenticated/treinamentos/_turmas/turmas_/$turmaId'
     | '/_authenticated/treinamentos/_turmas/turmas_/nova'
   fileRoutesById: FileRoutesById
@@ -1307,6 +1320,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/comercial/_vendedores/vendedores_/$sellerId': {
+      id: '/_authenticated/comercial/_vendedores/vendedores_/$sellerId'
+      path: '/comercial/vendedores/$sellerId'
+      fullPath: '/comercial/vendedores/$sellerId'
+      preLoaderRoute: typeof AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_propostas/propostas_/nova': {
       id: '/_authenticated/comercial/_propostas/propostas_/nova'
       path: '/comercial/propostas/nova'
@@ -1379,6 +1399,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComercialContratosContratosContractIdRoute: typeof AuthenticatedComercialContratosContratosContractIdRoute
   AuthenticatedComercialPropostasPropostasProposalIdRoute: typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   AuthenticatedComercialPropostasPropostasNovaRoute: typeof AuthenticatedComercialPropostasPropostasNovaRoute
+  AuthenticatedComercialVendedoresVendedoresSellerIdRoute: typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   AuthenticatedTreinamentosTurmasTurmasNovaRoute: typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
 }
@@ -1467,6 +1488,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialPropostasPropostasProposalIdRoute,
   AuthenticatedComercialPropostasPropostasNovaRoute:
     AuthenticatedComercialPropostasPropostasNovaRoute,
+  AuthenticatedComercialVendedoresVendedoresSellerIdRoute:
+    AuthenticatedComercialVendedoresVendedoresSellerIdRoute,
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute:
     AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute,
   AuthenticatedTreinamentosTurmasTurmasNovaRoute:

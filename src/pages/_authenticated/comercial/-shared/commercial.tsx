@@ -13,6 +13,7 @@ export const commercialApi = {
   post: async <T,>(path: string, body?: unknown) => (await api.post<T>(`commercial/${path}`, body ?? {})).data,
   put: async <T,>(path: string, body?: unknown) => (await api.put<T>(`commercial/${path}`, body ?? {})).data,
   patch: async <T,>(path: string, body?: unknown) => (await api.patch<T>(`commercial/${path}`, body ?? {})).data,
+  delete: async <T,>(path: string) => (await api.delete<T>(`commercial/${path}`)).data,
 };
 
 export const errorMessage = (error: unknown) => {

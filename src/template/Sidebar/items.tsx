@@ -37,12 +37,6 @@ export const items = [
         path: "/comercial/vendedores",
       },
       {
-        title: "Comissões",
-        ability: "comissoes",
-        icon: "hand-coins",
-        path: "/comercial/comissaoes",
-      },
-      {
         title: "Cupons",
         ability: "cupoms",
         icon: "ticket-percent",

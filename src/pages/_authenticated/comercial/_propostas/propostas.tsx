@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
@@ -52,6 +54,8 @@ function ProposalsPage() {
   const [kind, setKind] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  // arquivadas (tiradas da lista) só aparecem quando pedidas
+  const [archived, setArchived] = useState(false);
   // refaz o quadro quando um cartão é arrastado (a situação não muda por arrasto)
   const [boardKey, setBoardKey] = useState(0);
   // a visão escolhida (lista ou kanban) fica guardada neste navegador
@@ -61,8 +65,8 @@ function ProposalsPage() {
 
   // no kanban as colunas já são as situações: vêm todas de uma vez, sem paginação
   const params = kanban
-    ? { page: 0, limit: KANBAN_LIMIT, ...(kind ? { kind } : {}), ...(search.trim() ? { search: search.trim() } : {}) }
-    : { page, limit: LIMIT, ...(status ? { status } : {}), ...(kind ? { kind } : {}), ...(search.trim() ? { search: search.trim() } : {}) };
+    ? { page: 0, limit: KANBAN_LIMIT, ...(kind ? { kind } : {}), ...(search.trim() ? { search: search.trim() } : {}), ...(archived ? { inactive: "true" } : {}) }
+    : { page, limit: LIMIT, ...(status ? { status } : {}), ...(kind ? { kind } : {}), ...(search.trim() ? { search: search.trim() } : {}), ...(archived ? { inactive: "true" } : {}) };
   const { data, isLoading, error } = useQuery({
     queryKey: [PROPOSALS_KEY, params],
     queryFn: () => commercialApi.get<ListResponse>("proposals", params),
@@ -72,9 +76,9 @@ function ProposalsPage() {
   const open = (id: number) => navigate({ to: "/comercial/propostas/$proposalId", params: { proposalId: String(id) } });
 
   const { mutate: act } = useMutation({
-    mutationFn: ({ row, action }: { row: ProposalRow; action: "duplicate" | "revise" | "cancelada" | "inactive" }) => {
+    mutationFn: ({ row, action }: { row: ProposalRow; action: "duplicate" | "revise" | "cancelada" | "inactive" | "active" }) => {
       if (action === "duplicate" || action === "revise") return commercialApi.post<Proposal>(`proposals/${row.id}/${action}`);
-      if (action === "inactive") return commercialApi.patch<Proposal>(`proposals/inactive/${row.id}`);
+      if (action === "inactive" || action === "active") return commercialApi.patch<Proposal>(`proposals/${action}/${row.id}`);
       return commercialApi.patch<Proposal>(`proposals/status/${row.id}`, { status: action });
     },
     onSuccess: (result, { action }) => {
@@ -83,7 +87,7 @@ function ProposalsPage() {
         toast({ title: action === "revise" ? `Revisão ${result.number} criada` : `Proposta ${result.number} criada`, variant: "success" });
         open(result.id);
       } else {
-        toast({ title: action === "inactive" ? "Proposta inativada" : "Proposta cancelada", variant: "success" });
+        toast({ title: action === "inactive" ? "Proposta arquivada" : action === "active" ? "Proposta de volta à lista" : "Proposta cancelada", variant: "success" });
       }
     },
     onError: (err) => toast({ title: "Não foi possível concluir", description: errorMessage(err), variant: "destructive" }),
@@ -173,9 +177,12 @@ function ProposalsPage() {
         )}
         {can(`inactive_${COMMERCIAL_ABILITY}`) && ["rascunho", "cancelada", "recusada"].includes(row.status) && !row.inactiveAt && (
           <DropdownMenuItem className="p-0" onSelect={(event) => event.preventDefault()}>
-            <ConfirmDialog title={`Inativar ${row.number}?`} description="Some da lista. Nada é apagado."
-              onConfirm={() => act({ row, action: "inactive" })} titleBttn="Inativar" iconBttn="power-off" />
+            <ConfirmDialog title={`Arquivar ${row.number}?`} description={'A proposta sai da lista e do kanban. Nada é apagado: marque "Mostrar arquivadas" para vê-la de novo e trazê-la de volta.'}
+              onConfirm={() => act({ row, action: "inactive" })} titleBttn="Arquivar (tirar da lista)" iconBttn="archive" />
           </DropdownMenuItem>
+        )}
+        {can(`activate_${COMMERCIAL_ABILITY}`) && row.inactiveAt && (
+          <DropdownMenuItem className="gap-2" onSelect={() => act({ row, action: "active" })}><Icon name="archive-restore" className="w-3 h-3" /> Trazer de volta à lista</DropdownMenuItem>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -217,6 +224,10 @@ function ProposalsPage() {
           <Select name="kind" state={kind} clearable placeholder="Todos os tipos" modal={false}
             options={Object.entries(KIND_LABEL).map(([id, name]) => ({ id, name }))}
             onChange={(_, value) => { setKind(String(value)); setPage(0); }} />
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Checkbox id="showArchived" checked={archived} onCheckedChange={(checked) => { setArchived(checked === true); setPage(0); }} />
+          <Label htmlFor="showArchived" className="cursor-pointer text-sm font-normal">Mostrar arquivadas</Label>
         </div>
         {summary.enviada && (
           <p className="xl:ml-auto text-sm text-muted-foreground">
@@ -262,7 +273,7 @@ function ProposalsPage() {
                 </div>
                 <div className="pt-2 border-t flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold tabular-nums">{money(row.total)}</p>
-                  {row.expired && <StatusBadge status={row.status} expired />}
+                  {row.inactiveAt ? <span className="text-xs rounded bg-muted px-1.5 py-0.5">Arquivada</span> : row.expired && <StatusBadge status={row.status} expired />}
                 </div>
               </div>
             )}
@@ -301,7 +312,7 @@ function ProposalsPage() {
               <p className="text-xs text-muted-foreground truncate">{row.title}{row.seller ? ` · ${row.seller}` : ""}</p>
               <FollowUpChip followUp={row.followUp} className="mt-1" />
             </div>
-            <div className="lg:w-40"><StatusBadge status={row.status} expired={row.expired} /></div>
+            <div className="lg:w-40 flex flex-wrap items-center gap-1"><StatusBadge status={row.status} expired={row.expired} />{row.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Arquivada</span>}</div>
             <div className="lg:w-28 text-muted-foreground"><span className="lg:hidden text-xs">Validade: </span>{dateBr(row.validUntil)}</div>
             <div className="lg:w-36 lg:text-right font-semibold tabular-nums">{money(row.total)}</div>
             <div className="absolute top-2 right-2 lg:static lg:w-16 flex justify-end">

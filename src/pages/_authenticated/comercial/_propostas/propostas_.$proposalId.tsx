@@ -260,7 +260,7 @@ function ProposalEditorPage() {
           <div className="flex flex-wrap items-center gap-2 mt-1">
             <h1 className="text-xl font-bold tabular-nums">{proposal.number}</h1>
             <StatusBadge status={proposal.status} expired={proposal.expired} />
-            {proposal.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Inativa</span>}
+            {proposal.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Arquivada</span>}
             {!readOnly && <span className="text-xs text-muted-foreground">{saving ? "Salvando..." : calculating ? "Calculando..." : dirty ? "Alterações não salvas" : "Tudo salvo"}</span>}
           </div>
           <p className="text-sm text-muted-foreground truncate">{[customer.name, titled ? draft.title : null, KIND_LABEL[draft.kind]].filter(Boolean).join(" · ")}</p>

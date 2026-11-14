@@ -1,11 +1,29 @@
+import { useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
  * "Folha" do documento da proposta: fundo branco e tipografia própria, igual
  * na pré-visualização, na página pública e na impressão. O HTML vem pronto e
  * já limpo da API (o corpo é sanitizado no servidor ao gravar e ao montar).
+ *
+ * A folha tem sempre a largura de uma A4. Quando o espaço é menor (celular),
+ * ela não se rearranja: é reduzida por inteiro, com tudo no mesmo lugar, como
+ * um PDF visto de longe. O cliente amplia com os dedos se quiser ler de perto.
  */
+const PAGE_WIDTH = 794; // A4 a 96 dpi
+
 export function DocumentPaper({ html, className }: { html: string; className?: string }) {
+  const frame = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useLayoutEffect(() => {
+    const element = frame.current;
+    if (!element) return;
+    const fit = () => setScale(Math.min(1, element.clientWidth / PAGE_WIDTH));
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   return (
     <>
       <style>{`
@@ -43,12 +61,15 @@ export function DocumentPaper({ html, className }: { html: string; className?: s
         .proposal-doc .ql-size-small { font-size:.8em; } .proposal-doc .ql-size-large { font-size:1.4em; } .proposal-doc .ql-size-huge { font-size:2em; }
         .proposal-doc .ql-indent-1 { padding-left:2em; } .proposal-doc .ql-indent-2 { padding-left:4em; }
         @media print {
-          .proposal-doc { font-size:12pt; padding:0 !important; border:0 !important; box-shadow:none !important; }
+          .proposal-doc { font-size:12pt; padding:0 !important; border:0 !important; box-shadow:none !important; zoom:1 !important; width:auto !important; }
           .proposal-doc table { page-break-inside:auto; } .proposal-doc tr { page-break-inside:avoid; }
           .proposal-doc h2, .proposal-doc h3 { page-break-after:avoid; }
         }
       `}</style>
-      <div className={cn("proposal-doc rounded-md border p-5 sm:p-10 overflow-x-auto", className)} dangerouslySetInnerHTML={{ __html: html }} />
+      {/* a moldura não herda a largura da folha (senão nunca "faltaria" espaço para reduzir) */}
+      <div ref={frame} className="w-full min-w-0 overflow-hidden" style={{ containerType: "inline-size" }}>
+        <div className={cn("proposal-doc mx-auto rounded-md border p-10", className)} style={{ width: PAGE_WIDTH, zoom: scale }} dangerouslySetInnerHTML={{ __html: html }} />
+      </div>
     </>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/services/api";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,16 @@ export default function ProposalClientView({ data, proposalKey, onChanged }: Pro
   const notice = NOTICE[data.status];
   const wa = whatsapp(data.contact.phone);
   const done = () => { setMode(""); onChanged?.(); };
+
+  // O sistema trava a ampliação com os dedos; nesta página a folha aparece reduzida no celular,
+  // então o cliente precisa poder ampliar para ler. Ao sair, volta ao que era.
+  useEffect(() => {
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+    if (!meta) return;
+    const original = meta.content;
+    meta.content = "width=device-width, initial-scale=1, maximum-scale=5, user-scalable=1";
+    return () => { meta.content = original; };
+  }, []);
 
   return (
     <div className="min-h-full bg-muted/40 print:bg-white" style={{ ["--brand" as string]: color }}>

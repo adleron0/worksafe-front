@@ -266,7 +266,7 @@ export default function KanbanView<T extends Record<string, any>>({
           scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent'
         }}
       >
-        <div className="flex gap-4 min-w-max" style={{ width: 'max-content' }}>
+        <div className="flex gap-3 min-w-max" style={{ width: 'max-content' }}>
           <KanbanProvider
             columns={providerColumns}
             data={JSON.parse(JSON.stringify(kanbanData)) as any}
@@ -282,7 +282,7 @@ export default function KanbanView<T extends Record<string, any>>({
                 <KanbanBoard 
                   id={column.id} 
                   key={column.id}
-                  className="w-[calc(100vw+40rem)] sm:w-[280px] md:w-[320px] flex-shrink-0 max-w-[320px]"
+                  className="w-[240px] flex-shrink-0"
                 >
                   <KanbanHeader className="mb-3">
                     <div className="flex items-center justify-between w-full">

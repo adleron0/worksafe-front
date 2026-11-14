@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 import { Slider } from '@/components/ui/slider';
 import { RectangleHorizontal, RectangleVertical, ZoomIn, ZoomOut, Loader2, RotateCcw } from 'lucide-react';
 import * as fabric from 'fabric';
@@ -306,10 +307,10 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
               fabricCanvasRef.current.renderAll();
             })
             .catch(() => {
-              alert('Erro ao carregar imagem. Verifique se a URL está acessível.');
+              toast({ title: 'Erro ao carregar imagem', description: 'Verifique se a URL está acessível.', variant: 'destructive' });
             });
         } else {
-          alert('Erro ao carregar imagem local.');
+          toast({ title: 'Erro ao carregar imagem local', variant: 'destructive' });
         }
       });
   };

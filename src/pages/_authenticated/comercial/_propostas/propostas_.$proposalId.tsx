@@ -577,7 +577,9 @@ function TotalsPanel({ calc, draft, readOnly, canSeeCosts, stale, onDiscount, cu
           <Line label="Custo" value={money(t.cost)} />
           <Line label={<>Imposto{calc?.tax.inside != null && <Rate>{percent(calc.tax.inside)}</Rate>}</>} value={money(t.tax)} />
           <Line label="Comissão" value={money(t.commission)} />
-          <Line label={<>Lucro estimado<Rate>{percent(t.profitRate, 1)}</Rate></>} value={money(t.profit)} negative={(t.profit ?? 0) < 0} />
+          <div className="border-t mt-1 pt-1">
+            <Line label={<>Lucro estimado<Rate>{percent(t.profitRate, 1)}</Rate></>} value={money(t.profit)} negative={(t.profit ?? 0) < 0} bold />
+          </div>
 
           <div className="mt-3 rounded-md bg-muted/50 px-3 py-2.5">
             <p className="text-xs font-semibold">Margem real</p>

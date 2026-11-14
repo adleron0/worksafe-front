@@ -16,6 +16,8 @@ import { COMMERCIAL_ABILITY, NumField, Tip, commercialApi, dateBr, errorMessage,
 import {
   CustomerOption, DraftSection, KIND_LABEL, isBlankItem, PROPOSALS_KEY, PROPOSAL_KEY, Proposal, ProposalCalc, ProposalDraft, ProposalOptions, STATUS_LABEL, StatusBadge,
 } from "../-shared/proposals";
+import { ActivityPanel } from "../-shared/activities";
+import { downloadProposalPdf } from "../-shared/pdf";
 import CustomerStep from "./-CustomerStep";
 import ProposalDocumentTab, { LinkPanel, ProposalHistory } from "./-ProposalDocumentTab";
 import ProposalItemsTab from "./-ProposalItemsTab";
@@ -93,6 +95,15 @@ function ProposalEditorPage() {
   const payload = useMemo(() => (draft ? payloadOf(draft) : null), [draft]);
   const serialized = useMemo(() => (payload ? JSON.stringify(payload) : ""), [payload]);
   const dirty = Boolean(draft) && serialized !== saved;
+  // PDF: monta a folha e abre "Salvar como PDF" do navegador
+  const [printing, setPrinting] = useState(false);
+  const pdf = () => {
+    if (!proposal) return;
+    setPrinting(true);
+    downloadProposalPdf(proposal.id, proposal.customer.name)
+      .catch((err) => toast({ title: "Não foi possível gerar o PDF", description: errorMessage(err), variant: "destructive" }))
+      .finally(() => setPrinting(false));
+  };
   const canUpdate = can(`update_${COMMERCIAL_ABILITY}`);
   const canCreate = can(`create_${COMMERCIAL_ABILITY}`);
   const readOnly = !proposal?.editable || !canUpdate;
@@ -136,14 +147,15 @@ function ProposalEditorPage() {
   const fail = (title: string) => (err: unknown) => toast({ title, description: errorMessage(err), variant: "destructive" });
 
   const { mutate: save, isPending: saving } = useMutation({
-    mutationFn: (extra: { refreshBase?: boolean; goTo?: StepKey; openClientView?: boolean } | void) =>
+    mutationFn: (extra: { refreshBase?: boolean; goTo?: StepKey; openClientView?: boolean; pdf?: boolean } | void) =>
       commercialApi.put<Proposal>(`proposals/${proposalId}`, { ...payload, ...(extra?.refreshBase ? { refreshBase: true } : {}) }),
     onSuccess: (result, extra) => {
       apply(result);
       if (extra?.goTo) setTab(extra.goTo);
       if (extra?.openClientView) window.open(`/proposta/rascunho/${proposalId}`, "_blank", "noopener");
+      if (extra?.pdf) pdf();
       // avançar de passo já salva: não precisa avisar a cada clique
-      if (!extra?.goTo && !extra?.openClientView) toast({ title: extra?.refreshBase ? "Recalculada com a base atual" : "Proposta salva", variant: "success" });
+      if (!extra?.goTo && !extra?.openClientView && !extra?.pdf) toast({ title: extra?.refreshBase ? "Recalculada com a base atual" : "Proposta salva", variant: "success" });
     },
     onError: fail("Não foi possível salvar"),
   });
@@ -231,6 +243,11 @@ function ProposalEditorPage() {
     if (!readOnly && dirty && !calcError) save({ goTo: key });
     else setTab(key);
   };
+  const downloadPdf = () => {
+    // o PDF sai do que está salvo: com alteração pendente, salva antes
+    if (!readOnly && dirty && !calcError) save({ pdf: true });
+    else pdf();
+  };
   const openClientView = () => {
     if (!readOnly && dirty && !calcError) save({ openClientView: true });
     else window.open(`/proposta/rascunho/${proposalId}`, "_blank", "noopener");
@@ -251,6 +268,7 @@ function ProposalEditorPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Button type="button" variant="outline" onClick={openClientView} disabled={saving}><Icon name="eye" className="w-4 h-4 mr-1" /> Ver como o cliente</Button>
+          <Button type="button" variant="outline" onClick={downloadPdf} disabled={saving || printing}><Icon name="file-down" className="w-4 h-4 mr-1" /> {printing ? "Gerando..." : "Baixar PDF"}</Button>
           {proposal.publicKey && <Button type="button" variant="outline" onClick={() => copyLink(proposal)}><Icon name="copy" className="w-4 h-4 mr-1" /> Copiar link do cliente</Button>}
           {sent && canUpdate && <>
             <Button type="button" onClick={() => setDecision("aceita")}><Icon name="check" className="w-4 h-4 mr-1" /> Registrar aceite</Button>
@@ -389,6 +407,7 @@ function ProposalEditorPage() {
                   )}
                 </section>
               )}
+              <ActivityPanel proposalId={proposal.id} canEdit={canUpdate} defaultContact={draft.contactName} />
               <ProposalHistory proposal={proposal} />
             </div>
           )}

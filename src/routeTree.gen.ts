@@ -65,6 +65,7 @@ import { Route as AuthenticatedComercialModelosModelosRouteImport } from './page
 import { Route as AuthenticatedComercialCuponsCuponsRouteImport } from './pages/_authenticated/comercial/_cupons/cupons'
 import { Route as AuthenticatedComercialContratosContratosRouteImport } from './pages/_authenticated/comercial/_contratos/contratos'
 import { Route as AuthenticatedComercialBaseCalculoBaseCalculoRouteImport } from './pages/_authenticated/comercial/_base-calculo/base-calculo'
+import { Route as AuthenticatedComercialAcompanhamentoAcompanhamentoRouteImport } from './pages/_authenticated/comercial/_acompanhamento/acompanhamento'
 import { Route as AuthenticatedBlogVisitantesVisitantesRouteImport } from './pages/_authenticated/blog/_visitantes/visitantes'
 import { Route as AuthenticatedBlogTagsTagsRouteImport } from './pages/_authenticated/blog/_tags/tags'
 import { Route as AuthenticatedBlogPostsPostsRouteImport } from './pages/_authenticated/blog/_posts/posts'
@@ -396,6 +397,12 @@ const AuthenticatedComercialBaseCalculoBaseCalculoRoute =
     path: '/comercial/base-calculo',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedComercialAcompanhamentoAcompanhamentoRoute =
+  AuthenticatedComercialAcompanhamentoAcompanhamentoRouteImport.update({
+    id: '/comercial/_acompanhamento/acompanhamento',
+    path: '/comercial/acompanhamento',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedBlogVisitantesVisitantesRoute =
   AuthenticatedBlogVisitantesVisitantesRouteImport.update({
     id: '/blog/_visitantes/visitantes',
@@ -490,6 +497,7 @@ export interface FileRoutesByFullPath {
   '/blog/posts': typeof AuthenticatedBlogPostsPostsRoute
   '/blog/tags': typeof AuthenticatedBlogTagsTagsRoute
   '/blog/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
+  '/comercial/acompanhamento': typeof AuthenticatedComercialAcompanhamentoAcompanhamentoRoute
   '/comercial/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/comercial/contratos': typeof AuthenticatedComercialContratosContratosRoute
   '/comercial/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
@@ -556,6 +564,7 @@ export interface FileRoutesByTo {
   '/blog/posts': typeof AuthenticatedBlogPostsPostsRoute
   '/blog/tags': typeof AuthenticatedBlogTagsTagsRoute
   '/blog/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
+  '/comercial/acompanhamento': typeof AuthenticatedComercialAcompanhamentoAcompanhamentoRoute
   '/comercial/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/comercial/contratos': typeof AuthenticatedComercialContratosContratosRoute
   '/comercial/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
@@ -626,6 +635,7 @@ export interface FileRoutesById {
   '/_authenticated/blog/_posts/posts': typeof AuthenticatedBlogPostsPostsRoute
   '/_authenticated/blog/_tags/tags': typeof AuthenticatedBlogTagsTagsRoute
   '/_authenticated/blog/_visitantes/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
+  '/_authenticated/comercial/_acompanhamento/acompanhamento': typeof AuthenticatedComercialAcompanhamentoAcompanhamentoRoute
   '/_authenticated/comercial/_base-calculo/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/_authenticated/comercial/_contratos/contratos': typeof AuthenticatedComercialContratosContratosRoute
   '/_authenticated/comercial/_cupons/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
@@ -695,6 +705,7 @@ export interface FileRouteTypes {
     | '/blog/posts'
     | '/blog/tags'
     | '/blog/visitantes'
+    | '/comercial/acompanhamento'
     | '/comercial/base-calculo'
     | '/comercial/contratos'
     | '/comercial/cupons'
@@ -761,6 +772,7 @@ export interface FileRouteTypes {
     | '/blog/posts'
     | '/blog/tags'
     | '/blog/visitantes'
+    | '/comercial/acompanhamento'
     | '/comercial/base-calculo'
     | '/comercial/contratos'
     | '/comercial/cupons'
@@ -830,6 +842,7 @@ export interface FileRouteTypes {
     | '/_authenticated/blog/_posts/posts'
     | '/_authenticated/blog/_tags/tags'
     | '/_authenticated/blog/_visitantes/visitantes'
+    | '/_authenticated/comercial/_acompanhamento/acompanhamento'
     | '/_authenticated/comercial/_base-calculo/base-calculo'
     | '/_authenticated/comercial/_contratos/contratos'
     | '/_authenticated/comercial/_cupons/cupons'
@@ -1271,6 +1284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComercialBaseCalculoBaseCalculoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/comercial/_acompanhamento/acompanhamento': {
+      id: '/_authenticated/comercial/_acompanhamento/acompanhamento'
+      path: '/comercial/acompanhamento'
+      fullPath: '/comercial/acompanhamento'
+      preLoaderRoute: typeof AuthenticatedComercialAcompanhamentoAcompanhamentoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/blog/_visitantes/visitantes': {
       id: '/_authenticated/blog/_visitantes/visitantes'
       path: '/blog/visitantes'
@@ -1368,6 +1388,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBlogPostsPostsRoute: typeof AuthenticatedBlogPostsPostsRoute
   AuthenticatedBlogTagsTagsRoute: typeof AuthenticatedBlogTagsTagsRoute
   AuthenticatedBlogVisitantesVisitantesRoute: typeof AuthenticatedBlogVisitantesVisitantesRoute
+  AuthenticatedComercialAcompanhamentoAcompanhamentoRoute: typeof AuthenticatedComercialAcompanhamentoAcompanhamentoRoute
   AuthenticatedComercialBaseCalculoBaseCalculoRoute: typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   AuthenticatedComercialContratosContratosRoute: typeof AuthenticatedComercialContratosContratosRoute
   AuthenticatedComercialCuponsCuponsRoute: typeof AuthenticatedComercialCuponsCuponsRoute
@@ -1427,6 +1448,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBlogTagsTagsRoute: AuthenticatedBlogTagsTagsRoute,
   AuthenticatedBlogVisitantesVisitantesRoute:
     AuthenticatedBlogVisitantesVisitantesRoute,
+  AuthenticatedComercialAcompanhamentoAcompanhamentoRoute:
+    AuthenticatedComercialAcompanhamentoAcompanhamentoRoute,
   AuthenticatedComercialBaseCalculoBaseCalculoRoute:
     AuthenticatedComercialBaseCalculoBaseCalculoRoute,
   AuthenticatedComercialContratosContratosRoute:

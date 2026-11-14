@@ -14,6 +14,8 @@ import Pagination from "@/components/general-components/Pagination";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, dateBr, errorMessage, money } from "../-shared/commercial";
+import { FollowUpChip } from "../-shared/activities";
+import { downloadProposalPdf } from "../-shared/pdf";
 import {
   KIND_LABEL, PROPOSALS_KEY, Proposal, ProposalRow, ProposalStatus, StatusBadge,
 } from "../-shared/proposals";
@@ -84,6 +86,11 @@ function ProposalsPage() {
     onError: (err) => toast({ title: "Não foi possível concluir", description: errorMessage(err), variant: "destructive" }),
   });
 
+  const pdf = (row: ProposalRow) => {
+    toast({ title: `Gerando o PDF de ${row.number}...` });
+    downloadProposalPdf(row.id, row.customer.name).catch((err) => toast({ title: "Não foi possível gerar o PDF", description: errorMessage(err), variant: "destructive" }));
+  };
+
   if (!can(`view_${COMMERCIAL_ABILITY}`)) return null;
   const canCreate = can(`create_${COMMERCIAL_ABILITY}`);
   const canUpdate = can(`update_${COMMERCIAL_ABILITY}`);
@@ -99,6 +106,7 @@ function ProposalsPage() {
         <DropdownMenuItem className="gap-2" onSelect={() => open(row.id)}>
           <Icon name={row.status === "rascunho" ? "pencil" : "eye"} className="w-3 h-3" /> {row.status === "rascunho" ? "Editar" : "Abrir"}
         </DropdownMenuItem>
+        <DropdownMenuItem className="gap-2" onSelect={() => pdf(row)}><Icon name="file-down" className="w-3 h-3" /> Baixar PDF</DropdownMenuItem>
         {canCreate && <DropdownMenuItem className="gap-2" onSelect={() => act({ row, action: "duplicate" })}><Icon name="copy" className="w-3 h-3" /> Duplicar</DropdownMenuItem>}
         {canCreate && ["enviada", "visualizada", "recusada", "expirada"].includes(row.status) && (
           <DropdownMenuItem className="gap-2" onSelect={() => act({ row, action: "revise" })}><Icon name="git-branch" className="w-3 h-3" /> Criar revisão</DropdownMenuItem>
@@ -196,6 +204,7 @@ function ProposalsPage() {
                       <p className="text-xs text-muted-foreground truncate">{row.seller}</p>
                     </div>
                   )}
+                  <FollowUpChip followUp={row.followUp} />
                 </div>
                 <div className="pt-2 border-t flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold tabular-nums">{money(row.total)}</p>
@@ -236,6 +245,7 @@ function ProposalsPage() {
             <div className="flex-1 min-w-0 pr-10 lg:pr-4">
               <p className="font-medium truncate">{row.customer.name}</p>
               <p className="text-xs text-muted-foreground truncate">{row.title}{row.seller ? ` · ${row.seller}` : ""}</p>
+              <FollowUpChip followUp={row.followUp} className="mt-1" />
             </div>
             <div className="lg:w-40"><StatusBadge status={row.status} expired={row.expired} /></div>
             <div className="lg:w-28 text-muted-foreground"><span className="lg:hidden text-xs">Validade: </span>{dateBr(row.validUntil)}</div>

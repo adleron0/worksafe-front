@@ -12,21 +12,8 @@ import { cn } from "@/lib/utils";
  */
 const PAGE_WIDTH = 794; // A4 a 96 dpi
 
-export function DocumentPaper({ html, className }: { html: string; className?: string }) {
-  const frame = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-  useLayoutEffect(() => {
-    const element = frame.current;
-    if (!element) return;
-    const fit = () => setScale(Math.min(1, element.clientWidth / PAGE_WIDTH));
-    fit();
-    const observer = new ResizeObserver(fit);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-  return (
-    <>
-      <style>{`
+/** Tipografia da folha: a mesma na tela, na página do cliente e no PDF. */
+export const DOCUMENT_CSS = `
         .proposal-doc { background:#fff; color:#111; font-size:15px; line-height:1.55; }
         .proposal-doc h1 { font-size:1.6em; font-weight:700; margin:0 0 .6em; line-height:1.25; }
         .proposal-doc h2 { font-size:1.2em; font-weight:700; margin:1.4em 0 .4em; }
@@ -65,7 +52,23 @@ export function DocumentPaper({ html, className }: { html: string; className?: s
           .proposal-doc table { page-break-inside:auto; } .proposal-doc tr { page-break-inside:avoid; }
           .proposal-doc h2, .proposal-doc h3 { page-break-after:avoid; }
         }
-      `}</style>
+`;
+
+export function DocumentPaper({ html, className }: { html: string; className?: string }) {
+  const frame = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useLayoutEffect(() => {
+    const element = frame.current;
+    if (!element) return;
+    const fit = () => setScale(Math.min(1, element.clientWidth / PAGE_WIDTH));
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <>
+      <style>{DOCUMENT_CSS}</style>
       {/* a moldura não herda a largura da folha (senão nunca "faltaria" espaço para reduzir) */}
       <div ref={frame} className="w-full min-w-0 overflow-hidden" style={{ containerType: "inline-size" }}>
         <div className={cn("proposal-doc mx-auto rounded-md border p-10", className)} style={{ width: PAGE_WIDTH, zoom: scale }} dangerouslySetInnerHTML={{ __html: html }} />

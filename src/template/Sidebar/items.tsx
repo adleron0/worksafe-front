@@ -25,6 +25,12 @@ export const items = [
         path: "/comercial/propostas",
       },
       {
+        title: "Acompanhamento",
+        ability: "comercial",
+        icon: "calendar-check",
+        path: "/comercial/acompanhamento",
+      },
+      {
         title: "Contratos",
         ability: "comercial",
         icon: "file-signature",

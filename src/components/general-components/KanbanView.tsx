@@ -6,6 +6,17 @@ import {
   KanbanHeader,
   KanbanProvider,
 } from '@/components/ui/kibo-ui/kanban';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import Icon from '@/components/general-components/Icon';
 
 export interface KanbanColumn {
   id: string | number;
@@ -23,6 +34,11 @@ export interface KanbanViewProps<T = any> {
   isLoading?: boolean;
   emptyMessage?: string;
   className?: string;
+  /**
+   * Chave para lembrar, neste navegador, quais colunas a pessoa ocultou.
+   * Sem a chave, a escolha vale só enquanto a tela estiver aberta.
+   */
+  storageKey?: string;
 }
 
 interface KanbanItem {
@@ -41,7 +57,31 @@ export default function KanbanView<T extends Record<string, any>>({
   isLoading = false,
   emptyMessage = 'Nenhum item encontrado',
   className = '',
+  storageKey,
 }: KanbanViewProps<T>) {
+  // Colunas ocultas: qualquer kanban do sistema ganha o botão "Colunas".
+  const [hidden, setHidden] = useState<string[]>(() => {
+    if (!storageKey) return [];
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) ?? '[]');
+      return Array.isArray(saved) ? saved.map(String) : [];
+    } catch {
+      return [];
+    }
+  });
+  const changeHidden = (next: string[]) => {
+    setHidden(next);
+    if (!storageKey) return;
+    try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch { /* sem armazenamento: vale só nesta visita */ }
+  };
+  const isHidden = (value: string | number) => hidden.includes(String(value));
+  const visibleCount = columns.filter(col => !isHidden(col.value)).length;
+  const toggleColumn = (value: string | number, show: boolean) => {
+    const key = String(value);
+    // pelo menos uma coluna fica à vista
+    if (!show && visibleCount <= 1) return;
+    changeHidden(show ? hidden.filter(item => item !== key) : [...hidden, key]);
+  };
   const [kanbanData, setKanbanData] = useState<KanbanItem[]>([]);
   const previousDataRef = useRef<KanbanItem[]>([]);
   const isDraggingRef = useRef<boolean>(false);
@@ -134,7 +174,7 @@ export default function KanbanView<T extends Record<string, any>>({
   }));
 
   // Converter colunas para formato esperado pelo KanbanProvider
-  const providerColumns = columnsWithCount.map(col => ({
+  const providerColumns = columnsWithCount.filter(col => !isHidden(col.value)).map(col => ({
     id: String(col.value),
     name: col.name,
     color: col.color,
@@ -157,8 +197,53 @@ export default function KanbanView<T extends Record<string, any>>({
     );
   }
 
+  const hiddenColumns = columnsWithCount.filter(col => isHidden(col.value));
+  const hiddenItems = hiddenColumns.reduce((sum, col) => sum + col.count, 0);
+
   return (
     <div className={`w-full ${className}`}>
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="outline" size="sm" className="gap-2">
+              <Icon name="columns" className="w-4 h-4" />
+              Colunas
+              {hiddenColumns.length > 0 && <span className="text-muted-foreground">({visibleCount} de {columns.length})</span>}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[220px]">
+            <DropdownMenuLabel>Colunas à vista</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {columnsWithCount.map(col => (
+              <DropdownMenuCheckboxItem
+                key={String(col.value)}
+                checked={!isHidden(col.value)}
+                disabled={!isHidden(col.value) && visibleCount <= 1}
+                onCheckedChange={(checked) => toggleColumn(col.value, checked === true)}
+                onSelect={(event) => event.preventDefault()}
+              >
+                <span className="flex items-center gap-2 w-full">
+                  {col.color && <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: col.color }} />}
+                  <span className="flex-1">{col.name}</span>
+                  <span className="text-xs text-muted-foreground">{col.count}</span>
+                </span>
+              </DropdownMenuCheckboxItem>
+            ))}
+            {hiddenColumns.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => changeHidden([])}>Mostrar todas</DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        {hiddenColumns.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {hiddenColumns.length === 1 ? '1 coluna oculta' : `${hiddenColumns.length} colunas ocultas`}
+            {hiddenItems > 0 ? `, com ${hiddenItems} ${hiddenItems === 1 ? 'item' : 'itens'}` : ''}: {hiddenColumns.map(col => col.name).join(', ')}.
+          </p>
+        )}
+      </div>
       <style>{`
         .kanban-scroll-container::-webkit-scrollbar {
           height: 6px;

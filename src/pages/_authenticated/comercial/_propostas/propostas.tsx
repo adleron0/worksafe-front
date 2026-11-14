@@ -28,22 +28,12 @@ const STATUS_OPTIONS: Array<{ id: ProposalStatus; name: string }> = [
   { id: "rascunho", name: "Rascunhos" }, { id: "enviada", name: "Enviadas" }, { id: "visualizada", name: "Visualizadas" },
   { id: "aceita", name: "Aceitas" }, { id: "recusada", name: "Recusadas" }, { id: "expirada", name: "Expiradas" }, { id: "cancelada", name: "Canceladas" },
 ];
-/**
- * Colunas do kanban (o mesmo KanbanView da tela de Inscrições): o caminho da proposta,
- * com as que terminaram sem aceite juntas no fim.
- */
-const COLUMNS: KanbanColumn[] = [
-  { id: "rascunho", name: "Rascunho", value: "rascunho", color: "#9ca3af" },
-  { id: "enviada", name: "Enviadas", value: "enviada", color: "#3b82f6" },
-  { id: "aceita", name: "Aceitas", value: "aceita", color: "#22c55e" },
-  { id: "encerrada", name: "Sem aceite", value: "encerrada", color: "#ef4444" },
-];
-/** Em qual coluna cada situação aparece. */
-const COLUMN_OF: Record<ProposalStatus, string> = {
-  rascunho: "rascunho", enviada: "enviada", visualizada: "enviada", aceita: "aceita",
-  recusada: "encerrada", expirada: "encerrada", cancelada: "encerrada", substituida: "encerrada",
+/** Cor de cada situação no cabeçalho da coluna do kanban. */
+const STATUS_COLOR: Record<string, string> = {
+  rascunho: "#9ca3af", enviada: "#3b82f6", visualizada: "#6366f1", aceita: "#22c55e", recusada: "#ef4444", expirada: "#f59e0b", cancelada: "#6b7280",
 };
-type BoardRow = ProposalRow & { column: string };
+/** Colunas do kanban (o KanbanView do sistema): uma para cada situação do filtro da lista, na mesma ordem. */
+const COLUMNS: KanbanColumn[] = STATUS_OPTIONS.map(({ id, name }) => ({ id, name, value: id, color: STATUS_COLOR[id] }));
 type View = "lista" | "kanban";
 const VIEW_KEY = "worksafe.comercial.propostas.view";
 const KANBAN_LIMIT = 100;
@@ -128,8 +118,6 @@ function ProposalsPage() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-  // cada proposta ganha a coluna do quadro
-  const board: BoardRow[] = (data?.rows ?? []).map((row) => ({ ...row, column: COLUMN_OF[row.status] }));
   const summary = data?.summary ?? {};
   const allCount = Object.entries(summary).reduce((sum, [key, value]) => sum + (key === "substituida" ? 0 : value?.count ?? 0), 0);
 
@@ -177,14 +165,14 @@ function ProposalsPage() {
 
       {kanban && !error && (
         <div className="p-2">
-          <KanbanView key={boardKey} data={board} columns={COLUMNS} statusField="column" isLoading={isLoading}
+          <KanbanView key={boardKey} data={data?.rows ?? []} columns={COLUMNS} statusField="status" isLoading={isLoading} storageKey="worksafe.comercial.propostas.kanban.hidden"
             emptyMessage={search || kind ? "Nenhuma proposta com esses filtros." : "Nenhuma proposta ainda. Crie a primeira em \"Nova proposta\"."}
             onStatusChange={() => {
               // a situação de uma proposta muda dentro dela (enviar congela o documento, aceitar gera contrato)
               toast({ title: "A situação muda dentro da proposta", description: "Abra a proposta para enviar, registrar o aceite, a recusa ou cancelar." });
               setBoardKey((value) => value + 1);
             }}>
-            {(row: BoardRow) => (
+            {(row: ProposalRow) => (
               <div className={cn("p-3 space-y-3", row.inactiveAt && "opacity-60")}>
                 <div className="flex items-start justify-between gap-2">
                   <button type="button" className="flex-1 min-w-0 overflow-hidden text-left" onClick={() => open(row.id)}>
@@ -211,7 +199,7 @@ function ProposalsPage() {
                 </div>
                 <div className="pt-2 border-t flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold tabular-nums">{money(row.total)}</p>
-                  {(row.status !== row.column || row.expired) && <StatusBadge status={row.status} expired={row.expired} />}
+                  {row.expired && <StatusBadge status={row.status} expired />}
                 </div>
               </div>
             )}

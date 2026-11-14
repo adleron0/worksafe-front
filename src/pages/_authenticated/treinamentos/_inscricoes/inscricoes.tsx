@@ -482,6 +482,7 @@ Deseja continuar?`}
             onStatusChange={handleKanbanStatusChange}
             isLoading={isLoading}
             emptyMessage="Nenhuma inscrição encontrada"
+            storageKey="subscription-kanban-hidden-columns"
           >
             {(item: IEntity, column) => (
               <SubscriptionCard

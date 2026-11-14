@@ -99,7 +99,7 @@ export function ProposalInfoStep({ draft, setDraft, options, readOnly, canSeeCos
 
       {more && (
         <div className="grid lg:grid-cols-2 gap-4">
-          <Card title="Contato no cliente" description="Quem recebe a proposta. Aparece na capa como A/C.">
+          <Card title="Contato do cliente" description="Quem recebe esta proposta. O nome, o e-mail e o telefone daqui aparecem no documento, e é exatamente para este e-mail que o link e o código de confirmação são enviados.">
             {!readOnly && Boolean(customer.contacts?.length) && (
               <F label="Usar um contato cadastrado">
                 <Select name="contact" state="" modal={false} placeholder="Escolha para preencher os campos abaixo"

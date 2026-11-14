@@ -147,12 +147,31 @@ function ProposalEditorPage() {
     },
     onError: fail("Não foi possível salvar"),
   });
+  /** Copia o link público do cliente. Em silêncio quando faz parte de outra ação. */
+  const copyLink = async (source: Proposal, quiet = false) => {
+    const url = source.publicUrl ?? (source.publicKey ? `${window.location.origin}/proposta/${source.publicKey}` : "");
+    if (!url) return false;
+    try {
+      await navigator.clipboard.writeText(url);
+      if (!quiet) toast({ title: "Link copiado", description: "Cole no e-mail ou no WhatsApp para o cliente.", variant: "success" });
+      return true;
+    } catch {
+      if (!quiet) toast({ title: "Não foi possível copiar", description: "Abra o passo Enviar e copie o link de lá.", variant: "destructive" });
+      return false;
+    }
+  };
   const { mutate: setStatus, isPending: changing } = useMutation({
-    mutationFn: (body: { status: string; note?: string }) => commercialApi.patch<Proposal>(`proposals/status/${proposalId}`, body),
-    onSuccess: (result) => {
+    mutationFn: (body: { status: string; note?: string; notify?: boolean }) => commercialApi.patch<Proposal>(`proposals/status/${proposalId}`, body),
+    onSuccess: async (result, body) => {
       apply(result); setDecision(null);
-      if (result.status === "enviada") { setTab("envio"); toast({ title: "Proposta enviada", description: "Copie o link e mande para o cliente.", variant: "success" }); }
-      else toast({ title: `Proposta ${STATUS_LABEL[result.status].toLowerCase()}`, variant: "success" });
+      if (result.status !== "enviada") { toast({ title: `Proposta ${STATUS_LABEL[result.status].toLowerCase()}`, variant: "success" }); return; }
+      setTab("envio");
+      // o link já vai para a área de transferência: é só colar no e-mail ou no WhatsApp
+      const copied = await copyLink(result, true);
+      const to = result.draft.contactEmail;
+      if (result.emailError) toast({ title: "Proposta enviada, mas o e-mail falhou", description: `${result.emailError} ${copied ? "O link foi copiado: mande por outro canal." : "Copie o link e mande por outro canal."}`, variant: "destructive" });
+      else if (body.notify) toast({ title: "Proposta enviada", description: `O link foi enviado para ${to}${copied ? " e também copiado" : ""}.`, variant: "success" });
+      else toast({ title: "Link criado", description: copied ? "O link foi copiado: cole no e-mail ou no WhatsApp para o cliente." : "Copie o link abaixo e mande para o cliente.", variant: "success" });
     },
     onError: fail("Não foi possível mudar a situação"),
   });
@@ -200,6 +219,7 @@ function ProposalEditorPage() {
   const blocking = checks.filter((check) => !check.ok && check.label !== "Validade da proposta");
   const stepIndex = STEPS.findIndex((item) => item.key === tab);
   const isDraft = proposal.status === "rascunho";
+  const canEmail = proposal.emailConfigured && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.contactEmail ?? "");
   const states = Object.fromEntries(STEPS.map((step, i): [StepKey, StepState] => {
     const missing = step.key === "envio" ? blocking.length > 0 : blocking.some((check) => check.step === step.key);
     // só cobra o que ficou para trás; o que está à frente ainda é "a fazer"
@@ -231,6 +251,7 @@ function ProposalEditorPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Button type="button" variant="outline" onClick={openClientView} disabled={saving}><Icon name="eye" className="w-4 h-4 mr-1" /> Ver como o cliente</Button>
+          {proposal.publicKey && <Button type="button" variant="outline" onClick={() => copyLink(proposal)}><Icon name="copy" className="w-4 h-4 mr-1" /> Copiar link do cliente</Button>}
           {sent && canUpdate && <>
             <Button type="button" onClick={() => setDecision("aceita")}><Icon name="check" className="w-4 h-4 mr-1" /> Registrar aceite</Button>
             <Button type="button" variant="outline" onClick={() => setDecision("recusada")}>Registrar recusa</Button>
@@ -341,16 +362,26 @@ function ProposalEditorPage() {
                     <div><p className="text-xs text-muted-foreground">Total da proposta</p><p className="font-semibold tabular-nums">{money(total)}</p></div>
                     <div><p className="text-xs text-muted-foreground">Válida até</p><p className="font-medium">{draft.validUntil ? dateBr(draft.validUntil) : "sem validade"}</p></div>
                   </div>
-                  {!readOnly && (
-                    <div className="flex flex-col sm:flex-row gap-2">
+                  {!readOnly && (<>
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
                       <Button type="button" variant="outline" onClick={openClientView} disabled={saving}><Icon name="eye" className="w-4 h-4 mr-1" /> Ver como o cliente vai ver</Button>
-                      <ConfirmDialog title={`Enviar ${proposal.number}?`}
-                        description="O documento é congelado e a proposta ganha um link para o cliente ler e aceitar. Depois de enviada ela não é mais editada: para mudar algo, cria-se uma revisão."
+                      <ConfirmDialog title={`Criar o link de ${proposal.number}?`}
+                        description="O documento é congelado e a proposta ganha um link para o cliente ler e aceitar. Nenhum e-mail é enviado: o link é copiado para você mandar por onde quiser. Depois disso ela não é mais editada: para mudar algo, cria-se uma revisão."
                         onConfirm={() => setStatus({ status: "enviada" })}>
-                        <Button type="button" disabled={changing || saving || dirty || blocking.length > 0}><Icon name="send" className="w-4 h-4 mr-1" /> Enviar proposta</Button>
+                        <Button type="button" variant="outline" disabled={changing || saving || dirty || blocking.length > 0}><Icon name="copy" className="w-4 h-4 mr-1" /> Criar e copiar o link</Button>
+                      </ConfirmDialog>
+                      <ConfirmDialog title={`Enviar ${proposal.number} por e-mail?`}
+                        description={`O documento é congelado e o link da proposta é enviado para ${draft.contactEmail || "o contato do cliente"}. Depois de enviada ela não é mais editada: para mudar algo, cria-se uma revisão.`}
+                        onConfirm={() => setStatus({ status: "enviada", notify: true })}>
+                        <Button type="button" disabled={changing || saving || dirty || blocking.length > 0 || !canEmail}><Icon name="send" className="w-4 h-4 mr-1" /> Enviar por e-mail</Button>
                       </ConfirmDialog>
                     </div>
-                  )}
+                    <p className="text-xs text-muted-foreground">
+                      {!proposal.emailConfigured ? "O envio de e-mail pelo sistema não está configurado: crie o link e mande pelo seu e-mail ou WhatsApp."
+                        : !draft.contactEmail ? "Para enviar por e-mail, informe o e-mail do contato do cliente no passo Proposta, em Mais opções."
+                          : <>O e-mail vai para <b className="text-foreground">{draft.contactEmail}</b>, o contato do cliente desta proposta. Para mandar para outro endereço, troque no passo Proposta, em Mais opções.</>}
+                    </p>
+                  </>)}
                   {!readOnly && (dirty || blocking.length > 0) && (
                     <p className="text-xs text-muted-foreground">
                       {blocking.length > 0 ? "Resolva os itens marcados para liberar o envio." : "Salve as alterações para liberar o envio."}

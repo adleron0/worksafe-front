@@ -73,6 +73,8 @@ export interface Proposal {
   publicKey: string | null; publicUrl: string | null; documentFrozen: boolean; documentHash: string | null; viewedAt: string | null;
   emailConfigured: boolean; events: ProposalEvent[];
   contract: { id: number; number: string; status: string } | null;
+  /** só na resposta do envio: a proposta foi enviada, mas o e-mail com o link falhou */
+  emailError?: string;
   versions: Array<{ id: number; number: string; revision: number; status: ProposalStatus; total: number }>;
   draft: Omit<ProposalDraft, "sections" | "installments"> & {
     sections: Array<Omit<DraftSection, "uid" | "items"> & { items: Array<Omit<DraftItem, "uid">> }>;

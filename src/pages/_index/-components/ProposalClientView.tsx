@@ -48,8 +48,8 @@ interface Props {
 }
 
 /**
- * A página que o cliente abre pelo link: documento, barra de ação com o valor
- * e o botão de aceite. A mesma tela serve de pré-visualização interna (com a
+ * A página que o cliente abre pelo link: o documento e, flutuando no canto, o
+ * botão de aceite com o valor. A mesma tela serve de pré-visualização interna (com a
  * tarja de rascunho e sem registrar nada).
  */
 export default function ProposalClientView({ data, proposalKey, onChanged }: Props) {
@@ -63,7 +63,12 @@ export default function ProposalClientView({ data, proposalKey, onChanged }: Pro
   return (
     <div className="min-h-full bg-muted/40 print:bg-white" style={{ ["--brand" as string]: color }}>
       {/* a moldura da página pública tem altura fixa e rolagem: na impressão o documento precisa sair inteiro */}
-      <style>{`@media print { html, body, #root, .h-dvh { height:auto !important; overflow:visible !important; } .no-print { display:none !important; } }`}</style>
+      <style>{`
+        @media print { html, body, #root, .h-dvh { height:auto !important; overflow:visible !important; } .no-print { display:none !important; } }
+        @keyframes proposal-shimmer { 0% { transform:translateX(0); } 60%, 100% { transform:translateX(400%); } }
+        .proposal-shimmer { background:linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); animation:proposal-shimmer 3.2s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) { .proposal-shimmer { animation:none; display:none; } }
+      `}</style>
 
       {preview && (
         <div className="no-print sticky top-0 z-30 text-center text-sm font-semibold text-amber-950 px-3 py-2 shadow"
@@ -116,25 +121,28 @@ export default function ProposalClientView({ data, proposalKey, onChanged }: Pro
         </p>
       </main>
 
-      {data.canDecide && (
-        <div className="no-print fixed bottom-0 inset-x-0 z-20 border-t bg-background/95 backdrop-blur shadow-[0_-4px_16px_rgba(0,0,0,.08)]">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="min-w-0 sm:flex-1">
-              <p className="text-xs text-muted-foreground">Investimento total{data.validUntil ? ` · proposta válida até ${dateBr(data.validUntil)}` : ""}</p>
-              <p className="text-xl font-bold tabular-nums leading-tight" style={{ color }}>{money(data.total)}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              {wa && (
-                <Button type="button" variant="outline" className="shrink-0" onClick={() => window.open(wa, "_blank", "noopener")}>
-                  <Icon name="message-circle" className="w-4 h-4 sm:mr-1" /> <span className="hidden sm:inline">Tirar dúvida</span>
-                </Button>
-              )}
-              <Button type="button" variant="ghost" className="shrink-0" onClick={() => setMode("refuse")}>Recusar</Button>
-              <Button type="button" className="flex-1 sm:flex-none text-white hover:opacity-90" style={{ background: color }} onClick={() => setMode("accept")}>
-                <Icon name="check" className="w-4 h-4 mr-1" /> Aceitar a proposta
+      {/* Ações flutuando no canto, como o botão de assinatura de contrato: o documento fica livre até o fim */}
+      {data.canDecide && mode === "" && (
+        <div className="no-print fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-20 flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2">
+            {wa && (
+              <Button type="button" variant="outline" size="sm" className="rounded-full bg-background shadow-md" onClick={() => window.open(wa, "_blank", "noopener")}>
+                <Icon name="message-circle" className="w-4 h-4 mr-1" /> Tirar dúvida
               </Button>
-            </div>
+            )}
+            <Button type="button" variant="outline" size="sm" className="rounded-full bg-background shadow-md" onClick={() => setMode("refuse")}>Recusar</Button>
           </div>
+          <button type="button" onClick={() => setMode("accept")} style={{ background: color }}
+            className="group relative overflow-hidden rounded-full pl-4 pr-6 py-2.5 text-left text-white shadow-xl transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-foreground">
+            <span className="relative z-10 flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20"><Icon name="check" className="w-5 h-5" /></span>
+              <span>
+                <span className="block text-sm font-bold leading-tight">Aceitar a proposta</span>
+                <span className="block text-xs leading-tight opacity-90 tabular-nums">{money(data.total)}{data.validUntil ? ` · válida até ${dateBr(data.validUntil)}` : ""}</span>
+              </span>
+            </span>
+            <span aria-hidden="true" className="proposal-shimmer pointer-events-none absolute inset-y-0 -left-1/2 w-1/2" />
+          </button>
         </div>
       )}
 

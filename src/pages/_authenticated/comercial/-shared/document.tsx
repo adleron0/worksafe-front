@@ -31,6 +31,9 @@ export function DocumentPaper({ html, className }: { html: string; className?: s
         .proposal-doc .pd-classic > h2 { font-size:1.25em; font-weight:400; letter-spacing:.02em; margin:1.5em 0 .5em; padding-left:0; border-left:0; }
         .proposal-doc .pd-classic > p { font-size:.95em; }
         .proposal-doc .pd-classic th { border-bottom:0 !important; }
+        /* proposta com texto próprio: os termos viram títulos e parágrafos comuns, com a mesma cara */
+        .proposal-doc .pd-classic > h3 { border-top:1px solid #999; margin:14px 0 6px; padding-top:8px; font-size:.82em; letter-spacing:.04em; text-transform:uppercase; }
+        .proposal-doc .pd-classic > h3 ~ p, .proposal-doc .pd-classic > h3 ~ ul, .proposal-doc .pd-classic > h3 ~ ol { font-size:.9em; line-height:1.5; margin-bottom:.45em; }
         .proposal-doc .pd-classic [data-block="termo"] p { margin:0 0 .45em; }
         .proposal-doc .pd-classic [data-block="termo"] ul { margin:0 0 .45em 1.2em; }
         .proposal-doc .pd-classic [data-block="termo"] li { margin:0 0 .25em; }

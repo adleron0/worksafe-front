@@ -20,6 +20,12 @@ import { ITEMS_MODE_OPTIONS, ItemsMode, KIND_LABEL, ProposalKind, VariableOption
 import { VariablePalette } from "../_propostas/-ProposalDocumentTab";
 import BrandTab from "./-BrandTab";
 
+/**
+ * Criar e editar modelos de proposta está fechado por enquanto (decisão do dono em 13/11/2026):
+ * as propostas usam só os modelos padrão de serviço e de treinamento. Para reabrir, basta trocar para true.
+ */
+const TEMPLATES_OPEN: boolean = false;
+
 export const Route = createFileRoute("/_authenticated/comercial/_modelos/modelos")({
   component: TemplatesPage,
 });
@@ -98,13 +104,13 @@ function TemplatesPage() {
       <Tabs defaultValue="identidade" className="mt-4">
         <TabsList>
           <TabsTrigger value="identidade">Identidade</TabsTrigger>
-          <TabsTrigger value="modelos">Modelos de proposta</TabsTrigger>
+          {TEMPLATES_OPEN && <TabsTrigger value="modelos">Modelos de proposta</TabsTrigger>}
           <TabsTrigger value="termos">Termos jurídicos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="identidade" className="mt-4"><BrandTab canUpdate={canUpdate} /></TabsContent>
 
-        <TabsContent value="modelos" className="mt-4 grid gap-3">
+        {TEMPLATES_OPEN && <TabsContent value="modelos" className="mt-4 grid gap-3">
           {canCreate && <div><Button type="button" onClick={() => setTemplateForm({})}><Icon name="plus" className="w-4 h-4 mr-1" /> Novo modelo</Button></div>}
           {templates.isLoading && <Skeleton className="h-32 w-full" />}
           {templates.error && <p className="text-destructive text-sm">{errorMessage(templates.error)}</p>}
@@ -132,7 +138,7 @@ function TemplatesPage() {
               </article>
             ))}
           </div>
-        </TabsContent>
+        </TabsContent>}
 
         <TabsContent value="termos" className="mt-4 grid gap-3">
           <p className="text-xs rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 px-3 py-2">

@@ -87,7 +87,7 @@ export interface ProposalEvent {
 }
 
 export interface TemplateOption { id: number; name: string; kind: ProposalKind | null; isDefault: boolean; body: string; itemsMode: ItemsMode; termIds: number[] }
-export interface TermOption { id: number; title: string; kind: string }
+export interface TermOption { id: number; title: string; kind: string; body: string }
 export interface VariableOption { key: string; label: string; block?: boolean }
 
 export const ITEMS_MODE_OPTIONS: Array<{ id: ItemsMode; name: string }> = [

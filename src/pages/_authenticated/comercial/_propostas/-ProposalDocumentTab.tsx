@@ -75,8 +75,15 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
   // O texto só é copiado para dentro da proposta quando alguém pede para editar.
   const follow = (template: Template | null) =>
     setDraft((d) => ({ ...d, templateId: template?.id ?? null, documentBody: null, itemsMode: template?.itemsMode ?? d.itemsMode, termIds: template?.termIds ?? [] }));
-  const copyToEdit = (template: Template) =>
-    setDraft((d) => ({ ...d, templateId: template.id, documentBody: template.body, itemsMode: template.itemsMode, termIds: template.termIds }));
+  // Ao abrir para edição, os termos entram por extenso no texto (título + parágrafos), para
+  // qualquer trecho poder ser mudado. O que continua entre {{ }} é o que o sistema preenche
+  // sozinho (cabeçalho, cliente, tabelas, valores, datas).
+  const copyToEdit = (template: Template) => {
+    const terms = template.termIds.map((id) => options.terms.find((term) => term.id === id)).filter((term): term is NonNullable<typeof term> => Boolean(term));
+    const written = terms.map((term) => `<h3>${term.title.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c] ?? c))}</h3>${term.body}`).join("");
+    const body = template.body.replace(/<p>\s*\{\{\s*termos\s*\}\}\s*<\/p>|\{\{\s*termos\s*\}\}/, () => written);
+    setDraft((d) => ({ ...d, templateId: template.id, documentBody: body, itemsMode: template.itemsMode, termIds: body === template.body ? template.termIds : [] }));
+  };
   const [pendingTemplate, setPendingTemplate] = useState<Template | null>(null);
   const applyTemplate = (id: string) => {
     const template = options.templates.find((t) => String(t.id) === String(id));
@@ -88,6 +95,13 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
   const suggested = options.templates.find((t) => t.kind === draft.kind) ?? options.templates.find((t) => t.isDefault) ?? options.templates[0];
   // o modelo em uso: o escolhido nesta proposta ou, sem escolha, o padrão do tipo dela
   const current = options.templates.find((t) => t.id === draft.templateId) ?? suggested;
+  // só os modelos padrão (orçamento de serviço e de treinamento) ficam para escolher;
+  // o modelo que a proposta já usa continua na lista, mesmo sendo outro
+  const standard = options.templates.filter((t) => t.body.includes("{{cabecalho}}") || t.id === draft.templateId);
+  const choices = standard.length ? standard : options.templates;
+  const body = draft.documentBody || current?.body || "";
+  // os termos só se escolhem quando o texto ainda usa o bloco {{termos}}
+  const termsByBlock = body.includes("{{termos}}");
 
   return (
     <div className="grid gap-4">
@@ -109,7 +123,7 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
           </Button>
         </div>
 
-        {!readOnly && options.brandReady === false && (
+        {!readOnly && options.brandReady === false && body.includes("{{sobre}}") && (
           <p className="rounded-md border border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200 px-3 py-2 text-sm">
             A seção "Por que nós" ainda está vazia e não aparece na proposta. Preencha quem somos, números e diferenciais em{" "}
             <Link to="/comercial/modelos" className="underline font-medium">Comercial → Identidade e modelos</Link>: é o que dá confiança ao cliente.
@@ -122,7 +136,7 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
               <Label className="text-xs">Modelo</Label>
               <div className="mt-1">
                 <Select name="templateId" state={draft.templateId ? String(draft.templateId) : ""} modal={false} placeholder={suggested ? `${suggested.name} (padrão)` : "Escolha um modelo"}
-                  options={options.templates.map((t) => ({ id: t.id, name: t.isDefault ? `${t.name} (padrão)` : t.name }))} onChange={(_, value) => applyTemplate(String(value))} />
+                  options={choices.map((t) => ({ id: t.id, name: t.isDefault ? `${t.name} (padrão)` : t.name }))} onChange={(_, value) => applyTemplate(String(value))} />
               </div>
             </div>
             <div>
@@ -131,14 +145,14 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
                 <Select name="itemsMode" state={draft.itemsMode} modal={false} options={ITEMS_MODE_OPTIONS} onChange={(_, value) => setDraft((d) => ({ ...d, itemsMode: String(value) as ItemsMode }))} />
               </div>
             </div>
-            <div>
+            {termsByBlock && <div>
               <Label className="text-xs">Termos que entram no documento</Label>
               <div className="mt-1">
-                <Select name="termIds" multiple state={draft.termIds.map(String)} modal={false} placeholder="Nenhum termo"
+                <Select name="termIds" multiple state={draft.termIds.map(String)} modal={false} placeholder="Os termos do modelo"
                   options={options.terms.map((t) => ({ id: t.id, name: t.title }))}
                   onChange={(_, value) => setDraft((d) => ({ ...d, termIds: (Array.isArray(value) ? value : [value]).map(Number).filter(Boolean) }))} />
               </div>
-            </div>
+            </div>}
           </div>
         )}
 
@@ -167,7 +181,10 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
           <>
             <RichTextEditor value={draft.documentBody} height={420} placeholder="Texto da proposta..."
               onChange={(content) => setDraft((d) => (d.documentBody === content ? d : { ...d, documentBody: content }))} />
-            <VariablePalette variables={options.variables} />
+            <p className="text-xs text-muted-foreground">
+              Todo o texto pode ser mudado. O que está entre <code>{"{{ }}"}</code> é preenchido pelo sistema na proposta (cabeçalho, cliente, tabelas, valores e datas):
+              mantenha esses trechos onde o conteúdo deve aparecer. Use "Pré-visualizar" para ver o resultado.
+            </p>
           </>
         )}
       </section>

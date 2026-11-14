@@ -18,6 +18,7 @@ interface Brand {
   testimonials: Array<{ quote: string; author: string; company: string }>;
   phone: string; email: string; website: string; address: string;
   registrations: string; payment: string;
+  serviceEmail: string; trainingEmail: string;
 }
 const KEY = "commercialBrand";
 
@@ -137,7 +138,16 @@ export default function BrandTab({ canUpdate }: { canUpdate: boolean }) {
               placeholder={"Banco: ...\nAgência: ...\nConta corrente: ...\nChave PIX: ...\nBeneficiário: ..."} />
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">Em branco, o bloco de dados bancários não aparece na proposta. O endereço do cabeçalho vem do cadastro da empresa.</p>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div><Label htmlFor="brandServiceEmail" className="text-xs">E-mail de tratativas — serviços</Label>
+            <ShadInput id="brandServiceEmail" type="email" className="mt-1" value={form.serviceEmail ?? ""} maxLength={255} disabled={!canUpdate} onChange={(event) => set("serviceEmail", event.target.value)} /></div>
+          <div><Label htmlFor="brandTrainingEmail" className="text-xs">E-mail de tratativas — treinamentos</Label>
+            <ShadInput id="brandTrainingEmail" type="email" className="mt-1" value={form.trainingEmail ?? ""} maxLength={255} disabled={!canUpdate} onChange={(event) => set("trainingEmail", event.target.value)} /></div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Em branco, o bloco de dados bancários não aparece na proposta. O endereço do cabeçalho vem do cadastro da empresa.
+          O e-mail de tratativas aparece no fim da proposta, conforme o tipo dela; em branco, vale o e-mail do contato.
+        </p>
       </Card>
 
       <Card title="Quem somos" description="Um parágrafo curto sobre a empresa. Fale do que o cliente ganha, não só da sua história.">

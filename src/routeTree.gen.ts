@@ -48,6 +48,7 @@ import { Route as AuthenticatedSiteProdutosProdutosRouteImport } from './pages/_
 import { Route as AuthenticatedSiteMarcasMarcasRouteImport } from './pages/_authenticated/site/_marcas/marcas'
 import { Route as AuthenticatedSiteCategoriasLojaCategoriasLojaRouteImport } from './pages/_authenticated/site/_categorias-loja/categorias-loja'
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico'
+import { Route as AuthenticatedServicosOrdensDiarioDeObraRouteImport } from './pages/_authenticated/servicos/_ordens/diario-de-obra'
 import { Route as AuthenticatedInventariosAreasAreaIdRouteImport } from './pages/_authenticated/inventarios/areas/$areaId'
 import { Route as AuthenticatedFinanceiroReceberReceberRouteImport } from './pages/_authenticated/financeiro/_receber/receber'
 import { Route as AuthenticatedFinanceiroPlanoContasPlanoContasRouteImport } from './pages/_authenticated/financeiro/_plano-contas/plano-contas'
@@ -73,6 +74,7 @@ import { Route as AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport 
 import { Route as AuthenticatedComercialPropostasPropostasNovaRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.nova'
 import { Route as AuthenticatedComercialPropostasPropostasProposalIdRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.$proposalId'
 import { Route as AuthenticatedComercialContratosContratosContractIdRouteImport } from './pages/_authenticated/comercial/_contratos/contratos_.$contractId'
+import { Route as AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico_.$orderId_.rdo.$reportId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/_index',
@@ -293,6 +295,12 @@ const AuthenticatedServicosOrdensOrdensDeServicoRoute =
     path: '/servicos/ordens-de-servico',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedServicosOrdensDiarioDeObraRoute =
+  AuthenticatedServicosOrdensDiarioDeObraRouteImport.update({
+    id: '/servicos/_ordens/diario-de-obra',
+    path: '/servicos/diario-de-obra',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedInventariosAreasAreaIdRoute =
   AuthenticatedInventariosAreasAreaIdRouteImport.update({
     id: '/inventarios/areas/$areaId',
@@ -443,6 +451,14 @@ const AuthenticatedComercialContratosContratosContractIdRoute =
     path: '/comercial/contratos/$contractId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute =
+  AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRouteImport.update(
+    {
+      id: '/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId',
+      path: '/servicos/ordens-de-servico/$orderId/rdo/$reportId',
+      getParentRoute: () => AuthenticatedRoute,
+    } as any,
+  )
 
 export interface FileRoutesByFullPath {
   '/student': typeof StudentRouteWithChildren
@@ -482,6 +498,7 @@ export interface FileRoutesByFullPath {
   '/financeiro/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/servicos/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/servicos/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
   '/site/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
   '/site/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
@@ -507,6 +524,7 @@ export interface FileRoutesByFullPath {
   '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
+  '/servicos/ordens-de-servico/$orderId/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
 }
 export interface FileRoutesByTo {
   '/building': typeof AuthenticatedBuildingRoute
@@ -545,6 +563,7 @@ export interface FileRoutesByTo {
   '/financeiro/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/servicos/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/servicos/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
   '/site/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
   '/site/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
@@ -570,6 +589,7 @@ export interface FileRoutesByTo {
   '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
+  '/servicos/ordens-de-servico/$orderId/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -612,6 +632,7 @@ export interface FileRoutesById {
   '/_authenticated/financeiro/_plano-contas/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/_authenticated/financeiro/_receber/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/_authenticated/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/_authenticated/servicos/_ordens/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
   '/_authenticated/site/_categorias-loja/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
   '/_authenticated/site/_marcas/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
@@ -637,6 +658,7 @@ export interface FileRoutesById {
   '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
+  '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -678,6 +700,7 @@ export interface FileRouteTypes {
     | '/financeiro/plano-contas'
     | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
+    | '/servicos/diario-de-obra'
     | '/servicos/ordens-de-servico'
     | '/site/categorias-loja'
     | '/site/marcas'
@@ -703,6 +726,7 @@ export interface FileRouteTypes {
     | '/servicos/ordens-de-servico/$orderId'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
+    | '/servicos/ordens-de-servico/$orderId/rdo/$reportId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/building'
@@ -741,6 +765,7 @@ export interface FileRouteTypes {
     | '/financeiro/plano-contas'
     | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
+    | '/servicos/diario-de-obra'
     | '/servicos/ordens-de-servico'
     | '/site/categorias-loja'
     | '/site/marcas'
@@ -766,6 +791,7 @@ export interface FileRouteTypes {
     | '/servicos/ordens-de-servico/$orderId'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
+    | '/servicos/ordens-de-servico/$orderId/rdo/$reportId'
   id:
     | '__root__'
     | '/_authenticated'
@@ -807,6 +833,7 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro/_plano-contas/plano-contas'
     | '/_authenticated/financeiro/_receber/receber'
     | '/_authenticated/inventarios/areas/$areaId'
+    | '/_authenticated/servicos/_ordens/diario-de-obra'
     | '/_authenticated/servicos/_ordens/ordens-de-servico'
     | '/_authenticated/site/_categorias-loja/categorias-loja'
     | '/_authenticated/site/_marcas/marcas'
@@ -832,6 +859,7 @@ export interface FileRouteTypes {
     | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId'
     | '/_authenticated/treinamentos/_turmas/turmas_/$turmaId'
     | '/_authenticated/treinamentos/_turmas/turmas_/nova'
+    | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1115,6 +1143,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/servicos/_ordens/diario-de-obra': {
+      id: '/_authenticated/servicos/_ordens/diario-de-obra'
+      path: '/servicos/diario-de-obra'
+      fullPath: '/servicos/diario-de-obra'
+      preLoaderRoute: typeof AuthenticatedServicosOrdensDiarioDeObraRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/inventarios/areas/$areaId': {
       id: '/_authenticated/inventarios/areas/$areaId'
       path: '/inventarios/areas/$areaId'
@@ -1290,6 +1325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComercialContratosContratosContractIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId': {
+      id: '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId'
+      path: '/servicos/ordens-de-servico/$orderId/rdo/$reportId'
+      fullPath: '/servicos/ordens-de-servico/$orderId/rdo/$reportId'
+      preLoaderRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -1323,6 +1365,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFinanceiroPlanoContasPlanoContasRoute: typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   AuthenticatedFinanceiroReceberReceberRoute: typeof AuthenticatedFinanceiroReceberReceberRoute
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
+  AuthenticatedServicosOrdensDiarioDeObraRoute: typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   AuthenticatedServicosOrdensOrdensDeServicoRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
   AuthenticatedSiteCategoriasLojaCategoriasLojaRoute: typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
   AuthenticatedSiteMarcasMarcasRoute: typeof AuthenticatedSiteMarcasMarcasRoute
@@ -1345,6 +1388,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   AuthenticatedTreinamentosTurmasTurmasNovaRoute: typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
+  AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -1396,6 +1440,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedFinanceiroReceberReceberRoute,
   AuthenticatedInventariosAreasAreaIdRoute:
     AuthenticatedInventariosAreasAreaIdRoute,
+  AuthenticatedServicosOrdensDiarioDeObraRoute:
+    AuthenticatedServicosOrdensDiarioDeObraRoute,
   AuthenticatedServicosOrdensOrdensDeServicoRoute:
     AuthenticatedServicosOrdensOrdensDeServicoRoute,
   AuthenticatedSiteCategoriasLojaCategoriasLojaRoute:
@@ -1439,6 +1485,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute,
   AuthenticatedTreinamentosTurmasTurmasNovaRoute:
     AuthenticatedTreinamentosTurmasTurmasNovaRoute,
+  AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute:
+    AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

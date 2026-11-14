@@ -21,6 +21,7 @@ import {
   ChecklistItem, MoveDialog, ORDERS_ABILITY, ORDERS_KEY, ORDER_KEY, ORDER_STAGES, ORDER_STATUS_LABEL, Order, OrderOptions, OrderStageBadge, OrderStatus, ScopeItem, TeamMember,
   isForward, moveLabel, nextStage, ordersApi,
 } from "../-shared/orders";
+import { DiaryPanel } from "../-shared/reports";
 
 export const Route = createFileRoute("/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId")({
   component: OrderPage,
@@ -166,6 +167,9 @@ function OrderPage() {
               </div>
             ))}
           </section>
+
+          {/* com a obra andando, o diário vem primeiro: é o que se usa todo dia */}
+          {(order.status === "em_execucao" || order.status === "concluida" || order.status === "encerrada") && <DiaryPanel orderId={order.id} canEdit={canUpdate && order.status !== "encerrada"} />}
 
           {order.schedule && order.schedule.steps.length > 0 && (
             <section className="rounded-lg border p-4">

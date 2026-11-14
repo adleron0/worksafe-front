@@ -71,11 +71,12 @@ export const items = [
         icon: "scroll-text",
         path: "/servicos/ordens-de-servico",
       },
-      // {
-      //   title: "RDO",
-      //   icon: "calendar-days",
-      //   path: "/servicos/diario-de-obra",
-      // },
+      {
+        title: "Diário de Obra (RDO)",
+        ability: "ordens_de_servico",
+        icon: "calendar-days",
+        path: "/servicos/diario-de-obra",
+      },
     ],
   },
   {

@@ -238,7 +238,12 @@ function ItemRow({ item, line, draft, options, readOnly, canSeeCosts, update, re
               <div className="flex gap-1">
                 {FLAGS.map(([key, icon, label]) => (
                   <Tip key={key} text={label}>
-                    <button type="button" disabled={readOnly} aria-pressed={item[key]} aria-label={label} onClick={() => update({ [key]: !item[key] })}
+                    <button type="button" disabled={readOnly} aria-pressed={item[key]} aria-label={label}
+                      onClick={() => {
+                        update({ [key]: !item[key] });
+                        // fim de semana/feriado precisa dos dias: abre os ajustes da linha para informar
+                        if (key === "weekend" && !item.weekend && !(item.weekendDays ?? draft.weekendDays)) setOpen(true);
+                      }}
                       className={cn("h-9 w-8 rounded-md border flex items-center justify-center disabled:cursor-not-allowed", item[key] ? "bg-primary text-inverse-foreground border-primary" : "text-muted-foreground hover:bg-muted")}>
                       <Icon name={icon} className="w-4 h-4" />
                     </button>
@@ -293,6 +298,7 @@ function ItemRow({ item, line, draft, options, readOnly, canSeeCosts, update, re
       <p className="mt-1 text-xs text-muted-foreground">
         {labor && (!item.professionalId ? "Selecione o profissional" : line?.hours ? `${decimal(line.hours, 0)} h por profissional` : "Informe o prazo em dias úteis no passo Proposta")}
         {labor && item.overtimeHours > 0 && ` + ${decimal(item.overtimeHours, 1)} h extras`}
+        {labor && item.weekend && !(item.weekendDays ?? draft.weekendDays) && <span className="text-amber-700 dark:text-amber-300"> · informe os dias de fim de semana/feriado nos ajustes da linha</span>}
         {labor && canSeeCosts && line?.hourCost ? ` · custo hora ${money(line.hourCost)}` : ""}
         {training && (!item.courseId ? "Escolha o curso para usar a tabela in-company" : line?.listPrice != null ? `Tabela in-company: ${money(line.listPrice)}` : "Curso sem tabela in-company: digite o valor final")}
         {!labor && !training && !typed && (line ? "Valor final: usando o sugerido" : "Descreva o item e informe o valor unitário")}
@@ -309,7 +315,7 @@ function ItemRow({ item, line, draft, options, readOnly, canSeeCosts, update, re
             <NumField digits={0} value={item.workDays} disabled={readOnly} ariaLabel="Dias úteis desta linha" placeholder={`${draft.workDays || 0} (o da proposta)`}
               onChange={(workDays) => update({ workDays })} onEmpty={() => update({ workDays: null })} /></div>
           <div><p className="text-xs text-muted-foreground mb-0.5">Dias de fim de semana/feriado</p>
-            <NumField digits={0} value={item.weekendDays} disabled={readOnly || !item.weekend} ariaLabel="Dias de FDS/feriado desta linha" placeholder={item.weekend ? `${draft.weekendDays || 0} (o da proposta)` : "marque a estrela"}
+            <NumField digits={0} value={item.weekendDays} disabled={readOnly || !item.weekend} ariaLabel="Dias de FDS/feriado desta linha" placeholder={!item.weekend ? "marque a estrela" : draft.weekendDays ? `${draft.weekendDays} (o da proposta)` : "0"}
               onChange={(weekendDays) => update({ weekendDays })} onEmpty={() => update({ weekendDays: null })} /></div>
           <div><p className="text-xs text-muted-foreground mb-0.5">Horas extras por profissional</p>
             <NumField digits={1} suffix="h" value={item.overtimeHours || null} disabled={readOnly} ariaLabel="Horas extras por profissional desta linha" placeholder="0"

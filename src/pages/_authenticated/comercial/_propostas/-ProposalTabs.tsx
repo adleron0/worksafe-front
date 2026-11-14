@@ -129,9 +129,6 @@ export function ProposalInfoStep({ draft, setDraft, options, readOnly, canSeeCos
                 <CalendarPicker mode="single" name="referenceDate" className="w-full" value={draft.referenceDate} disabled={readOnly} fromYear={2024} toYear={2040}
                   onValueChange={(_, value) => { if (value) set("referenceDate", value); }} />
               </F>
-              <F label="Dias de FDS/feriado" hint="Só para profissionais marcados com ⭐.">
-                <NumField digits={0} value={draft.weekendDays} disabled={readOnly} ariaLabel="Dias de fim de semana ou feriado" onChange={(weekendDays) => set("weekendDays", weekendDays)} />
-              </F>
               <F label="Imprevisibilidade (outro %)">
                 <NumField kind="percent" value={draft.contingencyRate} disabled={readOnly} ariaLabel="Percentual de imprevisibilidade" onChange={(rate) => set("contingencyRate", rate)} />
               </F>

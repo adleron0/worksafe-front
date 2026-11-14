@@ -1,3 +1,5 @@
+// Cursos Online e Aulas Online saíram do menu: curso online está desligado
+// (ver src/lib/features.ts e archive/curso-online/).
 export const items = [
   {
     title: "Home",
@@ -98,16 +100,6 @@ export const items = [
         title: "Turmas",
         icon: "clipboard-list",
         path: "/treinamentos/turmas",
-      },
-      {
-        title: "Cursos Online",
-        icon: "youtube",
-        path: "/treinamentos/cursos-online",
-      },
-      {
-        title: "Aulas Online",
-        icon: "blocks",
-        path: "/treinamentos/aulas-online",
       },
       {
         title: "Inscrições",

@@ -1,4 +1,4 @@
-import { Home, BookOpen, Award, CreditCard, User } from "lucide-react";
+import { Home, Award, CreditCard, User } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
   Sidebar,
@@ -24,11 +24,7 @@ const menuItems = [
         icon: Home,
         href: "/student",
       },
-      {
-        title: "Meus Cursos",
-        icon: BookOpen,
-        href: "/student/courses",
-      },
+      // "Meus Cursos" (curso online) desligado — ver src/lib/features.ts
       {
         title: "Certificados",
         icon: Award,

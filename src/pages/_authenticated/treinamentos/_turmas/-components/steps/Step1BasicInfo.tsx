@@ -12,6 +12,7 @@ import { Response } from "@/general-interfaces/api.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { IEntity as Course } from "../../../_cursos/-interfaces/entity.interface";
 import FaqGenerator from "@/components/general-components/FaqGenerator";
+import { ONLINE_COURSES_ENABLED } from "@/lib/features";
 
 interface StepProps {
   dataForm: FormData;
@@ -96,7 +97,7 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors }: StepProps) => {
       ];
       return get("online-courses", "", params);
     },
-    enabled: dataForm.hasOnlineCourse && dataForm.courseId > 0,
+    enabled: ONLINE_COURSES_ENABLED && dataForm.hasOnlineCourse && dataForm.courseId > 0,
   });
 
   // Função para encontrar um curso pelo ID
@@ -243,7 +244,8 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors }: StepProps) => {
         )}
       </div>
 
-      {/* Curso Online */}
+      {/* Curso Online (desligado — ver src/lib/features.ts) */}
+      {ONLINE_COURSES_ENABLED && (
       <div className={`p-4 bg-muted/30 border border-border/50 rounded-lg ${dataForm.hasOnlineCourse ? "pb-4" : ""}`}>
         <div className="flex justify-between items-center">
           <div className="flex flex-col">
@@ -300,6 +302,7 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors }: StepProps) => {
           </div>
         )}
       </div>
+      )}
 
       {/* Nome da Turma */}
       <div>

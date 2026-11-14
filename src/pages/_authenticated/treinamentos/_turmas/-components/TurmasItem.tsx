@@ -35,6 +35,7 @@ import ListaPresenca from "../-lista-presenca";
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
+import { ONLINE_COURSES_ENABLED } from "@/lib/features";
 
 interface ItemsProps {
   item: IEntity;
@@ -240,7 +241,7 @@ const SiteServicesItem = ({
               )}
 
               {/* Badge Curso Online */}
-              {item.hasOnlineCourse && (
+              {ONLINE_COURSES_ENABLED && item.hasOnlineCourse && (
                 <ResponsiveBadge
                   icon="youtube"
                   text={`Curso online`}

@@ -26,6 +26,7 @@ import { certificatePdfUrl, isIssuedCertificateKey, triggerApiDownload } from '@
 import Dialog from '@/components/general-components/Dialog';
 import { toast } from '@/hooks/use-toast';
 import { useLoader } from '@/context/GeneralContext';
+import { ONLINE_COURSES_ENABLED } from '@/lib/features';
 
 export const Route = createFileRoute('/student/')({
   component: StudentDashboard,
@@ -98,12 +99,16 @@ function StudentDashboard() {
   const { studentData } = useStudentAuth();
   const navigate = useNavigate();
   const { showLoader, hideLoader } = useLoader();
+  // /student/courses está arquivada (curso online desligado): o destino não
+  // existe no roteador e os botões que o usam só aparecem com a chave ligada.
+  const goToCourses = () => navigate({ to: '/student/courses' } as never);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
   const [showViewerModal, setShowViewerModal] = useState(false);
 
   // Buscar cursos do aluno
   const { data: myCourses, isLoading: isLoadingCourses } = useQuery({
     queryKey: ['student-courses', 'my-courses'],
+    enabled: ONLINE_COURSES_ENABLED,
     queryFn: async () => {
       const response = await get<{ rows: StudentCourse[] } | StudentCourse[]>('student-courses', 'my-courses');
       
@@ -136,6 +141,7 @@ function StudentDashboard() {
   // Buscar progresso geral
   const { data: studentProgress, isLoading: isLoadingProgress } = useQuery({
     queryKey: ['student-progress'],
+    enabled: ONLINE_COURSES_ENABLED,
     queryFn: async () => {
       const response = await get<any>('student-progress', 'summary');
       return response || {};
@@ -250,10 +256,13 @@ function StudentDashboard() {
           Bem-vindo de volta, {(studentData?.name || '').split(' ')[0] || 'Aluno'}! 👋
         </h1>
         <p className="opacity-90">
-          Continue sua jornada de aprendizado e conquiste seus objetivos
+          {ONLINE_COURSES_ENABLED ? 'Continue sua jornada de aprendizado e conquiste seus objetivos' : 'Aqui ficam seus certificados e seus dados'}
         </p>
       </div>
 
+      {/* Curso online desligado (ver src/lib/features.ts): estatísticas,
+          próxima aula e atividades só aparecem com ele ligado. */}
+      {ONLINE_COURSES_ENABLED && (<>
       {/* Stats Grid */}
       <div className="grid gap-4 grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-4">
         {(isLoadingCourses || isLoadingProgress) ? (
@@ -405,7 +414,7 @@ function StudentDashboard() {
                   variant="outline" 
                   size="sm" 
                   className="mt-4"
-                  onClick={() => navigate({ to: '/student/courses' })}
+                  onClick={() => goToCourses()}
                 >
                   Explorar Cursos
                 </Button>
@@ -455,7 +464,7 @@ function StudentDashboard() {
                       variant="outline" 
                       className="w-full" 
                       size="sm"
-                      onClick={() => navigate({ to: '/student/courses' })}
+                      onClick={() => goToCourses()}
                     >
                       Ver todos os cursos
                     </Button>
@@ -471,6 +480,7 @@ function StudentDashboard() {
         </Card>
       </div>
 
+      </>)}
       {/* Certificados Recentes */}
       {isLoadingCertificates ? (
         // Skeleton for certificates with thumbnail
@@ -505,7 +515,7 @@ function StudentDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {certificates.slice(0, 3).map((cert) => (
+              {(ONLINE_COURSES_ENABLED ? certificates.slice(0, 3) : certificates).map((cert) => (
                 <div key={cert.id} className="flex flex-col min-[480px]:flex-row items-start min-[480px]:items-center gap-4 p-2 hover:bg-muted/50 rounded-lg transition-colors">
                   {/* Thumbnail do certificado */}
                   {cert.fabricJsonFront ? (
@@ -572,12 +582,12 @@ function StudentDashboard() {
                   </div>
                 </div>
               ))}
-              {certificates.length > 3 && (
+ {ONLINE_COURSES_ENABLED && certificates.length > 3 && (
                 <Button 
                   variant="outline" 
                   className="w-full" 
                   size="sm"
-                  onClick={() => navigate({ to: '/student/courses' })}
+                  onClick={() => goToCourses()}
                 >
                   Ver todos os certificados
                 </Button>
@@ -588,6 +598,7 @@ function StudentDashboard() {
       )}
 
       {/* Call to Action */}
+      {ONLINE_COURSES_ENABLED && (
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
         <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6">
           <div className="min-w-0 flex-1">
@@ -596,12 +607,13 @@ function StudentDashboard() {
               Descubra cursos recomendados baseados no seu perfil
             </p>
           </div>
-          <Button onClick={() => navigate({ to: '/student/courses' })} className="w-full sm:w-auto flex-shrink-0">
+          <Button onClick={() => goToCourses()} className="w-full sm:w-auto flex-shrink-0">
             Explorar Cursos <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </CardContent>
       </Card>
 
+      )}
       {/* Modal de Visualização do Certificado */}
       {selectedCertificate && (
         <Dialog

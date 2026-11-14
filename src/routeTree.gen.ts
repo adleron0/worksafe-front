@@ -15,7 +15,6 @@ import { Route as AuthenticatedRouteImport } from './pages/_authenticated'
 import { Route as StudentIndexRouteImport } from './pages/student/index'
 import { Route as IndexIndexRouteImport } from './pages/_index/index'
 import { Route as StudentProfileRouteImport } from './pages/student/profile'
-import { Route as StudentCoursesRouteImport } from './pages/student/courses'
 import { Route as AuthenticatedHomeRouteImport } from './pages/_authenticated/home'
 import { Route as AuthenticatedBuildingRouteImport } from './pages/_authenticated/building'
 import { Route as IndexCertificadosIndexRouteImport } from './pages/_index/certificados/index'
@@ -25,28 +24,22 @@ import { Route as AuthenticatedIntegracoesIndexRouteImport } from './pages/_auth
 import { Route as AuthenticatedEmpresaIndexRouteImport } from './pages/_authenticated/empresa/index'
 import { Route as AuthenticatedClientesIndexRouteImport } from './pages/_authenticated/clientes/index'
 import { Route as AuthenticatedBlogIndexRouteImport } from './pages/_authenticated/blog/index'
-import { Route as StudentLessonLessonIdRouteImport } from './pages/student/lesson/$lessonId'
 import { Route as IndexProvaClassIdRouteImport } from './pages/_index/prova.$classId'
 import { Route as IndexPropostaKeyRouteImport } from './pages/_index/proposta.$key'
 import { Route as IndexCertificadosIdRouteImport } from './pages/_index/certificados/$id'
 import { Route as AuthenticatedInventariosDashboardRouteImport } from './pages/_authenticated/inventarios/dashboard'
 import { Route as AuthenticatedInventariosAutorizadosRouteImport } from './pages/_authenticated/inventarios/autorizados'
 import { Route as AuthenticatedInventariosAccessControlRouteImport } from './pages/_authenticated/inventarios/access-control'
-import { Route as StudentCourseCourseIdIndexRouteImport } from './pages/student/course/$courseId.index'
 import { Route as AuthenticatedUsuariosUsuariosIndexRouteImport } from './pages/_authenticated/usuarios/_usuarios/index'
-import { Route as AuthenticatedTreinamentosAulasOnlineIndexRouteImport } from './pages/_authenticated/treinamentos/aulas-online/index'
 import { Route as AuthenticatedInventariosAreasIndexRouteImport } from './pages/_authenticated/inventarios/areas/index'
-import { Route as StudentCourseCourseIdLessonsRouteImport } from './pages/student/course/$courseId.lessons'
 import { Route as IndexPropostaRascunhoProposalIdRouteImport } from './pages/_index/proposta_.rascunho.$proposalId'
 import { Route as IndexCertificadosNomeIdRouteImport } from './pages/_index/certificados/$nome.$id'
 import { Route as IndexAuthStudentLoginRouteImport } from './pages/_index/auth/student/login'
 import { Route as AuthenticatedUsuariosPerfisPerfisRouteImport } from './pages/_authenticated/usuarios/_perfis/perfis'
-import { Route as AuthenticatedTreinamentosAulasOnlineIdRouteImport } from './pages/_authenticated/treinamentos/aulas-online/$id'
 import { Route as AuthenticatedTreinamentosTurmasTurmasRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas'
 import { Route as AuthenticatedTreinamentosInstrutoresInstrutoresRouteImport } from './pages/_authenticated/treinamentos/_instrutores/instrutores'
 import { Route as AuthenticatedTreinamentosInscricoesInscricoesRouteImport } from './pages/_authenticated/treinamentos/_inscricoes/inscricoes'
 import { Route as AuthenticatedTreinamentosCursosCursosRouteImport } from './pages/_authenticated/treinamentos/_cursos/cursos'
-import { Route as AuthenticatedTreinamentosCursosOnlineCursosOnlineRouteImport } from './pages/_authenticated/treinamentos/_cursos-online/cursos-online'
 import { Route as AuthenticatedTreinamentosCertificadosCertificadosRouteImport } from './pages/_authenticated/treinamentos/_certificados/certificados'
 import { Route as AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRouteImport } from './pages/_authenticated/treinamentos/_certificados-modelos/certificados-modelos'
 import { Route as AuthenticatedTreinamentosAlunosAlunosRouteImport } from './pages/_authenticated/treinamentos/_alunos/alunos'
@@ -106,11 +99,6 @@ const StudentProfileRoute = StudentProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => StudentRoute,
 } as any)
-const StudentCoursesRoute = StudentCoursesRouteImport.update({
-  id: '/courses',
-  path: '/courses',
-  getParentRoute: () => StudentRoute,
-} as any)
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   id: '/home',
   path: '/home',
@@ -161,11 +149,6 @@ const AuthenticatedBlogIndexRoute = AuthenticatedBlogIndexRouteImport.update({
   path: '/blog/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const StudentLessonLessonIdRoute = StudentLessonLessonIdRouteImport.update({
-  id: '/lesson/$lessonId',
-  path: '/lesson/$lessonId',
-  getParentRoute: () => StudentRoute,
-} as any)
 const IndexProvaClassIdRoute = IndexProvaClassIdRouteImport.update({
   id: '/prova/$classId',
   path: '/prova/$classId',
@@ -199,22 +182,10 @@ const AuthenticatedInventariosAccessControlRoute =
     path: '/inventarios/access-control',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const StudentCourseCourseIdIndexRoute =
-  StudentCourseCourseIdIndexRouteImport.update({
-    id: '/course/$courseId/',
-    path: '/course/$courseId/',
-    getParentRoute: () => StudentRoute,
-  } as any)
 const AuthenticatedUsuariosUsuariosIndexRoute =
   AuthenticatedUsuariosUsuariosIndexRouteImport.update({
     id: '/usuarios/_usuarios/',
     path: '/usuarios/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedTreinamentosAulasOnlineIndexRoute =
-  AuthenticatedTreinamentosAulasOnlineIndexRouteImport.update({
-    id: '/treinamentos/aulas-online/',
-    path: '/treinamentos/aulas-online/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedInventariosAreasIndexRoute =
@@ -222,12 +193,6 @@ const AuthenticatedInventariosAreasIndexRoute =
     id: '/inventarios/areas/',
     path: '/inventarios/areas/',
     getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const StudentCourseCourseIdLessonsRoute =
-  StudentCourseCourseIdLessonsRouteImport.update({
-    id: '/course/$courseId/lessons',
-    path: '/course/$courseId/lessons',
-    getParentRoute: () => StudentRoute,
   } as any)
 const IndexPropostaRascunhoProposalIdRoute =
   IndexPropostaRascunhoProposalIdRouteImport.update({
@@ -249,12 +214,6 @@ const AuthenticatedUsuariosPerfisPerfisRoute =
   AuthenticatedUsuariosPerfisPerfisRouteImport.update({
     id: '/usuarios/_perfis/perfis',
     path: '/usuarios/perfis',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedTreinamentosAulasOnlineIdRoute =
-  AuthenticatedTreinamentosAulasOnlineIdRouteImport.update({
-    id: '/treinamentos/aulas-online/$id',
-    path: '/treinamentos/aulas-online/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedTreinamentosTurmasTurmasRoute =
@@ -279,12 +238,6 @@ const AuthenticatedTreinamentosCursosCursosRoute =
   AuthenticatedTreinamentosCursosCursosRouteImport.update({
     id: '/treinamentos/_cursos/cursos',
     path: '/treinamentos/cursos',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedTreinamentosCursosOnlineCursosOnlineRoute =
-  AuthenticatedTreinamentosCursosOnlineCursosOnlineRouteImport.update({
-    id: '/treinamentos/_cursos-online/cursos-online',
-    path: '/treinamentos/cursos-online',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedTreinamentosCertificadosCertificadosRoute =
@@ -474,7 +427,6 @@ export interface FileRoutesByFullPath {
   '/student': typeof StudentRouteWithChildren
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
-  '/student/courses': typeof StudentCoursesRoute
   '/student/profile': typeof StudentProfileRoute
   '/': typeof IndexIndexRoute
   '/student/': typeof StudentIndexRoute
@@ -484,7 +436,6 @@ export interface FileRoutesByFullPath {
   '/certificados/$id': typeof IndexCertificadosIdRoute
   '/proposta/$key': typeof IndexPropostaKeyRoute
   '/prova/$classId': typeof IndexProvaClassIdRoute
-  '/student/lesson/$lessonId': typeof StudentLessonLessonIdRoute
   '/blog': typeof AuthenticatedBlogIndexRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
   '/empresa': typeof AuthenticatedEmpresaIndexRoute
@@ -516,21 +467,16 @@ export interface FileRoutesByFullPath {
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
   '/treinamentos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
-  '/treinamentos/cursos-online': typeof AuthenticatedTreinamentosCursosOnlineCursosOnlineRoute
   '/treinamentos/cursos': typeof AuthenticatedTreinamentosCursosCursosRoute
   '/treinamentos/inscricoes': typeof AuthenticatedTreinamentosInscricoesInscricoesRoute
   '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
-  '/treinamentos/aulas-online/$id': typeof AuthenticatedTreinamentosAulasOnlineIdRoute
   '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
   '/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/proposta/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
-  '/student/course/$courseId/lessons': typeof StudentCourseCourseIdLessonsRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
-  '/treinamentos/aulas-online': typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
-  '/student/course/$courseId': typeof StudentCourseCourseIdIndexRoute
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
@@ -541,7 +487,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
-  '/student/courses': typeof StudentCoursesRoute
   '/student/profile': typeof StudentProfileRoute
   '/': typeof IndexIndexRoute
   '/student': typeof StudentIndexRoute
@@ -551,7 +496,6 @@ export interface FileRoutesByTo {
   '/certificados/$id': typeof IndexCertificadosIdRoute
   '/proposta/$key': typeof IndexPropostaKeyRoute
   '/prova/$classId': typeof IndexProvaClassIdRoute
-  '/student/lesson/$lessonId': typeof StudentLessonLessonIdRoute
   '/blog': typeof AuthenticatedBlogIndexRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
   '/empresa': typeof AuthenticatedEmpresaIndexRoute
@@ -583,21 +527,16 @@ export interface FileRoutesByTo {
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
   '/treinamentos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
-  '/treinamentos/cursos-online': typeof AuthenticatedTreinamentosCursosOnlineCursosOnlineRoute
   '/treinamentos/cursos': typeof AuthenticatedTreinamentosCursosCursosRoute
   '/treinamentos/inscricoes': typeof AuthenticatedTreinamentosInscricoesInscricoesRoute
   '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
-  '/treinamentos/aulas-online/$id': typeof AuthenticatedTreinamentosAulasOnlineIdRoute
   '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
   '/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/proposta/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
-  '/student/course/$courseId/lessons': typeof StudentCourseCourseIdLessonsRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
-  '/treinamentos/aulas-online': typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
-  '/student/course/$courseId': typeof StudentCourseCourseIdIndexRoute
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
@@ -612,7 +551,6 @@ export interface FileRoutesById {
   '/student': typeof StudentRouteWithChildren
   '/_authenticated/building': typeof AuthenticatedBuildingRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
-  '/student/courses': typeof StudentCoursesRoute
   '/student/profile': typeof StudentProfileRoute
   '/_index/': typeof IndexIndexRoute
   '/student/': typeof StudentIndexRoute
@@ -622,7 +560,6 @@ export interface FileRoutesById {
   '/_index/certificados/$id': typeof IndexCertificadosIdRoute
   '/_index/proposta/$key': typeof IndexPropostaKeyRoute
   '/_index/prova/$classId': typeof IndexProvaClassIdRoute
-  '/student/lesson/$lessonId': typeof StudentLessonLessonIdRoute
   '/_authenticated/blog/': typeof AuthenticatedBlogIndexRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
   '/_authenticated/empresa/': typeof AuthenticatedEmpresaIndexRoute
@@ -654,21 +591,16 @@ export interface FileRoutesById {
   '/_authenticated/treinamentos/_alunos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
   '/_authenticated/treinamentos/_certificados-modelos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/_authenticated/treinamentos/_certificados/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
-  '/_authenticated/treinamentos/_cursos-online/cursos-online': typeof AuthenticatedTreinamentosCursosOnlineCursosOnlineRoute
   '/_authenticated/treinamentos/_cursos/cursos': typeof AuthenticatedTreinamentosCursosCursosRoute
   '/_authenticated/treinamentos/_inscricoes/inscricoes': typeof AuthenticatedTreinamentosInscricoesInscricoesRoute
   '/_authenticated/treinamentos/_instrutores/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/_authenticated/treinamentos/_turmas/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
-  '/_authenticated/treinamentos/aulas-online/$id': typeof AuthenticatedTreinamentosAulasOnlineIdRoute
   '/_authenticated/usuarios/_perfis/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
   '/_index/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/_index/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/_index/proposta_/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
-  '/student/course/$courseId/lessons': typeof StudentCourseCourseIdLessonsRoute
   '/_authenticated/inventarios/areas/': typeof AuthenticatedInventariosAreasIndexRoute
-  '/_authenticated/treinamentos/aulas-online/': typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
   '/_authenticated/usuarios/_usuarios/': typeof AuthenticatedUsuariosUsuariosIndexRoute
-  '/student/course/$courseId/': typeof StudentCourseCourseIdIndexRoute
   '/_authenticated/comercial/_contratos/contratos_/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
   '/_authenticated/comercial/_propostas/propostas_/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/_authenticated/comercial/_propostas/propostas_/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
@@ -682,7 +614,6 @@ export interface FileRouteTypes {
     | '/student'
     | '/building'
     | '/home'
-    | '/student/courses'
     | '/student/profile'
     | '/'
     | '/student/'
@@ -692,7 +623,6 @@ export interface FileRouteTypes {
     | '/certificados/$id'
     | '/proposta/$key'
     | '/prova/$classId'
-    | '/student/lesson/$lessonId'
     | '/blog'
     | '/clientes'
     | '/empresa'
@@ -724,21 +654,16 @@ export interface FileRouteTypes {
     | '/treinamentos/alunos'
     | '/treinamentos/certificados-modelos'
     | '/treinamentos/certificados'
-    | '/treinamentos/cursos-online'
     | '/treinamentos/cursos'
     | '/treinamentos/inscricoes'
     | '/treinamentos/instrutores'
     | '/treinamentos/turmas'
-    | '/treinamentos/aulas-online/$id'
     | '/usuarios/perfis'
     | '/auth/student/login'
     | '/certificados/$nome/$id'
     | '/proposta/rascunho/$proposalId'
-    | '/student/course/$courseId/lessons'
     | '/inventarios/areas'
-    | '/treinamentos/aulas-online'
     | '/usuarios'
-    | '/student/course/$courseId'
     | '/comercial/contratos/$contractId'
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
@@ -749,7 +674,6 @@ export interface FileRouteTypes {
   to:
     | '/building'
     | '/home'
-    | '/student/courses'
     | '/student/profile'
     | '/'
     | '/student'
@@ -759,7 +683,6 @@ export interface FileRouteTypes {
     | '/certificados/$id'
     | '/proposta/$key'
     | '/prova/$classId'
-    | '/student/lesson/$lessonId'
     | '/blog'
     | '/clientes'
     | '/empresa'
@@ -791,21 +714,16 @@ export interface FileRouteTypes {
     | '/treinamentos/alunos'
     | '/treinamentos/certificados-modelos'
     | '/treinamentos/certificados'
-    | '/treinamentos/cursos-online'
     | '/treinamentos/cursos'
     | '/treinamentos/inscricoes'
     | '/treinamentos/instrutores'
     | '/treinamentos/turmas'
-    | '/treinamentos/aulas-online/$id'
     | '/usuarios/perfis'
     | '/auth/student/login'
     | '/certificados/$nome/$id'
     | '/proposta/rascunho/$proposalId'
-    | '/student/course/$courseId/lessons'
     | '/inventarios/areas'
-    | '/treinamentos/aulas-online'
     | '/usuarios'
-    | '/student/course/$courseId'
     | '/comercial/contratos/$contractId'
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
@@ -819,7 +737,6 @@ export interface FileRouteTypes {
     | '/student'
     | '/_authenticated/building'
     | '/_authenticated/home'
-    | '/student/courses'
     | '/student/profile'
     | '/_index/'
     | '/student/'
@@ -829,7 +746,6 @@ export interface FileRouteTypes {
     | '/_index/certificados/$id'
     | '/_index/proposta/$key'
     | '/_index/prova/$classId'
-    | '/student/lesson/$lessonId'
     | '/_authenticated/blog/'
     | '/_authenticated/clientes/'
     | '/_authenticated/empresa/'
@@ -861,21 +777,16 @@ export interface FileRouteTypes {
     | '/_authenticated/treinamentos/_alunos/alunos'
     | '/_authenticated/treinamentos/_certificados-modelos/certificados-modelos'
     | '/_authenticated/treinamentos/_certificados/certificados'
-    | '/_authenticated/treinamentos/_cursos-online/cursos-online'
     | '/_authenticated/treinamentos/_cursos/cursos'
     | '/_authenticated/treinamentos/_inscricoes/inscricoes'
     | '/_authenticated/treinamentos/_instrutores/instrutores'
     | '/_authenticated/treinamentos/_turmas/turmas'
-    | '/_authenticated/treinamentos/aulas-online/$id'
     | '/_authenticated/usuarios/_perfis/perfis'
     | '/_index/auth/student/login'
     | '/_index/certificados/$nome/$id'
     | '/_index/proposta_/rascunho/$proposalId'
-    | '/student/course/$courseId/lessons'
     | '/_authenticated/inventarios/areas/'
-    | '/_authenticated/treinamentos/aulas-online/'
     | '/_authenticated/usuarios/_usuarios/'
-    | '/student/course/$courseId/'
     | '/_authenticated/comercial/_contratos/contratos_/$contractId'
     | '/_authenticated/comercial/_propostas/propostas_/$proposalId'
     | '/_authenticated/comercial/_propostas/propostas_/nova'
@@ -932,13 +843,6 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/student/profile'
       preLoaderRoute: typeof StudentProfileRouteImport
-      parentRoute: typeof StudentRoute
-    }
-    '/student/courses': {
-      id: '/student/courses'
-      path: '/courses'
-      fullPath: '/student/courses'
-      preLoaderRoute: typeof StudentCoursesRouteImport
       parentRoute: typeof StudentRoute
     }
     '/_authenticated/home': {
@@ -1004,13 +908,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBlogIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/student/lesson/$lessonId': {
-      id: '/student/lesson/$lessonId'
-      path: '/lesson/$lessonId'
-      fullPath: '/student/lesson/$lessonId'
-      preLoaderRoute: typeof StudentLessonLessonIdRouteImport
-      parentRoute: typeof StudentRoute
-    }
     '/_index/prova/$classId': {
       id: '/_index/prova/$classId'
       path: '/prova/$classId'
@@ -1053,25 +950,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventariosAccessControlRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/student/course/$courseId/': {
-      id: '/student/course/$courseId/'
-      path: '/course/$courseId'
-      fullPath: '/student/course/$courseId'
-      preLoaderRoute: typeof StudentCourseCourseIdIndexRouteImport
-      parentRoute: typeof StudentRoute
-    }
     '/_authenticated/usuarios/_usuarios/': {
       id: '/_authenticated/usuarios/_usuarios/'
       path: '/usuarios'
       fullPath: '/usuarios'
       preLoaderRoute: typeof AuthenticatedUsuariosUsuariosIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/treinamentos/aulas-online/': {
-      id: '/_authenticated/treinamentos/aulas-online/'
-      path: '/treinamentos/aulas-online'
-      fullPath: '/treinamentos/aulas-online'
-      preLoaderRoute: typeof AuthenticatedTreinamentosAulasOnlineIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/inventarios/areas/': {
@@ -1080,13 +963,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/inventarios/areas'
       preLoaderRoute: typeof AuthenticatedInventariosAreasIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
-    }
-    '/student/course/$courseId/lessons': {
-      id: '/student/course/$courseId/lessons'
-      path: '/course/$courseId/lessons'
-      fullPath: '/student/course/$courseId/lessons'
-      preLoaderRoute: typeof StudentCourseCourseIdLessonsRouteImport
-      parentRoute: typeof StudentRoute
     }
     '/_index/proposta_/rascunho/$proposalId': {
       id: '/_index/proposta_/rascunho/$proposalId'
@@ -1116,13 +992,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsuariosPerfisPerfisRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/treinamentos/aulas-online/$id': {
-      id: '/_authenticated/treinamentos/aulas-online/$id'
-      path: '/treinamentos/aulas-online/$id'
-      fullPath: '/treinamentos/aulas-online/$id'
-      preLoaderRoute: typeof AuthenticatedTreinamentosAulasOnlineIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/treinamentos/_turmas/turmas': {
       id: '/_authenticated/treinamentos/_turmas/turmas'
       path: '/treinamentos/turmas'
@@ -1149,13 +1018,6 @@ declare module '@tanstack/react-router' {
       path: '/treinamentos/cursos'
       fullPath: '/treinamentos/cursos'
       preLoaderRoute: typeof AuthenticatedTreinamentosCursosCursosRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/treinamentos/_cursos-online/cursos-online': {
-      id: '/_authenticated/treinamentos/_cursos-online/cursos-online'
-      path: '/treinamentos/cursos-online'
-      fullPath: '/treinamentos/cursos-online'
-      preLoaderRoute: typeof AuthenticatedTreinamentosCursosOnlineCursosOnlineRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/treinamentos/_certificados/certificados': {
@@ -1407,15 +1269,12 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTreinamentosAlunosAlunosRoute: typeof AuthenticatedTreinamentosAlunosAlunosRoute
   AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute: typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   AuthenticatedTreinamentosCertificadosCertificadosRoute: typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
-  AuthenticatedTreinamentosCursosOnlineCursosOnlineRoute: typeof AuthenticatedTreinamentosCursosOnlineCursosOnlineRoute
   AuthenticatedTreinamentosCursosCursosRoute: typeof AuthenticatedTreinamentosCursosCursosRoute
   AuthenticatedTreinamentosInscricoesInscricoesRoute: typeof AuthenticatedTreinamentosInscricoesInscricoesRoute
   AuthenticatedTreinamentosInstrutoresInstrutoresRoute: typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   AuthenticatedTreinamentosTurmasTurmasRoute: typeof AuthenticatedTreinamentosTurmasTurmasRoute
-  AuthenticatedTreinamentosAulasOnlineIdRoute: typeof AuthenticatedTreinamentosAulasOnlineIdRoute
   AuthenticatedUsuariosPerfisPerfisRoute: typeof AuthenticatedUsuariosPerfisPerfisRoute
   AuthenticatedInventariosAreasIndexRoute: typeof AuthenticatedInventariosAreasIndexRoute
-  AuthenticatedTreinamentosAulasOnlineIndexRoute: typeof AuthenticatedTreinamentosAulasOnlineIndexRoute
   AuthenticatedUsuariosUsuariosIndexRoute: typeof AuthenticatedUsuariosUsuariosIndexRoute
   AuthenticatedComercialContratosContratosContractIdRoute: typeof AuthenticatedComercialContratosContratosContractIdRoute
   AuthenticatedComercialPropostasPropostasProposalIdRoute: typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
@@ -1485,8 +1344,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute,
   AuthenticatedTreinamentosCertificadosCertificadosRoute:
     AuthenticatedTreinamentosCertificadosCertificadosRoute,
-  AuthenticatedTreinamentosCursosOnlineCursosOnlineRoute:
-    AuthenticatedTreinamentosCursosOnlineCursosOnlineRoute,
   AuthenticatedTreinamentosCursosCursosRoute:
     AuthenticatedTreinamentosCursosCursosRoute,
   AuthenticatedTreinamentosInscricoesInscricoesRoute:
@@ -1495,14 +1352,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedTreinamentosInstrutoresInstrutoresRoute,
   AuthenticatedTreinamentosTurmasTurmasRoute:
     AuthenticatedTreinamentosTurmasTurmasRoute,
-  AuthenticatedTreinamentosAulasOnlineIdRoute:
-    AuthenticatedTreinamentosAulasOnlineIdRoute,
   AuthenticatedUsuariosPerfisPerfisRoute:
     AuthenticatedUsuariosPerfisPerfisRoute,
   AuthenticatedInventariosAreasIndexRoute:
     AuthenticatedInventariosAreasIndexRoute,
-  AuthenticatedTreinamentosAulasOnlineIndexRoute:
-    AuthenticatedTreinamentosAulasOnlineIndexRoute,
   AuthenticatedUsuariosUsuariosIndexRoute:
     AuthenticatedUsuariosUsuariosIndexRoute,
   AuthenticatedComercialContratosContratosContractIdRoute:
@@ -1548,21 +1401,13 @@ const IndexRouteChildren: IndexRouteChildren = {
 const IndexRouteWithChildren = IndexRoute._addFileChildren(IndexRouteChildren)
 
 interface StudentRouteChildren {
-  StudentCoursesRoute: typeof StudentCoursesRoute
   StudentProfileRoute: typeof StudentProfileRoute
   StudentIndexRoute: typeof StudentIndexRoute
-  StudentLessonLessonIdRoute: typeof StudentLessonLessonIdRoute
-  StudentCourseCourseIdLessonsRoute: typeof StudentCourseCourseIdLessonsRoute
-  StudentCourseCourseIdIndexRoute: typeof StudentCourseCourseIdIndexRoute
 }
 
 const StudentRouteChildren: StudentRouteChildren = {
-  StudentCoursesRoute: StudentCoursesRoute,
   StudentProfileRoute: StudentProfileRoute,
   StudentIndexRoute: StudentIndexRoute,
-  StudentLessonLessonIdRoute: StudentLessonLessonIdRoute,
-  StudentCourseCourseIdLessonsRoute: StudentCourseCourseIdLessonsRoute,
-  StudentCourseCourseIdIndexRoute: StudentCourseCourseIdIndexRoute,
 }
 
 const StudentRouteWithChildren =

@@ -20,7 +20,7 @@ import { FollowUpChip } from "../-shared/activities";
 import { downloadProposalPdf } from "../-shared/pdf";
 import DecisionDialog from "./-DecisionDialog";
 import {
-  KIND_LABEL, PROPOSALS_KEY, Proposal, ProposalRow, ProposalStatus, StatusBadge,
+  KIND_LABEL, KindBadge, PROPOSALS_KEY, Proposal, ProposalRow, ProposalStatus, StatusBadge,
 } from "../-shared/proposals";
 
 export const Route = createFileRoute("/_authenticated/comercial/_propostas/propostas")({
@@ -250,10 +250,11 @@ function ProposalsPage() {
                 <div className="flex items-start justify-between gap-2">
                   <button type="button" className="flex-1 min-w-0 overflow-hidden text-left" onClick={() => open(row.id)}>
                     <p className="font-medium text-sm truncate">{row.customer.name}</p>
-                    <p className="text-xs text-muted-foreground truncate tabular-nums">{row.number} · {KIND_LABEL[row.kind]}</p>
+                    <p className="text-xs text-muted-foreground truncate tabular-nums">{row.number}</p>
                   </button>
                   {rowMenu(row, true)}
                 </div>
+                <KindBadge kind={row.kind} />
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Icon name="file-text" className="w-3 h-3 text-muted-foreground" />
@@ -305,7 +306,7 @@ function ProposalsPage() {
           <div key={row.id} className={cn("relative flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40", row.inactiveAt && "opacity-60")}>
             <div className="lg:w-40">
               <button type="button" className="font-semibold tabular-nums hover:underline text-left" onClick={() => open(row.id)}>{row.number}</button>
-              <p className="text-xs text-muted-foreground">{KIND_LABEL[row.kind]}</p>
+              <KindBadge kind={row.kind} className="mt-0.5" />
             </div>
             <div className="flex-1 min-w-0 pr-10 lg:pr-4">
               <p className="font-medium truncate">{row.customer.name}</p>

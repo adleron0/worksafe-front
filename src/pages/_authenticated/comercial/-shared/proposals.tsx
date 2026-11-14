@@ -1,3 +1,4 @@
+import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
 
 export type ProposalKind = "servico" | "treinamento" | "misto";
@@ -151,6 +152,22 @@ export function StatusBadge({ status, expired }: { status: ProposalStatus; expir
     <span className="inline-flex items-center gap-1">
       <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", STATUS_CLASS[status])}>{STATUS_LABEL[status]}</span>
       {expired && <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", STATUS_CLASS.expirada)}>Validade vencida</span>}
+    </span>
+  );
+}
+
+/** Cor e ícone de cada tipo de proposta: para bater o olho e saber se é serviço ou treinamento. */
+const KIND_STYLE: Record<ProposalKind, { icon: string; className: string }> = {
+  servico: { icon: "wrench", className: "border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-200" },
+  treinamento: { icon: "graduation-cap", className: "border-violet-300 bg-violet-50 text-violet-800 dark:border-violet-900 dark:bg-violet-950 dark:text-violet-200" },
+  misto: { icon: "layers", className: "border-teal-300 bg-teal-50 text-teal-800 dark:border-teal-900 dark:bg-teal-950 dark:text-teal-200" },
+};
+/** Etiqueta do tipo da proposta (serviço, treinamento ou os dois), com ícone e cor próprios. */
+export function KindBadge({ kind, className }: { kind: ProposalKind; className?: string }) {
+  const style = KIND_STYLE[kind] ?? KIND_STYLE.servico;
+  return (
+    <span className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap", style.className, className)}>
+      <Icon name={style.icon} className="w-3 h-3 shrink-0" /> {KIND_LABEL[kind] ?? kind}
     </span>
   );
 }

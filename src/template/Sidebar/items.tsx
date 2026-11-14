@@ -33,12 +33,6 @@ export const items = [
         path: "/comercial/acompanhamento",
       },
       {
-        title: "Contratos",
-        ability: "comercial",
-        icon: "file-signature",
-        path: "/comercial/contratos",
-      },
-      {
         title: "Vendedores",
         ability: "comercial",
         icon: "user-round-check",
@@ -182,6 +176,11 @@ export const items = [
       //   icon: "trending-down",
       //   path: "/financeiro/pagar",
       // },
+      {
+        title: "A Faturar",
+        icon: "receipt",
+        path: "/financeiro/faturar",
+      },
       {
         title: "Contas a Receber",
         icon: "trending-up",

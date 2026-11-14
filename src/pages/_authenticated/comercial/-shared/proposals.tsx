@@ -73,7 +73,7 @@ export interface Proposal {
   baseOutdated: boolean; baseCapturedAt: string;
   publicKey: string | null; publicUrl: string | null; documentFrozen: boolean; documentHash: string | null; viewedAt: string | null;
   emailConfigured: boolean; events: ProposalEvent[];
-  contract: { id: number; number: string; status: string } | null;
+  contract: { id: number; number: string; status: string; customerOrder?: { number: string | null; date: string | null; fileUrl: string | null; fileName: string | null } } | null;
   /** só na resposta do envio: a proposta foi enviada, mas o e-mail com o link falhou */
   emailError?: string;
   versions: Array<{ id: number; number: string; revision: number; status: ProposalStatus; total: number }>;

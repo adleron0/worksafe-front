@@ -1,6 +1,9 @@
 import { cn } from "@/lib/utils";
 import { CustomerOption, DueRule, ProposalKind } from "./proposals";
 
+/** Pedido de compra que o cliente manda para confirmar o aceite. */
+export interface CustomerOrder { number: string | null; date: string | null; fileUrl: string | null; fileName: string | null }
+
 export type ContractStatus = "vigente" | "concluido" | "cancelado";
 
 export interface ContractRow {
@@ -21,12 +24,21 @@ export interface ContractClassSlot {
 
 export interface Contract {
   id: number; number: string; kind: ProposalKind; status: ContractStatus; title: string; value: number; acceptedAt: string;
-  startDate: string | null; endDate: string | null; notes: string | null; statusNote: string | null;
+  startDate: string | null; endDate: string | null; notes: string | null; statusNote: string | null; customerOrder: CustomerOrder;
   customer: CustomerOption; proposal: { id: number; number: string } | null; documentHash: string | null; hasDocument: boolean;
   signer: { name?: string; cpf?: string; role?: string; email?: string; ip?: string; userAgent?: string; at?: string; codeVerified?: boolean; manual?: boolean; note?: string } | null;
   billed: number; received: number; toBill: number;
   installments: ContractInstallment[]; classes: ContractClassSlot[];
 }
+
+/** Uma parcela na fila "A faturar" do Financeiro. */
+export type BillingStage = "aguardando" | "liberada" | "faturada" | "recebida";
+export interface BillingRow extends ContractInstallment {
+  stage: BillingStage; contractId: number; contractNumber: string; contractStatus: ContractStatus; kind: ProposalKind; title: string;
+  proposal: { id: number; number: string } | null; customer: { id: number; name: string }; waitingFor: string | null; customerOrder: CustomerOrder;
+}
+export interface BillingQueue { rows: BillingRow[]; summary: Record<BillingStage, { count: number; total: number }>; recentDays: number }
+export const BILLING_KEY = "commercialBilling";
 
 export const CONTRACTS_KEY = "commercialContracts";
 export const CONTRACT_KEY = "commercialContract";

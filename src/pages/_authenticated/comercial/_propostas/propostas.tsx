@@ -114,7 +114,7 @@ function ProposalsPage() {
     onError: (err) => toast({ title: "Não foi possível copiar o link", description: errorMessage(err), variant: "destructive" }),
   });
   const { mutate: changeStatus, isPending: changing } = useMutation({
-    mutationFn: ({ row, ...body }: { row: ProposalRow; status: "enviada" | "aceita" | "recusada"; note?: string; notify?: boolean }) =>
+    mutationFn: ({ row, ...body }: { row: ProposalRow; status: "enviada" | "aceita" | "recusada"; note?: string; notify?: boolean; customerOrderNumber?: string; customerOrderDate?: string }) =>
       commercialApi.patch<Proposal>(`proposals/status/${row.id}`, body),
     onSuccess: async (result, body) => {
       refresh(); setDecision(null);
@@ -334,7 +334,7 @@ function ProposalsPage() {
 
       {decision && (
         <DecisionDialog decision={decision.kind} number={decision.row.number} pending={changing} onClose={() => setDecision(null)}
-          onConfirm={(note) => changeStatus({ row: decision.row, status: decision.kind, note })} />
+          onConfirm={(note, extra) => changeStatus({ row: decision.row, status: decision.kind, note, ...extra })} />
       )}
     </>
   );

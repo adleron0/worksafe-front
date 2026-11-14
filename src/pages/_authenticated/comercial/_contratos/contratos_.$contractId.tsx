@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
@@ -12,13 +12,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import CalendarPicker from "@/components/general-components/Calendar";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
-import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
-import { COMMERCIAL_ABILITY, NumField, commercialApi, dateBr, errorMessage, money, todayIso } from "../-shared/commercial";
+import { COMMERCIAL_ABILITY, commercialApi, dateBr, errorMessage, money } from "../-shared/commercial";
 import {
   CONTRACTS_KEY, CONTRACT_KEY, Contract, ContractClassSlot, ContractInstallment, ContractStatus, ContractStatusBadge,
-  PAYMENT_METHOD_OPTIONS, RECORD_STATUS_LABEL, dueRuleText,
+  RECORD_STATUS_LABEL, dueRuleText,
 } from "../-shared/contracts";
+import { BillDialog, CustomerOrderCard } from "../-shared/billing";
 import { DocumentPaper } from "../-shared/document";
 import { KIND_LABEL, formatCnpj } from "../-shared/proposals";
 
@@ -55,7 +55,7 @@ function ContractPage() {
 
   const { mutate: saveDates, isPending: saving } = useMutation({
     mutationFn: () => commercialApi.put<Contract>(`contracts/${contractId}`, dates),
-    onSuccess: (result) => { apply(result); toast({ title: "Contrato atualizado", variant: "success" }); },
+    onSuccess: (result) => { apply(result); toast({ title: "Venda atualizada", variant: "success" }); },
     onError: fail("Não foi possível salvar"),
   });
   const { mutate: unbill } = useMutation({
@@ -70,7 +70,7 @@ function ContractPage() {
   });
 
   if (!can(`view_${COMMERCIAL_ABILITY}`)) return null;
-  if (error) return <div className="p-4"><p className="text-destructive font-medium">Erro: {errorMessage(error)}</p><Link to="/comercial/contratos" className="underline text-sm">Voltar para os contratos</Link></div>;
+  if (error) return <div className="p-4"><p className="text-destructive font-medium">Erro: {errorMessage(error)}</p><Link to="/comercial/propostas" className="underline text-sm">Voltar para as propostas</Link></div>;
   if (isLoading || !contract) return <div className="grid gap-3"><Skeleton className="h-16 w-full" /><Skeleton className="h-24 w-full" /><Skeleton className="h-64 w-full" /></div>;
 
   const canUpdate = can(`update_${COMMERCIAL_ABILITY}`);
@@ -84,7 +84,10 @@ function ContractPage() {
     <>
       <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link to="/comercial/contratos" className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1"><Icon name="arrow-left" className="w-3 h-3" /> Contratos</Link>
+          {contract.proposal
+            ? <Link to="/comercial/propostas/$proposalId" params={{ proposalId: String(contract.proposal.id) }} className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1"><Icon name="arrow-left" className="w-3 h-3" /> Proposta {contract.proposal.number}</Link>
+            : <Link to="/comercial/propostas" className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1"><Icon name="arrow-left" className="w-3 h-3" /> Propostas</Link>}
+          <p className="text-xs text-muted-foreground mt-1">Venda fechada</p>
           <div className="flex flex-wrap items-center gap-2 mt-1">
             <h1 className="text-xl font-bold tabular-nums">{contract.number}</h1>
             <ContractStatusBadge status={contract.status} />
@@ -94,7 +97,7 @@ function ContractPage() {
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           {contract.hasDocument && <Button type="button" variant="outline" disabled={loadingDocument} onClick={() => loadDocument()}><Icon name="file-text" className="w-4 h-4 mr-1" /> Ver o documento aceito</Button>}
           {canUpdate && active && <Button type="button" variant="outline" onClick={() => setStatusTarget("concluido")}><Icon name="check" className="w-4 h-4 mr-1" /> Concluir</Button>}
-          {canUpdate && active && <Button type="button" variant="ghost" onClick={() => setStatusTarget("cancelado")}>Cancelar contrato</Button>}
+          {canUpdate && active && <Button type="button" variant="ghost" onClick={() => setStatusTarget("cancelado")}>Cancelar a venda</Button>}
           {canUpdate && !active && <Button type="button" variant="outline" onClick={() => setStatusTarget("vigente")}>Reabrir</Button>}
         </div>
       </div>
@@ -102,7 +105,7 @@ function ContractPage() {
       {contract.statusNote && !active && <p className="mt-3 rounded-md border px-3 py-2 text-sm text-muted-foreground">Observação: {contract.statusNote}</p>}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 my-4">
-        <Stat label="Valor do contrato" value={money(contract.value)} />
+        <Stat label="Valor da venda" value={money(contract.value)} />
         <Stat label="Faturado (com nota)" value={money(contract.billed)} />
         <Stat label="Recebido" value={money(contract.received)} />
         <Stat label="A faturar" value={money(contract.toBill)} highlight={contract.toBill > 0.005 && active} />
@@ -208,6 +211,7 @@ function ContractPage() {
         </div>
 
         <aside className="grid gap-4">
+          <CustomerOrderCard contractId={contract.id} order={contract.customerOrder} canEdit={canUpdate} onSaved={apply} />
           <section className="rounded-lg border p-4 text-sm grid gap-1">
             <h2 className="font-semibold text-base">Cliente</h2>
             <p className="font-medium">{contract.customer.corporateName}</p>
@@ -258,59 +262,6 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-lg font-semibold tabular-nums">{value}</p>
     </div>
-  );
-}
-
-/** Registrar a NF de uma parcela: cria a conta a receber. */
-function BillDialog({ contract, installment, onClose, onDone }: { contract: Contract; installment: ContractInstallment; onClose: () => void; onDone: (contract: Contract) => void }) {
-  const [form, setForm] = useState({ invoiceNumber: "", invoiceIssuedAt: todayIso(), dueDate: installment.suggestedDue, paymentMethod: "boleto", netValue: null as number | null });
-  const [error, setError] = useState("");
-  const { mutate, isPending } = useMutation({
-    mutationFn: () => commercialApi.post<Contract>(`contracts/${contract.id}/installments/${installment.id}/bill`, form),
-    onSuccess: (result) => { onDone(result); toast({ title: "Conta a receber criada", description: "A parcela já aparece em Financeiro → Contas a Receber.", variant: "success" }); onClose(); },
-    onError: (err) => setError(errorMessage(err)),
-  });
-  const submit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!form.invoiceNumber.trim()) return setError("Informe o número da nota fiscal");
-    if (!form.invoiceIssuedAt || !form.dueDate) return setError("Informe a data da nota e o vencimento");
-    setError(""); mutate();
-  };
-  return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Registrar nota fiscal — {installment.total > 1 ? `parcela ${installment.number}/${installment.total}` : "pagamento único"}</DialogTitle>
-          <DialogDescription>
-            {contract.number} · {contract.customer.name} · <b>{money(installment.value)}</b>. A nota é emitida fora do sistema; aqui você registra o número e a parcela vira conta a receber.
-          </DialogDescription>
-        </DialogHeader>
-        <form className="grid gap-4" onSubmit={submit}>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div><Label htmlFor="billNumber">Número da nota <span>*</span></Label>
-              <ShadInput id="billNumber" className="mt-1" value={form.invoiceNumber} maxLength={60} autoFocus onChange={(event) => setForm((f) => ({ ...f, invoiceNumber: event.target.value }))} /></div>
-            <div><Label>Data da nota <span>*</span></Label>
-              <CalendarPicker mode="single" name="invoiceIssuedAt" className="mt-1 w-full" value={form.invoiceIssuedAt} fromYear={2024} toYear={2040}
-                onValueChange={(_, value) => setForm((f) => ({ ...f, invoiceIssuedAt: value ?? "" }))} /></div>
-            <div><Label>Vencimento <span>*</span></Label>
-              <CalendarPicker mode="single" name="dueDate" className="mt-1 w-full" value={form.dueDate} fromYear={2024} toYear={2040}
-                onValueChange={(_, value) => setForm((f) => ({ ...f, dueDate: value ?? "" }))} />
-              <p className="text-xs text-muted-foreground mt-1">Combinado: {dueRuleText(installment)}.</p></div>
-            <div><Label>Forma de pagamento</Label>
-              <div className="mt-1"><Select name="paymentMethod" state={form.paymentMethod} modal options={PAYMENT_METHOD_OPTIONS} onChange={(_, value) => setForm((f) => ({ ...f, paymentMethod: String(value) }))} /></div></div>
-            <div className="sm:col-span-2"><Label htmlFor="billNet">Valor líquido a receber (opcional)</Label>
-              <NumField id="billNet" kind="money" className="mt-1 sm:w-1/2" value={form.netValue} placeholder={String(installment.value).replace(".", ",")}
-                onChange={(netValue) => setForm((f) => ({ ...f, netValue }))} onEmpty={() => setForm((f) => ({ ...f, netValue: null }))} />
-              <p className="text-xs text-muted-foreground mt-1">Preencha se a nota tiver retenções (ISS, INSS, IR): é o que o cliente deposita de fato.</p></div>
-          </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={isPending}>{isPending ? "Registrando..." : "Registrar e criar a conta a receber"}</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }
 

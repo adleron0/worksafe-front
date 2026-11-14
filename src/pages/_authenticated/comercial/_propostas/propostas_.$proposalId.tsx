@@ -18,6 +18,7 @@ import { ActivityPanel } from "../-shared/activities";
 import { downloadProposalPdf } from "../-shared/pdf";
 import CustomerStep from "./-CustomerStep";
 import DecisionDialog from "./-DecisionDialog";
+import { CustomerOrderCard } from "../-shared/billing";
 import ProposalDocumentTab, { LinkPanel, ProposalHistory } from "./-ProposalDocumentTab";
 import ProposalItemsTab from "./-ProposalItemsTab";
 import { ProposalInfoStep, ProposalPaymentTab } from "./-ProposalTabs";
@@ -172,7 +173,7 @@ function ProposalEditorPage() {
     }
   };
   const { mutate: setStatus, isPending: changing } = useMutation({
-    mutationFn: (body: { status: string; note?: string; notify?: boolean }) => commercialApi.patch<Proposal>(`proposals/status/${proposalId}`, body),
+    mutationFn: (body: { status: string; note?: string; notify?: boolean; customerOrderNumber?: string; customerOrderDate?: string }) => commercialApi.patch<Proposal>(`proposals/status/${proposalId}`, body),
     onSuccess: async (result, body) => {
       apply(result); setDecision(null);
       if (result.status !== "enviada") { toast({ title: `Proposta ${STATUS_LABEL[result.status].toLowerCase()}`, variant: "success" }); return; }
@@ -315,9 +316,13 @@ function ProposalEditorPage() {
             {proposal.decidedAt && ` Decisão em ${dateBr(proposal.decidedAt)}.`}
             {proposal.statusNote && ` Observação: ${proposal.statusNote}`}
             {proposal.contract && (
-              <> Virou o contrato <Link to="/comercial/contratos/$contractId" params={{ contractId: String(proposal.contract.id) }} className="underline font-medium text-foreground">{proposal.contract.number}</Link>.</>
+              <> Venda fechada <Link to="/comercial/contratos/$contractId" params={{ contractId: String(proposal.contract.id) }} className="underline font-medium text-foreground">{proposal.contract.number}</Link>: parcelas, notas fiscais e turmas.</>
             )}
           </p>
+        )}
+        {proposal.contract && (
+          <CustomerOrderCard contractId={proposal.contract.id} order={proposal.contract.customerOrder} canEdit={canUpdate}
+            onSaved={() => queryClient.invalidateQueries({ queryKey: [PROPOSAL_KEY] })} />
         )}
         {proposal.baseOutdated && !readOnly && (
           <div className="rounded-md border border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200 px-3 py-2 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -446,7 +451,7 @@ function ProposalEditorPage() {
 
       {decision && (
         <DecisionDialog decision={decision} number={proposal.number} pending={changing} onClose={() => setDecision(null)}
-          onConfirm={(note) => setStatus({ status: decision, note })} />
+          onConfirm={(note, extra) => setStatus({ status: decision, note, ...extra })} />
       )}
     </>
   );

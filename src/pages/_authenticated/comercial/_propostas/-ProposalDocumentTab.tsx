@@ -70,23 +70,30 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
     onError: (err) => toast({ title: "Não foi possível montar o documento", description: errorMessage(err), variant: "destructive" }),
   });
 
-  const [pendingTemplate, setPendingTemplate] = useState<ProposalOptions["templates"][number] | null>(null);
-  const putTemplate = (template: ProposalOptions["templates"][number]) =>
+  type Template = ProposalOptions["templates"][number];
+  // Escolher um modelo só aponta para ele: a proposta acompanha o modelo.
+  // O texto só é copiado para dentro da proposta quando alguém pede para editar.
+  const follow = (template: Template | null) =>
+    setDraft((d) => ({ ...d, templateId: template?.id ?? null, documentBody: null, itemsMode: template?.itemsMode ?? d.itemsMode, termIds: template?.termIds ?? [] }));
+  const copyToEdit = (template: Template) =>
     setDraft((d) => ({ ...d, templateId: template.id, documentBody: template.body, itemsMode: template.itemsMode, termIds: template.termIds }));
+  const [pendingTemplate, setPendingTemplate] = useState<Template | null>(null);
   const applyTemplate = (id: string) => {
     const template = options.templates.find((t) => String(t.id) === String(id));
     if (!template) return;
-    // já existe texto próprio nesta proposta: confirma antes de trocar
+    // já existe texto próprio nesta proposta: confirma antes de descartar
     if (draft.documentBody) setPendingTemplate(template);
-    else putTemplate(template);
+    else follow(template);
   };
   const suggested = options.templates.find((t) => t.kind === draft.kind) ?? options.templates.find((t) => t.isDefault) ?? options.templates[0];
+  // o modelo em uso: o escolhido nesta proposta ou, sem escolha, o padrão do tipo dela
+  const current = options.templates.find((t) => t.id === draft.templateId) ?? suggested;
 
   return (
     <div className="grid gap-4">
       <ConfirmDialog open={Boolean(pendingTemplate)} onOpenChange={(open) => { if (!open) setPendingTemplate(null); }}
-        title={`Trocar o texto pelo do modelo "${pendingTemplate?.name ?? ""}"?`} description="As edições feitas no texto desta proposta serão perdidas."
-        onConfirm={() => { if (pendingTemplate) putTemplate(pendingTemplate); setPendingTemplate(null); }} />
+        title={`Usar o modelo "${pendingTemplate?.name ?? ""}"?`} description="O texto próprio desta proposta é descartado e ela passa a acompanhar o modelo."
+        onConfirm={() => { if (pendingTemplate) follow(pendingTemplate); setPendingTemplate(null); }} />
       <section className="rounded-lg border p-4 grid gap-3">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div>
@@ -114,7 +121,7 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
             <div>
               <Label className="text-xs">Modelo</Label>
               <div className="mt-1">
-                <Select name="templateId" state={draft.templateId ? String(draft.templateId) : ""} modal={false} placeholder="Escolha um modelo"
+                <Select name="templateId" state={draft.templateId ? String(draft.templateId) : ""} modal={false} placeholder={suggested ? `${suggested.name} (padrão)` : "Escolha um modelo"}
                   options={options.templates.map((t) => ({ id: t.id, name: t.isDefault ? `${t.name} (padrão)` : t.name }))} onChange={(_, value) => applyTemplate(String(value))} />
               </div>
             </div>
@@ -138,9 +145,21 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
         {!readOnly && !draft.documentBody && (
           <div className="rounded-md border border-dashed p-4 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <span>
-              Esta proposta ainda não tem texto próprio. {suggested ? `Se você enviar assim, ela usa o modelo "${suggested.name}" como está.` : "Cadastre um modelo em Comercial → Modelos e termos."}
+              {current
+                ? `Esta proposta usa o modelo "${current.name}" como ele está: se o modelo mudar, a proposta acompanha até ser enviada.`
+                : "Cadastre um modelo em Comercial → Modelos e termos."}
             </span>
-            {suggested && <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => applyTemplate(String(suggested.id))}>Copiar o modelo para editar</Button>}
+            {current && <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => copyToEdit(current)}>Editar o texto só nesta proposta</Button>}
+          </div>
+        )}
+
+        {!readOnly && Boolean(draft.documentBody) && (
+          <div className="rounded-md border border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200 px-3 py-2 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span>Esta proposta tem texto próprio: ela não acompanha mais as mudanças do modelo.</span>
+            <ConfirmDialog title="Voltar a usar o modelo?" description="O texto próprio desta proposta é descartado e ela passa a usar o modelo padrão, como ele está."
+              onConfirm={() => follow(null)}>
+              <Button type="button" variant="outline" size="sm" className="shrink-0">Voltar a usar o modelo padrão</Button>
+            </ConfirmDialog>
           </div>
         )}
 

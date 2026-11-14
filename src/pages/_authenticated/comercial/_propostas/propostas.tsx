@@ -227,7 +227,7 @@ function ProposalsPage() {
 
       {kanban && !error && (
         <div className="p-2">
-          <KanbanView key={boardKey} data={data?.rows ?? []} columns={COLUMNS} statusField="status" isLoading={isLoading} storageKey="worksafe.comercial.propostas.kanban.hidden"
+          <KanbanView key={boardKey} data={data?.rows ?? []} columns={COLUMNS} statusField="status" isLoading={isLoading} storageKey="worksafe.comercial.propostas.kanban.hidden" columnWidth={240}
             emptyMessage={search || kind ? "Nenhuma proposta com esses filtros." : "Nenhuma proposta ainda. Crie a primeira em \"Nova proposta\"."}
             onStatusChange={() => {
               // a situação de uma proposta muda dentro dela (enviar congela o documento, aceitar gera contrato)

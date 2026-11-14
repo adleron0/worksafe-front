@@ -39,6 +39,8 @@ export interface KanbanViewProps<T = any> {
    * Sem a chave, a escolha vale só enquanto a tela estiver aberta.
    */
   storageKey?: string;
+  /** Largura de cada coluna, em px. Sem isso, o padrão do sistema (320 px no computador). */
+  columnWidth?: number;
 }
 
 interface KanbanItem {
@@ -58,6 +60,7 @@ export default function KanbanView<T extends Record<string, any>>({
   emptyMessage = 'Nenhum item encontrado',
   className = '',
   storageKey,
+  columnWidth,
 }: KanbanViewProps<T>) {
   // Colunas ocultas: qualquer kanban do sistema ganha o botão "Colunas".
   const [hidden, setHidden] = useState<string[]>(() => {
@@ -270,6 +273,10 @@ export default function KanbanView<T extends Record<string, any>>({
         )}
       </div>
       <style>{`
+        /* A área de rolagem da coluna embrulha os cartões num bloco que cresce com o conteúdo:
+           um texto comprido empurrava o cartão para fora da coluna, que o cortava. Como bloco
+           comum, o cartão respeita a largura da coluna e o texto encurta com reticências. */
+        .kanban-scroll-container [data-radix-scroll-area-viewport] > div { display: block !important; min-width: 0 !important; }
         .kanban-scroll-container::-webkit-scrollbar {
           height: 6px;
         }
@@ -293,7 +300,7 @@ export default function KanbanView<T extends Record<string, any>>({
           scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent'
         }}
       >
-        <div className="flex gap-3 min-w-max" style={{ width: 'max-content' }}>
+        <div className="flex gap-3 min-w-max" style={{ width: 'max-content', ['--kanban-column' as string]: columnWidth ? `${columnWidth}px` : undefined }}>
           <KanbanProvider
             columns={providerColumns}
             data={JSON.parse(JSON.stringify(kanbanData)) as any}
@@ -309,7 +316,7 @@ export default function KanbanView<T extends Record<string, any>>({
                 <KanbanBoard 
                   id={column.id} 
                   key={column.id}
-                  className="w-[240px] flex-shrink-0"
+                  className={columnWidth ? "w-[var(--kanban-column)] flex-shrink-0" : "w-[calc(100vw+40rem)] sm:w-[280px] md:w-[320px] flex-shrink-0 max-w-[320px]"}
                 >
                   <KanbanHeader className="mb-3">
                     <div className="flex items-center justify-between w-full">
@@ -331,7 +338,6 @@ export default function KanbanView<T extends Record<string, any>>({
                   <KanbanCards 
                     id={column.id}
                     className="space-y-2 min-h-[200px] sm:min-h-[400px] max-h-[calc(100vh-350px)] overflow-y-auto"
-                    style={{ paddingRight: '4px' }}
                   >
                     {(item: any) => {
                       const kanbanItem = item as KanbanItem;

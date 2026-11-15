@@ -26,6 +26,7 @@ import { Route as AuthenticatedClientesIndexRouteImport } from './pages/_authent
 import { Route as AuthenticatedBlogIndexRouteImport } from './pages/_authenticated/blog/index'
 import { Route as IndexProvaClassIdRouteImport } from './pages/_index/prova.$classId'
 import { Route as IndexPropostaKeyRouteImport } from './pages/_index/proposta.$key'
+import { Route as IndexCertificadosEfeitosRouteImport } from './pages/_index/certificados/efeitos'
 import { Route as IndexCertificadosIdRouteImport } from './pages/_index/certificados/$id'
 import { Route as AuthenticatedInventariosDashboardRouteImport } from './pages/_authenticated/inventarios/dashboard'
 import { Route as AuthenticatedInventariosAutorizadosRouteImport } from './pages/_authenticated/inventarios/autorizados'
@@ -175,6 +176,12 @@ const IndexPropostaKeyRoute = IndexPropostaKeyRouteImport.update({
   path: '/proposta/$key',
   getParentRoute: () => IndexRoute,
 } as any)
+const IndexCertificadosEfeitosRoute =
+  IndexCertificadosEfeitosRouteImport.update({
+    id: '/certificados/efeitos',
+    path: '/certificados/efeitos',
+    getParentRoute: () => IndexRoute,
+  } as any)
 const IndexCertificadosIdRoute = IndexCertificadosIdRouteImport.update({
   id: '/certificados/$id',
   path: '/certificados/$id',
@@ -548,6 +555,7 @@ export interface FileRoutesByFullPath {
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/certificados/$id': typeof IndexCertificadosIdRoute
+  '/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
   '/proposta/$key': typeof IndexPropostaKeyRoute
   '/prova/$classId': typeof IndexProvaClassIdRoute
   '/blog': typeof AuthenticatedBlogIndexRoute
@@ -624,6 +632,7 @@ export interface FileRoutesByTo {
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/certificados/$id': typeof IndexCertificadosIdRoute
+  '/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
   '/proposta/$key': typeof IndexPropostaKeyRoute
   '/prova/$classId': typeof IndexProvaClassIdRoute
   '/blog': typeof AuthenticatedBlogIndexRoute
@@ -704,6 +713,7 @@ export interface FileRoutesById {
   '/_authenticated/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/_authenticated/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/_index/certificados/$id': typeof IndexCertificadosIdRoute
+  '/_index/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
   '/_index/proposta/$key': typeof IndexPropostaKeyRoute
   '/_index/prova/$classId': typeof IndexProvaClassIdRoute
   '/_authenticated/blog/': typeof AuthenticatedBlogIndexRoute
@@ -783,6 +793,7 @@ export interface FileRouteTypes {
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
     | '/certificados/$id'
+    | '/certificados/efeitos'
     | '/proposta/$key'
     | '/prova/$classId'
     | '/blog'
@@ -859,6 +870,7 @@ export interface FileRouteTypes {
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
     | '/certificados/$id'
+    | '/certificados/efeitos'
     | '/proposta/$key'
     | '/prova/$classId'
     | '/blog'
@@ -938,6 +950,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventarios/autorizados'
     | '/_authenticated/inventarios/dashboard'
     | '/_index/certificados/$id'
+    | '/_index/certificados/efeitos'
     | '/_index/proposta/$key'
     | '/_index/prova/$classId'
     | '/_authenticated/blog/'
@@ -1130,6 +1143,13 @@ declare module '@tanstack/react-router' {
       path: '/proposta/$key'
       fullPath: '/proposta/$key'
       preLoaderRoute: typeof IndexPropostaKeyRouteImport
+      parentRoute: typeof IndexRoute
+    }
+    '/_index/certificados/efeitos': {
+      id: '/_index/certificados/efeitos'
+      path: '/certificados/efeitos'
+      fullPath: '/certificados/efeitos'
+      preLoaderRoute: typeof IndexCertificadosEfeitosRouteImport
       parentRoute: typeof IndexRoute
     }
     '/_index/certificados/$id': {
@@ -1749,6 +1769,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 interface IndexRouteChildren {
   IndexIndexRoute: typeof IndexIndexRoute
   IndexCertificadosIdRoute: typeof IndexCertificadosIdRoute
+  IndexCertificadosEfeitosRoute: typeof IndexCertificadosEfeitosRoute
   IndexPropostaKeyRoute: typeof IndexPropostaKeyRoute
   IndexProvaClassIdRoute: typeof IndexProvaClassIdRoute
   IndexCertificadosIndexRoute: typeof IndexCertificadosIndexRoute
@@ -1760,6 +1781,7 @@ interface IndexRouteChildren {
 const IndexRouteChildren: IndexRouteChildren = {
   IndexIndexRoute: IndexIndexRoute,
   IndexCertificadosIdRoute: IndexCertificadosIdRoute,
+  IndexCertificadosEfeitosRoute: IndexCertificadosEfeitosRoute,
   IndexPropostaKeyRoute: IndexPropostaKeyRoute,
   IndexProvaClassIdRoute: IndexProvaClassIdRoute,
   IndexCertificadosIndexRoute: IndexCertificadosIndexRoute,

@@ -1,3 +1,5 @@
+import type { FoilSettings } from "./server/FoilShaderLayer";
+
 // ============================================================================
 // Certificados de destaque — catálogo dos temas e o destaque efetivo.
 //
@@ -109,3 +111,51 @@ export const HOLO_GLOW: Record<HighlightTheme, string> = {
   prata: "0 0 0 1px rgba(150,165,180,.4), 0 0 34px -6px rgba(170,190,215,.6)",
   holografico: "0 0 0 1px rgba(170,140,255,.35), 0 0 38px -6px rgba(160,200,255,.6)",
 };
+
+// ── Efeitos animados (FoilShaderLayer) ──────────────────────────────────────
+// Cada tema aponta para um efeito; a vitrine (/treinamentos/efeitos-destaque)
+// mostra também as variações extras para escolher.
+
+
+export interface HighlightEffect {
+  id: string;
+  name: string;
+  description: string;
+  settings: FoilSettings;
+  glow: string;
+}
+
+const FRAME = 0.035;
+
+export const HIGHLIGHT_EFFECTS: HighlightEffect[] = [
+  { id: "ouro", name: "Ouro", description: "Ouro gravado com flocos que acendem no ângulo da luz",
+    settings: { preset: "gold", foil: "#e6c36a", intensity: 0.55, edge: 0.55, frame: FRAME, scale: 1 }, glow: HOLO_GLOW.ouro },
+  { id: "ouro-glitter", name: "Ouro glitter", description: "Glitter dourado fino, mais discreto",
+    settings: { preset: "glitter", foil: "#e9c46a", intensity: 0.32, edge: 0.5, frame: FRAME, scale: 1.4 }, glow: HOLO_GLOW.ouro },
+  { id: "prata", name: "Prata", description: "Glitter prateado frio",
+    settings: { preset: "glitter", foil: "#dfe6ee", intensity: 0.3, edge: 0.5, frame: FRAME, scale: 1.2 }, glow: HOLO_GLOW.prata },
+  { id: "prata-estilhacos", name: "Prata estilhaçada", description: "Facetas de cristal que mudam com a inclinação",
+    settings: { preset: "shards", foil: "#d9e1ea", intensity: 0.38, edge: 0.45, frame: FRAME, scale: 1 }, glow: HOLO_GLOW.prata },
+  { id: "holografico", name: "Holográfico", description: "Arco-íris contínuo, o clássico holográfico",
+    settings: { preset: "rainbow", foil: "#e2e6ec", intensity: 0.55, edge: 0.6, frame: FRAME, scale: 1 }, glow: HOLO_GLOW.holografico },
+  { id: "estrelas", name: "Estrelas", description: "Estrelas furta-cor espalhadas",
+    settings: { preset: "stars", foil: "#e2e6ec", intensity: 0.4, edge: 0.6, frame: FRAME, scale: 1 }, glow: HOLO_GLOW.holografico },
+  { id: "explosoes", name: "Explosões", description: "Rosetas radiais, estilo selo de segurança",
+    settings: { preset: "bursts", foil: "#e2e6ec", intensity: 0.35, edge: 0.6, frame: FRAME, scale: 1 }, glow: HOLO_GLOW.holografico },
+  { id: "cosmos", name: "Cosmos", description: "Anéis e pontos, como bolhas de sabão",
+    settings: { preset: "cosmos", foil: "#e2e6ec", intensity: 0.4, edge: 0.6, frame: FRAME, scale: 1 }, glow: HOLO_GLOW.holografico },
+  { id: "espiral", name: "Espiral", description: "Raios que giram a partir do centro",
+    settings: { preset: "swirl", foil: "#e2e6ec", intensity: 0.4, edge: 0.55, frame: FRAME, scale: 1 }, glow: HOLO_GLOW.holografico },
+];
+
+/** Efeito usado por cada tema (o que o certificado de destaque mostra hoje). */
+export const THEME_EFFECT: Record<HighlightTheme, string> = {
+  ouro: "ouro",
+  prata: "prata",
+  holografico: "holografico",
+};
+
+export const effectById = (id?: string | null) =>
+  HIGHLIGHT_EFFECTS.find((e) => e.id === id) ?? null;
+export const effectForTheme = (theme?: HighlightTheme | null) =>
+  theme ? effectById(THEME_EFFECT[theme]) : null;

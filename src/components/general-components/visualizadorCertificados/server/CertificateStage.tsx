@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/tooltip";
 import { getLogicalCanvasSize } from "../utils/fabricSetup";
 import { certificateImageUrl, hasBackSide } from "./certificateRenderUrls";
-import HolographicLayer from "./HolographicLayer";
-import { HOLO_GLOW, type HighlightTheme } from "../highlight";
+import FoilShaderLayer from "./FoilShaderLayer";
+import { effectById, effectForTheme, type HighlightTheme } from "../highlight";
 
 // ============================================================================
 // Palco do certificado público.
@@ -66,6 +66,8 @@ interface CertificateStageProps {
   actions?: React.ReactNode;
   /** Tema de destaque (turma especial / aluno destaque): liga o brilho. */
   highlightTheme?: HighlightTheme | null;
+  /** Força um efeito do catálogo (vitrine de efeitos), ignorando o tema. */
+  effectId?: string | null;
   onError: () => void;
 }
 
@@ -164,6 +166,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
   version,
   actions,
   highlightTheme,
+  effectId,
   onError,
 }) => {
   const { width: logicalW, height: logicalH } = getLogicalCanvasSize(
@@ -492,10 +495,9 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
   };
 
   // brilho em volta do cartão nos certificados de destaque
-  const glowStyle: React.CSSProperties = highlightTheme
-    ? {
-        boxShadow: `0 18px 40px -12px rgba(0,0,0,0.35), ${HOLO_GLOW[highlightTheme]}`,
-      }
+  const effect = effectId ? effectById(effectId) : effectForTheme(highlightTheme);
+  const glowStyle: React.CSSProperties = effect
+    ? { boxShadow: `0 18px 40px -12px rgba(0,0,0,0.35), ${effect.glow}` }
     : {};
   const zoomed = view.scale > 1;
   const hiRes = view.scale >= HI_RES_FROM;
@@ -570,6 +572,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
               {/* inclinação 3D seguindo o ponteiro */}
               <div
                 ref={tiltRef}
+                data-ws-tilt
                 className="relative h-full w-full"
                 style={
                   {
@@ -607,7 +610,13 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
                       hiRes={hiRes && side === "front"}
                       onError={onError}
                     />
-                    {highlightTheme && <HolographicLayer theme={highlightTheme} />}
+                    {effect && (
+                      <FoilShaderLayer
+                        src={certificateImageUrl(certificateKey, "front", version)}
+                        settings={effect.settings}
+                        active={!zoomed && side === "front"}
+                      />
+                    )}
                   </div>
                   {twoSided && (
                     <div
@@ -626,7 +635,13 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
                         hiRes={hiRes && side === "back"}
                         onError={onError}
                       />
-                      {highlightTheme && <HolographicLayer theme={highlightTheme} />}
+                      {effect && (
+                        <FoilShaderLayer
+                          src={certificateImageUrl(certificateKey, "back", version)}
+                          settings={effect.settings}
+                          active={!zoomed && side === "back"}
+                        />
+                      )}
                     </div>
                   )}
                 </div>

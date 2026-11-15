@@ -26,6 +26,7 @@ import { ICertificate } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { renderVersion, resolveHighlight, themeInfo } from "@/components/general-components/visualizadorCertificados/highlight";
+import DestaqueCertificadoDialog from "./DestaqueCertificadoDialog";
 
 interface ItemsProps {
   item: ICertificate;
@@ -46,6 +47,7 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
   const highlight = resolveHighlight(item);
   const highlightTheme = themeInfo(highlight?.theme);
   const [showViewer, setShowViewer] = useState(false);
+  const [openDestaque, setOpenDestaque] = useState(false);
 
   // Mutation para inativar
   const { mutate: deactivate } = useMutation({
@@ -433,6 +435,20 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
                 </DropdownMenuItem>
               )}
 
+              {/* Destaque (aluno destaque) */}
+              {can(`update_${entity.ability}`) && item.id && (
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Button
+                    variant="ghost"
+                    className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
+                    onClick={() => setOpenDestaque(true)}
+                  >
+                    <Icon name="sparkles" className="w-3 h-3" />
+                    <p>{item.highlightStudent ? "Destaque (marcado)" : "Marcar como destaque"}</p>
+                  </Button>
+                </DropdownMenuItem>
+              )}
+
               {/* Visualizar Detalhes */}
               {can(`view_${entity.ability}`) && (
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -552,6 +568,9 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
           />
         </div>
       </Dialog>
+      {openDestaque && (
+        <DestaqueCertificadoDialog item={item} open={openDestaque} onOpenChange={setOpenDestaque} />
+      )}
     </>
   )
 };

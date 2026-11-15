@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/services/api";
 import { toast } from "@/hooks/use-toast";
@@ -7,16 +7,28 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import CalendarPicker from "@/components/general-components/Calendar";
+import type { DocStatus } from "@/components/general-components/DocStatusBadge";
+import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
-import { openApiFile } from "@/lib/open-file";
-import { errorMessage } from "../../comercial/-shared/commercial";
+import { openApiFile, sizeText } from "@/lib/open-file";
+import { NumField, errorMessage, todayIso } from "../../comercial/-shared/commercial";
 
 /** Arquivos da empresa: tipos (espelham a API), chamadas e os diálogos de pasta e de arquivo. */
-export interface FolderInfo { id: number; parentId: number | null; name: string; restricted: boolean; profileIds: number[]; locked: boolean; files: number; folders: number }
-export interface FileInfo { id: number; folderId: number; name: string; fileName: string; mimeType: string; size: number; notes: string | null; inline: boolean; uploadedBy: string | null; createdAt: string }
+export interface FolderInfo { id: number; parentId: number | null; name: string; restricted: boolean; profileIds: number[]; locked: boolean; files: number; folders: number; status: DocStatus; statusLabel: string }
+export interface FileInfo {
+  id: number; folderId: number; name: string; fileName: string; mimeType: string; size: number; notes: string | null; inline: boolean; uploadedBy: string | null; createdAt: string;
+  typeId: number | null; typeName: string | null; issueDate: string | null; expiryDate: string | null; warnDays: number | null; status: DocStatus; statusLabel: string;
+  versions?: Array<FileInfo & { replacedAt: string }>;
+}
+export interface FileType { id: number; name: string; expires: boolean; validityMonths: number | null; warnDays: number; required: boolean; inactive: boolean }
+export interface ExpiringRow {
+  key: string; fileId: number | null; folderId: number | null; name: string; where: string; typeId: number | null; typeName: string | null; status: DocStatus; statusLabel: string; expiryDate: string | null; days: number | null;
+}
+export interface ExpiringList { today: string; summary: { vencido: number; a_vencer: number; faltando: number }; total: number; rows: ExpiringRow[]; types: PathItem[] }
 export interface PathItem { id: number; name: string }
-export interface Browse { folder: FolderInfo | null; path: PathItem[]; folders: FolderInfo[]; files: FileInfo[]; maxBytes: number; trashDays: number }
+export interface Browse { folder: FolderInfo | null; path: PathItem[]; folders: FolderInfo[]; files: FileInfo[]; types: FileType[]; maxBytes: number; trashDays: number }
 export interface SearchResult { folders: Array<PathItem & { path: PathItem[] }>; files: Array<FileInfo & { path: PathItem[] }>; total: number }
 export interface FolderOption { id: number; parentId: number | null; name: string; path: string }
 export interface TrashList {
@@ -33,6 +45,7 @@ export const filesApi = {
   get: async <T,>(path: string, params?: Record<string, unknown>) => (await api.get<T>(`company-files/${path}`, { params })).data,
   post: async <T,>(path: string, body?: unknown) => (await api.post<T>(`company-files/${path}`, body ?? {})).data,
   put: async <T,>(path: string, body?: unknown) => (await api.put<T>(`company-files/${path}`, body ?? {})).data,
+  patch: async <T,>(path: string, body?: unknown) => (await api.patch<T>(`company-files/${path}`, body ?? {})).data,
   delete: async <T,>(path: string) => (await api.delete<T>(`company-files/${path}`)).data,
 };
 
@@ -198,7 +211,7 @@ export function AccessDialog({ folder, onClose }: { folder: FolderInfo; onClose:
 }
 
 const EVENT_LABEL: Record<string, string> = {
-  envio: "Enviou", visualizado: "Abriu", download: "Baixou", renomeado: "Renomeou", movido: "Moveu", lixeira: "Mandou para a lixeira", restaurado: "Restaurou", excluido: "Apagou de vez",
+  envio: "Enviou", substituido: "Enviou uma versão nova", visualizado: "Abriu", download: "Baixou", renomeado: "Renomeou", movido: "Moveu", lixeira: "Mandou para a lixeira", restaurado: "Restaurou", excluido: "Apagou de vez",
 };
 
 /** Para quem administra: quem enviou, abriu, baixou e mudou o arquivo. */
@@ -224,6 +237,164 @@ export function HistoryDialog({ file, onClose }: { file: Pick<FileInfo, "id" | "
             ))}
           </ul>
         )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Emissão + validade em meses, no mesmo dia (31/01 + 1 mês = último dia de fevereiro): a mesma conta da API. */
+const addMonths = (date: string, months: number) => {
+  const [year, month, day] = date.split("-").map(Number);
+  const total = month - 1 + months;
+  const targetYear = year + Math.floor(total / 12);
+  const targetMonth = total % 12;
+  const last = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(targetYear, targetMonth, Math.min(day, last))).toISOString().slice(0, 10);
+};
+
+/**
+ * Tipo de documento, emissão, vencimento e aviso: os mesmos campos ao ajustar um
+ * arquivo e ao enviar uma versão nova. Enquanto a pessoa não mexer no vencimento,
+ * ele acompanha a emissão e a validade do tipo.
+ */
+function useExpiryFields(types: FileType[], initial: { typeId: number | null; issueDate: string | null; expiryDate: string | null }, lockType = false) {
+  const [type, setType] = useState(initial.typeId ? String(initial.typeId) : "");
+  const [issueDate, setIssueDate] = useState(initial.issueDate ?? "");
+  const [expiryDate, setExpiryDate] = useState(initial.expiryDate ?? "");
+  const [touched, setTouched] = useState(!!initial.expiryDate);
+  const current = types.find((item) => String(item.id) === type);
+  const suggested = current?.expires && current.validityMonths && issueDate ? addMonths(issueDate, current.validityMonths) : "";
+  const expiry = touched ? expiryDate : suggested;
+  const problem = current?.expires && !expiry ? `${current.name} tem validade: informe o vencimento.` : issueDate && expiry && expiry < issueDate ? "O vencimento não pode ser antes da emissão." : "";
+  const fields = (
+    <>
+      <div>
+        <Label>Tipo de documento</Label>
+        <Select name="type" options={types.map((item) => ({ id: String(item.id), name: item.name }))} state={type} modal clearable disabled={lockType} placeholder="Nenhum (arquivo comum)"
+          onChange={(_, value) => { setType(String(value ?? "")); setTouched(false); setExpiryDate(""); }} />
+      </div>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div>
+          <Label>Emissão</Label>
+          <CalendarPicker mode="single" name="issueDate" className="mt-1 w-full" value={issueDate} placeholder="Não informada" fromYear={2000} toYear={2040} onValueChange={(_, value) => setIssueDate(String(value ?? ""))} />
+        </div>
+        <div>
+          <Label>Vencimento {current?.expires && <span>*</span>}</Label>
+          <CalendarPicker mode="single" name="expiryDate" className="mt-1 w-full" value={expiry} placeholder={current?.expires ? "Escolha" : "Não vence"} fromYear={2000} toYear={2060}
+            onValueChange={(_, value) => { setExpiryDate(String(value ?? "")); setTouched(true); }} />
+        </div>
+      </div>
+      {current?.expires && current.validityMonths && !touched && issueDate && <p className="-mt-2 text-xs text-muted-foreground">{current.name} vale {current.validityMonths} {current.validityMonths === 1 ? "mês" : "meses"}: o vencimento foi calculado pela emissão. Corrija se o documento disser outra data.</p>}
+    </>
+  );
+  return { fields, problem, values: { typeId: type ? Number(type) : null, issueDate: issueDate || null, expiryDate: expiry || null } };
+}
+
+/** Ajustar um arquivo: tipo de documento, emissão, vencimento, dias de aviso e a observação. */
+export function DetailsDialog({ file, types, onClose }: { file: FileInfo; types: FileType[]; onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const expiry = useExpiryFields(types, file);
+  const [ownWarn, setOwnWarn] = useState(file.warnDays !== null);
+  const [warnDays, setWarnDays] = useState(file.warnDays ?? 30);
+  const [notes, setNotes] = useState(file.notes ?? "");
+  const [error, setError] = useState("");
+  const { mutate, isPending } = useMutation({
+    mutationFn: () => filesApi.put(`files/${file.id}`, { ...expiry.values, warnDays: ownWarn ? warnDays : null, notes }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: [FILES_KEY] }); toast({ title: "Arquivo atualizado", variant: "success" }); onClose(); },
+    onError: (err) => setError(errorMessage(err)),
+  });
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (expiry.problem) return setError(expiry.problem);
+    setError(""); mutate();
+  };
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Vencimento e detalhes</DialogTitle>
+          <DialogDescription className="truncate">{file.name}</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="grid gap-4">
+          {expiry.fields}
+          {expiry.values.expiryDate && (
+            <div className="grid gap-2 rounded-lg border p-3">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox aria-label="Aviso próprio para este arquivo" checked={ownWarn} onCheckedChange={(checked) => setOwnWarn(checked === true)} />
+                <span>Aviso próprio para este arquivo (o padrão é o do tipo, ou 30 dias)</span>
+              </label>
+              {ownWarn && (
+                <div>
+                  <Label className="text-xs">Avisar quantos dias antes</Label>
+                  <NumField value={warnDays} digits={0} ariaLabel="Dias de antecedência do aviso" onChange={(value) => setWarnDays(Math.max(0, Math.min(365, Math.round(value))))} />
+                </div>
+              )}
+            </div>
+          )}
+          <div>
+            <Label htmlFor="file-notes">Observação</Label>
+            <Input id="file-notes" name="notes" value={notes} maxLength={500} onValueChange={(_, value) => setNotes(String(value))} className="mt-1" placeholder="Opcional" />
+          </div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" disabled={isPending}>{isPending ? "Salvando..." : "Salvar"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Substituir por uma versão nova: o arquivo atual fica guardado como versão anterior. */
+export function ReplaceDialog({ file, types, maxBytes, onClose }: { file: FileInfo; types: FileType[]; maxBytes: number; onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [picked, setPicked] = useState<File | null>(null);
+  // a validade do arquivo novo não herda a do antigo: começa pela emissão de hoje
+  const expiry = useExpiryFields(types, { typeId: file.typeId, issueDate: file.typeId || file.expiryDate ? todayIso() : null, expiryDate: null }, true);
+  const [error, setError] = useState("");
+  const { mutate, isPending } = useMutation({
+    mutationFn: async () => {
+      const form = new FormData();
+      form.append("file", picked as File);
+      if (expiry.values.issueDate) form.append("issueDate", expiry.values.issueDate);
+      if (expiry.values.expiryDate) form.append("expiryDate", expiry.values.expiryDate);
+      return (await api.post(`company-files/files/${file.id}/replace`, form)).data;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: [FILES_KEY] }); toast({ title: "Versão nova enviada", variant: "success" }); onClose(); },
+    onError: (err) => setError(errorMessage(err)),
+  });
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!picked) return setError("Escolha o arquivo.");
+    if (picked.size > maxBytes) return setError(`O arquivo passa de ${sizeText(maxBytes)}.`);
+    if (expiry.problem) return setError(expiry.problem);
+    setError(""); mutate();
+  };
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Enviar versão nova</DialogTitle>
+          <DialogDescription>"{file.name}": o arquivo atual fica guardado como versão anterior.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="grid gap-4">
+          <div>
+            <Label>Arquivo <span>*</span></Label>
+            <input ref={fileRef} type="file" className="hidden" onChange={(event) => { setPicked(event.target.files?.[0] ?? null); setError(""); }} />
+            <div className="mt-1 flex items-center gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}><Icon name="paperclip" className="w-3 h-3 mr-1" /> {picked ? "Trocar arquivo" : "Escolher arquivo"}</Button>
+              <span className="min-w-0 truncate text-sm text-muted-foreground">{picked ? `${picked.name} · ${sizeText(picked.size)}` : `Até ${sizeText(maxBytes)}`}</span>
+            </div>
+          </div>
+          {(file.typeId || file.expiryDate) && expiry.fields}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" disabled={isPending}>{isPending ? "Enviando..." : "Enviar"}</Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

@@ -77,6 +77,8 @@ import { Route as AuthenticatedBlogTagsTagsRouteImport } from './pages/_authenti
 import { Route as AuthenticatedBlogPostsPostsRouteImport } from './pages/_authenticated/blog/_posts/posts'
 import { Route as AuthenticatedBlogComentariosComentariosRouteImport } from './pages/_authenticated/blog/_comentarios/comentarios'
 import { Route as AuthenticatedBlogCategoriasCategoriasRouteImport } from './pages/_authenticated/blog/_categorias/categorias'
+import { Route as AuthenticatedArquivosPastasVencimentosRouteImport } from './pages/_authenticated/arquivos/_pastas/vencimentos'
+import { Route as AuthenticatedArquivosPastasTiposDeDocumentoRouteImport } from './pages/_authenticated/arquivos/_pastas/tipos-de-documento'
 import { Route as AuthenticatedArquivosPastasPastasRouteImport } from './pages/_authenticated/arquivos/_pastas/pastas'
 import { Route as AuthenticatedArquivosPastasLixeiraRouteImport } from './pages/_authenticated/arquivos/_pastas/lixeira'
 import { Route as AuthenticatedTreinamentosTurmasTurmasNovaRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.nova'
@@ -483,6 +485,18 @@ const AuthenticatedBlogCategoriasCategoriasRoute =
     path: '/blog/categorias',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedArquivosPastasVencimentosRoute =
+  AuthenticatedArquivosPastasVencimentosRouteImport.update({
+    id: '/arquivos/_pastas/vencimentos',
+    path: '/arquivos/vencimentos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedArquivosPastasTiposDeDocumentoRoute =
+  AuthenticatedArquivosPastasTiposDeDocumentoRouteImport.update({
+    id: '/arquivos/_pastas/tipos-de-documento',
+    path: '/arquivos/tipos-de-documento',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedArquivosPastasPastasRoute =
   AuthenticatedArquivosPastasPastasRouteImport.update({
     id: '/arquivos/_pastas/pastas',
@@ -581,6 +595,8 @@ export interface FileRoutesByFullPath {
   '/certificados': typeof IndexCertificadosIndexRoute
   '/arquivos/lixeira': typeof AuthenticatedArquivosPastasLixeiraRoute
   '/arquivos/pastas': typeof AuthenticatedArquivosPastasPastasRoute
+  '/arquivos/tipos-de-documento': typeof AuthenticatedArquivosPastasTiposDeDocumentoRoute
+  '/arquivos/vencimentos': typeof AuthenticatedArquivosPastasVencimentosRoute
   '/blog/categorias': typeof AuthenticatedBlogCategoriasCategoriasRoute
   '/blog/comentarios': typeof AuthenticatedBlogComentariosComentariosRoute
   '/blog/posts': typeof AuthenticatedBlogPostsPostsRoute
@@ -660,6 +676,8 @@ export interface FileRoutesByTo {
   '/certificados': typeof IndexCertificadosIndexRoute
   '/arquivos/lixeira': typeof AuthenticatedArquivosPastasLixeiraRoute
   '/arquivos/pastas': typeof AuthenticatedArquivosPastasPastasRoute
+  '/arquivos/tipos-de-documento': typeof AuthenticatedArquivosPastasTiposDeDocumentoRoute
+  '/arquivos/vencimentos': typeof AuthenticatedArquivosPastasVencimentosRoute
   '/blog/categorias': typeof AuthenticatedBlogCategoriasCategoriasRoute
   '/blog/comentarios': typeof AuthenticatedBlogComentariosComentariosRoute
   '/blog/posts': typeof AuthenticatedBlogPostsPostsRoute
@@ -743,6 +761,8 @@ export interface FileRoutesById {
   '/_index/certificados/': typeof IndexCertificadosIndexRoute
   '/_authenticated/arquivos/_pastas/lixeira': typeof AuthenticatedArquivosPastasLixeiraRoute
   '/_authenticated/arquivos/_pastas/pastas': typeof AuthenticatedArquivosPastasPastasRoute
+  '/_authenticated/arquivos/_pastas/tipos-de-documento': typeof AuthenticatedArquivosPastasTiposDeDocumentoRoute
+  '/_authenticated/arquivos/_pastas/vencimentos': typeof AuthenticatedArquivosPastasVencimentosRoute
   '/_authenticated/blog/_categorias/categorias': typeof AuthenticatedBlogCategoriasCategoriasRoute
   '/_authenticated/blog/_comentarios/comentarios': typeof AuthenticatedBlogComentariosComentariosRoute
   '/_authenticated/blog/_posts/posts': typeof AuthenticatedBlogPostsPostsRoute
@@ -825,6 +845,8 @@ export interface FileRouteTypes {
     | '/certificados'
     | '/arquivos/lixeira'
     | '/arquivos/pastas'
+    | '/arquivos/tipos-de-documento'
+    | '/arquivos/vencimentos'
     | '/blog/categorias'
     | '/blog/comentarios'
     | '/blog/posts'
@@ -904,6 +926,8 @@ export interface FileRouteTypes {
     | '/certificados'
     | '/arquivos/lixeira'
     | '/arquivos/pastas'
+    | '/arquivos/tipos-de-documento'
+    | '/arquivos/vencimentos'
     | '/blog/categorias'
     | '/blog/comentarios'
     | '/blog/posts'
@@ -986,6 +1010,8 @@ export interface FileRouteTypes {
     | '/_index/certificados/'
     | '/_authenticated/arquivos/_pastas/lixeira'
     | '/_authenticated/arquivos/_pastas/pastas'
+    | '/_authenticated/arquivos/_pastas/tipos-de-documento'
+    | '/_authenticated/arquivos/_pastas/vencimentos'
     | '/_authenticated/blog/_categorias/categorias'
     | '/_authenticated/blog/_comentarios/comentarios'
     | '/_authenticated/blog/_posts/posts'
@@ -1528,6 +1554,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBlogCategoriasCategoriasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/arquivos/_pastas/vencimentos': {
+      id: '/_authenticated/arquivos/_pastas/vencimentos'
+      path: '/arquivos/vencimentos'
+      fullPath: '/arquivos/vencimentos'
+      preLoaderRoute: typeof AuthenticatedArquivosPastasVencimentosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/arquivos/_pastas/tipos-de-documento': {
+      id: '/_authenticated/arquivos/_pastas/tipos-de-documento'
+      path: '/arquivos/tipos-de-documento'
+      fullPath: '/arquivos/tipos-de-documento'
+      preLoaderRoute: typeof AuthenticatedArquivosPastasTiposDeDocumentoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/arquivos/_pastas/pastas': {
       id: '/_authenticated/arquivos/_pastas/pastas'
       path: '/arquivos/pastas'
@@ -1629,6 +1669,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTreinamentosIndexRoute: typeof AuthenticatedTreinamentosIndexRoute
   AuthenticatedArquivosPastasLixeiraRoute: typeof AuthenticatedArquivosPastasLixeiraRoute
   AuthenticatedArquivosPastasPastasRoute: typeof AuthenticatedArquivosPastasPastasRoute
+  AuthenticatedArquivosPastasTiposDeDocumentoRoute: typeof AuthenticatedArquivosPastasTiposDeDocumentoRoute
+  AuthenticatedArquivosPastasVencimentosRoute: typeof AuthenticatedArquivosPastasVencimentosRoute
   AuthenticatedBlogCategoriasCategoriasRoute: typeof AuthenticatedBlogCategoriasCategoriasRoute
   AuthenticatedBlogComentariosComentariosRoute: typeof AuthenticatedBlogComentariosComentariosRoute
   AuthenticatedBlogPostsPostsRoute: typeof AuthenticatedBlogPostsPostsRoute
@@ -1703,6 +1745,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedArquivosPastasLixeiraRoute,
   AuthenticatedArquivosPastasPastasRoute:
     AuthenticatedArquivosPastasPastasRoute,
+  AuthenticatedArquivosPastasTiposDeDocumentoRoute:
+    AuthenticatedArquivosPastasTiposDeDocumentoRoute,
+  AuthenticatedArquivosPastasVencimentosRoute:
+    AuthenticatedArquivosPastasVencimentosRoute,
   AuthenticatedBlogCategoriasCategoriasRoute:
     AuthenticatedBlogCategoriasCategoriasRoute,
   AuthenticatedBlogComentariosComentariosRoute:

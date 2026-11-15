@@ -9,16 +9,16 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import CalendarPicker from "@/components/general-components/Calendar";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
-import DocumentFolder, { DocumentFolderTone } from "@/components/general-components/DocumentFolder";
+import DocStatusBadge, { DocStatus, STATUS_TONE } from "@/components/general-components/DocStatusBadge";
+import DocumentFolder from "@/components/general-components/DocumentFolder";
 import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
-import { cn } from "@/lib/utils";
 import { openApiFile, sizeText } from "@/lib/open-file";
 import { Tip, dateBr, errorMessage, todayIso } from "../../comercial/-shared/commercial";
 import { EMPLOYEES_KEY } from "./employees";
 
 /** Documentos do funcionário: tipos (espelham a API), pastas, envio e o arquivo. */
-export type DocStatus = "em_dia" | "a_vencer" | "vencido" | "sem_validade" | "faltando" | "vazia";
+export type { DocStatus };
 export interface DocType {
   id: number; name: string; folder: string; folderName: string; expires: boolean; validityMonths: number | null; warnDays: number;
   required: boolean; requiredProfessionalIds: number[]; inIntegration: boolean; inactive: boolean;
@@ -49,19 +49,8 @@ export const documentsApi = {
   delete: async <T,>(path: string) => (await api.delete<T>(`hr-documents/${path}`)).data,
 };
 
-const STATUS_STYLE: Record<DocStatus, string> = {
-  em_dia: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
-  a_vencer: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  vencido: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
-  faltando: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
-  sem_validade: "bg-muted text-muted-foreground",
-  vazia: "bg-muted text-muted-foreground",
-};
-export const STATUS_TONE: Record<DocStatus, DocumentFolderTone> = { em_dia: "ok", a_vencer: "warn", vencido: "danger", faltando: "danger", sem_validade: "neutral", vazia: "neutral" };
-
-export function DocStatusBadge({ status, label }: { status: DocStatus; label: string }) {
-  return <span className={cn("inline-flex rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", STATUS_STYLE[status])}>{label}</span>;
-}
+// o selo de situação e a cor da pasta são os mesmos dos Arquivos da empresa
+export { DocStatusBadge, STATUS_TONE };
 
 /** Emissão + validade em meses, no mesmo dia (31/01 + 1 mês = último dia de fevereiro): a mesma conta da API. */
 const addMonths = (date: string, months: number) => {

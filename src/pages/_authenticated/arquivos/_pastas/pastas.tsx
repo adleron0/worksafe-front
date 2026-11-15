@@ -7,13 +7,14 @@ import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
+import DocStatusBadge, { STATUS_TONE } from "@/components/general-components/DocStatusBadge";
 import DocumentFolder from "@/components/general-components/DocumentFolder";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import { sizeText } from "@/lib/open-file";
 import { cn } from "@/lib/utils";
 import { Tip, dateBr, errorMessage } from "../../comercial/-shared/commercial";
-import { AccessDialog, Browse, FILES_ABILITY, FILES_KEY, FileInfo, FolderInfo, HistoryDialog, MoveDialog, NameDialog, PathItem, SearchResult, fileIcon, filesApi, openFile } from "../-shared/files";
+import { AccessDialog, Browse, DetailsDialog, FILES_ABILITY, FILES_KEY, FileInfo, FileType, FolderInfo, HistoryDialog, MoveDialog, NameDialog, PathItem, ReplaceDialog, SearchResult, dateTimeBr, fileIcon, filesApi, openFile } from "../-shared/files";
 
 export const Route = createFileRoute("/_authenticated/arquivos/_pastas/pastas")({
   component: FoldersPage,
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/arquivos/_pastas/pastas")(
 interface Sending { key: string; name: string; size: number; progress: number; status: "fila" | "enviando" | "ok" | "erro"; error?: string }
 type Modal =
   | { kind: "nova-pasta" } | { kind: "renomear-pasta"; folder: FolderInfo } | { kind: "mover-pasta"; folder: FolderInfo } | { kind: "acesso"; folder: FolderInfo }
-  | { kind: "renomear-arquivo"; file: FileInfo } | { kind: "mover-arquivo"; file: FileInfo } | { kind: "historico"; file: FileInfo };
+  | { kind: "renomear-arquivo"; file: FileInfo } | { kind: "mover-arquivo"; file: FileInfo } | { kind: "historico"; file: FileInfo } | { kind: "detalhes"; file: FileInfo } | { kind: "substituir"; file: FileInfo };
 
 const filesText = (count: number) => `${count} ${count === 1 ? "arquivo" : "arquivos"}`;
 
@@ -43,17 +44,24 @@ function Crumbs({ path, last = true }: { path: PathItem[]; last?: boolean }) {
 }
 
 /** Uma linha de arquivo: o que é, de quem, e o que dá para fazer com ele. */
-function FileRow({ file, where, canWrite, canManage, onModal, onTrash }: {
-  file: FileInfo; where?: PathItem[]; canWrite: boolean; canManage: boolean; onModal: (modal: Modal) => void; onTrash: (file: FileInfo) => void;
+function FileRow({ file, where, canWrite, canManage, onModal, onTrash, onPurgeVersion }: {
+  file: FileInfo; where?: PathItem[]; canWrite: boolean; canManage: boolean; onModal: (modal: Modal) => void; onTrash: (file: FileInfo) => void; onPurgeVersion: (version: FileInfo) => void;
 }) {
+  const [showVersions, setShowVersions] = useState(false);
   const action = "h-8 w-8 p-0";
+  const versions = file.versions ?? [];
   return (
-    <div className="flex flex-col lg:flex-row lg:items-center gap-2 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+    <div className="px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+    <div className="flex flex-col lg:flex-row lg:items-center gap-2">
       <div className="flex flex-1 min-w-0 items-start gap-3">
         <Icon name={fileIcon(file)} className="w-5 h-5 mt-0.5 shrink-0 text-muted-foreground" />
         <div className="min-w-0">
-          <button type="button" className="block max-w-full truncate text-left font-medium hover:underline" onClick={() => openFile(file, !file.inline)}>{file.name}</button>
-          <p className="text-xs text-muted-foreground truncate">{sizeText(file.size)}{file.uploadedBy ? ` · enviado por ${file.uploadedBy}` : ""} · {dateBr(file.createdAt)}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" className="max-w-full truncate text-left font-medium hover:underline" onClick={() => openFile(file, !file.inline)}>{file.name}</button>
+            {file.typeName && <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium whitespace-nowrap">{file.typeName}</span>}
+            {file.status !== "sem_validade" && <DocStatusBadge status={file.status} label={file.statusLabel} />}
+          </div>
+          <p className="text-xs text-muted-foreground truncate">{sizeText(file.size)}{file.uploadedBy ? ` · enviado por ${file.uploadedBy}` : ""} · {dateBr(file.createdAt)}{file.expiryDate ? ` · vence em ${dateBr(file.expiryDate)}` : ""}</p>
           {file.notes && <p className="text-xs text-muted-foreground truncate">{file.notes}</p>}
           {where && <div className="mt-1"><Crumbs path={where} last={false} /></div>}
         </div>
@@ -61,6 +69,8 @@ function FileRow({ file, where, canWrite, canManage, onModal, onTrash }: {
       <div className="flex items-center gap-1">
         {file.inline && <Tip text="Ver"><Button type="button" variant="ghost" size="sm" className={action} aria-label={`Ver ${file.name}`} onClick={() => openFile(file)}><Icon name="eye" className="w-4 h-4" /></Button></Tip>}
         <Tip text="Baixar"><Button type="button" variant="ghost" size="sm" className={action} aria-label={`Baixar ${file.name}`} onClick={() => openFile(file, true)}><Icon name="download" className="w-4 h-4" /></Button></Tip>
+        {canWrite && <Tip text="Vencimento e detalhes"><Button type="button" variant="ghost" size="sm" className={action} aria-label={`Vencimento e detalhes de ${file.name}`} onClick={() => onModal({ kind: "detalhes", file })}><Icon name="calendar-clock" className="w-4 h-4" /></Button></Tip>}
+        {canWrite && <Tip text="Enviar versão nova"><Button type="button" variant="ghost" size="sm" className={action} aria-label={`Enviar versão nova de ${file.name}`} onClick={() => onModal({ kind: "substituir", file })}><Icon name="refresh-cw" className="w-4 h-4" /></Button></Tip>}
         {canWrite && <Tip text="Renomear"><Button type="button" variant="ghost" size="sm" className={action} aria-label={`Renomear ${file.name}`} onClick={() => onModal({ kind: "renomear-arquivo", file })}><Icon name="pencil" className="w-4 h-4" /></Button></Tip>}
         {canWrite && <Tip text="Mover para outra pasta"><Button type="button" variant="ghost" size="sm" className={action} aria-label={`Mover ${file.name}`} onClick={() => onModal({ kind: "mover-arquivo", file })}><Icon name="folder-input" className="w-4 h-4" /></Button></Tip>}
         {canManage && <Tip text="Histórico de acesso"><Button type="button" variant="ghost" size="sm" className={action} aria-label={`Histórico de ${file.name}`} onClick={() => onModal({ kind: "historico", file })}><Icon name="history" className="w-4 h-4" /></Button></Tip>}
@@ -70,6 +80,30 @@ function FileRow({ file, where, canWrite, canManage, onModal, onTrash }: {
           </ConfirmDialog>
         )}
       </div>
+    </div>
+      {!!versions.length && (
+        <div className="mt-2 lg:pl-8">
+          <button type="button" className="text-xs underline text-muted-foreground" onClick={() => setShowVersions(!showVersions)}>
+            {showVersions ? "Esconder" : "Ver"} {versions.length} {versions.length === 1 ? "versão anterior" : "versões anteriores"}
+          </button>
+          {showVersions && (
+            <ul className="mt-2 grid gap-1 border-l-2 pl-3">
+              {versions.map((old) => (
+                <li key={old.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                  <span className="truncate">{old.fileName} · {sizeText(old.size)}</span>
+                  <span>substituída em {dateTimeBr(old.replacedAt)}{old.expiryDate ? ` · vencia em ${dateBr(old.expiryDate)}` : ""}</span>
+                  <button type="button" className="underline" onClick={() => openFile(old, !old.inline)}>{old.inline ? "ver" : "baixar"}</button>
+                  {canManage && (
+                    <ConfirmDialog title="Apagar esta versão anterior?" description="Ela sai do sistema e do armazenamento. O arquivo vigente não muda. Não dá para desfazer." slideLabel="Deslize para apagar a versão" onConfirm={() => onPurgeVersion(old)}>
+                      <button type="button" className="underline text-red-600 dark:text-red-400">apagar</button>
+                    </ConfirmDialog>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -102,6 +136,13 @@ function FoldersPage() {
     onSuccess: () => { refresh(); toast({ title: "Arquivo na lixeira", variant: "success" }); },
     onError: (err) => toast({ title: "Não foi possível mandar para a lixeira", description: errorMessage(err), variant: "destructive" }),
   });
+  const { mutate: purgeVersion } = useMutation({
+    mutationFn: (version: FileInfo) => filesApi.delete(`files/${version.id}/version`),
+    onSuccess: () => { refresh(); toast({ title: "Versão apagada", variant: "success" }); },
+    onError: (err) => toast({ title: "Não foi possível apagar a versão", description: errorMessage(err), variant: "destructive" }),
+  });
+  // os tipos de documento servem aos diálogos também quando a pessoa está na busca
+  const types: FileType[] = data?.types ?? [];
   const { mutate: trashFolder } = useMutation({
     mutationFn: (folder: FolderInfo) => filesApi.delete<{ parentId: number | null }>(`folders/${folder.id}`),
     onSuccess: (result) => { refresh(); toast({ title: "Pasta na lixeira", variant: "success" }); navigate({ search: result.parentId ? { pasta: result.parentId } : {} }); },
@@ -172,7 +213,7 @@ function FoldersPage() {
               <span className="min-w-0"><span className="block font-medium truncate">{item.name}</span><span className="block text-xs text-muted-foreground truncate">{item.path.map((part) => part.name).join(" › ")}</span></span>
             </Link>
           ))}
-          {found.data?.files.map((file) => <FileRow key={file.id} file={file} where={file.path} canWrite={canWrite} canManage={canManage} onModal={setModal} onTrash={trashFile} />)}
+          {found.data?.files.map((file) => <FileRow key={file.id} file={file} where={file.path} canWrite={canWrite} canManage={canManage} onModal={setModal} onTrash={trashFile} onPurgeVersion={purgeVersion} />)}
           {found.data && found.data.total > found.data.files.length && <p className="p-3 text-xs text-muted-foreground">Mostrando {found.data.files.length} de {found.data.total} arquivos. Digite mais do nome para chegar aos demais.</p>}
         </section>
       )}
@@ -184,14 +225,15 @@ function FoldersPage() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="font-semibold">Pastas</h2>
-              <p className="text-xs text-muted-foreground">Abra uma pasta para ver e enviar arquivos. O cadeado marca as pastas restritas a alguns perfis.</p>
+              <p className="text-xs text-muted-foreground">Abra uma pasta para ver e enviar arquivos. A cor mostra o pior caso dentro dela: vermelho para vencido, amarelo para a vencer, verde para em dia.</p>
             </div>
             {canManage && <Button type="button" onClick={() => setModal({ kind: "nova-pasta" })}><Icon name="folder-plus" className="w-4 h-4 mr-1" /> Nova pasta</Button>}
           </div>
           {!data.folders.length && <p className="mt-4 text-sm text-muted-foreground">{canManage ? "Nenhuma pasta. Crie a primeira." : "Nenhuma pasta disponível para o seu perfil."}</p>}
           <div className="mt-4 flex flex-wrap gap-2">
             {data.folders.map((item) => (
-              <DocumentFolder key={item.id} name={item.name} count={item.files} statusLabel={item.locked ? "restrita" : undefined} onSelect={() => navigate({ search: { pasta: item.id } })} />
+              <DocumentFolder key={item.id} name={item.name} count={item.files} tone={STATUS_TONE[item.status]}
+                statusLabel={[item.status === "vencido" || item.status === "a_vencer" ? item.statusLabel.toLowerCase() : "", item.locked ? "restrita" : ""].filter(Boolean).join(" · ") || undefined} onSelect={() => navigate({ search: { pasta: item.id } })} />
             ))}
           </div>
         </section>
@@ -205,6 +247,7 @@ function FoldersPage() {
               <div className="min-w-0">
                 <h2 className="flex items-center gap-2 text-lg font-semibold">
                   <span className="truncate">{folder.name}</span>
+                  {(folder.status === "vencido" || folder.status === "a_vencer") && <DocStatusBadge status={folder.status} label={folder.statusLabel} />}
                   {folder.locked && <Tip text={folder.restricted ? "Pasta restrita a alguns perfis" : "Restrita porque a pasta de cima é restrita"}><span><Icon name="lock" className="w-4 h-4 text-muted-foreground" /></span></Tip>}
                 </h2>
                 <p className="text-xs text-muted-foreground">{filesText(folder.files)}{folder.folders ? ` · ${folder.folders} ${folder.folders === 1 ? "pasta dentro" : "pastas dentro"}` : ""}</p>
@@ -255,12 +298,13 @@ function FoldersPage() {
               <Link key={item.id} to="/arquivos/pastas" search={{ pasta: item.id }} className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
                 <Icon name="folder" className="w-5 h-5 shrink-0 text-muted-foreground" />
                 <span className="flex-1 min-w-0 truncate font-medium">{item.name}</span>
+                {(item.status === "vencido" || item.status === "a_vencer") && <DocStatusBadge status={item.status} label={item.statusLabel} />}
                 {item.restricted && <Icon name="lock" className="w-3 h-3 text-muted-foreground" />}
                 <span className="shrink-0 text-xs text-muted-foreground">{filesText(item.files)}</span>
                 <Icon name="chevron-right" className="w-4 h-4 text-muted-foreground" />
               </Link>
             ))}
-            {data.files.map((file) => <FileRow key={file.id} file={file} canWrite={canWrite} canManage={canManage} onModal={setModal} onTrash={trashFile} />)}
+            {data.files.map((file) => <FileRow key={file.id} file={file} canWrite={canWrite} canManage={canManage} onModal={setModal} onTrash={trashFile} onPurgeVersion={purgeVersion} />)}
           </section>
         </>
       )}
@@ -284,6 +328,8 @@ function FoldersPage() {
       {modal?.kind === "mover-arquivo" && (
         <MoveDialog title={`Mover "${modal.file.name}"`} currentId={modal.file.folderId} onSubmit={(folderId) => filesApi.put(`files/${modal.file.id}`, { folderId })} onClose={() => setModal(null)} />
       )}
+      {modal?.kind === "detalhes" && <DetailsDialog file={modal.file} types={types} onClose={() => setModal(null)} />}
+      {modal?.kind === "substituir" && <ReplaceDialog file={modal.file} types={types} maxBytes={data?.maxBytes ?? 25 * 1024 * 1024} onClose={() => setModal(null)} />}
       {modal?.kind === "historico" && <HistoryDialog file={modal.file} onClose={() => setModal(null)} />}
     </div>
   );

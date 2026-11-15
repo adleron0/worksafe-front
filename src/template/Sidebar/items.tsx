@@ -152,6 +152,12 @@ export const items = [
         path: "/arquivos/pastas",
       },
       {
+        title: "Vencimentos",
+        ability: "arquivos",
+        icon: "calendar-clock",
+        path: "/arquivos/vencimentos",
+      },
+      {
         title: "Lixeira",
         ability: "arquivos",
         icon: "trash-2",

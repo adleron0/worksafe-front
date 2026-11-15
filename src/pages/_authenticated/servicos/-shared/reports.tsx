@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/services/api";
 import { Button } from "@/components/ui/button";
+import { Input as ShadInput } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
@@ -9,19 +10,23 @@ import { dateBr, errorMessage, money } from "../../comercial/-shared/commercial"
 import { OrderStatus } from "./orders";
 
 /** RDO — relatório diário de obra: tipos (espelham a API), rótulos e o painel do diário na OS. */
-export interface CrewMember { name: string; role: string; hours: number; overtime: number }
+/** `in`/`out` só vêm preenchidos quando a pessoa entrou ou saiu em hora diferente da do dia. */
+export interface CrewMember { name: string; role: string; hours: number; overtime: number; in?: string | null; out?: string | null; leaveReason?: string | null }
 export interface StepProgress { step: number; title: string; percent: number }
 export interface Occurrence { type: string; description: string; hoursLost: number }
 export interface Photo { url: string; caption: string }
 export interface ReportOrder { id: number; number: string; status: OrderStatus; title: string; customer: { id: number; name: string } | null; startedAt: string | null; finishedAt: string | null; location: string | null }
 export interface Report {
   id: number | null; date: string; shift: string; weather: string; status: "rascunho" | "fechado"; editable: boolean;
+  startTime: string | null; endTime: string | null; breakMinutes: number; weatherEnd: string | null;
+  startCondition: string | null; endCondition: string | null; startNote: string | null; endNote: string | null;
   crew: CrewMember[]; activities: string | null; progress: StepProgress[]; occurrences: Occurrence[]; equipment: string | null; photos: Photo[]; notes: string | null;
   createdBy: string | null; closedAt: string | null; closedBy: string | null; order: ReportOrder; roles: string[]; hoursPerDay?: number;
 }
 export interface ReportRow {
   id: number; orderId: number; date: string; shift: string; shiftLabel: string; weather: string; status: "rascunho" | "fechado";
   people: number; hours: number; overtime: number; activities: string | null; occurrences: number; photos: number; createdBy: string | null;
+  startTime: string | null; endTime: string | null; earlyLeaves: number;
 }
 export interface DiarySummary {
   reports: number; days: number; drafts: number; lastDate: string | null;
@@ -54,11 +59,63 @@ export const SHIFT_OPTIONS = [{ id: "integral", name: "Dia inteiro" }, { id: "ma
 export const WEATHER_OPTIONS = [
   { id: "bom", name: "Bom", icon: "sun" }, { id: "nublado", name: "Nublado", icon: "cloud" }, { id: "chuva", name: "Chuva", icon: "cloud-rain" }, { id: "impraticavel", name: "Impraticável", icon: "cloud-lightning" },
 ];
+/** Condição da frente de trabalho na entrada e na saída. */
+export const CONDITION_OPTIONS = [
+  { id: "normal", name: "Normal", icon: "circle-check" }, { id: "restricao", name: "Com restrição", icon: "triangle-alert" }, { id: "impedido", name: "Sem condição", icon: "ban" },
+];
 export const OCCURRENCE_OPTIONS = [
   { id: "paralisacao", name: "Paralisação" }, { id: "pendencia_cliente", name: "Pendência do cliente" }, { id: "quase_acidente", name: "Quase acidente" }, { id: "acidente", name: "Acidente" }, { id: "outro", name: "Outra" },
 ];
 const WEATHER_ICON = Object.fromEntries(WEATHER_OPTIONS.map((option) => [option.id, option.icon]));
+/** "HH:MM" válido. */
+export const isTime = (value?: string | null) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value ?? "");
+const minutesOf = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
+/** Minutos entre a entrada e a saída; no turno da noite a saída pode ser no dia seguinte. */
+export function spanMinutes(start: string, end: string, overnight: boolean): number {
+  const span = minutesOf(end) - minutesOf(start);
+  return span <= 0 && overnight ? span + 1440 : span;
+}
+/**
+ * Horas de uma pessoa a partir da entrada e da saída: desconta o intervalo de
+ * quem ficou mais de 6 horas e separa o que passa da jornada como hora extra.
+ */
+export function workedHours(start: string, end: string, breakMinutes: number, hoursPerDay: number, overnight: boolean): { hours: number; overtime: number } | null {
+  if (!isTime(start) || !isTime(end)) return null;
+  const span = spanMinutes(start, end, overnight);
+  if (span <= 0) return null;
+  const worked = Math.max(0, span - (span > 360 ? breakMinutes : 0)) / 60;
+  const round = (value: number) => Math.round(value * 100) / 100;
+  return { hours: round(Math.min(worked, hoursPerDay)), overtime: round(Math.max(0, worked - hoursPerDay)) };
+}
 export const hoursText = (value: number) => `${String(Math.round(value * 100) / 100).replace(".", ",")} h`;
+
+/** Hora de agora, "HH:MM", no relógio de quem está preenchendo. */
+export const nowTime = () => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false });
+
+/**
+ * Campo de hora digitada (07:30), com o botão "Agora" para quem preenche na
+ * obra. Aceita só números e põe os dois-pontos sozinho; ao sair do campo,
+ * "7" vira 07:00 e "730" vira 07:30.
+ */
+export function TimeField({ id, value, onChange, disabled, ariaLabel, now = true, className }: {
+  id?: string; value: string; onChange: (value: string) => void; disabled?: boolean; ariaLabel?: string; now?: boolean; className?: string;
+}) {
+  const typed = (raw: string) => { const digits = raw.replace(/\D/g, "").slice(0, 4); return digits.length <= 2 ? digits : `${digits.slice(0, 2)}:${digits.slice(2)}`; };
+  const settle = () => {
+    const digits = value.replace(/\D/g, "");
+    if (!digits) return;
+    const full = digits.length <= 2 ? `${digits.padStart(2, "0")}00` : digits.length === 3 ? `0${digits}` : digits;
+    const out = `${full.slice(0, 2)}:${full.slice(2, 4)}`;
+    if (out !== value) onChange(out);
+  };
+  return (
+    <div className={cn("flex gap-2", className)}>
+      <ShadInput id={id} aria-label={ariaLabel} className={cn("text-center tabular-nums", value && !isTime(value) && "border-red-500")} inputMode="numeric" placeholder="00:00" maxLength={5}
+        value={value} disabled={disabled} onChange={(event) => onChange(typed(event.target.value))} onBlur={settle} />
+      {now && !disabled && <Button type="button" variant="outline" className="shrink-0" onClick={() => onChange(nowTime())}><Icon name="clock" className="w-4 h-4 mr-1" /> Agora</Button>}
+    </div>
+  );
+}
 
 /** Barra de "feito de um total", que fica vermelha quando passa do orçado. */
 function Meter({ value, total, label, detail }: { value: number; total: number; label: string; detail: string }) {
@@ -90,7 +147,9 @@ export function ReportLine({ row, orderId, context }: { row: ReportRow; orderId:
           <p className="font-medium">{dateBr(row.date)}{row.shift !== "integral" ? ` · ${row.shiftLabel}` : ""} <ReportStatusBadge status={row.status} /></p>
           {context && <p className="text-xs text-muted-foreground truncate">{context}</p>}
           <p className="text-xs text-muted-foreground">
+            {row.startTime ? `${row.startTime}${row.endTime ? ` às ${row.endTime}` : " (sem saída)"} · ` : ""}
             {row.people} {row.people === 1 ? "pessoa" : "pessoas"} · {hoursText(row.hours)}{row.overtime > 0 ? ` + ${hoursText(row.overtime)} extras` : ""}
+            {row.earlyLeaves > 0 ? ` · ${row.earlyLeaves} saiu${row.earlyLeaves === 1 ? "" : "ram"} antes` : ""}
             {row.occurrences > 0 ? ` · ${row.occurrences} ocorrência${row.occurrences === 1 ? "" : "s"}` : ""}{row.photos > 0 ? ` · ${row.photos} foto${row.photos === 1 ? "" : "s"}` : ""}
             {row.createdBy ? ` · ${row.createdBy}` : ""}
           </p>
@@ -111,7 +170,10 @@ export function DiaryPanel({ orderId, canEdit }: { orderId: number; canEdit: boo
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div>
           <h2 className="font-semibold">Diário de obra (RDO)</h2>
-          <p className="text-xs text-muted-foreground">Um relatório por dia de obra. Dele saem o avanço e as horas trabalhadas.</p>
+          <p className="text-xs text-muted-foreground">
+            Um relatório por dia de obra. Dele saem o avanço e as horas trabalhadas.{" "}
+            {summary && summary.reports > 0 && <Link to="/servicos/estatisticas-do-diario" search={{ os: orderId }} className="underline hover:text-foreground">Ver as estatísticas desta obra</Link>}
+          </p>
         </div>
         {canEdit && data?.canWrite && (
           <Button asChild size="sm" className="shrink-0">

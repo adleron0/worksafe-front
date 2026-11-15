@@ -19,21 +19,27 @@ import { cn } from "@/lib/utils";
 import { dateBr, errorMessage } from "../../comercial/-shared/commercial";
 import { ORDERS_ABILITY, RDO_PERMISSION, ORDERS_KEY, ORDER_KEY } from "../-shared/orders";
 import {
-  CrewMember, DIARY_KEY, OCCURRENCE_OPTIONS, Occurrence, Photo, RECENT_REPORTS_KEY, REPORT_KEY, Report, ReportStatusBadge, SHIFT_OPTIONS, StepProgress, WEATHER_OPTIONS,
-  hoursText, reportsApi,
+  CONDITION_OPTIONS, CrewMember, DIARY_KEY, OCCURRENCE_OPTIONS, Occurrence, Photo, RECENT_REPORTS_KEY, REPORT_KEY, Report, ReportStatusBadge, SHIFT_OPTIONS, StepProgress, TimeField, WEATHER_OPTIONS,
+  hoursText, isTime, reportsApi, spanMinutes, workedHours,
 } from "../-shared/reports";
 
 export const Route = createFileRoute("/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId")({
   component: ReportPage,
 });
 
+/** Na tela a pessoa sempre tem os três campos (vazios quando segue a hora do dia); `own` abre o bloco da hora própria. */
+interface CrewRow extends CrewMember { in: string; out: string; leaveReason: string; own: boolean }
 interface Form {
-  date: string; shift: string; weather: string; crew: CrewMember[]; activities: string; progress: StepProgress[];
+  date: string; shift: string; weather: string; crew: CrewRow[]; activities: string; progress: StepProgress[];
   occurrences: Occurrence[]; equipment: string; photos: Photo[]; notes: string;
+  startTime: string; endTime: string; breakMinutes: number; weatherEnd: string; startCondition: string; endCondition: string; startNote: string; endNote: string;
 }
+const crewRow = (member: CrewMember): CrewRow => ({ ...member, in: member.in ?? "", out: member.out ?? "", leaveReason: member.leaveReason ?? "", own: Boolean(member.in || member.out || member.leaveReason) });
 const formOf = (report: Report): Form => ({
-  date: report.date, shift: report.shift, weather: report.weather, crew: report.crew, activities: report.activities ?? "", progress: report.progress,
+  date: report.date, shift: report.shift, weather: report.weather, crew: report.crew.map(crewRow), activities: report.activities ?? "", progress: report.progress,
   occurrences: report.occurrences, equipment: report.equipment ?? "", photos: report.photos, notes: report.notes ?? "",
+  startTime: report.startTime ?? "", endTime: report.endTime ?? "", breakMinutes: report.breakMinutes ?? 60, weatherEnd: report.weatherEnd ?? "",
+  startCondition: report.startCondition ?? "", endCondition: report.endCondition ?? "", startNote: report.startNote ?? "", endNote: report.endNote ?? "",
 });
 const MAX_PHOTOS = 30;
 /** Horas digitadas: aceita vírgula e não deixa passar texto. */
@@ -46,6 +52,26 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
       <div className="mt-3 grid gap-3">{children}</div>
     </section>
+  );
+}
+
+/** Condição da frente de trabalho (normal, com restrição, sem condição) e a observação que a explica. */
+function ConditionField({ label, value, note, disabled, placeholder, onValue, onNote }: {
+  label: string; value: string; note: string; disabled: boolean; placeholder: string; onValue: (value: string) => void; onNote: (value: string) => void;
+}) {
+  return (
+    <div>
+      <Label className="text-xs">{label}</Label>
+      <div className="mt-1 grid grid-cols-1 sm:grid-cols-3 gap-2" role="radiogroup" aria-label={label}>
+        {CONDITION_OPTIONS.map((option) => (
+          <Button key={option.id} type="button" role="radio" aria-checked={value === option.id} variant={value === option.id ? "default" : "outline"} disabled={disabled}
+            className="h-11 gap-2" onClick={() => onValue(value === option.id ? "" : option.id)}>
+            <Icon name={option.icon} className="w-4 h-4" /> {option.name}
+          </Button>
+        ))}
+      </div>
+      <Textarea aria-label={`Observação: ${label}`} className="mt-2" rows={2} maxLength={500} value={note} disabled={disabled} placeholder={placeholder} onChange={(event) => onNote(event.target.value)} />
+    </div>
   );
 }
 
@@ -106,7 +132,23 @@ function ReportPage() {
   const editable = report.editable && can(RDO_PERMISSION);
   const dirty = isNew || JSON.stringify(form) !== JSON.stringify(formOf(report));
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm((current) => (current ? { ...current, [key]: value } : current));
-  const setCrew = (index: number, patch: Partial<CrewMember>) => set("crew", form.crew.map((member, i) => (i === index ? { ...member, ...patch } : member)));
+  const hoursPerDay = report.hoursPerDay ?? 8;
+  /** Horas de cada pessoa pela entrada e saída (a dela, ou a do dia); sem as duas horas, fica o que estava digitado. */
+  const timed = (value: Form): Form => ({
+    ...value,
+    crew: value.crew.map((member) => {
+      const worked = workedHours(member.in || value.startTime, member.out || value.endTime, value.breakMinutes, hoursPerDay, value.shift === "noite");
+      return worked ? { ...member, ...worked } : member;
+    }),
+  });
+  /** Mudou hora, intervalo ou turno: as horas da equipe são refeitas. */
+  const setTimes = (patch: Partial<Form>) => setForm((current) => (current ? timed({ ...current, ...patch }) : current));
+  const setCrew = (index: number, patch: Partial<CrewRow>) => set("crew", form.crew.map((member, i) => (i === index ? { ...member, ...patch } : member)));
+  const setCrewTimes = (index: number, patch: Partial<CrewRow>) => setForm((current) => (current ? timed({ ...current, crew: current.crew.map((member, i) => (i === index ? { ...member, ...patch } : member)) }) : current));
+  const overnight = form.shift === "noite";
+  const leftEarly = (member: CrewRow) => isTime(member.out) && isTime(form.startTime) && isTime(form.endTime)
+    && spanMinutes(form.startTime, member.out, overnight) < spanMinutes(form.startTime, form.endTime, overnight);
+  const daySpan = isTime(form.startTime) && isTime(form.endTime) ? spanMinutes(form.startTime, form.endTime, overnight) : null;
   const setOccurrence = (index: number, patch: Partial<Occurrence>) => set("occurrences", form.occurrences.map((item, i) => (i === index ? { ...item, ...patch } : item)));
   // funções: as vendidas na proposta e as que já estão na equipe do dia
   const roles = [...new Set([...report.roles, ...form.crew.map((member) => member.role).filter(Boolean)])];
@@ -155,11 +197,16 @@ function ReportPage() {
               <CalendarPicker mode="single" name="reportDate" className="mt-1 w-full" value={form.date} disabled={!editable} fromYear={2024} toYear={2040}
                 onValueChange={(_, value) => set("date", String(value ?? "") || form.date)} /></div>
             <div><Label className="text-xs">Turno</Label>
-              <Select name="shift" state={form.shift} disabled={!editable} modal={false} options={SHIFT_OPTIONS} onChange={(_, value) => set("shift", String(value || "integral"))} /></div>
+              <Select name="shift" state={form.shift} disabled={!editable} modal={false} options={SHIFT_OPTIONS} onChange={(_, value) => setTimes({ shift: String(value || "integral") })} /></div>
           </div>
+        </Section>
+
+        <Section title="Entrada na atividade" hint="A hora em que a equipe começou, o clima e como estava a frente de trabalho.">
+          <div><Label htmlFor="startTime" className="text-xs">Hora de entrada</Label>
+            <TimeField id="startTime" className="mt-1" value={form.startTime} disabled={!editable} onChange={(value) => setTimes({ startTime: value })} /></div>
           <div>
-            <Label className="text-xs">Clima</Label>
-            <div className="mt-1 grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Clima">
+            <Label className="text-xs">Clima na entrada</Label>
+            <div className="mt-1 grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Clima na entrada">
               {WEATHER_OPTIONS.map((option) => (
                 <Button key={option.id} type="button" role="radio" aria-checked={form.weather === option.id} variant={form.weather === option.id ? "default" : "outline"} disabled={!editable}
                   className="h-11 gap-2" onClick={() => set("weather", option.id)}>
@@ -169,6 +216,8 @@ function ReportPage() {
             </div>
             {form.weather === "impraticavel" && <p className="mt-1 text-xs text-muted-foreground">Dia sem condição de trabalho: conta como dia parado.</p>}
           </div>
+          <ConditionField label="Condição da frente de trabalho na entrada" value={form.startCondition} note={form.startNote} disabled={!editable}
+            placeholder="Ex.: área liberada, PT emitida; piso molhado no lado norte" onValue={(value) => set("startCondition", value)} onNote={(value) => set("startNote", value)} />
         </Section>
 
         <Section title="Equipe do dia" hint={`Quem trabalhou e quantas horas. Total: ${hoursText(totalHours)}${totalOvertime > 0 ? ` + ${hoursText(totalOvertime)} extras` : ""}.`}>
@@ -179,6 +228,26 @@ function ReportPage() {
                 <ShadInput aria-label="Nome" placeholder="Nome" maxLength={120} value={member.name} disabled={!editable} onChange={(event) => setCrew(index, { name: event.target.value })} />
                 {editable && <Button type="button" variant="ghost" size="sm" className="h-9 w-9 p-0 shrink-0" aria-label={`Tirar ${member.name || "pessoa"} da equipe do dia`} onClick={() => set("crew", form.crew.filter((_, i) => i !== index))}><Icon name="x" className="w-4 h-4" /></Button>}
               </div>
+              {/* quem entrou depois ou saiu antes tem a hora própria; os demais seguem a do dia */}
+              {member.own ? (
+                <div className="grid gap-2 rounded-md bg-muted/40 p-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><Label htmlFor={`in-${index}`} className="text-xs">Entrou às</Label>
+                      <TimeField id={`in-${index}`} className="mt-1" now={false} value={member.in} disabled={!editable} onChange={(value) => setCrewTimes(index, { in: value })} /></div>
+                    <div><Label htmlFor={`out-${index}`} className="text-xs">Saiu às</Label>
+                      <TimeField id={`out-${index}`} className="mt-1" now={false} value={member.out} disabled={!editable} onChange={(value) => setCrewTimes(index, { out: value })} /></div>
+                  </div>
+                  <div><Label htmlFor={`reason-${index}`} className="text-xs">Motivo{leftEarly(member) ? " da saída antecipada *" : ""}</Label>
+                    <ShadInput id={`reason-${index}`} className="mt-1" maxLength={200} value={member.leaveReason} disabled={!editable} placeholder="Ex.: consulta médica; chamado para outra obra"
+                      onChange={(event) => setCrew(index, { leaveReason: event.target.value })} /></div>
+                  {editable && <Button type="button" variant="ghost" size="sm" className="w-fit h-7 px-2 text-xs" onClick={() => setCrewTimes(index, { in: "", out: "", leaveReason: "", own: false })}>Voltar a seguir a hora do dia</Button>}
+                </div>
+              ) : editable && (
+                <Button type="button" variant="ghost" size="sm" className="w-fit h-7 px-2 text-xs text-muted-foreground"
+                  onClick={() => setCrew(index, { own: true })}>
+                  <Icon name="clock" className="w-3 h-3 mr-1" /> Entrou depois ou saiu antes
+                </Button>
+              )}
               <div className="grid grid-cols-[minmax(0,1fr)_5rem_5rem] gap-2 items-end">
                 <div><Label className="text-xs">Função</Label>
                   <Select name={`role-${index}`} state={member.role} clearable disabled={!editable} modal={false} placeholder="Escolha" options={roles.map((role) => ({ id: role, name: role }))}
@@ -193,7 +262,7 @@ function ReportPage() {
             </div>
           ))}
           {editable && (
-            <Button type="button" variant="outline" className="h-11" onClick={() => set("crew", [...form.crew, { name: "", role: report.roles[0] ?? "", hours: report.hoursPerDay ?? 8, overtime: 0 }])}>
+            <Button type="button" variant="outline" className="h-11" onClick={() => setForm((current) => (current ? timed({ ...current, crew: [...current.crew, { name: "", role: report.roles[0] ?? "", hours: hoursPerDay, overtime: 0, in: "", out: "", leaveReason: "", own: false }] }) : current))}>
               <Icon name="user-plus" className="w-4 h-4 mr-1" /> Incluir pessoa
             </Button>
           )}
@@ -236,6 +305,33 @@ function ReportPage() {
               <Icon name="triangle-alert" className="w-4 h-4 mr-1" /> Registrar ocorrência
             </Button>
           )}
+        </Section>
+
+        <Section title="Saída" hint="Preencha no fim do dia: a hora em que a equipe saiu, o clima e como a frente de trabalho ficou.">
+          <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3 items-end">
+            <div><Label htmlFor="endTime" className="text-xs">Hora de saída</Label>
+              <TimeField id="endTime" className="mt-1" value={form.endTime} disabled={!editable} onChange={(value) => setTimes({ endTime: value })} /></div>
+            <div><Label htmlFor="breakMinutes" className="text-xs">Intervalo (min)</Label>
+              <ShadInput id="breakMinutes" className="mt-1 text-center" inputMode="numeric" maxLength={3} value={String(form.breakMinutes)} disabled={!editable}
+                onChange={(event) => setTimes({ breakMinutes: Math.min(240, Number(event.target.value.replace(/\D/g, "")) || 0) })} /></div>
+          </div>
+          {daySpan !== null && daySpan > 0 && (
+            <p className="text-xs text-muted-foreground">Jornada de {hoursText(daySpan / 60)}{daySpan > 360 && form.breakMinutes > 0 ? `, com ${form.breakMinutes} min de intervalo` : ""}. As horas de cada pessoa foram calculadas por ela; ajuste na equipe se precisar.</p>
+          )}
+          {isTime(form.startTime) && isTime(form.endTime) && daySpan !== null && daySpan <= 0 && <p className="text-xs text-red-600 dark:text-red-400">A hora de saída precisa ser depois da entrada.</p>}
+          <div>
+            <Label className="text-xs">Clima na saída</Label>
+            <div className="mt-1 grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Clima na saída">
+              {WEATHER_OPTIONS.map((option) => (
+                <Button key={option.id} type="button" role="radio" aria-checked={form.weatherEnd === option.id} variant={form.weatherEnd === option.id ? "default" : "outline"} disabled={!editable}
+                  className="h-11 gap-2" onClick={() => set("weatherEnd", form.weatherEnd === option.id ? "" : option.id)}>
+                  <Icon name={option.icon} className="w-4 h-4" /> {option.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <ConditionField label="Condição da frente de trabalho na saída" value={form.endCondition} note={form.endNote} disabled={!editable}
+            placeholder="Ex.: área limpa e isolada; andaime travado" onValue={(value) => set("endCondition", value)} onNote={(value) => set("endNote", value)} />
         </Section>
 
         <Section title="Equipamentos e observações">

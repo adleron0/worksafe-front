@@ -50,6 +50,7 @@ import { Route as AuthenticatedSiteMarcasMarcasRouteImport } from './pages/_auth
 import { Route as AuthenticatedSiteCategoriasLojaCategoriasLojaRouteImport } from './pages/_authenticated/site/_categorias-loja/categorias-loja'
 import { Route as AuthenticatedServicosOrdensResultadoDasObrasRouteImport } from './pages/_authenticated/servicos/_ordens/resultado-das-obras'
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico'
+import { Route as AuthenticatedServicosOrdensEstatisticasDoDiarioRouteImport } from './pages/_authenticated/servicos/_ordens/estatisticas-do-diario'
 import { Route as AuthenticatedServicosOrdensDiarioDeObraRouteImport } from './pages/_authenticated/servicos/_ordens/diario-de-obra'
 import { Route as AuthenticatedInventariosAreasAreaIdRouteImport } from './pages/_authenticated/inventarios/areas/$areaId'
 import { Route as AuthenticatedFinanceiroReceberReceberRouteImport } from './pages/_authenticated/financeiro/_receber/receber'
@@ -312,6 +313,12 @@ const AuthenticatedServicosOrdensOrdensDeServicoRoute =
     path: '/servicos/ordens-de-servico',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedServicosOrdensEstatisticasDoDiarioRoute =
+  AuthenticatedServicosOrdensEstatisticasDoDiarioRouteImport.update({
+    id: '/servicos/_ordens/estatisticas-do-diario',
+    path: '/servicos/estatisticas-do-diario',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedServicosOrdensDiarioDeObraRoute =
   AuthenticatedServicosOrdensDiarioDeObraRouteImport.update({
     id: '/servicos/_ordens/diario-de-obra',
@@ -536,6 +543,7 @@ export interface FileRoutesByFullPath {
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/servicos/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
+  '/servicos/estatisticas-do-diario': typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
   '/servicos/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
   '/servicos/resultado-das-obras': typeof AuthenticatedServicosOrdensResultadoDasObrasRoute
   '/site/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
@@ -606,6 +614,7 @@ export interface FileRoutesByTo {
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/servicos/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
+  '/servicos/estatisticas-do-diario': typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
   '/servicos/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
   '/servicos/resultado-das-obras': typeof AuthenticatedServicosOrdensResultadoDasObrasRoute
   '/site/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
@@ -680,6 +689,7 @@ export interface FileRoutesById {
   '/_authenticated/financeiro/_receber/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/_authenticated/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/_authenticated/servicos/_ordens/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
+  '/_authenticated/servicos/_ordens/estatisticas-do-diario': typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
   '/_authenticated/servicos/_ordens/resultado-das-obras': typeof AuthenticatedServicosOrdensResultadoDasObrasRoute
   '/_authenticated/site/_categorias-loja/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
@@ -753,6 +763,7 @@ export interface FileRouteTypes {
     | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
     | '/servicos/diario-de-obra'
+    | '/servicos/estatisticas-do-diario'
     | '/servicos/ordens-de-servico'
     | '/servicos/resultado-das-obras'
     | '/site/categorias-loja'
@@ -823,6 +834,7 @@ export interface FileRouteTypes {
     | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
     | '/servicos/diario-de-obra'
+    | '/servicos/estatisticas-do-diario'
     | '/servicos/ordens-de-servico'
     | '/servicos/resultado-das-obras'
     | '/site/categorias-loja'
@@ -896,6 +908,7 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro/_receber/receber'
     | '/_authenticated/inventarios/areas/$areaId'
     | '/_authenticated/servicos/_ordens/diario-de-obra'
+    | '/_authenticated/servicos/_ordens/estatisticas-do-diario'
     | '/_authenticated/servicos/_ordens/ordens-de-servico'
     | '/_authenticated/servicos/_ordens/resultado-das-obras'
     | '/_authenticated/site/_categorias-loja/categorias-loja'
@@ -1222,6 +1235,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/servicos/_ordens/estatisticas-do-diario': {
+      id: '/_authenticated/servicos/_ordens/estatisticas-do-diario'
+      path: '/servicos/estatisticas-do-diario'
+      fullPath: '/servicos/estatisticas-do-diario'
+      preLoaderRoute: typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/servicos/_ordens/diario-de-obra': {
       id: '/_authenticated/servicos/_ordens/diario-de-obra'
       path: '/servicos/diario-de-obra'
@@ -1468,6 +1488,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFinanceiroReceberReceberRoute: typeof AuthenticatedFinanceiroReceberReceberRoute
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
   AuthenticatedServicosOrdensDiarioDeObraRoute: typeof AuthenticatedServicosOrdensDiarioDeObraRoute
+  AuthenticatedServicosOrdensEstatisticasDoDiarioRoute: typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
   AuthenticatedServicosOrdensOrdensDeServicoRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
   AuthenticatedServicosOrdensResultadoDasObrasRoute: typeof AuthenticatedServicosOrdensResultadoDasObrasRoute
   AuthenticatedSiteCategoriasLojaCategoriasLojaRoute: typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
@@ -1551,6 +1572,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedInventariosAreasAreaIdRoute,
   AuthenticatedServicosOrdensDiarioDeObraRoute:
     AuthenticatedServicosOrdensDiarioDeObraRoute,
+  AuthenticatedServicosOrdensEstatisticasDoDiarioRoute:
+    AuthenticatedServicosOrdensEstatisticasDoDiarioRoute,
   AuthenticatedServicosOrdensOrdensDeServicoRoute:
     AuthenticatedServicosOrdensOrdensDeServicoRoute,
   AuthenticatedServicosOrdensResultadoDasObrasRoute:

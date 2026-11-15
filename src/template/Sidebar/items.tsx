@@ -78,6 +78,12 @@ export const items = [
         path: "/servicos/diario-de-obra",
       },
       {
+        title: "Estatísticas do Diário",
+        ability: "ordens_de_servico",
+        icon: "chart-column",
+        path: "/servicos/estatisticas-do-diario",
+      },
+      {
         title: "Resultado das Obras",
         ability: "custos_comercial",
         icon: "chart-column-big",

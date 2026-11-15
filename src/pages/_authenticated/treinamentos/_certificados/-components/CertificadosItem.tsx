@@ -27,6 +27,7 @@ import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { renderVersion, resolveHighlight, themeInfo } from "@/components/general-components/visualizadorCertificados/highlight";
 import DestaqueCertificadoDialog from "./DestaqueCertificadoDialog";
+import IssuedCertificateView from "@/components/general-components/visualizadorCertificados/server/IssuedCertificateView";
 
 interface ItemsProps {
   item: ICertificate;
@@ -47,6 +48,9 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
   const highlight = resolveHighlight(item);
   const highlightTheme = themeInfo(highlight?.theme);
   const [showViewer, setShowViewer] = useState(false);
+  const [stageFailed, setStageFailed] = useState(false);
+  // emitido → mesmo visualizador da página pública (palco + brilho + Baixar)
+  const issuedView = isIssuedCertificateKey(item.key?.toString()) && !stageFailed;
   const [openDestaque, setOpenDestaque] = useState(false);
 
   // Mutation para inativar
@@ -548,9 +552,20 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
         description={`Certificado - ${item.course?.name || 'Certificado'}`}
         showBttn={false}
         showHeader={true}
-        className="md:w-fit"
-        classNameContent="h-fit md:h-[80vh]"
+        className={issuedView ? "w-[min(94vw,1100px)] sm:max-w-[94vw]" : "md:w-fit"}
+        classNameContent={issuedView ? "h-auto max-h-[75vh] pb-2" : "h-fit md:h-[80vh]"}
       >
+        {issuedView ? (
+          <div className="w-full">
+            <IssuedCertificateView
+              reservedHeight={typeof window !== 'undefined' ? Math.round(window.innerHeight * 0.25) + 110 : 300}
+              certificate={{ ...item, key: String(item.key) }}
+              name={item.course?.name || 'Certificado'}
+              fileNameParts={[item.trainee?.name, item.course?.name]}
+              onError={() => setStageFailed(true)}
+            />
+          </div>
+        ) : (
         <div className="h-fit md:h-full w-full">
           <VisualizadorCertificados
             certificateData={{
@@ -567,6 +582,7 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
             zoom={50}
           />
         </div>
+        )}
       </Dialog>
       {openDestaque && (
         <DestaqueCertificadoDialog item={item} open={openDestaque} onOpenChange={setOpenDestaque} />

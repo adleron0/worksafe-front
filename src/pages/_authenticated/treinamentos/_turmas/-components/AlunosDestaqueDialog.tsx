@@ -10,9 +10,13 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { get, put } from "@/services/api";
 import {
+  DEFAULT_PATTERN,
   HIGHLIGHT_DEFAULT_LABEL,
+  HIGHLIGHT_PATTERN_OPTIONS,
   HIGHLIGHT_THEMES,
+  patternInfo,
   themeInfo,
+  type HighlightPattern,
 } from "@/components/general-components/visualizadorCertificados/highlight";
 
 // ============================================================================
@@ -30,6 +34,7 @@ interface CandidateRow {
   highlightStudent: boolean;
   highlightTheme: Theme | null;
   highlightLabel: string | null;
+  highlightPattern: HighlightPattern | null;
   trainee?: { id: number; name: string; imageUrl?: string | null } | null;
   examScore: number | null;
   examPassed: boolean | null;
@@ -37,11 +42,11 @@ interface CandidateRow {
 }
 
 interface CandidatesResponse {
-  class: { id: number; name: string; highlightTheme: Theme | null; highlightLabel: string | null };
+  class: { id: number; name: string; highlightTheme: Theme | null; highlightLabel: string | null; highlightPattern?: HighlightPattern | null };
   rows: CandidateRow[];
 }
 
-type Draft = Pick<CandidateRow, "highlightStudent" | "highlightTheme" | "highlightLabel">;
+type Draft = Pick<CandidateRow, "highlightStudent" | "highlightTheme" | "highlightLabel" | "highlightPattern">;
 
 const initials = (name?: string) =>
   (name || "?")
@@ -80,7 +85,12 @@ export default function AlunosDestaqueDialog({
       Object.fromEntries(
         data.rows.map((r) => [
           r.id,
-          { highlightStudent: r.highlightStudent, highlightTheme: r.highlightTheme, highlightLabel: r.highlightLabel },
+          {
+            highlightStudent: r.highlightStudent,
+            highlightTheme: r.highlightTheme,
+            highlightLabel: r.highlightLabel,
+            highlightPattern: r.highlightPattern ?? null,
+          },
         ]),
       ),
     );
@@ -94,7 +104,8 @@ export default function AlunosDestaqueDialog({
           d &&
           (d.highlightStudent !== r.highlightStudent ||
             (d.highlightTheme ?? null) !== (r.highlightTheme ?? null) ||
-            (d.highlightLabel || null) !== (r.highlightLabel || null))
+            (d.highlightLabel || null) !== (r.highlightLabel || null) ||
+            (d.highlightPattern ?? null) !== (r.highlightPattern ?? null))
         );
       }),
     [data, drafts],
@@ -109,6 +120,7 @@ export default function AlunosDestaqueDialog({
           highlightStudent: d.highlightStudent,
           highlightTheme: d.highlightStudent ? d.highlightTheme || "" : "",
           highlightLabel: d.highlightStudent ? d.highlightLabel || "" : "",
+          highlightPattern: d.highlightStudent ? d.highlightPattern || "" : "",
         } as never);
       }
     },
@@ -216,6 +228,19 @@ export default function AlunosDestaqueDialog({
                     state={d.highlightTheme ?? ""}
                     onChange={(_, value) => update(row.id, { highlightTheme: (value as Theme) || null })}
                     placeholder={`Tema: ${classTheme?.name ?? "Ouro"} (padrão)`}
+                    clearable
+                  />
+                  <Select
+                    name={`pattern-${row.id}`}
+                    options={HIGHLIGHT_PATTERN_OPTIONS}
+                    state={d.highlightPattern ?? ""}
+                    onChange={(_, value) => update(row.id, { highlightPattern: (value as HighlightPattern) || null })}
+                    placeholder={`Padronagem: ${
+                      patternInfo(
+                        data?.class.highlightPattern ??
+                          DEFAULT_PATTERN[d.highlightTheme ?? data?.class.highlightTheme ?? "ouro"],
+                      )?.name
+                    } (padrão)`}
                     clearable
                   />
                   <Input

@@ -14,8 +14,8 @@ import Footer from "../-components/Footer";
 import { decodeBase64Variables } from "@/utils/decodeBase64Variables";
 import CertificatePDFService from "@/components/general-components/visualizadorCertificados/services/CertificatePDFService";
 import CertificateImageService from "@/components/general-components/visualizadorCertificados/services/CertificateImageService";
-import { certificateFileName, certificateImageUrl, certificatePdfUrl, downloadFromApi, hasBackSide, isIssuedCertificateKey } from '@/components/general-components/visualizadorCertificados/server/certificateRenderUrls';
-import CertificateStage from '@/components/general-components/visualizadorCertificados/server/CertificateStage';
+import { certificateFileName, certificateImageUrl, certificatePdfUrl, downloadIssuedCertificate, hasBackSide, isIssuedCertificateKey } from '@/components/general-components/visualizadorCertificados/server/certificateRenderUrls';
+import IssuedCertificateView from '@/components/general-components/visualizadorCertificados/server/IssuedCertificateView';
 import CertificateDownloadMenu, { type DownloadFormat } from '@/components/general-components/visualizadorCertificados/server/CertificateDownloadMenu';
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
@@ -404,19 +404,10 @@ function CertificadoPublico() {
       // modelo/sem chave: gera no navegador como antes
       return format === 'pdf' ? handleGeneratePDF() : handleGeneratePNG();
     }
-    const base = certificateFileName(variables.aluno_nome?.value, variables.curso_nome?.value);
-    if (format === 'pdf') {
-      await downloadFromApi(
-        certificatePdfUrl(certificate.key, { version: renderVersion(certificate) }),
-        `${base}.pdf`,
-      );
-      return;
-    }
-    const side = format === 'png-back' ? 'back' : 'front';
-    await downloadFromApi(
-      certificateImageUrl(certificate.key, side, renderVersion(certificate), 4),
-      `${base}${side === 'back' ? '-verso' : ''}.png`,
-    );
+    await downloadIssuedCertificate(certificate.key, format, {
+      version: renderVersion(certificate),
+      fileName: certificateFileName(variables.aluno_nome?.value, variables.curso_nome?.value),
+    });
   };
 
   const { 
@@ -585,23 +576,11 @@ function CertificadoPublico() {
           {certificate?.variableToReplace && certificate?.fabricJsonFront &&
             isIssuedCertificateKey(certificate.key) && !stageFailed && (
             <div className="mb-6">
-              <CertificateStage
-                certificateKey={certificate.key}
+              <IssuedCertificateView
+                certificate={{ ...certificate, key: certificate.key }}
                 name={variables.curso_nome?.value || 'Certificado'}
-                fabricJsonBack={certificate.fabricJsonBack}
-                canvasWidth={certificate.canvasWidth}
-                canvasHeight={certificate.canvasHeight}
-                version={renderVersion(certificate)}
-                highlightTheme={highlight?.theme ?? null}
+                fileNameParts={[variables.aluno_nome?.value, variables.curso_nome?.value]}
                 onError={() => setStageFailed(true)}
-                actions={
-                  <CertificateDownloadMenu
-                    size="sm"
-                    variant="subtle"
-                    hasBack={certificateHasBack}
-                    onDownload={handleDownload}
-                  />
-                }
               />
             </div>
           )}

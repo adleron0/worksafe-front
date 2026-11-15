@@ -59,6 +59,7 @@ const Schema = z
     certificateId: z.number().optional().nullable(),
     highlightTheme: z.enum(["ouro", "prata", "holografico"]).optional().nullable(),
     highlightLabel: z.string().max(60, "Máximo de 60 caracteres").optional().nullable(),
+    highlightPattern: z.enum(["rosetas", "estrelas", "estilhacos", "bolhas", "espiral", "glitter", "arco_iris", "gravado", "nenhum"]).optional().nullable(),
     price: z.number().min(0, { message: "Valor de venda é obrigatório" }),
     discountPrice: z.number(),
     dividedIn: z.number().min(1).optional().nullable(),
@@ -304,6 +305,7 @@ const FIELD_TO_TAB: Record<string, string> = {
   certificateId: "basico",
   highlightTheme: "basico",
   highlightLabel: "basico",
+  highlightPattern: "basico",
   hoursDuration: "periodo",
   daysDuration: "periodo",
   initialDate: "periodo",
@@ -388,6 +390,7 @@ function buildDefaults(formData?: IEntity): FormData {
     certificateId: fd?.certificateId || null,
     highlightTheme: (fd?.highlightTheme as FormData["highlightTheme"]) || null,
     highlightLabel: fd?.highlightLabel || null,
+    highlightPattern: (fd?.highlightPattern as FormData["highlightPattern"]) || null,
     price: Number(formData?.price) || 0,
     discountPrice: Number(fd?.discountPrice) || 0,
     dividedIn: fd?.dividedIn || null,
@@ -673,6 +676,7 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
       // vazio = "sem destaque" (o envio pula null; a API trata "" como limpar)
       highlightTheme: dataForm.highlightTheme || "",
       highlightLabel: dataForm.highlightLabel || "",
+      highlightPattern: dataForm.highlightPattern || "",
     } as unknown as FormData;
 
     if (formData) {

@@ -9,6 +9,7 @@ export interface ICertificate {
   highlightStudent?: boolean;
   highlightTheme?: string | null;
   highlightLabel?: string | null;
+  highlightPattern?: string | null;
   fabricJsonFront?: any;
   fabricJsonBack?: any;
   variableToReplace?: any;
@@ -35,6 +36,7 @@ export interface ICertificate {
     classCode?: string;
     highlightTheme?: string | null;
     highlightLabel?: string | null;
+    highlightPattern?: string | null;
   };
 }
 

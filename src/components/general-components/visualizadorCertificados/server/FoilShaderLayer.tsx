@@ -18,14 +18,22 @@
  */
 import React, { useEffect, useRef } from "react";
 
-export type FoilPreset = "bursts" | "stars" | "shards" | "cosmos" | "rainbow" | "swirl" | "glitter" | "gold";
+/** Padronagem do centro (ids iguais aos do banco). */
+export type FoilPattern =
+  | "rosetas" | "estrelas" | "estilhacos" | "bolhas" | "espiral"
+  | "glitter" | "arco_iris" | "gravado" | "nenhum";
 
-const PRESETS: FoilPreset[] = ["bursts", "stars", "shards", "cosmos", "rainbow", "swirl", "glitter", "gold"];
+// índice no shader
+const PATTERNS: FoilPattern[] = [
+  "rosetas", "estrelas", "estilhacos", "bolhas", "arco_iris", "espiral", "glitter", "gravado", "nenhum",
+];
 
 export interface FoilSettings {
-  preset: FoilPreset;
+  pattern: FoilPattern;
   /** Cor do metal (hex). */
   foil: string;
+  /** 0 = furta-cor (arco-íris), 1 = metal (ouro/prata). */
+  metal: number;
   /** 0–1: quanto o foil tinge o papel. */
   intensity: number;
   /** 0–1: brilhos na moldura. */
@@ -55,6 +63,7 @@ uniform float uScale;
 uniform float uEdge;
 uniform float uFrame;
 uniform vec3 uFoil;
+uniform float uMetal;
 uniform float uHover;
 out vec4 outColor;
 const float TAU = 6.28318530718;
@@ -155,26 +164,43 @@ Foil glitter(vec2 p) {
   float m = smoothstep(size, size * 0.55, length(fract(g) - 0.5 - (hash2(cell) - 0.5) * 0.5)) * step(0.25, hash(cell + 5.0));
   return Foil(m, hash(cell + 7.0) * TAU, hash(cell + 9.0), (hash2(cell + 11.0) - 0.5) * 0.9);
 }
+// gravado: só as linhas finas (sem os flocos do original)
 Foil gold(vec2 p) {
-  Foil flake = glitter(p * 0.8);
-  if (flake.mask > 0.5) return flake;
   float etch = 0.55 + 0.45 * smoothstep(0.2, 0.8, abs(fract((p.x * 0.6 + p.y) * 140.0 * uScale) - 0.5) * 2.0);
   return Foil(etch, 0.9, 0.4, vec2(0.0));
 }
-vec3 sparkles(vec2 p, vec3 halfway, vec2 sweep, float awake) {
-  vec2 g = p * 62.0;
-  vec2 cell = floor(g);
-  vec2 d = fract(g) - 0.5 - (hash2(cell) - 0.5) * 0.36;
-  float spin = hash(cell + 3.0) * TAU;
-  d = mat2(cos(spin), -sin(spin), sin(spin), cos(spin)) * d;
+// distância de cada forma (d no espaço da célula, r = tamanho)
+float shapeDist(vec2 d, float kind, float r) {
   vec2 a = abs(d);
-  float hexagon = max(a.x * 0.866 + a.y * 0.5, a.y);
-  float size = mix(0.22, 0.38, hash(cell + 2.0));
-  float piece = smoothstep(size, size - 0.07, hexagon) * step(0.42, hash(cell + 4.0));
-  vec3 facet = normalize(vec3((hash2(cell + 6.0) - 0.5) * 0.9, 1.0));
+  if (kind < 1.0) return length(d) - r;                                   // ponto
+  if (kind < 2.0) return (a.x + a.y) - r;                                 // losango
+  if (kind < 3.0) return max(a.x * 0.866 + a.y * 0.5, a.y) - r;           // hexágono
+  float ang = atan(d.y, d.x);
+  float n = kind < 4.0 ? 4.0 : 5.0;                                       // estrela de 4 / 5 pontas
+  float k = abs(fract(ang / TAU * n) - 0.5) * 2.0;
+  return length(d) - r * mix(0.38, 1.0, pow(k, 2.2));
+}
+// uma camada de brilhos: densidade, formas, tamanhos e giros sorteados
+vec3 sparkleLayer(vec2 p, float grid, float seed, vec3 halfway, vec2 sweep) {
+  vec2 g = p * grid;
+  vec2 cell = floor(g);
+  float present = step(0.58, hash(cell + seed));
+  vec2 d = fract(g) - 0.5 - (hash2(cell + seed + 1.0) - 0.5) * 0.5;
+  float spin = hash(cell + seed + 3.0) * TAU;
+  d = mat2(cos(spin), -sin(spin), sin(spin), cos(spin)) * d;
+  float kind = floor(hash(cell + seed + 5.0) * 5.0);
+  float r = mix(0.1, 0.36, pow(hash(cell + seed + 2.0), 1.6));
+  float piece = smoothstep(0.02, -0.02, shapeDist(d, kind, r)) * present;
+  vec3 facet = normalize(vec3((hash2(cell + seed + 6.0) - 0.5) * 0.9, 1.0));
   float flash = pow(max(dot(facet, halfway), 0.0), 6.0);
-  vec3 tint = hue(dot(sweep, vec2(cos(spin), sin(spin))) * 1.2 + dot(sweep, vec2(0.8, 0.6)) * 0.8 + hash(cell + 8.0) * 0.5);
-  return piece * tint * (0.3 + 1.6 * flash) * awake;
+  vec3 tint = hue(dot(sweep, vec2(cos(spin), sin(spin))) * 1.2 + dot(sweep, vec2(0.8, 0.6)) * 0.8 + hash(cell + seed + 8.0) * 0.5);
+  tint = mix(tint, mix(uFoil, vec3(1.0), 0.25 * flash), uMetal * 0.75);
+  return piece * tint * (0.35 + 1.5 * flash);
+}
+vec3 sparkles(vec2 p, vec3 halfway, vec2 sweep, float awake) {
+  vec3 big = sparkleLayer(p, 34.0, 0.0, halfway, sweep);
+  vec3 small = sparkleLayer(p, 88.0, 40.0, halfway, sweep);
+  return max(big, small * 0.85) * awake;
 }
 void main() {
   vec2 uv = vec2(gl_FragCoord.x / uSize.x, 1.0 - gl_FragCoord.y / uSize.y);
@@ -204,8 +230,9 @@ void main() {
   else if (uPreset == 4) f = rainbow(p);
   else if (uPreset == 5) f = swirl(p);
   else if (uPreset == 6) f = glitter(p);
-  else f = gold(p);
-  vec3 metal = uPreset == 7 ? vec3(1.0, 0.74, 0.38) * dot(uFoil, vec3(0.3333)) * 1.15 : uFoil;
+  else if (uPreset == 7) f = gold(p);
+  else f = Foil(0.0, 0.0, 0.0, vec2(0.0));
+  vec3 metal = uFoil;
   vec4 look = uPreset == 0 ? vec4(0.25, 1.9, 0.12, 1.0)
     : uPreset == 1 ? vec4(0.6, 1.4, 0.3, 1.0)
     : uPreset == 2 ? vec4(0.9, 0.9, 0.6, 0.5)
@@ -223,8 +250,8 @@ void main() {
     spoke = 0.3 + 0.7 * smoothstep(0.25, 0.95, abs(facing));
   }
   vec3 tint = hue(phase);
-  // metal: cor do metal com um toque do furta-cor (ouro/prata não viram arco-íris)
-  if (uPreset == 7) tint = mix(tint, metal, 0.65);
+  // tema metal (ouro/prata): a cor do metal com um toque do furta-cor
+  tint = mix(tint, metal, uMetal * 0.72);
   float glint = pow(max(dot(normalize(vec3(f.facet, 1.0)), halfway), 0.0), 24.0) * step(0.001, length(f.facet));
   bool layered = uPreset == 2 || uPreset == 4 || uPreset == 5 || uPreset == 7;
   float tilted = smoothstep(0.02, 0.21, length(sin(uTilt)));
@@ -233,7 +260,7 @@ void main() {
   float band = uPreset == 5 ? spoke : layered ? 0.25 + 0.75 * smoothstep(0.3, 0.95, 0.5 + 0.5 * cos(phase * TAU * 0.5 + 1.3)) : 1.0;
   // papel branco: o foil tinge (multiplica) — "screen" sumiria no branco
   float amount = clamp(strength * look.w * band, 0.0, 1.0);
-  vec3 dye = mix(vec3(1.0), mix(tint, vec3(1.0), 0.35) * (0.9 + 0.2 * sheen), amount);
+  vec3 dye = mix(vec3(1.0), mix(tint, vec3(1.0), 0.18) * (0.9 + 0.2 * sheen), amount);
   vec3 color = art * dye;
   // reflexo pontual dos flocos: troca a cor pelo brilho do metal/furta-cor
   color = mix(color, mix(tint, metal, 0.5) * 1.05, clamp(glint * strength * 1.4, 0.0, 0.85));
@@ -302,7 +329,7 @@ export const FoilShaderLayer: React.FC<{
     const U = {
       art: u("uArt"), size: u("uSize"), aspect: u("uAspect"), tilt: u("uTilt"), light: u("uLight"),
       distance: u("uDistance"), preset: u("uPreset"), intensity: u("uIntensity"), scale: u("uScale"),
-      edge: u("uEdge"), frame: u("uFrame"), foil: u("uFoil"), hover: u("uHover"),
+      edge: u("uEdge"), frame: u("uFrame"), foil: u("uFoil"), metal: u("uMetal"), hover: u("uHover"),
     };
 
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
@@ -334,7 +361,8 @@ export const FoilShaderLayer: React.FC<{
       gl.uniform2f(U.tilt, (state.tx * Math.PI) / 180, (state.ty * Math.PI) / 180);
       gl.uniform2f(U.light, state.lx, state.ly);
       gl.uniform1f(U.distance, 1100 / Math.max(1, canvas.clientWidth));
-      gl.uniform1i(U.preset, Math.max(0, PRESETS.indexOf(s.preset)));
+      gl.uniform1i(U.preset, Math.max(0, PATTERNS.indexOf(s.pattern)));
+      gl.uniform1f(U.metal, s.metal);
       gl.uniform1f(U.intensity, s.intensity);
       gl.uniform1f(U.scale, s.scale);
       gl.uniform1f(U.edge, s.edge);

@@ -14,8 +14,11 @@ import { IEntity as Course } from "../../../_cursos/-interfaces/entity.interface
 import FaqGenerator from "@/components/general-components/FaqGenerator";
 import { ONLINE_COURSES_ENABLED } from "@/lib/features";
 import {
+  DEFAULT_PATTERN,
   HIGHLIGHT_DEFAULT_LABEL,
+  HIGHLIGHT_PATTERNS,
   HIGHLIGHT_THEMES,
+  patternInfo,
 } from "@/components/general-components/visualizadorCertificados/highlight";
 
 interface StepProps {
@@ -265,6 +268,19 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors }: StepProps) => {
           placeholder="Sem destaque"
           clearable
         />
+        {dataForm.highlightTheme && (
+          <div>
+            <Label htmlFor="highlightPattern">Padronagem do centro</Label>
+            <Select
+              name="highlightPattern"
+              options={HIGHLIGHT_PATTERNS.map((p) => ({ id: p.id, name: `${p.name} — ${p.description}` }))}
+              state={dataForm.highlightPattern ?? ""}
+              onChange={(name, value) => handleChange(name, value || null)}
+              placeholder={`Padrão do tema (${patternInfo(DEFAULT_PATTERN[dataForm.highlightTheme])?.name})`}
+              clearable
+            />
+          </div>
+        )}
         {dataForm.highlightTheme && (
           <div>
             <Label htmlFor="highlightLabel">Texto da faixa</Label>

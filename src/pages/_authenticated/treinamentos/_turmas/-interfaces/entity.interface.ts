@@ -3,6 +3,7 @@ import { FaqItem } from "../../_cursos/-interfaces/entity.interface";
 export interface IEntity {
   highlightTheme?: "ouro" | "prata" | "holografico" | null;
   highlightLabel?: string | null;
+  highlightPattern?: "rosetas" | "estrelas" | "estilhacos" | "bolhas" | "espiral" | "glitter" | "arco_iris" | "gravado" | "nenhum" | null;
   id?: number;
   name: string;
   imageUrl: string | null;

@@ -9,9 +9,13 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { put } from "@/services/api";
 import {
+  DEFAULT_PATTERN,
   HIGHLIGHT_DEFAULT_LABEL,
+  HIGHLIGHT_PATTERN_OPTIONS,
   HIGHLIGHT_THEMES,
+  patternInfo,
   themeInfo,
+  type HighlightPattern,
 } from "@/components/general-components/visualizadorCertificados/highlight";
 import { ICertificate } from "../-interfaces/entity.interface";
 
@@ -36,6 +40,9 @@ export default function DestaqueCertificadoDialog({
   const [student, setStudent] = useState(!!item.highlightStudent);
   const [theme, setTheme] = useState<Theme | null>((item.highlightTheme as Theme) || null);
   const [label, setLabel] = useState(item.highlightLabel || "");
+  const [pattern, setPattern] = useState<HighlightPattern | null>(
+    (item.highlightPattern as HighlightPattern) || null,
+  );
   const classTheme = themeInfo(item.class?.highlightTheme);
 
   const { mutate: save, isPending } = useMutation({
@@ -45,6 +52,7 @@ export default function DestaqueCertificadoDialog({
         highlightStudent: student,
         highlightTheme: student ? theme || "" : "",
         highlightLabel: student ? label.trim() : "",
+        highlightPattern: student ? pattern || "" : "",
       } as never),
     onSuccess: () => {
       toast({
@@ -112,6 +120,22 @@ export default function DestaqueCertificadoDialog({
                 state={theme ?? ""}
                 onChange={(_, value) => setTheme((value as Theme) || null)}
                 placeholder={`${classTheme?.name ?? "Ouro"} (padrão)`}
+                clearable
+              />
+            </div>
+            <div>
+              <p className="mb-1 text-xs text-muted-foreground">Padronagem do centro</p>
+              <Select
+                name="highlightPattern"
+                options={HIGHLIGHT_PATTERN_OPTIONS}
+                state={pattern ?? ""}
+                onChange={(_, value) => setPattern((value as HighlightPattern) || null)}
+                placeholder={`${
+                  patternInfo(
+                    item.class?.highlightPattern ??
+                      DEFAULT_PATTERN[theme ?? (item.class?.highlightTheme as Theme) ?? "ouro"],
+                  )?.name
+                } (padrão)`}
                 clearable
               />
             </div>

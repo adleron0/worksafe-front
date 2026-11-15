@@ -121,3 +121,23 @@ export function certificateFileName(...parts: (string | undefined | null)[]) {
     .slice(0, 80);
   return `certificado${slug ? `-${slug}` : ''}`;
 }
+
+/**
+ * Baixa um certificado emitido já renderizado pela API (com o efeito estático
+ * de destaque embutido). Usado pela página pública e pelo admin — mesmos arquivos.
+ */
+export async function downloadIssuedCertificate(
+  key: string,
+  format: 'pdf' | 'png-front' | 'png-back',
+  options: { version?: string | number | Date | null; fileName: string },
+) {
+  if (format === 'pdf') {
+    await downloadFromApi(certificatePdfUrl(key, { version: options.version }), `${options.fileName}.pdf`);
+    return;
+  }
+  const side = format === 'png-back' ? 'back' : 'front';
+  await downloadFromApi(
+    certificateImageUrl(key, side, options.version, 4),
+    `${options.fileName}${side === 'back' ? '-verso' : ''}.png`,
+  );
+}

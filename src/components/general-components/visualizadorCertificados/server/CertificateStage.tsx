@@ -14,7 +14,8 @@ import {
 import { getLogicalCanvasSize } from "../utils/fabricSetup";
 import { certificateImageUrl, hasBackSide } from "./certificateRenderUrls";
 import FoilShaderLayer from "./FoilShaderLayer";
-import { effectById, effectForTheme, type HighlightTheme } from "../highlight";
+import { buildFoilSettings, DEFAULT_PATTERN, HOLO_GLOW, type HighlightTheme } from "../highlight";
+import type { FoilPattern } from "./FoilShaderLayer";
 
 // ============================================================================
 // Palco do certificado público.
@@ -66,8 +67,10 @@ interface CertificateStageProps {
   actions?: React.ReactNode;
   /** Tema de destaque (turma especial / aluno destaque): liga o brilho. */
   highlightTheme?: HighlightTheme | null;
-  /** Força um efeito do catálogo (vitrine de efeitos), ignorando o tema. */
-  effectId?: string | null;
+  /** Padronagem do centro (sem ela, a padrão do tema). */
+  highlightPattern?: FoilPattern | null;
+  /** Altura da janela reservada fora do palco (padrão 140 px; maior dentro de diálogos). */
+  reservedHeight?: number;
   onError: () => void;
 }
 
@@ -165,8 +168,9 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
   canvasHeight,
   version,
   actions,
+  reservedHeight = 140,
   highlightTheme,
-  effectId,
+  highlightPattern,
   onError,
 }) => {
   const { width: logicalW, height: logicalH } = getLogicalCanvasSize(
@@ -252,7 +256,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
   const chrome = PAD * 2 + TOOLBAR + top;
   const fixedH = Math.min(
     STAGE_MAX_H,
-    Math.max(STAGE_MIN_H, viewportH - 140),
+    Math.max(STAGE_MIN_H, viewportH - reservedHeight),
   );
   const fitByWidthH = stageWidth
     ? (stageWidth - PAD * 2) / aspect + chrome
@@ -385,8 +389,15 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
     [twoSided, side, flipTo],
   );
 
+  // Eventos de portais (menu Baixar, tooltips) borbulham pela árvore do React
+  // até aqui mesmo estando fora do palco no DOM: sem isto, escolher uma opção
+  // do menu contava como clique no certificado e o virava.
+  const outside = (e: React.SyntheticEvent) =>
+    !stageRef.current?.contains(e.target as Node) ||
+    !!(e.target as HTMLElement).closest?.("[data-stage-control]");
+
   const onPointerDown = (e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest("[data-stage-control]")) return;
+    if (outside(e)) return;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     try {
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -411,6 +422,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    if (!stageRef.current?.contains(e.target as Node)) return;
     // mouse passando por cima (sem botão): só inclina
     if (e.pointerType === "mouse" && !pointers.current.has(e.pointerId)) {
       if (view.scale <= 1) setTilt(e.clientX, e.clientY);
@@ -448,6 +460,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
+    if (!pointers.current.has(e.pointerId)) return;
     const wasClick =
       e.type === "pointerup" &&
       pointers.current.size === 1 &&
@@ -495,9 +508,11 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
   };
 
   // brilho em volta do cartão nos certificados de destaque
-  const effect = effectId ? effectById(effectId) : effectForTheme(highlightTheme);
-  const glowStyle: React.CSSProperties = effect
-    ? { boxShadow: `0 18px 40px -12px rgba(0,0,0,0.35), ${effect.glow}` }
+  const effect = highlightTheme
+    ? buildFoilSettings(highlightTheme, highlightPattern ?? DEFAULT_PATTERN[highlightTheme])
+    : null;
+  const glowStyle: React.CSSProperties = highlightTheme
+    ? { boxShadow: `0 18px 40px -12px rgba(0,0,0,0.35), ${HOLO_GLOW[highlightTheme]}` }
     : {};
   const zoomed = view.scale > 1;
   const hiRes = view.scale >= HI_RES_FROM;
@@ -613,7 +628,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
                     {effect && (
                       <FoilShaderLayer
                         src={certificateImageUrl(certificateKey, "front", version)}
-                        settings={effect.settings}
+                        settings={effect}
                         active={!zoomed && side === "front"}
                       />
                     )}
@@ -638,7 +653,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
                       {effect && (
                         <FoilShaderLayer
                           src={certificateImageUrl(certificateKey, "back", version)}
-                          settings={effect.settings}
+                          settings={effect}
                           active={!zoomed && side === "back"}
                         />
                       )}

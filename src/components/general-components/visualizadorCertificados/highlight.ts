@@ -1,4 +1,4 @@
-import type { FoilSettings } from "./server/FoilShaderLayer";
+import type { FoilPattern, FoilSettings } from "./server/FoilShaderLayer";
 
 // ============================================================================
 // Certificados de destaque — catálogo dos temas e o destaque efetivo.
@@ -9,6 +9,7 @@ import type { FoilSettings } from "./server/FoilShaderLayer";
 // ============================================================================
 
 export type HighlightTheme = "ouro" | "prata" | "holografico";
+export type HighlightPattern = FoilPattern;
 export type HighlightKind = "aluno" | "turma";
 
 export interface HighlightThemeInfo {
@@ -57,25 +58,35 @@ export interface CertificateHighlight {
   kind: HighlightKind;
   theme: HighlightTheme;
   label: string;
+  pattern: FoilPattern;
 }
 
 interface HighlightSource {
   highlightStudent?: boolean | null;
   highlightTheme?: string | null;
   highlightLabel?: string | null;
-  class?: { highlightTheme?: string | null; highlightLabel?: string | null } | null;
+  highlightPattern?: string | null;
+  class?: {
+    highlightTheme?: string | null;
+    highlightLabel?: string | null;
+    highlightPattern?: string | null;
+  } | null;
 }
 
 const asTheme = (value?: string | null): HighlightTheme | null =>
   themeInfo(value)?.id ?? null;
+const asPattern = (value?: string | null): FoilPattern | null =>
+  HIGHLIGHT_PATTERNS.some((p) => p.id === value) ? (value as FoilPattern) : null;
 
 export function resolveHighlight(cert?: HighlightSource | null): CertificateHighlight | null {
   if (!cert) return null;
   if (cert.highlightStudent) {
+    const theme = asTheme(cert.highlightTheme) ?? asTheme(cert.class?.highlightTheme) ?? "ouro";
     return {
       kind: "aluno",
-      theme: asTheme(cert.highlightTheme) ?? asTheme(cert.class?.highlightTheme) ?? "ouro",
+      theme,
       label: cert.highlightLabel?.trim() || HIGHLIGHT_DEFAULT_LABEL.aluno,
+      pattern: asPattern(cert.highlightPattern) ?? asPattern(cert.class?.highlightPattern) ?? DEFAULT_PATTERN[theme],
     };
   }
   const classTheme = asTheme(cert.class?.highlightTheme);
@@ -84,6 +95,7 @@ export function resolveHighlight(cert?: HighlightSource | null): CertificateHigh
       kind: "turma",
       theme: classTheme,
       label: cert.class?.highlightLabel?.trim() || HIGHLIGHT_DEFAULT_LABEL.turma,
+      pattern: asPattern(cert.class?.highlightPattern) ?? DEFAULT_PATTERN[classTheme],
     };
   }
   return null;
@@ -101,7 +113,7 @@ export function renderVersion(
   const h = resolveHighlight(cert);
   if (!h || !cert.updatedAt) return cert.updatedAt;
   let hash = 0;
-  for (const ch of `${h.kind}|${h.theme}|${h.label}`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
+  for (const ch of `${h.kind}|${h.theme}|${h.label}|${h.pattern}`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
   return `${new Date(cert.updatedAt).getTime()}-${h.theme}-${(hash >>> 0).toString(36)}`;
 }
 
@@ -112,50 +124,60 @@ export const HOLO_GLOW: Record<HighlightTheme, string> = {
   holografico: "0 0 0 1px rgba(170,140,255,.35), 0 0 38px -6px rgba(160,200,255,.6)",
 };
 
-// ── Efeitos animados (FoilShaderLayer) ──────────────────────────────────────
-// Cada tema aponta para um efeito; a vitrine (/treinamentos/efeitos-destaque)
-// mostra também as variações extras para escolher.
+// ── Efeito animado (FoilShaderLayer): tema × padronagem ────────────────────
+// O tema dá a cor (metal ou furta-cor); a padronagem, o desenho do centro.
+// A borda sempre tem brilhos de formas e tamanhos sorteados.
 
-
-export interface HighlightEffect {
-  id: string;
-  name: string;
-  description: string;
-  settings: FoilSettings;
-  glow: string;
-}
-
-const FRAME = 0.035;
-
-export const HIGHLIGHT_EFFECTS: HighlightEffect[] = [
-  { id: "ouro", name: "Ouro", description: "Ouro gravado com flocos que acendem no ângulo da luz",
-    settings: { preset: "gold", foil: "#e6c36a", intensity: 0.55, edge: 0.55, frame: FRAME, scale: 1 }, glow: HOLO_GLOW.ouro },
-  { id: "ouro-glitter", name: "Ouro glitter", description: "Glitter dourado fino, mais discreto",
-    settings: { preset: "glitter", foil: "#e9c46a", intensity: 0.32, edge: 0.5, frame: FRAME, scale: 1.4 }, glow: HOLO_GLOW.ouro },
-  { id: "prata", name: "Prata", description: "Glitter prateado frio",
-    settings: { preset: "glitter", foil: "#dfe6ee", intensity: 0.3, edge: 0.5, frame: FRAME, scale: 1.2 }, glow: HOLO_GLOW.prata },
-  { id: "prata-estilhacos", name: "Prata estilhaçada", description: "Facetas de cristal que mudam com a inclinação",
-    settings: { preset: "shards", foil: "#d9e1ea", intensity: 0.38, edge: 0.45, frame: FRAME, scale: 1 }, glow: HOLO_GLOW.prata },
-  { id: "holografico", name: "Holográfico", description: "Arco-íris contínuo, o clássico holográfico",
-    settings: { preset: "rainbow", foil: "#e2e6ec", intensity: 0.55, edge: 0.6, frame: FRAME, scale: 1 }, glow: HOLO_GLOW.holografico },
-  { id: "estrelas", name: "Estrelas", description: "Estrelas furta-cor espalhadas",
-    settings: { preset: "stars", foil: "#e2e6ec", intensity: 0.4, edge: 0.6, frame: FRAME, scale: 1 }, glow: HOLO_GLOW.holografico },
-  { id: "explosoes", name: "Explosões", description: "Rosetas radiais, estilo selo de segurança",
-    settings: { preset: "bursts", foil: "#e2e6ec", intensity: 0.35, edge: 0.6, frame: FRAME, scale: 1 }, glow: HOLO_GLOW.holografico },
-  { id: "cosmos", name: "Cosmos", description: "Anéis e pontos, como bolhas de sabão",
-    settings: { preset: "cosmos", foil: "#e2e6ec", intensity: 0.4, edge: 0.6, frame: FRAME, scale: 1 }, glow: HOLO_GLOW.holografico },
-  { id: "espiral", name: "Espiral", description: "Raios que giram a partir do centro",
-    settings: { preset: "swirl", foil: "#e2e6ec", intensity: 0.4, edge: 0.55, frame: FRAME, scale: 1 }, glow: HOLO_GLOW.holografico },
+export const HIGHLIGHT_PATTERNS: { id: FoilPattern; name: string; description: string }[] = [
+  { id: "rosetas", name: "Rosetas", description: "Rosetas radiais, como selo de segurança" },
+  { id: "estrelas", name: "Estrelas", description: "Estrelas de tamanhos variados espalhadas" },
+  { id: "estilhacos", name: "Estilhaços", description: "Facetas de cristal que mudam com a luz" },
+  { id: "bolhas", name: "Bolhas", description: "Anéis como bolhas de sabão" },
+  { id: "espiral", name: "Espiral", description: "Raios que giram a partir do centro" },
+  { id: "arco_iris", name: "Arco-íris", description: "Véu contínuo, sem desenho" },
+  { id: "gravado", name: "Gravado", description: "Linhas finas gravadas em diagonal" },
+  { id: "glitter", name: "Glitter", description: "Pontinhos finos (os flocos)" },
+  { id: "nenhum", name: "Nenhum", description: "Só os brilhos da borda" },
 ];
 
-/** Efeito usado por cada tema (o que o certificado de destaque mostra hoje). */
-export const THEME_EFFECT: Record<HighlightTheme, string> = {
-  ouro: "ouro",
-  prata: "prata",
-  holografico: "holografico",
+/** Padronagem de cada tema quando ninguém escolheu (igual à API). */
+export const DEFAULT_PATTERN: Record<HighlightTheme, FoilPattern> = {
+  ouro: "rosetas",
+  prata: "estilhacos",
+  holografico: "estrelas",
 };
 
-export const effectById = (id?: string | null) =>
-  HIGHLIGHT_EFFECTS.find((e) => e.id === id) ?? null;
-export const effectForTheme = (theme?: HighlightTheme | null) =>
-  theme ? effectById(THEME_EFFECT[theme]) : null;
+const THEME_FOIL: Record<HighlightTheme, { foil: string; metal: number }> = {
+  ouro: { foil: "#e6c36a", metal: 1 },
+  prata: { foil: "#dfe6ee", metal: 1 },
+  holografico: { foil: "#e2e6ec", metal: 0 },
+};
+
+/** Intensidade/escala por padronagem (as cheias tingem mais o papel). */
+const PATTERN_TUNE: Record<FoilPattern, { intensity: number; scale: number }> = {
+  rosetas: { intensity: 0.55, scale: 1 },
+  estrelas: { intensity: 0.55, scale: 1 },
+  estilhacos: { intensity: 0.5, scale: 1 },
+  bolhas: { intensity: 0.55, scale: 1 },
+  espiral: { intensity: 0.5, scale: 1 },
+  arco_iris: { intensity: 0.55, scale: 1 },
+  gravado: { intensity: 0.6, scale: 1 },
+  glitter: { intensity: 0.32, scale: 1.3 },
+  nenhum: { intensity: 0, scale: 1 },
+};
+
+export const patternInfo = (id?: string | null) =>
+  HIGHLIGHT_PATTERNS.find((p) => p.id === id) ?? null;
+
+export function buildFoilSettings(theme: HighlightTheme, pattern: FoilPattern): FoilSettings {
+  return {
+    pattern,
+    ...THEME_FOIL[theme],
+    ...PATTERN_TUNE[pattern],
+    edge: 0.8,
+    frame: 0.035,
+  };
+}
+
+/** Opções de padronagem para os selects do admin. */
+export const HIGHLIGHT_PATTERN_OPTIONS = HIGHLIGHT_PATTERNS.map((p) => ({ id: p.id, name: p.name }));

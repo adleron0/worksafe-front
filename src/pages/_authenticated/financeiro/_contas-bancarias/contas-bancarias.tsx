@@ -63,7 +63,7 @@ function BankAccounts() {
         </div>
       </>}
       renderForm={(props) => <BankAccountForm {...props} />}
-      inactivateWarning="Deixa de aparecer na baixa. Os recebimentos já lançados continuam ligados à conta."
+      inactivateWarning="Deixa de aparecer na baixa. Os recebimentos e pagamentos já lançados continuam ligados à conta."
     />
   );
 }

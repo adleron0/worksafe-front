@@ -173,11 +173,6 @@ export const items = [
     isProduct: "financeiro",
     ability: "financeiro",
     subitems: [
-      // {
-      //   title: "Contas a Pagar",
-      //   icon: "trending-down",
-      //   path: "/financeiro/pagar",
-      // },
       {
         title: "A Faturar",
         icon: "receipt",
@@ -187,6 +182,16 @@ export const items = [
         title: "Contas a Receber",
         icon: "trending-up",
         path: "/financeiro/receber",
+      },
+      {
+        title: "Contas a Pagar",
+        icon: "trending-down",
+        path: "/financeiro/pagar",
+      },
+      {
+        title: "Fornecedores",
+        icon: "truck",
+        path: "/financeiro/fornecedores",
       },
       {
         title: "Plano de Contas",

@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/financeiro/_centros-custo/
           {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
         </div>
         <div className="lg:w-32 text-muted-foreground"><span className="lg:hidden text-xs">Código: </span>{item.code || "—"}</div>
-        <div className="lg:w-32 lg:text-right lg:pr-6 tabular-nums"><span className="lg:hidden text-xs text-muted-foreground">Lançamentos: </span>{item._count?.financialRecords ?? 0}</div>
+        <div className="lg:w-32 lg:text-right lg:pr-6 tabular-nums"><span className="lg:hidden text-xs text-muted-foreground">Lançamentos: </span>{(item._count?.financialRecords ?? 0) + (item._count?.payables ?? 0)}</div>
       </>}
       renderForm={(props) => <CostCenterForm {...props} />}
     />

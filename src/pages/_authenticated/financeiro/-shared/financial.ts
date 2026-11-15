@@ -28,7 +28,7 @@ export interface CostCenter {
   code?: string | null;
   description?: string | null;
   inactiveAt?: string | null;
-  _count?: { financialRecords: number };
+  _count?: { financialRecords: number; payables?: number };
 }
 
 export type BankAccountType = "corrente" | "poupanca" | "caixa" | "gateway";
@@ -50,7 +50,7 @@ export interface BankAccount {
   gateway?: string | null;
   isDefault: boolean;
   inactiveAt?: string | null;
-  _count?: { financialRecords: number };
+  _count?: { financialRecords: number; payables?: number };
 }
 
 export const bankTypeOptions: Array<{ id: BankAccountType; name: string }> = [

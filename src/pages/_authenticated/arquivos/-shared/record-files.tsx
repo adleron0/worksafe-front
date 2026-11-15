@@ -46,6 +46,13 @@ export function RecordFilesPanel({ entity, entityId, title = "Arquivos", hint, c
     onError: (err) => toast({ title: "Não foi possível restaurar", description: errorMessage(err), variant: "destructive" }),
   });
 
+  // apagar de vez é de quem administra os Arquivos: o arquivo e as versões dele saem do sistema e do armazenamento
+  const { mutate: purge, isPending: purging } = useMutation({
+    mutationFn: (file: FileInfo) => api.delete(`company-files/files/${file.id}/purge`),
+    onSuccess: () => { refresh(); toast({ title: "Arquivo apagado de vez", variant: "success" }); },
+    onError: (err) => toast({ title: "Não foi possível apagar", description: errorMessage(err), variant: "destructive" }),
+  });
+
   /** Um arquivo por vez; o grande vai direto ao armazenamento, em partes. O que falha fica na lista com o motivo. */
   const send = async (list: File[]) => {
     if (!data?.canWrite || !list.length) return;
@@ -170,6 +177,11 @@ export function RecordFilesPanel({ entity, entityId, title = "Arquivos", hint, c
                   <span className="truncate">{file.name} · {sizeText(file.size)}</span>
                   <span>apagado em {dateBr(file.trashedAt)}{file.trashedBy ? ` por ${file.trashedBy}` : ""} · some em {file.daysLeft} {file.daysLeft === 1 ? "dia" : "dias"}</span>
                   {canWrite && <button type="button" className="underline" disabled={restoring} onClick={() => restore(file)}>restaurar</button>}
+                  {data.canManage && (
+                    <ConfirmDialog title="Apagar de vez?" description={`"${file.name}" e as versões anteriores dele saem do sistema e do armazenamento. Não dá para desfazer.`} slideLabel="Deslize para apagar de vez" onConfirm={() => purge(file)}>
+                      <button type="button" className="underline text-red-600 dark:text-red-400" disabled={purging}>apagar de vez</button>
+                    </ConfirmDialog>
+                  )}
                 </li>
               ))}
             </ul>

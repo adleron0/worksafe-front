@@ -17,11 +17,12 @@ import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { dateBr, errorMessage } from "../../comercial/-shared/commercial";
-import { ORDERS_ABILITY, RDO_PERMISSION, ORDERS_KEY, ORDER_KEY } from "../-shared/orders";
+import { ORDERS_ABILITY, RDO_PERMISSION, ORDERS_KEY, ORDER_KEY, ordersApi } from "../-shared/orders";
 import {
   CONDITION_OPTIONS, CrewMember, DIARY_KEY, OCCURRENCE_OPTIONS, Occurrence, Photo, RECENT_REPORTS_KEY, REPORT_KEY, Report, ReportStatusBadge, SHIFT_OPTIONS, StepProgress, TimeField, WEATHER_OPTIONS,
   hoursText, isTime, reportsApi, spanMinutes, workedHours,
 } from "../-shared/reports";
+import { TEAM_OPTIONS_KEY, TeamOptions, TeamPicker } from "../-shared/team";
 
 export const Route = createFileRoute("/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId")({
   component: ReportPage,
@@ -81,12 +82,21 @@ function ReportPage() {
   const { can } = useVerify();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [picking, setPicking] = useState(false);
+  // funções do cadastro de quem foi incluído pela lista: [nome, id]
+  const [extraRoles, setExtraRoles] = useState<Array<[string, number | null]>>([]);
   const isNew = reportId === "novo";
   const input = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<Form | null>(null);
   const [uploading, setUploading] = useState(false);
   const [reopening, setReopening] = useState(false);
 
+  // quem pode entrar na equipe do dia: os funcionários, com a disponibilidade na data do RDO
+  const pickDate = form?.date ?? "";
+  const { data: teamOptions } = useQuery({
+    queryKey: [TEAM_OPTIONS_KEY, Number(orderId), { from: pickDate, to: pickDate }], enabled: picking && !!pickDate, staleTime: 60 * 1000,
+    queryFn: () => ordersApi.get<TeamOptions>(`${orderId}/team-options`, { from: pickDate, to: pickDate }),
+  });
   const { data: report, isLoading, error } = useQuery({
     queryKey: [REPORT_KEY, orderId, reportId],
     queryFn: () => reportsApi.get<Report>(isNew ? `service-orders/${orderId}/reports/template` : `service-reports/${reportId}`),
@@ -151,7 +161,12 @@ function ReportPage() {
   const daySpan = isTime(form.startTime) && isTime(form.endTime) ? spanMinutes(form.startTime, form.endTime, overnight) : null;
   const setOccurrence = (index: number, patch: Partial<Occurrence>) => set("occurrences", form.occurrences.map((item, i) => (i === index ? { ...item, ...patch } : item)));
   // funções: as vendidas na proposta e as que já estão na equipe do dia
-  const roles = [...new Set([...report.roles, ...form.crew.map((member) => member.role).filter(Boolean)])];
+  // funções orçadas na proposta, as do cadastro de quem foi incluído e as que já estão lançadas
+  const roleIds = new Map<string, number | null>([...(report.roleOptions ?? []).map((role): [string, number | null] => [role.name, role.professionalId]), ...extraRoles]);
+  const roles = [...new Set([...report.roles, ...roleIds.keys(), ...form.crew.map((member) => member.role).filter(Boolean)])];
+  /** O id da função no cadastro: é por ele que o custo de mão de obra casa com o orçado. */
+  const roleIdOf = (role: string) => roleIds.get(role) ?? null;
+  const linkedIds = new Set(form.crew.map((member) => member.employeeId).filter((id): id is number => !!id));
   const totalHours = form.crew.reduce((sum, member) => sum + member.hours, 0);
   const totalOvertime = form.crew.reduce((sum, member) => sum + member.overtime, 0);
 
@@ -225,7 +240,9 @@ function ReportPage() {
           {form.crew.map((member, index) => (
             <div key={index} className="rounded-md border p-3 grid gap-2">
               <div className="flex gap-2">
-                <ShadInput aria-label="Nome" placeholder="Nome" maxLength={120} value={member.name} disabled={!editable} onChange={(event) => setCrew(index, { name: event.target.value })} />
+                {member.employeeId
+                  ? <p className="flex h-9 min-w-0 flex-1 items-center gap-1.5 text-sm font-medium"><Icon name="id-card" className="w-4 h-4 shrink-0 text-muted-foreground" /> <span className="truncate">{member.name}</span></p>
+                  : <ShadInput aria-label="Nome" placeholder="Nome" maxLength={120} value={member.name} disabled={!editable} onChange={(event) => setCrew(index, { name: event.target.value })} />}
                 {editable && <Button type="button" variant="ghost" size="sm" className="h-9 w-9 p-0 shrink-0" aria-label={`Tirar ${member.name || "pessoa"} da equipe do dia`} onClick={() => set("crew", form.crew.filter((_, i) => i !== index))}><Icon name="x" className="w-4 h-4" /></Button>}
               </div>
               {/* quem entrou depois ou saiu antes tem a hora própria; os demais seguem a do dia */}
@@ -251,7 +268,7 @@ function ReportPage() {
               <div className="grid grid-cols-[minmax(0,1fr)_5rem_5rem] gap-2 items-end">
                 <div><Label className="text-xs">Função</Label>
                   <Select name={`role-${index}`} state={member.role} clearable disabled={!editable} modal={false} placeholder="Escolha" options={roles.map((role) => ({ id: role, name: role }))}
-                    onChange={(_, value) => setCrew(index, { role: String(value ?? "") })} /></div>
+                    onChange={(_, value) => { const role = String(value ?? ""); setCrew(index, { role, professionalId: roleIdOf(role) }); }} /></div>
                 <div><Label htmlFor={`hours-${index}`} className="text-xs">Horas</Label>
                   <ShadInput id={`hours-${index}`} className="mt-1 text-center" inputMode="decimal" value={String(member.hours).replace(".", ",")} disabled={!editable}
                     onChange={(event) => setCrew(index, { hours: toHours(event.target.value) })} /></div>
@@ -262,9 +279,14 @@ function ReportPage() {
             </div>
           ))}
           {editable && (
-            <Button type="button" variant="outline" className="h-11" onClick={() => setForm((current) => (current ? timed({ ...current, crew: [...current.crew, { name: "", role: report.roles[0] ?? "", hours: hoursPerDay, overtime: 0, in: "", out: "", leaveReason: "", own: false }] }) : current))}>
-              <Icon name="user-plus" className="w-4 h-4 mr-1" /> Incluir pessoa
-            </Button>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button type="button" variant="outline" className="h-11" onClick={() => setPicking(true)}>
+                <Icon name="user-plus" className="w-4 h-4 mr-1" /> Incluir funcionário
+              </Button>
+              <Button type="button" variant="ghost" className="h-11" onClick={() => setForm((current) => (current ? timed({ ...current, crew: [...current.crew, { name: "", role: report.roles[0] ?? "", professionalId: roleIdOf(report.roles[0] ?? ""), hours: hoursPerDay, overtime: 0, in: "", out: "", leaveReason: "", own: false }] }) : current))}>
+                <Icon name="plus" className="w-4 h-4 mr-1" /> Pessoa avulsa (diarista, terceiro)
+              </Button>
+            </div>
           )}
         </Section>
 
@@ -388,6 +410,19 @@ function ReportPage() {
         </div>
       )}
 
+      {picking && teamOptions && (
+        <TeamPicker options={teamOptions} taken={linkedIds} onClose={() => setPicking(false)}
+          onPick={(chosen) => {
+            setExtraRoles((current) => [...current, ...chosen.flatMap((option) => option.roles.map((role): [string, number | null] => [role.name, role.id]))]);
+            setForm((current) => (current ? timed({ ...current, crew: [...current.crew, ...chosen.map((option): CrewRow => {
+              // a função do dia: a orçada que a pessoa exerce, se houver; senão a principal dela
+              const budgeted = option.roles.find((role) => (report.roleOptions ?? []).some((item) => item.professionalId === role.id));
+              const role = budgeted ?? option.roles.find((item) => item.isPrimary) ?? option.roles[0];
+              const budgetName = role ? (report.roleOptions ?? []).find((item) => item.professionalId === role.id)?.name : undefined;
+              return { name: option.name, role: budgetName ?? role?.name ?? "", employeeId: option.id, professionalId: role?.id ?? null, hours: hoursPerDay, overtime: 0, in: "", out: "", leaveReason: "", own: false };
+            })] }) : current));
+          }} />
+      )}
       {reopening && <ReopenDialog reportId={Number(reportId)} onClose={() => setReopening(false)} onDone={(result) => { refreshAll(); queryClient.setQueryData([REPORT_KEY, orderId, reportId], result); }} />}
     </div>
   );

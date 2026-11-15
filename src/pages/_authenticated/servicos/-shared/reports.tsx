@@ -11,7 +11,8 @@ import { OrderStatus } from "./orders";
 
 /** RDO — relatório diário de obra: tipos (espelham a API), rótulos e o painel do diário na OS. */
 /** `in`/`out` só vêm preenchidos quando a pessoa entrou ou saiu em hora diferente da do dia. */
-export interface CrewMember { name: string; role: string; hours: number; overtime: number; in?: string | null; out?: string | null; leaveReason?: string | null }
+/** `employeeId` e `professionalId`: pessoa e função do cadastro; sem eles é pessoa avulsa e a função vale pelo texto. */
+export interface CrewMember { name: string; role: string; hours: number; overtime: number; in?: string | null; out?: string | null; leaveReason?: string | null; employeeId?: number | null; professionalId?: number | null }
 export interface StepProgress { step: number; title: string; percent: number }
 export interface Occurrence { type: string; description: string; hoursLost: number }
 export interface Photo { url: string; caption: string }
@@ -21,7 +22,7 @@ export interface Report {
   startTime: string | null; endTime: string | null; breakMinutes: number; weatherEnd: string | null;
   startCondition: string | null; endCondition: string | null; startNote: string | null; endNote: string | null;
   crew: CrewMember[]; activities: string | null; progress: StepProgress[]; occurrences: Occurrence[]; equipment: string | null; photos: Photo[]; notes: string | null;
-  createdBy: string | null; closedAt: string | null; closedBy: string | null; order: ReportOrder; roles: string[]; hoursPerDay?: number;
+  createdBy: string | null; closedAt: string | null; closedBy: string | null; order: ReportOrder; roles: string[]; roleOptions?: Array<{ name: string; professionalId: number | null }>; hoursPerDay?: number;
 }
 export interface ReportRow {
   id: number; orderId: number; date: string; shift: string; shiftLabel: string; weather: string; status: "rascunho" | "fechado";

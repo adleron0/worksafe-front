@@ -22,6 +22,7 @@ import {
   isForward, moveLabel, nextStage, ordersApi,
 } from "../-shared/orders";
 import { DiaryPanel } from "../-shared/reports";
+import { TEAM_OPTIONS_KEY, TeamEditor } from "../-shared/team";
 import { ResultPanel } from "../-shared/results";
 import { OrderPurchasesPanel } from "../../suprimentos/-shared/purchases";
 
@@ -59,6 +60,7 @@ function OrderPage() {
   const apply = (result: Order) => {
     queryClient.setQueryData([ORDER_KEY, orderId], result);
     queryClient.invalidateQueries({ queryKey: [ORDERS_KEY] });
+    queryClient.invalidateQueries({ queryKey: [TEAM_OPTIONS_KEY] });
   };
   const fail = (title: string) => (err: unknown) => toast({ title, description: errorMessage(err), variant: "destructive" });
   const { mutate: saveAgenda, isPending: saving } = useMutation({
@@ -260,30 +262,8 @@ function OrderPage() {
                 options={(options?.users ?? []).map((user) => ({ id: String(user.id), name: user.name }))} onChange={(_, value) => set("responsibleUserId", String(value ?? ""))} /></div>
             <div>
               <Label className="text-xs">Equipe escalada</Label>
-              <div className="mt-1 grid gap-2">
-                {agenda.team.map((member, index) => (
-                  <div key={index} className="grid gap-1">
-                    <div className="flex gap-2">
-                      <ShadInput aria-label="Nome" placeholder="Nome" maxLength={120} value={member.name} disabled={!editable}
-                        onChange={(event) => set("team", agenda.team.map((current, i) => (i === index ? { ...current, name: event.target.value } : current)))} />
-                      <ShadInput aria-label="Função" placeholder="Função" maxLength={80} value={member.role} disabled={!editable}
-                        onChange={(event) => set("team", agenda.team.map((current, i) => (i === index ? { ...current, role: event.target.value } : current)))} />
-                      {editable && <Button type="button" variant="ghost" size="sm" className="h-9 w-9 p-0 shrink-0" aria-label="Remover da equipe" onClick={() => set("team", agenda.team.filter((_, i) => i !== index))}><Icon name="x" className="w-3 h-3" /></Button>}
-                    </div>
-                    {/* ligar a pessoa ao usuário dela é o que faz esta OS aparecer para quem só vê as suas */}
-                    {(editable || member.userId) && (
-                      <Select name={`teamUser-${index}`} state={member.userId ? String(member.userId) : ""} clearable disabled={!editable} placeholder="Sem usuário no sistema" modal={false}
-                        options={(options?.users ?? []).map((user) => ({ id: String(user.id), name: user.name }))}
-                        onChange={(_, value) => {
-                          const user = (options?.users ?? []).find((current) => String(current.id) === String(value ?? ""));
-                          set("team", agenda.team.map((current, i) => (i === index ? { ...current, userId: user?.id ?? null, name: current.name || user?.name || "" } : current)));
-                        }} />
-                    )}
-                  </div>
-                ))}
-                {editable && <Button type="button" variant="outline" size="sm" className="w-fit" onClick={() => set("team", [...agenda.team, { name: "", role: "", userId: null }])}><Icon name="user-plus" className="w-4 h-4 mr-1" /> Incluir pessoa</Button>}
-                {!editable && agenda.team.length === 0 && <p className="text-sm text-muted-foreground">Ninguém escalado.</p>}
-              </div>
+              <TeamEditor orderId={order.id} team={agenda.team} onChange={(team) => set("team", team)} editable={editable} from={agenda.plannedStart || order.startedAt || ""} to={agenda.plannedEnd || order.finishedAt || ""}
+                users={options?.users ?? []} />
             </div>
             <div><Label htmlFor="orderLocation" className="text-xs">Local do serviço</Label>
               <ShadInput id="orderLocation" className="mt-1" maxLength={300} value={agenda.location} disabled={!editable} onChange={(event) => set("location", event.target.value)} /></div>

@@ -26,7 +26,8 @@ export interface OrderList { rows: OrderRow[]; total: number; summary: Partial<R
 
 export interface ChecklistItem { id?: string; title: string; done: boolean; doneAt?: string | null; doneBy?: string | null }
 /** Pessoa escalada; ligada a um usuário, a OS aparece para ela mesmo sem a permissão de ver todas. */
-export interface TeamMember { name: string; role: string; userId?: number | null }
+/** `employeeId`: pessoa do cadastro de funcionários; sem ele é pessoa avulsa. `from`/`to`: período dela dentro da obra. */
+export interface TeamMember { name: string; role: string; userId?: number | null; employeeId?: number | null; professionalId?: number | null; from?: string | null; to?: string | null }
 export interface ScopeItem { type: string; description: string; unit: string | null; quantity: number; workDays: number | null; hoursPerDay: number | null; overtimeHours: number; night: boolean; weekend: boolean; travel: boolean }
 export interface ScopeSection { title: string; kind: string; items: ScopeItem[] }
 export interface OrderEvent { id: number; type: string; from: OrderStatus | null; to: OrderStatus | null; note: string | null; at: string; user: string | null }

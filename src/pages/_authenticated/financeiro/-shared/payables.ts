@@ -48,10 +48,20 @@ export interface Payable {
   receiptUrl?: string | null;
   observations?: string | null;
   inactiveAt?: string | null;
+  groupKey?: string | null;
+  barcode?: string | null;
+  pixCode?: string | null;
+  interestValue?: number | string | null;
+  fineValue?: number | string | null;
+  discountValue?: number | string | null;
+  recurrenceId?: number | null;
+  recurrence?: { id: number; inactiveAt?: string | null; endDate?: string | null } | null;
+  statementRef?: string | null;
 }
 
 interface Bucket { count: number; total: number }
-export interface PayableSummary { today: string; overdue: Bucket; dueToday: Bucket; dueWeek: Bucket; later: Bucket; paid: Bucket }
+export interface PayableSummary { today: string; overdue: Bucket; dueToday: Bucket; dueWeek: Bucket; later: Bucket; paid: Bucket; open?: Bucket; paidPeriod?: string }
+export interface PayableList { today: string; view: string; rows: Payable[]; total: number; summary: PayableSummary }
 
 export const PAYABLES_KEY = "listContas a Pagar";
 export const PAYABLES_SUMMARY_KEY = "financialPayablesSummary";

@@ -1,234 +1,175 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { get } from "@/services/api";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import api, { get } from "@/services/api";
+import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import Pagination from "@/components/general-components/Pagination";
-import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
-import CalendarPicker from "@/components/general-components/Calendar";
-import Select from "@/components/general-components/Select";
-import StatusCards from "./-components/StatusCards";
-import StatusCardsSkeleton from "./-components/StatusCardsSkeleton";
+import ConfirmDialog from "@/components/general-components/ConfirmDialog";
+import Icon from "@/components/general-components/Icon";
+import { Button } from "@/components/ui/button";
+import { ApiError } from "@/general-interfaces/api.interface";
+import { cn } from "@/lib/utils";
 import ItemSkeleton from "./-skeletons/ItemSkeleton";
 import ItemList from "./-components/FinancialRecordsItem";
 import Form from "./-components/FinancialRecordsForm";
-import SearchForm from "./-components/FinancialRecordsSearch";
 import { IFinancialRecord } from "./-interfaces/entity.interface";
-import { statusOptions } from "./-components/options";
-import { ApiError } from "@/general-interfaces/api.interface";
+import { OPEN_STATUSES } from "./-components/options";
+import { CHART_KEY, FINANCIAL_ABILITY } from "../-shared/financial";
+import {
+  ActiveFilters, Bucket, BulkSettleDialog, FilterPanel, SearchBox, SelectBox, SelectionBar, SortButton, SummaryCards,
+  countFilters, downloadXlsx, reportBulk, toParams, useSelection, useUrlFilters,
+} from "../-shared/ledger";
 
-export const Route = createFileRoute('/_authenticated/financeiro/_receber/receber')(({
-  component: List,
-}))
+export const Route = createFileRoute("/_authenticated/financeiro/_receber/receber")({
+  component: Receivables,
+  validateSearch: (search: Record<string, unknown>) => search as Record<string, string>,
+});
 
-function List() {
+const entity = { name: "Conta a Receber", pluralName: "Contas a Receber", model: "financial-records", ability: "financeiro" };
+const LIST_KEY = `list${entity.pluralName}`;
+const VIEWS = [
+  { id: "abertas", label: "Em aberto" },
+  { id: "recebidas", label: "Recebidas" },
+  { id: "canceladas", label: "Canceladas" },
+  { id: "todas", label: "Todas" },
+  { id: "excluidas", label: "Inativas" },
+];
+const LIMITS = [30, 50, 100, 200];
+
+interface Summary { overdue: Bucket; dueToday: Bucket; dueWeek: Bucket; later: Bucket; received: Bucket; lost: Bucket; open: Bucket; paidPeriod: string }
+interface Response { today: string; view: string; rows: IFinancialRecord[]; total: number; summary: Summary }
+
+function Receivables() {
   const { can } = useVerify();
-  const [openSearch, setOpenSearch] = useState(false);
+  const queryClient = useQueryClient();
+  const { filters, set, replace } = useUrlFilters({ view: "abertas" });
+  const [openFilters, setOpenFilters] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<IFinancialRecord | null>(null);
+  const [bulkSettle, setBulkSettle] = useState(false);
+  const view = filters.view || "abertas";
+  const page = Number(filters.page ?? 0);
+  const limit = Number(filters.limit ?? 30);
 
-  // Get current month in YYYY-MM format
-  const getCurrentMonth = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`;
-  };
-
-  const [searchParams, setSearchParams] = useState<{
-    limit: number;
-    page: number;
-    show: string[];
-    'order-createdAt': string;
-    accrualDate: string | null;
-    '-aggregate': string;
-    'in-status'?: string[];
-    [filter: string]: unknown;
-  }>({
-    limit: 10,
-    page: 0,
-    show: ['trainee', 'subscription', 'customer', 'chartAccount', 'costCenter', 'bankAccount'],
-    'order-createdAt': 'desc',
-    accrualDate: getCurrentMonth(), // Default to current month
-    '-aggregate': 'status:count:sum:value'
-  });
-  const initialFormRef = useRef(searchParams);
-
-  const entity = {
-    name: "Conta a Receber",
-    pluralName: "Contas a Receber",
-    model: "financial-records",
-    ability: "financeiro",
-  }
-
-  interface Response {
-    rows: IFinancialRecord[];
-    total: number;
-    aggregations?: {
-      [key: string]: {
-        _count: number;
-        _sum: {
-          value: string;
-        };
-      };
-    };
-  }
-
+  const params = toParams({ ...filters, view, page: String(page), limit: String(limit) });
   const { data, isLoading, isError, error } = useQuery<Response | undefined, ApiError>({
-    queryKey: [`list${entity.pluralName}`, searchParams],
-    queryFn: async () => {
-      const params = Object.keys(searchParams)
-        // chaves `ui-*` guardam só o estado da busca na tela; não vão para a API
-        .filter((key) => !key.startsWith('ui-') && searchParams[key] !== null && searchParams[key] !== undefined)
-        .map((key) => ({ key, value: searchParams[key] as string | number | string[] }));
-      return get(entity.model, '', params);
-    },
+    queryKey: [LIST_KEY, "ledger", params],
+    queryFn: () => get("financial", "receivables", params),
+    placeholderData: (previous) => previous,
   });
+  const selection = useSelection(data?.rows);
+  const selectedRows = [...selection.selected.values()];
+  const settleable = selectedRows.filter((r) => r.gateway === "manual" && OPEN_STATUSES.includes(r.status) && !r.inactiveAt);
+  const archivable = selectedRows.filter((r) => r.gateway === "manual" && r.status !== "received" && !r.inactiveAt);
+  const total = (rows: IFinancialRecord[]) => rows.reduce((sum, r) => sum + Number(r.netValue ?? r.value ?? 0), 0);
+  const summary = data?.summary;
 
-  const handleSearch = async (params: { [key: string]: any }) => {
-    setSearchParams((prev) => ({ ...prev, ...params }));
-  };
-
-  const handleMonthChange = (_name: string, value: string | null) => {
-    setSearchParams((prev) => ({
-      ...prev,
-      accrualDate: value || null, // When cleared, set to null to show all
-      page: 0 // Reset page when changing month
-    }));
-  };
-
-  const handleStatusChange = (_name: string, selectedStatus: string | string[]) => {
-    const statusArray = Array.isArray(selectedStatus) ? selectedStatus : [selectedStatus];
-    setSearchParams((prev) => ({
-      ...prev,
-      'in-status': statusArray.length > 0 && statusArray[0] !== '' ? statusArray : undefined,
-      page: 0 // Reset page when changing filter
-    }));
-  };
-
-  const handleClear = () => {
-    setSearchParams(initialFormRef.current);
-  };
-
-  const handleLimitChange = (name: string, value: string | number) => {
-    setSearchParams((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handlePageChange = (page: number) => {
-    setSearchParams((prev) => ({ ...prev, page }));
-  };
-
-  const totalPages = data ? Math.ceil(data.total / searchParams.limit) : 0;
-  const skeletons = Array(5).fill(null);
+  const refresh = () => { for (const key of [LIST_KEY, "financialBankBalances", CHART_KEY, "financialReports"]) queryClient.invalidateQueries({ queryKey: [key] }); };
+  const { mutate: archiveMany } = useMutation({
+    mutationFn: async (ids: number[]) => (await api.post("financial/receivables/bulk-archive", { ids })).data,
+    onSuccess: (result) => { reportBulk(`${result.archived} ${result.archived === 1 ? "conta inativada" : "contas inativadas"}`, result); selection.clear(); refresh(); },
+    onError: (err: ApiError) => toast({ title: "Não foi possível concluir", description: err.response?.data?.message || "Erro desconhecido.", variant: "destructive" }),
+  });
 
   if (!can(`view_${entity.ability}`)) return null;
+  const canUpdate = can(`update_${FINANCIAL_ABILITY}`);
+  const canCreate = can(`create_${FINANCIAL_ABILITY}`);
+  const filterCount = countFilters(filters);
+  const periodHint = summary?.paidPeriod && summary.paidPeriod !== "filtro" ? `${summary.paidPeriod.slice(5, 7)}/${summary.paidPeriod.slice(0, 4)}` : "no período";
+  const cards = [
+    { view: "atrasadas", label: "Vencidas", bucket: summary?.overdue, tone: "text-red-600 dark:text-red-400" },
+    { view: "hoje", label: "Vencem hoje", bucket: summary?.dueToday, tone: "text-amber-600 dark:text-amber-400" },
+    { view: "semana", label: "Próximos 7 dias", bucket: summary?.dueWeek },
+    { view: "depois", label: "Depois", bucket: summary?.later },
+    { view: "abertas", label: "Total em aberto", bucket: summary?.open },
+    { view: "recebidas", label: "Recebidas", bucket: summary?.received, tone: "text-green-600 dark:text-green-400", hint: periodHint },
+  ];
+  const exportNow = (ids?: number[]) => downloadXlsx("financial/receivables/export", ids ? [{ key: "ids", value: ids.join(",") }] : toParams({ ...filters, view }), "contas-a-receber.xlsx");
 
   return (
     <>
-      <HeaderLists
-        entityName={entity.name}
-        ability={entity.ability}
-        limit={data?.total || 0}
-        searchParams={searchParams}
-        onlimitChange={handleLimitChange}
-        openSearch={setOpenSearch}
-        openForm={setOpenForm}
-        setFormData={setFormData}
-        setFormType={() => {}}
-        iconForm="plus"
-        addButtonName="Nova"
-        titlePage='Contas a Receber'
-        descriptionPage='Gerencie todas as contas a receber.'
-      />
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 my-4 p-4 rounded-lg border">
-        <div className="flex items-center gap-2">
-          <CalendarPicker
-            mode="month"
-            name="monthSelector"
-            value={searchParams.accrualDate}
-            onValueChange={handleMonthChange}
-            placeholder="Selecione o mês"
-            fromYear={2020}
-            toYear={2030}
-          />
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Contas a Receber</h1>
+          <p className="text-sm text-muted-foreground">Inscrições, contratos e lançamentos manuais. Por padrão, o que está em aberto, ordenado pelo vencimento.</p>
         </div>
-        <div className="w-full sm:w-64">
-          <Select
-            name="statusFilter"
-            options={statusOptions}
-            state={searchParams['in-status'] || []}
-            onChange={handleStatusChange}
-            placeholder="Filtrar por status..."
-            multiple={true}
-          />
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" asChild><Link to="/financeiro/recorrentes" search={{ tipo: "receivable" } as never}><Icon name="repeat" className="w-4 h-4" /> Recorrentes</Link></Button>
+          <Button variant="outline" size="sm" onClick={() => exportNow()}><Icon name="file-spreadsheet" className="w-4 h-4" /> Exportar</Button>
+          {canCreate && <Button size="sm" onClick={() => { setFormData(null); setOpenForm(true); }}><Icon name="plus" className="w-4 h-4" /> Nova conta</Button>}
         </div>
       </div>
 
-      {/* Status Cards */}
-      {isLoading ? (
-        <StatusCardsSkeleton />
-      ) : (
-        <StatusCards aggregations={data?.aggregations} />
+      <SummaryCards cards={cards} active={view} onPick={(next) => { selection.clear(); set({ view: next === view && next !== "abertas" ? "abertas" : next }); }} />
+
+      <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-3">
+        <SearchBox value={filters.q ?? ""} onChange={(q) => set({ q })} placeholder="Cliente, aluno, CNPJ/CPF, descrição, NF, código ou valor" />
+        <Button variant="outline" size="sm" className="h-9 w-fit" onClick={() => setOpenFilters(true)}>
+          <Icon name="sliders-horizontal" className="w-4 h-4" /> Filtros
+          {filterCount > 0 && <span className="ml-1 rounded-full bg-primary text-primary-foreground text-[10px] px-1.5">{filterCount}</span>}
+        </Button>
+        <div className="flex flex-wrap gap-1 p-1 bg-muted rounded-lg w-fit lg:ml-auto">
+          {VIEWS.map((option) => (
+            <Button key={option.id} size="sm" variant={view === option.id || (option.id === "abertas" && ["atrasadas", "hoje", "semana", "depois"].includes(view)) ? "default" : "ghost"}
+              className="h-7" onClick={() => { selection.clear(); set({ view: option.id }); }}>{option.label}</Button>
+          ))}
+        </div>
+      </div>
+
+        <div className="flex items-center gap-3 text-xs mb-3 -mt-1">
+          <span className="text-muted-foreground">Ordenar por:</span>
+          <SortButton label="Vencimento" field="dueDate" order={filters.order} onSort={(order) => set({ order })} />
+          <SortButton label="Valor" field="value" order={filters.order} onSort={(order) => set({ order })} />
+          <SortButton label="Recebimento" field="paidAt" order={filters.order} onSort={(order) => set({ order })} />
+        </div>
+      <ActiveFilters kind="receivable" filters={filters} onRemove={(keys) => set(Object.fromEntries(keys.map((k) => [k, ""])))} onClear={() => replace({ view })} />
+
+      <SelectionBar count={selection.selected.size} total={total(selectedRows)} onClear={selection.clear}>
+        {canUpdate && settleable.length > 0 && <Button size="sm" onClick={() => setBulkSettle(true)}><Icon name="circle-check" className="w-4 h-4" /> Receber selecionadas</Button>}
+        <Button size="sm" variant="outline" onClick={() => exportNow([...selection.selected.keys()])}><Icon name="file-spreadsheet" className="w-4 h-4" /> Exportar</Button>
+        {can(`inactive_${FINANCIAL_ABILITY}`) && archivable.length > 0 && (
+          <ConfirmDialog title={`Inativar ${archivable.length} conta(s)?`} description="Só lançamentos manuais não recebidos são inativados; cobranças do gateway se cancelam no provedor."
+            onConfirm={() => archiveMany(archivable.map((r) => r.id))}>
+            <Button size="sm" variant="outline"><Icon name="power-off" className="w-4 h-4" /> Inativar</Button>
+          </ConfirmDialog>
+        )}
+      </SelectionBar>
+
+      <SideForm openSheet={openFilters} setOpenSheet={setOpenFilters} title="Filtros" description="Combine os filtros; os cartões e a exportação seguem o mesmo recorte." side="left"
+        form={<FilterPanel key={JSON.stringify(filters)} kind="receivable" filters={filters} onApply={(patch) => set(patch)} onClear={() => replace({ view, ...(filters.q ? { q: filters.q } : {}) })} close={() => setOpenFilters(false)} />} />
+      <SideForm openSheet={openForm} setOpenSheet={setOpenForm}
+        title={formData ? `Editar ${entity.name}` : `Cadastrar ${entity.name}`}
+        description={formData ? `Edite as informações da ${entity.name}.` : "Lance uma conta a receber avulsa. Mensalidade fixa? Use Recorrentes."} side="right"
+        form={<Form key={formData?.id ?? "new"} formData={formData} setOpenForm={setOpenForm} entity={entity} />} />
+      {bulkSettle && (
+        <BulkSettleDialog kind="receivable" ids={settleable.map((r) => r.id)} count={settleable.length} total={total(settleable)}
+          onClose={() => setBulkSettle(false)} onDone={() => { selection.clear(); refresh(); }} />
       )}
 
-      <SideForm
-        openSheet={openSearch}
-        setOpenSheet={setOpenSearch}
-        title={`Buscar ${entity.pluralName}`}
-        description={`Preencha os campos abaixo para filtrar ${entity.pluralName}.`}
-        side="left"
-        form={ <SearchForm onSearch={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
-      />
-
-      <SideForm
-        openSheet={openForm}
-        setOpenSheet={setOpenForm}
-        title={formData ? `Editar ${entity.name}` : `Cadastrar ${entity.name}`}
-        description={formData ? `Edite as informações da ${entity.name}.` : `Preencha os campos abaixo para cadastrar uma nova ${entity.name}.`}
-        side="right"
-        form={ <Form key={formData?.id ?? 'new'} formData={formData} setOpenForm={setOpenForm} entity={entity} /> }
-      />
-
-      <div className="space-y-2 mt-4">
-        {isLoading
-          ? skeletons.map((_, i) => <ItemSkeleton key={i} index={i} />)
-          : isError
-          ? <div className="w-full flex justify-center items-center font-medium text-destructive py-4 rounded border border-destructive">
-              <p>Erro: {error?.response?.data?.message}</p>
-            </div>
-          : data?.rows && data.rows.length > 0
-          ? data.rows.map((item: IFinancialRecord, i: number) => (
-              <ItemList
-                key={item.id}
-                item={item}
-                entity={entity}
-                index={i}
-                setFormData={setFormData}
-                setOpenForm={setOpenForm}
-              />
-            ))
-          : (
-            <div className="w-full flex justify-center items-center font-medium text-primary py-4 rounded border border-primary">
-              <p>Nenhuma {entity.name} encontrada!</p>
-            </div>
-          )
-        }
+      <div className="space-y-2 mt-2">
+        {isLoading ? Array.from({ length: 5 }, (_, i) => <ItemSkeleton key={i} index={i} />)
+          : isError ? <div className="w-full flex justify-center items-center font-medium text-destructive py-4 rounded border border-destructive"><p>Erro: {error?.response?.data?.message}</p></div>
+          : data?.rows?.length ? data.rows.map((item, i) => (
+            <ItemList key={item.id} item={item} entity={entity} index={i} setFormData={setFormData} setOpenForm={setOpenForm} today={data.today}
+              selected={selection.selected.has(item.id)} onSelect={(on) => selection.toggle(item, on)}
+              headerSelect={<SelectBox checked={selection.allOnPage} onChange={selection.togglePage} label="Selecionar todas desta página" inverse />} />
+          ))
+          : <p className="p-6 text-sm text-muted-foreground text-center rounded border">{filterCount || filters.q ? "Nenhuma conta com esses filtros." : "Nenhuma conta nesta visão."}</p>}
       </div>
 
-      <div className="mt-4">
-        {totalPages >= 1 && (
-          <Pagination
-            totalItems={data?.total || 0}
-            itemsPerPage={searchParams.limit}
-            currentPage={searchParams.page}
-            onPageChange={handlePageChange}
-            maxVisiblePages={5}
-          />
-        )}
-      </div>
+      {data && data.total > 0 && (
+        <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{data.total} {data.total === 1 ? "conta" : "contas"} · mostrar</span>
+            {LIMITS.map((n) => (
+              <button key={n} type="button" onClick={() => set({ limit: String(n) })} className={cn("rounded px-1.5 py-0.5", limit === n ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>{n}</button>
+            ))}
+          </div>
+          {data.total > limit && <Pagination totalItems={data.total} itemsPerPage={limit} currentPage={page} onPageChange={(next) => set({ page: String(next) }, true)} maxVisiblePages={5} />}
+        </div>
+      )}
     </>
   );
-};
+}

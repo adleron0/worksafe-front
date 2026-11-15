@@ -27,31 +27,42 @@ type Column = typeof ATTACHMENTS[number]["column"];
 const MODES = [
   { id: "unica", name: "Uma conta só" },
   { id: "dividir", name: "Dividir em parcelas" },
-  { id: "repetir", name: "Repetir todo mês (despesa fixa)" },
+  { id: "recorrente", name: "Despesa fixa todo mês (sem data para acabar)" },
+  { id: "repetir", name: "Repetir por alguns meses" },
+];
+const SCOPES = [
+  { id: "esta", name: "Só esta parcela" },
+  { id: "proximas", name: "Esta e as próximas em aberto" },
+  { id: "todas", name: "Todas as parcelas em aberto" },
 ];
 
 /** Cadastro e edição de conta a pagar. Ao criar, pode lançar várias parcelas de uma vez. */
-export default function PayableForm({ formData, close }: { formData: Payable | null; close: () => void }) {
+export default function PayableForm({ formData, close, duplicate = false }: { formData: Payable | null; close: () => void; duplicate?: boolean }) {
   const { can } = useVerify();
   const { showLoader, hideLoader } = useLoader();
   const queryClient = useQueryClient();
-  const isEdit = Boolean(formData);
-  const paid = formData?.status === "paga";
+  const isEdit = Boolean(formData) && !duplicate;
+  const paid = isEdit && formData?.status === "paga";
+  const inGroup = isEdit && Boolean(formData?.groupKey) && formData?.status === "aberta";
 
   const [state, setState] = useState({
     supplierId: formData?.supplierId ? String(formData.supplierId) : "",
     description: formData?.description ?? "",
     value: Number(formData?.value ?? 0),
-    dueDate: toDateInput(formData?.dueDate),
-    accrualDate: formData?.accrualDate ?? "",
+    dueDate: duplicate ? "" : toDateInput(formData?.dueDate),
+    accrualDate: duplicate ? "" : formData?.accrualDate ?? "",
     paymentMethod: formData?.paymentMethod ?? "",
     documentNumber: formData?.documentNumber ?? "",
     serviceOrderId: formData?.serviceOrderId ? String(formData.serviceOrderId) : "",
     chartAccountId: formData?.chartAccountId ? String(formData.chartAccountId) : "",
     costCenterId: formData?.costCenterId ? String(formData.costCenterId) : "",
     observations: formData?.observations ?? "",
+    barcode: duplicate ? "" : formData?.barcode ?? "",
+    pixCode: duplicate ? "" : formData?.pixCode ?? "",
     mode: "unica",
     count: "2",
+    endDate: "",
+    scope: "esta",
   });
   const [files, setFiles] = useState<Partial<Record<string, File>>>({});
   const [removed, setRemoved] = useState<Column[]>([]);
@@ -70,7 +81,8 @@ export default function PayableForm({ formData, close }: { formData: Payable | n
   });
   const orderOptions = (orders?.rows ?? []).map((order) => ({ id: order.id, name: `${order.number} — ${order.customer.name}` }));
 
-  const several = !isEdit && state.mode !== "unica";
+  const recurring = !isEdit && state.mode === "recorrente";
+  const several = !isEdit && (state.mode === "dividir" || state.mode === "repetir");
   const count = Number(state.count);
 
   const validate = () => {
@@ -79,6 +91,9 @@ export default function PayableForm({ formData, close }: { formData: Payable | n
     if (!state.value || state.value <= 0) found.value = "Informe o valor";
     if (!state.dueDate) found.dueDate = "Informe o vencimento";
     if (several && (!Number.isInteger(count) || count < 2 || count > 60)) found.count = "De 2 a 60 parcelas";
+    const code = state.barcode.replace(/\D/g, "");
+    if (code && (code.length < 44 || code.length > 48)) found.barcode = "A linha digitável tem de 44 a 48 números";
+    if (recurring && state.endDate && state.endDate < state.dueDate) found.endDate = "A data final é antes do primeiro vencimento";
     setErrors(found);
     return Object.keys(found).length === 0;
   };
@@ -92,15 +107,31 @@ export default function PayableForm({ formData, close }: { formData: Payable | n
         paymentMethod: state.paymentMethod, documentNumber: state.documentNumber.trim(), serviceOrderId: state.serviceOrderId,
         chartAccountId: state.chartAccountId, costCenterId: state.costCenterId, observations: state.observations.trim(),
       };
+      if (recurring) {
+        return (await api.post("financial/recurrences", {
+          kind: "payable", description: base.description, value: base.value, startDate: base.dueDate, endDate: state.endDate || null,
+          supplierId: base.supplierId || null, chartAccountId: base.chartAccountId || null, costCenterId: base.costCenterId || null,
+          serviceOrderId: base.serviceOrderId || null, paymentMethod: base.paymentMethod || null, observations: base.observations,
+        })).data;
+      }
       if (several) return (await api.post("financial-payables/installments", { ...base, count, mode: state.mode })).data;
+      if (inGroup && state.scope !== "esta") {
+        // descrição, fornecedor e classificação valem para as outras parcelas; vencimento e anexos ficam só nesta
+        await api.put(`financial/payables/group/${formData!.groupKey}`, {
+          scope: state.scope, fromId: formData!.id, description: base.description, supplierId: base.supplierId || null, paymentMethod: base.paymentMethod || null,
+          chartAccountId: base.chartAccountId || null, costCenterId: base.costCenterId || null, serviceOrderId: base.serviceOrderId || null, value: base.value,
+        });
+      }
+      base.barcode = state.barcode.replace(/\D/g, "");
+      base.pixCode = state.pixCode.trim();
       const data: Record<string, unknown> = { ...base, accrualDate: state.accrualDate || state.dueDate.slice(0, 7), ...files };
       for (const column of removed) data[column] = "";
       return isEdit ? put("financial-payables", String(formData!.id), data) : post("financial-payables", "", data);
     },
     onSuccess: () => {
       hideLoader();
-      toast({ title: several ? `${count} parcelas lançadas!` : `Conta a pagar ${isEdit ? "atualizada" : "lançada"}!`, variant: "success" });
-      for (const key of [PAYABLES_KEY, PAYABLES_SUMMARY_KEY, CHART_KEY]) queryClient.invalidateQueries({ queryKey: [key] });
+      toast({ title: recurring ? "Despesa fixa criada: os próximos 12 meses já estão lançados!" : several ? `${count} parcelas lançadas!` : `Conta a pagar ${isEdit ? "atualizada" : "lançada"}!`, variant: "success" });
+      for (const key of [PAYABLES_KEY, PAYABLES_SUMMARY_KEY, CHART_KEY, "financialRecurrences"]) queryClient.invalidateQueries({ queryKey: [key] });
       close();
     },
     onError: (error: ApiError) => {
@@ -142,13 +173,13 @@ export default function PayableForm({ formData, close }: { formData: Payable | n
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="value">{state.mode === "dividir" && !isEdit ? "Valor total" : state.mode === "repetir" && !isEdit ? "Valor por mês" : "Valor"} <span>*</span></Label>
+          <Label htmlFor="value">{state.mode === "dividir" && !isEdit ? "Valor total" : (state.mode === "repetir" || recurring) && !isEdit ? "Valor por mês" : "Valor"} <span>*</span></Label>
           <Input id="value" name="value" format="currency" value={state.value} onValueChange={set} disabled={paid} className="mt-1" />
           {paid && <p className="text-xs text-muted-foreground mt-1">Estorne a baixa para alterar o valor.</p>}
           {hint("value")}
         </div>
         <div>
-          <Label htmlFor="dueDate">{several ? "Primeiro vencimento" : "Vencimento"} <span>*</span></Label>
+          <Label htmlFor="dueDate">{several || recurring ? "Primeiro vencimento" : "Vencimento"} <span>*</span></Label>
           <CalendarPicker mode="natural" name="dueDate" value={state.dueDate} onValueChange={set} placeholder="dd/mm/aaaa" className="mt-1" />
           {hint("dueDate")}
         </div>
@@ -169,6 +200,26 @@ export default function PayableForm({ formData, close }: { formData: Payable | n
         </div>
       )}
 
+      {recurring && (
+        <div className="rounded border p-3 flex flex-col gap-2">
+          <p className="text-sm">Todo mês, no dia do primeiro vencimento. Os próximos 12 meses ficam lançados (aparecem no fluxo de caixa) e o sistema vai lançando os seguintes sozinho.</p>
+          <div>
+            <Label htmlFor="endDate">Termina em (opcional)</Label>
+            <CalendarPicker mode="natural" name="endDate" value={state.endDate} onValueChange={set} placeholder="Sem data para acabar" className="mt-1" />
+            {hint("endDate")}
+          </div>
+          <p className="text-xs text-muted-foreground">Para mudar o valor ou encerrar depois, use Financeiro → Recorrentes.</p>
+        </div>
+      )}
+
+      {inGroup && (
+        <div className="rounded border p-3">
+          <Label htmlFor="scope">Aplicar as mudanças em</Label>
+          <Select name="scope" options={SCOPES} state={state.scope} onChange={set} modal />
+          <p className="text-xs text-muted-foreground mt-1">Descrição, valor, fornecedor, forma e classificação. Vencimento, documento e anexos mudam só nesta parcela; parcela paga não muda.</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="documentNumber">Nº da nota ou documento</Label>
@@ -180,7 +231,23 @@ export default function PayableForm({ formData, close }: { formData: Payable | n
         </div>
       </div>
 
-      {!several && (
+      {!several && !recurring && (
+        <div className="rounded border p-3 flex flex-col gap-3">
+          <p className="font-medium text-sm">Para pagar</p>
+          <div>
+            <Label htmlFor="barcode">Linha digitável do boleto</Label>
+            <Input id="barcode" name="barcode" value={state.barcode} maxLength={60} placeholder="Cole aqui os números do boleto" onValueChange={set} className="mt-1" />
+            {hint("barcode")}
+          </div>
+          <div>
+            <Label htmlFor="pixCode">PIX copia e cola</Label>
+            <Input id="pixCode" name="pixCode" type="textArea" value={state.pixCode} maxLength={600} placeholder="Cole o código PIX do fornecedor" onValueChange={set} className="mt-1" />
+          </div>
+          <p className="text-xs text-muted-foreground">Na lista aparece um botão para copiar e colar no banco, sem abrir o PDF.</p>
+        </div>
+      )}
+
+      {!several && !recurring && (
         <div>
           <Label htmlFor="accrualDate">Competência</Label>
           <CalendarPicker mode="month" name="accrualDate" value={state.accrualDate || null} onValueChange={set}
@@ -212,11 +279,11 @@ export default function PayableForm({ formData, close }: { formData: Payable | n
         )}
       </div>
 
-      {!several ? (
+      {!several && !recurring ? (
         <div className="rounded border p-3 flex flex-col gap-3">
           <p className="font-medium text-sm">Anexos (PDF, XML ou imagem)</p>
           {ATTACHMENTS.map(({ field, column, label }) => {
-            const current = !removed.includes(column) && !files[field] ? formData?.[column] : null;
+            const current = !duplicate && !removed.includes(column) && !files[field] ? formData?.[column] : null;
             return (
               <div key={field} className="flex flex-wrap items-center gap-3 text-sm">
                 <span className="w-36 text-muted-foreground">{label}</span>
@@ -238,7 +305,7 @@ export default function PayableForm({ formData, close }: { formData: Payable | n
           })}
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">Boleto, nota e comprovante são anexados depois, em cada parcela.</p>
+        <p className="text-xs text-muted-foreground">Boleto, nota, linha digitável e comprovante entram depois, em cada {recurring ? "mês" : "parcela"}.</p>
       )}
 
       <div>
@@ -247,7 +314,7 @@ export default function PayableForm({ formData, close }: { formData: Payable | n
       </div>
 
       <div className="flex gap-2">
-        <Button type="submit" className="flex-1" disabled={isPending}>{isEdit ? "Atualizar" : several ? "Lançar parcelas" : "Lançar"}</Button>
+        <Button type="submit" className="flex-1" disabled={isPending}>{isEdit ? "Atualizar" : recurring ? "Criar despesa fixa" : several ? "Lançar parcelas" : "Lançar"}</Button>
         <Button type="button" variant="outline" className="flex-1" onClick={close}>Cancelar</Button>
       </div>
     </form>

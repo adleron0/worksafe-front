@@ -10,6 +10,12 @@ import { money } from "./comercial/-shared/commercial";
  * em que a pessoa atua (retornos, OS, RDO, compras, faturamento, contas a pagar).
  * A API só devolve os blocos das áreas que a pessoa pode ver.
  */
+/** Link com "?a=b": a rota vai em `to` e os parâmetros em `search`. */
+const linkTo = (link: string) => {
+  const [to, query] = link.split("?");
+  return { to, search: query ? Object.fromEntries(new URLSearchParams(query)) : undefined } as { to: never; search: never };
+};
+
 interface PipelineItem { id: number; title: string; subtitle: string; link: string; value: number | null; late: boolean }
 interface PipelineBlock { key: string; area: string; title: string; hint: string; count: number; total: number | null; link: string; items: PipelineItem[] }
 interface Pipeline { today: string; blocks: PipelineBlock[] }
@@ -50,7 +56,7 @@ export default function MyPipeline() {
               <ul className="mt-3 divide-y text-sm flex-1">
                 {block.items.map((item) => (
                   <li key={item.id}>
-                    <Link to={item.link} className="flex items-center gap-3 py-2 hover:bg-muted/40 rounded">
+                    <Link {...linkTo(item.link)} className="flex items-center gap-3 py-2 hover:bg-muted/40 rounded">
                       <span className="min-w-0 flex-1">
                         <span className="block font-medium truncate">{item.title}</span>
                         <span className={cn("block text-xs truncate", item.late ? "text-red-600 dark:text-red-400" : "text-muted-foreground")}>{item.subtitle}{item.late ? " · atrasado" : ""}</span>
@@ -61,7 +67,7 @@ export default function MyPipeline() {
                   </li>
                 ))}
               </ul>
-              <Link to={block.link} className="mt-2 text-sm underline hover:text-foreground text-muted-foreground w-fit">
+              <Link {...linkTo(block.link)} className="mt-2 text-sm underline hover:text-foreground text-muted-foreground w-fit">
                 {block.count > block.items.length ? `Ver os ${block.count}` : "Abrir a tela"}
               </Link>
             </div>

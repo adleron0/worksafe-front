@@ -61,12 +61,15 @@ import { Route as AuthenticatedRhDocumentosVencimentosRouteImport } from './page
 import { Route as AuthenticatedRhDocumentosTiposDeDocumentoRouteImport } from './pages/_authenticated/rh/_documentos/tipos-de-documento'
 import { Route as AuthenticatedRhAlocacaoMapaDeAlocacaoRouteImport } from './pages/_authenticated/rh/_alocacao/mapa-de-alocacao'
 import { Route as AuthenticatedInventariosAreasAreaIdRouteImport } from './pages/_authenticated/inventarios/areas/$areaId'
+import { Route as AuthenticatedFinanceiroRelatoriosRelatoriosRouteImport } from './pages/_authenticated/financeiro/_relatorios/relatorios'
+import { Route as AuthenticatedFinanceiroRecorrentesRecorrentesRouteImport } from './pages/_authenticated/financeiro/_recorrentes/recorrentes'
 import { Route as AuthenticatedFinanceiroReceberReceberRouteImport } from './pages/_authenticated/financeiro/_receber/receber'
 import { Route as AuthenticatedFinanceiroPlanoContasPlanoContasRouteImport } from './pages/_authenticated/financeiro/_plano-contas/plano-contas'
 import { Route as AuthenticatedFinanceiroPagarPagarRouteImport } from './pages/_authenticated/financeiro/_pagar/pagar'
 import { Route as AuthenticatedFinanceiroFornecedoresFornecedoresRouteImport } from './pages/_authenticated/financeiro/_fornecedores/fornecedores'
 import { Route as AuthenticatedFinanceiroFaturarFaturarRouteImport } from './pages/_authenticated/financeiro/_faturar/faturar'
 import { Route as AuthenticatedFinanceiroContasBancariasContasBancariasRouteImport } from './pages/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
+import { Route as AuthenticatedFinanceiroConciliacaoConciliacaoRouteImport } from './pages/_authenticated/financeiro/_conciliacao/conciliacao'
 import { Route as AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport } from './pages/_authenticated/financeiro/_centros-custo/centros-custo'
 import { Route as AuthenticatedComercialVendedoresVendedoresRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores'
 import { Route as AuthenticatedComercialPropostasPropostasRouteImport } from './pages/_authenticated/comercial/_propostas/propostas'
@@ -399,6 +402,18 @@ const AuthenticatedInventariosAreasAreaIdRoute =
     path: '/inventarios/areas/$areaId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanceiroRelatoriosRelatoriosRoute =
+  AuthenticatedFinanceiroRelatoriosRelatoriosRouteImport.update({
+    id: '/financeiro/_relatorios/relatorios',
+    path: '/financeiro/relatorios',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceiroRecorrentesRecorrentesRoute =
+  AuthenticatedFinanceiroRecorrentesRecorrentesRouteImport.update({
+    id: '/financeiro/_recorrentes/recorrentes',
+    path: '/financeiro/recorrentes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedFinanceiroReceberReceberRoute =
   AuthenticatedFinanceiroReceberReceberRouteImport.update({
     id: '/financeiro/_receber/receber',
@@ -433,6 +448,12 @@ const AuthenticatedFinanceiroContasBancariasContasBancariasRoute =
   AuthenticatedFinanceiroContasBancariasContasBancariasRouteImport.update({
     id: '/financeiro/_contas-bancarias/contas-bancarias',
     path: '/financeiro/contas-bancarias',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceiroConciliacaoConciliacaoRoute =
+  AuthenticatedFinanceiroConciliacaoConciliacaoRouteImport.update({
+    id: '/financeiro/_conciliacao/conciliacao',
+    path: '/financeiro/conciliacao',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute =
@@ -694,12 +715,15 @@ export interface FileRoutesByFullPath {
   '/comercial/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
+  '/financeiro/conciliacao': typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   '/financeiro/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
   '/financeiro/faturar': typeof AuthenticatedFinanceiroFaturarFaturarRoute
   '/financeiro/fornecedores': typeof AuthenticatedFinanceiroFornecedoresFornecedoresRoute
   '/financeiro/pagar': typeof AuthenticatedFinanceiroPagarPagarRoute
   '/financeiro/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
+  '/financeiro/recorrentes': typeof AuthenticatedFinanceiroRecorrentesRecorrentesRoute
+  '/financeiro/relatorios': typeof AuthenticatedFinanceiroRelatoriosRelatoriosRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/rh/mapa-de-alocacao': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoRoute
   '/rh/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
@@ -786,12 +810,15 @@ export interface FileRoutesByTo {
   '/comercial/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
+  '/financeiro/conciliacao': typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   '/financeiro/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
   '/financeiro/faturar': typeof AuthenticatedFinanceiroFaturarFaturarRoute
   '/financeiro/fornecedores': typeof AuthenticatedFinanceiroFornecedoresFornecedoresRoute
   '/financeiro/pagar': typeof AuthenticatedFinanceiroPagarPagarRoute
   '/financeiro/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
+  '/financeiro/recorrentes': typeof AuthenticatedFinanceiroRecorrentesRecorrentesRoute
+  '/financeiro/relatorios': typeof AuthenticatedFinanceiroRelatoriosRelatoriosRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/rh/mapa-de-alocacao': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoRoute
   '/rh/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
@@ -882,12 +909,15 @@ export interface FileRoutesById {
   '/_authenticated/comercial/_propostas/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/_authenticated/comercial/_vendedores/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/_authenticated/financeiro/_centros-custo/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
+  '/_authenticated/financeiro/_conciliacao/conciliacao': typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   '/_authenticated/financeiro/_contas-bancarias/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
   '/_authenticated/financeiro/_faturar/faturar': typeof AuthenticatedFinanceiroFaturarFaturarRoute
   '/_authenticated/financeiro/_fornecedores/fornecedores': typeof AuthenticatedFinanceiroFornecedoresFornecedoresRoute
   '/_authenticated/financeiro/_pagar/pagar': typeof AuthenticatedFinanceiroPagarPagarRoute
   '/_authenticated/financeiro/_plano-contas/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/_authenticated/financeiro/_receber/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
+  '/_authenticated/financeiro/_recorrentes/recorrentes': typeof AuthenticatedFinanceiroRecorrentesRecorrentesRoute
+  '/_authenticated/financeiro/_relatorios/relatorios': typeof AuthenticatedFinanceiroRelatoriosRelatoriosRoute
   '/_authenticated/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/_authenticated/rh/_alocacao/mapa-de-alocacao': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoRoute
   '/_authenticated/rh/_documentos/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
@@ -977,12 +1007,15 @@ export interface FileRouteTypes {
     | '/comercial/propostas'
     | '/comercial/vendedores'
     | '/financeiro/centros-custo'
+    | '/financeiro/conciliacao'
     | '/financeiro/contas-bancarias'
     | '/financeiro/faturar'
     | '/financeiro/fornecedores'
     | '/financeiro/pagar'
     | '/financeiro/plano-contas'
     | '/financeiro/receber'
+    | '/financeiro/recorrentes'
+    | '/financeiro/relatorios'
     | '/inventarios/areas/$areaId'
     | '/rh/mapa-de-alocacao'
     | '/rh/tipos-de-documento'
@@ -1069,12 +1102,15 @@ export interface FileRouteTypes {
     | '/comercial/propostas'
     | '/comercial/vendedores'
     | '/financeiro/centros-custo'
+    | '/financeiro/conciliacao'
     | '/financeiro/contas-bancarias'
     | '/financeiro/faturar'
     | '/financeiro/fornecedores'
     | '/financeiro/pagar'
     | '/financeiro/plano-contas'
     | '/financeiro/receber'
+    | '/financeiro/recorrentes'
+    | '/financeiro/relatorios'
     | '/inventarios/areas/$areaId'
     | '/rh/mapa-de-alocacao'
     | '/rh/tipos-de-documento'
@@ -1164,12 +1200,15 @@ export interface FileRouteTypes {
     | '/_authenticated/comercial/_propostas/propostas'
     | '/_authenticated/comercial/_vendedores/vendedores'
     | '/_authenticated/financeiro/_centros-custo/centros-custo'
+    | '/_authenticated/financeiro/_conciliacao/conciliacao'
     | '/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
     | '/_authenticated/financeiro/_faturar/faturar'
     | '/_authenticated/financeiro/_fornecedores/fornecedores'
     | '/_authenticated/financeiro/_pagar/pagar'
     | '/_authenticated/financeiro/_plano-contas/plano-contas'
     | '/_authenticated/financeiro/_receber/receber'
+    | '/_authenticated/financeiro/_recorrentes/recorrentes'
+    | '/_authenticated/financeiro/_relatorios/relatorios'
     | '/_authenticated/inventarios/areas/$areaId'
     | '/_authenticated/rh/_alocacao/mapa-de-alocacao'
     | '/_authenticated/rh/_documentos/tipos-de-documento'
@@ -1584,6 +1623,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventariosAreasAreaIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/financeiro/_relatorios/relatorios': {
+      id: '/_authenticated/financeiro/_relatorios/relatorios'
+      path: '/financeiro/relatorios'
+      fullPath: '/financeiro/relatorios'
+      preLoaderRoute: typeof AuthenticatedFinanceiroRelatoriosRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/financeiro/_recorrentes/recorrentes': {
+      id: '/_authenticated/financeiro/_recorrentes/recorrentes'
+      path: '/financeiro/recorrentes'
+      fullPath: '/financeiro/recorrentes'
+      preLoaderRoute: typeof AuthenticatedFinanceiroRecorrentesRecorrentesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/financeiro/_receber/receber': {
       id: '/_authenticated/financeiro/_receber/receber'
       path: '/financeiro/receber'
@@ -1624,6 +1677,13 @@ declare module '@tanstack/react-router' {
       path: '/financeiro/contas-bancarias'
       fullPath: '/financeiro/contas-bancarias'
       preLoaderRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/financeiro/_conciliacao/conciliacao': {
+      id: '/_authenticated/financeiro/_conciliacao/conciliacao'
+      path: '/financeiro/conciliacao'
+      fullPath: '/financeiro/conciliacao'
+      preLoaderRoute: typeof AuthenticatedFinanceiroConciliacaoConciliacaoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/financeiro/_centros-custo/centros-custo': {
@@ -1910,12 +1970,15 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComercialPropostasPropostasRoute: typeof AuthenticatedComercialPropostasPropostasRoute
   AuthenticatedComercialVendedoresVendedoresRoute: typeof AuthenticatedComercialVendedoresVendedoresRoute
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute: typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
+  AuthenticatedFinanceiroConciliacaoConciliacaoRoute: typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   AuthenticatedFinanceiroContasBancariasContasBancariasRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
   AuthenticatedFinanceiroFaturarFaturarRoute: typeof AuthenticatedFinanceiroFaturarFaturarRoute
   AuthenticatedFinanceiroFornecedoresFornecedoresRoute: typeof AuthenticatedFinanceiroFornecedoresFornecedoresRoute
   AuthenticatedFinanceiroPagarPagarRoute: typeof AuthenticatedFinanceiroPagarPagarRoute
   AuthenticatedFinanceiroPlanoContasPlanoContasRoute: typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   AuthenticatedFinanceiroReceberReceberRoute: typeof AuthenticatedFinanceiroReceberReceberRoute
+  AuthenticatedFinanceiroRecorrentesRecorrentesRoute: typeof AuthenticatedFinanceiroRecorrentesRecorrentesRoute
+  AuthenticatedFinanceiroRelatoriosRelatoriosRoute: typeof AuthenticatedFinanceiroRelatoriosRelatoriosRoute
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
   AuthenticatedRhAlocacaoMapaDeAlocacaoRoute: typeof AuthenticatedRhAlocacaoMapaDeAlocacaoRoute
   AuthenticatedRhDocumentosTiposDeDocumentoRoute: typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
@@ -2012,6 +2075,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialVendedoresVendedoresRoute,
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute:
     AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute,
+  AuthenticatedFinanceiroConciliacaoConciliacaoRoute:
+    AuthenticatedFinanceiroConciliacaoConciliacaoRoute,
   AuthenticatedFinanceiroContasBancariasContasBancariasRoute:
     AuthenticatedFinanceiroContasBancariasContasBancariasRoute,
   AuthenticatedFinanceiroFaturarFaturarRoute:
@@ -2024,6 +2089,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedFinanceiroPlanoContasPlanoContasRoute,
   AuthenticatedFinanceiroReceberReceberRoute:
     AuthenticatedFinanceiroReceberReceberRoute,
+  AuthenticatedFinanceiroRecorrentesRecorrentesRoute:
+    AuthenticatedFinanceiroRecorrentesRecorrentesRoute,
+  AuthenticatedFinanceiroRelatoriosRelatoriosRoute:
+    AuthenticatedFinanceiroRelatoriosRelatoriosRoute,
   AuthenticatedInventariosAreasAreaIdRoute:
     AuthenticatedInventariosAreasAreaIdRoute,
   AuthenticatedRhAlocacaoMapaDeAlocacaoRoute:

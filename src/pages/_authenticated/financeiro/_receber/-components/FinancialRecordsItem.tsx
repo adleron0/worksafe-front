@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { patch } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
@@ -15,6 +15,7 @@ import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { IFinancialRecord } from "../-interfaces/entity.interface";
 import SettleDialog from "./SettleDialog";
 import { OPEN_STATUSES, formatCurrency, formatDate, paymentMethodLabel, todayInput } from "./options";
+import { SelectBox } from "../../-shared/ledger";
 
 interface ItemsProps {
   item: IFinancialRecord;
@@ -22,12 +23,18 @@ interface ItemsProps {
   entity: IDefaultEntity;
   setFormData: (data: IFinancialRecord) => void;
   setOpenForm: (open: boolean) => void;
+  /** seleção para operações em lote */
+  selected?: boolean;
+  onSelect?: (checked: boolean) => void;
+  headerSelect?: React.ReactNode;
+  /** dia de hoje dado pela API (fuso de Brasília) */
+  today?: string;
 }
 
 type StatusName = "processing" | "waiting" | "received" | "declined" | "chargeback" | "cancelled" | "overdue";
 const KNOWN_STATUS: StatusName[] = ["processing", "waiting", "received", "declined", "chargeback", "cancelled", "overdue"];
 
-const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => {
+const Item = ({ item, index, entity, setFormData, setOpenForm, selected, onSelect, headerSelect, today }: ItemsProps) => {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const [openSettle, setOpenSettle] = useState(false);
@@ -36,7 +43,7 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
   const isOpen = OPEN_STATUSES.includes(item.status);
   const canUpdate = can(`update_${entity.ability}`);
   // Manual não tem provedor para marcar atraso: mostramos pelo vencimento.
-  const late = isManual && item.status === "waiting" && !!item.dueDate && item.dueDate.slice(0, 10) < todayInput();
+  const late = isOpen && item.status !== "overdue" && !!item.dueDate && item.dueDate.slice(0, 10) < (today ?? todayInput());
   const status: StatusName = late ? "overdue" : KNOWN_STATUS.includes(item.status as StatusName) ? (item.status as StatusName) : "processing";
 
   const { mutate: run } = useMutation({
@@ -63,7 +70,7 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
     <>
       {index === 0 && (
         <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
-          <div className="lg:w-3/12">Cliente/Aluno</div>
+          <div className="lg:w-3/12 flex items-center gap-2">{headerSelect}Cliente/Aluno</div>
           <div className="lg:w-2/12">Valor</div>
           <div className="lg:w-2/12">Datas</div>
           <div className="lg:w-2/12">Nota fiscal</div>
@@ -72,7 +79,7 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
         </div>
       )}
 
-      <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} ${item.inactiveAt ? "opacity-60" : ""} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+      <div className={`${selected ? "bg-primary/5" : index % 2 === 0 ? "bg-background" : "bg-background/50"} ${item.inactiveAt ? "opacity-60" : ""} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
         <div className="absolute -top-1 left-4 right-14 lg:right-auto lg:left-4">
           <div className="flex items-center gap-2">
             <ResponsiveBadge
@@ -89,6 +96,9 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
                 iconClassName="w-3 h-3"
               />
             )}
+            {item.recurrenceId && (
+              <ResponsiveBadge icon="repeat" text="Mensal" colorClass="text-foreground bg-muted" iconClassName="w-3 h-3" />
+            )}
             {item.contractId && (
               <Link to="/comercial/contratos/$contractId" params={{ contractId: String(item.contractId) }}
                 className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs bg-muted hover:underline" title="Abrir o contrato">
@@ -98,9 +108,11 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
           </div>
         </div>
 
-        <div className="flex flex-col lg:w-3/12 pr-2">
+        <div className="flex lg:w-3/12 pr-2 gap-2 min-w-0">
+          {onSelect && <div className="pt-0.5"><SelectBox checked={Boolean(selected)} onChange={onSelect} label={`Selecionar ${name}`} /></div>}
+          <div className="flex flex-col min-w-0">
           <p className="text-xs text-muted-foreground lg:hidden">Cliente/Aluno</p>
-          <p className="font-medium">{name}</p>
+          <p className="font-medium">{name} <span className="text-xs text-muted-foreground font-normal">#{item.id}</span></p>
           {contact && <p className="text-xs text-muted-foreground break-all">{contact}</p>}
           {item.description && <p className="text-xs text-muted-foreground break-words">{item.description}</p>}
           {(item.chartAccount || item.costCenter) && (
@@ -108,6 +120,7 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
               {[item.chartAccount && `${item.chartAccount.code} ${item.chartAccount.name}`, item.costCenter?.name].filter(Boolean).join(" · ")}
             </p>
           )}
+          </div>
         </div>
 
         <div className="flex flex-col lg:w-2/12">
@@ -145,6 +158,8 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
           <p className="text-xs text-muted-foreground">
             {paymentMethodLabel(item.paymentMethod)}{item.bankAccount ? ` · ${item.bankAccount.name}` : ""}
           </p>
+          {item.receiptUrl && <a href={item.receiptUrl} target="_blank" rel="noreferrer" className="text-xs underline text-primary w-fit">Comprovante</a>}
+          {item.statementRef && <p className="text-[10px] text-muted-foreground">conciliada com o extrato</p>}
         </div>
 
         <div className="flex flex-col lg:w-2/12">

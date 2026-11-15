@@ -63,6 +63,12 @@ export interface IFinancialRecord {
   installmentTotal?: number | null;
   netValue?: number | null;
   receivedValue?: number | null;
+  interestValue?: number | string | null;
+  fineValue?: number | string | null;
+  discountValue?: number | string | null;
+  receiptUrl?: string | null;
+  recurrenceId?: number | null;
+  statementRef?: string | null;
   settledByUserId?: number | null;
   // Classificação gerencial
   chartAccountId?: number | null;

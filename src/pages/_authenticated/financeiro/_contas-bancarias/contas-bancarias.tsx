@@ -9,6 +9,7 @@ import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import CalendarPicker from "@/components/general-components/Calendar";
 import SimpleCrud, { SimpleEntity, useSimpleSave } from "../-shared/SimpleCrud";
+import TransfersSection from "../-shared/transfers";
 import { BankAccount, bankTypeLabel, bankTypeOptions, formatMoney, gatewayOptions } from "../-shared/financial";
 
 const entity: SimpleEntity = {
@@ -16,7 +17,7 @@ const entity: SimpleEntity = {
   pluralName: "Contas Bancárias",
   model: "financial-bank-accounts",
   article: "a",
-  description: "Contas, caixas e saldos de gateway onde o dinheiro entra. O saldo é o saldo inicial mais os recebimentos baixados na conta.",
+  description: "Contas, caixas e saldos de gateway. O saldo é o saldo inicial + o que entrou − o que saiu ± as transferências.",
   optionKeys: ["optionsBankAccounts", "financialBankBalances"],
 };
 
@@ -39,6 +40,7 @@ function BankAccounts() {
   const balanceOf = (id: number) => balances?.find((b) => b.id === id)?.balance;
 
   return (
+    <>
     <SimpleCrud<BankAccount>
       entity={entity}
       header={<>
@@ -65,6 +67,8 @@ function BankAccounts() {
       renderForm={(props) => <BankAccountForm {...props} />}
       inactivateWarning="Deixa de aparecer na baixa. Os recebimentos e pagamentos já lançados continuam ligados à conta."
     />
+    <TransfersSection />
+    </>
   );
 }
 

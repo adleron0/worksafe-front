@@ -302,6 +302,21 @@ export const items = [
         path: "/financeiro/pagar",
       },
       {
+        title: "Recorrentes",
+        icon: "repeat",
+        path: "/financeiro/recorrentes",
+      },
+      {
+        title: "Relatórios",
+        icon: "chart-pie",
+        path: "/financeiro/relatorios",
+      },
+      {
+        title: "Conciliação",
+        icon: "file-check-2",
+        path: "/financeiro/conciliacao",
+      },
+      {
         title: "Fornecedores",
         icon: "truck",
         path: "/financeiro/fornecedores",
@@ -325,11 +340,6 @@ export const items = [
       //   title: "Notas Fiscais",
       //   icon: "receipt",
       //   path: "/financeiro/notas-fiscais",
-      // },
-      // {
-      //   title: "Relatórios",
-      //   icon: "chart-pie",
-      //   path: "/financeiro/relatorios",
       // },
     ],
   },

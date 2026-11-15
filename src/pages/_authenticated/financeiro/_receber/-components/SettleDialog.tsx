@@ -13,6 +13,7 @@ import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { IFinancialRecord } from "../-interfaces/entity.interface";
 import { formatCurrency, paymentMethodOptions, todayInput } from "./options";
 import { CHART_KEY, useBankAccounts } from "../../-shared/financial";
+import { SettleExtras } from "../../-shared/ledger";
 
 interface SettleDialogProps {
   item: IFinancialRecord;
@@ -27,6 +28,9 @@ const SettleDialog: React.FC<SettleDialogProps> = ({ item, entity, open, onOpenC
   const expected = Number(item.netValue ?? item.value ?? 0);
   const [paidAt, setPaidAt] = useState(todayInput());
   const [receivedValue, setReceivedValue] = useState(expected);
+  const [extras, setExtras] = useState({ interest: 0, fine: 0, discount: 0 });
+  const [receipt, setReceipt] = useState<File | null>(null);
+  const changeExtras = (next: typeof extras) => { setExtras(next); setReceivedValue(Math.round((expected + next.interest + next.fine - next.discount) * 100) / 100); };
   const [paymentMethod, setPaymentMethod] = useState(item.paymentMethod || "transferencia");
   const [observations, setObservations] = useState(item.observations ?? "");
   const [error, setError] = useState("");
@@ -38,9 +42,14 @@ const SettleDialog: React.FC<SettleDialogProps> = ({ item, entity, open, onOpenC
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
-      const response = await api.patch(`${entity.model}/settle/${item.id}`, {
-        paidAt, receivedValue, paymentMethod, observations, bankAccountId: bankAccountId || null,
-      });
+      const form = new FormData();
+      const fields: Record<string, string> = {
+        paidAt, receivedValue: String(receivedValue), paymentMethod, observations, bankAccountId: bankAccountId || "",
+        interestValue: extras.interest ? String(extras.interest) : "", fineValue: extras.fine ? String(extras.fine) : "", discountValue: extras.discount ? String(extras.discount) : "",
+      };
+      for (const [key, value] of Object.entries(fields)) if (value) form.append(key, value);
+      if (receipt) form.append("receiptFile", receipt);
+      const response = await api.patch(`${entity.model}/settle/${item.id}`, form);
       return response.data;
     },
     onSuccess: () => {
@@ -48,6 +57,7 @@ const SettleDialog: React.FC<SettleDialogProps> = ({ item, entity, open, onOpenC
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
       queryClient.invalidateQueries({ queryKey: ["financialBankBalances"] });
       queryClient.invalidateQueries({ queryKey: [CHART_KEY] });
+      queryClient.invalidateQueries({ queryKey: ["financialReports"] });
       onOpenChange(false);
     },
     onError: (err: ApiError) => {
@@ -92,9 +102,10 @@ const SettleDialog: React.FC<SettleDialogProps> = ({ item, entity, open, onOpenC
                 onValueChange={(_, value) => setReceivedValue(Number(value))} className="mt-1" />
             </div>
           </div>
-          {difference !== 0 && receivedValue > 0 && (
+          <SettleExtras base={expected} extras={extras} onChange={changeExtras} />
+          {difference !== 0 && receivedValue > 0 && extras.interest + extras.fine + extras.discount === 0 && (
             <p className="text-xs text-muted-foreground -mt-2">
-              {difference > 0 ? "Acima" : "Abaixo"} do esperado em {formatCurrency(Math.abs(difference))}. O título é baixado por inteiro.
+              {difference > 0 ? "Acima" : "Abaixo"} do esperado em {formatCurrency(Math.abs(difference))}: entra como {difference > 0 ? "juros" : "desconto"}. O título é baixado por inteiro.
             </p>
           )}
           <div>
@@ -112,6 +123,14 @@ const SettleDialog: React.FC<SettleDialogProps> = ({ item, entity, open, onOpenC
                 Nenhuma conta bancária cadastrada. Cadastre em Financeiro → Contas Bancárias para acompanhar o saldo.
               </p>
             )}
+          </div>
+          <div>
+            <Label htmlFor="receivableReceipt">Comprovante</Label>
+            <div className="mt-1 flex items-center gap-3 text-sm">
+              <input id="receivableReceipt" type="file" accept="application/pdf,image/*" className="hidden" onChange={(event) => setReceipt(event.target.files?.[0] ?? null)} />
+              <Button type="button" variant="outline" size="sm" onClick={() => document.getElementById("receivableReceipt")?.click()}>Escolher arquivo</Button>
+              <span className="min-w-0 truncate text-muted-foreground">{receipt?.name ?? "Opcional"}</span>
+            </div>
           </div>
           <div>
             <Label htmlFor="settleObservations">Observações</Label>

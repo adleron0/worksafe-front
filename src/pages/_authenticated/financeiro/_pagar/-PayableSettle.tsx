@@ -12,6 +12,7 @@ import { ApiError } from "@/general-interfaces/api.interface";
 import { CHART_KEY, formatMoney, useBankAccounts } from "../-shared/financial";
 import { PAYABLES_KEY, PAYABLES_SUMMARY_KEY, Payable } from "../-shared/payables";
 import { paymentMethodOptions, todayInput } from "../_receber/-components/options";
+import { CopyButton, SettleExtras } from "../-shared/ledger";
 
 /** Baixa de conta a pagar: quando saiu, quanto, de qual conta, com o comprovante. */
 export default function PayableSettle({ item, onClose }: { item: Payable; onClose: () => void }) {
@@ -19,6 +20,8 @@ export default function PayableSettle({ item, onClose }: { item: Payable; onClos
   const expected = Number(item.value ?? 0);
   const [paidAt, setPaidAt] = useState(todayInput());
   const [paidValue, setPaidValue] = useState(expected);
+  const [extras, setExtras] = useState({ interest: 0, fine: 0, discount: 0 });
+  const changeExtras = (next: typeof extras) => { setExtras(next); setPaidValue(Math.round((expected + next.interest + next.fine - next.discount) * 100) / 100); };
   const [paymentMethod, setPaymentMethod] = useState(item.paymentMethod || "pix");
   const [observations, setObservations] = useState(item.observations ?? "");
   const [receipt, setReceipt] = useState<File | null>(null);
@@ -32,14 +35,17 @@ export default function PayableSettle({ item, onClose }: { item: Payable; onClos
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       const form = new FormData();
-      const fields = { paidAt, paidValue: String(paidValue), paymentMethod, observations, bankAccountId };
+      const fields = {
+        paidAt, paidValue: String(paidValue), paymentMethod, observations, bankAccountId,
+        interestValue: extras.interest ? String(extras.interest) : "", fineValue: extras.fine ? String(extras.fine) : "", discountValue: extras.discount ? String(extras.discount) : "",
+      };
       for (const [key, value] of Object.entries(fields)) if (value) form.append(key, value);
       if (receipt) form.append("receiptFile", receipt);
       return (await api.patch(`financial-payables/settle/${item.id}`, form)).data;
     },
     onSuccess: () => {
       toast({ title: "Pagamento registrado!", variant: "success" });
-      for (const key of [PAYABLES_KEY, PAYABLES_SUMMARY_KEY, "financialBankBalances", CHART_KEY]) queryClient.invalidateQueries({ queryKey: [key] });
+      for (const key of [PAYABLES_KEY, PAYABLES_SUMMARY_KEY, "financialBankBalances", CHART_KEY, "financialReports"]) queryClient.invalidateQueries({ queryKey: [key] });
       onClose();
     },
     onError: (err: ApiError) => setError(err.response?.data?.message || "Erro desconhecido."),
@@ -67,7 +73,14 @@ export default function PayableSettle({ item, onClose }: { item: Payable; onClos
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {item.supplier?.pixKey && <p className="text-xs rounded border p-2 text-muted-foreground">Pix do fornecedor: <span className="text-foreground select-all">{item.supplier.pixKey}</span></p>}
+          {(item.barcode || item.pixCode || item.supplier?.pixKey) && (
+            <div className="text-xs rounded border p-2 text-muted-foreground flex flex-wrap items-center gap-2">
+              <span>Para pagar:</span>
+              {item.barcode && <CopyButton text={item.barcode} label="Linha digitável" />}
+              {item.pixCode && <CopyButton text={item.pixCode} label="PIX copia e cola" />}
+              {item.supplier?.pixKey && <CopyButton text={item.supplier.pixKey} label={`Chave PIX: ${item.supplier.pixKey}`} />}
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="paidAt">Data do pagamento <span>*</span></Label>
@@ -78,9 +91,10 @@ export default function PayableSettle({ item, onClose }: { item: Payable; onClos
               <Input id="paidValue" name="paidValue" format="currency" value={paidValue} onValueChange={(_, value) => setPaidValue(Number(value))} className="mt-1" />
             </div>
           </div>
-          {difference !== 0 && paidValue > 0 && (
+          <SettleExtras base={expected} extras={extras} onChange={changeExtras} />
+          {difference !== 0 && paidValue > 0 && extras.interest + extras.fine + extras.discount === 0 && (
             <p className="text-xs text-muted-foreground -mt-2">
-              {difference > 0 ? "Acima" : "Abaixo"} do valor da conta em {formatMoney(Math.abs(difference))} (juros, multa ou desconto). A conta é baixada por inteiro.
+              {difference > 0 ? "Acima" : "Abaixo"} do valor da conta em {formatMoney(Math.abs(difference))}: entra como {difference > 0 ? "juros" : "desconto"}. A conta é baixada por inteiro.
             </p>
           )}
           <div>

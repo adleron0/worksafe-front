@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
 import { dateBr, errorMessage } from "../../comercial/-shared/commercial";
-import { ORDERS_ABILITY } from "../-shared/orders";
+import { ORDERS_ABILITY, RDO_PERMISSION } from "../-shared/orders";
 import { RECENT_REPORTS_KEY, RecentReports, ReportLine, reportsApi } from "../-shared/reports";
 
 export const Route = createFileRoute("/_authenticated/servicos/_ordens/diario-de-obra")({
@@ -17,7 +17,7 @@ function DiaryPage() {
   const { can } = useVerify();
   const { data, isLoading, error } = useQuery({ queryKey: [RECENT_REPORTS_KEY], queryFn: () => reportsApi.get<RecentReports>("service-reports") });
   if (!can(`view_${ORDERS_ABILITY}`)) return null;
-  const canEdit = can(`update_${ORDERS_ABILITY}`);
+  const canEdit = can(RDO_PERMISSION);
   return (
     <>
       <div>

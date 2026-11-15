@@ -14,7 +14,7 @@ import { COMMERCIAL_ABILITY, NumField, Tip, commercialApi, dateBr, errorMessage,
 import {
   CustomerOption, DraftSection, KIND_LABEL, isBlankItem, PROPOSALS_KEY, PROPOSAL_KEY, Proposal, ProposalCalc, ProposalDraft, ProposalOptions, STATUS_LABEL, StatusBadge,
 } from "../-shared/proposals";
-import { ActivityPanel } from "../-shared/activities";
+import { ACTIVITY_PERMISSION, ActivityPanel } from "../-shared/activities";
 import { downloadProposalPdf } from "../-shared/pdf";
 import CustomerStep from "./-CustomerStep";
 import DecisionDialog from "./-DecisionDialog";
@@ -428,7 +428,7 @@ function ProposalEditorPage() {
                   )}
                 </section>
               )}
-              <ActivityPanel proposalId={proposal.id} canEdit={canUpdate} defaultContact={draft.contactName} />
+              <ActivityPanel proposalId={proposal.id} canEdit={can(ACTIVITY_PERMISSION)} defaultContact={draft.contactName} />
               <ProposalHistory proposal={proposal} />
             </div>
           )}

@@ -15,10 +15,10 @@ import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { Tip, dateBr, errorMessage } from "../../comercial/-shared/commercial";
-import { ActivityPanel } from "../../comercial/-shared/activities";
+import { ACTIVITY_PERMISSION, ActivityPanel } from "../../comercial/-shared/activities";
 import { formatCnpj } from "../../comercial/-shared/proposals";
 import {
-  ChecklistItem, MoveDialog, ORDERS_ABILITY, ORDERS_KEY, ORDER_KEY, ORDER_STAGES, ORDER_STATUS_LABEL, Order, OrderOptions, OrderStageBadge, OrderStatus, ScopeItem, TeamMember,
+  ChecklistItem, MoveDialog, ORDERS_ABILITY, ORDERS_KEY, ORDER_KEY, ORDER_STAGES, ORDER_STATUS_LABEL, Order, OrderOptions, OrderStageBadge, OrderStatus, RDO_PERMISSION, ScopeItem, TeamMember,
   isForward, moveLabel, nextStage, ordersApi,
 } from "../-shared/orders";
 import { DiaryPanel } from "../-shared/reports";
@@ -170,7 +170,7 @@ function OrderPage() {
           </section>
 
           {/* com a obra andando, o diário vem primeiro: é o que se usa todo dia */}
-          {(order.status === "em_execucao" || order.status === "concluida" || order.status === "encerrada") && <DiaryPanel orderId={order.id} canEdit={canUpdate && order.status !== "encerrada"} />}
+          {(order.status === "em_execucao" || order.status === "concluida" || order.status === "encerrada") && <DiaryPanel orderId={order.id} canEdit={can(RDO_PERMISSION) && order.status !== "encerrada"} />}
           <OrderPurchasesPanel orderId={order.id} canRequest={!locked} />
           {order.canSeeCosts && <ResultPanel orderId={order.id} />}
 
@@ -223,7 +223,7 @@ function OrderPage() {
             )}
           </section>
 
-          {order.proposal && <ActivityPanel proposalId={order.proposal.id} canEdit={can("update_comercial")} defaultContact={order.contactName} />}
+          {order.proposal && can("list_comercial") && <ActivityPanel proposalId={order.proposal.id} canEdit={can(ACTIVITY_PERMISSION)} defaultContact={order.contactName} />}
 
           <section className="rounded-lg border p-4">
             <h2 className="font-semibold">Histórico</h2>
@@ -262,15 +262,26 @@ function OrderPage() {
               <Label className="text-xs">Equipe escalada</Label>
               <div className="mt-1 grid gap-2">
                 {agenda.team.map((member, index) => (
-                  <div key={index} className="flex gap-2">
-                    <ShadInput aria-label="Nome" placeholder="Nome" maxLength={120} value={member.name} disabled={!editable}
-                      onChange={(event) => set("team", agenda.team.map((current, i) => (i === index ? { ...current, name: event.target.value } : current)))} />
-                    <ShadInput aria-label="Função" placeholder="Função" maxLength={80} value={member.role} disabled={!editable}
-                      onChange={(event) => set("team", agenda.team.map((current, i) => (i === index ? { ...current, role: event.target.value } : current)))} />
-                    {editable && <Button type="button" variant="ghost" size="sm" className="h-9 w-9 p-0 shrink-0" aria-label="Remover da equipe" onClick={() => set("team", agenda.team.filter((_, i) => i !== index))}><Icon name="x" className="w-3 h-3" /></Button>}
+                  <div key={index} className="grid gap-1">
+                    <div className="flex gap-2">
+                      <ShadInput aria-label="Nome" placeholder="Nome" maxLength={120} value={member.name} disabled={!editable}
+                        onChange={(event) => set("team", agenda.team.map((current, i) => (i === index ? { ...current, name: event.target.value } : current)))} />
+                      <ShadInput aria-label="Função" placeholder="Função" maxLength={80} value={member.role} disabled={!editable}
+                        onChange={(event) => set("team", agenda.team.map((current, i) => (i === index ? { ...current, role: event.target.value } : current)))} />
+                      {editable && <Button type="button" variant="ghost" size="sm" className="h-9 w-9 p-0 shrink-0" aria-label="Remover da equipe" onClick={() => set("team", agenda.team.filter((_, i) => i !== index))}><Icon name="x" className="w-3 h-3" /></Button>}
+                    </div>
+                    {/* ligar a pessoa ao usuário dela é o que faz esta OS aparecer para quem só vê as suas */}
+                    {(editable || member.userId) && (
+                      <Select name={`teamUser-${index}`} state={member.userId ? String(member.userId) : ""} clearable disabled={!editable} placeholder="Sem usuário no sistema" modal={false}
+                        options={(options?.users ?? []).map((user) => ({ id: String(user.id), name: user.name }))}
+                        onChange={(_, value) => {
+                          const user = (options?.users ?? []).find((current) => String(current.id) === String(value ?? ""));
+                          set("team", agenda.team.map((current, i) => (i === index ? { ...current, userId: user?.id ?? null, name: current.name || user?.name || "" } : current)));
+                        }} />
+                    )}
                   </div>
                 ))}
-                {editable && <Button type="button" variant="outline" size="sm" className="w-fit" onClick={() => set("team", [...agenda.team, { name: "", role: "" }])}><Icon name="user-plus" className="w-4 h-4 mr-1" /> Incluir pessoa</Button>}
+                {editable && <Button type="button" variant="outline" size="sm" className="w-fit" onClick={() => set("team", [...agenda.team, { name: "", role: "", userId: null }])}><Icon name="user-plus" className="w-4 h-4 mr-1" /> Incluir pessoa</Button>}
                 {!editable && agenda.team.length === 0 && <p className="text-sm text-muted-foreground">Ninguém escalado.</p>}
               </div>
             </div>

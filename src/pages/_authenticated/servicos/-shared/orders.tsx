@@ -24,7 +24,8 @@ export interface OrderRow {
 export interface OrderList { rows: OrderRow[]; total: number; summary: Partial<Record<OrderStatus, number>> }
 
 export interface ChecklistItem { id?: string; title: string; done: boolean; doneAt?: string | null; doneBy?: string | null }
-export interface TeamMember { name: string; role: string }
+/** Pessoa escalada; ligada a um usuário, a OS aparece para ela mesmo sem a permissão de ver todas. */
+export interface TeamMember { name: string; role: string; userId?: number | null }
 export interface ScopeItem { type: string; description: string; unit: string | null; quantity: number; workDays: number | null; hoursPerDay: number | null; overtimeHours: number; night: boolean; weekend: boolean; travel: boolean }
 export interface ScopeSection { title: string; kind: string; items: ScopeItem[] }
 export interface OrderEvent { id: number; type: string; from: OrderStatus | null; to: OrderStatus | null; note: string | null; at: string; user: string | null }
@@ -47,6 +48,8 @@ export const ORDERS_KEY = "serviceOrders";
 export const ORDER_KEY = "serviceOrder";
 export const ORDER_RESULT_KEY = "serviceOrderResult";
 export const ORDERS_ABILITY = "ordens_de_servico";
+/** Lançar e fechar RDO tem permissão própria: o encarregado preenche o diário sem poder alterar a OS. */
+export const RDO_PERMISSION = "update_rdo";
 
 /** Rotas da OS recebem JSON (o helper padrão envia multipart). */
 export const ordersApi = {

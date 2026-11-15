@@ -264,6 +264,9 @@ export function useActivityUsers() {
 }
 
 /** Uma linha do acompanhamento: pendente (com "Concluir") ou feita. */
+/** Registrar contato e agendar retorno tem permissão própria (não exige editar proposta). */
+export const ACTIVITY_PERMISSION = "update_acompanhamento";
+
 export function ActivityItem({ activity, canEdit, showContext, onComplete, onEdit }: {
   activity: Activity; canEdit: boolean; showContext?: boolean; onComplete: (activity: Activity) => void; onEdit: (activity: Activity) => void;
 }) {

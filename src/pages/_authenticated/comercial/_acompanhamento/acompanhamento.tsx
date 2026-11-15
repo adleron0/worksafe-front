@@ -7,7 +7,7 @@ import Pagination from "@/components/general-components/Pagination";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, errorMessage } from "../-shared/commercial";
-import { ACTIVITIES_KEY, ActivityItem, ActivityList, useActivityDialogs, useActivityUsers } from "../-shared/activities";
+import { ACTIVITIES_KEY, ACTIVITY_PERMISSION, ActivityItem, ActivityList, useActivityDialogs, useActivityUsers } from "../-shared/activities";
 
 export const Route = createFileRoute("/_authenticated/comercial/_acompanhamento/acompanhamento")({
   component: FollowUpPage,
@@ -46,7 +46,7 @@ function FollowUpPage() {
   });
 
   if (!can(`view_${COMMERCIAL_ABILITY}`)) return null;
-  const canEdit = can(`update_${COMMERCIAL_ABILITY}`);
+  const canEdit = can(ACTIVITY_PERMISSION);
   return (
     <>
       <div>

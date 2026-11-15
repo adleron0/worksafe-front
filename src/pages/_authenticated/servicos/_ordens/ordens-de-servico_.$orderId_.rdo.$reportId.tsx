@@ -17,7 +17,7 @@ import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { dateBr, errorMessage } from "../../comercial/-shared/commercial";
-import { ORDERS_ABILITY, ORDERS_KEY, ORDER_KEY } from "../-shared/orders";
+import { ORDERS_ABILITY, RDO_PERMISSION, ORDERS_KEY, ORDER_KEY } from "../-shared/orders";
 import {
   CrewMember, DIARY_KEY, OCCURRENCE_OPTIONS, Occurrence, Photo, RECENT_REPORTS_KEY, REPORT_KEY, Report, ReportStatusBadge, SHIFT_OPTIONS, StepProgress, WEATHER_OPTIONS,
   hoursText, reportsApi,
@@ -103,7 +103,7 @@ function ReportPage() {
   if (error) return <div className="p-4"><p className="text-destructive font-medium">Erro: {errorMessage(error)}</p>{back}</div>;
   if (isLoading || !report || !form) return <div className="grid gap-3 max-w-2xl mx-auto"><Skeleton className="h-16 w-full" /><Skeleton className="h-40 w-full" /><Skeleton className="h-40 w-full" /></div>;
 
-  const editable = report.editable && can(`update_${ORDERS_ABILITY}`);
+  const editable = report.editable && can(RDO_PERMISSION);
   const dirty = isNew || JSON.stringify(form) !== JSON.stringify(formOf(report));
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm((current) => (current ? { ...current, [key]: value } : current));
   const setCrew = (index: number, patch: Partial<CrewMember>) => set("crew", form.crew.map((member, i) => (i === index ? { ...member, ...patch } : member)));
@@ -273,7 +273,7 @@ function ReportPage() {
       </div>
 
       {/* ações sempre à mão, no rodapé */}
-      {can(`update_${ORDERS_ABILITY}`) && (
+      {can(RDO_PERMISSION) && (
         <div className={cn("fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 backdrop-blur px-4 py-3")}>
           <div className="max-w-2xl mx-auto flex flex-wrap items-center justify-end gap-2">
             {editable && !isNew && (

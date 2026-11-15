@@ -12,6 +12,8 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { get } from '@/services/api';
 import { ApiError } from '@/general-interfaces/api.interface';
+import MyPipeline from './-MyPipeline';
+import useVerify from '@/hooks/use-verify';
 import { GraduationCap, Users, UserCheck, Clock, Award, UserPlus } from 'lucide-react';
 
 export const Route = createFileRoute('/_authenticated/home')({
@@ -60,6 +62,8 @@ interface SubscriptionsResponse {
 
 function Home() {
   const navigate = useNavigate();
+  const { can } = useVerify();
+  const seesTraining = can("view_treinamentos");
 
   // Query para buscar primeiros passos
   const { data: steps, isLoading: stepsLoading } = useQuery<FirstStepsResponse | undefined, ApiError>({
@@ -67,6 +71,7 @@ function Home() {
     queryFn: async () => {
       return get('companies', 'first-steps');
     },
+    enabled: seesTraining,
   });
 
   // Query para buscar todas as turmas
@@ -75,6 +80,7 @@ function Home() {
     queryFn: async () => {
       return get('classes', '', [{ key: 'limit', value: 'all' }]);
     },
+    enabled: seesTraining,
   });
 
   // Query para buscar últimas inscrições confirmadas
@@ -88,6 +94,7 @@ function Home() {
         { key: 'show', value: ['class'] }
       ]);
     },
+    enabled: seesTraining,
   });
 
   // Query para buscar total de certificados
@@ -100,6 +107,7 @@ function Home() {
         { key: 'active', value: true }
       ]);
     },
+    enabled: seesTraining,
   });
 
   // Query para buscar total de alunos
@@ -111,6 +119,7 @@ function Home() {
         { key: 'page', value: 0 }
       ]);
     },
+    enabled: seesTraining,
   });
 
   // Separar turmas realizadas e em andamento
@@ -187,6 +196,12 @@ function Home() {
       <div className="py-8 bg-background/5 min-h-screen">
         {/* Título da Dashboard */}
         <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+
+        {/* o que espera por quem entrou, nas áreas em que atua */}
+        <MyPipeline />
+
+        {/* o painel de treinamentos só para quem atua em Treinamentos: os outros perfis não têm acesso a esses dados */}
+        {seesTraining && (<>
 
         {/* Timeline de Primeiros Passos - com Skeleton */}
         {stepsLoading ? (
@@ -513,6 +528,7 @@ function Home() {
             )}
           </CardContent>
         </Card>
+        </>)}
       </div>
     );
   };

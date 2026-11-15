@@ -25,20 +25,24 @@ export default function ClassPicker() {
   const settings = useMarketingSettings();
   const today = new Date().toISOString().slice(0, 10);
 
-  const { data, isLoading } = useQuery({
+  const { data: result, isLoading } = useQuery({
     queryKey: ["marketing-upcoming-classes", search],
     queryFn: async () => {
-      const res = await get<{ rows: MarketingClass[] }>("classes", "", [
-        { key: "limit", value: 30 },
-        { key: "active", value: "true" },
-        { key: "order-initialDate", value: "asc" },
-        { key: "show", value: ["course", "_count"] },
-        { key: "gte-initialDate", value: today },
-        ...(search ? [{ key: "like-name", value: search }] : []),
-      ]);
-      return res?.rows ?? [];
+      const list = async (upcoming: boolean) =>
+        (await get<{ rows: MarketingClass[] }>("classes", "", [
+          { key: "limit", value: upcoming ? 30 : 12 },
+          { key: "active", value: "true" },
+          { key: "order-initialDate", value: upcoming ? "asc" : "desc" },
+          { key: "show", value: ["course", "_count"] },
+          ...(upcoming ? [{ key: "gte-initialDate", value: today }] : []),
+          ...(search ? [{ key: "like-name", value: search }] : []),
+        ]))?.rows ?? [];
+      const upcoming = await list(true);
+      // sem turma futura, mostra as mais recentes (para duplicar a ideia ou testar)
+      return upcoming.length ? { rows: upcoming, recent: false } : { rows: await list(false), recent: true };
     },
   });
+  const data = result?.rows;
 
   return (
     <div className="space-y-3">
@@ -54,9 +58,15 @@ export default function ClassPicker() {
         </div>
       ) : !data?.length ? (
         <div className="w-full flex justify-center items-center font-medium text-primary py-4 rounded border border-primary">
-          <p>Nenhuma turma com data a partir de hoje.</p>
+          <p>Nenhuma turma encontrada.</p>
         </div>
       ) : (
+        <>
+        {result?.recent && (
+          <p className="text-sm text-muted-foreground">
+            Nenhuma turma com data a partir de hoje. Mostrando as mais recentes; cadastre a próxima turma para divulgá-la.
+          </p>
+        )}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {data.map((t) => {
             const d = dateParts(t.initialDate, t.finalDate);
@@ -101,6 +111,7 @@ export default function ClassPicker() {
             );
           })}
         </div>
+        </>
       )}
       <DivulgarDialog classId={classId} open={classId !== null} onOpenChange={(o) => !o && setClassId(null)} />
     </div>

@@ -171,13 +171,13 @@ function Studio({
       options,
       theme,
       companyName: company.name,
-      whatsapp: settings.whatsapp ?? "",
+      whatsapp: vars.values.whatsapp,
       email: settings.email ?? "",
       site: vars.values.site,
       photo,
       seals,
     }),
-    [vars, overrides.titulo, overrides.niveis, options, theme, company.name, settings.whatsapp, settings.email, photo, seals],
+    [vars, overrides.titulo, overrides.niveis, options, theme, company.name, settings.email, photo, seals],
   );
 
   const canvasRef = useRef<HTMLCanvasElement>(null);

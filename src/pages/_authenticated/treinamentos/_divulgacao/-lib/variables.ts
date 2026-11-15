@@ -143,6 +143,15 @@ export function defaultOverrides(turma: MarketingClass, settings: MarketingSetti
   };
 }
 
+/** "81989479259" → "(81) 98947-9259"; o que não for número de telefone fica como está. */
+export function formatPhone(value?: string | null): string {
+  const raw = String(value ?? "").trim();
+  const d = raw.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return raw;
+}
+
 const siteLabel = (url?: string) => String(url ?? "").replace(/^https?:\/\//, "").replace(/\/$/, "");
 
 export function enrollmentLink(turma: MarketingClass, settings: MarketingSettings, siteDomain?: string | null) {
@@ -211,7 +220,7 @@ export function buildVariables(
     vagas_frase: remaining !== null && remaining > 0 ? (remaining === 1 ? "Resta só 1 vaga." : `Restam só ${remaining} vagas.`) : "",
     incluso: joinPt(incluso),
     incluso_lista: incluso.map((i) => `✅ ${i}`).join("\n"),
-    whatsapp: settings.whatsapp ?? "",
+    whatsapp: formatPhone(settings.whatsapp),
     email: settings.email ?? "",
     site: siteLabel(settings.site),
     link_inscricao: enrollmentLink(turma, settings, siteDomain),

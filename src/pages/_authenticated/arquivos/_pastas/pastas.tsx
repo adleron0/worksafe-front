@@ -11,10 +11,11 @@ import DocStatusBadge, { STATUS_TONE } from "@/components/general-components/Doc
 import DocumentFolder from "@/components/general-components/DocumentFolder";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
-import { sizeText } from "@/lib/open-file";
+import { blobErrorMessage, openApiFile, sizeText } from "@/lib/open-file";
 import { cn } from "@/lib/utils";
 import { Tip, dateBr, errorMessage } from "../../comercial/-shared/commercial";
 import { AccessDialog, Browse, DetailsDialog, FILES_ABILITY, FILES_KEY, FileInfo, FileType, FolderInfo, HistoryDialog, MoveDialog, NameDialog, PathItem, ReplaceDialog, SearchResult, dateTimeBr, fileIcon, filesApi, openFile } from "../-shared/files";
+import { PickedFile, filesFromDrop, filesFromPicker, uploadLarge } from "../-shared/upload";
 
 export const Route = createFileRoute("/_authenticated/arquivos/_pastas/pastas")({
   component: FoldersPage,
@@ -115,6 +116,7 @@ function FoldersPage() {
   const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const dirRef = useRef<HTMLInputElement>(null);
   const [modal, setModal] = useState<Modal | null>(null);
   const [typed, setTyped] = useState("");
   const [term, setTerm] = useState("");
@@ -149,29 +151,64 @@ function FoldersPage() {
     onError: (err) => toast({ title: "Não foi possível mandar para a lixeira", description: errorMessage(err), variant: "destructive" }),
   });
 
-  /** Envia um arquivo por vez, cada um com o seu andamento; o que falha fica na lista com o motivo. */
-  const send = async (list: File[]) => {
+  /**
+   * Envia um arquivo por vez, cada um com o seu andamento; o que falha fica na
+   * lista com o motivo. Arquivo grande vai direto ao armazenamento, em partes.
+   * Quando vem uma pasta inteira, as pastas de dentro são criadas antes.
+   */
+  const send = async (list: PickedFile[]) => {
     const folder = data?.folder;
     if (!folder || !list.length) return;
-    const max = data.maxBytes;
-    const batch = list.map((file, index) => ({ file, item: { key: `${Date.now()}-${index}`, name: file.name, size: file.size, progress: 0, status: "fila" } as Sending }));
+    const { maxBytes, directMaxBytes } = data;
+    const batch = list.map((picked, index) => ({ ...picked, item: { key: `${Date.now()}-${index}`, name: [...picked.path, picked.file.name].join(" / "), size: picked.file.size, progress: 0, status: "fila" } as Sending }));
     setSending((current) => [...current.filter((item) => item.status !== "ok"), ...batch.map((entry) => entry.item)]);
     const patch = (key: string, change: Partial<Sending>) => setSending((current) => current.map((item) => (item.key === key ? { ...item, ...change } : item)));
-    for (const { file, item } of batch) {
-      if (file.size > max) { patch(item.key, { status: "erro", error: `Passa de ${sizeText(max)}.` }); continue; }
+    // cada caminho de pastas é garantido uma vez só
+    const folderOf = new Map<string, Promise<number>>([["", Promise.resolve(folder.id)]]);
+    const targetOf = (path: string[]) => {
+      const key = path.join("/");
+      if (!folderOf.has(key)) folderOf.set(key, filesApi.post<{ id: number }>("folders/path", { parentId: folder.id, path }).then((result) => result.id));
+      return folderOf.get(key) as Promise<number>;
+    };
+    for (const { file, path, item } of batch) {
+      if (file.size > directMaxBytes) { patch(item.key, { status: "erro", error: `Passa de ${sizeText(directMaxBytes)}.` }); continue; }
+      if (!file.size) { patch(item.key, { status: "erro", error: "Arquivo vazio." }); continue; }
       patch(item.key, { status: "enviando" });
       try {
-        const form = new FormData();
-        form.append("folderId", String(folder.id));
-        form.append("file", file);
-        await api.post("company-files/files", form, { onUploadProgress: (event) => patch(item.key, { progress: event.total ? Math.round((event.loaded / event.total) * 100) : 0 }) });
+        const folderId = await targetOf(path);
+        if (file.size > maxBytes) {
+          await uploadLarge(file, { folderId }, (progress) => patch(item.key, { progress }));
+        } else {
+          const form = new FormData();
+          form.append("folderId", String(folderId));
+          form.append("file", file);
+          await api.post("company-files/files", form, { onUploadProgress: (event) => patch(item.key, { progress: event.total ? Math.round((event.loaded / event.total) * 100) : 0 }) });
+        }
         patch(item.key, { status: "ok", progress: 100 });
         refresh();
       } catch (err) {
-        patch(item.key, { status: "erro", error: errorMessage(err) });
+        patch(item.key, { status: "erro", error: (err as { response?: unknown })?.response ? errorMessage(err) : (err as Error)?.message || "Não foi possível enviar." });
       }
     }
   };
+  const [zipping, setZipping] = useState(false);
+  const downloadZip = async (target: FolderInfo) => {
+    setZipping(true);
+    try {
+      await openApiFile(`company-files/folders/${target.id}/zip`, `${target.name}.zip`, true);
+    } catch (err) {
+      toast({ title: "Não foi possível baixar a pasta", description: await blobErrorMessage(err), variant: "destructive" });
+    } finally { setZipping(false); }
+  };
+
+  // fechar a aba no meio de um envio perde o que estava subindo: o navegador pergunta antes
+  const uploading = sending.some((item) => item.status === "fila" || item.status === "enviando");
+  useEffect(() => {
+    if (!uploading) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [uploading]);
 
   if (!can(`view_${FILES_ABILITY}`)) return null;
   const folder = data?.folder ?? null;
@@ -183,7 +220,7 @@ function FoldersPage() {
     <div
       onDragOver={(event) => { if (folder && canWrite && event.dataTransfer.types.includes("Files")) { event.preventDefault(); setDragging(true); } }}
       onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false); }}
-      onDrop={(event) => { if (!folder || !canWrite) return; event.preventDefault(); setDragging(false); send(Array.from(event.dataTransfer.files)); }}
+      onDrop={(event) => { if (!folder || !canWrite) return; event.preventDefault(); setDragging(false); filesFromDrop(event.dataTransfer).then(send).catch(() => toast({ title: "Não foi possível ler o que foi arrastado", variant: "destructive" })); }}
       className={cn("rounded-lg", dragging && "outline outline-2 outline-dashed outline-primary outline-offset-4")}
     >
       <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-3">
@@ -254,7 +291,9 @@ function FoldersPage() {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {canWrite && <Button type="button" onClick={() => fileRef.current?.click()} disabled={busy}><Icon name="upload" className="w-4 h-4 mr-1" /> Enviar arquivos</Button>}
+                {canWrite && <Button type="button" variant="outline" onClick={() => dirRef.current?.click()} disabled={busy}><Icon name="folder-up" className="w-4 h-4 mr-1" /> Enviar pasta</Button>}
                 {canWrite && <Button type="button" variant="outline" onClick={() => setModal({ kind: "nova-pasta" })}><Icon name="folder-plus" className="w-4 h-4 mr-1" /> Nova pasta</Button>}
+                {folder.files > 0 && <Tip text="Baixar a pasta em ZIP (até 300 MB)"><Button type="button" variant="outline" size="sm" className="h-9 w-9 p-0" aria-label="Baixar a pasta em ZIP" disabled={zipping} onClick={() => downloadZip(folder)}><Icon name={zipping ? "loader-circle" : "folder-down"} className={cn("w-4 h-4", zipping && "animate-spin")} /></Button></Tip>}
                 {canWrite && (folder.parentId || canManage) && (
                   <>
                     <Tip text="Renomear a pasta"><Button type="button" variant="outline" size="sm" className="h-9 w-9 p-0" aria-label="Renomear a pasta" onClick={() => setModal({ kind: "renomear-pasta", folder })}><Icon name="pencil" className="w-4 h-4" /></Button></Tip>
@@ -267,8 +306,10 @@ function FoldersPage() {
                 )}
               </div>
             </div>
-            <input ref={fileRef} type="file" multiple className="hidden" onChange={(event) => { send(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
-            {canWrite && <p className="mt-2 text-xs text-muted-foreground">Arraste arquivos para esta tela ou use "Enviar arquivos". Qualquer tipo de arquivo, até {sizeText(data.maxBytes)} cada.</p>}
+            <input ref={fileRef} type="file" multiple className="hidden" onChange={(event) => { send(Array.from(event.target.files ?? []).map((file) => ({ file, path: [] }))); event.target.value = ""; }} />
+            {/* seletor de pasta inteira: o atributo ainda não está nos tipos do React */}
+            <input ref={dirRef} type="file" multiple className="hidden" {...({ webkitdirectory: "" } as Record<string, string>)} onChange={(event) => { send(filesFromPicker(event.target.files)); event.target.value = ""; }} />
+            {canWrite && <p className="mt-2 text-xs text-muted-foreground">Arraste arquivos ou pastas inteiras para esta tela, ou use os botões. Qualquer tipo de arquivo, até {sizeText(data.directMaxBytes)} cada; não feche a aba enquanto um arquivo grande estiver subindo.</p>}
           </section>
 
           {!!sending.length && (
@@ -329,7 +370,7 @@ function FoldersPage() {
         <MoveDialog title={`Mover "${modal.file.name}"`} currentId={modal.file.folderId} onSubmit={(folderId) => filesApi.put(`files/${modal.file.id}`, { folderId })} onClose={() => setModal(null)} />
       )}
       {modal?.kind === "detalhes" && <DetailsDialog file={modal.file} types={types} onClose={() => setModal(null)} />}
-      {modal?.kind === "substituir" && <ReplaceDialog file={modal.file} types={types} maxBytes={data?.maxBytes ?? 25 * 1024 * 1024} onClose={() => setModal(null)} />}
+      {modal?.kind === "substituir" && <ReplaceDialog file={modal.file} types={types} maxBytes={data?.maxBytes ?? 25 * 1024 * 1024} directMaxBytes={data?.directMaxBytes ?? 2 * 1024 ** 3} onClose={() => setModal(null)} />}
       {modal?.kind === "historico" && <HistoryDialog file={modal.file} onClose={() => setModal(null)} />}
     </div>
   );

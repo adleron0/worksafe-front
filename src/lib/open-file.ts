@@ -24,3 +24,26 @@ export async function openApiFile(path: string, fileName: string, download = fal
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
+
+/** Abre (ou baixa) um endereço direto, como o link temporário do armazenamento. */
+export function openUrl(url: string, download = false) {
+  const link = window.document.createElement("a");
+  link.href = url;
+  if (!download) link.target = "_blank";
+  link.rel = "noopener";
+  window.document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+/** A mensagem de erro da API quando a resposta esperada era um arquivo (o erro chega como arquivo também). */
+export async function blobErrorMessage(error: unknown): Promise<string> {
+  const data = (error as { response?: { data?: unknown } })?.response?.data;
+  if (data instanceof Blob) {
+    try {
+      const message = JSON.parse(await data.text())?.message;
+      if (message) return Array.isArray(message) ? message.join(" ") : String(message);
+    } catch { /* não era JSON: fica a mensagem geral */ }
+  }
+  return "Não foi possível baixar o arquivo.";
+}

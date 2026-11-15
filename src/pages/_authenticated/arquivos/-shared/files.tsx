@@ -12,7 +12,8 @@ import type { DocStatus } from "@/components/general-components/DocStatusBadge";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
-import { openApiFile, sizeText } from "@/lib/open-file";
+import { openApiFile, openUrl, sizeText } from "@/lib/open-file";
+import { uploadLarge } from "./upload";
 import { NumField, errorMessage, todayIso } from "../../comercial/-shared/commercial";
 
 /** Arquivos da empresa: tipos (espelham a API), chamadas e os diálogos de pasta e de arquivo. */
@@ -28,7 +29,7 @@ export interface ExpiringRow {
 }
 export interface ExpiringList { today: string; summary: { vencido: number; a_vencer: number; faltando: number }; total: number; rows: ExpiringRow[]; types: PathItem[] }
 export interface PathItem { id: number; name: string }
-export interface Browse { folder: FolderInfo | null; path: PathItem[]; folders: FolderInfo[]; files: FileInfo[]; types: FileType[]; maxBytes: number; trashDays: number }
+export interface Browse { folder: FolderInfo | null; path: PathItem[]; folders: FolderInfo[]; files: FileInfo[]; types: FileType[]; maxBytes: number; directMaxBytes: number; trashDays: number }
 export interface SearchResult { folders: Array<PathItem & { path: PathItem[] }>; files: Array<FileInfo & { path: PathItem[] }>; total: number }
 export interface FolderOption { id: number; parentId: number | null; name: string; path: string }
 export interface TrashList {
@@ -63,8 +64,15 @@ export function fileIcon(file: Pick<FileInfo, "mimeType" | "fileName">): string 
 
 export const dateTimeBr = (value: string) => new Date(value).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
-export async function openFile(file: Pick<FileInfo, "id" | "name">, download = false) {
+/** Acima disto o arquivo não passa pela memória do navegador nem pela API: abre por um link temporário do armazenamento. */
+const LINK_FROM_BYTES = 20 * 1024 * 1024;
+
+export async function openFile(file: Pick<FileInfo, "id" | "name"> & { size?: number }, download = false) {
   try {
+    if ((file.size ?? 0) > LINK_FROM_BYTES) {
+      const link = await filesApi.get<{ url: string }>(`files/${file.id}/link`, download ? { download: 1 } : undefined);
+      return openUrl(link.url, download);
+    }
     await openApiFile(`company-files/files/${file.id}/file`, file.name, download);
   } catch (err) {
     toast({ title: "Não foi possível abrir o arquivo", description: errorMessage(err), variant: "destructive" });
@@ -347,20 +355,24 @@ export function DetailsDialog({ file, types, onClose }: { file: FileInfo; types:
 }
 
 /** Substituir por uma versão nova: o arquivo atual fica guardado como versão anterior. */
-export function ReplaceDialog({ file, types, maxBytes, onClose }: { file: FileInfo; types: FileType[]; maxBytes: number; onClose: () => void }) {
+export function ReplaceDialog({ file, types, maxBytes, directMaxBytes, onClose }: { file: FileInfo; types: FileType[]; maxBytes: number; directMaxBytes: number; onClose: () => void }) {
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [picked, setPicked] = useState<File | null>(null);
   // a validade do arquivo novo não herda a do antigo: começa pela emissão de hoje
   const expiry = useExpiryFields(types, { typeId: file.typeId, issueDate: file.typeId || file.expiryDate ? todayIso() : null, expiryDate: null }, true);
   const [error, setError] = useState("");
+  const [percent, setPercent] = useState(0);
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
+      const chosen = picked as File;
+      // arquivo grande vai direto ao armazenamento, em partes
+      if (chosen.size > maxBytes) return uploadLarge(chosen, { replaceId: file.id, issueDate: expiry.values.issueDate, expiryDate: expiry.values.expiryDate }, setPercent);
       const form = new FormData();
-      form.append("file", picked as File);
+      form.append("file", chosen);
       if (expiry.values.issueDate) form.append("issueDate", expiry.values.issueDate);
       if (expiry.values.expiryDate) form.append("expiryDate", expiry.values.expiryDate);
-      return (await api.post(`company-files/files/${file.id}/replace`, form)).data;
+      return (await api.post(`company-files/files/${file.id}/replace`, form, { onUploadProgress: (event) => setPercent(event.total ? Math.round((event.loaded / event.total) * 100) : 0) })).data;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: [FILES_KEY] }); toast({ title: "Versão nova enviada", variant: "success" }); onClose(); },
     onError: (err) => setError(errorMessage(err)),
@@ -368,9 +380,9 @@ export function ReplaceDialog({ file, types, maxBytes, onClose }: { file: FileIn
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!picked) return setError("Escolha o arquivo.");
-    if (picked.size > maxBytes) return setError(`O arquivo passa de ${sizeText(maxBytes)}.`);
+    if (picked.size > directMaxBytes) return setError(`O arquivo passa de ${sizeText(directMaxBytes)}.`);
     if (expiry.problem) return setError(expiry.problem);
-    setError(""); mutate();
+    setError(""); setPercent(0); mutate();
   };
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -385,14 +397,14 @@ export function ReplaceDialog({ file, types, maxBytes, onClose }: { file: FileIn
             <input ref={fileRef} type="file" className="hidden" onChange={(event) => { setPicked(event.target.files?.[0] ?? null); setError(""); }} />
             <div className="mt-1 flex items-center gap-2">
               <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}><Icon name="paperclip" className="w-3 h-3 mr-1" /> {picked ? "Trocar arquivo" : "Escolher arquivo"}</Button>
-              <span className="min-w-0 truncate text-sm text-muted-foreground">{picked ? `${picked.name} · ${sizeText(picked.size)}` : `Até ${sizeText(maxBytes)}`}</span>
+              <span className="min-w-0 truncate text-sm text-muted-foreground">{picked ? `${picked.name} · ${sizeText(picked.size)}` : `Até ${sizeText(directMaxBytes)}`}</span>
             </div>
           </div>
           {(file.typeId || file.expiryDate) && expiry.fields}
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={isPending}>{isPending ? "Enviando..." : "Enviar"}</Button>
+            <Button type="submit" disabled={isPending}>{isPending ? `Enviando... ${percent}%` : "Enviar"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

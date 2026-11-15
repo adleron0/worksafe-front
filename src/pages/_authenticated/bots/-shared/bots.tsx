@@ -27,6 +27,7 @@ export interface TeamMember extends Bot {
   today: { conversations: number; actions: number };
   lastActivityAt: string | null;
   lastConversation: { id: number; title: string; at: string } | null;
+  agenda: { count: number; watching: number; next: { id: number; name: string; at: string | null } | null };
 }
 export interface TeamActivity { id: number; botId: number | null; persona: string | null; avatar: string | null; title: string; status: string; at: string; origin: string; user: string | null }
 export interface Team { members: TeamMember[]; activity: TeamActivity[] }
@@ -89,6 +90,7 @@ export const TOOL_LABEL: Record<string, string> = {
   fin_salvar_fornecedor: "Fornecedor", fin_salvar_conta_bancaria: "Conta bancária", fin_salvar_recorrencia: "Recorrência",
   fin_encerrar_recorrencia: "Encerrar recorrência", fin_definir_classificacao_padrao: "Classificação padrão", fin_dar_baixa: "Dar baixa",
   fin_estornar_baixa: "Estornar baixa", fin_transferir_entre_contas: "Transferir entre contas", fin_excluir_lancamentos: "Excluir lançamentos",
+  agendar_tarefa: "Agendar tarefa", minhas_tarefas: "Agenda", pausar_tarefa: "Pausar tarefa",
 };
 export const STATUS_LABEL: Record<string, string> = { ok: "feito", refused: "recusado", denied: "sem permissão", error: "falhou", pending: "aguardando confirmação", running: "em andamento" };
 

@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import { BotAvatar, STATUS_TEXT } from "../-shared/avatar";
-import { TeamActivity, TeamMember, ago, useAiStatus, useTeam } from "../-shared/bots";
+import { TeamActivity, TeamMember, ago, dateTimeBr, useAiStatus, useTeam } from "../-shared/bots";
 
 export const Route = createFileRoute("/_authenticated/bots/_bots/equipe")({
   component: TeamPage,
@@ -89,6 +89,15 @@ function MemberCard({ member }: { member: TeamMember }) {
         <div className="rounded-lg bg-muted/60 py-2"><p className="text-lg font-semibold leading-none">{member.today.conversations}</p><p className="mt-1 text-[11px] text-muted-foreground">pedidos hoje</p></div>
         <div className="rounded-lg bg-muted/60 py-2"><p className="text-lg font-semibold leading-none">{member.today.actions}</p><p className="mt-1 text-[11px] text-muted-foreground">tarefas hoje</p></div>
       </div>
+      <Link to="/bots/agenda" className="mt-3 flex items-center gap-2 rounded-lg border border-dashed px-2.5 py-2 text-xs hover:bg-muted">
+        <Icon name="calendar-clock" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        <span className="min-w-0 flex-1 truncate">
+          {member.agenda?.next
+            ? <>Próxima: <strong className="font-medium">{member.agenda.next.name}</strong>{member.agenda.next.at ? ` · ${dateTimeBr(member.agenda.next.at)}` : ""}</>
+            : member.agenda?.count ? `${member.agenda.count} ${member.agenda.count === 1 ? "tarefa agendada" : "tarefas agendadas"}` : <span className="text-muted-foreground">Sem tarefas agendadas</span>}
+        </span>
+        {member.agenda?.watching ? <span className="flex shrink-0 items-center gap-0.5 text-amber-600 dark:text-amber-400"><Icon name="zap" className="h-3 w-3" />{member.agenda.watching}</span> : null}
+      </Link>
       <div className="mt-4 flex gap-2">
         <Button asChild size="sm" className="flex-1">
           <Link to="/bots/conversas" search={{ bot: member.id, conversa: member.working.mine?.conversationId ?? member.lastConversation?.id }}>

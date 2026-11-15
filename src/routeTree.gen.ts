@@ -83,10 +83,10 @@ import { Route as AuthenticatedBotsRelatoriosRelatoriosRouteImport } from './pag
 import { Route as AuthenticatedBotsBotsEquipeRouteImport } from './pages/_authenticated/bots/_bots/equipe'
 import { Route as AuthenticatedBotsBotsConversasRouteImport } from './pages/_authenticated/bots/_bots/conversas'
 import { Route as AuthenticatedBotsBotsConexoesRouteImport } from './pages/_authenticated/bots/_bots/conexoes'
+import { Route as AuthenticatedBotsBotsAgendaRouteImport } from './pages/_authenticated/bots/_bots/agenda'
 import { Route as AuthenticatedBotsBotsAcoesRouteImport } from './pages/_authenticated/bots/_bots/acoes'
 import { Route as AuthenticatedBotsAdminConfiguracaoRouteImport } from './pages/_authenticated/bots/_admin/configuracao'
 import { Route as AuthenticatedBotsAdminAuditoriaRouteImport } from './pages/_authenticated/bots/_admin/auditoria'
-import { Route as AuthenticatedBotsAdminAgendamentosRouteImport } from './pages/_authenticated/bots/_admin/agendamentos'
 import { Route as AuthenticatedBlogVisitantesVisitantesRouteImport } from './pages/_authenticated/blog/_visitantes/visitantes'
 import { Route as AuthenticatedBlogTagsTagsRouteImport } from './pages/_authenticated/blog/_tags/tags'
 import { Route as AuthenticatedBlogPostsPostsRouteImport } from './pages/_authenticated/blog/_posts/posts'
@@ -535,6 +535,12 @@ const AuthenticatedBotsBotsConexoesRoute =
     path: '/bots/conexoes',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedBotsBotsAgendaRoute =
+  AuthenticatedBotsBotsAgendaRouteImport.update({
+    id: '/bots/_bots/agenda',
+    path: '/bots/agenda',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedBotsBotsAcoesRoute =
   AuthenticatedBotsBotsAcoesRouteImport.update({
     id: '/bots/_bots/acoes',
@@ -551,12 +557,6 @@ const AuthenticatedBotsAdminAuditoriaRoute =
   AuthenticatedBotsAdminAuditoriaRouteImport.update({
     id: '/bots/_admin/auditoria',
     path: '/bots/auditoria',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedBotsAdminAgendamentosRoute =
-  AuthenticatedBotsAdminAgendamentosRouteImport.update({
-    id: '/bots/_admin/agendamentos',
-    path: '/bots/agendamentos',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedBlogVisitantesVisitantesRoute =
@@ -714,10 +714,10 @@ export interface FileRoutesByFullPath {
   '/blog/posts': typeof AuthenticatedBlogPostsPostsRoute
   '/blog/tags': typeof AuthenticatedBlogTagsTagsRoute
   '/blog/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
-  '/bots/agendamentos': typeof AuthenticatedBotsAdminAgendamentosRoute
   '/bots/auditoria': typeof AuthenticatedBotsAdminAuditoriaRoute
   '/bots/configuracao': typeof AuthenticatedBotsAdminConfiguracaoRoute
   '/bots/acoes': typeof AuthenticatedBotsBotsAcoesRoute
+  '/bots/agenda': typeof AuthenticatedBotsBotsAgendaRoute
   '/bots/conexoes': typeof AuthenticatedBotsBotsConexoesRoute
   '/bots/conversas': typeof AuthenticatedBotsBotsConversasRoute
   '/bots/equipe': typeof AuthenticatedBotsBotsEquipeRoute
@@ -811,10 +811,10 @@ export interface FileRoutesByTo {
   '/blog/posts': typeof AuthenticatedBlogPostsPostsRoute
   '/blog/tags': typeof AuthenticatedBlogTagsTagsRoute
   '/blog/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
-  '/bots/agendamentos': typeof AuthenticatedBotsAdminAgendamentosRoute
   '/bots/auditoria': typeof AuthenticatedBotsAdminAuditoriaRoute
   '/bots/configuracao': typeof AuthenticatedBotsAdminConfiguracaoRoute
   '/bots/acoes': typeof AuthenticatedBotsBotsAcoesRoute
+  '/bots/agenda': typeof AuthenticatedBotsBotsAgendaRoute
   '/bots/conexoes': typeof AuthenticatedBotsBotsConexoesRoute
   '/bots/conversas': typeof AuthenticatedBotsBotsConversasRoute
   '/bots/equipe': typeof AuthenticatedBotsBotsEquipeRoute
@@ -912,10 +912,10 @@ export interface FileRoutesById {
   '/_authenticated/blog/_posts/posts': typeof AuthenticatedBlogPostsPostsRoute
   '/_authenticated/blog/_tags/tags': typeof AuthenticatedBlogTagsTagsRoute
   '/_authenticated/blog/_visitantes/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
-  '/_authenticated/bots/_admin/agendamentos': typeof AuthenticatedBotsAdminAgendamentosRoute
   '/_authenticated/bots/_admin/auditoria': typeof AuthenticatedBotsAdminAuditoriaRoute
   '/_authenticated/bots/_admin/configuracao': typeof AuthenticatedBotsAdminConfiguracaoRoute
   '/_authenticated/bots/_bots/acoes': typeof AuthenticatedBotsBotsAcoesRoute
+  '/_authenticated/bots/_bots/agenda': typeof AuthenticatedBotsBotsAgendaRoute
   '/_authenticated/bots/_bots/conexoes': typeof AuthenticatedBotsBotsConexoesRoute
   '/_authenticated/bots/_bots/conversas': typeof AuthenticatedBotsBotsConversasRoute
   '/_authenticated/bots/_bots/equipe': typeof AuthenticatedBotsBotsEquipeRoute
@@ -1012,10 +1012,10 @@ export interface FileRouteTypes {
     | '/blog/posts'
     | '/blog/tags'
     | '/blog/visitantes'
-    | '/bots/agendamentos'
     | '/bots/auditoria'
     | '/bots/configuracao'
     | '/bots/acoes'
+    | '/bots/agenda'
     | '/bots/conexoes'
     | '/bots/conversas'
     | '/bots/equipe'
@@ -1109,10 +1109,10 @@ export interface FileRouteTypes {
     | '/blog/posts'
     | '/blog/tags'
     | '/blog/visitantes'
-    | '/bots/agendamentos'
     | '/bots/auditoria'
     | '/bots/configuracao'
     | '/bots/acoes'
+    | '/bots/agenda'
     | '/bots/conexoes'
     | '/bots/conversas'
     | '/bots/equipe'
@@ -1209,10 +1209,10 @@ export interface FileRouteTypes {
     | '/_authenticated/blog/_posts/posts'
     | '/_authenticated/blog/_tags/tags'
     | '/_authenticated/blog/_visitantes/visitantes'
-    | '/_authenticated/bots/_admin/agendamentos'
     | '/_authenticated/bots/_admin/auditoria'
     | '/_authenticated/bots/_admin/configuracao'
     | '/_authenticated/bots/_bots/acoes'
+    | '/_authenticated/bots/_bots/agenda'
     | '/_authenticated/bots/_bots/conexoes'
     | '/_authenticated/bots/_bots/conversas'
     | '/_authenticated/bots/_bots/equipe'
@@ -1802,6 +1802,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBotsBotsConexoesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/bots/_bots/agenda': {
+      id: '/_authenticated/bots/_bots/agenda'
+      path: '/bots/agenda'
+      fullPath: '/bots/agenda'
+      preLoaderRoute: typeof AuthenticatedBotsBotsAgendaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/bots/_bots/acoes': {
       id: '/_authenticated/bots/_bots/acoes'
       path: '/bots/acoes'
@@ -1821,13 +1828,6 @@ declare module '@tanstack/react-router' {
       path: '/bots/auditoria'
       fullPath: '/bots/auditoria'
       preLoaderRoute: typeof AuthenticatedBotsAdminAuditoriaRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/bots/_admin/agendamentos': {
-      id: '/_authenticated/bots/_admin/agendamentos'
-      path: '/bots/agendamentos'
-      fullPath: '/bots/agendamentos'
-      preLoaderRoute: typeof AuthenticatedBotsAdminAgendamentosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/blog/_visitantes/visitantes': {
@@ -1994,10 +1994,10 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBlogPostsPostsRoute: typeof AuthenticatedBlogPostsPostsRoute
   AuthenticatedBlogTagsTagsRoute: typeof AuthenticatedBlogTagsTagsRoute
   AuthenticatedBlogVisitantesVisitantesRoute: typeof AuthenticatedBlogVisitantesVisitantesRoute
-  AuthenticatedBotsAdminAgendamentosRoute: typeof AuthenticatedBotsAdminAgendamentosRoute
   AuthenticatedBotsAdminAuditoriaRoute: typeof AuthenticatedBotsAdminAuditoriaRoute
   AuthenticatedBotsAdminConfiguracaoRoute: typeof AuthenticatedBotsAdminConfiguracaoRoute
   AuthenticatedBotsBotsAcoesRoute: typeof AuthenticatedBotsBotsAcoesRoute
+  AuthenticatedBotsBotsAgendaRoute: typeof AuthenticatedBotsBotsAgendaRoute
   AuthenticatedBotsBotsConexoesRoute: typeof AuthenticatedBotsBotsConexoesRoute
   AuthenticatedBotsBotsConversasRoute: typeof AuthenticatedBotsBotsConversasRoute
   AuthenticatedBotsBotsEquipeRoute: typeof AuthenticatedBotsBotsEquipeRoute
@@ -2089,12 +2089,11 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBlogTagsTagsRoute: AuthenticatedBlogTagsTagsRoute,
   AuthenticatedBlogVisitantesVisitantesRoute:
     AuthenticatedBlogVisitantesVisitantesRoute,
-  AuthenticatedBotsAdminAgendamentosRoute:
-    AuthenticatedBotsAdminAgendamentosRoute,
   AuthenticatedBotsAdminAuditoriaRoute: AuthenticatedBotsAdminAuditoriaRoute,
   AuthenticatedBotsAdminConfiguracaoRoute:
     AuthenticatedBotsAdminConfiguracaoRoute,
   AuthenticatedBotsBotsAcoesRoute: AuthenticatedBotsBotsAcoesRoute,
+  AuthenticatedBotsBotsAgendaRoute: AuthenticatedBotsBotsAgendaRoute,
   AuthenticatedBotsBotsConexoesRoute: AuthenticatedBotsBotsConexoesRoute,
   AuthenticatedBotsBotsConversasRoute: AuthenticatedBotsBotsConversasRoute,
   AuthenticatedBotsBotsEquipeRoute: AuthenticatedBotsBotsEquipeRoute,

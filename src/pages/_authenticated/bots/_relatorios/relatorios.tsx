@@ -24,7 +24,7 @@ function ReportsPage() {
           <h1 className="text-xl font-bold">Relatórios</h1>
           <p className="text-sm text-muted-foreground">Os relatórios agendados que você recebe. O aviso por e-mail ou WhatsApp traz o link para cá.</p>
         </div>
-        {can("update_bots") && <Link to="/bots/agendamentos" className="text-sm font-medium text-primary underline underline-offset-2">Configurar agendamentos</Link>}
+        <Link to="/bots/agenda" className="text-sm font-medium text-primary underline underline-offset-2">Abrir a agenda</Link>
       </div>
       {error && <p className="text-destructive">Erro: {errorMessage(error)}</p>}
       {isLoading && <Skeleton className="h-32 w-full" />}

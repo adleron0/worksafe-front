@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from '../ui/button';
 import Icon from '../general-components/Icon';
+import SlideConfirm from './SlideConfirm';
 
 interface ConfirmDialogProps {
   titleBttn?: string;
@@ -23,6 +24,11 @@ interface ConfirmDialogProps {
   /** Uso controlado (sem botão que abre): quem chama decide quando o diálogo aparece. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /**
+   * Para ações importantes e difíceis de desfazer: no lugar do botão "Continuar",
+   * a pessoa desliza para confirmar (ex.: "Deslize para fechar o RDO").
+   */
+  slideLabel?: string;
 }
 
 const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -34,6 +40,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   children,
   open,
   onOpenChange,
+  slideLabel,
 }) => {
   const [inner, setInner] = useState(false);
   const controlled = open !== undefined;
@@ -66,10 +73,17 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirm}>Continuar</AlertDialogAction>
-        </AlertDialogFooter>
+        {slideLabel ? (
+          <div className="grid gap-3">
+            <SlideConfirm label={slideLabel} onConfirm={handleConfirm} />
+            <AlertDialogCancel className="w-full sm:w-fit sm:justify-self-end">Cancelar</AlertDialogCancel>
+          </div>
+        ) : (
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm}>Continuar</AlertDialogAction>
+          </AlertDialogFooter>
+        )}
       </AlertDialogContent>
     </AlertDialog>
   );

@@ -283,7 +283,7 @@ function ReportPage() {
             )}
             {editable && <Button type="button" variant="outline" disabled={saving || uploading || !dirty} onClick={() => save({ value: form, close: false })}>{saving ? "Salvando..." : "Salvar rascunho"}</Button>}
             {editable && (
-              <ConfirmDialog title="Fechar o RDO?" description="Depois de fechado ele não é mais editado. Para corrigir, é preciso reabrir informando o motivo." onConfirm={() => save({ value: form, close: true })}>
+              <ConfirmDialog title="Fechar o RDO?" description="Depois de fechado ele não é mais editado. Para corrigir, é preciso reabrir informando o motivo." slideLabel="Deslize para fechar o RDO" onConfirm={() => save({ value: form, close: true })}>
                 <Button type="button" disabled={saving || uploading}><Icon name="check" className="w-4 h-4 mr-1" /> Fechar o RDO</Button>
               </ConfirmDialog>
             )}

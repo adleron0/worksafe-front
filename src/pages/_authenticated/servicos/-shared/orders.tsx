@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
+import SlideConfirm from "@/components/general-components/SlideConfirm";
 import { cn } from "@/lib/utils";
 import { dateBr, errorMessage, todayIso } from "../../comercial/-shared/commercial";
 import { BILLING_KEY } from "../../comercial/-shared/contracts";
@@ -148,12 +149,16 @@ export function MoveDialog({ order, target, onClose, onDone }: { order: Movable;
     },
     onError: (err) => setError(errorMessage(err)),
   });
-  const submit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (scheduling && !plannedStart) return setError("Escolha a data de início.");
-    if (cancelling && !note.trim()) return setError("Informe o motivo do cancelamento.");
+  /** Confere o que a passagem exige e manda; devolve se foi enviado. */
+  const send = (): boolean => {
+    if (scheduling && !plannedStart) { setError("Escolha a data de início."); return false; }
+    if (cancelling && !note.trim()) { setError("Informe o motivo do cancelamento."); return false; }
     setError(""); mutate();
+    return true;
   };
+  const submit = (event: React.FormEvent) => { event.preventDefault(); send(); };
+  // passagens que pesam (liberam faturamento, congelam o resultado, tiram a OS do quadro) pedem o deslize, não um clique
+  const slide = finishing ? "Deslize para concluir o serviço" : target === "encerrada" ? "Deslize para encerrar a OS" : cancelling ? "Deslize para cancelar a OS" : null;
   const description = scheduling ? "Marque quando a equipe começa. A OS passa a aparecer como agendada."
     : starting ? "Registre o dia em que a equipe começou de fato."
       : finishing ? "Registre o dia em que o serviço foi entregue. Isso libera para faturar as parcelas combinadas para depois da conclusão."
@@ -195,10 +200,17 @@ export function MoveDialog({ order, target, onClose, onDone }: { order: Movable;
           <div><Label htmlFor="moveNote">{cancelling ? "Motivo" : "Observação (opcional)"}{cancelling && <span> *</span>}</Label>
             <Textarea id="moveNote" className="mt-1" rows={2} maxLength={500} value={note} onChange={(event) => setNote(event.target.value)} /></div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Voltar</Button>
-            <Button type="submit" disabled={isPending}>{isPending ? "Salvando..." : moveLabel(order.status, target)}</Button>
-          </DialogFooter>
+          {slide ? (
+            <div className="grid gap-3">
+              <SlideConfirm label={slide} pending={isPending} onConfirm={send} />
+              <Button type="button" variant="outline" className="w-full sm:w-fit sm:justify-self-end" onClick={onClose}>Voltar</Button>
+            </div>
+          ) : (
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose}>Voltar</Button>
+              <Button type="submit" disabled={isPending}>{isPending ? "Salvando..." : moveLabel(order.status, target)}</Button>
+            </DialogFooter>
+          )}
         </form>
       </DialogContent>
     </Dialog>

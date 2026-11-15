@@ -14,7 +14,7 @@ import Input from "@/components/general-components/Input";
 import { blobErrorMessage, openApiFile, sizeText } from "@/lib/open-file";
 import { cn } from "@/lib/utils";
 import { Tip, dateBr, errorMessage } from "../../comercial/-shared/commercial";
-import { AccessDialog, Browse, DetailsDialog, FILES_ABILITY, FILES_KEY, FileInfo, FileType, FolderInfo, HistoryDialog, MoveDialog, NameDialog, PathItem, ReplaceDialog, SearchResult, dateTimeBr, fileIcon, filesApi, openFile } from "../-shared/files";
+import { AccessDialog, Browse, CustomerFiles, DetailsDialog, FILES_ABILITY, FILES_KEY, FileInfo, FileType, FolderInfo, HistoryDialog, MoveDialog, NameDialog, PathItem, ReplaceDialog, SearchResult, dateTimeBr, fileIcon, filesApi, openFile } from "../-shared/files";
 import { PickedFile, filesFromDrop, filesFromPicker, uploadLarge } from "../-shared/upload";
 
 export const Route = createFileRoute("/_authenticated/arquivos/_pastas/pastas")({
@@ -131,6 +131,8 @@ function FoldersPage() {
 
   const { data, isLoading, error } = useQuery({ queryKey: [FILES_KEY, "browse", pasta ?? 0], queryFn: () => filesApi.get<Browse>("browse", pasta ? { folderId: pasta } : undefined), placeholderData: (previous) => previous });
   const found = useQuery({ queryKey: [FILES_KEY, "search", term], queryFn: () => filesApi.get<SearchResult>("search", { q: term }), enabled: searching });
+  // "Por cliente": os clientes, propostas e OS que têm arquivos (os arquivos abrem no próprio registro)
+  const byCustomer = useQuery({ queryKey: [FILES_KEY, "by-customer"], queryFn: () => filesApi.get<CustomerFiles>("by-customer"), enabled: !pasta });
   const refresh = () => queryClient.invalidateQueries({ queryKey: [FILES_KEY] });
 
   const { mutate: trashFile } = useMutation({
@@ -271,6 +273,36 @@ function FoldersPage() {
             {data.folders.map((item) => (
               <DocumentFolder key={item.id} name={item.name} count={item.files} tone={STATUS_TONE[item.status]}
                 statusLabel={[item.status === "vencido" || item.status === "a_vencer" ? item.statusLabel.toLowerCase() : "", item.locked ? "restrita" : ""].filter(Boolean).join(" · ") || undefined} onSelect={() => navigate({ search: { pasta: item.id } })} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!searching && atRoot && !!byCustomer.data?.rows.length && (
+        <section className="mt-4 rounded-lg border p-4">
+          <h2 className="font-semibold">Por cliente</h2>
+          <p className="text-xs text-muted-foreground">Arquivos guardados no cliente, nas propostas e nas ordens de serviço. Eles abrem no próprio registro; aqui aparece só o que você pode ver.</p>
+          <div className="mt-3 rounded-lg border overflow-hidden">
+            {byCustomer.data.rows.map((customer) => (
+              <div key={customer.id} className="px-4 py-3 border-b last:border-b-0 text-sm">
+                <p className="flex flex-wrap items-center gap-2 font-medium">
+                  <Icon name="heart-handshake" className="w-4 h-4 text-muted-foreground" /> {customer.name}
+                  {customer.files > 0 && <span className="text-xs font-normal text-muted-foreground">{filesText(customer.files)} no cadastro do cliente</span>}
+                </p>
+                {!!customer.records.length && (
+                  <ul className="mt-1 grid gap-1 pl-6">
+                    {customer.records.map((record) => (
+                      <li key={`${record.entity}${record.id}`} className="flex flex-wrap items-center gap-2 text-muted-foreground">
+                        <Icon name={record.entity === "proposal" ? "file-text" : "hard-hat"} className="w-3 h-3" />
+                        {record.entity === "proposal"
+                          ? <Link to="/comercial/propostas/$proposalId" params={{ proposalId: String(record.id) }} className="text-foreground hover:underline">{record.label}</Link>
+                          : <Link to="/servicos/ordens-de-servico/$orderId" params={{ orderId: String(record.id) }} className="text-foreground hover:underline">{record.label}</Link>}
+                        <span className="text-xs">{record.entity === "proposal" ? "proposta" : "ordem de serviço"} · {filesText(record.files)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             ))}
           </div>
         </section>

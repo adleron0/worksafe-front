@@ -13,13 +13,13 @@ import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { openApiFile, openUrl, sizeText } from "@/lib/open-file";
-import { uploadLarge } from "./upload";
+import { FilesBase, uploadLarge } from "./upload";
 import { NumField, errorMessage, todayIso } from "../../comercial/-shared/commercial";
 
 /** Arquivos da empresa: tipos (espelham a API), chamadas e os diálogos de pasta e de arquivo. */
 export interface FolderInfo { id: number; parentId: number | null; name: string; restricted: boolean; profileIds: number[]; locked: boolean; files: number; folders: number; status: DocStatus; statusLabel: string }
 export interface FileInfo {
-  id: number; folderId: number; name: string; fileName: string; mimeType: string; size: number; notes: string | null; inline: boolean; uploadedBy: string | null; createdAt: string;
+  id: number; folderId: number | null; entity?: string | null; entityId?: number | null; name: string; fileName: string; mimeType: string; size: number; notes: string | null; inline: boolean; uploadedBy: string | null; createdAt: string;
   typeId: number | null; typeName: string | null; issueDate: string | null; expiryDate: string | null; warnDays: number | null; status: DocStatus; statusLabel: string;
   versions?: Array<FileInfo & { replacedAt: string }>;
 }
@@ -37,6 +37,11 @@ export interface TrashList {
   folders: Array<{ id: number; name: string; from: string; trashedAt: string; trashedBy: string | null; daysLeft: number; files: number }>;
   files: Array<FileInfo & { from: string; trashedAt: string; trashedBy: string | null; daysLeft: number }>;
 }
+export interface RecordFiles {
+  record: { entity: string; id: number; label: string }; canWrite: boolean; canManage: boolean; files: FileInfo[];
+  trashed: Array<FileInfo & { trashedAt: string; trashedBy: string | null; daysLeft: number }>; maxBytes: number; directMaxBytes: number; trashDays: number;
+}
+export interface CustomerFiles { rows: Array<{ id: number; name: string; files: number; canOpen: boolean; records: Array<{ entity: "proposal" | "service_order"; id: number; label: string; files: number }> }> }
 export interface FileHistory { file: PathItem; rows: Array<{ id: number; type: string; note: string | null; user: string | null; createdAt: string }> }
 
 export const FILES_KEY = "companyFiles";
@@ -67,13 +72,13 @@ export const dateTimeBr = (value: string) => new Date(value).toLocaleString("pt-
 /** Acima disto o arquivo não passa pela memória do navegador nem pela API: abre por um link temporário do armazenamento. */
 const LINK_FROM_BYTES = 20 * 1024 * 1024;
 
-export async function openFile(file: Pick<FileInfo, "id" | "name"> & { size?: number }, download = false) {
+export async function openFile(file: Pick<FileInfo, "id" | "name"> & { size?: number }, download = false, base: FilesBase = "company-files") {
   try {
     if ((file.size ?? 0) > LINK_FROM_BYTES) {
-      const link = await filesApi.get<{ url: string }>(`files/${file.id}/link`, download ? { download: 1 } : undefined);
+      const link = (await api.get<{ url: string }>(`${base}/files/${file.id}/link`, { params: download ? { download: 1 } : undefined })).data;
       return openUrl(link.url, download);
     }
-    await openApiFile(`company-files/files/${file.id}/file`, file.name, download);
+    await openApiFile(`${base}/files/${file.id}/file`, file.name, download);
   } catch (err) {
     toast({ title: "Não foi possível abrir o arquivo", description: errorMessage(err), variant: "destructive" });
   }
@@ -355,7 +360,7 @@ export function DetailsDialog({ file, types, onClose }: { file: FileInfo; types:
 }
 
 /** Substituir por uma versão nova: o arquivo atual fica guardado como versão anterior. */
-export function ReplaceDialog({ file, types, maxBytes, directMaxBytes, onClose }: { file: FileInfo; types: FileType[]; maxBytes: number; directMaxBytes: number; onClose: () => void }) {
+export function ReplaceDialog({ file, types, maxBytes, directMaxBytes, base = "company-files", onClose }: { file: FileInfo; types: FileType[]; maxBytes: number; directMaxBytes: number; base?: FilesBase; onClose: () => void }) {
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [picked, setPicked] = useState<File | null>(null);
@@ -367,12 +372,12 @@ export function ReplaceDialog({ file, types, maxBytes, directMaxBytes, onClose }
     mutationFn: async () => {
       const chosen = picked as File;
       // arquivo grande vai direto ao armazenamento, em partes
-      if (chosen.size > maxBytes) return uploadLarge(chosen, { replaceId: file.id, issueDate: expiry.values.issueDate, expiryDate: expiry.values.expiryDate }, setPercent);
+      if (chosen.size > maxBytes) return uploadLarge(chosen, { replaceId: file.id, issueDate: expiry.values.issueDate, expiryDate: expiry.values.expiryDate }, setPercent, base);
       const form = new FormData();
       form.append("file", chosen);
       if (expiry.values.issueDate) form.append("issueDate", expiry.values.issueDate);
       if (expiry.values.expiryDate) form.append("expiryDate", expiry.values.expiryDate);
-      return (await api.post(`company-files/files/${file.id}/replace`, form, { onUploadProgress: (event) => setPercent(event.total ? Math.round((event.loaded / event.total) * 100) : 0) })).data;
+      return (await api.post(`${base}/files/${file.id}/replace`, form, { onUploadProgress: (event) => setPercent(event.total ? Math.round((event.loaded / event.total) * 100) : 0) })).data;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: [FILES_KEY] }); toast({ title: "Versão nova enviada", variant: "success" }); onClose(); },
     onError: (err) => setError(errorMessage(err)),

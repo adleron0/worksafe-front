@@ -23,6 +23,7 @@ import { OrderStageBadge, OrderStatus } from "../../servicos/-shared/orders";
 import ProposalDocumentTab, { LinkPanel, ProposalHistory } from "./-ProposalDocumentTab";
 import ProposalItemsTab from "./-ProposalItemsTab";
 import { ProposalInfoStep, ProposalPaymentTab } from "./-ProposalTabs";
+import { RecordFilesPanel } from "../../arquivos/-shared/record-files";
 import WizardSteps, { STEPS, StepKey, StepState } from "./-WizardSteps";
 
 /** Título provisório de quem acabou de escolher o cliente e ainda não deu nome à proposta. */
@@ -458,6 +459,8 @@ function ProposalEditorPage() {
           customer={customer.name} wide={tab === "itens"} open={summaryOpen} onToggle={() => setSummaryOpen(!summaryOpen)}
           onDiscount={(discount) => setDraftSafe((d) => ({ ...d, discount }))} />
       </div>
+
+      <RecordFilesPanel entity="proposal" entityId={proposal.id} className="mt-4" title="Arquivos da proposta" hint="Pedido do cliente, memoriais, fotos da visita e o que mais for desta proposta. Quem vê a proposta vê os arquivos." />
 
       {decision && (
         <DecisionDialog decision={decision} number={proposal.number} pending={changing} onClose={() => setDecision(null)}

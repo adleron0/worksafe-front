@@ -1,3 +1,4 @@
+import { useState } from "react";
 // Serviços
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { patch } from "@/services/api";
@@ -11,7 +12,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
+import { RecordFilesPanel } from "../../arquivos/-shared/record-files";
 import Icon from "@/components/general-components/Icon";
 import HeaderRow from "@/components/general-components/HeaderRow";
 // Interfaces
@@ -32,6 +35,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
+  const [filesOpen, setFilesOpen] = useState(false);
 
    // Mutation para inativar
   const { mutate: deactivate } = useMutation({
@@ -199,6 +203,13 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
                 )
               }
 
+              <DropdownMenuItem className="p-0" onSelect={() => setFilesOpen(true)}>
+                <Button variant="ghost" className="flex justify-start gap-2 p-2 items-baseline w-full h-fit">
+                  <Icon name="folder-open" className="w-3 h-3" />
+                  <p>Arquivos</p>
+                </Button>
+              </DropdownMenuItem>
+
               <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
                 <Button 
                   variant="ghost" 
@@ -244,6 +255,17 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
           </DropdownMenu>
         </div>
       </div>
+      {filesOpen && (
+        <Dialog open onOpenChange={(open) => { if (!open) setFilesOpen(false); }}>
+          <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Arquivos de {item.name}</DialogTitle>
+              <DialogDescription>Contrato, cadastro, certidões e o que mais for deste cliente.</DialogDescription>
+            </DialogHeader>
+            <RecordFilesPanel entity="customer" entityId={Number(item.id)} title="Arquivos do cliente" hint="Quem vê o cliente vê os arquivos; quem pode editar o cliente envia e apaga." className="border-0 p-0" />
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   )
 };

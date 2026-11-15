@@ -5,6 +5,8 @@ import api from "@/services/api";
  * em partes, sem passar pela API. A API só abre o envio, assina o endereço de
  * cada parte e fecha no fim; se algo falhar, o envio é desfeito.
  */
+/** As rotas do módulo Arquivos (pastas) ou as dos arquivos de um registro (cliente, proposta, OS). */
+export type FilesBase = "company-files" | "record-files";
 interface Started { id: number; partBytes: number; parts: number }
 interface PartLink { partNumber: number; url: string }
 const PARALLEL = 3;
@@ -33,8 +35,8 @@ function putPart(url: string, body: Blob, onProgress: (loaded: number) => void, 
  * Envia `file` em partes. `target` diz onde ele entra: numa pasta, ou como versão
  * nova de outro arquivo (`replaceId`). `onProgress` recebe de 0 a 100.
  */
-export async function uploadLarge<T>(file: File, target: Record<string, unknown>, onProgress: (percent: number) => void): Promise<T> {
-  const started = (await api.post<Started>("company-files/uploads", { ...target, fileName: file.name, mimeType: file.type, size: file.size })).data;
+export async function uploadLarge<T>(file: File, target: Record<string, unknown>, onProgress: (percent: number) => void, base: FilesBase = "company-files"): Promise<T> {
+  const started = (await api.post<Started>(`${base}/uploads`, { ...target, fileName: file.name, mimeType: file.type, size: file.size })).data;
   const signal = { cancelled: false, requests: new Set<XMLHttpRequest>() };
   const loaded = new Map<number, number>();
   const report = () => onProgress(Math.min(99, Math.round(([...loaded.values()].reduce((sum, value) => sum + value, 0) / file.size) * 100)));
@@ -49,7 +51,7 @@ export async function uploadLarge<T>(file: File, target: Record<string, unknown>
       for (let attempt = 1; attempt <= TRIES && !signal.cancelled; attempt++) {
         try {
           // o endereço é pedido na hora de usar: um envio longo não esbarra na validade dele
-          const link = (await api.post<{ parts: PartLink[] }>(`company-files/uploads/${started.id}/parts`, { partNumbers: [partNumber] })).data.parts[0];
+          const link = (await api.post<{ parts: PartLink[] }>(`${base}/uploads/${started.id}/parts`, { partNumbers: [partNumber] })).data.parts[0];
           const etag = await putPart(link.url, body, (value) => { loaded.set(partNumber, value); report(); }, signal);
           loaded.set(partNumber, body.size); report();
           etags.push({ partNumber, etag });
@@ -67,14 +69,14 @@ export async function uploadLarge<T>(file: File, target: Record<string, unknown>
 
   try {
     await Promise.all(Array.from({ length: Math.min(PARALLEL, started.parts) }, worker));
-    const done = (await api.post<T>(`company-files/uploads/${started.id}/complete`, { parts: etags })).data;
+    const done = (await api.post<T>(`${base}/uploads/${started.id}/complete`, { parts: etags })).data;
     onProgress(100);
     return done;
   } catch (error) {
     signal.cancelled = true;
     signal.requests.forEach((request) => request.abort());
     // desfaz o envio para não deixar partes soltas no armazenamento (a API também descarta sozinha depois de um dia)
-    await api.delete(`company-files/uploads/${started.id}`).catch(() => undefined);
+    await api.delete(`${base}/uploads/${started.id}`).catch(() => undefined);
     throw error;
   }
 }

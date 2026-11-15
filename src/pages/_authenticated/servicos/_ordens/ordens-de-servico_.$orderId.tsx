@@ -26,6 +26,7 @@ import { TEAM_OPTIONS_KEY, TeamEditor } from "../-shared/team";
 import { ResultPanel } from "../-shared/results";
 import { OrderPurchasesPanel } from "../../suprimentos/-shared/purchases";
 import { TEAM_DOCUMENTS_KEY, TeamDocumentsPanel } from "../../rh/-shared/team-documents";
+import { RecordFilesPanel } from "../../arquivos/-shared/record-files";
 import { PointDialog } from "../../rh/-shared/places";
 
 export const Route = createFileRoute("/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId")({
@@ -183,6 +184,7 @@ function OrderPage() {
           {/* com a obra andando, o diário vem primeiro: é o que se usa todo dia */}
           {(order.status === "em_execucao" || order.status === "concluida" || order.status === "encerrada") && <DiaryPanel orderId={order.id} canEdit={can(RDO_PERMISSION) && order.status !== "encerrada"} />}
           <TeamDocumentsPanel orderId={order.id} orderNumber={order.number} />
+          <RecordFilesPanel entity="service_order" entityId={order.id} title="Arquivos da obra" hint="ART, projetos, autorizações e o que mais for desta ordem de serviço. Quem vê a OS vê os arquivos." />
           <OrderPurchasesPanel orderId={order.id} canRequest={!locked} />
           {order.canSeeCosts && <ResultPanel orderId={order.id} />}
 

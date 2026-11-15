@@ -11,12 +11,14 @@ import Select from "@/components/general-components/Select";
 import { formatPHONE } from "@/utils/phone-mask";
 import { dateBr, errorMessage } from "../../comercial/-shared/commercial";
 import { EMPLOYEES_ABILITY, EMPLOYEES_KEY, EMPLOYEE_OPTIONS_KEY, EmployeeList, EmployeeOptions, EmployeeStatusBadge, employeesApi } from "../-shared/employees";
+import { DocStatusBadge } from "../-shared/documents";
 
 export const Route = createFileRoute("/_authenticated/rh/_funcionarios/funcionarios")({
   component: EmployeesPage,
 });
 
 const LIMIT = 20;
+const DOC_SIGNAL: Record<string, string> = { em_dia: "Em dia", a_vencer: "A vencer", vencido: "Vencido", faltando: "Faltando" };
 
 /** Funcionários: quem trabalha para a empresa, a função de cada um e a situação de hoje. */
 function EmployeesPage() {
@@ -74,6 +76,7 @@ function EmployeesPage() {
             <div className="flex-1">Funcionário</div>
             <div className="w-64">Função</div>
             <div className="w-56">Situação</div>
+            <div className="w-32">Documentos</div>
             <div className="w-40">Telefone</div>
             <div className="w-28">Admissão</div>
           </div>
@@ -91,6 +94,7 @@ function EmployeesPage() {
                 {row.roles.length > 1 && <p className="text-xs text-muted-foreground truncate">também {row.roles.filter((role) => !role.isPrimary).map((role) => role.name).join(", ")}</p>}
               </div>
               <div className="xl:w-56"><EmployeeStatusBadge status={row.status} label={row.statusLabel} until={row.statusUntil} /></div>
+              <div className="xl:w-32">{row.documents && row.documents !== "vazia" && row.documents !== "sem_validade" ? <DocStatusBadge status={row.documents} label={DOC_SIGNAL[row.documents]} /> : <span className="text-muted-foreground">—</span>}</div>
               <div className="xl:w-40 text-muted-foreground tabular-nums">{row.phone ? formatPHONE(row.phone) : "—"}</div>
               <div className="xl:w-28 text-muted-foreground tabular-nums">{dateBr(row.admissionDate)}</div>
             </button>

@@ -53,6 +53,8 @@ import { Route as AuthenticatedServicosOrdensOrdensDeServicoRouteImport } from '
 import { Route as AuthenticatedServicosOrdensEstatisticasDoDiarioRouteImport } from './pages/_authenticated/servicos/_ordens/estatisticas-do-diario'
 import { Route as AuthenticatedServicosOrdensDiarioDeObraRouteImport } from './pages/_authenticated/servicos/_ordens/diario-de-obra'
 import { Route as AuthenticatedRhFuncionariosFuncionariosRouteImport } from './pages/_authenticated/rh/_funcionarios/funcionarios'
+import { Route as AuthenticatedRhDocumentosVencimentosRouteImport } from './pages/_authenticated/rh/_documentos/vencimentos'
+import { Route as AuthenticatedRhDocumentosTiposDeDocumentoRouteImport } from './pages/_authenticated/rh/_documentos/tipos-de-documento'
 import { Route as AuthenticatedInventariosAreasAreaIdRouteImport } from './pages/_authenticated/inventarios/areas/$areaId'
 import { Route as AuthenticatedFinanceiroReceberReceberRouteImport } from './pages/_authenticated/financeiro/_receber/receber'
 import { Route as AuthenticatedFinanceiroPlanoContasPlanoContasRouteImport } from './pages/_authenticated/financeiro/_plano-contas/plano-contas'
@@ -333,6 +335,18 @@ const AuthenticatedRhFuncionariosFuncionariosRoute =
     path: '/rh/funcionarios',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedRhDocumentosVencimentosRoute =
+  AuthenticatedRhDocumentosVencimentosRouteImport.update({
+    id: '/rh/_documentos/vencimentos',
+    path: '/rh/vencimentos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedRhDocumentosTiposDeDocumentoRoute =
+  AuthenticatedRhDocumentosTiposDeDocumentoRouteImport.update({
+    id: '/rh/_documentos/tipos-de-documento',
+    path: '/rh/tipos-de-documento',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedInventariosAreasAreaIdRoute =
   AuthenticatedInventariosAreasAreaIdRouteImport.update({
     id: '/inventarios/areas/$areaId',
@@ -556,6 +570,8 @@ export interface FileRoutesByFullPath {
   '/financeiro/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/rh/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
+  '/rh/vencimentos': typeof AuthenticatedRhDocumentosVencimentosRoute
   '/rh/funcionarios': typeof AuthenticatedRhFuncionariosFuncionariosRoute
   '/servicos/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/servicos/estatisticas-do-diario': typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
@@ -629,6 +645,8 @@ export interface FileRoutesByTo {
   '/financeiro/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/rh/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
+  '/rh/vencimentos': typeof AuthenticatedRhDocumentosVencimentosRoute
   '/rh/funcionarios': typeof AuthenticatedRhFuncionariosFuncionariosRoute
   '/servicos/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/servicos/estatisticas-do-diario': typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
@@ -706,6 +724,8 @@ export interface FileRoutesById {
   '/_authenticated/financeiro/_plano-contas/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/_authenticated/financeiro/_receber/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/_authenticated/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/_authenticated/rh/_documentos/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
+  '/_authenticated/rh/_documentos/vencimentos': typeof AuthenticatedRhDocumentosVencimentosRoute
   '/_authenticated/rh/_funcionarios/funcionarios': typeof AuthenticatedRhFuncionariosFuncionariosRoute
   '/_authenticated/servicos/_ordens/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/_authenticated/servicos/_ordens/estatisticas-do-diario': typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
@@ -782,6 +802,8 @@ export interface FileRouteTypes {
     | '/financeiro/plano-contas'
     | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
+    | '/rh/tipos-de-documento'
+    | '/rh/vencimentos'
     | '/rh/funcionarios'
     | '/servicos/diario-de-obra'
     | '/servicos/estatisticas-do-diario'
@@ -855,6 +877,8 @@ export interface FileRouteTypes {
     | '/financeiro/plano-contas'
     | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
+    | '/rh/tipos-de-documento'
+    | '/rh/vencimentos'
     | '/rh/funcionarios'
     | '/servicos/diario-de-obra'
     | '/servicos/estatisticas-do-diario'
@@ -931,6 +955,8 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro/_plano-contas/plano-contas'
     | '/_authenticated/financeiro/_receber/receber'
     | '/_authenticated/inventarios/areas/$areaId'
+    | '/_authenticated/rh/_documentos/tipos-de-documento'
+    | '/_authenticated/rh/_documentos/vencimentos'
     | '/_authenticated/rh/_funcionarios/funcionarios'
     | '/_authenticated/servicos/_ordens/diario-de-obra'
     | '/_authenticated/servicos/_ordens/estatisticas-do-diario'
@@ -1282,6 +1308,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRhFuncionariosFuncionariosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/rh/_documentos/vencimentos': {
+      id: '/_authenticated/rh/_documentos/vencimentos'
+      path: '/rh/vencimentos'
+      fullPath: '/rh/vencimentos'
+      preLoaderRoute: typeof AuthenticatedRhDocumentosVencimentosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/rh/_documentos/tipos-de-documento': {
+      id: '/_authenticated/rh/_documentos/tipos-de-documento'
+      path: '/rh/tipos-de-documento'
+      fullPath: '/rh/tipos-de-documento'
+      preLoaderRoute: typeof AuthenticatedRhDocumentosTiposDeDocumentoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/inventarios/areas/$areaId': {
       id: '/_authenticated/inventarios/areas/$areaId'
       path: '/inventarios/areas/$areaId'
@@ -1527,6 +1567,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFinanceiroPlanoContasPlanoContasRoute: typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   AuthenticatedFinanceiroReceberReceberRoute: typeof AuthenticatedFinanceiroReceberReceberRoute
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
+  AuthenticatedRhDocumentosTiposDeDocumentoRoute: typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
+  AuthenticatedRhDocumentosVencimentosRoute: typeof AuthenticatedRhDocumentosVencimentosRoute
   AuthenticatedRhFuncionariosFuncionariosRoute: typeof AuthenticatedRhFuncionariosFuncionariosRoute
   AuthenticatedServicosOrdensDiarioDeObraRoute: typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   AuthenticatedServicosOrdensEstatisticasDoDiarioRoute: typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
@@ -1612,6 +1654,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedFinanceiroReceberReceberRoute,
   AuthenticatedInventariosAreasAreaIdRoute:
     AuthenticatedInventariosAreasAreaIdRoute,
+  AuthenticatedRhDocumentosTiposDeDocumentoRoute:
+    AuthenticatedRhDocumentosTiposDeDocumentoRoute,
+  AuthenticatedRhDocumentosVencimentosRoute:
+    AuthenticatedRhDocumentosVencimentosRoute,
   AuthenticatedRhFuncionariosFuncionariosRoute:
     AuthenticatedRhFuncionariosFuncionariosRoute,
   AuthenticatedServicosOrdensDiarioDeObraRoute:

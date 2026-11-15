@@ -15,7 +15,7 @@ interface PipelineBlock { key: string; area: string; title: string; hint: string
 interface Pipeline { today: string; blocks: PipelineBlock[] }
 export const PIPELINE_KEY = "myPipeline";
 
-const AREA_ICON: Record<string, string> = { Comercial: "handshake", "Operação": "drill", Suprimentos: "shopping-cart", Financeiro: "circle-dollar-sign" };
+const AREA_ICON: Record<string, string> = { Comercial: "handshake", "Operação": "drill", Suprimentos: "shopping-cart", Financeiro: "circle-dollar-sign", RH: "id-card" };
 
 export default function MyPipeline() {
   const { data } = useQuery({ queryKey: [PIPELINE_KEY], staleTime: 60 * 1000, queryFn: async () => (await api.get<Pipeline>("my-pipeline")).data });

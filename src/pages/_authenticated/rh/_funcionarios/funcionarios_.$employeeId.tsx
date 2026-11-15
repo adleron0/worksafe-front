@@ -6,6 +6,7 @@ import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
@@ -16,6 +17,7 @@ import { Tip, dateBr, errorMessage } from "../../comercial/-shared/commercial";
 import {
   EMPLOYEES_ABILITY, EMPLOYEES_KEY, EMPLOYEE_KEY, EMPLOYEE_OPTIONS_KEY, Employee, EmployeeEvent, EmployeeEventDialog, EmployeeOptions, EmployeeStatusBadge, employeesApi, periodText,
 } from "../-shared/employees";
+import { DOCS_ABILITY, EmployeeDocuments } from "../-shared/documents";
 
 export const Route = createFileRoute("/_authenticated/rh/_funcionarios/funcionarios_/$employeeId")({
   component: EmployeePage,
@@ -58,6 +60,7 @@ function EmployeePage() {
     queryClient.invalidateQueries({ queryKey: [EMPLOYEE_OPTIONS_KEY] });
   };
   const editable = isNew ? can(`create_${EMPLOYEES_ABILITY}`) : can(`update_${EMPLOYEES_ABILITY}`);
+  const canSeeDocuments = can(`view_${DOCS_ABILITY}`);
   const seesPersonal = isNew ? !!options?.canSeePersonal : !!employee?.canSeePersonal;
 
   const { mutate: save, isPending: saving } = useMutation({
@@ -135,7 +138,16 @@ function EmployeePage() {
         )}
       </div>
 
-      <div className="mt-4 grid xl:grid-cols-3 gap-4 items-start">
+      <Tabs defaultValue="dados" className="mt-4">
+        {employee && canSeeDocuments && (
+          <TabsList>
+            <TabsTrigger value="dados">Dados</TabsTrigger>
+            <TabsTrigger value="documentos">Documentos</TabsTrigger>
+          </TabsList>
+        )}
+        {employee && canSeeDocuments && <TabsContent value="documentos" className="mt-4"><EmployeeDocuments employeeId={employee.id} /></TabsContent>}
+        <TabsContent value="dados" className="mt-4">
+      <div className="grid xl:grid-cols-3 gap-4 items-start">
         <form onSubmit={submit} className="xl:col-span-2 grid gap-4">
           <section className="rounded-lg border p-4 grid gap-4">
             <h2 className="font-semibold">Dados do funcionário</h2>
@@ -277,6 +289,8 @@ function EmployeePage() {
           )}
         </aside>
       </div>
+        </TabsContent>
+      </Tabs>
 
       {adding && employee && options && <EmployeeEventDialog employee={employee} types={options.eventTypes} onClose={() => setAdding(false)} />}
     </>

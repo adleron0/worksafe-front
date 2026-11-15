@@ -119,6 +119,18 @@ export const items = [
         icon: "users-round",
         path: "/rh/funcionarios",
       },
+      {
+        title: "Vencimentos",
+        ability: "documentos_funcionarios",
+        icon: "calendar-clock",
+        path: "/rh/vencimentos",
+      },
+      {
+        title: "Tipos de Documento",
+        ability: "documentos_funcionarios",
+        icon: "folder-cog",
+        path: "/rh/tipos-de-documento",
+      },
     ],
   },
   {

@@ -118,6 +118,17 @@ export const money = (value?: number | null) =>
 export const decimal = (value?: number | null, digits = 2) =>
   new Intl.NumberFormat("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(Number(value ?? 0));
 export const percent = (value?: number | null, digits = 2) => `${decimal(Number(value ?? 0) * 100, digits)}%`;
+/**
+ * Faixas da margem real. Os limites são um ponto de partida (não vêm da planilha):
+ * abaixo de 5% qualquer imprevisto vira prejuízo; de 5% a 15% a obra se paga com pouca folga.
+ */
+export const MARGIN_ZONES = [
+  { upTo: 0.05, label: "Risco de prejuízo", bar: "bg-red-500", text: "text-red-600 dark:text-red-400" },
+  { upTo: 0.15, label: "Apertada", bar: "bg-amber-400", text: "text-amber-600 dark:text-amber-400" },
+  { upTo: 0.3, label: "Saudável", bar: "bg-green-500", text: "text-green-600 dark:text-green-400" },
+  { upTo: Infinity, label: "Excelente", bar: "bg-blue-500", text: "text-blue-600 dark:text-blue-400" },
+] as const;
+export const marginZoneOf = (rate: number) => MARGIN_ZONES.find((zone) => rate < zone.upTo) ?? MARGIN_ZONES[MARGIN_ZONES.length - 1];
 export const dateBr = (value?: string | null) => (value ? value.slice(0, 10).split("-").reverse().join("/") : "—");
 export const todayIso = () => {
   const now = new Date();

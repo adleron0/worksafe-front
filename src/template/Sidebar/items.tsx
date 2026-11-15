@@ -77,6 +77,12 @@ export const items = [
         icon: "calendar-days",
         path: "/servicos/diario-de-obra",
       },
+      {
+        title: "Resultado das Obras",
+        ability: "custos_comercial",
+        icon: "chart-column-big",
+        path: "/servicos/resultado-das-obras",
+      },
     ],
   },
   {

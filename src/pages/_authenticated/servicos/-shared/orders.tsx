@@ -37,7 +37,7 @@ export interface Order {
   responsible: { id: number; name: string } | null; team: TeamMember[];
   plannedStart: string | null; plannedEnd: string | null; startedAt: string | null; finishedAt: string | null;
   scope: ScopeSection[]; schedule: { unit: "dia" | "semana" | "mes"; steps: Array<{ title: string; start: number; duration: number }> } | null;
-  checklist: ChecklistItem[]; notes: string | null; conclusionNotes: string | null;
+  checklist: ChecklistItem[]; notes: string | null; conclusionNotes: string | null; closedAt: string | null;
   canSeeCosts: boolean; budget: { revenue: number; cost: number; tax: number; commission: number; profit: number; groups: Array<{ type: string; label: string; cost: number }> } | null;
   events: OrderEvent[];
 }
@@ -45,6 +45,7 @@ export interface OrderOptions { users: Array<{ id: number; name: string }> }
 
 export const ORDERS_KEY = "serviceOrders";
 export const ORDER_KEY = "serviceOrder";
+export const ORDER_RESULT_KEY = "serviceOrderResult";
 export const ORDERS_ABILITY = "ordens_de_servico";
 
 /** Rotas da OS recebem JSON (o helper padrão envia multipart). */
@@ -136,6 +137,9 @@ export function MoveDialog({ order, target, onClose, onDone }: { order: Movable;
       // concluir libera parcelas no faturamento e muda o que a proposta mostra
       queryClient.invalidateQueries({ queryKey: [BILLING_KEY] });
       queryClient.invalidateQueries({ queryKey: [PROPOSAL_KEY] });
+      // encerrar congela o resultado; reabrir volta a calcular
+      queryClient.invalidateQueries({ queryKey: [ORDER_RESULT_KEY] });
+      queryClient.invalidateQueries({ queryKey: ["serviceOrderResults"] });
       toast({ title: `${result.number}: ${result.statusLabel.toLowerCase()}`, variant: "success" });
       onDone?.(result); onClose();
     },
@@ -152,7 +156,8 @@ export function MoveDialog({ order, target, onClose, onDone }: { order: Movable;
       : finishing ? "Registre o dia em que o serviço foi entregue. Isso libera para faturar as parcelas combinadas para depois da conclusão."
         : cancelling ? "A OS sai do quadro. Ela continua guardada e pode ser reativada."
           : target === "a_mobilizar" && order.status === "a_liberar" ? "Use quando o cliente não emite pedido de compra, ou quando a obra vai começar antes de ele chegar."
-            : target === "encerrada" ? "Use quando não há mais nada a lançar nesta obra."
+            : target === "encerrada" ? "Use quando não há mais nada a lançar nesta obra. O resultado (orçado × realizado) fica congelado como está agora, e a OS deixa de receber RDO e pedido de compra."
+              : order.status === "encerrada" ? "A OS volta para concluída e o resultado volta a ser calculado com o que for lançado."
               : !forward && order.status === "concluida" ? "A OS volta para execução e as parcelas de depois da conclusão voltam a aguardar."
                 : `A OS volta para "${ORDER_STATUS_LABEL[target]}".`;
 

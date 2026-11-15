@@ -48,6 +48,7 @@ import { Route as AuthenticatedSiteServicosServicosRouteImport } from './pages/_
 import { Route as AuthenticatedSiteProdutosProdutosRouteImport } from './pages/_authenticated/site/_produtos/produtos'
 import { Route as AuthenticatedSiteMarcasMarcasRouteImport } from './pages/_authenticated/site/_marcas/marcas'
 import { Route as AuthenticatedSiteCategoriasLojaCategoriasLojaRouteImport } from './pages/_authenticated/site/_categorias-loja/categorias-loja'
+import { Route as AuthenticatedServicosOrdensResultadoDasObrasRouteImport } from './pages/_authenticated/servicos/_ordens/resultado-das-obras'
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico'
 import { Route as AuthenticatedServicosOrdensDiarioDeObraRouteImport } from './pages/_authenticated/servicos/_ordens/diario-de-obra'
 import { Route as AuthenticatedInventariosAreasAreaIdRouteImport } from './pages/_authenticated/inventarios/areas/$areaId'
@@ -299,6 +300,12 @@ const AuthenticatedSiteCategoriasLojaCategoriasLojaRoute =
     path: '/site/categorias-loja',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedServicosOrdensResultadoDasObrasRoute =
+  AuthenticatedServicosOrdensResultadoDasObrasRouteImport.update({
+    id: '/servicos/_ordens/resultado-das-obras',
+    path: '/servicos/resultado-das-obras',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedServicosOrdensOrdensDeServicoRoute =
   AuthenticatedServicosOrdensOrdensDeServicoRouteImport.update({
     id: '/servicos/_ordens/ordens-de-servico',
@@ -530,6 +537,7 @@ export interface FileRoutesByFullPath {
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/servicos/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/servicos/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
+  '/servicos/resultado-das-obras': typeof AuthenticatedServicosOrdensResultadoDasObrasRoute
   '/site/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
   '/site/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
   '/site/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
@@ -599,6 +607,7 @@ export interface FileRoutesByTo {
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/servicos/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/servicos/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
+  '/servicos/resultado-das-obras': typeof AuthenticatedServicosOrdensResultadoDasObrasRoute
   '/site/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
   '/site/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
   '/site/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
@@ -672,6 +681,7 @@ export interface FileRoutesById {
   '/_authenticated/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/_authenticated/servicos/_ordens/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
+  '/_authenticated/servicos/_ordens/resultado-das-obras': typeof AuthenticatedServicosOrdensResultadoDasObrasRoute
   '/_authenticated/site/_categorias-loja/categorias-loja': typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
   '/_authenticated/site/_marcas/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
   '/_authenticated/site/_produtos/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
@@ -744,6 +754,7 @@ export interface FileRouteTypes {
     | '/inventarios/areas/$areaId'
     | '/servicos/diario-de-obra'
     | '/servicos/ordens-de-servico'
+    | '/servicos/resultado-das-obras'
     | '/site/categorias-loja'
     | '/site/marcas'
     | '/site/produtos'
@@ -813,6 +824,7 @@ export interface FileRouteTypes {
     | '/inventarios/areas/$areaId'
     | '/servicos/diario-de-obra'
     | '/servicos/ordens-de-servico'
+    | '/servicos/resultado-das-obras'
     | '/site/categorias-loja'
     | '/site/marcas'
     | '/site/produtos'
@@ -885,6 +897,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventarios/areas/$areaId'
     | '/_authenticated/servicos/_ordens/diario-de-obra'
     | '/_authenticated/servicos/_ordens/ordens-de-servico'
+    | '/_authenticated/servicos/_ordens/resultado-das-obras'
     | '/_authenticated/site/_categorias-loja/categorias-loja'
     | '/_authenticated/site/_marcas/marcas'
     | '/_authenticated/site/_produtos/produtos'
@@ -1195,6 +1208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/servicos/_ordens/resultado-das-obras': {
+      id: '/_authenticated/servicos/_ordens/resultado-das-obras'
+      path: '/servicos/resultado-das-obras'
+      fullPath: '/servicos/resultado-das-obras'
+      preLoaderRoute: typeof AuthenticatedServicosOrdensResultadoDasObrasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/servicos/_ordens/ordens-de-servico': {
       id: '/_authenticated/servicos/_ordens/ordens-de-servico'
       path: '/servicos/ordens-de-servico'
@@ -1449,6 +1469,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
   AuthenticatedServicosOrdensDiarioDeObraRoute: typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   AuthenticatedServicosOrdensOrdensDeServicoRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
+  AuthenticatedServicosOrdensResultadoDasObrasRoute: typeof AuthenticatedServicosOrdensResultadoDasObrasRoute
   AuthenticatedSiteCategoriasLojaCategoriasLojaRoute: typeof AuthenticatedSiteCategoriasLojaCategoriasLojaRoute
   AuthenticatedSiteMarcasMarcasRoute: typeof AuthenticatedSiteMarcasMarcasRoute
   AuthenticatedSiteProdutosProdutosRoute: typeof AuthenticatedSiteProdutosProdutosRoute
@@ -1532,6 +1553,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedServicosOrdensDiarioDeObraRoute,
   AuthenticatedServicosOrdensOrdensDeServicoRoute:
     AuthenticatedServicosOrdensOrdensDeServicoRoute,
+  AuthenticatedServicosOrdensResultadoDasObrasRoute:
+    AuthenticatedServicosOrdensResultadoDasObrasRoute,
   AuthenticatedSiteCategoriasLojaCategoriasLojaRoute:
     AuthenticatedSiteCategoriasLojaCategoriasLojaRoute,
   AuthenticatedSiteMarcasMarcasRoute: AuthenticatedSiteMarcasMarcasRoute,

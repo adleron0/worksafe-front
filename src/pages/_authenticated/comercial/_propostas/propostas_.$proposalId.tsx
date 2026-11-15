@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
-import { COMMERCIAL_ABILITY, NumField, Tip, commercialApi, dateBr, errorMessage, money, newUid, percent } from "../-shared/commercial";
+import { COMMERCIAL_ABILITY, NumField, Tip, commercialApi, dateBr, errorMessage, money, newUid, percent, MARGIN_ZONES, marginZoneOf } from "../-shared/commercial";
 import {
   CustomerOption, DraftSection, KIND_LABEL, isBlankItem, PROPOSALS_KEY, PROPOSAL_KEY, Proposal, ProposalCalc, ProposalDraft, ProposalOptions, STATUS_LABEL, StatusBadge,
 } from "../-shared/proposals";
@@ -475,18 +475,8 @@ const Line = ({ label, value, strong, muted, negative, hint, small, bold }: { la
     </div>
   </Tip>
 );
-/**
- * Faixas da margem real. Os limites são um ponto de partida (não vêm da planilha):
- * abaixo de 5% qualquer imprevisto vira prejuízo; de 5% a 15% a obra se paga com pouca folga.
- */
-const MARGIN_ZONES = [
-  { upTo: 0.05, label: "Risco de prejuízo", bar: "bg-red-500", text: "text-red-600 dark:text-red-400" },
-  { upTo: 0.15, label: "Apertada", bar: "bg-amber-400", text: "text-amber-600 dark:text-amber-400" },
-  { upTo: 0.3, label: "Saudável", bar: "bg-green-500", text: "text-green-600 dark:text-green-400" },
-  { upTo: Infinity, label: "Excelente", bar: "bg-blue-500", text: "text-blue-600 dark:text-blue-400" },
-] as const;
 const SCALE_MIN = -0.05, SCALE_MAX = 0.45;
-const zoneOf = (rate: number) => MARGIN_ZONES.find((zone) => rate < zone.upTo) ?? MARGIN_ZONES[MARGIN_ZONES.length - 1];
+const zoneOf = marginZoneOf;
 const scaleAt = (rate: number) => Math.min(100, Math.max(0, ((rate - SCALE_MIN) / (SCALE_MAX - SCALE_MIN)) * 100));
 
 /**

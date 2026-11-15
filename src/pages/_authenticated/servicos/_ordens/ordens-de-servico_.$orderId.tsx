@@ -14,7 +14,7 @@ import CalendarPicker from "@/components/general-components/Calendar";
 import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
-import { Tip, dateBr, errorMessage, money, percent } from "../../comercial/-shared/commercial";
+import { Tip, dateBr, errorMessage } from "../../comercial/-shared/commercial";
 import { ActivityPanel } from "../../comercial/-shared/activities";
 import { formatCnpj } from "../../comercial/-shared/proposals";
 import {
@@ -22,6 +22,7 @@ import {
   isForward, moveLabel, nextStage, ordersApi,
 } from "../-shared/orders";
 import { DiaryPanel } from "../-shared/reports";
+import { ResultPanel } from "../-shared/results";
 import { OrderPurchasesPanel } from "../../suprimentos/-shared/purchases";
 
 export const Route = createFileRoute("/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId")({
@@ -86,7 +87,6 @@ function OrderPage() {
   const stageIndex = ORDER_STAGES.findIndex((stage) => stage.id === order.status);
   const done = order.checklist.filter((item) => item.done).length;
   const unit = UNIT[order.schedule?.unit ?? "dia"];
-  const margin = order.budget && order.budget.revenue > 0 ? order.budget.profit / order.budget.revenue : 0;
 
   return (
     <>
@@ -172,6 +172,7 @@ function OrderPage() {
           {/* com a obra andando, o diário vem primeiro: é o que se usa todo dia */}
           {(order.status === "em_execucao" || order.status === "concluida" || order.status === "encerrada") && <DiaryPanel orderId={order.id} canEdit={canUpdate && order.status !== "encerrada"} />}
           <OrderPurchasesPanel orderId={order.id} canRequest={!locked} />
+          {order.canSeeCosts && <ResultPanel orderId={order.id} />}
 
           {order.schedule && order.schedule.steps.length > 0 && (
             <section className="rounded-lg border p-4">
@@ -306,21 +307,6 @@ function OrderPage() {
             )}
           </section>
 
-          {order.budget && (
-            <section className="rounded-lg border p-4 text-sm">
-              <h2 className="font-semibold text-base">Orçamento da obra</h2>
-              <p className="text-xs text-muted-foreground">Uso interno: o que a proposta previu. O realizado entra com os RDOs e as compras.</p>
-              <dl className="mt-2 grid gap-1">
-                <div className="flex justify-between gap-3"><dt>Receita (proposta)</dt><dd className="font-semibold tabular-nums">{money(order.budget.revenue)}</dd></div>
-                {order.budget.groups.map((group) => (
-                  <div key={group.type} className="flex justify-between gap-3 text-muted-foreground"><dt>{group.label}</dt><dd className="tabular-nums">{money(group.cost)}</dd></div>
-                ))}
-                <div className="flex justify-between gap-3 text-muted-foreground"><dt>Imposto</dt><dd className="tabular-nums">{money(order.budget.tax)}</dd></div>
-                <div className="flex justify-between gap-3 text-muted-foreground"><dt>Comissão</dt><dd className="tabular-nums">{money(order.budget.commission)}</dd></div>
-                <div className="flex justify-between gap-3 border-t pt-1 font-semibold"><dt>Lucro previsto <span className="font-normal text-muted-foreground">{percent(margin, 1)}</span></dt><dd className="tabular-nums">{money(order.budget.profit)}</dd></div>
-              </dl>
-            </section>
-          )}
         </aside>
       </div>
 

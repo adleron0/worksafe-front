@@ -9,10 +9,12 @@ import useVerify from "@/hooks/use-verify";
 interface SidebarItemProps {
   title: string;
   ability?: string;
+  /** Alternativa ao ability: vê quem tem QUALQUER uma destas permissões exatas (ex.: "usar_bots"). */
+  permissions?: string[];
   isProduct?: string;
   icon: string; // Changed any to string
   path: string;
-  subitems?: { title: string; path: string; icon: string; ability?: string }[]; // Changed any to string
+  subitems?: { title: string; path: string; icon: string; ability?: string; permissions?: string[] }[]; // Changed any to string
   className?: string;
   activePath: string | null;
   setActivePath: (path: string | null) => void;
@@ -21,6 +23,7 @@ interface SidebarItemProps {
 const SidebarItem = ({
   title,
   ability,
+  permissions,
   isProduct,
   icon,
   path,
@@ -51,6 +54,7 @@ const SidebarItem = ({
   let canView: boolean = true;
   canView = isProduct ? has(isProduct) : canView;
   canView = ability ? can(`view_${ability}`) : canView;
+  canView = permissions ? permissions.some((permission) => can(permission)) : canView;
   if (!canView) return;
 
   return (
@@ -101,7 +105,7 @@ const SidebarItem = ({
               <div className="flex flex-col pl-8 border-y gap-1 py-1">
                 {subitems.map((item) => {
                   // Check ability for subitem if it exists
-                  const canViewSubitem = item.ability ? can(`view_${item.ability}`) : true;
+                  const canViewSubitem = item.permissions ? item.permissions.some((permission) => can(permission)) : item.ability ? can(`view_${item.ability}`) : true;
                   if (!canViewSubitem) return null; // Don't render if cannot view
 
                   return (

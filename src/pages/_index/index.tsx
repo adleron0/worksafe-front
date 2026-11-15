@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { takeAfterLogin } from "@/lib/after-login";
 import Loader from "@/components/general-components/Loader";
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
@@ -55,7 +56,9 @@ function Login() {
 
   useEffect(() => {
     if (accessToken) {
-      navigate({
+      const next = takeAfterLogin();
+      if (next) window.location.assign(next);
+      else navigate({
         to: "/home",
       });
       reloadUser();
@@ -74,7 +77,9 @@ function Login() {
       localStorage.setItem("accessToken", data.accessToken);
       setIsLogged(true);
       reloadUser();
-      navigate({
+      const next = takeAfterLogin();
+      if (next) window.location.assign(next);
+      else navigate({
         to: "/home",
       });
       toast({

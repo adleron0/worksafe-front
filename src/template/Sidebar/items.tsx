@@ -7,6 +7,21 @@ export const items = [
     path: "/home",
   },
   {
+    title: "Bots",
+    icon: "bot",
+    path: "/bots",
+    permissions: ["usar_bots", "usar_mcp", "update_bots", "view_auditoria_bots"],
+    subitems: [
+      { title: "Conversar", permissions: ["usar_bots"], icon: "messages-square", path: "/bots/conversas" },
+      { title: "Ações pendentes", permissions: ["usar_bots", "usar_mcp"], icon: "shield-alert", path: "/bots/acoes" },
+      { title: "Relatórios", permissions: ["usar_bots"], icon: "file-chart-column", path: "/bots/relatorios" },
+      { title: "Conectar apps de IA", permissions: ["usar_mcp", "update_bots"], icon: "plug", path: "/bots/conexoes" },
+      { title: "Configurar bots", permissions: ["update_bots"], icon: "sliders-horizontal", path: "/bots/configuracao" },
+      { title: "Agendamentos", permissions: ["update_bots"], icon: "calendar-clock", path: "/bots/agendamentos" },
+      { title: "Auditoria e gasto", permissions: ["view_auditoria_bots"], icon: "scroll-text", path: "/bots/auditoria" },
+    ],
+  },
+  {
     title: "Clientes",
     icon: "heart-handshake",
     path: "/clientes",

@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteImport } from './pages/_authenticated'
 import { Route as StudentIndexRouteImport } from './pages/student/index'
 import { Route as IndexIndexRouteImport } from './pages/_index/index'
 import { Route as StudentProfileRouteImport } from './pages/student/profile'
+import { Route as IndexConectarIaRouteImport } from './pages/_index/conectar-ia'
 import { Route as AuthenticatedHomeRouteImport } from './pages/_authenticated/home'
 import { Route as AuthenticatedBuildingRouteImport } from './pages/_authenticated/building'
 import { Route as IndexCertificadosIndexRouteImport } from './pages/_index/certificados/index'
@@ -74,6 +75,13 @@ import { Route as AuthenticatedComercialCuponsCuponsRouteImport } from './pages/
 import { Route as AuthenticatedComercialContratosContratosRouteImport } from './pages/_authenticated/comercial/_contratos/contratos'
 import { Route as AuthenticatedComercialBaseCalculoBaseCalculoRouteImport } from './pages/_authenticated/comercial/_base-calculo/base-calculo'
 import { Route as AuthenticatedComercialAcompanhamentoAcompanhamentoRouteImport } from './pages/_authenticated/comercial/_acompanhamento/acompanhamento'
+import { Route as AuthenticatedBotsRelatoriosRelatoriosRouteImport } from './pages/_authenticated/bots/_relatorios/relatorios'
+import { Route as AuthenticatedBotsBotsConversasRouteImport } from './pages/_authenticated/bots/_bots/conversas'
+import { Route as AuthenticatedBotsBotsConexoesRouteImport } from './pages/_authenticated/bots/_bots/conexoes'
+import { Route as AuthenticatedBotsBotsAcoesRouteImport } from './pages/_authenticated/bots/_bots/acoes'
+import { Route as AuthenticatedBotsAdminConfiguracaoRouteImport } from './pages/_authenticated/bots/_admin/configuracao'
+import { Route as AuthenticatedBotsAdminAuditoriaRouteImport } from './pages/_authenticated/bots/_admin/auditoria'
+import { Route as AuthenticatedBotsAdminAgendamentosRouteImport } from './pages/_authenticated/bots/_admin/agendamentos'
 import { Route as AuthenticatedBlogVisitantesVisitantesRouteImport } from './pages/_authenticated/blog/_visitantes/visitantes'
 import { Route as AuthenticatedBlogTagsTagsRouteImport } from './pages/_authenticated/blog/_tags/tags'
 import { Route as AuthenticatedBlogPostsPostsRouteImport } from './pages/_authenticated/blog/_posts/posts'
@@ -92,6 +100,7 @@ import { Route as AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport 
 import { Route as AuthenticatedComercialPropostasPropostasNovaRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.nova'
 import { Route as AuthenticatedComercialPropostasPropostasProposalIdRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.$proposalId'
 import { Route as AuthenticatedComercialContratosContratosContractIdRouteImport } from './pages/_authenticated/comercial/_contratos/contratos_.$contractId'
+import { Route as AuthenticatedBotsRelatoriosRelatoriosReportIdRouteImport } from './pages/_authenticated/bots/_relatorios/relatorios_.$reportId'
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico_.$orderId_.rdo.$reportId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -121,6 +130,11 @@ const StudentProfileRoute = StudentProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
   getParentRoute: () => StudentRoute,
+} as any)
+const IndexConectarIaRoute = IndexConectarIaRouteImport.update({
+  id: '/conectar-ia',
+  path: '/conectar-ia',
+  getParentRoute: () => IndexRoute,
 } as any)
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   id: '/home',
@@ -469,6 +483,48 @@ const AuthenticatedComercialAcompanhamentoAcompanhamentoRoute =
     path: '/comercial/acompanhamento',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedBotsRelatoriosRelatoriosRoute =
+  AuthenticatedBotsRelatoriosRelatoriosRouteImport.update({
+    id: '/bots/_relatorios/relatorios',
+    path: '/bots/relatorios',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBotsBotsConversasRoute =
+  AuthenticatedBotsBotsConversasRouteImport.update({
+    id: '/bots/_bots/conversas',
+    path: '/bots/conversas',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBotsBotsConexoesRoute =
+  AuthenticatedBotsBotsConexoesRouteImport.update({
+    id: '/bots/_bots/conexoes',
+    path: '/bots/conexoes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBotsBotsAcoesRoute =
+  AuthenticatedBotsBotsAcoesRouteImport.update({
+    id: '/bots/_bots/acoes',
+    path: '/bots/acoes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBotsAdminConfiguracaoRoute =
+  AuthenticatedBotsAdminConfiguracaoRouteImport.update({
+    id: '/bots/_admin/configuracao',
+    path: '/bots/configuracao',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBotsAdminAuditoriaRoute =
+  AuthenticatedBotsAdminAuditoriaRouteImport.update({
+    id: '/bots/_admin/auditoria',
+    path: '/bots/auditoria',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBotsAdminAgendamentosRoute =
+  AuthenticatedBotsAdminAgendamentosRouteImport.update({
+    id: '/bots/_admin/agendamentos',
+    path: '/bots/agendamentos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedBlogVisitantesVisitantesRoute =
   AuthenticatedBlogVisitantesVisitantesRouteImport.update({
     id: '/blog/_visitantes/visitantes',
@@ -577,6 +633,12 @@ const AuthenticatedComercialContratosContratosContractIdRoute =
     path: '/comercial/contratos/$contractId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedBotsRelatoriosRelatoriosReportIdRoute =
+  AuthenticatedBotsRelatoriosRelatoriosReportIdRouteImport.update({
+    id: '/bots/_relatorios/relatorios_/$reportId',
+    path: '/bots/relatorios/$reportId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute =
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRouteImport.update(
     {
@@ -590,6 +652,7 @@ export interface FileRoutesByFullPath {
   '/student': typeof StudentRouteWithChildren
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/conectar-ia': typeof IndexConectarIaRoute
   '/student/profile': typeof StudentProfileRoute
   '/': typeof IndexIndexRoute
   '/student/': typeof StudentIndexRoute
@@ -616,6 +679,13 @@ export interface FileRoutesByFullPath {
   '/blog/posts': typeof AuthenticatedBlogPostsPostsRoute
   '/blog/tags': typeof AuthenticatedBlogTagsTagsRoute
   '/blog/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
+  '/bots/agendamentos': typeof AuthenticatedBotsAdminAgendamentosRoute
+  '/bots/auditoria': typeof AuthenticatedBotsAdminAuditoriaRoute
+  '/bots/configuracao': typeof AuthenticatedBotsAdminConfiguracaoRoute
+  '/bots/acoes': typeof AuthenticatedBotsBotsAcoesRoute
+  '/bots/conexoes': typeof AuthenticatedBotsBotsConexoesRoute
+  '/bots/conversas': typeof AuthenticatedBotsBotsConversasRoute
+  '/bots/relatorios': typeof AuthenticatedBotsRelatoriosRelatoriosRoute
   '/comercial/acompanhamento': typeof AuthenticatedComercialAcompanhamentoAcompanhamentoRoute
   '/comercial/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/comercial/contratos': typeof AuthenticatedComercialContratosContratosRoute
@@ -659,6 +729,7 @@ export interface FileRoutesByFullPath {
   '/proposta/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
+  '/bots/relatorios/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
@@ -673,6 +744,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/conectar-ia': typeof IndexConectarIaRoute
   '/student/profile': typeof StudentProfileRoute
   '/': typeof IndexIndexRoute
   '/student': typeof StudentIndexRoute
@@ -699,6 +771,13 @@ export interface FileRoutesByTo {
   '/blog/posts': typeof AuthenticatedBlogPostsPostsRoute
   '/blog/tags': typeof AuthenticatedBlogTagsTagsRoute
   '/blog/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
+  '/bots/agendamentos': typeof AuthenticatedBotsAdminAgendamentosRoute
+  '/bots/auditoria': typeof AuthenticatedBotsAdminAuditoriaRoute
+  '/bots/configuracao': typeof AuthenticatedBotsAdminConfiguracaoRoute
+  '/bots/acoes': typeof AuthenticatedBotsBotsAcoesRoute
+  '/bots/conexoes': typeof AuthenticatedBotsBotsConexoesRoute
+  '/bots/conversas': typeof AuthenticatedBotsBotsConversasRoute
+  '/bots/relatorios': typeof AuthenticatedBotsRelatoriosRelatoriosRoute
   '/comercial/acompanhamento': typeof AuthenticatedComercialAcompanhamentoAcompanhamentoRoute
   '/comercial/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/comercial/contratos': typeof AuthenticatedComercialContratosContratosRoute
@@ -742,6 +821,7 @@ export interface FileRoutesByTo {
   '/proposta/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
+  '/bots/relatorios/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
@@ -760,6 +840,7 @@ export interface FileRoutesById {
   '/student': typeof StudentRouteWithChildren
   '/_authenticated/building': typeof AuthenticatedBuildingRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/_index/conectar-ia': typeof IndexConectarIaRoute
   '/student/profile': typeof StudentProfileRoute
   '/_index/': typeof IndexIndexRoute
   '/student/': typeof StudentIndexRoute
@@ -786,6 +867,13 @@ export interface FileRoutesById {
   '/_authenticated/blog/_posts/posts': typeof AuthenticatedBlogPostsPostsRoute
   '/_authenticated/blog/_tags/tags': typeof AuthenticatedBlogTagsTagsRoute
   '/_authenticated/blog/_visitantes/visitantes': typeof AuthenticatedBlogVisitantesVisitantesRoute
+  '/_authenticated/bots/_admin/agendamentos': typeof AuthenticatedBotsAdminAgendamentosRoute
+  '/_authenticated/bots/_admin/auditoria': typeof AuthenticatedBotsAdminAuditoriaRoute
+  '/_authenticated/bots/_admin/configuracao': typeof AuthenticatedBotsAdminConfiguracaoRoute
+  '/_authenticated/bots/_bots/acoes': typeof AuthenticatedBotsBotsAcoesRoute
+  '/_authenticated/bots/_bots/conexoes': typeof AuthenticatedBotsBotsConexoesRoute
+  '/_authenticated/bots/_bots/conversas': typeof AuthenticatedBotsBotsConversasRoute
+  '/_authenticated/bots/_relatorios/relatorios': typeof AuthenticatedBotsRelatoriosRelatoriosRoute
   '/_authenticated/comercial/_acompanhamento/acompanhamento': typeof AuthenticatedComercialAcompanhamentoAcompanhamentoRoute
   '/_authenticated/comercial/_base-calculo/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   '/_authenticated/comercial/_contratos/contratos': typeof AuthenticatedComercialContratosContratosRoute
@@ -829,6 +917,7 @@ export interface FileRoutesById {
   '/_index/proposta_/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
   '/_authenticated/inventarios/areas/': typeof AuthenticatedInventariosAreasIndexRoute
   '/_authenticated/usuarios/_usuarios/': typeof AuthenticatedUsuariosUsuariosIndexRoute
+  '/_authenticated/bots/_relatorios/relatorios_/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   '/_authenticated/comercial/_contratos/contratos_/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
   '/_authenticated/comercial/_propostas/propostas_/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/_authenticated/comercial/_propostas/propostas_/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
@@ -846,6 +935,7 @@ export interface FileRouteTypes {
     | '/student'
     | '/building'
     | '/home'
+    | '/conectar-ia'
     | '/student/profile'
     | '/'
     | '/student/'
@@ -872,6 +962,13 @@ export interface FileRouteTypes {
     | '/blog/posts'
     | '/blog/tags'
     | '/blog/visitantes'
+    | '/bots/agendamentos'
+    | '/bots/auditoria'
+    | '/bots/configuracao'
+    | '/bots/acoes'
+    | '/bots/conexoes'
+    | '/bots/conversas'
+    | '/bots/relatorios'
     | '/comercial/acompanhamento'
     | '/comercial/base-calculo'
     | '/comercial/contratos'
@@ -915,6 +1012,7 @@ export interface FileRouteTypes {
     | '/proposta/rascunho/$proposalId'
     | '/inventarios/areas'
     | '/usuarios'
+    | '/bots/relatorios/$reportId'
     | '/comercial/contratos/$contractId'
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
@@ -929,6 +1027,7 @@ export interface FileRouteTypes {
   to:
     | '/building'
     | '/home'
+    | '/conectar-ia'
     | '/student/profile'
     | '/'
     | '/student'
@@ -955,6 +1054,13 @@ export interface FileRouteTypes {
     | '/blog/posts'
     | '/blog/tags'
     | '/blog/visitantes'
+    | '/bots/agendamentos'
+    | '/bots/auditoria'
+    | '/bots/configuracao'
+    | '/bots/acoes'
+    | '/bots/conexoes'
+    | '/bots/conversas'
+    | '/bots/relatorios'
     | '/comercial/acompanhamento'
     | '/comercial/base-calculo'
     | '/comercial/contratos'
@@ -998,6 +1104,7 @@ export interface FileRouteTypes {
     | '/proposta/rascunho/$proposalId'
     | '/inventarios/areas'
     | '/usuarios'
+    | '/bots/relatorios/$reportId'
     | '/comercial/contratos/$contractId'
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
@@ -1015,6 +1122,7 @@ export interface FileRouteTypes {
     | '/student'
     | '/_authenticated/building'
     | '/_authenticated/home'
+    | '/_index/conectar-ia'
     | '/student/profile'
     | '/_index/'
     | '/student/'
@@ -1041,6 +1149,13 @@ export interface FileRouteTypes {
     | '/_authenticated/blog/_posts/posts'
     | '/_authenticated/blog/_tags/tags'
     | '/_authenticated/blog/_visitantes/visitantes'
+    | '/_authenticated/bots/_admin/agendamentos'
+    | '/_authenticated/bots/_admin/auditoria'
+    | '/_authenticated/bots/_admin/configuracao'
+    | '/_authenticated/bots/_bots/acoes'
+    | '/_authenticated/bots/_bots/conexoes'
+    | '/_authenticated/bots/_bots/conversas'
+    | '/_authenticated/bots/_relatorios/relatorios'
     | '/_authenticated/comercial/_acompanhamento/acompanhamento'
     | '/_authenticated/comercial/_base-calculo/base-calculo'
     | '/_authenticated/comercial/_contratos/contratos'
@@ -1084,6 +1199,7 @@ export interface FileRouteTypes {
     | '/_index/proposta_/rascunho/$proposalId'
     | '/_authenticated/inventarios/areas/'
     | '/_authenticated/usuarios/_usuarios/'
+    | '/_authenticated/bots/_relatorios/relatorios_/$reportId'
     | '/_authenticated/comercial/_contratos/contratos_/$contractId'
     | '/_authenticated/comercial/_propostas/propostas_/$proposalId'
     | '/_authenticated/comercial/_propostas/propostas_/nova'
@@ -1145,6 +1261,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/student/profile'
       preLoaderRoute: typeof StudentProfileRouteImport
       parentRoute: typeof StudentRoute
+    }
+    '/_index/conectar-ia': {
+      id: '/_index/conectar-ia'
+      path: '/conectar-ia'
+      fullPath: '/conectar-ia'
+      preLoaderRoute: typeof IndexConectarIaRouteImport
+      parentRoute: typeof IndexRoute
     }
     '/_authenticated/home': {
       id: '/_authenticated/home'
@@ -1559,6 +1682,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComercialAcompanhamentoAcompanhamentoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/bots/_relatorios/relatorios': {
+      id: '/_authenticated/bots/_relatorios/relatorios'
+      path: '/bots/relatorios'
+      fullPath: '/bots/relatorios'
+      preLoaderRoute: typeof AuthenticatedBotsRelatoriosRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/bots/_bots/conversas': {
+      id: '/_authenticated/bots/_bots/conversas'
+      path: '/bots/conversas'
+      fullPath: '/bots/conversas'
+      preLoaderRoute: typeof AuthenticatedBotsBotsConversasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/bots/_bots/conexoes': {
+      id: '/_authenticated/bots/_bots/conexoes'
+      path: '/bots/conexoes'
+      fullPath: '/bots/conexoes'
+      preLoaderRoute: typeof AuthenticatedBotsBotsConexoesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/bots/_bots/acoes': {
+      id: '/_authenticated/bots/_bots/acoes'
+      path: '/bots/acoes'
+      fullPath: '/bots/acoes'
+      preLoaderRoute: typeof AuthenticatedBotsBotsAcoesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/bots/_admin/configuracao': {
+      id: '/_authenticated/bots/_admin/configuracao'
+      path: '/bots/configuracao'
+      fullPath: '/bots/configuracao'
+      preLoaderRoute: typeof AuthenticatedBotsAdminConfiguracaoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/bots/_admin/auditoria': {
+      id: '/_authenticated/bots/_admin/auditoria'
+      path: '/bots/auditoria'
+      fullPath: '/bots/auditoria'
+      preLoaderRoute: typeof AuthenticatedBotsAdminAuditoriaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/bots/_admin/agendamentos': {
+      id: '/_authenticated/bots/_admin/agendamentos'
+      path: '/bots/agendamentos'
+      fullPath: '/bots/agendamentos'
+      preLoaderRoute: typeof AuthenticatedBotsAdminAgendamentosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/blog/_visitantes/visitantes': {
       id: '/_authenticated/blog/_visitantes/visitantes'
       path: '/blog/visitantes'
@@ -1685,6 +1857,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComercialContratosContratosContractIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/bots/_relatorios/relatorios_/$reportId': {
+      id: '/_authenticated/bots/_relatorios/relatorios_/$reportId'
+      path: '/bots/relatorios/$reportId'
+      fullPath: '/bots/relatorios/$reportId'
+      preLoaderRoute: typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId': {
       id: '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId'
       path: '/servicos/ordens-de-servico/$orderId/rdo/$reportId'
@@ -1716,6 +1895,13 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBlogPostsPostsRoute: typeof AuthenticatedBlogPostsPostsRoute
   AuthenticatedBlogTagsTagsRoute: typeof AuthenticatedBlogTagsTagsRoute
   AuthenticatedBlogVisitantesVisitantesRoute: typeof AuthenticatedBlogVisitantesVisitantesRoute
+  AuthenticatedBotsAdminAgendamentosRoute: typeof AuthenticatedBotsAdminAgendamentosRoute
+  AuthenticatedBotsAdminAuditoriaRoute: typeof AuthenticatedBotsAdminAuditoriaRoute
+  AuthenticatedBotsAdminConfiguracaoRoute: typeof AuthenticatedBotsAdminConfiguracaoRoute
+  AuthenticatedBotsBotsAcoesRoute: typeof AuthenticatedBotsBotsAcoesRoute
+  AuthenticatedBotsBotsConexoesRoute: typeof AuthenticatedBotsBotsConexoesRoute
+  AuthenticatedBotsBotsConversasRoute: typeof AuthenticatedBotsBotsConversasRoute
+  AuthenticatedBotsRelatoriosRelatoriosRoute: typeof AuthenticatedBotsRelatoriosRelatoriosRoute
   AuthenticatedComercialAcompanhamentoAcompanhamentoRoute: typeof AuthenticatedComercialAcompanhamentoAcompanhamentoRoute
   AuthenticatedComercialBaseCalculoBaseCalculoRoute: typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
   AuthenticatedComercialContratosContratosRoute: typeof AuthenticatedComercialContratosContratosRoute
@@ -1756,6 +1942,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedUsuariosPerfisPerfisRoute: typeof AuthenticatedUsuariosPerfisPerfisRoute
   AuthenticatedInventariosAreasIndexRoute: typeof AuthenticatedInventariosAreasIndexRoute
   AuthenticatedUsuariosUsuariosIndexRoute: typeof AuthenticatedUsuariosUsuariosIndexRoute
+  AuthenticatedBotsRelatoriosRelatoriosReportIdRoute: typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   AuthenticatedComercialContratosContratosContractIdRoute: typeof AuthenticatedComercialContratosContratosContractIdRoute
   AuthenticatedComercialPropostasPropostasProposalIdRoute: typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   AuthenticatedComercialPropostasPropostasNovaRoute: typeof AuthenticatedComercialPropostasPropostasNovaRoute
@@ -1799,6 +1986,16 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBlogTagsTagsRoute: AuthenticatedBlogTagsTagsRoute,
   AuthenticatedBlogVisitantesVisitantesRoute:
     AuthenticatedBlogVisitantesVisitantesRoute,
+  AuthenticatedBotsAdminAgendamentosRoute:
+    AuthenticatedBotsAdminAgendamentosRoute,
+  AuthenticatedBotsAdminAuditoriaRoute: AuthenticatedBotsAdminAuditoriaRoute,
+  AuthenticatedBotsAdminConfiguracaoRoute:
+    AuthenticatedBotsAdminConfiguracaoRoute,
+  AuthenticatedBotsBotsAcoesRoute: AuthenticatedBotsBotsAcoesRoute,
+  AuthenticatedBotsBotsConexoesRoute: AuthenticatedBotsBotsConexoesRoute,
+  AuthenticatedBotsBotsConversasRoute: AuthenticatedBotsBotsConversasRoute,
+  AuthenticatedBotsRelatoriosRelatoriosRoute:
+    AuthenticatedBotsRelatoriosRelatoriosRoute,
   AuthenticatedComercialAcompanhamentoAcompanhamentoRoute:
     AuthenticatedComercialAcompanhamentoAcompanhamentoRoute,
   AuthenticatedComercialBaseCalculoBaseCalculoRoute:
@@ -1877,6 +2074,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedInventariosAreasIndexRoute,
   AuthenticatedUsuariosUsuariosIndexRoute:
     AuthenticatedUsuariosUsuariosIndexRoute,
+  AuthenticatedBotsRelatoriosRelatoriosReportIdRoute:
+    AuthenticatedBotsRelatoriosRelatoriosReportIdRoute,
   AuthenticatedComercialContratosContratosContractIdRoute:
     AuthenticatedComercialContratosContratosContractIdRoute,
   AuthenticatedComercialPropostasPropostasProposalIdRoute:
@@ -1904,6 +2103,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 interface IndexRouteChildren {
+  IndexConectarIaRoute: typeof IndexConectarIaRoute
   IndexIndexRoute: typeof IndexIndexRoute
   IndexCertificadosIdRoute: typeof IndexCertificadosIdRoute
   IndexCertificadosEfeitosRoute: typeof IndexCertificadosEfeitosRoute
@@ -1916,6 +2116,7 @@ interface IndexRouteChildren {
 }
 
 const IndexRouteChildren: IndexRouteChildren = {
+  IndexConectarIaRoute: IndexConectarIaRoute,
   IndexIndexRoute: IndexIndexRoute,
   IndexCertificadosIdRoute: IndexCertificadosIdRoute,
   IndexCertificadosEfeitosRoute: IndexCertificadosEfeitosRoute,

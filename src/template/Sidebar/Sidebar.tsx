@@ -71,6 +71,7 @@ const Sidebar = () => {
                   subitems={item.subitems}
                   isProduct={item.isProduct}
                   ability={item.ability}
+                  permissions={"permissions" in item ? (item.permissions as string[]) : undefined}
                   path={item.path}
                   activePath={activePath}
                   setActivePath={setActivePath}

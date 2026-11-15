@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/tooltip";
 import { getLogicalCanvasSize } from "../utils/fabricSetup";
 import { certificateImageUrl, hasBackSide } from "./certificateRenderUrls";
+import HolographicLayer from "./HolographicLayer";
+import { HOLO_GLOW, type HighlightTheme } from "../highlight";
 
 // ============================================================================
 // Palco do certificado público.
@@ -62,6 +64,8 @@ interface CertificateStageProps {
   version?: string | number | Date | null;
   /** Conteúdo extra no canto superior direito (ex.: botão Baixar). */
   actions?: React.ReactNode;
+  /** Tema de destaque (turma especial / aluno destaque): liga o brilho. */
+  highlightTheme?: HighlightTheme | null;
   onError: () => void;
 }
 
@@ -159,6 +163,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
   canvasHeight,
   version,
   actions,
+  highlightTheme,
   onError,
 }) => {
   const { width: logicalW, height: logicalH } = getLogicalCanvasSize(
@@ -341,6 +346,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
         el.style.setProperty("--ry", "0deg");
         el.style.setProperty("--mx", "0.5");
         el.style.setProperty("--my", "0.5");
+        el.style.setProperty("--hover", "0");
         return;
       }
       const rect = el.getBoundingClientRect();
@@ -350,6 +356,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
       el.style.setProperty("--rx", `${((0.5 - ny) * 2 * TILT_X).toFixed(2)}deg`);
       el.style.setProperty("--mx", nx.toFixed(3));
       el.style.setProperty("--my", ny.toFixed(3));
+      el.style.setProperty("--hover", "1");
     },
     [reducedMotion],
   );
@@ -484,6 +491,12 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
       });
   };
 
+  // brilho em volta do cartão nos certificados de destaque
+  const glowStyle: React.CSSProperties = highlightTheme
+    ? {
+        boxShadow: `0 18px 40px -12px rgba(0,0,0,0.35), ${HOLO_GLOW[highlightTheme]}`,
+      }
+    : {};
   const zoomed = view.scale > 1;
   const hiRes = view.scale >= HI_RES_FROM;
   const animate = !reducedMotion && !zoomed && !dragging;
@@ -564,6 +577,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
                     "--ry": "0deg",
                     "--mx": "0.5",
                     "--my": "0.5",
+                    "--hover": "0",
                     transform: "rotateX(var(--rx)) rotateY(var(--ry))",
                     transition: "transform 220ms ease-out",
                     transformStyle: "preserve-3d",
@@ -583,7 +597,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
                 >
                   <div
                     className="absolute inset-0 overflow-hidden rounded-sm bg-white shadow-[0_18px_40px_-12px_rgba(0,0,0,0.35)]"
-                    style={{ backfaceVisibility: "hidden" }}
+                    style={{ backfaceVisibility: "hidden", ...glowStyle }}
                   >
                     <Face
                       certificateKey={certificateKey}
@@ -593,6 +607,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
                       hiRes={hiRes && side === "front"}
                       onError={onError}
                     />
+                    {highlightTheme && <HolographicLayer theme={highlightTheme} />}
                   </div>
                   {twoSided && (
                     <div
@@ -600,6 +615,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
                       style={{
                         backfaceVisibility: "hidden",
                         transform: "rotateY(180deg)",
+                        ...glowStyle,
                       }}
                     >
                       <Face
@@ -610,6 +626,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
                         hiRes={hiRes && side === "back"}
                         onError={onError}
                       />
+                      {highlightTheme && <HolographicLayer theme={highlightTheme} />}
                     </div>
                   )}
                 </div>

@@ -102,3 +102,10 @@ export function renderVersion(
   for (const ch of `${h.kind}|${h.theme}|${h.label}`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
   return `${new Date(cert.updatedAt).getTime()}-${h.theme}-${(hash >>> 0).toString(36)}`;
 }
+
+/** Brilho extra em volta do cartão, por tema. */
+export const HOLO_GLOW: Record<HighlightTheme, string> = {
+  ouro: "0 0 0 1px rgba(212,160,23,.35), 0 0 34px -6px rgba(245,190,60,.55)",
+  prata: "0 0 0 1px rgba(150,165,180,.4), 0 0 34px -6px rgba(170,190,215,.6)",
+  holografico: "0 0 0 1px rgba(170,140,255,.35), 0 0 38px -6px rgba(160,200,255,.6)",
+};

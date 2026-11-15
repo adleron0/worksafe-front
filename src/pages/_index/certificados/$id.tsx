@@ -592,6 +592,7 @@ function CertificadoPublico() {
                 canvasWidth={certificate.canvasWidth}
                 canvasHeight={certificate.canvasHeight}
                 version={renderVersion(certificate)}
+                highlightTheme={highlight?.theme ?? null}
                 onError={() => setStageFailed(true)}
                 actions={
                   <CertificateDownloadMenu

@@ -13,6 +13,7 @@ import { dateBr, errorMessage, todayIso } from "../../comercial/-shared/commerci
 import { ALLOCATION_ABILITY, ALLOCATION_KEY, Allocation, CLASS_COLOR, CLASS_LABEL, PART, PART_LABEL, addDays, overlaps, spanColor, spanText } from "../-shared/allocation";
 import { Activity, ActivityDialog, ActivityTypesDialog, SHIFT_OPTIONS, Shift, activitiesApi, shiftsClash } from "../-shared/activities";
 import { EmployeeStatusBadge, employeesApi } from "../-shared/employees";
+import { AllocationMapView } from "../-shared/allocation-map";
 
 export const Route = createFileRoute("/_authenticated/rh/_alocacao/mapa-de-alocacao")({
   component: AllocationPage,
@@ -34,6 +35,9 @@ function AllocationPage() {
   // atividade aberta: uma existente (pelo id), uma nova, ou nenhuma
   const [activity, setActivity] = useState<{ id?: number } | null>(null);
   const [managingTypes, setManagingTypes] = useState(false);
+  // linha do tempo (quando) ou mapa (onde); a escolha fica guardada neste navegador
+  const [mode, setMode] = useState<"tempo" | "mapa">(() => { try { return localStorage.getItem("worksafe.rh.alocacao.modo") === "mapa" ? "mapa" : "tempo"; } catch { return "tempo"; } });
+  const changeMode = (next: "tempo" | "mapa") => { setMode(next); try { localStorage.setItem("worksafe.rh.alocacao.modo", next); } catch { /* sem armazenamento: vale só nesta visita */ } };
 
   const to = addDays(from, Number(size) - 1);
   const params = { from, to };
@@ -100,6 +104,12 @@ function AllocationPage() {
         )}
       </div>
 
+      <div className="mt-4 flex gap-1 p-1 bg-muted rounded-lg w-fit">
+        <Button variant={mode === "tempo" ? "default" : "ghost"} size="sm" onClick={() => changeMode("tempo")} className="gap-2"><Icon name="chart-gantt" className="w-4 h-4" /> Linha do tempo</Button>
+        <Button variant={mode === "mapa" ? "default" : "ghost"} size="sm" onClick={() => changeMode("mapa")} className="gap-2"><Icon name="map" className="w-4 h-4" /> Mapa</Button>
+      </div>
+      {mode === "mapa" && <div className="mt-4"><AllocationMapView /></div>}
+      {mode === "tempo" && (<>
       <div className="my-4 grid gap-3 rounded-lg border p-4 lg:grid-cols-[auto_auto_1fr_auto] lg:items-end">
         <div>
           <Label className="text-xs">A partir de</Label>
@@ -189,6 +199,7 @@ function AllocationPage() {
           )}
         </>
       )}
+      </>)}
       {activity && (!activity.id || opened) && (
         <ActivityDialog activity={activity.id ? opened : undefined} employees={(data?.employees ?? []).filter((employee) => employee.status !== "desligado").map(({ id, name }) => ({ id, name }))} canWrite={canWrite} onClose={() => setActivity(null)} />
       )}

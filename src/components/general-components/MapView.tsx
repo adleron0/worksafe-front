@@ -41,6 +41,8 @@ interface MapViewProps {
   onPick?: (point: MapPoint) => void;
   /** Enquadramento: muda quando a referência muda (um preset, ou os limites dos pontos). */
   bounds?: MapBounds | null;
+  /** Muda para enquadrar de novo os mesmos limites (a pessoa moveu o mapa e pediu o mesmo enquadramento outra vez). */
+  boundsKey?: string | number;
   /** Sem `bounds`, enquadra os pontos; sem pontos, mostra este preset. */
   fallback?: keyof typeof MAP_PRESETS;
   className?: string;
@@ -55,7 +57,7 @@ const iconOf = (marker: Pick<MapMarker, "color" | "badge" | "quiet">) => {
   return L.divIcon({ html: pinHtml(marker.color ?? "#2563eb", marker.badge, !!marker.quiet), className: "", iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
 };
 
-export default function MapView({ markers = [], picked, onPick, bounds, fallback = "pernambuco", className }: MapViewProps) {
+export default function MapView({ markers = [], picked, onPick, bounds, boundsKey: again, fallback = "pernambuco", className }: MapViewProps) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const layer = useRef<L.LayerGroup | null>(null);
@@ -118,7 +120,7 @@ export default function MapView({ markers = [], picked, onPick, bounds, fallback
     if (points.length === 1) map.current.setView(points[0], 14);
     else map.current.fitBounds(L.latLngBounds(points), { padding: [32, 32], maxZoom: 14 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boundsKey, markers.length, !!picked]);
+  }, [boundsKey, again, markers.length, !!picked]);
 
   return <div ref={container} className={cn("isolate z-0 h-80 w-full overflow-hidden rounded-lg border", onPick && "cursor-crosshair", className)} role="application" aria-label="Mapa" />;
 }

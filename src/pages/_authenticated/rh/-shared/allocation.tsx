@@ -17,9 +17,17 @@ export interface AllocationActivity {
   employeeId: number; activityId: number; typeId: number; typeName: string; color: string; occupies: boolean; location: string | null; notes: string | null;
   start: string; end: string; shift: "integral" | "manha" | "tarde" | "noite";
 }
+export interface AllocationClass {
+  employeeId: number; classId: number; className: string; courseName: string | null; role: "instrutor" | "aluno"; location: string | null; start: string; end: string;
+  shift: "integral" | "manha" | "tarde" | "noite";
+}
+export const CLASS_COLOR = { instrutor: "#7c3aed", aluno: "#0891b2" } as const;
+export const CLASS_LABEL = { instrutor: "Aula", aluno: "Treinamento" } as const;
 export interface Allocation {
   today: string; from: string; to: string; employees: EmployeeRow[]; spans: AllocationSpan[]; undated: AllocationSpan[];
   activities?: AllocationActivity[];
+  /** Turmas em que a pessoa dá aula ou é aluna: saem do cadastro de turmas, pelo CPF. */
+  classes?: AllocationClass[];
   unavailable: Array<{ employeeId: number; start: string; end: string | null; label: string }>;
   worked: Array<{ employeeId: number; date: string; orderId: number; hours: number }>;
 }
@@ -51,6 +59,7 @@ export function EmployeeAllocation({ employeeId }: { employeeId: number }) {
   if (error) return <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>;
   if (isLoading || !data) return <div className="grid gap-3"><Skeleton className="h-28 w-full" /><Skeleton className="h-32 w-full" /></div>;
   const open = (orderId: number) => navigate({ to: "/servicos/ordens-de-servico/$orderId", params: { orderId: String(orderId) } });
+  const openClass = (classId: number) => navigate({ to: "/treinamentos/turmas/$turmaId", params: { turmaId: String(classId) } });
   const employee = data.employees[0];
   const spans = [...data.spans].sort((a, b) => (b.start ?? "").localeCompare(a.start ?? ""));
   const hoursOf = (orderId: number) => data.worked.filter((row) => row.orderId === orderId).reduce((sum, row) => sum + row.hours, 0);
@@ -64,11 +73,24 @@ export function EmployeeAllocation({ employeeId }: { employeeId: number }) {
           bars: [
             ...data.spans.filter((span) => span.start).map((span) => ({ id: `os${span.orderId}`, start: span.start as string, end: span.end ?? (span.start as string), label: span.number, color: spanColor(span), part: PART[span.shift ?? "integral"], hint: `${span.number} · ${span.title}`, onClick: () => open(span.orderId) })),
             ...(data.activities ?? []).map((item) => ({ id: `a${item.activityId}`, start: item.start, end: item.end, label: item.typeName, color: item.color, part: PART[item.shift], hint: [item.typeName, item.location].filter(Boolean).join(" · ") })),
+            ...(data.classes ?? []).map((item) => ({ id: `c${item.classId}${item.role}`, start: item.start, end: item.end, label: `${CLASS_LABEL[item.role]}: ${item.className}`, color: CLASS_COLOR[item.role], part: PART[item.shift], hint: `${CLASS_LABEL[item.role]} · ${item.className}`, onClick: () => openClass(item.classId) })),
           ],
           bands: data.unavailable.map((item, index) => ({ id: index, start: item.start, end: item.end, label: item.label })),
           marks: data.worked.map((row) => ({ date: row.date, hint: `Trabalhou ${row.hours} h` })),
         }]} />
       <p className="-mt-2 text-xs text-muted-foreground">Barra: escalado na obra ou em atividade (meia altura: só manhã ou só tarde). Ponto: dia com RDO lançado para a pessoa. Faixa listrada: férias, afastamento ou suspensão.</p>
+      {!!data.classes?.length && (
+        <section className="rounded-lg border">
+          <h2 className="border-b px-4 py-3 font-semibold">Turmas neste período</h2>
+          {data.classes.map((item) => (
+            <button key={`${item.classId}${item.role}`} type="button" onClick={() => openClass(item.classId)} className="flex w-full flex-col gap-1 border-b px-4 py-3 text-left text-sm last:border-b-0 hover:bg-muted/40 lg:flex-row lg:items-center lg:gap-0">
+              <span className="flex min-w-0 flex-1 items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: CLASS_COLOR[item.role] }} /> <span className="font-medium">{item.className}</span> <span className="truncate text-muted-foreground">{[item.courseName, item.location].filter(Boolean).join(" · ")}</span></span>
+              <span className="lg:w-56 text-muted-foreground">{spanText(item.start, item.end)}</span>
+              <span className="lg:w-44 text-muted-foreground">{item.role === "instrutor" ? "dando aula" : "como aluno"}</span>
+            </button>
+          ))}
+        </section>
+      )}
       {!!data.activities?.length && (
         <section className="rounded-lg border">
           <h2 className="border-b px-4 py-3 font-semibold">Atividades neste período</h2>

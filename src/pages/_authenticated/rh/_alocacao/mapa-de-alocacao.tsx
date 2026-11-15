@@ -10,7 +10,7 @@ import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import TimelineView, { TimelineRow } from "@/components/general-components/TimelineView";
 import { dateBr, errorMessage, todayIso } from "../../comercial/-shared/commercial";
-import { ALLOCATION_ABILITY, ALLOCATION_KEY, Allocation, PART, PART_LABEL, addDays, overlaps, spanColor, spanText } from "../-shared/allocation";
+import { ALLOCATION_ABILITY, ALLOCATION_KEY, Allocation, CLASS_COLOR, CLASS_LABEL, PART, PART_LABEL, addDays, overlaps, spanColor, spanText } from "../-shared/allocation";
 import { Activity, ActivityDialog, ActivityTypesDialog, SHIFT_OPTIONS, Shift, activitiesApi, shiftsClash } from "../-shared/activities";
 import { EmployeeStatusBadge, employeesApi } from "../-shared/employees";
 
@@ -54,6 +54,7 @@ function AllocationPage() {
   const isFree = (id: number, terminationDate: string | null) => searching
     && !(data?.spans ?? []).some((span) => span.employeeId === id && span.start && overlaps(span.start, span.end, freeFrom, searchTo) && shiftsClash(span.shift ?? "integral", freeShift))
     && !(data?.activities ?? []).some((item) => item.employeeId === id && item.occupies && overlaps(item.start, item.end, freeFrom, searchTo) && shiftsClash(item.shift, freeShift))
+    && !(data?.classes ?? []).some((item) => item.employeeId === id && overlaps(item.start, item.end, freeFrom, searchTo) && shiftsClash(item.shift, freeShift))
     && !(data?.unavailable ?? []).some((item) => item.employeeId === id && overlaps(item.start, item.end, freeFrom, searchTo))
     && !(terminationDate && terminationDate <= searchTo);
   const free = employees.filter((employee) => isFree(employee.id, employee.terminationDate));
@@ -65,6 +66,11 @@ function AllocationPage() {
       ...(data?.spans ?? []).filter((span) => span.employeeId === employee.id && span.start).map((span) => ({
         id: `os${span.orderId}`, start: span.start as string, end: span.end ?? (span.start as string), label: `${span.number}${span.customer ? ` · ${span.customer}` : ""}`, color: spanColor(span), part: PART[span.shift ?? "integral"],
         hint: `${span.number} · ${span.title} · ${spanText(span.start, span.end)} · ${PART_LABEL[span.shift ?? "integral"]}`, onClick: () => openOrder(span.orderId),
+      })),
+      // turmas em que a pessoa dá aula ou é aluna: vêm do cadastro de turmas, pelo CPF
+      ...(data?.classes ?? []).filter((item) => item.employeeId === employee.id).map((item) => ({
+        id: `c${item.classId}${item.role}`, start: item.start, end: item.end, label: `${CLASS_LABEL[item.role]}: ${item.className}`, color: CLASS_COLOR[item.role], part: PART[item.shift],
+        hint: `${CLASS_LABEL[item.role]} · ${item.className} · ${spanText(item.start, item.end)}`, onClick: () => navigate({ to: "/treinamentos/turmas/$turmaId", params: { turmaId: String(item.classId) } }),
       })),
       // atividades fora de OS: aula, treinamento, atividade no CT...
       ...(data?.activities ?? []).filter((item) => item.employeeId === employee.id).map((item) => ({
@@ -140,7 +146,7 @@ function AllocationPage() {
           <div className="hidden md:block">
             <TimelineView from={data.from} to={data.to} today={data.today} rows={rows} focus={searching ? { start: freeFrom, end: searchTo } : null}
               emptyMessage={roleId ? "Ninguém com essa função." : "Nenhum funcionário cadastrado. Cadastre em RH → Funcionários."} />
-            <p className="mt-2 text-xs text-muted-foreground">Barra: escalado na obra (mais clara enquanto a obra não começou) ou em atividade. Meia altura: só manhã (em cima) ou só tarde (embaixo); listrada: noite. Ponto: dia com RDO lançado. Faixa listrada: férias, afastamento ou suspensão. Duas barras inteiras na mesma pessoa no mesmo dia são conflito de escala.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Barra: escalado na obra (mais clara enquanto a obra não começou) em atividade ou em turma (aula ou treinamento, pelo CPF do instrutor e do aluno). Meia altura: só manhã (em cima) ou só tarde (embaixo); listrada: noite. Ponto: dia com RDO lançado. Faixa listrada: férias, afastamento ou suspensão. Duas barras inteiras na mesma pessoa no mesmo dia são conflito de escala.</p>
           </div>
           {/* celular: quem está onde hoje */}
           <div className="md:hidden rounded-lg border">
@@ -150,14 +156,16 @@ function AllocationPage() {
               const now = todayOf(employee.id);
               const away = awayToday(employee.id);
               const doing = (data.activities ?? []).filter((item) => item.employeeId === employee.id && overlaps(item.start, item.end, data.today, data.today));
+              const classes = (data.classes ?? []).filter((item) => item.employeeId === employee.id && overlaps(item.start, item.end, data.today, data.today));
               return (
                 <button key={employee.id} type="button" onClick={() => openEmployee(employee.id)} className="flex w-full flex-col gap-1 border-b px-4 py-3 text-left text-sm last:border-b-0">
                   <span className="font-medium">{employee.name}</span>
                   <span className="text-xs text-muted-foreground">{employee.primaryRole ?? "Sem função"}</span>
                   {away ? <span className="text-xs text-amber-700 dark:text-amber-400">{away.label} ({spanText(away.start, away.end)})</span>
-                    : now.length || doing.length ? <>
+                    : now.length || doing.length || classes.length ? <>
                       {now.map((span) => <span key={span.orderId} className="text-xs">Em {span.number}{span.customer ? ` · ${span.customer}` : ""} ({PART_LABEL[span.shift ?? "integral"]})</span>)}
                       {doing.map((item) => <span key={item.activityId} className="text-xs">{item.typeName}{item.location ? ` · ${item.location}` : ""} ({PART_LABEL[item.shift]})</span>)}
+                      {classes.map((item) => <span key={`${item.classId}${item.role}`} className="text-xs">{CLASS_LABEL[item.role]}: {item.className}</span>)}
                     </>
                     : <span className="text-xs text-green-700 dark:text-green-400">Livre</span>}
                 </button>

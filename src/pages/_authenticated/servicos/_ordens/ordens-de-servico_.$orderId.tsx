@@ -26,6 +26,7 @@ import { TEAM_OPTIONS_KEY, TeamEditor } from "../-shared/team";
 import { ResultPanel } from "../-shared/results";
 import { OrderPurchasesPanel } from "../../suprimentos/-shared/purchases";
 import { TEAM_DOCUMENTS_KEY, TeamDocumentsPanel } from "../../rh/-shared/team-documents";
+import { PointDialog } from "../../rh/-shared/places";
 
 export const Route = createFileRoute("/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId")({
   component: OrderPage,
@@ -65,6 +66,12 @@ function OrderPage() {
     queryClient.invalidateQueries({ queryKey: [TEAM_DOCUMENTS_KEY] });
   };
   const fail = (title: string) => (err: unknown) => toast({ title, description: errorMessage(err), variant: "destructive" });
+  const [pickingPoint, setPickingPoint] = useState(false);
+  const { mutate: savePoint, isPending: savingPoint } = useMutation({
+    mutationFn: (point: { latitude: number; longitude: number } | null) => ordersApi.put<Order>(orderId, { latitude: point?.latitude ?? null, longitude: point?.longitude ?? null }),
+    onSuccess: (result) => { apply(result); setPickingPoint(false); toast({ title: "Ponto da obra salvo", variant: "success" }); },
+    onError: fail("Não foi possível salvar o ponto"),
+  });
   const { mutate: saveAgenda, isPending: saving } = useMutation({
     mutationFn: (value: Agenda) => ordersApi.put<Order>(orderId, { ...value, plannedStart: value.plannedStart || null, plannedEnd: value.plannedEnd || null, responsibleUserId: value.responsibleUserId || null }),
     onSuccess: (result) => { apply(result); toast({ title: "Ordem de serviço salva", variant: "success" }); },
@@ -270,6 +277,12 @@ function OrderPage() {
             </div>
             <div><Label htmlFor="orderLocation" className="text-xs">Local do serviço</Label>
               <ShadInput id="orderLocation" className="mt-1" maxLength={300} value={agenda.location} disabled={!editable} onChange={(event) => set("location", event.target.value)} /></div>
+            {/* ponto da obra no mapa: por padrão o do cliente; pode ter um ponto próprio (outra planta, outro município) */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <Icon name="map-pin" className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="flex-1 text-muted-foreground">{order.point?.source === "obra" ? "Ponto próprio da obra no mapa" : order.point?.source === "local" ? `No mapa: ${order.point.place?.name}` : order.point?.source === "cliente" ? "No mapa: o ponto do cliente" : "Sem ponto no mapa (o cliente ainda não tem ponto)"}</span>
+              {editable && <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => setPickingPoint(true)}>{order.point?.own ? "Ajustar o ponto" : "Marcar o ponto da obra"}</Button>}
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label htmlFor="orderContact" className="text-xs">Contato no cliente</Label>
                 <ShadInput id="orderContact" className="mt-1" maxLength={160} value={agenda.contactName} disabled={!editable} onChange={(event) => set("contactName", event.target.value)} /></div>
@@ -305,6 +318,10 @@ function OrderPage() {
       </div>
 
       {moving && <MoveDialog order={order} target={moving} onClose={() => setMoving(null)} onDone={apply} />}
+      {pickingPoint && (
+        <PointDialog title={`Ponto da obra ${order.number}`} description="Marque onde a obra acontece, se não for no endereço do cliente. Clique no mapa ou arraste o alfinete."
+          point={order.point?.own ?? null} hint={order.point?.customer ?? null} clearLabel="Usar o ponto do cliente" saving={savingPoint} onSave={(point) => savePoint(point)} onClose={() => setPickingPoint(false)} />
+      )}
     </>
   );
 }

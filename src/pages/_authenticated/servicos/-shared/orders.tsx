@@ -37,6 +37,8 @@ export interface Order {
   proposal: { id: number; number: string } | null; contract: { id: number; number: string } | null;
   customerOrder: { number: string | null; date: string | null; fileUrl: string | null; fileName: string | null } | null;
   contactName: string | null; contactPhone: string | null; contactEmail: string | null; location: string | null;
+  /** Ponto da obra no mapa: o próprio, o do local da empresa ou, sem eles, o do cliente. */
+  point?: { latitude: number | null; longitude: number | null; source: "obra" | "local" | "cliente" | null; own: { latitude: number; longitude: number } | null; place: { id: number; name: string } | null; customer: { latitude: number; longitude: number } | null };
   responsible: { id: number; name: string } | null; team: TeamMember[];
   plannedStart: string | null; plannedEnd: string | null; startedAt: string | null; finishedAt: string | null;
   scope: ScopeSection[]; schedule: { unit: "dia" | "semana" | "mes"; steps: Array<{ title: string; start: number; duration: number }> } | null;

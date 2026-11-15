@@ -14,7 +14,9 @@ import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { Tip, errorMessage, todayIso } from "../../comercial/-shared/commercial";
+import useVerify from "@/hooks/use-verify";
 import { ALLOCATION_KEY } from "./allocation";
+import { PLACES_ABILITY, usePlaces } from "./places";
 
 /** Atividades fora de OS (aula, treinamento, atividade no CT...): tipos, lançamento e parte do dia. */
 export type Shift = "integral" | "manha" | "tarde" | "noite";
@@ -27,7 +29,7 @@ export const shiftPart = (shift: Shift) => (({ integral: "full", manha: "am", ta
 
 export interface ActivityType { id: number; name: string; color: string; occupies: boolean; inactive: boolean }
 export interface Activity {
-  id: number; typeId: number; typeName: string; color: string; occupies: boolean; location: string | null; startDate: string; endDate: string; shift: Shift; notes: string | null;
+  id: number; typeId: number; typeName: string; color: string; occupies: boolean; location: string | null; placeId?: number | null; startDate: string; endDate: string; shift: Shift; notes: string | null;
   employees: Array<{ id: number; name: string }>;
 }
 export const ACTIVITY_TYPES_KEY = "hrActivityTypes";
@@ -62,6 +64,11 @@ export function ActivityDialog({ activity, employeeIds = [], employees, canWrite
   const [endDate, setEndDate] = useState(activity?.endDate ?? "");
   const [shift, setShift] = useState<Shift>(activity?.shift ?? "integral");
   const [location, setLocation] = useState(activity?.location ?? "");
+  const [placeId, setPlaceId] = useState(activity?.placeId ? String(activity.placeId) : "");
+  const { can } = useVerify();
+  // os locais da empresa (CT, bases em uso) para quem pode vê-los; senão fica só o texto
+  const { data: places } = usePlaces(can(`view_${PLACES_ABILITY}`));
+  const placeOptions = (places?.rows ?? []).filter((place) => place.current || String(place.id) === placeId).map((place) => ({ id: String(place.id), name: `${place.name} · ${place.kindName}` }));
   const [notes, setNotes] = useState(activity?.notes ?? "");
   const [error, setError] = useState("");
   // quem está numa atividade antiga e saiu da lista (desligado) continua aparecendo
@@ -70,7 +77,7 @@ export function ActivityDialog({ activity, employeeIds = [], employees, canWrite
 
   const { mutate: save, isPending } = useMutation({
     mutationFn: () => {
-      const body = { typeId: Number(typeId), employeeIds: people.map(Number), startDate, endDate: endDate || startDate, shift, location: location.trim(), notes: notes.trim() };
+      const body = { typeId: Number(typeId), employeeIds: people.map(Number), startDate, endDate: endDate || startDate, shift, placeId: placeId || null, location: location.trim(), notes: notes.trim() };
       return activity ? activitiesApi.put<Activity>(String(activity.id), body) : activitiesApi.post<Activity>("", body);
     },
     onSuccess: () => { toast({ title: activity ? "Atividade salva" : "Atividade lançada", variant: "success" }); done(); },
@@ -124,6 +131,13 @@ export function ActivityDialog({ activity, employeeIds = [], employees, canWrite
               <Select name="activityShift" modal disabled={!canWrite} options={SHIFT_OPTIONS} state={shift} onChange={(_, value) => setShift((String(value ?? "integral") as Shift))} placeholder="Dia inteiro" />
             </div>
           </div>
+          {placeOptions.length > 0 && (
+            <div>
+              <Label>Local da empresa</Label>
+              <Select name="activityPlace" modal clearable disabled={!canWrite} options={placeOptions} state={placeId} placeholder="Nenhum (use o campo abaixo)"
+                onChange={(_, value) => { const next = String(value ?? ""); setPlaceId(next); const place = places?.rows.find((item) => String(item.id) === next); if (place && !location.trim()) setLocation(place.name); }} />
+            </div>
+          )}
           <div>
             <Label htmlFor="activityLocation">Onde</Label>
             <Input id="activityLocation" name="activityLocation" className="mt-1" value={location} maxLength={200} disabled={!canWrite} onValueChange={(_, value) => setLocation(String(value))} placeholder="Ex.: CT Recife" />

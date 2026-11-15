@@ -126,6 +126,12 @@ export const items = [
         path: "/rh/mapa-de-alocacao",
       },
       {
+        title: "Locais",
+        ability: "locais",
+        icon: "map-pinned",
+        path: "/rh/locais",
+      },
+      {
         title: "Vencimentos",
         ability: "documentos_funcionarios",
         icon: "calendar-clock",

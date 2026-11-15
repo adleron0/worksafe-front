@@ -53,6 +53,7 @@ import { Route as AuthenticatedServicosOrdensResultadoDasObrasRouteImport } from
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico'
 import { Route as AuthenticatedServicosOrdensEstatisticasDoDiarioRouteImport } from './pages/_authenticated/servicos/_ordens/estatisticas-do-diario'
 import { Route as AuthenticatedServicosOrdensDiarioDeObraRouteImport } from './pages/_authenticated/servicos/_ordens/diario-de-obra'
+import { Route as AuthenticatedRhLocaisLocaisRouteImport } from './pages/_authenticated/rh/_locais/locais'
 import { Route as AuthenticatedRhFuncionariosFuncionariosRouteImport } from './pages/_authenticated/rh/_funcionarios/funcionarios'
 import { Route as AuthenticatedRhDocumentosVencimentosRouteImport } from './pages/_authenticated/rh/_documentos/vencimentos'
 import { Route as AuthenticatedRhDocumentosTiposDeDocumentoRouteImport } from './pages/_authenticated/rh/_documentos/tipos-de-documento'
@@ -341,6 +342,12 @@ const AuthenticatedServicosOrdensDiarioDeObraRoute =
     path: '/servicos/diario-de-obra',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedRhLocaisLocaisRoute =
+  AuthenticatedRhLocaisLocaisRouteImport.update({
+    id: '/rh/_locais/locais',
+    path: '/rh/locais',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedRhFuncionariosFuncionariosRoute =
   AuthenticatedRhFuncionariosFuncionariosRouteImport.update({
     id: '/rh/_funcionarios/funcionarios',
@@ -621,6 +628,7 @@ export interface FileRoutesByFullPath {
   '/rh/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
   '/rh/vencimentos': typeof AuthenticatedRhDocumentosVencimentosRoute
   '/rh/funcionarios': typeof AuthenticatedRhFuncionariosFuncionariosRoute
+  '/rh/locais': typeof AuthenticatedRhLocaisLocaisRoute
   '/servicos/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/servicos/estatisticas-do-diario': typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
   '/servicos/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
@@ -702,6 +710,7 @@ export interface FileRoutesByTo {
   '/rh/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
   '/rh/vencimentos': typeof AuthenticatedRhDocumentosVencimentosRoute
   '/rh/funcionarios': typeof AuthenticatedRhFuncionariosFuncionariosRoute
+  '/rh/locais': typeof AuthenticatedRhLocaisLocaisRoute
   '/servicos/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/servicos/estatisticas-do-diario': typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
   '/servicos/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
@@ -787,6 +796,7 @@ export interface FileRoutesById {
   '/_authenticated/rh/_documentos/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
   '/_authenticated/rh/_documentos/vencimentos': typeof AuthenticatedRhDocumentosVencimentosRoute
   '/_authenticated/rh/_funcionarios/funcionarios': typeof AuthenticatedRhFuncionariosFuncionariosRoute
+  '/_authenticated/rh/_locais/locais': typeof AuthenticatedRhLocaisLocaisRoute
   '/_authenticated/servicos/_ordens/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/_authenticated/servicos/_ordens/estatisticas-do-diario': typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
@@ -871,6 +881,7 @@ export interface FileRouteTypes {
     | '/rh/tipos-de-documento'
     | '/rh/vencimentos'
     | '/rh/funcionarios'
+    | '/rh/locais'
     | '/servicos/diario-de-obra'
     | '/servicos/estatisticas-do-diario'
     | '/servicos/ordens-de-servico'
@@ -952,6 +963,7 @@ export interface FileRouteTypes {
     | '/rh/tipos-de-documento'
     | '/rh/vencimentos'
     | '/rh/funcionarios'
+    | '/rh/locais'
     | '/servicos/diario-de-obra'
     | '/servicos/estatisticas-do-diario'
     | '/servicos/ordens-de-servico'
@@ -1036,6 +1048,7 @@ export interface FileRouteTypes {
     | '/_authenticated/rh/_documentos/tipos-de-documento'
     | '/_authenticated/rh/_documentos/vencimentos'
     | '/_authenticated/rh/_funcionarios/funcionarios'
+    | '/_authenticated/rh/_locais/locais'
     | '/_authenticated/servicos/_ordens/diario-de-obra'
     | '/_authenticated/servicos/_ordens/estatisticas-do-diario'
     | '/_authenticated/servicos/_ordens/ordens-de-servico'
@@ -1386,6 +1399,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedServicosOrdensDiarioDeObraRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/rh/_locais/locais': {
+      id: '/_authenticated/rh/_locais/locais'
+      path: '/rh/locais'
+      fullPath: '/rh/locais'
+      preLoaderRoute: typeof AuthenticatedRhLocaisLocaisRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/rh/_funcionarios/funcionarios': {
       id: '/_authenticated/rh/_funcionarios/funcionarios'
       path: '/rh/funcionarios'
@@ -1695,6 +1715,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedRhDocumentosTiposDeDocumentoRoute: typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
   AuthenticatedRhDocumentosVencimentosRoute: typeof AuthenticatedRhDocumentosVencimentosRoute
   AuthenticatedRhFuncionariosFuncionariosRoute: typeof AuthenticatedRhFuncionariosFuncionariosRoute
+  AuthenticatedRhLocaisLocaisRoute: typeof AuthenticatedRhLocaisLocaisRoute
   AuthenticatedServicosOrdensDiarioDeObraRoute: typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   AuthenticatedServicosOrdensEstatisticasDoDiarioRoute: typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
   AuthenticatedServicosOrdensOrdensDeServicoRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
@@ -1795,6 +1816,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedRhDocumentosVencimentosRoute,
   AuthenticatedRhFuncionariosFuncionariosRoute:
     AuthenticatedRhFuncionariosFuncionariosRoute,
+  AuthenticatedRhLocaisLocaisRoute: AuthenticatedRhLocaisLocaisRoute,
   AuthenticatedServicosOrdensDiarioDeObraRoute:
     AuthenticatedServicosOrdensDiarioDeObraRoute,
   AuthenticatedServicosOrdensEstatisticasDoDiarioRoute:

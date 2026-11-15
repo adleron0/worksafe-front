@@ -9,9 +9,17 @@ import { EmployeeRow, employeesApi } from "./employees";
 /** Alocação dos funcionários: tipos (espelham a API) e o que é comum ao mapa e à ficha. */
 export interface AllocationSpan {
   employeeId: number; orderId: number; number: string; title: string; status: string; role: string; start: string | null; end: string | null; customer: string | null; location: string | null;
+  /** Parte do dia em que a pessoa está nesta obra. */
+  shift?: "integral" | "manha" | "tarde" | "noite";
+}
+/** Atividade fora de OS de uma pessoa (aula, treinamento, atividade no CT...). */
+export interface AllocationActivity {
+  employeeId: number; activityId: number; typeId: number; typeName: string; color: string; occupies: boolean; location: string | null; notes: string | null;
+  start: string; end: string; shift: "integral" | "manha" | "tarde" | "noite";
 }
 export interface Allocation {
   today: string; from: string; to: string; employees: EmployeeRow[]; spans: AllocationSpan[]; undated: AllocationSpan[];
+  activities?: AllocationActivity[];
   unavailable: Array<{ employeeId: number; start: string; end: string | null; label: string }>;
   worked: Array<{ employeeId: number; date: string; orderId: number; hours: number }>;
 }
@@ -21,6 +29,10 @@ export const ALLOCATION_ABILITY = "alocacao";
 export const addDays = (date: string, days: number) => new Date(new Date(`${date}T00:00:00.000Z`).getTime() + days * 86400000).toISOString().slice(0, 10);
 export const overlaps = (aStart: string, aEnd: string | null, bStart: string, bEnd: string | null) => aStart <= (bEnd ?? "9999-12-31") && bStart <= (aEnd ?? "9999-12-31");
 export const spanText = (start: string | null, end: string | null) => (!start ? "sem data marcada" : !end || end === start ? dateBr(start) : `${dateBr(start)} a ${dateBr(end)}`);
+
+/** A parte do dia como a linha do tempo desenha. */
+export const PART = { integral: "full", manha: "am", tarde: "pm", noite: "night" } as const;
+export const PART_LABEL = { integral: "dia inteiro", manha: "manhã", tarde: "tarde", noite: "noite" } as const;
 
 /** Uma cor por obra, sempre a mesma para a mesma OS. */
 const COLORS = ["#2563eb", "#7c3aed", "#0891b2", "#c2410c", "#4d7c0f", "#be185d", "#0f766e", "#a16207"];
@@ -49,11 +61,26 @@ export function EmployeeAllocation({ employeeId }: { employeeId: number }) {
       <TimelineView from={data.from} to={data.to} today={data.today} dayWidth={22}
         rows={[{
           id: employee.id, title: employee.name, subtitle: employee.primaryRole ?? undefined,
-          bars: data.spans.filter((span) => span.start).map((span) => ({ id: span.orderId, start: span.start as string, end: span.end ?? (span.start as string), label: span.number, color: spanColor(span), hint: `${span.number} · ${span.title}`, onClick: () => open(span.orderId) })),
+          bars: [
+            ...data.spans.filter((span) => span.start).map((span) => ({ id: `os${span.orderId}`, start: span.start as string, end: span.end ?? (span.start as string), label: span.number, color: spanColor(span), part: PART[span.shift ?? "integral"], hint: `${span.number} · ${span.title}`, onClick: () => open(span.orderId) })),
+            ...(data.activities ?? []).map((item) => ({ id: `a${item.activityId}`, start: item.start, end: item.end, label: item.typeName, color: item.color, part: PART[item.shift], hint: [item.typeName, item.location].filter(Boolean).join(" · ") })),
+          ],
           bands: data.unavailable.map((item, index) => ({ id: index, start: item.start, end: item.end, label: item.label })),
           marks: data.worked.map((row) => ({ date: row.date, hint: `Trabalhou ${row.hours} h` })),
         }]} />
-      <p className="-mt-2 text-xs text-muted-foreground">Barra: escalado na obra. Ponto: dia com RDO lançado para a pessoa. Faixa listrada: férias, afastamento ou suspensão.</p>
+      <p className="-mt-2 text-xs text-muted-foreground">Barra: escalado na obra ou em atividade (meia altura: só manhã ou só tarde). Ponto: dia com RDO lançado para a pessoa. Faixa listrada: férias, afastamento ou suspensão.</p>
+      {!!data.activities?.length && (
+        <section className="rounded-lg border">
+          <h2 className="border-b px-4 py-3 font-semibold">Atividades neste período</h2>
+          {data.activities.map((item) => (
+            <div key={item.activityId} className="flex flex-col gap-1 border-b px-4 py-3 text-sm last:border-b-0 lg:flex-row lg:items-center lg:gap-0">
+              <span className="flex min-w-0 flex-1 items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} /> <span className="font-medium">{item.typeName}</span> <span className="truncate text-muted-foreground">{[item.location, item.notes].filter(Boolean).join(" · ")}</span></span>
+              <span className="lg:w-56 text-muted-foreground">{spanText(item.start, item.end)}</span>
+              <span className="lg:w-44 text-muted-foreground">{PART_LABEL[item.shift]}</span>
+            </div>
+          ))}
+        </section>
+      )}
 
       <section className="rounded-lg border">
         <h2 className="border-b px-4 py-3 font-semibold">Obras neste período</h2>

@@ -11,6 +11,11 @@ import { cn } from "@/lib/utils";
  */
 export interface TimelineBar {
   id: string | number; start: string; end: string; label: string;
+  /**
+   * Parte do dia que a barra ocupa: dia inteiro (padrão), manhã (metade de cima da faixa),
+   * tarde (metade de baixo) ou noite (faixa própria). Manhã e tarde dividem a mesma faixa.
+   */
+  part?: "full" | "am" | "pm" | "night";
   /** Cor de fundo da barra (hex ou rgb). */
   color?: string;
   /** Texto do balão ao passar o mouse. */
@@ -38,18 +43,21 @@ const DAY = 86400000;
 const time = (date: string) => new Date(`${date}T00:00:00.000Z`).getTime();
 const WEEKDAY = ["D", "S", "T", "Q", "Q", "S", "S"];
 const MONTH = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-const BAR_HEIGHT = 22;
+const BAR_HEIGHT = 26;
 const BAR_GAP = 3;
 const ROW_PADDING = 6;
 const MARK_SPACE = 8;
 
-/** Barras que se cruzam vão para faixas diferentes da mesma linha, para nenhuma esconder a outra. */
+/** Duas partes do dia cabem na mesma faixa só quando são manhã e tarde. */
+const sharesLane = (a: TimelineBar["part"], b: TimelineBar["part"]) => (a === "am" && b === "pm") || (a === "pm" && b === "am");
+
+/** Barras que se cruzam vão para faixas diferentes da mesma linha, para nenhuma esconder a outra; manhã e tarde dividem a faixa. */
 function lanesOf(bars: TimelineBar[]): Array<TimelineBar & { lane: number }> {
-  const ends: string[] = [];
+  const lanes: Array<Array<TimelineBar>> = [];
   return [...bars].sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end)).map((bar) => {
-    let lane = ends.findIndex((end) => end < bar.start);
-    if (lane < 0) lane = ends.length;
-    ends[lane] = bar.end;
+    let lane = lanes.findIndex((placed) => placed.every((other) => other.end < bar.start || other.start > bar.end || sharesLane(other.part, bar.part)));
+    if (lane < 0) { lane = lanes.length; lanes.push([]); }
+    lanes[lane].push(bar);
     return { ...bar, lane };
   });
 }
@@ -141,8 +149,12 @@ export default function TimelineView({ from, to, today, rows, dayWidth = 30, tit
                 {bars.map((bar) => {
                   const at = place(bar.start, bar.end);
                   if (!at) return null;
-                  const style = { left: at.left + 1, width: at.width - 2, top: ROW_PADDING + bar.lane * (BAR_HEIGHT + BAR_GAP), height: BAR_HEIGHT, backgroundColor: bar.color ?? "#64748b" };
-                  const classes = cn("absolute z-[6] flex items-center overflow-hidden px-1.5 text-[11px] font-medium text-white shadow-sm", at.cutLeft ? "rounded-l-none" : "rounded-l", at.cutRight ? "rounded-r-none" : "rounded-r");
+                  const half = bar.part === "am" || bar.part === "pm";
+                  const top = ROW_PADDING + bar.lane * (BAR_HEIGHT + BAR_GAP) + (bar.part === "pm" ? BAR_HEIGHT / 2 : 0);
+                  const style = { left: at.left + 1, width: at.width - 2, top, height: half ? BAR_HEIGHT / 2 - 1 : BAR_HEIGHT, backgroundColor: bar.color ?? "#64748b",
+                    // noite: listras, para não se confundir com o dia inteiro
+                    ...(bar.part === "night" ? { backgroundImage: "repeating-linear-gradient(90deg, rgba(0,0,0,.28) 0 5px, transparent 5px 10px)" } : {}) };
+                  const classes = cn("absolute z-[6] flex items-center overflow-hidden px-1.5 font-medium text-white shadow-sm", half ? "text-[9px] leading-none" : "text-[11px]", at.cutLeft ? "rounded-l-none" : "rounded-l", at.cutRight ? "rounded-r-none" : "rounded-r");
                   return bar.onClick
                     ? <button key={bar.id} type="button" className={cn(classes, "hover:brightness-110 focus-visible:outline focus-visible:outline-2")} style={style} aria-label={bar.hint ?? bar.label} onClick={bar.onClick}><span className="truncate">{bar.label}</span></button>
                     : <div key={bar.id} className={classes} style={style}><span className="truncate">{bar.label}</span></div>;

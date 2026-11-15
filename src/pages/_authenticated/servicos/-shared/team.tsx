@@ -13,11 +13,18 @@ import { cn } from "@/lib/utils";
 import { Tip, dateBr } from "../../comercial/-shared/commercial";
 import { TeamMember, ordersApi } from "./orders";
 
+type Shift = "integral" | "manha" | "tarde" | "noite";
+const SHIFT_OPTIONS: Array<{ id: Shift; name: string }> = [{ id: "integral", name: "Dia inteiro" }, { id: "manha", name: "Só de manhã" }, { id: "tarde", name: "Só à tarde" }, { id: "noite", name: "Só à noite" }];
+const SHIFT_LABEL: Record<Shift, string> = { integral: "dia inteiro", manha: "manhã", tarde: "tarde", noite: "noite" };
+/** Duas partes do dia se cruzam: dia inteiro cruza com qualquer uma; manhã só com manhã. */
+const shiftsClash = (a: Shift, b: Shift) => a === "integral" || b === "integral" || a === b;
+
 /** Equipe da OS a partir do cadastro de funcionários: quem está livre, em outra obra, de férias ou com documento pendente. */
 export interface TeamDocIssue { typeId: number; typeName: string; kind: "vencido" | "faltando" | "vence_antes" | "a_vencer"; expiryDate: string | null }
 export interface TeamOption {
   id: number; name: string; userId: number | null; roles: Array<{ id: number; name: string; isPrimary: boolean }>;
-  busy: Array<{ orderId: number; number: string; title: string; start: string | null; end: string | null }>;
+  busy: Array<{ orderId: number; number: string; title: string; start: string | null; end: string | null; shift?: Shift }>;
+  activities?: Array<{ activityId: number; typeName: string; start: string; end: string; shift: Shift }>;
   unavailable: Array<{ label: string; start: string; end: string | null }>;
   documents: TeamDocIssue[]; free: boolean;
 }
@@ -32,13 +39,18 @@ const issueText = (issue: TeamDocIssue) =>
 const serious = (option?: TeamOption) => (option?.documents ?? []).filter((issue) => issue.kind !== "a_vencer");
 
 /** Os avisos de uma pessoa: nada disso impede de escalar, só informa. */
-function Warnings({ option }: { option?: TeamOption }) {
+function Warnings({ option, shift = "integral" }: { option?: TeamOption; shift?: Shift }) {
   if (!option) return null;
   const docs = serious(option);
-  if (option.free && !docs.length) return <p className="flex items-center gap-1 text-xs text-green-700 dark:text-green-400"><Icon name="circle-check" className="w-3 h-3" /> Livre no período</p>;
+  // só atrapalha o que cai na mesma parte do dia: manhã aqui e tarde em outra obra não se cruzam
+  const busy = option.busy.filter((item) => shiftsClash(item.shift ?? "integral", shift));
+  const activities = (option.activities ?? []).filter((item) => shiftsClash(item.shift, shift));
+  const elsewhere = option.busy.length + (option.activities?.length ?? 0) - busy.length - activities.length;
+  if (!busy.length && !activities.length && !option.unavailable.length && !docs.length) return <p className="flex items-center gap-1 text-xs text-green-700 dark:text-green-400"><Icon name="circle-check" className="w-3 h-3" /> {elsewhere ? `Livre nesta parte do dia (${SHIFT_LABEL[shift]})` : "Livre no período"}</p>;
   return (
     <div className="grid gap-0.5 text-xs">
-      {option.busy.map((busy) => <p key={busy.orderId} className="flex items-center gap-1 text-amber-700 dark:text-amber-400"><Icon name="hard-hat" className="w-3 h-3 shrink-0" /> Em {busy.number} ({span(busy.start, busy.end)})</p>)}
+      {busy.map((item) => <p key={item.orderId} className="flex items-center gap-1 text-amber-700 dark:text-amber-400"><Icon name="hard-hat" className="w-3 h-3 shrink-0" /> Em {item.number} ({span(item.start, item.end)}{item.shift && item.shift !== "integral" ? `, ${SHIFT_LABEL[item.shift]}` : ""})</p>)}
+      {activities.map((item) => <p key={item.activityId} className="flex items-center gap-1 text-amber-700 dark:text-amber-400"><Icon name="calendar-clock" className="w-3 h-3 shrink-0" /> {item.typeName} ({span(item.start, item.end)}{item.shift !== "integral" ? `, ${SHIFT_LABEL[item.shift]}` : ""})</p>)}
       {option.unavailable.map((item, index) => <p key={index} className="flex items-center gap-1 text-amber-700 dark:text-amber-400"><Icon name="calendar-off" className="w-3 h-3 shrink-0" /> {item.label} ({span(item.start, item.end)})</p>)}
       {docs.length > 0 && (
         <Tip text={docs.map(issueText).join("; ")}>
@@ -78,13 +90,17 @@ export function TeamEditor({ orderId, team, onChange, editable, from, to, users 
                 <div className="flex items-start gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-1.5 text-sm font-medium"><Icon name="id-card" className="w-3.5 h-3.5 shrink-0 text-muted-foreground" /> <span className="truncate">{member.name}</span></p>
-                    <Warnings option={option} />
+                    <Warnings option={option} shift={(member.shift as Shift | undefined) ?? "integral"} />
                   </div>
                   {editable && <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0" aria-label={`Tirar ${member.name} da equipe`} onClick={() => onChange(team.filter((_, i) => i !== index))}><Icon name="x" className="w-3 h-3" /></Button>}
                 </div>
                 <Select name={`teamRole-${index}`} state={member.professionalId ? String(member.professionalId) : ""} disabled={!editable} placeholder={member.role || "Função nesta obra"} modal={false}
                   options={roles.map((role) => ({ id: String(role.id), name: role.name }))}
                   onChange={(_, value) => { const role = roles.find((item) => String(item.id) === String(value ?? "")); if (role) patch(index, { professionalId: role.id, role: role.name }); }} />
+                {(editable || (member.shift && member.shift !== "integral")) && (
+                  <Select name={`teamShift-${index}`} state={member.shift ?? "integral"} disabled={!editable} modal={false} options={SHIFT_OPTIONS} placeholder="Dia inteiro"
+                    onChange={(_, value) => patch(index, { shift: String(value ?? "integral") })} />
+                )}
                 {(editable || partial) && (
                   <div className="grid gap-2">
                     <div className="flex items-center gap-2">

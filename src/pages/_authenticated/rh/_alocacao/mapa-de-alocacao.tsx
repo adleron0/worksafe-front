@@ -10,7 +10,8 @@ import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import TimelineView, { TimelineRow } from "@/components/general-components/TimelineView";
 import { dateBr, errorMessage, todayIso } from "../../comercial/-shared/commercial";
-import { ALLOCATION_ABILITY, ALLOCATION_KEY, Allocation, addDays, overlaps, spanColor, spanText } from "../-shared/allocation";
+import { ALLOCATION_ABILITY, ALLOCATION_KEY, Allocation, PART, PART_LABEL, addDays, overlaps, spanColor, spanText } from "../-shared/allocation";
+import { Activity, ActivityDialog, ActivityTypesDialog, SHIFT_OPTIONS, Shift, activitiesApi, shiftsClash } from "../-shared/activities";
 import { EmployeeStatusBadge, employeesApi } from "../-shared/employees";
 
 export const Route = createFileRoute("/_authenticated/rh/_alocacao/mapa-de-alocacao")({
@@ -29,12 +30,18 @@ function AllocationPage() {
   // "quem está livre de tal dia a tal dia?"
   const [freeFrom, setFreeFrom] = useState("");
   const [freeTo, setFreeTo] = useState("");
+  const [freeShift, setFreeShift] = useState<Shift>("integral");
+  // atividade aberta: uma existente (pelo id), uma nova, ou nenhuma
+  const [activity, setActivity] = useState<{ id?: number } | null>(null);
+  const [managingTypes, setManagingTypes] = useState(false);
 
   const to = addDays(from, Number(size) - 1);
   const params = { from, to };
   const { data, isLoading, error } = useQuery({ queryKey: [ALLOCATION_KEY, params], queryFn: () => employeesApi.get<Allocation>("allocation", params), placeholderData: (previous) => previous });
 
+  const { data: opened } = useQuery({ queryKey: [ALLOCATION_KEY, "activity", activity?.id], enabled: !!activity?.id, queryFn: () => activitiesApi.get<Activity>(String(activity?.id)) });
   if (!can(`view_${ALLOCATION_ABILITY}`)) return null;
+  const canWrite = can(`update_${ALLOCATION_ABILITY}`);
   const openOrder = (orderId: number) => navigate({ to: "/servicos/ordens-de-servico/$orderId", params: { orderId: String(orderId) } });
   const openEmployee = (id: number) => navigate({ to: "/rh/funcionarios/$employeeId", params: { employeeId: String(id) } });
 
@@ -45,7 +52,8 @@ function AllocationPage() {
   const employees = (data?.employees ?? []).filter((employee) => !roleId || employee.roles.some((role) => String(role.id) === roleId));
   /** Livre no período procurado: sem obra, sem indisponibilidade e ainda na empresa. */
   const isFree = (id: number, terminationDate: string | null) => searching
-    && !(data?.spans ?? []).some((span) => span.employeeId === id && span.start && overlaps(span.start, span.end, freeFrom, searchTo))
+    && !(data?.spans ?? []).some((span) => span.employeeId === id && span.start && overlaps(span.start, span.end, freeFrom, searchTo) && shiftsClash(span.shift ?? "integral", freeShift))
+    && !(data?.activities ?? []).some((item) => item.employeeId === id && item.occupies && overlaps(item.start, item.end, freeFrom, searchTo) && shiftsClash(item.shift, freeShift))
     && !(data?.unavailable ?? []).some((item) => item.employeeId === id && overlaps(item.start, item.end, freeFrom, searchTo))
     && !(terminationDate && terminationDate <= searchTo);
   const free = employees.filter((employee) => isFree(employee.id, employee.terminationDate));
@@ -53,10 +61,17 @@ function AllocationPage() {
 
   const rows: TimelineRow[] = employees.map((employee) => ({
     id: employee.id, title: employee.name, subtitle: employee.primaryRole ?? "Sem função", onTitleClick: () => openEmployee(employee.id), highlight: isFree(employee.id, employee.terminationDate),
-    bars: (data?.spans ?? []).filter((span) => span.employeeId === employee.id && span.start).map((span) => ({
-      id: span.orderId, start: span.start as string, end: span.end ?? (span.start as string), label: `${span.number}${span.customer ? ` · ${span.customer}` : ""}`, color: spanColor(span),
-      hint: `${span.number} · ${span.title} · ${spanText(span.start, span.end)}`, onClick: () => openOrder(span.orderId),
-    })),
+    bars: [
+      ...(data?.spans ?? []).filter((span) => span.employeeId === employee.id && span.start).map((span) => ({
+        id: `os${span.orderId}`, start: span.start as string, end: span.end ?? (span.start as string), label: `${span.number}${span.customer ? ` · ${span.customer}` : ""}`, color: spanColor(span), part: PART[span.shift ?? "integral"],
+        hint: `${span.number} · ${span.title} · ${spanText(span.start, span.end)} · ${PART_LABEL[span.shift ?? "integral"]}`, onClick: () => openOrder(span.orderId),
+      })),
+      // atividades fora de OS: aula, treinamento, atividade no CT...
+      ...(data?.activities ?? []).filter((item) => item.employeeId === employee.id).map((item) => ({
+        id: `a${item.activityId}`, start: item.start, end: item.end, label: `${item.typeName}${item.location ? ` · ${item.location}` : ""}`, color: item.color, part: PART[item.shift],
+        hint: `${item.typeName} · ${spanText(item.start, item.end)} · ${PART_LABEL[item.shift]}`, onClick: () => setActivity({ id: item.activityId }),
+      })),
+    ],
     bands: (data?.unavailable ?? []).filter((item) => item.employeeId === employee.id).map((item, index) => ({ id: index, start: item.start, end: item.end, label: item.label })),
     marks: (data?.worked ?? []).filter((row) => row.employeeId === employee.id).map((row) => ({ date: row.date, hint: `Trabalhou ${row.hours} h` })),
   }));
@@ -66,9 +81,17 @@ function AllocationPage() {
 
   return (
     <>
-      <div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
         <h1 className="text-xl font-bold">Mapa de alocação</h1>
         <p className="text-sm text-muted-foreground">Onde cada funcionário está escalado, quem está livre e quem está de férias ou afastado. Sai da equipe das ordens de serviço, dos RDOs e do histórico.</p>
+      </div>
+        {canWrite && (
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" onClick={() => setManagingTypes(true)}><Icon name="tags" className="w-4 h-4 mr-1" /> Tipos de atividade</Button>
+            <Button type="button" onClick={() => setActivity({})}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova atividade</Button>
+          </div>
+        )}
       </div>
 
       <div className="my-4 grid gap-3 rounded-lg border p-4 lg:grid-cols-[auto_auto_1fr_auto] lg:items-end">
@@ -95,6 +118,7 @@ function AllocationPage() {
           <div className="mt-1 flex items-center gap-1">
             <CalendarPicker mode="single" name="freeFrom" className="w-36" value={freeFrom} placeholder="De" fromYear={2024} toYear={2040} onValueChange={(_, value) => setFreeFrom(String(value ?? ""))} />
             <CalendarPicker mode="single" name="freeTo" className="w-36" value={freeTo} placeholder="Até" fromYear={2024} toYear={2040} onValueChange={(_, value) => setFreeTo(String(value ?? ""))} />
+            <div className="w-36"><Select name="freeShift" options={SHIFT_OPTIONS} state={freeShift} modal={false} onChange={(_, value) => setFreeShift(String(value ?? "integral") as Shift)} placeholder="Dia inteiro" /></div>
           </div>
         </div>
       </div>
@@ -104,7 +128,7 @@ function AllocationPage() {
 
       {searching && data && (
         <div className="mb-4 rounded-lg border border-primary/40 bg-primary/5 p-4 text-sm">
-          <p className="font-semibold">{free.length} {free.length === 1 ? "pessoa livre" : "pessoas livres"} de {spanText(freeFrom, searchTo)}{roleId ? ` na função ${roles.get(Number(roleId))}` : ""}</p>
+          <p className="font-semibold">{free.length} {free.length === 1 ? "pessoa livre" : "pessoas livres"} de {spanText(freeFrom, searchTo)}{freeShift !== "integral" ? `, ${PART_LABEL[freeShift]}` : ""}{roleId ? ` na função ${roles.get(Number(roleId))}` : ""}</p>
           {free.length > 0 && <p className="mt-1 text-muted-foreground">{free.map((employee) => `${employee.name}${employee.primaryRole ? ` (${employee.primaryRole})` : ""}`).join(" · ")}</p>}
           {outside && <p className="mt-1 text-amber-700 dark:text-amber-400">As datas procuradas passam do período mostrado ({dateBr(data.from)} a {dateBr(data.to)}): aumente o período ou mude o início para a resposta valer.</p>}
         </div>
@@ -116,7 +140,7 @@ function AllocationPage() {
           <div className="hidden md:block">
             <TimelineView from={data.from} to={data.to} today={data.today} rows={rows} focus={searching ? { start: freeFrom, end: searchTo } : null}
               emptyMessage={roleId ? "Ninguém com essa função." : "Nenhum funcionário cadastrado. Cadastre em RH → Funcionários."} />
-            <p className="mt-2 text-xs text-muted-foreground">Barra: escalado na obra (mais clara enquanto a obra não começou). Ponto: dia com RDO lançado. Faixa listrada: férias, afastamento ou suspensão. Duas barras na mesma pessoa no mesmo dia são conflito de escala.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Barra: escalado na obra (mais clara enquanto a obra não começou) ou em atividade. Meia altura: só manhã (em cima) ou só tarde (embaixo); listrada: noite. Ponto: dia com RDO lançado. Faixa listrada: férias, afastamento ou suspensão. Duas barras inteiras na mesma pessoa no mesmo dia são conflito de escala.</p>
           </div>
           {/* celular: quem está onde hoje */}
           <div className="md:hidden rounded-lg border">
@@ -125,12 +149,16 @@ function AllocationPage() {
             {employees.map((employee) => {
               const now = todayOf(employee.id);
               const away = awayToday(employee.id);
+              const doing = (data.activities ?? []).filter((item) => item.employeeId === employee.id && overlaps(item.start, item.end, data.today, data.today));
               return (
                 <button key={employee.id} type="button" onClick={() => openEmployee(employee.id)} className="flex w-full flex-col gap-1 border-b px-4 py-3 text-left text-sm last:border-b-0">
                   <span className="font-medium">{employee.name}</span>
                   <span className="text-xs text-muted-foreground">{employee.primaryRole ?? "Sem função"}</span>
                   {away ? <span className="text-xs text-amber-700 dark:text-amber-400">{away.label} ({spanText(away.start, away.end)})</span>
-                    : now.length ? now.map((span) => <span key={span.orderId} className="text-xs">Em {span.number}{span.customer ? ` · ${span.customer}` : ""} ({spanText(span.start, span.end)})</span>)
+                    : now.length || doing.length ? <>
+                      {now.map((span) => <span key={span.orderId} className="text-xs">Em {span.number}{span.customer ? ` · ${span.customer}` : ""} ({PART_LABEL[span.shift ?? "integral"]})</span>)}
+                      {doing.map((item) => <span key={item.activityId} className="text-xs">{item.typeName}{item.location ? ` · ${item.location}` : ""} ({PART_LABEL[item.shift]})</span>)}
+                    </>
                     : <span className="text-xs text-green-700 dark:text-green-400">Livre</span>}
                 </button>
               );
@@ -153,6 +181,10 @@ function AllocationPage() {
           )}
         </>
       )}
+      {activity && (!activity.id || opened) && (
+        <ActivityDialog activity={activity.id ? opened : undefined} employees={(data?.employees ?? []).filter((employee) => employee.status !== "desligado").map(({ id, name }) => ({ id, name }))} canWrite={canWrite} onClose={() => setActivity(null)} />
+      )}
+      {managingTypes && <ActivityTypesDialog onClose={() => setManagingTypes(false)} />}
     </>
   );
 }

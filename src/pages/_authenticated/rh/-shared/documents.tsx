@@ -62,12 +62,28 @@ const addMonths = (date: string, months: number) => {
   return new Date(Date.UTC(targetYear, targetMonth, Math.min(day, last))).toISOString().slice(0, 10);
 };
 
+/**
+ * O motivo de um download que falhou. A resposta de erro vem como arquivo (o pedido é de um arquivo),
+ * então o texto precisa ser lido; e quando a API nem responde (reiniciando numa atualização), não há texto nenhum.
+ */
+export async function fileErrorMessage(err: unknown): Promise<string> {
+  const response = (err as { response?: { status?: number; data?: unknown } })?.response;
+  if (!response || response.status === 502 || response.status === 503 || response.status === 504) return "O sistema não respondeu agora (pode estar sendo atualizado). Tente de novo em um minuto.";
+  try {
+    if (response.data instanceof Blob) {
+      const message = JSON.parse(await response.data.text())?.message;
+      if (message) return Array.isArray(message) ? message.join(" ") : String(message);
+    }
+  } catch { /* resposta sem texto: fica a mensagem padrão */ }
+  return errorMessage(err);
+}
+
 /** O arquivo só sai pela API, com o login da pessoa (a peça é a mesma dos Arquivos da empresa). */
 export async function openDocument(document: Pick<EmployeeDoc, "id" | "fileName">, download = false) {
   try {
     await openApiFile(`hr-documents/${document.id}/file`, document.fileName, download);
   } catch (err) {
-    toast({ title: "Não foi possível abrir o documento", description: errorMessage(err), variant: "destructive" });
+    toast({ title: "Não foi possível abrir o documento", description: await fileErrorMessage(err), variant: "destructive" });
   }
 }
 

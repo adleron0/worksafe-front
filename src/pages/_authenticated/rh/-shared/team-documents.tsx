@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
 import { Tip, dateBr, errorMessage } from "../../comercial/-shared/commercial";
-import { DOCS_ABILITY, openDocument } from "./documents";
+import { DOCS_ABILITY, fileErrorMessage, openDocument } from "./documents";
 
 /** Documentos da equipe de uma obra: a tabela pessoa × documento e o pacote para a integração no cliente. */
 type CellStatus = "em_dia" | "a_vencer" | "vence_antes" | "vencido" | "faltando" | "nao_enviado";
@@ -120,13 +120,7 @@ function PackageDialog({ orderId, orderNumber, data, onClose }: { orderId: numbe
       toast({ title: "Pacote gerado", description: `${files} ${files === 1 ? "arquivo" : "arquivos"} e a folha de rosto.`, variant: "success" });
       onClose();
     },
-    onError: async (err) => {
-      // a resposta de erro também vem como arquivo: lê o texto para mostrar o motivo
-      const blob = (err as { response?: { data?: Blob } })?.response?.data;
-      let message = errorMessage(err);
-      try { if (blob instanceof Blob) message = JSON.parse(await blob.text()).message ?? message; } catch { /* fica a mensagem padrão */ }
-      toast({ title: "Não foi possível gerar o pacote", description: message, variant: "destructive" });
-    },
+    onError: async (err) => toast({ title: "Não foi possível gerar o pacote", description: await fileErrorMessage(err), variant: "destructive" }),
   });
 
   return (

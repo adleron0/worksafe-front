@@ -40,6 +40,7 @@ import { Route as AuthenticatedUsuariosPerfisPerfisRouteImport } from './pages/_
 import { Route as AuthenticatedTreinamentosTurmasTurmasRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas'
 import { Route as AuthenticatedTreinamentosInstrutoresInstrutoresRouteImport } from './pages/_authenticated/treinamentos/_instrutores/instrutores'
 import { Route as AuthenticatedTreinamentosInscricoesInscricoesRouteImport } from './pages/_authenticated/treinamentos/_inscricoes/inscricoes'
+import { Route as AuthenticatedTreinamentosDivulgacaoDivulgacaoRouteImport } from './pages/_authenticated/treinamentos/_divulgacao/divulgacao'
 import { Route as AuthenticatedTreinamentosCursosCursosRouteImport } from './pages/_authenticated/treinamentos/_cursos/cursos'
 import { Route as AuthenticatedTreinamentosCertificadosCertificadosRouteImport } from './pages/_authenticated/treinamentos/_certificados/certificados'
 import { Route as AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRouteImport } from './pages/_authenticated/treinamentos/_certificados-modelos/certificados-modelos'
@@ -260,6 +261,12 @@ const AuthenticatedTreinamentosInscricoesInscricoesRoute =
   AuthenticatedTreinamentosInscricoesInscricoesRouteImport.update({
     id: '/treinamentos/_inscricoes/inscricoes',
     path: '/treinamentos/inscricoes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTreinamentosDivulgacaoDivulgacaoRoute =
+  AuthenticatedTreinamentosDivulgacaoDivulgacaoRouteImport.update({
+    id: '/treinamentos/_divulgacao/divulgacao',
+    path: '/treinamentos/divulgacao',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedTreinamentosCursosCursosRoute =
@@ -642,6 +649,7 @@ export interface FileRoutesByFullPath {
   '/treinamentos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
   '/treinamentos/cursos': typeof AuthenticatedTreinamentosCursosCursosRoute
+  '/treinamentos/divulgacao': typeof AuthenticatedTreinamentosDivulgacaoDivulgacaoRoute
   '/treinamentos/inscricoes': typeof AuthenticatedTreinamentosInscricoesInscricoesRoute
   '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
@@ -724,6 +732,7 @@ export interface FileRoutesByTo {
   '/treinamentos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
   '/treinamentos/cursos': typeof AuthenticatedTreinamentosCursosCursosRoute
+  '/treinamentos/divulgacao': typeof AuthenticatedTreinamentosDivulgacaoDivulgacaoRoute
   '/treinamentos/inscricoes': typeof AuthenticatedTreinamentosInscricoesInscricoesRoute
   '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
@@ -810,6 +819,7 @@ export interface FileRoutesById {
   '/_authenticated/treinamentos/_certificados-modelos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/_authenticated/treinamentos/_certificados/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
   '/_authenticated/treinamentos/_cursos/cursos': typeof AuthenticatedTreinamentosCursosCursosRoute
+  '/_authenticated/treinamentos/_divulgacao/divulgacao': typeof AuthenticatedTreinamentosDivulgacaoDivulgacaoRoute
   '/_authenticated/treinamentos/_inscricoes/inscricoes': typeof AuthenticatedTreinamentosInscricoesInscricoesRoute
   '/_authenticated/treinamentos/_instrutores/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/_authenticated/treinamentos/_turmas/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
@@ -895,6 +905,7 @@ export interface FileRouteTypes {
     | '/treinamentos/certificados-modelos'
     | '/treinamentos/certificados'
     | '/treinamentos/cursos'
+    | '/treinamentos/divulgacao'
     | '/treinamentos/inscricoes'
     | '/treinamentos/instrutores'
     | '/treinamentos/turmas'
@@ -977,6 +988,7 @@ export interface FileRouteTypes {
     | '/treinamentos/certificados-modelos'
     | '/treinamentos/certificados'
     | '/treinamentos/cursos'
+    | '/treinamentos/divulgacao'
     | '/treinamentos/inscricoes'
     | '/treinamentos/instrutores'
     | '/treinamentos/turmas'
@@ -1062,6 +1074,7 @@ export interface FileRouteTypes {
     | '/_authenticated/treinamentos/_certificados-modelos/certificados-modelos'
     | '/_authenticated/treinamentos/_certificados/certificados'
     | '/_authenticated/treinamentos/_cursos/cursos'
+    | '/_authenticated/treinamentos/_divulgacao/divulgacao'
     | '/_authenticated/treinamentos/_inscricoes/inscricoes'
     | '/_authenticated/treinamentos/_instrutores/instrutores'
     | '/_authenticated/treinamentos/_turmas/turmas'
@@ -1306,6 +1319,13 @@ declare module '@tanstack/react-router' {
       path: '/treinamentos/inscricoes'
       fullPath: '/treinamentos/inscricoes'
       preLoaderRoute: typeof AuthenticatedTreinamentosInscricoesInscricoesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/treinamentos/_divulgacao/divulgacao': {
+      id: '/_authenticated/treinamentos/_divulgacao/divulgacao'
+      path: '/treinamentos/divulgacao'
+      fullPath: '/treinamentos/divulgacao'
+      preLoaderRoute: typeof AuthenticatedTreinamentosDivulgacaoDivulgacaoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/treinamentos/_cursos/cursos': {
@@ -1729,6 +1749,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute: typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   AuthenticatedTreinamentosCertificadosCertificadosRoute: typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
   AuthenticatedTreinamentosCursosCursosRoute: typeof AuthenticatedTreinamentosCursosCursosRoute
+  AuthenticatedTreinamentosDivulgacaoDivulgacaoRoute: typeof AuthenticatedTreinamentosDivulgacaoDivulgacaoRoute
   AuthenticatedTreinamentosInscricoesInscricoesRoute: typeof AuthenticatedTreinamentosInscricoesInscricoesRoute
   AuthenticatedTreinamentosInstrutoresInstrutoresRoute: typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   AuthenticatedTreinamentosTurmasTurmasRoute: typeof AuthenticatedTreinamentosTurmasTurmasRoute
@@ -1842,6 +1863,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedTreinamentosCertificadosCertificadosRoute,
   AuthenticatedTreinamentosCursosCursosRoute:
     AuthenticatedTreinamentosCursosCursosRoute,
+  AuthenticatedTreinamentosDivulgacaoDivulgacaoRoute:
+    AuthenticatedTreinamentosDivulgacaoDivulgacaoRoute,
   AuthenticatedTreinamentosInscricoesInscricoesRoute:
     AuthenticatedTreinamentosInscricoesInscricoesRoute,
   AuthenticatedTreinamentosInstrutoresInstrutoresRoute:

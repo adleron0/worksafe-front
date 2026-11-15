@@ -31,6 +31,7 @@ import Dialog from "@/components/general-components/Dialog";
 import { useState } from "react";
 import DuplicateTurmaModal from "./DuplicateTurmaModal";
 import ListaPresenca from "../-lista-presenca";
+import DivulgarDialog from "../../_divulgacao/-components/DivulgarDialog";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -64,6 +65,7 @@ const SiteServicesItem = ({
   const [openHighlights, setOpenHighlights] = useState(false);
   const [openDuplicateModal, setOpenDuplicateModal] = useState(false);
   const [openAttendanceModal, setOpenAttendanceModal] = useState(false);
+  const [openDivulgar, setOpenDivulgar] = useState(false);
 
   // Links públicos do WorkSafe (sem slug: uma empresa por domínio).
   const generateProvaLink = (classId: number) =>
@@ -480,6 +482,22 @@ const SiteServicesItem = ({
                 </Button>
               </DropdownMenuItem>
 
+              {can("list_divulgacao") && (
+                <DropdownMenuItem
+                  className="p-0"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <Button
+                    variant="ghost"
+                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                    onClick={() => setOpenDivulgar(true)}
+                  >
+                    <Icon name="megaphone" className="w-3 h-3" />
+                    <p>Divulgar (arte e legenda)</p>
+                  </Button>
+                </DropdownMenuItem>
+              )}
+
               <DropdownMenuItem
                 className="p-0"
                 onSelect={(e) => e.preventDefault()}
@@ -650,6 +668,13 @@ const SiteServicesItem = ({
           </div>
         </div>
       </Dialog>
+
+      {/* Divulgação: arte e legenda */}
+      <DivulgarDialog
+        classId={item.id ?? null}
+        open={openDivulgar}
+        onOpenChange={setOpenDivulgar}
+      />
 
       {/* Modal de Duplicação */}
       <DuplicateTurmaModal

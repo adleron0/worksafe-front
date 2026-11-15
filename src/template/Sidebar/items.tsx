@@ -216,6 +216,12 @@ export const items = [
         path: "/treinamentos/certificados-modelos",
       },
       {
+        title: "Divulgação",
+        ability: "divulgacao",
+        icon: "megaphone",
+        path: "/treinamentos/divulgacao",
+      },
+      {
         title: "Dashboard",
         icon: "chart-column-big",
         path: "/treinamentos",

@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteImport } from './pages/_authenticated'
 import { Route as StudentIndexRouteImport } from './pages/student/index'
 import { Route as IndexIndexRouteImport } from './pages/_index/index'
 import { Route as StudentProfileRouteImport } from './pages/student/profile'
+import { Route as IndexEnviarImagensRouteImport } from './pages/_index/enviar-imagens'
 import { Route as IndexConectarIaRouteImport } from './pages/_index/conectar-ia'
 import { Route as AuthenticatedHomeRouteImport } from './pages/_authenticated/home'
 import { Route as AuthenticatedBuildingRouteImport } from './pages/_authenticated/building'
@@ -133,6 +134,11 @@ const StudentProfileRoute = StudentProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
   getParentRoute: () => StudentRoute,
+} as any)
+const IndexEnviarImagensRoute = IndexEnviarImagensRouteImport.update({
+  id: '/enviar-imagens',
+  path: '/enviar-imagens',
+  getParentRoute: () => IndexRoute,
 } as any)
 const IndexConectarIaRoute = IndexConectarIaRouteImport.update({
   id: '/conectar-ia',
@@ -674,6 +680,7 @@ export interface FileRoutesByFullPath {
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
   '/conectar-ia': typeof IndexConectarIaRoute
+  '/enviar-imagens': typeof IndexEnviarImagensRoute
   '/student/profile': typeof StudentProfileRoute
   '/': typeof IndexIndexRoute
   '/student/': typeof StudentIndexRoute
@@ -769,6 +776,7 @@ export interface FileRoutesByTo {
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
   '/conectar-ia': typeof IndexConectarIaRoute
+  '/enviar-imagens': typeof IndexEnviarImagensRoute
   '/student/profile': typeof StudentProfileRoute
   '/': typeof IndexIndexRoute
   '/student': typeof StudentIndexRoute
@@ -868,6 +876,7 @@ export interface FileRoutesById {
   '/_authenticated/building': typeof AuthenticatedBuildingRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_index/conectar-ia': typeof IndexConectarIaRoute
+  '/_index/enviar-imagens': typeof IndexEnviarImagensRoute
   '/student/profile': typeof StudentProfileRoute
   '/_index/': typeof IndexIndexRoute
   '/student/': typeof StudentIndexRoute
@@ -966,6 +975,7 @@ export interface FileRouteTypes {
     | '/building'
     | '/home'
     | '/conectar-ia'
+    | '/enviar-imagens'
     | '/student/profile'
     | '/'
     | '/student/'
@@ -1061,6 +1071,7 @@ export interface FileRouteTypes {
     | '/building'
     | '/home'
     | '/conectar-ia'
+    | '/enviar-imagens'
     | '/student/profile'
     | '/'
     | '/student'
@@ -1159,6 +1170,7 @@ export interface FileRouteTypes {
     | '/_authenticated/building'
     | '/_authenticated/home'
     | '/_index/conectar-ia'
+    | '/_index/enviar-imagens'
     | '/student/profile'
     | '/_index/'
     | '/student/'
@@ -1300,6 +1312,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/student/profile'
       preLoaderRoute: typeof StudentProfileRouteImport
       parentRoute: typeof StudentRoute
+    }
+    '/_index/enviar-imagens': {
+      id: '/_index/enviar-imagens'
+      path: '/enviar-imagens'
+      fullPath: '/enviar-imagens'
+      preLoaderRoute: typeof IndexEnviarImagensRouteImport
+      parentRoute: typeof IndexRoute
     }
     '/_index/conectar-ia': {
       id: '/_index/conectar-ia'
@@ -2173,6 +2192,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 
 interface IndexRouteChildren {
   IndexConectarIaRoute: typeof IndexConectarIaRoute
+  IndexEnviarImagensRoute: typeof IndexEnviarImagensRoute
   IndexIndexRoute: typeof IndexIndexRoute
   IndexCertificadosIdRoute: typeof IndexCertificadosIdRoute
   IndexCertificadosEfeitosRoute: typeof IndexCertificadosEfeitosRoute
@@ -2186,6 +2206,7 @@ interface IndexRouteChildren {
 
 const IndexRouteChildren: IndexRouteChildren = {
   IndexConectarIaRoute: IndexConectarIaRoute,
+  IndexEnviarImagensRoute: IndexEnviarImagensRoute,
   IndexIndexRoute: IndexIndexRoute,
   IndexCertificadosIdRoute: IndexCertificadosIdRoute,
   IndexCertificadosEfeitosRoute: IndexCertificadosEfeitosRoute,

@@ -161,6 +161,39 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
 
   const { undo, redo, canUndo, canRedo } = useCanvasHistory(activeCanvas);
 
+  // Selo do certificado (marcador "selo_destaque") e sua imagem padrão
+  const findSeal = useCallback(
+    (canvas: fabric.Canvas | null) =>
+      canvas?.getObjects().find((o) => {
+        const any = o as unknown as { placeholderType?: string; placeholderName?: string };
+        return any.placeholderType === 'selo_destaque' || String(any.placeholderName || '').includes('selo_destaque');
+      }) ?? null,
+    [],
+  );
+  const [sealState, setSealState] = useState<{ has: boolean; src: string | null }>({ has: false, src: null });
+  useEffect(() => {
+    if (!activeCanvas) return;
+    const sync = () => {
+      const seal = findSeal(activeCanvas) as unknown as { sealDefaultSrc?: string } | null;
+      setSealState({ has: !!seal, src: seal?.sealDefaultSrc ?? null });
+    };
+    sync();
+    activeCanvas.on('object:added', sync);
+    activeCanvas.on('object:removed', sync);
+    return () => {
+      activeCanvas.off('object:added', sync);
+      activeCanvas.off('object:removed', sync);
+    };
+  }, [activeCanvas, findSeal]);
+  const setSealDefault = (url: string | null) => {
+    const seal = findSeal(activeCanvas);
+    if (!seal || !activeCanvas) return;
+    seal.set({ sealDefaultSrc: url ?? undefined } as never);
+    activeCanvas.fire('object:modified', { target: seal } as never);
+    setSealState({ has: true, src: url });
+  };
+
+
   // Atalhos de teclado para Undo/Redo (Ctrl+Z / Ctrl+Shift+Z)
   useEffect(() => {
     const handleUndoRedo = (e: KeyboardEvent) => {
@@ -1129,6 +1162,10 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
                 <CollapsibleContent className="p-4 pt-0">
                   <PlaceholderPanel
                     onAddPlaceholder={addPlaceholderToCanvas}
+                    images={imagesData?.rows ?? []}
+                    hasSeal={sealState.has}
+                    sealDefault={sealState.src}
+                    onSetSealDefault={setSealDefault}
                   />
                 </CollapsibleContent>
               </Collapsible>

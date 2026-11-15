@@ -426,6 +426,8 @@ export const useCanvas = () => {
     'evented', 'hasControls', 'hasBorders', 'lockMovementX', 'lockMovementY',
     'lockScalingX', 'lockScalingY', 'lockRotation', 'editable',
     'listType', 'listIndent', 'listItemSpacing',
+    // marcadores (placeholder) e selo padrão
+    'placeholderName', 'placeholderType', 'isPlaceholder', 'sealDefaultSrc',
   ];
 
   /**

@@ -3,14 +3,27 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 // import { Input } from '@/components/ui/input';
 import { User, Edit3, Plus, Info, QrCode, Star } from 'lucide-react';
+import Dialog from '@/components/general-components/Dialog';
+import { Image } from '../types';
 
 interface PlaceholderPanelProps {
   onAddPlaceholder: (name: string) => void;
+  /** Galeria de imagens do editor (para escolher o selo padrão). */
+  images?: Image[];
+  /** Imagem padrão do selo (sem destaque), se definida. */
+  sealDefault?: string | null;
+  hasSeal?: boolean;
+  onSetSealDefault?: (url: string | null) => void;
 }
 
 const PlaceholderPanel: React.FC<PlaceholderPanelProps> = ({
-  onAddPlaceholder
+  onAddPlaceholder,
+  images = [],
+  sealDefault,
+  hasSeal,
+  onSetSealDefault,
 }) => {
+  const [pickSeal, setPickSeal] = useState(false);
   // const [placeholderName, setPlaceholderName] = useState('');
   const [instructorCount, setInstructorCount] = useState(1);
   
@@ -146,9 +159,9 @@ const PlaceholderPanel: React.FC<PlaceholderPanelProps> = ({
           </p>
         </div>
 
-        {/* Selo de destaque */}
+        {/* Selo (padrão ou destaque) */}
         <div>
-          <h4 className="text-xs font-medium text-muted-foreground mb-2">Destaque</h4>
+          <h4 className="text-xs font-medium text-muted-foreground mb-2">Selo</h4>
           <Button
             variant="outline"
             size="sm"
@@ -156,15 +169,68 @@ const PlaceholderPanel: React.FC<PlaceholderPanelProps> = ({
             onClick={() => onAddPlaceholder('selo_destaque')}
           >
             <Star className="w-4 h-4 mr-2 flex-shrink-0" />
-            <span className="text-xs truncate flex-1 text-left">Selo de destaque</span>
-            <code className="text-[10px] text-muted-foreground ml-2">{'{{selo_destaque}}'}</code>
+            <span className="text-xs truncate flex-1 text-left">{hasSeal ? 'Selo (já no certificado)' : 'Adicionar selo'}</span>
+            <code className="text-[10px] text-muted-foreground ml-2">{'{{selo}}'}</code>
           </Button>
           <p className="text-xs text-muted-foreground mt-1">
-            Onde o selo aparece quando a turma é especial ou o aluno é destaque. Sem
-            marcador, ele vai no canto inferior esquerdo. Não aparece nos demais.
+            Com destaque (turma especial ou aluno destaque) aparece o selo de destaque. Sem
+            destaque, aparece a imagem padrão abaixo; sem imagem, o espaço fica livre.
           </p>
+          {hasSeal && onSetSealDefault && (
+            <div className="mt-2 flex items-center gap-2 rounded-md border border-border/60 p-2">
+              <div className="h-12 w-12 shrink-0 overflow-hidden rounded bg-muted">
+                {sealDefault && <img src={sealDefault} alt="" className="h-full w-full object-contain" />}
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="text-xs">{sealDefault ? 'Selo padrão definido' : 'Sem selo padrão'}</span>
+                <div className="flex gap-1">
+                  <Button type="button" size="sm" variant="secondary" className="h-6 px-2 text-[11px]" onClick={() => setPickSeal(true)}>
+                    Escolher
+                  </Button>
+                  {sealDefault && (
+                    <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => onSetSealDefault(null)}>
+                      Remover
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      <Dialog
+        open={pickSeal}
+        onOpenChange={setPickSeal}
+        title="Selo padrão"
+        description="Imagem usada no lugar do selo quando o certificado não tem destaque. Mostra as imagens da página atual da galeria."
+        showBttn={false}
+        className="sm:max-w-lg"
+        classNameContent="h-auto max-h-[60vh]"
+      >
+        {images.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Envie a imagem na galeria do editor primeiro.</p>
+        ) : (
+          <div className="grid grid-cols-3 gap-3">
+            {images.map((img) => {
+              const url = img.url || img.imageUrl || '';
+              return (
+                <button
+                  key={img.id}
+                  type="button"
+                  className="aspect-square overflow-hidden rounded-md border bg-muted p-1 hover:border-primary"
+                  onClick={() => {
+                    onSetSealDefault?.(url);
+                    setPickSeal(false);
+                  }}
+                >
+                  <img src={url} alt={img.name} className="h-full w-full object-contain" />
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </Dialog>
 
       {/* Instructions */}
       <Card>

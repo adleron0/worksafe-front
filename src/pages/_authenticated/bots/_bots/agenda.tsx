@@ -86,7 +86,7 @@ function AgendaPage() {
   if (!can("usar_bots")) return null;
   const canSchedule = can("agendar_bots");
   return (
-    <div className="grid max-w-5xl gap-4">
+    <div className="grid gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold">Agenda da equipe</h1>

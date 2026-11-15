@@ -39,7 +39,7 @@ function ConnectionsPage() {
   };
 
   return (
-    <div className="grid max-w-3xl gap-4">
+    <div className="grid gap-4">
       <div>
         <h1 className="text-xl font-bold">Conectar apps de IA</h1>
         <p className="text-sm text-muted-foreground">Use o sistema de dentro do Claude, do ChatGPT ou de outro app compatível com MCP, com a assinatura que você já tem. O app usa as mesmas ferramentas dos bots, com as suas permissões. O que sai para fora espera a sua confirmação em Bots → Ações pendentes.</p>

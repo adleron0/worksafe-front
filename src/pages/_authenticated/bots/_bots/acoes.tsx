@@ -18,7 +18,7 @@ function ActionsPage() {
   const { data, isLoading, error } = usePendingActions();
   if (!can("usar_bots") && !can("usar_mcp")) return null;
   return (
-    <div className="grid max-w-3xl gap-4">
+    <div className="grid gap-4">
       <div>
         <h1 className="text-xl font-bold">Ações pendentes</h1>
         <p className="text-sm text-muted-foreground">O que os bots prepararam e só acontece quando você confirma: envio de proposta, publicação, mudança de etapa. Inclui o que veio de apps de IA conectados (Claude, ChatGPT…). Cada ação vale por 30 minutos.</p>

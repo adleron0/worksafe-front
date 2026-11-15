@@ -20,7 +20,7 @@ function ReportPage() {
   const { data, isLoading, error } = useQuery({ queryKey: ["aiReport", reportId], enabled: can("usar_bots"), queryFn: () => aiApi.get<ReportView>(`reports/${reportId}`) });
   if (!can("usar_bots")) return null;
   return (
-    <div className="grid max-w-3xl gap-4">
+    <div className="grid gap-4">
       <Link to="/bots/relatorios" className="flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><Icon name="arrow-left" className="h-4 w-4" /> Relatórios</Link>
       {error && <p className="text-destructive">Erro: {errorMessage(error)}</p>}
       {isLoading && <Skeleton className="h-64 w-full" />}

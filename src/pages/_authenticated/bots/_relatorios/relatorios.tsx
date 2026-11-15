@@ -18,7 +18,7 @@ function ReportsPage() {
   const { data, isLoading, error } = useQuery({ queryKey: ["aiReports"], enabled: can("usar_bots"), queryFn: () => aiApi.get<ReportRow[]>("reports") });
   if (!can("usar_bots")) return null;
   return (
-    <div className="grid max-w-3xl gap-4">
+    <div className="grid gap-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h1 className="text-xl font-bold">Relatórios</h1>

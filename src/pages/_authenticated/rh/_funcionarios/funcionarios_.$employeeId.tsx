@@ -18,6 +18,7 @@ import {
   EMPLOYEES_ABILITY, EMPLOYEES_KEY, EMPLOYEE_KEY, EMPLOYEE_OPTIONS_KEY, Employee, EmployeeEvent, EmployeeEventDialog, EmployeeOptions, EmployeeStatusBadge, employeesApi, periodText,
 } from "../-shared/employees";
 import { DOCS_ABILITY, EmployeeDocuments } from "../-shared/documents";
+import { EmployeeAllocation } from "../-shared/allocation";
 
 export const Route = createFileRoute("/_authenticated/rh/_funcionarios/funcionarios_/$employeeId")({
   component: EmployeePage,
@@ -139,12 +140,14 @@ function EmployeePage() {
       </div>
 
       <Tabs defaultValue="dados" className="mt-4">
-        {employee && canSeeDocuments && (
+        {employee && (
           <TabsList>
             <TabsTrigger value="dados">Dados</TabsTrigger>
-            <TabsTrigger value="documentos">Documentos</TabsTrigger>
+            {canSeeDocuments && <TabsTrigger value="documentos">Documentos</TabsTrigger>}
+            <TabsTrigger value="alocacao">Alocação</TabsTrigger>
           </TabsList>
         )}
+        {employee && <TabsContent value="alocacao" className="mt-4"><EmployeeAllocation employeeId={employee.id} /></TabsContent>}
         {employee && canSeeDocuments && <TabsContent value="documentos" className="mt-4"><EmployeeDocuments employeeId={employee.id} /></TabsContent>}
         <TabsContent value="dados" className="mt-4">
       <div className="grid xl:grid-cols-3 gap-4 items-start">

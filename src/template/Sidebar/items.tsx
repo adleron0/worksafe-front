@@ -120,6 +120,12 @@ export const items = [
         path: "/rh/funcionarios",
       },
       {
+        title: "Mapa de Alocação",
+        ability: "alocacao",
+        icon: "chart-gantt",
+        path: "/rh/mapa-de-alocacao",
+      },
+      {
         title: "Vencimentos",
         ability: "documentos_funcionarios",
         icon: "calendar-clock",

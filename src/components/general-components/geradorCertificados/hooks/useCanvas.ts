@@ -428,6 +428,8 @@ export const useCanvas = () => {
     'listType', 'listIndent', 'listItemSpacing',
     // marcadores (placeholder) e selo padrão
     'placeholderName', 'placeholderType', 'isPlaceholder', 'sealDefaultSrc',
+    // altura máxima do texto (o render reduz a fonte até caber)
+    'maxHeight',
   ];
 
   /**

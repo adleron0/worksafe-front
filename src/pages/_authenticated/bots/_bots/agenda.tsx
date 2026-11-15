@@ -84,6 +84,7 @@ function AgendaPage() {
   }, [data]);
 
   if (!can("usar_bots")) return null;
+  const canSchedule = can("agendar_bots");
   return (
     <div className="grid max-w-5xl gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -91,7 +92,7 @@ function AgendaPage() {
           <h1 className="text-xl font-bold">Agenda da equipe</h1>
           <p className="text-sm text-muted-foreground">Tarefas que os assistentes fazem sozinhos: no horário marcado ou quando algo acontece no sistema. Rodam com as permissões de quem criou, e o que sai para fora continua esperando a sua confirmação. Dá para criar falando com eles: "toda segunda às 8h, me mande…".</p>
         </div>
-        <Button type="button" onClick={() => setEditing("novo")}><Icon name="plus" className="mr-1 h-4 w-4" /> Nova tarefa</Button>
+        {canSchedule && <Button type="button" onClick={() => setEditing("novo")}><Icon name="plus" className="mr-1 h-4 w-4" /> Nova tarefa</Button>}
       </div>
       {error && <p className="text-destructive">Erro: {errorMessage(error)}</p>}
       {isLoading && <Skeleton className="h-40 w-full" />}
@@ -100,7 +101,7 @@ function AgendaPage() {
           <div className="mx-auto flex w-fit -space-x-3">{data.bots.slice(0, 4).map((bot) => <BotAvatar key={bot.id} look={bot.avatar} size={44} />)}</div>
           <p className="mt-3 font-medium">Ninguém tem tarefa agendada ainda</p>
           <p className="text-sm text-muted-foreground">Exemplos: "toda manhã, Helena manda o resumo do dia" ou "quando entrar despesa sem categoria, Otávio categoriza".</p>
-          <Button type="button" className="mt-4" onClick={() => setEditing("novo")}>Criar a primeira</Button>
+          {canSchedule ? <Button type="button" className="mt-4" onClick={() => setEditing("novo")}>Criar a primeira</Button> : <p className="mt-3 text-xs text-muted-foreground">Para agendar, é preciso a permissão "Agendar tarefas para os bots".</p>}
         </div>
       )}
       {groups.map((group) => (
@@ -132,14 +133,14 @@ function AgendaPage() {
                   </p>
                 )}
               </div>
-              <div className="flex shrink-0 gap-1">
+              {canSchedule && <div className="flex shrink-0 gap-1">
                 <Button type="button" variant="outline" size="sm" disabled={run.isPending} onClick={() => run.mutate(row.id)}><Icon name="play" className="mr-1 h-3.5 w-3.5" /> Rodar agora</Button>
                 <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={row.active ? "Pausar" : "Retomar"} onClick={() => toggle.mutate(row)}><Icon name={row.active ? "pause" : "play-circle"} className="h-4 w-4" /></Button>
                 <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Editar ${row.name}`} onClick={() => setEditing(row)}><Icon name="pencil" className="h-4 w-4" /></Button>
                 <ConfirmDialog title="Remover a tarefa?" description="Os resultados já gerados continuam em Relatórios." onConfirm={() => remove.mutate(row.id)}>
                   <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Remover ${row.name}`}><Icon name="trash-2" className="h-4 w-4" /></Button>
                 </ConfirmDialog>
-              </div>
+              </div>}
             </div>
           ))}
         </section>

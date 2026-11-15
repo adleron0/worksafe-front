@@ -1,10 +1,12 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import { BotAvatar, STATUS_TEXT } from "../-shared/avatar";
+import { MemberActivity } from "../-shared/member-activity";
 import { TeamActivity, TeamMember, ago, dateTimeBr, useAiStatus, useTeam } from "../-shared/bots";
 
 export const Route = createFileRoute("/_authenticated/bots/_bots/equipe")({
@@ -73,7 +75,8 @@ function MemberCard({ member }: { member: TeamMember }) {
       ? `Atendendo ${member.working.people} ${member.working.people === 1 ? "pessoa" : "pessoas"}`
       : member.pendingForMe > 0
         ? `${member.pendingForMe} ${member.pendingForMe === 1 ? "ação espera" : "ações esperam"} a sua confirmação`
-        : member.lastActivityAt ? `Última tarefa ${ago(member.lastActivityAt)}` : "Ainda não trabalhou";
+        : member.lastActivityAt ? `Última atividade ${ago(member.lastActivityAt)}` : "Ainda não trabalhou";
+  const [open, setOpen] = useState<"pedidos" | "tarefas" | null>(null);
   return (
     <div className="group flex flex-col rounded-2xl border bg-background p-4 transition-shadow hover:shadow-md">
       <div className="flex items-start gap-3">
@@ -86,8 +89,8 @@ function MemberCard({ member }: { member: TeamMember }) {
       </div>
       <p className="mt-3 line-clamp-2 min-h-10 text-sm text-muted-foreground">{task}</p>
       <div className="mt-3 grid grid-cols-2 gap-2 text-center">
-        <div className="rounded-lg bg-muted/60 py-2"><p className="text-lg font-semibold leading-none">{member.today.conversations}</p><p className="mt-1 text-[11px] text-muted-foreground">pedidos hoje</p></div>
-        <div className="rounded-lg bg-muted/60 py-2"><p className="text-lg font-semibold leading-none">{member.today.actions}</p><p className="mt-1 text-[11px] text-muted-foreground">tarefas hoje</p></div>
+        <button type="button" onClick={() => setOpen("pedidos")} className="cursor-pointer rounded-lg bg-muted/60 py-2 transition-colors hover:bg-muted" aria-label={`Ver pedidos de hoje para ${member.persona}`}><p className="text-lg font-semibold leading-none">{member.today.conversations}</p><p className="mt-1 text-[11px] text-muted-foreground">pedidos hoje</p></button>
+        <button type="button" onClick={() => setOpen("tarefas")} className="cursor-pointer rounded-lg bg-muted/60 py-2 transition-colors hover:bg-muted" aria-label={`Ver tarefas de hoje de ${member.persona}`}><p className="text-lg font-semibold leading-none">{member.today.actions}</p><p className="mt-1 text-[11px] text-muted-foreground">tarefas hoje</p></button>
       </div>
       <Link to="/bots/agenda" className="mt-3 flex items-center gap-2 rounded-lg border border-dashed px-2.5 py-2 text-xs hover:bg-muted">
         <Icon name="calendar-clock" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -108,6 +111,7 @@ function MemberCard({ member }: { member: TeamMember }) {
           <Link to="/bots/conversas" search={{ bot: member.id }}><Icon name="plus" className="h-4 w-4" /></Link>
         </Button>
       </div>
+      {open && <MemberActivity member={member} tab={open} onClose={() => setOpen(null)} />}
     </div>
   );
 }

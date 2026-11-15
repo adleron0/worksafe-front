@@ -52,6 +52,7 @@ import { Route as AuthenticatedServicosOrdensResultadoDasObrasRouteImport } from
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico'
 import { Route as AuthenticatedServicosOrdensEstatisticasDoDiarioRouteImport } from './pages/_authenticated/servicos/_ordens/estatisticas-do-diario'
 import { Route as AuthenticatedServicosOrdensDiarioDeObraRouteImport } from './pages/_authenticated/servicos/_ordens/diario-de-obra'
+import { Route as AuthenticatedRhFuncionariosFuncionariosRouteImport } from './pages/_authenticated/rh/_funcionarios/funcionarios'
 import { Route as AuthenticatedInventariosAreasAreaIdRouteImport } from './pages/_authenticated/inventarios/areas/$areaId'
 import { Route as AuthenticatedFinanceiroReceberReceberRouteImport } from './pages/_authenticated/financeiro/_receber/receber'
 import { Route as AuthenticatedFinanceiroPlanoContasPlanoContasRouteImport } from './pages/_authenticated/financeiro/_plano-contas/plano-contas'
@@ -76,6 +77,7 @@ import { Route as AuthenticatedTreinamentosTurmasTurmasNovaRouteImport } from '.
 import { Route as AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.$turmaId'
 import { Route as AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRouteImport } from './pages/_authenticated/suprimentos/_pedidos/pedidos-de-compra_.$purchaseId'
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoOrderIdRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico_.$orderId'
+import { Route as AuthenticatedRhFuncionariosFuncionariosEmployeeIdRouteImport } from './pages/_authenticated/rh/_funcionarios/funcionarios_.$employeeId'
 import { Route as AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores_.$sellerId'
 import { Route as AuthenticatedComercialPropostasPropostasNovaRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.nova'
 import { Route as AuthenticatedComercialPropostasPropostasProposalIdRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.$proposalId'
@@ -325,6 +327,12 @@ const AuthenticatedServicosOrdensDiarioDeObraRoute =
     path: '/servicos/diario-de-obra',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedRhFuncionariosFuncionariosRoute =
+  AuthenticatedRhFuncionariosFuncionariosRouteImport.update({
+    id: '/rh/_funcionarios/funcionarios',
+    path: '/rh/funcionarios',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedInventariosAreasAreaIdRoute =
   AuthenticatedInventariosAreasAreaIdRouteImport.update({
     id: '/inventarios/areas/$areaId',
@@ -469,6 +477,12 @@ const AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute =
     path: '/servicos/ordens-de-servico/$orderId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute =
+  AuthenticatedRhFuncionariosFuncionariosEmployeeIdRouteImport.update({
+    id: '/rh/_funcionarios/funcionarios_/$employeeId',
+    path: '/rh/funcionarios/$employeeId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComercialVendedoresVendedoresSellerIdRoute =
   AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport.update({
     id: '/comercial/_vendedores/vendedores_/$sellerId',
@@ -542,6 +556,7 @@ export interface FileRoutesByFullPath {
   '/financeiro/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/rh/funcionarios': typeof AuthenticatedRhFuncionariosFuncionariosRoute
   '/servicos/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/servicos/estatisticas-do-diario': typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
   '/servicos/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
@@ -568,6 +583,7 @@ export interface FileRoutesByFullPath {
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/rh/funcionarios/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/suprimentos/pedidos-de-compra/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
@@ -613,6 +629,7 @@ export interface FileRoutesByTo {
   '/financeiro/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/rh/funcionarios': typeof AuthenticatedRhFuncionariosFuncionariosRoute
   '/servicos/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/servicos/estatisticas-do-diario': typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
   '/servicos/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
@@ -639,6 +656,7 @@ export interface FileRoutesByTo {
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/rh/funcionarios/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/suprimentos/pedidos-de-compra/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
@@ -688,6 +706,7 @@ export interface FileRoutesById {
   '/_authenticated/financeiro/_plano-contas/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/_authenticated/financeiro/_receber/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/_authenticated/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
+  '/_authenticated/rh/_funcionarios/funcionarios': typeof AuthenticatedRhFuncionariosFuncionariosRoute
   '/_authenticated/servicos/_ordens/diario-de-obra': typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   '/_authenticated/servicos/_ordens/estatisticas-do-diario': typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico': typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
@@ -714,6 +733,7 @@ export interface FileRoutesById {
   '/_authenticated/comercial/_propostas/propostas_/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/_authenticated/comercial/_propostas/propostas_/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/_authenticated/comercial/_vendedores/vendedores_/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/_authenticated/rh/_funcionarios/funcionarios_/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
@@ -762,6 +782,7 @@ export interface FileRouteTypes {
     | '/financeiro/plano-contas'
     | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
+    | '/rh/funcionarios'
     | '/servicos/diario-de-obra'
     | '/servicos/estatisticas-do-diario'
     | '/servicos/ordens-de-servico'
@@ -788,6 +809,7 @@ export interface FileRouteTypes {
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
     | '/comercial/vendedores/$sellerId'
+    | '/rh/funcionarios/$employeeId'
     | '/servicos/ordens-de-servico/$orderId'
     | '/suprimentos/pedidos-de-compra/$purchaseId'
     | '/treinamentos/turmas/$turmaId'
@@ -833,6 +855,7 @@ export interface FileRouteTypes {
     | '/financeiro/plano-contas'
     | '/financeiro/receber'
     | '/inventarios/areas/$areaId'
+    | '/rh/funcionarios'
     | '/servicos/diario-de-obra'
     | '/servicos/estatisticas-do-diario'
     | '/servicos/ordens-de-servico'
@@ -859,6 +882,7 @@ export interface FileRouteTypes {
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
     | '/comercial/vendedores/$sellerId'
+    | '/rh/funcionarios/$employeeId'
     | '/servicos/ordens-de-servico/$orderId'
     | '/suprimentos/pedidos-de-compra/$purchaseId'
     | '/treinamentos/turmas/$turmaId'
@@ -907,6 +931,7 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro/_plano-contas/plano-contas'
     | '/_authenticated/financeiro/_receber/receber'
     | '/_authenticated/inventarios/areas/$areaId'
+    | '/_authenticated/rh/_funcionarios/funcionarios'
     | '/_authenticated/servicos/_ordens/diario-de-obra'
     | '/_authenticated/servicos/_ordens/estatisticas-do-diario'
     | '/_authenticated/servicos/_ordens/ordens-de-servico'
@@ -933,6 +958,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comercial/_propostas/propostas_/$proposalId'
     | '/_authenticated/comercial/_propostas/propostas_/nova'
     | '/_authenticated/comercial/_vendedores/vendedores_/$sellerId'
+    | '/_authenticated/rh/_funcionarios/funcionarios_/$employeeId'
     | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId'
     | '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId'
     | '/_authenticated/treinamentos/_turmas/turmas_/$turmaId'
@@ -1249,6 +1275,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedServicosOrdensDiarioDeObraRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/rh/_funcionarios/funcionarios': {
+      id: '/_authenticated/rh/_funcionarios/funcionarios'
+      path: '/rh/funcionarios'
+      fullPath: '/rh/funcionarios'
+      preLoaderRoute: typeof AuthenticatedRhFuncionariosFuncionariosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/inventarios/areas/$areaId': {
       id: '/_authenticated/inventarios/areas/$areaId'
       path: '/inventarios/areas/$areaId'
@@ -1417,6 +1450,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/rh/_funcionarios/funcionarios_/$employeeId': {
+      id: '/_authenticated/rh/_funcionarios/funcionarios_/$employeeId'
+      path: '/rh/funcionarios/$employeeId'
+      fullPath: '/rh/funcionarios/$employeeId'
+      preLoaderRoute: typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_vendedores/vendedores_/$sellerId': {
       id: '/_authenticated/comercial/_vendedores/vendedores_/$sellerId'
       path: '/comercial/vendedores/$sellerId'
@@ -1487,6 +1527,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFinanceiroPlanoContasPlanoContasRoute: typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   AuthenticatedFinanceiroReceberReceberRoute: typeof AuthenticatedFinanceiroReceberReceberRoute
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
+  AuthenticatedRhFuncionariosFuncionariosRoute: typeof AuthenticatedRhFuncionariosFuncionariosRoute
   AuthenticatedServicosOrdensDiarioDeObraRoute: typeof AuthenticatedServicosOrdensDiarioDeObraRoute
   AuthenticatedServicosOrdensEstatisticasDoDiarioRoute: typeof AuthenticatedServicosOrdensEstatisticasDoDiarioRoute
   AuthenticatedServicosOrdensOrdensDeServicoRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoRoute
@@ -1510,6 +1551,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComercialPropostasPropostasProposalIdRoute: typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   AuthenticatedComercialPropostasPropostasNovaRoute: typeof AuthenticatedComercialPropostasPropostasNovaRoute
   AuthenticatedComercialVendedoresVendedoresSellerIdRoute: typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute: typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute: typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
@@ -1570,6 +1612,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedFinanceiroReceberReceberRoute,
   AuthenticatedInventariosAreasAreaIdRoute:
     AuthenticatedInventariosAreasAreaIdRoute,
+  AuthenticatedRhFuncionariosFuncionariosRoute:
+    AuthenticatedRhFuncionariosFuncionariosRoute,
   AuthenticatedServicosOrdensDiarioDeObraRoute:
     AuthenticatedServicosOrdensDiarioDeObraRoute,
   AuthenticatedServicosOrdensEstatisticasDoDiarioRoute:
@@ -1615,6 +1659,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialPropostasPropostasNovaRoute,
   AuthenticatedComercialVendedoresVendedoresSellerIdRoute:
     AuthenticatedComercialVendedoresVendedoresSellerIdRoute,
+  AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute:
+    AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute,
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute:
     AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute,
   AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute:

@@ -107,6 +107,21 @@ export const items = [
     ],
   },
   {
+    title: "RH",
+    icon: "id-card",
+    path: "/rh",
+    isProduct: "servicos",
+    ability: "funcionarios",
+    subitems: [
+      {
+        title: "Funcionários",
+        ability: "funcionarios",
+        icon: "users-round",
+        path: "/rh/funcionarios",
+      },
+    ],
+  },
+  {
     title: "Treinamentos",
     icon: "hard-hat",
     path: "/treinamentos",

@@ -80,6 +80,21 @@ export const items = [
     ],
   },
   {
+    title: "Suprimentos",
+    icon: "shopping-cart",
+    path: "/suprimentos",
+    isProduct: "servicos",
+    ability: "pedidos_de_compra",
+    subitems: [
+      {
+        title: "Pedidos de Compra",
+        ability: "pedidos_de_compra",
+        icon: "clipboard-list",
+        path: "/suprimentos/pedidos-de-compra",
+      },
+    ],
+  },
+  {
     title: "Treinamentos",
     icon: "hard-hat",
     path: "/treinamentos",

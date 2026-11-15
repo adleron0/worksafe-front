@@ -43,6 +43,7 @@ import { Route as AuthenticatedTreinamentosCursosCursosRouteImport } from './pag
 import { Route as AuthenticatedTreinamentosCertificadosCertificadosRouteImport } from './pages/_authenticated/treinamentos/_certificados/certificados'
 import { Route as AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRouteImport } from './pages/_authenticated/treinamentos/_certificados-modelos/certificados-modelos'
 import { Route as AuthenticatedTreinamentosAlunosAlunosRouteImport } from './pages/_authenticated/treinamentos/_alunos/alunos'
+import { Route as AuthenticatedSuprimentosPedidosPedidosDeCompraRouteImport } from './pages/_authenticated/suprimentos/_pedidos/pedidos-de-compra'
 import { Route as AuthenticatedSiteServicosServicosRouteImport } from './pages/_authenticated/site/_servicos/servicos'
 import { Route as AuthenticatedSiteProdutosProdutosRouteImport } from './pages/_authenticated/site/_produtos/produtos'
 import { Route as AuthenticatedSiteMarcasMarcasRouteImport } from './pages/_authenticated/site/_marcas/marcas'
@@ -71,6 +72,7 @@ import { Route as AuthenticatedBlogComentariosComentariosRouteImport } from './p
 import { Route as AuthenticatedBlogCategoriasCategoriasRouteImport } from './pages/_authenticated/blog/_categorias/categorias'
 import { Route as AuthenticatedTreinamentosTurmasTurmasNovaRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.nova'
 import { Route as AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.$turmaId'
+import { Route as AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRouteImport } from './pages/_authenticated/suprimentos/_pedidos/pedidos-de-compra_.$purchaseId'
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoOrderIdRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico_.$orderId'
 import { Route as AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores_.$sellerId'
 import { Route as AuthenticatedComercialPropostasPropostasNovaRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.nova'
@@ -267,6 +269,12 @@ const AuthenticatedTreinamentosAlunosAlunosRoute =
     path: '/treinamentos/alunos',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSuprimentosPedidosPedidosDeCompraRoute =
+  AuthenticatedSuprimentosPedidosPedidosDeCompraRouteImport.update({
+    id: '/suprimentos/_pedidos/pedidos-de-compra',
+    path: '/suprimentos/pedidos-de-compra',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSiteServicosServicosRoute =
   AuthenticatedSiteServicosServicosRouteImport.update({
     id: '/site/_servicos/servicos',
@@ -435,6 +443,12 @@ const AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute =
     path: '/treinamentos/turmas/$turmaId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute =
+  AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRouteImport.update({
+    id: '/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId',
+    path: '/suprimentos/pedidos-de-compra/$purchaseId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute =
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRouteImport.update({
     id: '/servicos/_ordens/ordens-de-servico_/$orderId',
@@ -520,6 +534,7 @@ export interface FileRoutesByFullPath {
   '/site/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
   '/site/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
   '/site/servicos': typeof AuthenticatedSiteServicosServicosRoute
+  '/suprimentos/pedidos-de-compra': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraRoute
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
   '/treinamentos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
@@ -538,6 +553,7 @@ export interface FileRoutesByFullPath {
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
   '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
+  '/suprimentos/pedidos-de-compra/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
   '/servicos/ordens-de-servico/$orderId/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
@@ -587,6 +603,7 @@ export interface FileRoutesByTo {
   '/site/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
   '/site/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
   '/site/servicos': typeof AuthenticatedSiteServicosServicosRoute
+  '/suprimentos/pedidos-de-compra': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraRoute
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
   '/treinamentos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
@@ -605,6 +622,7 @@ export interface FileRoutesByTo {
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
   '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
+  '/suprimentos/pedidos-de-compra/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
   '/servicos/ordens-de-servico/$orderId/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
@@ -658,6 +676,7 @@ export interface FileRoutesById {
   '/_authenticated/site/_marcas/marcas': typeof AuthenticatedSiteMarcasMarcasRoute
   '/_authenticated/site/_produtos/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
   '/_authenticated/site/_servicos/servicos': typeof AuthenticatedSiteServicosServicosRoute
+  '/_authenticated/suprimentos/_pedidos/pedidos-de-compra': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraRoute
   '/_authenticated/treinamentos/_alunos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
   '/_authenticated/treinamentos/_certificados-modelos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/_authenticated/treinamentos/_certificados/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
@@ -676,6 +695,7 @@ export interface FileRoutesById {
   '/_authenticated/comercial/_propostas/propostas_/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/_authenticated/comercial/_vendedores/vendedores_/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
+  '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
@@ -728,6 +748,7 @@ export interface FileRouteTypes {
     | '/site/marcas'
     | '/site/produtos'
     | '/site/servicos'
+    | '/suprimentos/pedidos-de-compra'
     | '/treinamentos/alunos'
     | '/treinamentos/certificados-modelos'
     | '/treinamentos/certificados'
@@ -746,6 +767,7 @@ export interface FileRouteTypes {
     | '/comercial/propostas/nova'
     | '/comercial/vendedores/$sellerId'
     | '/servicos/ordens-de-servico/$orderId'
+    | '/suprimentos/pedidos-de-compra/$purchaseId'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
     | '/servicos/ordens-de-servico/$orderId/rdo/$reportId'
@@ -795,6 +817,7 @@ export interface FileRouteTypes {
     | '/site/marcas'
     | '/site/produtos'
     | '/site/servicos'
+    | '/suprimentos/pedidos-de-compra'
     | '/treinamentos/alunos'
     | '/treinamentos/certificados-modelos'
     | '/treinamentos/certificados'
@@ -813,6 +836,7 @@ export interface FileRouteTypes {
     | '/comercial/propostas/nova'
     | '/comercial/vendedores/$sellerId'
     | '/servicos/ordens-de-servico/$orderId'
+    | '/suprimentos/pedidos-de-compra/$purchaseId'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
     | '/servicos/ordens-de-servico/$orderId/rdo/$reportId'
@@ -865,6 +889,7 @@ export interface FileRouteTypes {
     | '/_authenticated/site/_marcas/marcas'
     | '/_authenticated/site/_produtos/produtos'
     | '/_authenticated/site/_servicos/servicos'
+    | '/_authenticated/suprimentos/_pedidos/pedidos-de-compra'
     | '/_authenticated/treinamentos/_alunos/alunos'
     | '/_authenticated/treinamentos/_certificados-modelos/certificados-modelos'
     | '/_authenticated/treinamentos/_certificados/certificados'
@@ -883,6 +908,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comercial/_propostas/propostas_/nova'
     | '/_authenticated/comercial/_vendedores/vendedores_/$sellerId'
     | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId'
+    | '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId'
     | '/_authenticated/treinamentos/_turmas/turmas_/$turmaId'
     | '/_authenticated/treinamentos/_turmas/turmas_/nova'
     | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId'
@@ -1134,6 +1160,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTreinamentosAlunosAlunosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/suprimentos/_pedidos/pedidos-de-compra': {
+      id: '/_authenticated/suprimentos/_pedidos/pedidos-de-compra'
+      path: '/suprimentos/pedidos-de-compra'
+      fullPath: '/suprimentos/pedidos-de-compra'
+      preLoaderRoute: typeof AuthenticatedSuprimentosPedidosPedidosDeCompraRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/site/_servicos/servicos': {
       id: '/_authenticated/site/_servicos/servicos'
       path: '/site/servicos'
@@ -1330,6 +1363,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId': {
+      id: '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId'
+      path: '/suprimentos/pedidos-de-compra/$purchaseId'
+      fullPath: '/suprimentos/pedidos-de-compra/$purchaseId'
+      preLoaderRoute: typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId': {
       id: '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId'
       path: '/servicos/ordens-de-servico/$orderId'
@@ -1413,6 +1453,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSiteMarcasMarcasRoute: typeof AuthenticatedSiteMarcasMarcasRoute
   AuthenticatedSiteProdutosProdutosRoute: typeof AuthenticatedSiteProdutosProdutosRoute
   AuthenticatedSiteServicosServicosRoute: typeof AuthenticatedSiteServicosServicosRoute
+  AuthenticatedSuprimentosPedidosPedidosDeCompraRoute: typeof AuthenticatedSuprimentosPedidosPedidosDeCompraRoute
   AuthenticatedTreinamentosAlunosAlunosRoute: typeof AuthenticatedTreinamentosAlunosAlunosRoute
   AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute: typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   AuthenticatedTreinamentosCertificadosCertificadosRoute: typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
@@ -1428,6 +1469,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComercialPropostasPropostasNovaRoute: typeof AuthenticatedComercialPropostasPropostasNovaRoute
   AuthenticatedComercialVendedoresVendedoresSellerIdRoute: typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
+  AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute: typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   AuthenticatedTreinamentosTurmasTurmasNovaRoute: typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
@@ -1497,6 +1539,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedSiteProdutosProdutosRoute,
   AuthenticatedSiteServicosServicosRoute:
     AuthenticatedSiteServicosServicosRoute,
+  AuthenticatedSuprimentosPedidosPedidosDeCompraRoute:
+    AuthenticatedSuprimentosPedidosPedidosDeCompraRoute,
   AuthenticatedTreinamentosAlunosAlunosRoute:
     AuthenticatedTreinamentosAlunosAlunosRoute,
   AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute:
@@ -1527,6 +1571,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialVendedoresVendedoresSellerIdRoute,
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute:
     AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute,
+  AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute:
+    AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute,
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute:
     AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute,
   AuthenticatedTreinamentosTurmasTurmasNovaRoute:

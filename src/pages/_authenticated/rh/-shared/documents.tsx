@@ -13,6 +13,7 @@ import DocumentFolder, { DocumentFolderTone } from "@/components/general-compone
 import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
+import { openApiFile, sizeText } from "@/lib/open-file";
 import { Tip, dateBr, errorMessage, todayIso } from "../../comercial/-shared/commercial";
 import { EMPLOYEES_KEY } from "./employees";
 
@@ -62,7 +63,6 @@ export function DocStatusBadge({ status, label }: { status: DocStatus; label: st
   return <span className={cn("inline-flex rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", STATUS_STYLE[status])}>{label}</span>;
 }
 
-const sizeText = (bytes: number) => (bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1).replace(".", ",")} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
 /** Emissão + validade em meses, no mesmo dia (31/01 + 1 mês = último dia de fevereiro): a mesma conta da API. */
 const addMonths = (date: string, months: number) => {
   const [year, month, day] = date.split("-").map(Number);
@@ -73,19 +73,10 @@ const addMonths = (date: string, months: number) => {
   return new Date(Date.UTC(targetYear, targetMonth, Math.min(day, last))).toISOString().slice(0, 10);
 };
 
-/** O arquivo só sai pela API, com o login da pessoa: busca e abre (ou baixa) a partir da memória do navegador. */
+/** O arquivo só sai pela API, com o login da pessoa (a peça é a mesma dos Arquivos da empresa). */
 export async function openDocument(document: Pick<EmployeeDoc, "id" | "fileName">, download = false) {
   try {
-    const response = await api.get<Blob>(`hr-documents/${document.id}/file`, { responseType: "blob", params: download ? { download: 1 } : undefined });
-    const url = URL.createObjectURL(response.data);
-    const link = window.document.createElement("a");
-    link.href = url;
-    if (download) link.download = document.fileName;
-    else { link.target = "_blank"; link.rel = "noopener"; }
-    window.document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    await openApiFile(`hr-documents/${document.id}/file`, document.fileName, download);
   } catch (err) {
     toast({ title: "Não foi possível abrir o documento", description: errorMessage(err), variant: "destructive" });
   }

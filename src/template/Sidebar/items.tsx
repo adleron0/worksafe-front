@@ -140,6 +140,26 @@ export const items = [
     ],
   },
   {
+    title: "Arquivos",
+    icon: "folder-open",
+    path: "/arquivos",
+    ability: "arquivos",
+    subitems: [
+      {
+        title: "Pastas",
+        ability: "arquivos",
+        icon: "folders",
+        path: "/arquivos/pastas",
+      },
+      {
+        title: "Lixeira",
+        ability: "arquivos",
+        icon: "trash-2",
+        path: "/arquivos/lixeira",
+      },
+    ],
+  },
+  {
     title: "Treinamentos",
     icon: "hard-hat",
     path: "/treinamentos",

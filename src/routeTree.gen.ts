@@ -77,6 +77,8 @@ import { Route as AuthenticatedBlogTagsTagsRouteImport } from './pages/_authenti
 import { Route as AuthenticatedBlogPostsPostsRouteImport } from './pages/_authenticated/blog/_posts/posts'
 import { Route as AuthenticatedBlogComentariosComentariosRouteImport } from './pages/_authenticated/blog/_comentarios/comentarios'
 import { Route as AuthenticatedBlogCategoriasCategoriasRouteImport } from './pages/_authenticated/blog/_categorias/categorias'
+import { Route as AuthenticatedArquivosPastasPastasRouteImport } from './pages/_authenticated/arquivos/_pastas/pastas'
+import { Route as AuthenticatedArquivosPastasLixeiraRouteImport } from './pages/_authenticated/arquivos/_pastas/lixeira'
 import { Route as AuthenticatedTreinamentosTurmasTurmasNovaRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.nova'
 import { Route as AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.$turmaId'
 import { Route as AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRouteImport } from './pages/_authenticated/suprimentos/_pedidos/pedidos-de-compra_.$purchaseId'
@@ -481,6 +483,18 @@ const AuthenticatedBlogCategoriasCategoriasRoute =
     path: '/blog/categorias',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedArquivosPastasPastasRoute =
+  AuthenticatedArquivosPastasPastasRouteImport.update({
+    id: '/arquivos/_pastas/pastas',
+    path: '/arquivos/pastas',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedArquivosPastasLixeiraRoute =
+  AuthenticatedArquivosPastasLixeiraRouteImport.update({
+    id: '/arquivos/_pastas/lixeira',
+    path: '/arquivos/lixeira',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedTreinamentosTurmasTurmasNovaRoute =
   AuthenticatedTreinamentosTurmasTurmasNovaRouteImport.update({
     id: '/treinamentos/_turmas/turmas_/nova',
@@ -565,6 +579,8 @@ export interface FileRoutesByFullPath {
   '/inventarios': typeof AuthenticatedInventariosIndexRoute
   '/treinamentos': typeof AuthenticatedTreinamentosIndexRoute
   '/certificados': typeof IndexCertificadosIndexRoute
+  '/arquivos/lixeira': typeof AuthenticatedArquivosPastasLixeiraRoute
+  '/arquivos/pastas': typeof AuthenticatedArquivosPastasPastasRoute
   '/blog/categorias': typeof AuthenticatedBlogCategoriasCategoriasRoute
   '/blog/comentarios': typeof AuthenticatedBlogComentariosComentariosRoute
   '/blog/posts': typeof AuthenticatedBlogPostsPostsRoute
@@ -642,6 +658,8 @@ export interface FileRoutesByTo {
   '/inventarios': typeof AuthenticatedInventariosIndexRoute
   '/treinamentos': typeof AuthenticatedTreinamentosIndexRoute
   '/certificados': typeof IndexCertificadosIndexRoute
+  '/arquivos/lixeira': typeof AuthenticatedArquivosPastasLixeiraRoute
+  '/arquivos/pastas': typeof AuthenticatedArquivosPastasPastasRoute
   '/blog/categorias': typeof AuthenticatedBlogCategoriasCategoriasRoute
   '/blog/comentarios': typeof AuthenticatedBlogComentariosComentariosRoute
   '/blog/posts': typeof AuthenticatedBlogPostsPostsRoute
@@ -723,6 +741,8 @@ export interface FileRoutesById {
   '/_authenticated/inventarios/': typeof AuthenticatedInventariosIndexRoute
   '/_authenticated/treinamentos/': typeof AuthenticatedTreinamentosIndexRoute
   '/_index/certificados/': typeof IndexCertificadosIndexRoute
+  '/_authenticated/arquivos/_pastas/lixeira': typeof AuthenticatedArquivosPastasLixeiraRoute
+  '/_authenticated/arquivos/_pastas/pastas': typeof AuthenticatedArquivosPastasPastasRoute
   '/_authenticated/blog/_categorias/categorias': typeof AuthenticatedBlogCategoriasCategoriasRoute
   '/_authenticated/blog/_comentarios/comentarios': typeof AuthenticatedBlogComentariosComentariosRoute
   '/_authenticated/blog/_posts/posts': typeof AuthenticatedBlogPostsPostsRoute
@@ -803,6 +823,8 @@ export interface FileRouteTypes {
     | '/inventarios'
     | '/treinamentos'
     | '/certificados'
+    | '/arquivos/lixeira'
+    | '/arquivos/pastas'
     | '/blog/categorias'
     | '/blog/comentarios'
     | '/blog/posts'
@@ -880,6 +902,8 @@ export interface FileRouteTypes {
     | '/inventarios'
     | '/treinamentos'
     | '/certificados'
+    | '/arquivos/lixeira'
+    | '/arquivos/pastas'
     | '/blog/categorias'
     | '/blog/comentarios'
     | '/blog/posts'
@@ -960,6 +984,8 @@ export interface FileRouteTypes {
     | '/_authenticated/inventarios/'
     | '/_authenticated/treinamentos/'
     | '/_index/certificados/'
+    | '/_authenticated/arquivos/_pastas/lixeira'
+    | '/_authenticated/arquivos/_pastas/pastas'
     | '/_authenticated/blog/_categorias/categorias'
     | '/_authenticated/blog/_comentarios/comentarios'
     | '/_authenticated/blog/_posts/posts'
@@ -1502,6 +1528,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBlogCategoriasCategoriasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/arquivos/_pastas/pastas': {
+      id: '/_authenticated/arquivos/_pastas/pastas'
+      path: '/arquivos/pastas'
+      fullPath: '/arquivos/pastas'
+      preLoaderRoute: typeof AuthenticatedArquivosPastasPastasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/arquivos/_pastas/lixeira': {
+      id: '/_authenticated/arquivos/_pastas/lixeira'
+      path: '/arquivos/lixeira'
+      fullPath: '/arquivos/lixeira'
+      preLoaderRoute: typeof AuthenticatedArquivosPastasLixeiraRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/treinamentos/_turmas/turmas_/nova': {
       id: '/_authenticated/treinamentos/_turmas/turmas_/nova'
       path: '/treinamentos/turmas/nova'
@@ -1587,6 +1627,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedIntegracoesIndexRoute: typeof AuthenticatedIntegracoesIndexRoute
   AuthenticatedInventariosIndexRoute: typeof AuthenticatedInventariosIndexRoute
   AuthenticatedTreinamentosIndexRoute: typeof AuthenticatedTreinamentosIndexRoute
+  AuthenticatedArquivosPastasLixeiraRoute: typeof AuthenticatedArquivosPastasLixeiraRoute
+  AuthenticatedArquivosPastasPastasRoute: typeof AuthenticatedArquivosPastasPastasRoute
   AuthenticatedBlogCategoriasCategoriasRoute: typeof AuthenticatedBlogCategoriasCategoriasRoute
   AuthenticatedBlogComentariosComentariosRoute: typeof AuthenticatedBlogComentariosComentariosRoute
   AuthenticatedBlogPostsPostsRoute: typeof AuthenticatedBlogPostsPostsRoute
@@ -1657,6 +1699,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedIntegracoesIndexRoute: AuthenticatedIntegracoesIndexRoute,
   AuthenticatedInventariosIndexRoute: AuthenticatedInventariosIndexRoute,
   AuthenticatedTreinamentosIndexRoute: AuthenticatedTreinamentosIndexRoute,
+  AuthenticatedArquivosPastasLixeiraRoute:
+    AuthenticatedArquivosPastasLixeiraRoute,
+  AuthenticatedArquivosPastasPastasRoute:
+    AuthenticatedArquivosPastasPastasRoute,
   AuthenticatedBlogCategoriasCategoriasRoute:
     AuthenticatedBlogCategoriasCategoriasRoute,
   AuthenticatedBlogComentariosComentariosRoute:

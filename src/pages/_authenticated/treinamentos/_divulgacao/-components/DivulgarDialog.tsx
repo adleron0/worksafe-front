@@ -14,14 +14,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { BADGE_LABELS, drawArt, FORMAT_SIZES, LAYOUTS, type ArtInput } from "../-lib/art";
+import { badgeLabel, drawArt, FORMAT_SIZES, LAYOUTS, type ArtInput } from "../-lib/art";
 import { renderCaption, KIND_FOR_SITUATION } from "../-lib/caption";
-import { PHOTO_BANK, useCaptionTemplates, useMarketingClass, useMarketingSettings } from "../-lib/data";
-import { loadArtFonts } from "../-lib/fonts";
-import { THEMES, themeById } from "../-lib/themes";
+import { useCaptionTemplates, useMarketingClass, useMarketingSettings } from "../-lib/data";
+import { themeById } from "../-lib/themes";
 import type { ArtFormat, ArtLayout, ArtOptions, ClassSituation, MarketingOverrides } from "../-lib/types";
 import { buildVariables, defaultOverrides } from "../-lib/variables";
-import { useArtImages } from "./useArtImages";
+import { useArtResources, useIdentity } from "./useArtResources";
 
 interface Props {
   classId: number | null;
@@ -94,11 +93,6 @@ function DivulgarContent({ classId }: { classId: number }) {
   const settingsQuery = useMarketingSettings();
   const captionsQuery = useCaptionTemplates();
   const classQuery = useMarketingClass(classId);
-  const [fontsReady, setFontsReady] = useState(false);
-
-  useEffect(() => {
-    loadArtFonts().then(() => setFontsReady(true));
-  }, []);
 
   if (settingsQuery.isLoading || classQuery.isLoading || captionsQuery.isLoading) {
     return (
@@ -122,7 +116,6 @@ function DivulgarContent({ classId }: { classId: number }) {
       turma={classQuery.data}
       settingsData={settingsQuery.data}
       captions={captionsQuery.data ?? []}
-      fontsReady={fontsReady}
     />
   );
 }
@@ -131,12 +124,10 @@ function Studio({
   turma,
   settingsData,
   captions,
-  fontsReady,
 }: {
   turma: NonNullable<ReturnType<typeof useMarketingClass>["data"]>;
   settingsData: NonNullable<ReturnType<typeof useMarketingSettings>["data"]>;
   captions: NonNullable<ReturnType<typeof useCaptionTemplates>["data"]>;
-  fontsReady: boolean;
 }) {
   const { settings, company } = settingsData;
   const [overrides, setOverrides] = useState<MarketingOverrides>(() => defaultOverrides(turma, settings));
@@ -145,11 +136,12 @@ function Studio({
     [turma, settings, overrides, company],
   );
 
-  const firstPhoto = turma.imageUrl || turma.course?.imageUrl || PHOTO_BANK[0].src;
+  const { themes, labels, fonts, photoBank, fontsReady } = useIdentity(settings, company);
+  const firstPhoto = turma.imageUrl || turma.course?.imageUrl || photoBank[0]?.src || null;
   const [options, setOptions] = useState<ArtOptions>(() => ({
     format: "feed34",
     layout: "destaque",
-    theme: settings.temaPadrao || "verde",
+    theme: themeById(settings.temaPadrao, themes).id,
     badge: vars.situation,
     photoUrl: firstPhoto,
     photoX: 70,
@@ -160,12 +152,15 @@ function Studio({
     showPrice: true,
   }));
   const set = <K extends keyof ArtOptions>(key: K, value: ArtOptions[K]) => setOptions((o) => ({ ...o, [key]: value }));
-  const theme = themeById(options.theme);
-  const { photo, photoError, seals } = useArtImages(options.photoUrl, settings.selos ?? [], !!theme.light);
+  const theme = themeById(options.theme, themes);
+  const { photo, photoError, seals, brand } = useArtResources(settings, company, theme, options.photoUrl);
 
   const artInput: ArtInput = useMemo(
     () => ({
       vars,
+      labels,
+      brand,
+      fonts,
       title: overrides.titulo,
       levelsLabel: overrides.niveis,
       options,
@@ -177,7 +172,7 @@ function Studio({
       photo,
       seals,
     }),
-    [vars, overrides.titulo, overrides.niveis, options, theme, company.name, settings.email, photo, seals],
+    [vars, labels, brand, fonts, overrides.titulo, overrides.niveis, options, theme, company.name, settings.email, photo, seals],
   );
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -211,7 +206,7 @@ function Studio({
     ...(turma.imageUrl ? [{ src: turma.imageUrl, label: "Imagem da turma" }] : []),
     ...(turma.course?.imageUrl && turma.course.imageUrl !== turma.imageUrl ? [{ src: turma.course.imageUrl, label: "Imagem do curso" }] : []),
     ...uploaded.map((src, i) => ({ src, label: `Enviada ${i + 1}` })),
-    ...PHOTO_BANK,
+    ...photoBank,
   ];
 
   return (
@@ -286,7 +281,7 @@ function Studio({
 
             <Section title="Cores">
               <div className="flex flex-wrap gap-2">
-                {THEMES.map((t) => (
+                {themes.map((t) => (
                   <Tip key={t.id} text={t.name}>
                     <button
                       type="button"
@@ -309,7 +304,7 @@ function Studio({
                 modal
                 state={options.badge}
                 options={[
-                  ...(["vagas_abertas", "ultimas_vagas", "promocao", "lotada"] as ClassSituation[]).map((id) => ({ id, name: BADGE_LABELS[id] })),
+                  ...(["vagas_abertas", "ultimas_vagas", "promocao", "lotada"] as ClassSituation[]).map((id) => ({ id, name: badgeLabel(labels, id) })),
                   { id: "nenhum", name: "Sem selo" },
                 ]}
                 onChange={(_, v) => set("badge", v as ArtOptions["badge"])}

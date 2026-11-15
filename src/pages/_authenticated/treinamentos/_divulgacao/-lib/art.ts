@@ -9,9 +9,9 @@
  * certificação. A coluna é medida bloco a bloco e encolhe até caber.
  */
 import { BRAND_MARK, WHATSAPP_ICON } from "./brand";
-import { DISPLAY_FONT, TEXT_FONT } from "./fonts";
+import type { ArtFonts } from "./fonts";
 import { alpha, type ArtTheme } from "./themes";
-import type { ArtFormat, ArtLayout, ArtOptions, ClassSituation } from "./types";
+import type { ArtFormat, ArtLabels, ArtLayout, ArtOptions, ClassSituation, MarketingBrand } from "./types";
 import { moneyShort, type ClassVariables } from "./variables";
 
 export const FORMAT_SIZES: Record<ArtFormat, { w: number; h: number; label: string; hint: string }> = {
@@ -27,11 +27,48 @@ export const LAYOUTS: { id: ArtLayout; name: string; hint: string }[] = [
   { id: "cartao", name: "Cartão", hint: "Cartão com o texto sobre a foto" },
 ];
 
-export const BADGE_LABELS: Record<ClassSituation | "nenhum", string> = {
-  vagas_abertas: "VAGAS ABERTAS!",
-  ultimas_vagas: "ÚLTIMAS VAGAS!",
+/** Textos fixos da arte; cada empresa troca os seus na identidade visual. */
+export const DEFAULT_LABELS: ArtLabels = {
+  topo: "TREINAMENTO",
+  novaTurma: "NOVA TURMA",
+  vagasAbertas: "VAGAS ABERTAS!",
+  ultimasVagas: "ÚLTIMAS VAGAS!",
   lotada: "TURMA LOTADA",
   promocao: "PROMOÇÃO!",
+  investimento: "INVESTIMENTO",
+  valores: "VALORES",
+  incluso: "INCLUSO",
+  inscricoes: "INSCRIÇÕES",
+};
+
+export const LABEL_FIELDS: { key: keyof ArtLabels; label: string }[] = [
+  { key: "topo", label: "Texto acima do título" },
+  { key: "novaTurma", label: "Pílula de turma nova" },
+  { key: "vagasAbertas", label: "Selo: vagas abertas" },
+  { key: "ultimasVagas", label: "Selo: últimas vagas" },
+  { key: "lotada", label: "Selo: turma lotada" },
+  { key: "promocao", label: "Selo: promoção" },
+  { key: "investimento", label: "Título do preço" },
+  { key: "valores", label: "Título dos preços por nível" },
+  { key: "incluso", label: "Título do incluso" },
+  { key: "inscricoes", label: "Título do contato" },
+];
+
+export const resolveLabels = (custom?: Partial<ArtLabels>): ArtLabels => {
+  const out = { ...DEFAULT_LABELS };
+  for (const k of Object.keys(out) as (keyof ArtLabels)[]) if (custom?.[k]?.trim()) out[k] = custom[k]!.trim();
+  return out;
+};
+
+export const badgeLabel = (labels: ArtLabels, badge: ClassSituation | "nenhum") =>
+  ({ vagas_abertas: labels.vagasAbertas, ultimas_vagas: labels.ultimasVagas, lotada: labels.lotada, promocao: labels.promocao, nenhum: "" })[badge];
+
+/** Para listas de opções (selo): rótulos padrão. */
+export const BADGE_LABELS: Record<ClassSituation | "nenhum", string> = {
+  vagas_abertas: DEFAULT_LABELS.vagasAbertas,
+  ultimas_vagas: DEFAULT_LABELS.ultimasVagas,
+  lotada: DEFAULT_LABELS.lotada,
+  promocao: DEFAULT_LABELS.promocao,
   nenhum: "",
 };
 
@@ -42,8 +79,18 @@ export const SEALS: { id: string; name: string; dark: string; light: string; tin
   { id: "abnt", name: "ABNT Certificadora", dark: "/divulgacao/selos/abnt-certificadora-neg.png", light: "/divulgacao/selos/abnt-certificadora-neg.png", tintLight: true },
 ];
 
+/** Marca já resolvida para desenhar (logo carregado conforme o fundo). */
+export interface ArtBrand {
+  tipo: MarketingBrand["tipo"];
+  texto: string;
+  logo: HTMLImageElement | null;
+}
+
 export interface ArtInput {
   vars: ClassVariables;
+  labels: ArtLabels;
+  brand: ArtBrand;
+  fonts: ArtFonts;
   title: string;
   levelsLabel: string;
   options: ArtOptions;
@@ -57,6 +104,11 @@ export interface ArtInput {
 }
 
 type Ctx = CanvasRenderingContext2D;
+
+// Fontes do desenho atual (definidas no começo de drawArt).
+let DISPLAY_FONT = "Anton";
+let DISPLAY_WEIGHT = 400;
+let TEXT_FONT = "Montserrat";
 
 const font = (ctx: Ctx, weight: number | string, size: number, family = TEXT_FONT) => {
   ctx.font = `${weight} ${Math.round(size)}px "${family}"`;
@@ -111,7 +163,7 @@ let capRatio = 0;
 function cap(ctx: Ctx, size: number) {
   if (!capRatio) {
     ctx.save();
-    font(ctx, 400, 100, DISPLAY_FONT);
+    font(ctx, DISPLAY_WEIGHT, 100, DISPLAY_FONT);
     ctx.textBaseline = "alphabetic"; // a subida medida é relativa à linha de base atual
     const m = ctx.measureText("H");
     capRatio = (m.actualBoundingBoxAscent || 74) / 100;
@@ -122,7 +174,7 @@ function cap(ctx: Ctx, size: number) {
 
 /** Texto na fonte de títulos com o topo das maiúsculas em yTop. */
 function capFill(ctx: Ctx, text: string, x: number, yTop: number, size: number) {
-  font(ctx, 400, size, DISPLAY_FONT);
+  font(ctx, DISPLAY_WEIGHT, size, DISPLAY_FONT);
   ctx.textBaseline = "alphabetic";
   ctx.fillText(text, x, yTop + cap(ctx, size));
 }
@@ -143,7 +195,7 @@ function partitions(words: string[], n: number): string[][] {
  * ("ACESSO / POR CORDA"). Quebras com Enter feitas pela pessoa são respeitadas.
  */
 function fitTitle(ctx: Ctx, text: string, maxW: number, max: number, min: number, maxLines: number) {
-  font(ctx, 400, 100, DISPLAY_FONT);
+  font(ctx, DISPLAY_WEIGHT, 100, DISPLAY_FONT);
   const widthAt100 = (line: string) => ctx.measureText(line).width;
   const sizeFor = (lines: string[]) => Math.min(max, (100 * maxW) / Math.max(...lines.map(widthAt100)));
   if (text.includes("\n")) {
@@ -162,7 +214,7 @@ function fitTitle(ctx: Ctx, text: string, maxW: number, max: number, min: number
     if (bestN && bestN.size > best.size * (n === 1 ? 1 : 1.18)) best = bestN;
   }
   if (best.size < min) {
-    font(ctx, 400, min, DISPLAY_FONT);
+    font(ctx, DISPLAY_WEIGHT, min, DISPLAY_FONT);
     return { size: min, lines: wrap(ctx, text, maxW).slice(0, maxLines) };
   }
   return best;
@@ -192,21 +244,36 @@ function drawMark(ctx: Ctx, x: number, y: number, h: number, body: string) {
 
 function wordmarkText(companyName: string) {
   if (/^work\s*safe/i.test(companyName.trim())) return "WORK SAFE";
-  return companyName.trim().toUpperCase() || "WORK SAFE";
+  return companyName.trim().toUpperCase();
 }
 
-/** Marca + nome. Retorna a largura. */
-function drawBrand(ctx: Ctx, x: number, y: number, h: number, color: string, companyName: string) {
-  const mw = drawMark(ctx, x, y, h, color);
-  font(ctx, 900, h * 0.62);
+/**
+ * Marca no rodapé: logo enviado (proporção mantida, até maxW), símbolo padrão
+ * com o nome, ou só o nome. Retorna a largura usada.
+ */
+function drawBrand(ctx: Ctx, brand: ArtBrand, x: number, y: number, h: number, color: string, companyName: string, maxW: number) {
+  if (brand.tipo === "logo" && brand.logo) {
+    const ratio = brand.logo.naturalWidth / brand.logo.naturalHeight;
+    let lh = h * 1.15;
+    let lw = lh * ratio;
+    if (lw > maxW) {
+      lw = maxW;
+      lh = lw / ratio;
+    }
+    ctx.drawImage(brand.logo, x, y + (h - lh) / 2, lw, lh);
+    return lw;
+  }
+  const label = (brand.texto || wordmarkText(companyName)).toUpperCase();
+  const mw = brand.tipo === "padrao" ? drawMark(ctx, x, y, h, color) : 0;
+  const gap = mw ? h * 0.28 : 0;
+  fitLine(ctx, label, maxW - mw - gap, h * 0.62, h * 0.3, (sz) => font(ctx, 900, sz));
   setSpacing(ctx, h * 0.02);
   ctx.fillStyle = color;
   ctx.textBaseline = "middle";
-  const label = wordmarkText(companyName);
-  ctx.fillText(label, x + mw + h * 0.28, y + h * 0.54);
+  ctx.fillText(label, x + mw + gap, y + h * 0.54);
   const tw = ctx.measureText(label).width;
   setSpacing(ctx, 0);
-  return mw + h * 0.28 + tw;
+  return mw + gap + tw;
 }
 
 const tintCache = new WeakMap<HTMLImageElement, Map<string, HTMLCanvasElement>>();
@@ -315,7 +382,7 @@ function buildBlocks(c: ColumnCtx): Block[] {
       setSpacing(ctx, 7 * s);
       ctx.fillStyle = theme.accent;
       ctx.textBaseline = "top";
-      ctx.fillText("TREINAMENTO", x, y);
+      ctx.fillText(input.labels.topo, x, y);
       setSpacing(ctx, 0);
     },
   });
@@ -324,7 +391,7 @@ function buildBlocks(c: ColumnCtx): Block[] {
   let titleCache: { s: number; size: number; lines: string[] } | null = null;
   const title = (s: number) => {
     if (titleCache && titleCache.s === s) return titleCache;
-    const r = fitTitle(ctx, (input.title || "TREINAMENTO").toUpperCase(), w, 168 * s, 60 * s, 3);
+    const r = fitTitle(ctx, (input.title || input.labels.topo).toUpperCase(), w, 168 * s, 60 * s, 3);
     titleCache = { s, ...r };
     return titleCache;
   };
@@ -344,7 +411,7 @@ function buildBlocks(c: ColumnCtx): Block[] {
   });
 
   // NOVA TURMA + níveis
-  const pill = options.badge === "lotada" ? "TURMA LOTADA" : "NOVA TURMA";
+  const pill = options.badge === "lotada" ? input.labels.lotada.replace(/!+$/, "") : input.labels.novaTurma;
   blocks.push({
     key: "pills", gapBefore: 26,
     measure: (s) => 52 * s,
@@ -375,8 +442,8 @@ function buildBlocks(c: ColumnCtx): Block[] {
     const big = vars.dates.grande;
     const small = vars.dates.pequeno;
     const extra = [vars.values.horario, vars.values.carga_horaria && `${vars.values.carga_horaria} de curso`].filter(Boolean).join("  ·  ");
-    const bigSize = (s: number) => fitLine(ctx, big, w, (big.length > 8 ? 150 : 205) * s, 80 * s, (size) => font(ctx, 400, size, DISPLAY_FONT));
-    const smallSize = (s: number) => fitLine(ctx, small, w, 76 * s, 40 * s, (size) => font(ctx, 400, size, DISPLAY_FONT));
+    const bigSize = (s: number) => fitLine(ctx, big, w, (big.length > 8 ? 150 : 205) * s, 80 * s, (size) => font(ctx, DISPLAY_WEIGHT, size, DISPLAY_FONT));
+    const smallSize = (s: number) => fitLine(ctx, small, w, 76 * s, 40 * s, (size) => font(ctx, DISPLAY_WEIGHT, size, DISPLAY_FONT));
     blocks.push({
       key: "dates", gapBefore: 26,
       measure: (s) => {
@@ -422,7 +489,7 @@ function buildBlocks(c: ColumnCtx): Block[] {
           setSpacing(ctx, 5 * s);
           ctx.fillStyle = theme.accent;
           ctx.textBaseline = "top";
-          ctx.fillText("VALORES", x, y);
+          ctx.fillText(input.labels.valores, x, y);
           setSpacing(ctx, 0);
           const rh = cap(ctx, 46 * s);
           font(ctx, 900, 34 * s);
@@ -440,7 +507,7 @@ function buildBlocks(c: ColumnCtx): Block[] {
     } else if (vars.price) {
       const from = vars.priceFrom;
       const price = moneyShort(vars.price);
-      const priceSize = (s: number) => fitLine(ctx, price, w, 116 * s, 60 * s, (size) => font(ctx, 400, size, DISPLAY_FONT));
+      const priceSize = (s: number) => fitLine(ctx, price, w, 116 * s, 60 * s, (size) => font(ctx, DISPLAY_WEIGHT, size, DISPLAY_FONT));
       blocks.push({
         key: "price", gapBefore: 30, optional: 2,
         measure: (s) => 44 * s + cap(ctx, priceSize(s)) + (vars.values.parcelas ? 44 * s : 0),
@@ -465,7 +532,7 @@ function buildBlocks(c: ColumnCtx): Block[] {
             font(ctx, 800, 24 * s);
             setSpacing(ctx, 5 * s);
             ctx.fillStyle = theme.accent;
-            ctx.fillText("INVESTIMENTO", x, y + 4 * s);
+            ctx.fillText(input.labels.investimento, x, y + 4 * s);
             setSpacing(ctx, 0);
           }
           const ps = priceSize(s);
@@ -495,7 +562,7 @@ function buildBlocks(c: ColumnCtx): Block[] {
         setSpacing(ctx, 5 * s);
         ctx.fillStyle = theme.accent;
         ctx.textBaseline = "top";
-        ctx.fillText("INCLUSO", x, y);
+        ctx.fillText(input.labels.incluso, x, y);
         setSpacing(ctx, 0);
         const colW = w / cols;
         items.forEach((item, i) => {
@@ -515,15 +582,15 @@ function buildBlocks(c: ColumnCtx): Block[] {
   }
 
   // Selo inclinado
-  const badge = BADGE_LABELS[options.badge];
+  const badge = badgeLabel(input.labels, options.badge);
   if (badge) {
-    const size = (s: number) => fitLine(ctx, badge, w - 60 * s, 78 * s, 40 * s, (sz) => font(ctx, 400, sz, DISPLAY_FONT));
+    const size = (s: number) => fitLine(ctx, badge, w - 60 * s, 78 * s, 40 * s, (sz) => font(ctx, DISPLAY_WEIGHT, sz, DISPLAY_FONT));
     blocks.push({
       key: "badge", gapBefore: 34, optional: 1,
       measure: (s) => cap(ctx, size(s)) * 1.9 + 30 * s,
       draw: (y, s) => {
         const sz = size(s);
-        font(ctx, 400, sz, DISPLAY_FONT);
+        font(ctx, DISPLAY_WEIGHT, sz, DISPLAY_FONT);
         const tw = ctx.measureText(badge).width;
         const bw = tw + 56 * s;
         const bh = cap(ctx, sz) * 1.9;
@@ -555,7 +622,7 @@ function buildBlocks(c: ColumnCtx): Block[] {
           setSpacing(ctx, 4 * s);
           ctx.fillStyle = c.muted;
           ctx.textBaseline = "top";
-          ctx.fillText("INSCRIÇÕES", x + 90 * s, yy + 4 * s);
+          ctx.fillText(input.labels.inscricoes, x + 90 * s, yy + 4 * s);
           setSpacing(ctx, 0);
           const size = fitLine(ctx, input.whatsapp, w - 90 * s, 44 * s, 26 * s, (sz) => font(ctx, 900, sz));
           ctx.fillStyle = c.text;
@@ -631,7 +698,7 @@ function drawColumn(blocks: Block[], s: number, top: number, extraGap: number) {
 
 // ---------------------------------------------------------------------------
 
-function drawFallbackBackground(ctx: Ctx, w: number, h: number, theme: ArtTheme) {
+function drawFallbackBackground(ctx: Ctx, w: number, h: number, theme: ArtTheme, brand: ArtBrand) {
   const g = ctx.createLinearGradient(0, 0, w, h);
   g.addColorStop(0, theme.bg);
   g.addColorStop(1, theme.bg2);
@@ -640,14 +707,19 @@ function drawFallbackBackground(ctx: Ctx, w: number, h: number, theme: ArtTheme)
   // marca d'água grande à direita
   ctx.save();
   ctx.globalAlpha = theme.light ? 0.06 : 0.08;
-  drawMark(ctx, w * 0.48, h * 0.12, h * 0.8, theme.light ? "#000000" : "#ffffff");
+  if (brand.tipo === "padrao") drawMark(ctx, w * 0.48, h * 0.12, h * 0.8, theme.light ? "#000000" : "#ffffff");
+  else if (brand.tipo === "logo" && brand.logo) {
+    const lh = h * 0.6;
+    const lw = Math.min(w * 0.7, lh * (brand.logo.naturalWidth / brand.logo.naturalHeight));
+    ctx.drawImage(tinted(brand.logo, theme.light ? "#000000" : "#ffffff"), w - lw * 0.85, h * 0.2, lw, lw / (brand.logo.naturalWidth / brand.logo.naturalHeight));
+  }
   ctx.restore();
 }
 
 function drawFooter(ctx: Ctx, input: ArtInput, w: number, y: number, h: number, color: string) {
   const M = 64;
   const brandH = Math.min(58, h * 0.55);
-  drawBrand(ctx, M, y + (h - brandH) / 2, brandH, color, input.companyName);
+  drawBrand(ctx, input.brand, M, y + (h - brandH) / 2, brandH, color, input.companyName, w * 0.42);
   if (input.options.showSeals && input.seals.length) {
     const sealH = Math.min(58, h * 0.55);
     let xx = w - M;
@@ -668,13 +740,16 @@ export function drawArt(canvas: HTMLCanvasElement, input: ArtInput) {
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
   capRatio = 0;
+  DISPLAY_FONT = input.fonts.title;
+  DISPLAY_WEIGHT = input.fonts.titleWeight;
+  TEXT_FONT = input.fonts.text;
   const { theme, options, photo } = input;
   const story = options.format === "story";
   const M = 64;
   const safeTop = story ? 210 : M;
   const footerH = story ? 130 : 120;
   const footerY = H - (story ? 200 : 0) - footerH - (story ? 0 : 18);
-  const stripes = theme.id === "verde" || theme.id === "amarelo";
+  const stripes = !!theme.listras;
   const zoom = Math.max(1, options.photoZoom / 100);
   const fx = options.photoX / 100;
   const fy = options.photoY / 100;
@@ -695,7 +770,7 @@ export function drawArt(canvas: HTMLCanvasElement, input: ArtInput) {
     ctx.closePath();
     ctx.clip();
     if (photo) drawCover(ctx, photo, 0, 0, W, photoH, fx, fy, zoom);
-    else drawFallbackBackground(ctx, W, photoH, theme);
+    else drawFallbackBackground(ctx, W, photoH, theme, input.brand);
     const g = ctx.createLinearGradient(0, photoH * 0.45, 0, photoH);
     g.addColorStop(0, alpha(theme.bg, 0));
     g.addColorStop(1, alpha(theme.bg, 0.55));
@@ -729,7 +804,7 @@ export function drawArt(canvas: HTMLCanvasElement, input: ArtInput) {
     });
   } else if (options.layout === "cartao") {
     if (photo) drawCover(ctx, photo, 0, 0, W, H, fx, fy, zoom);
-    else drawFallbackBackground(ctx, W, H, theme);
+    else drawFallbackBackground(ctx, W, H, theme, input.brand);
     ctx.fillStyle = alpha("#000000", 0.18);
     ctx.fillRect(0, 0, W, H);
     const g = ctx.createLinearGradient(0, footerY - 160, 0, H);
@@ -762,7 +837,7 @@ export function drawArt(canvas: HTMLCanvasElement, input: ArtInput) {
   } else {
     // destaque: foto ao fundo, texto à esquerda
     if (photo) drawCover(ctx, photo, 0, 0, W, H, fx, fy, zoom);
-    else drawFallbackBackground(ctx, W, H, theme);
+    else drawFallbackBackground(ctx, W, H, theme, input.brand);
     const g = ctx.createLinearGradient(0, 0, W, 0);
     g.addColorStop(0, alpha(theme.bg, 0.97));
     g.addColorStop(0.42, alpha(theme.bg, 0.9));

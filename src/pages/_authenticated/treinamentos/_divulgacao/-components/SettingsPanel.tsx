@@ -6,15 +6,11 @@ import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { SEALS } from "../-lib/art";
 import { SETTINGS_KEY, useMarketingSettings } from "../-lib/data";
-import { THEMES } from "../-lib/themes";
 import type { MarketingSettings } from "../-lib/types";
 
 const LINK_OPTIONS = [
@@ -63,7 +59,6 @@ export default function SettingsPanel({ canEdit }: { canEdit: boolean }) {
   }
 
   const set = <K extends keyof MarketingSettings>(key: K, value: MarketingSettings[K]) => setForm((f) => ({ ...(f ?? {}), [key]: value }));
-  const sealOn = (id: string) => (form.selos ?? []).includes(id);
 
   return (
     <div className="space-y-4 max-w-4xl">
@@ -111,57 +106,6 @@ export default function SettingsPanel({ canEdit }: { canEdit: boolean }) {
           <Field label="“Últimas vagas” a partir de" hint="Quantas vagas livres (ou menos) para o selo mudar sozinho.">
             <Input type="number" min={0} max={100} value={form.ultimasVagasLimite ?? 5} disabled={!canEdit} onChange={(e) => set("ultimasVagasLimite", Number(e.target.value))} />
           </Field>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Arte</CardTitle>
-          <CardDescription>Cores que abrem por padrão e selos de certificação do rodapé.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="space-y-2">
-            <Label>Cores padrão</Label>
-            <div className="flex flex-wrap gap-3">
-              {THEMES.map((t) => (
-                <Tooltip key={t.id}>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      disabled={!canEdit}
-                      onClick={() => set("temaPadrao", t.id)}
-                      className={cn(
-                        "h-10 w-10 rounded-full border-2 transition-transform",
-                        form.temaPadrao === t.id ? "border-primary scale-110" : "border-transparent hover:scale-105",
-                      )}
-                      style={{ background: `linear-gradient(135deg, ${t.bg} 0 55%, ${t.accent} 55% 100%)` }}
-                      aria-label={t.name}
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent>{t.name}</TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Selos no rodapé</Label>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {SEALS.map((s) => (
-                <div key={s.id} className="flex items-center gap-3 rounded-lg border p-2">
-                  <Checkbox
-                    id={`selo-${s.id}`}
-                    checked={sealOn(s.id)}
-                    disabled={!canEdit}
-                    onCheckedChange={(v) => set("selos", v ? [...(form.selos ?? []), s.id] : (form.selos ?? []).filter((x) => x !== s.id))}
-                  />
-                  <span className="h-8 w-16 rounded bg-neutral-900 flex items-center justify-center p-1">
-                    <img src={s.dark} alt="" className="max-h-full max-w-full object-contain" />
-                  </span>
-                  <Label htmlFor={`selo-${s.id}`} className="text-sm font-normal cursor-pointer">{s.name}</Label>
-                </div>
-              ))}
-            </div>
-          </div>
         </CardContent>
       </Card>
 

@@ -14,6 +14,56 @@ export interface MarketingSettings {
   selos?: string[];
   temaPadrao?: string;
   ultimasVagasLimite?: number;
+  // ---- identidade visual (white label) ----
+  marca?: MarketingBrand;
+  rotulos?: Partial<ArtLabels>;
+  fonteTitulo?: string;
+  fonteTexto?: string;
+  temas?: CustomTheme[];
+  temasOcultos?: string[];
+  selosPersonalizados?: MarketingImage[];
+  fotos?: MarketingImage[];
+  usarFotosPadrao?: boolean;
+  iaContexto?: string;
+}
+
+/** Marca na arte: símbolo vetorial padrão, logo enviado ou só o nome. */
+export interface MarketingBrand {
+  tipo: "padrao" | "logo" | "texto";
+  texto?: string;
+  /** logo para fundo escuro (normalmente branco) */
+  logoClaroUrl?: string;
+  /** logo para fundo claro (colorido ou escuro) */
+  logoEscuroUrl?: string;
+}
+
+export interface MarketingImage {
+  nome: string;
+  url: string;
+}
+
+/** Tema criado pela empresa; as cores derivadas saem de `makeTheme`. */
+export interface CustomTheme {
+  id: string;
+  name: string;
+  bg: string;
+  accent: string;
+  badge: string;
+  light: boolean;
+  listras: boolean;
+}
+
+export interface ArtLabels {
+  topo: string;
+  novaTurma: string;
+  vagasAbertas: string;
+  ultimasVagas: string;
+  lotada: string;
+  promocao: string;
+  investimento: string;
+  valores: string;
+  incluso: string;
+  inscricoes: string;
 }
 
 export interface MarketingCompany {
@@ -21,6 +71,7 @@ export interface MarketingCompany {
   logoUrl: string | null;
   siteDomain: string | null;
   primaryColor: string | null;
+  secondaryColor?: string | null;
 }
 
 export interface MarketingSettingsResponse {

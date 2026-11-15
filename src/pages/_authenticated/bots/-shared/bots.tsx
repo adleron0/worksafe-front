@@ -91,7 +91,7 @@ function inline(text: string, keyBase: string): ReactNode[] {
     if (start > last) out.push(text.slice(last, start));
     const token = match[0];
     const key = `${keyBase}-${index++}`;
-    if (token.startsWith("**")) out.push(<strong key={key}>{token.slice(2, -2)}</strong>);
+    if (token.startsWith("**")) out.push(<strong key={key}>{inline(token.slice(2, -2), key)}</strong>);
     else if (token.startsWith("`")) out.push(<code key={key} className="rounded bg-muted px-1 py-0.5 text-[0.85em]">{token.slice(1, -1)}</code>);
     else if (token.startsWith("[")) {
       const label = token.slice(1, token.indexOf("]"));

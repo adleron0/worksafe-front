@@ -86,3 +86,19 @@ export function resolveHighlight(cert?: HighlightSource | null): CertificateHigh
   }
   return null;
 }
+
+/**
+ * Versão das imagens do certificado (`?v=`): a data de atualização e, se houver,
+ * o destaque. O tema da turma muda sem tocar no certificado — sem isto o
+ * navegador seguiria mostrando a imagem antiga (cache de um dia).
+ */
+export function renderVersion(
+  cert?: (HighlightSource & { updatedAt?: string | Date | null }) | null,
+): string | Date | null | undefined {
+  if (!cert) return undefined;
+  const h = resolveHighlight(cert);
+  if (!h || !cert.updatedAt) return cert.updatedAt;
+  let hash = 0;
+  for (const ch of `${h.kind}|${h.theme}|${h.label}`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
+  return `${new Date(cert.updatedAt).getTime()}-${h.theme}-${(hash >>> 0).toString(36)}`;
+}

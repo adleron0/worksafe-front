@@ -25,7 +25,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ICertificate } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
-import { resolveHighlight, themeInfo } from "@/components/general-components/visualizadorCertificados/highlight";
+import { renderVersion, resolveHighlight, themeInfo } from "@/components/general-components/visualizadorCertificados/highlight";
 
 interface ItemsProps {
   item: ICertificate;
@@ -315,7 +315,7 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
                   canvasWidth: item.canvasWidth,
                   canvasHeight: item.canvasHeight,
                   certificateId: item.key?.toString() || 'CERT-001',
-                  updatedAt: item.updatedAt
+                  updatedAt: renderVersion(item) ?? undefined
                 }}
                 variableToReplace={item.variableToReplace || {}}
                 className="w-full h-fit"
@@ -470,7 +470,7 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
                   <Button 
                     variant="ghost" 
                     className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
-                    onClick={() => window.open(certificateImageUrl(String(item.key), 'front', item.updatedAt), '_blank')}
+                    onClick={() => window.open(certificateImageUrl(String(item.key), 'front', renderVersion(item)), '_blank')}
                   >
                     <Icon name="image" className="w-3 h-3" /> 
                     <p>Imagem Preview</p>
@@ -545,7 +545,7 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
               canvasWidth: item.canvasWidth,
               canvasHeight: item.canvasHeight,
               certificateId: item.key?.toString() || 'CERT-001',
-              updatedAt: item.updatedAt
+              updatedAt: renderVersion(item) ?? undefined
             }}
             variableToReplace={item.variableToReplace || {}}
             zoom={50}

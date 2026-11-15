@@ -158,6 +158,12 @@ export class VariableReplacer {
                        normalizedName?.includes('qrcode') ||
                        placeholderName?.toLowerCase().includes('qr code');
       
+      // Selo de destaque: quem desenha é o render da API; no desenho local
+      // (prévia do editor, fallback) o marcador só some.
+      if (obj.placeholderType === 'selo_destaque' || normalizedName?.includes('selo_destaque')) {
+        return { ...obj, visible: false };
+      }
+
       if (isQRCode) {
         // QR Code será tratado de forma especial - não precisa de variável URL
         // Retornar um marcador especial para ser processado depois

@@ -19,7 +19,7 @@ import CertificateStage from '@/components/general-components/visualizadorCertif
 import CertificateDownloadMenu, { type DownloadFormat } from '@/components/general-components/visualizadorCertificados/server/CertificateDownloadMenu';
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-import { resolveHighlight, themeInfo } from '@/components/general-components/visualizadorCertificados/highlight';
+import { renderVersion, resolveHighlight, themeInfo } from '@/components/general-components/visualizadorCertificados/highlight';
 
 export const Route = createFileRoute("/_index/certificados/$id")({
   component: CertificadoPublico,
@@ -277,7 +277,7 @@ function CertificadoPublico() {
 
     // Certificado emitido: PDF pronto da API (renderizado no servidor)
     if (isIssuedCertificateKey(certificate.key)) {
-      window.open(certificatePdfUrl(certificate.key, { download: false, version: certificate.updatedAt }), '_blank');
+      window.open(certificatePdfUrl(certificate.key, { download: false, version: renderVersion(certificate) }), '_blank');
       return;
     }
 
@@ -338,7 +338,7 @@ function CertificadoPublico() {
 
     // Certificado emitido: PNG pronto da API, em resolução de impressão
     if (isIssuedCertificateKey(certificate.key)) {
-      window.open(certificateImageUrl(certificate.key, 'front', certificate.updatedAt, 4), '_blank');
+      window.open(certificateImageUrl(certificate.key, 'front', renderVersion(certificate), 4), '_blank');
       return;
     }
 
@@ -407,14 +407,14 @@ function CertificadoPublico() {
     const base = certificateFileName(variables.aluno_nome?.value, variables.curso_nome?.value);
     if (format === 'pdf') {
       await downloadFromApi(
-        certificatePdfUrl(certificate.key, { version: certificate.updatedAt }),
+        certificatePdfUrl(certificate.key, { version: renderVersion(certificate) }),
         `${base}.pdf`,
       );
       return;
     }
     const side = format === 'png-back' ? 'back' : 'front';
     await downloadFromApi(
-      certificateImageUrl(certificate.key, side, certificate.updatedAt, 4),
+      certificateImageUrl(certificate.key, side, renderVersion(certificate), 4),
       `${base}${side === 'back' ? '-verso' : ''}.png`,
     );
   };
@@ -591,7 +591,7 @@ function CertificadoPublico() {
                 fabricJsonBack={certificate.fabricJsonBack}
                 canvasWidth={certificate.canvasWidth}
                 canvasHeight={certificate.canvasHeight}
-                version={certificate.updatedAt}
+                version={renderVersion(certificate)}
                 onError={() => setStageFailed(true)}
                 actions={
                   <CertificateDownloadMenu

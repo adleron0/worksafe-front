@@ -462,15 +462,16 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
     const centerX = canvasInstance.width! / 2;
     const centerY = canvasInstance.height! / 2;
     const isQRCode = placeholderName.toLowerCase().includes('qrcode');
-    const size = isQRCode ? 120 : 200;
+    const isSeal = placeholderName.toLowerCase().includes('selo_destaque');
+    const size = isQRCode ? 120 : isSeal ? 140 : 200;
 
     const placeholder = createImagePlaceholder({
       name: placeholderName,
       left: centerX - size / 2,
       top: centerY - size / 2,
       width: size,
-      height: isQRCode ? size : 100,
-      type: isQRCode ? 'qrcode' : 'image',
+      height: isQRCode || isSeal ? size : 100,
+      type: isSeal ? 'selo_destaque' : isQRCode ? 'qrcode' : 'image',
     });
 
     canvasInstance.add(placeholder);

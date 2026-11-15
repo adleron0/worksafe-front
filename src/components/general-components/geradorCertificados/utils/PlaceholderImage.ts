@@ -6,7 +6,7 @@ export interface PlaceholderOptions {
   height?: number;
   left?: number;
   top?: number;
-  type?: 'image' | 'qrcode';
+  type?: 'image' | 'qrcode' | 'selo_destaque';
 }
 
 export function createImagePlaceholder(options: PlaceholderOptions): fabric.Group {
@@ -19,21 +19,25 @@ export function createImagePlaceholder(options: PlaceholderOptions): fabric.Grou
     type = 'image'
   } = options;
 
-  // Para QR Code, forçar dimensões quadradas
-  const isQRCode = type === 'qrcode' || name.includes('qrcode');
-  const finalWidth = isQRCode ? Math.min(width, height) : width;
-  const finalHeight = isQRCode ? Math.min(width, height) : height;
+  // Selo de destaque: marca onde o render desenha o selo (turma especial /
+  // aluno destaque). Quadrado, como o QR; some quando não há destaque.
+  const isSeal = type === 'selo_destaque' || name.includes('selo_destaque');
+  // Para QR Code (e selo), forçar dimensões quadradas
+  const isQRCode = !isSeal && (type === 'qrcode' || name.includes('qrcode'));
+  const square = isQRCode || isSeal;
+  const finalWidth = square ? Math.min(width, height) : width;
+  const finalHeight = square ? Math.min(width, height) : height;
 
   // Criar retângulo de fundo com transparência
   const background = new fabric.Rect({
     width: finalWidth,
     height: finalHeight,
-    fill: isQRCode ? 'rgba(248, 248, 248, 0.3)' : 'rgba(240, 240, 240, 0.3)', // 30% de opacidade
-    stroke: isQRCode ? 'rgba(51, 51, 51, 0.5)' : 'rgba(204, 204, 204, 0.5)', // 50% de opacidade na borda
+    fill: isSeal ? 'rgba(245, 208, 97, 0.18)' : isQRCode ? 'rgba(248, 248, 248, 0.3)' : 'rgba(240, 240, 240, 0.3)', // 30% de opacidade
+    stroke: isSeal ? 'rgba(180, 130, 20, 0.7)' : isQRCode ? 'rgba(51, 51, 51, 0.5)' : 'rgba(204, 204, 204, 0.5)', // 50% de opacidade na borda
     strokeWidth: 2,
     strokeDashArray: isQRCode ? [3, 3] : [5, 5],
-    rx: isQRCode ? 8 : 4,
-    ry: isQRCode ? 8 : 4,
+    rx: isSeal ? finalWidth / 2 : isQRCode ? 8 : 4,
+    ry: isSeal ? finalHeight / 2 : isQRCode ? 8 : 4,
     originX: 'center',
     originY: 'center',
     left: 0,
@@ -44,7 +48,21 @@ export function createImagePlaceholder(options: PlaceholderOptions): fabric.Grou
   const iconSize = Math.min(finalWidth, finalHeight) * 0.3;
   let icon;
   
-  if (isQRCode) {
+  if (isSeal) {
+    // Estrela (selo)
+    icon = new fabric.Path(
+      'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+      {
+        fill: 'rgba(180, 130, 20, 0.75)',
+        scaleX: iconSize / 24,
+        scaleY: iconSize / 24,
+        originX: 'center',
+        originY: 'center',
+        left: 0,
+        top: -finalHeight * 0.1,
+      }
+    );
+  } else if (isQRCode) {
     // Ícone de QR Code - padrão simplificado de QR
     const qrPattern = `
       M0,0 L10,0 L10,10 L0,10 Z
@@ -84,7 +102,7 @@ export function createImagePlaceholder(options: PlaceholderOptions): fabric.Grou
   }
 
   // Criar texto com o nome
-  const displayText = isQRCode ? 'QR Code' : name;
+  const displayText = isSeal ? 'Selo de destaque' : isQRCode ? 'QR Code' : name;
   const text = new fabric.Text(displayText, {
     fontSize: isQRCode ? 11 : 12,
     fill: isQRCode ? 'rgba(51, 51, 51, 0.7)' : 'rgba(102, 102, 102, 0.7)', // 70% de opacidade
@@ -116,7 +134,7 @@ export function createImagePlaceholder(options: PlaceholderOptions): fabric.Grou
     // Propriedades customizadas
     placeholderName: name,
     isPlaceholder: true,
-    placeholderType: isQRCode ? 'qrcode' : 'image'
+    placeholderType: isSeal ? 'selo_destaque' : isQRCode ? 'qrcode' : 'image'
   } as any);
 
   // Adicionar ID único

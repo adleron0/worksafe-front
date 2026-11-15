@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 // import { Input } from '@/components/ui/input';
-import { User, Edit3, Plus, Info, QrCode } from 'lucide-react';
+import { User, Edit3, Plus, Info, QrCode, Star } from 'lucide-react';
 
 interface PlaceholderPanelProps {
   onAddPlaceholder: (name: string) => void;
@@ -143,6 +143,25 @@ const PlaceholderPanel: React.FC<PlaceholderPanelProps> = ({
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             Gera um QR Code para validação online do certificado
+          </p>
+        </div>
+
+        {/* Selo de destaque */}
+        <div>
+          <h4 className="text-xs font-medium text-muted-foreground mb-2">Destaque</h4>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start overflow-hidden"
+            onClick={() => onAddPlaceholder('selo_destaque')}
+          >
+            <Star className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span className="text-xs truncate flex-1 text-left">Selo de destaque</span>
+            <code className="text-[10px] text-muted-foreground ml-2">{'{{selo_destaque}}'}</code>
+          </Button>
+          <p className="text-xs text-muted-foreground mt-1">
+            Onde o selo aparece quando a turma é especial ou o aluno é destaque. Sem
+            marcador, ele vai no canto inferior esquerdo. Não aparece nos demais.
           </p>
         </div>
       </div>

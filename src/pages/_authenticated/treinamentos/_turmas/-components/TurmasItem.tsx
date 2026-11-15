@@ -1,7 +1,7 @@
 // Serviços
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { patch, post } from "@/services/api";
+import { patch } from "@/services/api";
 import { useLoader } from "@/context/GeneralContext";
 import { useTheme } from "@/context/ThemeContext";
 import { toast } from "@/hooks/use-toast";
@@ -38,6 +38,7 @@ import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { ONLINE_COURSES_ENABLED } from "@/lib/features";
 import AlunosDestaqueDialog from "./AlunosDestaqueDialog";
+import EmitirCertificadosDialog from "./EmitirCertificadosDialog";
 
 interface ItemsProps {
   item: IEntity;
@@ -63,6 +64,7 @@ const SiteServicesItem = ({
   const { theme } = useTheme();
   const [openQrModal, setOpenQrModal] = useState(false);
   const [openHighlights, setOpenHighlights] = useState(false);
+  const [openIssue, setOpenIssue] = useState(false);
   const [openDuplicateModal, setOpenDuplicateModal] = useState(false);
   const [openAttendanceModal, setOpenAttendanceModal] = useState(false);
   const [openDivulgar, setOpenDivulgar] = useState(false);
@@ -138,31 +140,6 @@ const SiteServicesItem = ({
               ? (error as ApiError).response?.data?.message ||
                 `Erro ao reativar ${entity.name}`
               : `Erro ao reativar ${entity.name}`,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Mutation para gerar certificados
-  const { mutate: generateCertificates } = useMutation({
-    mutationFn: (id: number) => {
-      showLoader(`Gerando certificados...`);
-      return post<any>(entity.model, `generate-certificates/${id}`, {});
-    },
-    onSuccess: () => {
-      hideLoader();
-      toast({
-        title: "Certificados gerados com sucesso!",
-        description:
-          "Os certificados foram gerados para todos os alunos aprovados.",
-        variant: "success",
-      });
-    },
-    onError: (error: ApiError) => {
-      hideLoader();
-      toast({
-        title: "Erro ao gerar certificados",
-        description: error.response?.data?.message || "Erro desconhecido.",
         variant: "destructive",
       });
     },
@@ -512,6 +489,15 @@ const SiteServicesItem = ({
                 </Button>
               </DropdownMenuItem>
 
+              {/* fecha o menu antes de abrir o diálogo (menu aberto bloqueia os cliques) */}
+              <DropdownMenuItem
+                className="flex justify-start gap-2 p-2 items-baseline w-full h-fit cursor-pointer"
+                onSelect={() => setTimeout(() => setOpenIssue(true), 0)}
+              >
+                <Icon name="award" className="w-3 h-3" />
+                <p>Emitir certificados</p>
+              </DropdownMenuItem>
+
               <DropdownMenuItem
                 className="p-0"
                 onSelect={(e) => e.preventDefault()}
@@ -542,20 +528,6 @@ const SiteServicesItem = ({
                 </DropdownMenuItem>
               )}
 
-              {!item.allowExam && (
-                <DropdownMenuItem
-                  className="p-0"
-                  onSelect={(e) => e.preventDefault()}
-                >
-                  <ConfirmDialog
-                    title="Gerar certificados para esta turma?"
-                    description="Ao prosseguir, serão gerados certificados para todos os alunos desta turma. ação não poderá ser desfeita."
-                    onConfirm={() => item.id && generateCertificates(item.id)}
-                    titleBttn="Gerar Certificados"
-                    iconBttn="file-badge"
-                  />
-                </DropdownMenuItem>
-              )}
 
               {item.active
                 ? can(`inactive_${entity.ability}`) && (
@@ -590,6 +562,11 @@ const SiteServicesItem = ({
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Emitir certificados (seleção + destaque) */}
+      {item.id && openIssue && (
+        <EmitirCertificadosDialog classId={item.id} open={openIssue} onOpenChange={setOpenIssue} />
+      )}
 
       {/* Alunos destaque */}
       {item.id && openHighlights && (

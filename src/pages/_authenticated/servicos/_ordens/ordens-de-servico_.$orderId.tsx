@@ -25,6 +25,7 @@ import { DiaryPanel } from "../-shared/reports";
 import { TEAM_OPTIONS_KEY, TeamEditor } from "../-shared/team";
 import { ResultPanel } from "../-shared/results";
 import { OrderPurchasesPanel } from "../../suprimentos/-shared/purchases";
+import { TEAM_DOCUMENTS_KEY, TeamDocumentsPanel } from "../../rh/-shared/team-documents";
 
 export const Route = createFileRoute("/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId")({
   component: OrderPage,
@@ -61,6 +62,7 @@ function OrderPage() {
     queryClient.setQueryData([ORDER_KEY, orderId], result);
     queryClient.invalidateQueries({ queryKey: [ORDERS_KEY] });
     queryClient.invalidateQueries({ queryKey: [TEAM_OPTIONS_KEY] });
+    queryClient.invalidateQueries({ queryKey: [TEAM_DOCUMENTS_KEY] });
   };
   const fail = (title: string) => (err: unknown) => toast({ title, description: errorMessage(err), variant: "destructive" });
   const { mutate: saveAgenda, isPending: saving } = useMutation({
@@ -173,6 +175,7 @@ function OrderPage() {
 
           {/* com a obra andando, o diário vem primeiro: é o que se usa todo dia */}
           {(order.status === "em_execucao" || order.status === "concluida" || order.status === "encerrada") && <DiaryPanel orderId={order.id} canEdit={can(RDO_PERMISSION) && order.status !== "encerrada"} />}
+          <TeamDocumentsPanel orderId={order.id} orderNumber={order.number} />
           <OrderPurchasesPanel orderId={order.id} canRequest={!locked} />
           {order.canSeeCosts && <ResultPanel orderId={order.id} />}
 

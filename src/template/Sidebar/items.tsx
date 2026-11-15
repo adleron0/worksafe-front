@@ -12,6 +12,7 @@ export const items = [
     path: "/bots",
     permissions: ["usar_bots", "usar_mcp", "update_bots", "view_auditoria_bots"],
     subitems: [
+      { title: "Equipe", permissions: ["usar_bots"], icon: "users-round", path: "/bots/equipe" },
       { title: "Conversar", permissions: ["usar_bots"], icon: "messages-square", path: "/bots/conversas" },
       { title: "Ações pendentes", permissions: ["usar_bots", "usar_mcp"], icon: "shield-alert", path: "/bots/acoes" },
       { title: "Relatórios", permissions: ["usar_bots"], icon: "file-chart-column", path: "/bots/relatorios" },

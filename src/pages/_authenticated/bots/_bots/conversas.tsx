@@ -10,8 +10,9 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import { Tip, errorMessage } from "../../comercial/-shared/commercial";
 import { ActionCard } from "../-shared/action-card";
+import { BotAvatar, BotStatus } from "../-shared/avatar";
 import {
-  Bot, Conversation, ConversationView, Markdown, Message, RISK_CLASS, RISK_LABEL, RunStep, STATUS_KEY, STATUS_LABEL, TOOL_LABEL, aiApi, timeBr, useAiStatus, useBots,
+  Bot, Conversation, ConversationView, Markdown, Message, RISK_CLASS, RISK_LABEL, RunStep, STATUS_KEY, STATUS_LABEL, TOOL_LABEL, aiApi, timeBr, useAiStatus, useBots, useTeam,
 } from "../-shared/bots";
 import api from "@/services/api";
 
@@ -40,8 +41,8 @@ function BotsPage() {
     <div className="flex flex-col gap-3 lg:h-full lg:min-h-0">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="text-xl font-bold">Bots</h1>
-          <p className="text-sm text-muted-foreground">Peça para os bots consultarem, montarem rascunhos e prepararem ações. Eles usam as suas permissões, e o que sai para fora só acontece quando você confirma.</p>
+          <h1 className="text-xl font-bold">Conversas</h1>
+          <p className="text-sm text-muted-foreground">Converse com a equipe de assistentes. Eles usam as suas permissões, e o que sai para fora só acontece quando você confirma.</p>
         </div>
         {status && !status.enabled && <span className="rounded-md bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive">Os bots estão desligados no momento</span>}
       </div>
@@ -62,6 +63,8 @@ function BotsPage() {
 }
 
 function BotPicker({ bots, current, onPick }: { bots: Bot[]; current: Bot; onPick: (id: number) => void }) {
+  const { data: team } = useTeam();
+  const statusOf = (id: number) => team?.members.find((member) => member.id === id)?.status as BotStatus | undefined;
   return (
     <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:mx-0 lg:grid lg:grid-cols-1 lg:overflow-visible lg:px-0 lg:pb-0">
       {bots.map((bot) => (
@@ -69,14 +72,12 @@ function BotPicker({ bots, current, onPick }: { bots: Bot[]; current: Bot; onPic
           key={bot.id}
           type="button"
           onClick={() => onPick(bot.id)}
-          className={`flex shrink-0 cursor-pointer items-center gap-2 rounded-lg border px-2 py-1.5 text-left transition-colors ${bot.id === current.id ? "border-primary bg-primary/5" : "hover:bg-muted"}`}
+          className={`flex shrink-0 cursor-pointer items-center gap-2.5 rounded-xl border px-2 py-1.5 text-left transition-colors ${bot.id === current.id ? "border-primary bg-primary/5" : "hover:bg-muted"}`}
         >
-          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${bot.id === current.id ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-            <Icon name={bot.icon} className="h-4 w-4" />
-          </span>
+          <BotAvatar look={bot.avatar} size={36} status={statusOf(bot.id)} />
           <span className="min-w-0">
-            <span className="block text-sm font-medium">{bot.name}</span>
-            <span className="hidden text-xs text-muted-foreground lg:line-clamp-1">{bot.description}</span>
+            <span className="block text-sm font-medium leading-tight">{bot.persona}</span>
+            <span className="hidden text-xs text-muted-foreground lg:line-clamp-1">{bot.role}</span>
           </span>
         </button>
       ))}
@@ -176,9 +177,9 @@ function ConversationPane({ bot, conversationId, onCreated }: { bot: Bot; conver
   return (
     <section className="flex h-[70dvh] min-h-[28rem] min-w-0 flex-col rounded-lg border bg-background lg:h-auto">
       <header className="flex flex-wrap items-center gap-2 border-b px-4 py-2">
-        <Icon name={bot.icon} className="h-5 w-5 text-primary" />
+        <BotAvatar look={bot.avatar} size={36} status={running ? "trabalhando" : undefined} />
         <div className="min-w-0 flex-1">
-          <p className="font-semibold leading-tight">{bot.name}</p>
+          <p className="font-semibold leading-tight">{bot.persona} <span className="text-xs font-normal text-muted-foreground">· {bot.role}</span></p>
           <p className="truncate text-xs text-muted-foreground">{data?.title && conversationId ? data.title : bot.description}</p>
         </div>
         <Tip text={`Modelo: ${bot.providerLabel} · ${bot.model}`}>
@@ -189,8 +190,8 @@ function ConversationPane({ bot, conversationId, onCreated }: { bot: Bot; conver
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
         {isLoading && <Skeleton className="h-24 w-full" />}
         {empty && <Welcome bot={bot} onPick={(prompt) => { setText(prompt); }} />}
-        {data?.messages.map((message) => <MessageView key={`${message.role}-${message.id}`} message={message} actionsById={actionsById} />)}
-        {running && data?.run && <LiveSteps steps={data.run.steps} />}
+        {data?.messages.map((message) => <MessageView key={`${message.role}-${message.id}`} message={message} actionsById={actionsById} bot={bot} />)}
+        {running && data?.run && <LiveSteps steps={data.run.steps} bot={bot} />}
         {/* ações desta conversa que ainda não apareceram junto de um passo */}
         {data?.pendingActions.filter((action) => !data.messages.some((m) => m.role === "tool" && m.results.some((r) => r.pendingActionId === action.id))).map((action) => <ActionCard key={action.id} action={action} />)}
         <div ref={bottom} />
@@ -222,7 +223,7 @@ function ConversationPane({ bot, conversationId, onCreated }: { bot: Bot; conver
             value={text}
             onChange={(event) => setText(event.target.value)}
             onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submit(); } }}
-            placeholder={running ? "O bot está trabalhando..." : `Peça ao Bot ${bot.name}... (Enter envia, Shift+Enter quebra a linha)`}
+            placeholder={running ? `${bot.persona} está trabalhando...` : `Peça para ${bot.persona}... (Enter envia, Shift+Enter quebra a linha)`}
             className="max-h-40 min-h-10 flex-1 resize-none"
             rows={1}
             disabled={send.isPending}
@@ -241,9 +242,9 @@ function ConversationPane({ bot, conversationId, onCreated }: { bot: Bot; conver
 function Welcome({ bot, onPick }: { bot: Bot; onPick: (prompt: string) => void }) {
   return (
     <div className="mx-auto max-w-2xl py-6 text-center">
-      <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon name={bot.icon} className="h-6 w-6" /></span>
-      <p className="mt-3 font-semibold">Bot {bot.name}</p>
-      <p className="text-sm text-muted-foreground">{bot.description}</p>
+      <BotAvatar look={bot.avatar} size={96} className="mx-auto" />
+      <p className="mt-3 text-lg font-semibold">Oi, eu sou {bot.persona}.</p>
+      <p className="text-sm text-muted-foreground">{bot.role}. {bot.description}</p>
       {bot.shortcuts.length > 0 && (
         <div className="mt-4 flex flex-wrap justify-center gap-2">
           {bot.shortcuts.map((shortcut) => (
@@ -252,19 +253,19 @@ function Welcome({ bot, onPick }: { bot: Bot; onPick: (prompt: string) => void }
         </div>
       )}
       <div className="mt-6 text-left">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">O que este bot pode fazer por você</p>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">O que posso fazer por você</p>
         <div className="flex flex-wrap gap-1.5">
           {bot.capabilities.map((tool) => (
             <span key={tool.name} className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${RISK_CLASS[tool.risk]}`}>{TOOL_LABEL[tool.name] ?? tool.title} · {RISK_LABEL[tool.risk]}</span>
           ))}
         </div>
-        {bot.hiddenCount > 0 && <p className="mt-2 text-xs text-muted-foreground">{bot.hiddenCount} função(ões) deste bot ficam escondidas porque dependem de permissões que você não tem.</p>}
+        {bot.hiddenCount > 0 && <p className="mt-2 text-xs text-muted-foreground">{bot.hiddenCount} tarefa(s) ficam escondidas porque dependem de permissões que você não tem.</p>}
       </div>
     </div>
   );
 }
 
-function MessageView({ message, actionsById }: { message: Message; actionsById: Map<number, ConversationView["pendingActions"][number]> }) {
+function MessageView({ message, actionsById, bot }: { message: Message; actionsById: Map<number, ConversationView["pendingActions"][number]>; bot: Bot }) {
   if (message.role === "tool") {
     return (
       <div className="space-y-2">
@@ -296,8 +297,9 @@ function MessageView({ message, actionsById }: { message: Message; actionsById: 
     return <p className="text-xs text-muted-foreground"><Icon name="wand-sparkles" className="mr-1 inline h-3.5 w-3.5" />{message.toolCalls.map((call) => call.title).join(" · ")}</p>;
   }
   return (
-    <div className="flex">
-      <div className="max-w-[90%] rounded-2xl rounded-bl-sm bg-muted/60 px-3 py-2">
+    <div className="flex items-end gap-2">
+      <BotAvatar look={bot.avatar} size={28} />
+      <div className="max-w-[88%] rounded-2xl rounded-bl-sm bg-muted/60 px-3 py-2">
         <Markdown text={message.text} />
         {message.toolCalls.length > 0 && <p className="mt-1 text-[11px] text-muted-foreground">{message.toolCalls.map((call) => call.title).join(" · ")}</p>}
       </div>
@@ -305,10 +307,10 @@ function MessageView({ message, actionsById }: { message: Message; actionsById: 
   );
 }
 
-function LiveSteps({ steps }: { steps: RunStep[] }) {
+function LiveSteps({ steps, bot }: { steps: RunStep[]; bot: Bot }) {
   return (
     <div className="space-y-1 rounded-lg border border-dashed p-3 text-xs">
-      <p className="flex items-center gap-2 font-medium"><Icon name="loader-circle" className="h-3.5 w-3.5 animate-spin" /> Trabalhando...</p>
+      <p className="flex items-center gap-2 font-medium"><BotAvatar look={bot.avatar} size={22} status="trabalhando" /> {bot.persona} está trabalhando...</p>
       {steps.map((step, index) => (
         <p key={index} className="flex items-center gap-2 text-muted-foreground">
           <Icon name={step.status === "running" ? "loader" : step.status === "ok" ? "check" : step.status === "pending" ? "shield-alert" : "x"} className={`h-3.5 w-3.5 ${step.status === "running" ? "animate-spin" : ""}`} />

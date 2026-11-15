@@ -15,6 +15,7 @@ import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { errorMessage } from "../../comercial/-shared/commercial";
+import { AVATAR_LOOKS, BotAvatar } from "../-shared/avatar";
 import { BOTS_KEY, BotFull, BotsConfig, CatalogTool, RISK_CLASS, RISK_LABEL, aiApi, dateTimeBr } from "../-shared/bots";
 
 export const Route = createFileRoute("/_authenticated/bots/_admin/configuracao")({
@@ -46,8 +47,8 @@ function ConfigPage() {
             <div className="flex flex-col gap-1">
               {data.bots.map((item) => (
                 <button key={item.id} type="button" onClick={() => setSelected(item.id)} className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-left text-sm ${item.id === bot?.id ? "border-primary bg-primary/5" : "hover:bg-muted"}`}>
-                  <Icon name={item.icon} className="h-4 w-4" />
-                  <span className="flex-1">{item.name}</span>
+                  <BotAvatar look={item.avatar} size={28} />
+                  <span className="flex-1">{item.persona} <span className="text-xs text-muted-foreground">· {item.name}</span></span>
                   {!item.active && <span className="text-[10px] text-muted-foreground">desligado</span>}
                 </button>
               ))}
@@ -80,7 +81,7 @@ function ProvidersCard({ config }: { config: BotsConfig }) {
 function BotEditor({ bot, config }: { bot: BotFull; config: BotsConfig }) {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(() => ({
-    name: bot.name, description: bot.description, active: bot.active, instructions: bot.instructions, tools: bot.tools,
+    name: bot.name, persona: bot.persona, role: bot.role, avatar: bot.avatar, description: bot.description, active: bot.active, instructions: bot.instructions, tools: bot.tools,
     provider: bot.provider, model: bot.model, fallbackProvider: bot.fallbackProvider ?? "", fallbackModel: bot.fallbackModel ?? "", shortcuts: bot.shortcuts,
   }));
   const [versionsOpen, setVersionsOpen] = useState(false);
@@ -103,12 +104,25 @@ function BotEditor({ bot, config }: { bot: BotFull; config: BotsConfig }) {
   return (
     <div className="grid min-w-0 gap-4 rounded-lg border p-4">
       <div className="flex flex-wrap items-center gap-3">
-        <Icon name={bot.icon} className="h-5 w-5 text-primary" />
-        <h2 className="flex-1 font-semibold">{bot.name} <span className="text-xs font-normal text-muted-foreground">· versão {bot.version} · permissão "{bot.permissionKey}"</span></h2>
+        <BotAvatar look={draft.avatar} size={44} />
+        <h2 className="flex-1 font-semibold">{draft.persona || bot.name} <span className="text-xs font-normal text-muted-foreground">· versão {bot.version} · permissão "{bot.permissionKey}"</span></h2>
         <label className="flex items-center gap-2 text-sm"><Switch checked={draft.active} onCheckedChange={(value) => set("active", value)} /> Ligado</label>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
-        <div><Label htmlFor="botName">Nome</Label><Input id="botName" name="botName" className="mt-1" value={draft.name} maxLength={80} onValueChange={(_, value) => set("name", String(value))} /></div>
+        <div><Label htmlFor="botPersona">Nome do assistente</Label><Input id="botPersona" name="botPersona" className="mt-1" value={draft.persona} maxLength={40} onValueChange={(_, value) => set("persona", String(value))} placeholder="Ex.: Lia" /></div>
+        <div><Label htmlFor="botRole">Cargo</Label><Input id="botRole" name="botRole" className="mt-1" value={draft.role} maxLength={80} onValueChange={(_, value) => set("role", String(value))} placeholder="Ex.: Coordenadora de Treinamentos" /></div>
+        <div className="md:col-span-2">
+          <Label>Rosto</Label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {Object.entries(AVATAR_LOOKS).map(([key, look]) => (
+              <button key={key} type="button" onClick={() => set("avatar", key)} className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border p-2 text-[11px] ${draft.avatar === key ? "border-primary bg-primary/5" : "hover:bg-muted"}`} aria-label={`Rosto ${look.label}`}>
+                <BotAvatar look={key} size={44} />
+                {look.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div><Label htmlFor="botName">Área</Label><Input id="botName" name="botName" className="mt-1" value={draft.name} maxLength={80} onValueChange={(_, value) => set("name", String(value))} /></div>
         <div><Label htmlFor="botDescription">Descrição</Label><Input id="botDescription" name="botDescription" className="mt-1" value={draft.description} maxLength={300} onValueChange={(_, value) => set("description", String(value))} /></div>
         <div><Label>Fornecedor de IA</Label><Select name="botProvider" modal options={providers} state={draft.provider} onChange={(_, value) => set("provider", String(value))} /></div>
         <div><Label htmlFor="botModel">Modelo</Label><Input id="botModel" name="botModel" className="mt-1" value={draft.model} maxLength={80} onValueChange={(_, value) => set("model", String(value))} placeholder="Ex.: gemini-3.1-pro-preview" /></div>
@@ -125,14 +139,14 @@ function BotEditor({ bot, config }: { bot: BotFull; config: BotsConfig }) {
       </div>
       <div>
         <Label>Ferramentas</Label>
-        <div className="mt-2 grid gap-3 md:grid-cols-3">
+        <div className="mt-2 grid gap-3 md:grid-cols-3 [&>*]:min-w-0">
           {(["read", "draft", "sensitive"] as const).map((risk) => (
             <div key={risk} className="rounded-md border p-2">
               <p className={`mb-2 w-fit rounded-full px-2 py-0.5 text-[11px] font-medium ${RISK_CLASS[risk]}`}>{RISK_LABEL[risk]}</p>
               {byRisk(risk).map((tool) => (
                 <label key={tool.name} className="flex cursor-pointer items-start gap-2 py-1 text-xs">
                   <Checkbox checked={draft.tools.includes(tool.name)} onCheckedChange={(checked) => set("tools", checked ? [...draft.tools, tool.name] : draft.tools.filter((name) => name !== tool.name))} className="mt-0.5" />
-                  <span><span className="font-medium">{tool.name}</span><span className="block text-muted-foreground">exige: {tool.permissions.join(", ") || "nada"}</span></span>
+                  <span className="min-w-0"><span className="block font-medium [overflow-wrap:anywhere]">{tool.name}</span><span className="block text-muted-foreground [overflow-wrap:anywhere]">exige: {tool.permissions.join(", ") || "nada"}</span></span>
                 </label>
               ))}
             </div>

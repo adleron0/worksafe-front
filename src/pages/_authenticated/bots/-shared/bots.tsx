@@ -7,7 +7,7 @@ import api from "@/services/api";
 
 export interface BotCapability { name: string; title: string; risk: "read" | "draft" | "sensitive" }
 export interface Bot {
-  id: number; key: string; name: string; description: string; icon: string; active: boolean;
+  id: number; key: string; name: string; persona: string; role: string; avatar: string; description: string; icon: string; active: boolean;
   shortcuts: Array<{ label: string; prompt: string }>;
   provider: string; providerLabel: string; model: string; providerReady: boolean;
   capabilities: BotCapability[]; hiddenCount: number;
@@ -19,6 +19,17 @@ export interface BotFull extends Bot {
 export interface ProviderStatus { id: string; label: string; available: boolean }
 export interface CatalogTool { name: string; title: string; description: string; risk: BotCapability["risk"]; permissions: string[] }
 export interface BotsConfig { bots: BotFull[]; providers: ProviderStatus[]; tools: CatalogTool[]; enabled: boolean }
+
+export interface TeamMember extends Bot {
+  status: "trabalhando" | "aguardando" | "disponivel" | "sem_chave";
+  working: { people: number; mine: { conversationId: number; title: string } | null };
+  pendingForMe: number;
+  today: { conversations: number; actions: number };
+  lastActivityAt: string | null;
+  lastConversation: { id: number; title: string; at: string } | null;
+}
+export interface TeamActivity { id: number; botId: number | null; persona: string | null; avatar: string | null; title: string; status: string; at: string; origin: string; user: string | null }
+export interface Team { members: TeamMember[]; activity: TeamActivity[] }
 
 export interface Conversation { id: number; title: string; lastMessageAt: string; createdAt: string }
 export interface RunStep { at: string; kind: "tool" | "notice"; label: string; tool?: string; status: "running" | "ok" | "refused" | "denied" | "error" | "pending"; pendingActionId?: number }
@@ -36,6 +47,7 @@ export interface UsageSummary { month: string; budget: number; spent: number; pe
 export interface AiStatus { enabled: boolean; mcpEnabled: boolean; providers: ProviderStatus[]; usage: UsageSummary | null; pendingActions: number }
 
 export const BOTS_KEY = "aiBots";
+export const TEAM_KEY = "aiTeam";
 export const STATUS_KEY = "aiStatus";
 export const ACTIONS_KEY = "aiActions";
 
@@ -48,6 +60,7 @@ export const aiApi = {
 
 export const useAiStatus = () => useQuery({ queryKey: [STATUS_KEY], staleTime: 30 * 1000, queryFn: () => aiApi.get<AiStatus>("status") });
 export const useBots = (enabled = true) => useQuery({ queryKey: [BOTS_KEY], enabled, staleTime: 60 * 1000, queryFn: () => aiApi.get<Bot[]>("bots") });
+export const useTeam = (enabled = true) => useQuery({ queryKey: [TEAM_KEY], enabled, refetchInterval: 5000, queryFn: () => aiApi.get<Team>("team") });
 export const usePendingActions = () => useQuery({ queryKey: [ACTIONS_KEY], refetchInterval: 20 * 1000, queryFn: () => aiApi.get<PendingAction[]>("actions") });
 
 export const RISK_LABEL: Record<BotCapability["risk"], string> = { read: "Consulta", draft: "Rascunho", sensitive: "Com confirmação" };
@@ -66,10 +79,31 @@ export const TOOL_LABEL: Record<string, string> = {
   registrar_acompanhamento: "Registrar contato", escalar_equipe_os: "Escalar equipe", criar_rascunho_post_blog: "Rascunho de post",
   nova_turma_rascunho: "Nova turma", enviar_proposta: "Enviar proposta", mudar_situacao_proposta: "Aceite ou recusa", mover_os: "Mudar etapa da OS",
   publicar_turma: "Publicar turma", publicar_post_blog: "Publicar post",
+  link_para_enviar_imagens: "Receber imagens", imagens_do_envio: "Pegar imagens enviadas", enviar_imagem_por_url: "Imagem por link", enviar_imagem_base64: "Imagem em arquivo",
+  definir_imagem: "Trocar imagem", fin_resumo: "Resumo financeiro", fin_contas_a_pagar: "Contas a pagar", fin_contas_a_receber: "Contas a receber",
+  fin_fluxo_de_caixa: "Fluxo de caixa", fin_dre: "DRE", fin_plano_de_contas: "Plano de contas", fin_cadastros: "Cadastros financeiros",
+  fin_recorrencias: "Recorrências", fin_transferencias: "Transferências", fin_classificacao_padrao: "Classificação padrão",
+  fin_cadastrar_despesa: "Lançar despesa", fin_editar_conta_a_pagar: "Editar conta a pagar", fin_cadastrar_conta_a_receber: "Lançar a receber",
+  fin_editar_conta_a_receber: "Editar a receber", fin_categorizar: "Categorizar", fin_salvar_conta_do_plano: "Conta do plano",
+  fin_mover_conta_do_plano: "Mover conta do plano", fin_ativar_inativar: "Ativar ou inativar", fin_salvar_centro_de_custo: "Centro de custo",
+  fin_salvar_fornecedor: "Fornecedor", fin_salvar_conta_bancaria: "Conta bancária", fin_salvar_recorrencia: "Recorrência",
+  fin_encerrar_recorrencia: "Encerrar recorrência", fin_definir_classificacao_padrao: "Classificação padrão", fin_dar_baixa: "Dar baixa",
+  fin_estornar_baixa: "Estornar baixa", fin_transferir_entre_contas: "Transferir entre contas", fin_excluir_lancamentos: "Excluir lançamentos",
 };
 export const STATUS_LABEL: Record<string, string> = { ok: "feito", refused: "recusado", denied: "sem permissão", error: "falhou", pending: "aguardando confirmação", running: "em andamento" };
 
 export const usd = (value: number) => value.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: value < 1 ? 4 : 2 });
+/** "há 5 min", "há 2 h", "ontem"… */
+export function ago(value?: string | null) {
+  if (!value) return "";
+  const minutes = Math.round((Date.now() - new Date(value).getTime()) / 60000);
+  if (minutes < 1) return "agora";
+  if (minutes < 60) return `há ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `há ${hours} h`;
+  const days = Math.round(hours / 24);
+  return days === 1 ? "ontem" : `há ${days} dias`;
+}
 export const dateTimeBr = (value?: string | null) => (value ? new Date(value).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
 export const timeBr = (value?: string | null) => (value ? new Date(value).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "");
 

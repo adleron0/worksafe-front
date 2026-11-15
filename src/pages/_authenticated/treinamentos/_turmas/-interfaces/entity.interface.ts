@@ -1,6 +1,8 @@
 import { FaqItem } from "../../_cursos/-interfaces/entity.interface";
 
 export interface IEntity {
+  highlightTheme?: "ouro" | "prata" | "holografico" | null;
+  highlightLabel?: string | null;
   id?: number;
   name: string;
   imageUrl: string | null;

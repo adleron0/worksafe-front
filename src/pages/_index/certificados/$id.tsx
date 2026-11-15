@@ -19,6 +19,7 @@ import CertificateStage from '@/components/general-components/visualizadorCertif
 import CertificateDownloadMenu, { type DownloadFormat } from '@/components/general-components/visualizadorCertificados/server/CertificateDownloadMenu';
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
+import { resolveHighlight, themeInfo } from '@/components/general-components/visualizadorCertificados/highlight';
 
 export const Route = createFileRoute("/_index/certificados/$id")({
   component: CertificadoPublico,
@@ -195,6 +196,8 @@ interface IClass {
   workload?: number;
   modality?: 'presential' | 'online' | 'hybrid' | string;
   instructors?: IInstructor[];
+  highlightTheme?: string | null;
+  highlightLabel?: string | null;
 }
 
 // Interface para o trainee/aluno
@@ -217,6 +220,9 @@ interface ICompany {
 interface ICertificate {
   id: number;
   key: string;
+  highlightStudent?: boolean;
+  highlightTheme?: string | null;
+  highlightLabel?: string | null;
   courseId: number;
   traineeId: number;
   classId: number;
@@ -566,6 +572,9 @@ function CertificadoPublico() {
   // Extrair informações do variableToReplace e decodificar se necessário
   const variables = decodeBase64Variables(certificate?.variableToReplace) || {};
   const certificateHasBack = hasBackSide(certificate?.fabricJsonBack);
+  // Destaque (turma especial ou aluno destaque) — ver visualizadorCertificados/highlight.ts
+  const highlight = resolveHighlight(certificate);
+  const highlightTheme = themeInfo(highlight?.theme);
 
   return (
     <>
@@ -657,6 +666,15 @@ function CertificadoPublico() {
                   {/* Nome do Curso */}
                   <div>
                     <h2 className="text-2xl font-bold text-foreground">{variables.curso_nome?.value || "Curso não informado"}</h2>
+                    {highlight && highlightTheme && (
+                      <span
+                        className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold shadow-sm"
+                        style={{ background: highlightTheme.gradient, color: highlightTheme.text }}
+                      >
+                        <Icon name={highlightTheme.icon} className="h-3.5 w-3.5" />
+                        {highlight.label}
+                      </span>
+                    )}
                   </div>
 
                   {/* Botões de Ação */}

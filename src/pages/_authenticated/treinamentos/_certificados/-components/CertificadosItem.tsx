@@ -25,6 +25,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ICertificate } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
+import { resolveHighlight, themeInfo } from "@/components/general-components/visualizadorCertificados/highlight";
 
 interface ItemsProps {
   item: ICertificate;
@@ -41,6 +42,9 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
+  // turma especial ou aluno destaque (ver visualizadorCertificados/highlight.ts)
+  const highlight = resolveHighlight(item);
+  const highlightTheme = themeInfo(highlight?.theme);
   const [showViewer, setShowViewer] = useState(false);
 
   // Mutation para inativar
@@ -332,6 +336,15 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
             <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Aluno: </p>
             <p className="text-sm font-medium">{item.trainee?.name || "Não informado"}</p>
             <p className="text-xs text-muted-foreground">{item.course?.name || "Não informado"}</p>
+            {highlightTheme && highlight && (
+              <span
+                className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                style={{ background: highlightTheme.gradient, color: highlightTheme.text }}
+              >
+                <Icon name={highlightTheme.icon} className="h-3 w-3" />
+                {highlight.label}
+              </span>
+            )}
           </div>
         </div>
 

@@ -13,6 +13,10 @@ import { ApiError } from "@/general-interfaces/api.interface";
 import { IEntity as Course } from "../../../_cursos/-interfaces/entity.interface";
 import FaqGenerator from "@/components/general-components/FaqGenerator";
 import { ONLINE_COURSES_ENABLED } from "@/lib/features";
+import {
+  HIGHLIGHT_DEFAULT_LABEL,
+  HIGHLIGHT_THEMES,
+} from "@/components/general-components/visualizadorCertificados/highlight";
 
 interface StepProps {
   dataForm: FormData;
@@ -241,6 +245,41 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors }: StepProps) => {
         />
         {errors.certificateId && (
           <p className="text-red-500 text-sm mt-1">{errors.certificateId}</p>
+        )}
+      </div>
+
+      {/* Destaque da turma (turma especial) */}
+      <div className="p-4 bg-muted/30 border border-border/50 rounded-lg space-y-3">
+        <div>
+          <Label htmlFor="highlightTheme">Destaque da turma</Label>
+          <p className="text-xs text-muted-foreground">
+            Turma especial: todos os certificados da turma ganham o tema — brilho na
+            página do certificado e selo nos arquivos baixados e impressos.
+          </p>
+        </div>
+        <Select
+          name="highlightTheme"
+          options={HIGHLIGHT_THEMES.map((t) => ({ id: t.id, name: t.name }))}
+          state={dataForm.highlightTheme ?? ""}
+          onChange={(name, value) => handleChange(name, value || null)}
+          placeholder="Sem destaque"
+          clearable
+        />
+        {dataForm.highlightTheme && (
+          <div>
+            <Label htmlFor="highlightLabel">Texto da faixa</Label>
+            <Input
+              id="highlightLabel"
+              name="highlightLabel"
+              placeholder={HIGHLIGHT_DEFAULT_LABEL.turma}
+              value={dataForm.highlightLabel ?? ""}
+              onValueChange={(name, value) => handleChange(name, value || null)}
+              className="mt-1"
+            />
+            {errors.highlightLabel && (
+              <p className="text-red-500 text-sm mt-1">{errors.highlightLabel}</p>
+            )}
+          </div>
         )}
       </div>
 

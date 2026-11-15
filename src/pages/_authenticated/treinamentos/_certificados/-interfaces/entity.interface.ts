@@ -6,6 +6,9 @@ export interface ICertificate {
   classId: number;
   expirationDate?: Date | string;
   showOnWebsiteConsent?: boolean;
+  highlightStudent?: boolean;
+  highlightTheme?: string | null;
+  highlightLabel?: string | null;
   fabricJsonFront?: any;
   fabricJsonBack?: any;
   variableToReplace?: any;
@@ -30,6 +33,8 @@ export interface ICertificate {
     id: number;
     name: string;
     classCode?: string;
+    highlightTheme?: string | null;
+    highlightLabel?: string | null;
   };
 }
 

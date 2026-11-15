@@ -57,6 +57,8 @@ const Schema = z
     customerId: z.number().optional().nullable(),
     courseId: z.number().min(1, { message: "Id do curso é obrigatório" }),
     certificateId: z.number().optional().nullable(),
+    highlightTheme: z.enum(["ouro", "prata", "holografico"]).optional().nullable(),
+    highlightLabel: z.string().max(60, "Máximo de 60 caracteres").optional().nullable(),
     price: z.number().min(0, { message: "Valor de venda é obrigatório" }),
     discountPrice: z.number(),
     dividedIn: z.number().min(1).optional().nullable(),
@@ -300,6 +302,8 @@ const FIELD_TO_TAB: Record<string, string> = {
   onlineCourseModelId: "basico",
   openClass: "basico",
   certificateId: "basico",
+  highlightTheme: "basico",
+  highlightLabel: "basico",
   hoursDuration: "periodo",
   daysDuration: "periodo",
   initialDate: "periodo",
@@ -382,6 +386,8 @@ function buildDefaults(formData?: IEntity): FormData {
     customerId: formData?.customerId || null,
     courseId: formData?.courseId || 0,
     certificateId: fd?.certificateId || null,
+    highlightTheme: (fd?.highlightTheme as FormData["highlightTheme"]) || null,
+    highlightLabel: fd?.highlightLabel || null,
     price: Number(formData?.price) || 0,
     discountPrice: Number(fd?.discountPrice) || 0,
     dividedIn: fd?.dividedIn || null,
@@ -664,6 +670,9 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
     const submissionData = {
       ...dataForm,
       faq: JSON.stringify(dataForm.faq || []),
+      // vazio = "sem destaque" (o envio pula null; a API trata "" como limpar)
+      highlightTheme: dataForm.highlightTheme || "",
+      highlightLabel: dataForm.highlightLabel || "",
     } as unknown as FormData;
 
     if (formData) {

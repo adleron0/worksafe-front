@@ -36,6 +36,7 @@ import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { ONLINE_COURSES_ENABLED } from "@/lib/features";
+import AlunosDestaqueDialog from "./AlunosDestaqueDialog";
 
 interface ItemsProps {
   item: IEntity;
@@ -60,6 +61,7 @@ const SiteServicesItem = ({
   const { showLoader, hideLoader } = useLoader();
   const { theme } = useTheme();
   const [openQrModal, setOpenQrModal] = useState(false);
+  const [openHighlights, setOpenHighlights] = useState(false);
   const [openDuplicateModal, setOpenDuplicateModal] = useState(false);
   const [openAttendanceModal, setOpenAttendanceModal] = useState(false);
 
@@ -492,6 +494,20 @@ const SiteServicesItem = ({
                 </Button>
               </DropdownMenuItem>
 
+              <DropdownMenuItem
+                className="p-0"
+                onSelect={(e) => e.preventDefault()}
+              >
+                <Button
+                  variant="ghost"
+                  className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
+                  onClick={() => setOpenHighlights(true)}
+                >
+                  <Icon name="sparkles" className="w-3 h-3" />
+                  <p>Alunos destaque</p>
+                </Button>
+              </DropdownMenuItem>
+
               {item.allowExam && (
                 <DropdownMenuItem
                   className="p-0"
@@ -556,6 +572,15 @@ const SiteServicesItem = ({
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Alunos destaque */}
+      {item.id && openHighlights && (
+        <AlunosDestaqueDialog
+          classId={item.id}
+          open={openHighlights}
+          onOpenChange={setOpenHighlights}
+        />
+      )}
 
       {/* Modal do QR Code */}
       <Dialog

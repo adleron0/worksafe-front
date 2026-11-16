@@ -15,11 +15,13 @@ import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { dateBr, errorMessage, money, todayIso } from "../../comercial/-shared/commercial";
 import { PAYABLES_KEY, PAYABLES_SUMMARY_KEY } from "../../financeiro/-shared/payables";
+import { STOCK_KEYS, useStockOptions } from "./stock";
 import { paymentMethodOptions } from "../../financeiro/_receber/-components/options";
 
 /** Pedido de compra: tipos (espelham a API), etapas e a passagem entre elas. */
 export type PurchaseStatus = "solicitado" | "aprovado" | "comprado" | "recebido" | "recusado" | "cancelado";
-export interface PurchaseItem { description: string; unit: string | null; quantity: number; unitPrice: number; total: number }
+/** `itemId` liga a linha a um item do estoque; `receivedQuantity` é quanto dela já entrou. */
+export interface PurchaseItem { description: string; unit: string | null; quantity: number; unitPrice: number; total: number; itemId?: number | null; receivedQuantity?: number }
 export interface PurchaseAttachment { id: string; kind: string; name: string; url: string }
 export interface PurchaseBudget { group: string; budgetLabel: string | null; budget: number | null; committed: number; thisOrder: number; remaining: number | null }
 export interface PurchaseEvent { id: number; type: string; from: PurchaseStatus | null; to: PurchaseStatus | null; note: string | null; at: string; user: string | null }
@@ -132,7 +134,7 @@ export function BudgetBox({ budget, className }: { budget: PurchaseBudget; class
   );
 }
 
-type Movable = Pick<Purchase, "id" | "number" | "status"> & { total: number; supplier: { id: number; name: string } | null; budget?: PurchaseBudget | null };
+type Movable = Pick<Purchase, "id" | "number" | "status"> & { total: number; supplier: { id: number; name: string } | null; budget?: PurchaseBudget | null; items?: PurchaseItem[]; serviceOrder?: { id: number } | null };
 
 /**
  * Passagem de etapa: pede só o que aquela passagem exige (motivo para recusar
@@ -152,24 +154,36 @@ export function PurchaseMoveDialog({ purchase, target, onClose, onDone }: { purc
   const [paymentMethod, setPaymentMethod] = useState("boleto");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [error, setError] = useState("");
   // ao aprovar pelo quadro, busca o pedido para mostrar o orçamento da obra
   const { data: full } = useQuery({
     queryKey: [PURCHASE_KEY, String(purchase.id)],
     queryFn: () => purchasesApi.get<Purchase>(String(purchase.id)),
-    enabled: approving && purchase.budget === undefined,
+    enabled: (approving && purchase.budget === undefined) || (receiving && purchase.items === undefined),
   });
   const budget = purchase.budget ?? full?.budget ?? null;
+  // receber: o que é do estoque e ainda falta entra no local escolhido (pedido de obra entra direto na obra)
+  const items = purchase.items ?? full?.items ?? [];
+  const toObra = (purchase.serviceOrder ?? full?.serviceOrder ?? null) !== null;
+  const stockPending = receiving && isForward(from, target) && items.some((item) => item.itemId && (item.receivedQuantity ?? 0) < item.quantity);
+  const { can: canDo } = useVerify();
+  const { data: stockOptions, isError: stockOptionsError } = useStockOptions(stockPending && !toObra);
+  // sem ver o estoque não vem a lista de locais: a API usa o local padrão
+  const noStockOptions = stockOptionsError || !canDo("list_itens_estoque");
+  const locations = stockOptions?.locations ?? [];
   const count = Number(installments);
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => purchasesApi.patch<Purchase>(`${purchase.id}/status`, {
       status: target, note,
       ...(buying ? { installments: count, firstDueDate, paymentMethod, deliveryDate: deliveryDate || null, date } : {}),
-      ...(receiving ? { date, invoiceNumber } : {}),
+      ...(receiving ? { date, invoiceNumber, ...(stockPending && !toObra && (locationId || locations[0]) ? { locationId: Number(locationId || locations[0].id) } : {}) } : {}),
     }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: [PURCHASES_KEY] });
+      // receber ou desfazer o recebimento mexe no estoque
+      for (const key of [STOCK_KEYS.balances, STOCK_KEYS.items, STOCK_KEYS.item, STOCK_KEYS.movements, STOCK_KEYS.overview, STOCK_KEYS.itemOptions, STOCK_KEYS.order]) queryClient.invalidateQueries({ queryKey: [key] });
       queryClient.setQueryData([PURCHASE_KEY, String(result.id)], result);
       // comprar e desfazer mexem nas contas a pagar
       for (const key of [PAYABLES_KEY, PAYABLES_SUMMARY_KEY]) queryClient.invalidateQueries({ queryKey: [key] });
@@ -235,6 +249,17 @@ export function PurchaseMoveDialog({ purchase, target, onClose, onDone }: { purc
                 <Input id="invoiceNumber" name="invoiceNumber" value={invoiceNumber} maxLength={60} onValueChange={(_, value) => setInvoiceNumber(String(value))} className="mt-1" placeholder="Opcional" /></div>
             </div>
           )}
+          {stockPending && (toObra ? (
+            <p className="text-sm text-muted-foreground -mt-2">Os itens do estoque deste pedido entram direto na obra.</p>
+          ) : noStockOptions ? (
+            <p className="text-sm text-muted-foreground -mt-2">Os itens do estoque entram no local de estoque padrão.</p>
+          ) : (
+            <div>
+              <Label>Local de estoque onde entra</Label>
+              <Select name="locationId" options={locations} state={locationId || (locations[0] ? String(locations[0].id) : "")} modal onChange={(_, value) => setLocationId(String(value ?? ""))} placeholder="Escolha o local" />
+              <p className="text-xs text-muted-foreground mt-1">Itens por lote ou por peça pedem o "Receber itens", na ficha do pedido.</p>
+            </div>
+          ))}
           <div><Label htmlFor="moveNote">{needsReason ? "Motivo" : "Observação (opcional)"}{needsReason && <span> *</span>}</Label>
             <Textarea id="moveNote" className="mt-1" rows={2} maxLength={500} value={note} onChange={(event) => setNote(event.target.value)} /></div>
           {error && <p className="text-red-500 text-sm">{error}</p>}

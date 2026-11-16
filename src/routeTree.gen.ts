@@ -30,10 +30,12 @@ import { Route as IndexProvaClassIdRouteImport } from './pages/_index/prova.$cla
 import { Route as IndexPropostaKeyRouteImport } from './pages/_index/proposta.$key'
 import { Route as IndexCertificadosEfeitosRouteImport } from './pages/_index/certificados/efeitos'
 import { Route as IndexCertificadosIdRouteImport } from './pages/_index/certificados/$id'
+import { Route as AuthenticatedSuprimentosFornecedoresRouteImport } from './pages/_authenticated/suprimentos/fornecedores'
 import { Route as AuthenticatedInventariosDashboardRouteImport } from './pages/_authenticated/inventarios/dashboard'
 import { Route as AuthenticatedInventariosAutorizadosRouteImport } from './pages/_authenticated/inventarios/autorizados'
 import { Route as AuthenticatedInventariosAccessControlRouteImport } from './pages/_authenticated/inventarios/access-control'
 import { Route as AuthenticatedUsuariosUsuariosIndexRouteImport } from './pages/_authenticated/usuarios/_usuarios/index'
+import { Route as AuthenticatedSuprimentosEstoqueIndexRouteImport } from './pages/_authenticated/suprimentos/estoque/index'
 import { Route as AuthenticatedInventariosAreasIndexRouteImport } from './pages/_authenticated/inventarios/areas/index'
 import { Route as IndexPropostaRascunhoProposalIdRouteImport } from './pages/_index/proposta_.rascunho.$proposalId'
 import { Route as IndexCertificadosNomeIdRouteImport } from './pages/_index/certificados/$nome.$id'
@@ -47,6 +49,12 @@ import { Route as AuthenticatedTreinamentosCursosCursosRouteImport } from './pag
 import { Route as AuthenticatedTreinamentosCertificadosCertificadosRouteImport } from './pages/_authenticated/treinamentos/_certificados/certificados'
 import { Route as AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRouteImport } from './pages/_authenticated/treinamentos/_certificados-modelos/certificados-modelos'
 import { Route as AuthenticatedTreinamentosAlunosAlunosRouteImport } from './pages/_authenticated/treinamentos/_alunos/alunos'
+import { Route as AuthenticatedSuprimentosEstoqueSaldosRouteImport } from './pages/_authenticated/suprimentos/estoque/saldos'
+import { Route as AuthenticatedSuprimentosEstoqueMovimentacoesRouteImport } from './pages/_authenticated/suprimentos/estoque/movimentacoes'
+import { Route as AuthenticatedSuprimentosEstoqueLocaisRouteImport } from './pages/_authenticated/suprimentos/estoque/locais'
+import { Route as AuthenticatedSuprimentosEstoqueItensRouteImport } from './pages/_authenticated/suprimentos/estoque/itens'
+import { Route as AuthenticatedSuprimentosEstoqueCategoriasRouteImport } from './pages/_authenticated/suprimentos/estoque/categorias'
+import { Route as AuthenticatedSuprimentosComprasReposicaoRouteImport } from './pages/_authenticated/suprimentos/compras/reposicao'
 import { Route as AuthenticatedSuprimentosPedidosPedidosDeCompraRouteImport } from './pages/_authenticated/suprimentos/_pedidos/pedidos-de-compra'
 import { Route as AuthenticatedSiteServicosServicosRouteImport } from './pages/_authenticated/site/_servicos/servicos'
 import { Route as AuthenticatedSiteProdutosProdutosRouteImport } from './pages/_authenticated/site/_produtos/produtos'
@@ -99,6 +107,7 @@ import { Route as AuthenticatedArquivosPastasPastasRouteImport } from './pages/_
 import { Route as AuthenticatedArquivosPastasLixeiraRouteImport } from './pages/_authenticated/arquivos/_pastas/lixeira'
 import { Route as AuthenticatedTreinamentosTurmasTurmasNovaRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.nova'
 import { Route as AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.$turmaId'
+import { Route as AuthenticatedSuprimentosEstoqueItensItemIdRouteImport } from './pages/_authenticated/suprimentos/estoque/itens_.$itemId'
 import { Route as AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRouteImport } from './pages/_authenticated/suprimentos/_pedidos/pedidos-de-compra_.$purchaseId'
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoOrderIdRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico_.$orderId'
 import { Route as AuthenticatedRhFuncionariosFuncionariosEmployeeIdRouteImport } from './pages/_authenticated/rh/_funcionarios/funcionarios_.$employeeId'
@@ -218,6 +227,12 @@ const IndexCertificadosIdRoute = IndexCertificadosIdRouteImport.update({
   path: '/certificados/$id',
   getParentRoute: () => IndexRoute,
 } as any)
+const AuthenticatedSuprimentosFornecedoresRoute =
+  AuthenticatedSuprimentosFornecedoresRouteImport.update({
+    id: '/suprimentos/fornecedores',
+    path: '/suprimentos/fornecedores',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedInventariosDashboardRoute =
   AuthenticatedInventariosDashboardRouteImport.update({
     id: '/inventarios/dashboard',
@@ -240,6 +255,12 @@ const AuthenticatedUsuariosUsuariosIndexRoute =
   AuthenticatedUsuariosUsuariosIndexRouteImport.update({
     id: '/usuarios/_usuarios/',
     path: '/usuarios/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEstoqueIndexRoute =
+  AuthenticatedSuprimentosEstoqueIndexRouteImport.update({
+    id: '/suprimentos/estoque/',
+    path: '/suprimentos/estoque/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedInventariosAreasIndexRoute =
@@ -318,6 +339,42 @@ const AuthenticatedTreinamentosAlunosAlunosRoute =
   AuthenticatedTreinamentosAlunosAlunosRouteImport.update({
     id: '/treinamentos/_alunos/alunos',
     path: '/treinamentos/alunos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEstoqueSaldosRoute =
+  AuthenticatedSuprimentosEstoqueSaldosRouteImport.update({
+    id: '/suprimentos/estoque/saldos',
+    path: '/suprimentos/estoque/saldos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEstoqueMovimentacoesRoute =
+  AuthenticatedSuprimentosEstoqueMovimentacoesRouteImport.update({
+    id: '/suprimentos/estoque/movimentacoes',
+    path: '/suprimentos/estoque/movimentacoes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEstoqueLocaisRoute =
+  AuthenticatedSuprimentosEstoqueLocaisRouteImport.update({
+    id: '/suprimentos/estoque/locais',
+    path: '/suprimentos/estoque/locais',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEstoqueItensRoute =
+  AuthenticatedSuprimentosEstoqueItensRouteImport.update({
+    id: '/suprimentos/estoque/itens',
+    path: '/suprimentos/estoque/itens',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEstoqueCategoriasRoute =
+  AuthenticatedSuprimentosEstoqueCategoriasRouteImport.update({
+    id: '/suprimentos/estoque/categorias',
+    path: '/suprimentos/estoque/categorias',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosComprasReposicaoRoute =
+  AuthenticatedSuprimentosComprasReposicaoRouteImport.update({
+    id: '/suprimentos/compras/reposicao',
+    path: '/suprimentos/compras/reposicao',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedSuprimentosPedidosPedidosDeCompraRoute =
@@ -632,6 +689,12 @@ const AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute =
     path: '/treinamentos/turmas/$turmaId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSuprimentosEstoqueItensItemIdRoute =
+  AuthenticatedSuprimentosEstoqueItensItemIdRouteImport.update({
+    id: '/suprimentos/estoque/itens_/$itemId',
+    path: '/suprimentos/estoque/itens/$itemId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute =
   AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRouteImport.update({
     id: '/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId',
@@ -701,6 +764,7 @@ export interface FileRoutesByFullPath {
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
+  '/suprimentos/fornecedores': typeof AuthenticatedSuprimentosFornecedoresRoute
   '/certificados/$id': typeof IndexCertificadosIdRoute
   '/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
   '/proposta/$key': typeof IndexPropostaKeyRoute
@@ -762,6 +826,12 @@ export interface FileRoutesByFullPath {
   '/site/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
   '/site/servicos': typeof AuthenticatedSiteServicosServicosRoute
   '/suprimentos/pedidos-de-compra': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraRoute
+  '/suprimentos/compras/reposicao': typeof AuthenticatedSuprimentosComprasReposicaoRoute
+  '/suprimentos/estoque/categorias': typeof AuthenticatedSuprimentosEstoqueCategoriasRoute
+  '/suprimentos/estoque/itens': typeof AuthenticatedSuprimentosEstoqueItensRoute
+  '/suprimentos/estoque/locais': typeof AuthenticatedSuprimentosEstoqueLocaisRoute
+  '/suprimentos/estoque/movimentacoes': typeof AuthenticatedSuprimentosEstoqueMovimentacoesRoute
+  '/suprimentos/estoque/saldos': typeof AuthenticatedSuprimentosEstoqueSaldosRoute
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
   '/treinamentos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
@@ -775,6 +845,7 @@ export interface FileRoutesByFullPath {
   '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/proposta/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
+  '/suprimentos/estoque': typeof AuthenticatedSuprimentosEstoqueIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/bots/relatorios/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
@@ -784,6 +855,7 @@ export interface FileRoutesByFullPath {
   '/rh/funcionarios/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/suprimentos/pedidos-de-compra/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
+  '/suprimentos/estoque/itens/$itemId': typeof AuthenticatedSuprimentosEstoqueItensItemIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
   '/servicos/ordens-de-servico/$orderId/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
@@ -799,6 +871,7 @@ export interface FileRoutesByTo {
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
+  '/suprimentos/fornecedores': typeof AuthenticatedSuprimentosFornecedoresRoute
   '/certificados/$id': typeof IndexCertificadosIdRoute
   '/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
   '/proposta/$key': typeof IndexPropostaKeyRoute
@@ -860,6 +933,12 @@ export interface FileRoutesByTo {
   '/site/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
   '/site/servicos': typeof AuthenticatedSiteServicosServicosRoute
   '/suprimentos/pedidos-de-compra': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraRoute
+  '/suprimentos/compras/reposicao': typeof AuthenticatedSuprimentosComprasReposicaoRoute
+  '/suprimentos/estoque/categorias': typeof AuthenticatedSuprimentosEstoqueCategoriasRoute
+  '/suprimentos/estoque/itens': typeof AuthenticatedSuprimentosEstoqueItensRoute
+  '/suprimentos/estoque/locais': typeof AuthenticatedSuprimentosEstoqueLocaisRoute
+  '/suprimentos/estoque/movimentacoes': typeof AuthenticatedSuprimentosEstoqueMovimentacoesRoute
+  '/suprimentos/estoque/saldos': typeof AuthenticatedSuprimentosEstoqueSaldosRoute
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
   '/treinamentos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
@@ -873,6 +952,7 @@ export interface FileRoutesByTo {
   '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/proposta/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
+  '/suprimentos/estoque': typeof AuthenticatedSuprimentosEstoqueIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/bots/relatorios/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
@@ -882,6 +962,7 @@ export interface FileRoutesByTo {
   '/rh/funcionarios/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/suprimentos/pedidos-de-compra/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
+  '/suprimentos/estoque/itens/$itemId': typeof AuthenticatedSuprimentosEstoqueItensItemIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
   '/servicos/ordens-de-servico/$orderId/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
@@ -901,6 +982,7 @@ export interface FileRoutesById {
   '/_authenticated/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/_authenticated/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/_authenticated/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
+  '/_authenticated/suprimentos/fornecedores': typeof AuthenticatedSuprimentosFornecedoresRoute
   '/_index/certificados/$id': typeof IndexCertificadosIdRoute
   '/_index/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
   '/_index/proposta/$key': typeof IndexPropostaKeyRoute
@@ -962,6 +1044,12 @@ export interface FileRoutesById {
   '/_authenticated/site/_produtos/produtos': typeof AuthenticatedSiteProdutosProdutosRoute
   '/_authenticated/site/_servicos/servicos': typeof AuthenticatedSiteServicosServicosRoute
   '/_authenticated/suprimentos/_pedidos/pedidos-de-compra': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraRoute
+  '/_authenticated/suprimentos/compras/reposicao': typeof AuthenticatedSuprimentosComprasReposicaoRoute
+  '/_authenticated/suprimentos/estoque/categorias': typeof AuthenticatedSuprimentosEstoqueCategoriasRoute
+  '/_authenticated/suprimentos/estoque/itens': typeof AuthenticatedSuprimentosEstoqueItensRoute
+  '/_authenticated/suprimentos/estoque/locais': typeof AuthenticatedSuprimentosEstoqueLocaisRoute
+  '/_authenticated/suprimentos/estoque/movimentacoes': typeof AuthenticatedSuprimentosEstoqueMovimentacoesRoute
+  '/_authenticated/suprimentos/estoque/saldos': typeof AuthenticatedSuprimentosEstoqueSaldosRoute
   '/_authenticated/treinamentos/_alunos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
   '/_authenticated/treinamentos/_certificados-modelos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/_authenticated/treinamentos/_certificados/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
@@ -975,6 +1063,7 @@ export interface FileRoutesById {
   '/_index/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/_index/proposta_/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
   '/_authenticated/inventarios/areas/': typeof AuthenticatedInventariosAreasIndexRoute
+  '/_authenticated/suprimentos/estoque/': typeof AuthenticatedSuprimentosEstoqueIndexRoute
   '/_authenticated/usuarios/_usuarios/': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/_authenticated/bots/_relatorios/relatorios_/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   '/_authenticated/comercial/_contratos/contratos_/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
@@ -984,6 +1073,7 @@ export interface FileRoutesById {
   '/_authenticated/rh/_funcionarios/funcionarios_/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
+  '/_authenticated/suprimentos/estoque/itens_/$itemId': typeof AuthenticatedSuprimentosEstoqueItensItemIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
@@ -1002,6 +1092,7 @@ export interface FileRouteTypes {
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
+    | '/suprimentos/fornecedores'
     | '/certificados/$id'
     | '/certificados/efeitos'
     | '/proposta/$key'
@@ -1063,6 +1154,12 @@ export interface FileRouteTypes {
     | '/site/produtos'
     | '/site/servicos'
     | '/suprimentos/pedidos-de-compra'
+    | '/suprimentos/compras/reposicao'
+    | '/suprimentos/estoque/categorias'
+    | '/suprimentos/estoque/itens'
+    | '/suprimentos/estoque/locais'
+    | '/suprimentos/estoque/movimentacoes'
+    | '/suprimentos/estoque/saldos'
     | '/treinamentos/alunos'
     | '/treinamentos/certificados-modelos'
     | '/treinamentos/certificados'
@@ -1076,6 +1173,7 @@ export interface FileRouteTypes {
     | '/certificados/$nome/$id'
     | '/proposta/rascunho/$proposalId'
     | '/inventarios/areas'
+    | '/suprimentos/estoque'
     | '/usuarios'
     | '/bots/relatorios/$reportId'
     | '/comercial/contratos/$contractId'
@@ -1085,6 +1183,7 @@ export interface FileRouteTypes {
     | '/rh/funcionarios/$employeeId'
     | '/servicos/ordens-de-servico/$orderId'
     | '/suprimentos/pedidos-de-compra/$purchaseId'
+    | '/suprimentos/estoque/itens/$itemId'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
     | '/servicos/ordens-de-servico/$orderId/rdo/$reportId'
@@ -1100,6 +1199,7 @@ export interface FileRouteTypes {
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
+    | '/suprimentos/fornecedores'
     | '/certificados/$id'
     | '/certificados/efeitos'
     | '/proposta/$key'
@@ -1161,6 +1261,12 @@ export interface FileRouteTypes {
     | '/site/produtos'
     | '/site/servicos'
     | '/suprimentos/pedidos-de-compra'
+    | '/suprimentos/compras/reposicao'
+    | '/suprimentos/estoque/categorias'
+    | '/suprimentos/estoque/itens'
+    | '/suprimentos/estoque/locais'
+    | '/suprimentos/estoque/movimentacoes'
+    | '/suprimentos/estoque/saldos'
     | '/treinamentos/alunos'
     | '/treinamentos/certificados-modelos'
     | '/treinamentos/certificados'
@@ -1174,6 +1280,7 @@ export interface FileRouteTypes {
     | '/certificados/$nome/$id'
     | '/proposta/rascunho/$proposalId'
     | '/inventarios/areas'
+    | '/suprimentos/estoque'
     | '/usuarios'
     | '/bots/relatorios/$reportId'
     | '/comercial/contratos/$contractId'
@@ -1183,6 +1290,7 @@ export interface FileRouteTypes {
     | '/rh/funcionarios/$employeeId'
     | '/servicos/ordens-de-servico/$orderId'
     | '/suprimentos/pedidos-de-compra/$purchaseId'
+    | '/suprimentos/estoque/itens/$itemId'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
     | '/servicos/ordens-de-servico/$orderId/rdo/$reportId'
@@ -1201,6 +1309,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventarios/access-control'
     | '/_authenticated/inventarios/autorizados'
     | '/_authenticated/inventarios/dashboard'
+    | '/_authenticated/suprimentos/fornecedores'
     | '/_index/certificados/$id'
     | '/_index/certificados/efeitos'
     | '/_index/proposta/$key'
@@ -1262,6 +1371,12 @@ export interface FileRouteTypes {
     | '/_authenticated/site/_produtos/produtos'
     | '/_authenticated/site/_servicos/servicos'
     | '/_authenticated/suprimentos/_pedidos/pedidos-de-compra'
+    | '/_authenticated/suprimentos/compras/reposicao'
+    | '/_authenticated/suprimentos/estoque/categorias'
+    | '/_authenticated/suprimentos/estoque/itens'
+    | '/_authenticated/suprimentos/estoque/locais'
+    | '/_authenticated/suprimentos/estoque/movimentacoes'
+    | '/_authenticated/suprimentos/estoque/saldos'
     | '/_authenticated/treinamentos/_alunos/alunos'
     | '/_authenticated/treinamentos/_certificados-modelos/certificados-modelos'
     | '/_authenticated/treinamentos/_certificados/certificados'
@@ -1275,6 +1390,7 @@ export interface FileRouteTypes {
     | '/_index/certificados/$nome/$id'
     | '/_index/proposta_/rascunho/$proposalId'
     | '/_authenticated/inventarios/areas/'
+    | '/_authenticated/suprimentos/estoque/'
     | '/_authenticated/usuarios/_usuarios/'
     | '/_authenticated/bots/_relatorios/relatorios_/$reportId'
     | '/_authenticated/comercial/_contratos/contratos_/$contractId'
@@ -1284,6 +1400,7 @@ export interface FileRouteTypes {
     | '/_authenticated/rh/_funcionarios/funcionarios_/$employeeId'
     | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId'
     | '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId'
+    | '/_authenticated/suprimentos/estoque/itens_/$itemId'
     | '/_authenticated/treinamentos/_turmas/turmas_/$turmaId'
     | '/_authenticated/treinamentos/_turmas/turmas_/nova'
     | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId'
@@ -1444,6 +1561,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexCertificadosIdRouteImport
       parentRoute: typeof IndexRoute
     }
+    '/_authenticated/suprimentos/fornecedores': {
+      id: '/_authenticated/suprimentos/fornecedores'
+      path: '/suprimentos/fornecedores'
+      fullPath: '/suprimentos/fornecedores'
+      preLoaderRoute: typeof AuthenticatedSuprimentosFornecedoresRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/inventarios/dashboard': {
       id: '/_authenticated/inventarios/dashboard'
       path: '/inventarios/dashboard'
@@ -1470,6 +1594,13 @@ declare module '@tanstack/react-router' {
       path: '/usuarios'
       fullPath: '/usuarios'
       preLoaderRoute: typeof AuthenticatedUsuariosUsuariosIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/estoque/': {
+      id: '/_authenticated/suprimentos/estoque/'
+      path: '/suprimentos/estoque'
+      fullPath: '/suprimentos/estoque'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/inventarios/areas/': {
@@ -1561,6 +1692,48 @@ declare module '@tanstack/react-router' {
       path: '/treinamentos/alunos'
       fullPath: '/treinamentos/alunos'
       preLoaderRoute: typeof AuthenticatedTreinamentosAlunosAlunosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/estoque/saldos': {
+      id: '/_authenticated/suprimentos/estoque/saldos'
+      path: '/suprimentos/estoque/saldos'
+      fullPath: '/suprimentos/estoque/saldos'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueSaldosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/estoque/movimentacoes': {
+      id: '/_authenticated/suprimentos/estoque/movimentacoes'
+      path: '/suprimentos/estoque/movimentacoes'
+      fullPath: '/suprimentos/estoque/movimentacoes'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueMovimentacoesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/estoque/locais': {
+      id: '/_authenticated/suprimentos/estoque/locais'
+      path: '/suprimentos/estoque/locais'
+      fullPath: '/suprimentos/estoque/locais'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueLocaisRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/estoque/itens': {
+      id: '/_authenticated/suprimentos/estoque/itens'
+      path: '/suprimentos/estoque/itens'
+      fullPath: '/suprimentos/estoque/itens'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueItensRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/estoque/categorias': {
+      id: '/_authenticated/suprimentos/estoque/categorias'
+      path: '/suprimentos/estoque/categorias'
+      fullPath: '/suprimentos/estoque/categorias'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueCategoriasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/compras/reposicao': {
+      id: '/_authenticated/suprimentos/compras/reposicao'
+      path: '/suprimentos/compras/reposicao'
+      fullPath: '/suprimentos/compras/reposicao'
+      preLoaderRoute: typeof AuthenticatedSuprimentosComprasReposicaoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/suprimentos/_pedidos/pedidos-de-compra': {
@@ -1927,6 +2100,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/suprimentos/estoque/itens_/$itemId': {
+      id: '/_authenticated/suprimentos/estoque/itens_/$itemId'
+      path: '/suprimentos/estoque/itens/$itemId'
+      fullPath: '/suprimentos/estoque/itens/$itemId'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueItensItemIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId': {
       id: '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId'
       path: '/suprimentos/pedidos-de-compra/$purchaseId'
@@ -1999,6 +2179,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedInventariosAccessControlRoute: typeof AuthenticatedInventariosAccessControlRoute
   AuthenticatedInventariosAutorizadosRoute: typeof AuthenticatedInventariosAutorizadosRoute
   AuthenticatedInventariosDashboardRoute: typeof AuthenticatedInventariosDashboardRoute
+  AuthenticatedSuprimentosFornecedoresRoute: typeof AuthenticatedSuprimentosFornecedoresRoute
   AuthenticatedBlogIndexRoute: typeof AuthenticatedBlogIndexRoute
   AuthenticatedClientesIndexRoute: typeof AuthenticatedClientesIndexRoute
   AuthenticatedEmpresaIndexRoute: typeof AuthenticatedEmpresaIndexRoute
@@ -2055,6 +2236,12 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSiteProdutosProdutosRoute: typeof AuthenticatedSiteProdutosProdutosRoute
   AuthenticatedSiteServicosServicosRoute: typeof AuthenticatedSiteServicosServicosRoute
   AuthenticatedSuprimentosPedidosPedidosDeCompraRoute: typeof AuthenticatedSuprimentosPedidosPedidosDeCompraRoute
+  AuthenticatedSuprimentosComprasReposicaoRoute: typeof AuthenticatedSuprimentosComprasReposicaoRoute
+  AuthenticatedSuprimentosEstoqueCategoriasRoute: typeof AuthenticatedSuprimentosEstoqueCategoriasRoute
+  AuthenticatedSuprimentosEstoqueItensRoute: typeof AuthenticatedSuprimentosEstoqueItensRoute
+  AuthenticatedSuprimentosEstoqueLocaisRoute: typeof AuthenticatedSuprimentosEstoqueLocaisRoute
+  AuthenticatedSuprimentosEstoqueMovimentacoesRoute: typeof AuthenticatedSuprimentosEstoqueMovimentacoesRoute
+  AuthenticatedSuprimentosEstoqueSaldosRoute: typeof AuthenticatedSuprimentosEstoqueSaldosRoute
   AuthenticatedTreinamentosAlunosAlunosRoute: typeof AuthenticatedTreinamentosAlunosAlunosRoute
   AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute: typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   AuthenticatedTreinamentosCertificadosCertificadosRoute: typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
@@ -2065,6 +2252,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTreinamentosTurmasTurmasRoute: typeof AuthenticatedTreinamentosTurmasTurmasRoute
   AuthenticatedUsuariosPerfisPerfisRoute: typeof AuthenticatedUsuariosPerfisPerfisRoute
   AuthenticatedInventariosAreasIndexRoute: typeof AuthenticatedInventariosAreasIndexRoute
+  AuthenticatedSuprimentosEstoqueIndexRoute: typeof AuthenticatedSuprimentosEstoqueIndexRoute
   AuthenticatedUsuariosUsuariosIndexRoute: typeof AuthenticatedUsuariosUsuariosIndexRoute
   AuthenticatedBotsRelatoriosRelatoriosReportIdRoute: typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   AuthenticatedComercialContratosContratosContractIdRoute: typeof AuthenticatedComercialContratosContratosContractIdRoute
@@ -2074,6 +2262,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute: typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute: typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
+  AuthenticatedSuprimentosEstoqueItensItemIdRoute: typeof AuthenticatedSuprimentosEstoqueItensItemIdRoute
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   AuthenticatedTreinamentosTurmasTurmasNovaRoute: typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
@@ -2088,6 +2277,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedInventariosAutorizadosRoute,
   AuthenticatedInventariosDashboardRoute:
     AuthenticatedInventariosDashboardRoute,
+  AuthenticatedSuprimentosFornecedoresRoute:
+    AuthenticatedSuprimentosFornecedoresRoute,
   AuthenticatedBlogIndexRoute: AuthenticatedBlogIndexRoute,
   AuthenticatedClientesIndexRoute: AuthenticatedClientesIndexRoute,
   AuthenticatedEmpresaIndexRoute: AuthenticatedEmpresaIndexRoute,
@@ -2184,6 +2375,18 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedSiteServicosServicosRoute,
   AuthenticatedSuprimentosPedidosPedidosDeCompraRoute:
     AuthenticatedSuprimentosPedidosPedidosDeCompraRoute,
+  AuthenticatedSuprimentosComprasReposicaoRoute:
+    AuthenticatedSuprimentosComprasReposicaoRoute,
+  AuthenticatedSuprimentosEstoqueCategoriasRoute:
+    AuthenticatedSuprimentosEstoqueCategoriasRoute,
+  AuthenticatedSuprimentosEstoqueItensRoute:
+    AuthenticatedSuprimentosEstoqueItensRoute,
+  AuthenticatedSuprimentosEstoqueLocaisRoute:
+    AuthenticatedSuprimentosEstoqueLocaisRoute,
+  AuthenticatedSuprimentosEstoqueMovimentacoesRoute:
+    AuthenticatedSuprimentosEstoqueMovimentacoesRoute,
+  AuthenticatedSuprimentosEstoqueSaldosRoute:
+    AuthenticatedSuprimentosEstoqueSaldosRoute,
   AuthenticatedTreinamentosAlunosAlunosRoute:
     AuthenticatedTreinamentosAlunosAlunosRoute,
   AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute:
@@ -2204,6 +2407,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedUsuariosPerfisPerfisRoute,
   AuthenticatedInventariosAreasIndexRoute:
     AuthenticatedInventariosAreasIndexRoute,
+  AuthenticatedSuprimentosEstoqueIndexRoute:
+    AuthenticatedSuprimentosEstoqueIndexRoute,
   AuthenticatedUsuariosUsuariosIndexRoute:
     AuthenticatedUsuariosUsuariosIndexRoute,
   AuthenticatedBotsRelatoriosRelatoriosReportIdRoute:
@@ -2222,6 +2427,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute,
   AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute:
     AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute,
+  AuthenticatedSuprimentosEstoqueItensItemIdRoute:
+    AuthenticatedSuprimentosEstoqueItensItemIdRoute,
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute:
     AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute,
   AuthenticatedTreinamentosTurmasTurmasNovaRoute:

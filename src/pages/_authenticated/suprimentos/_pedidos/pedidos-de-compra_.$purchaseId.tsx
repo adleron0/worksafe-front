@@ -23,18 +23,27 @@ import {
   BudgetBox, PURCHASES_ABILITY, PURCHASES_KEY, PURCHASE_KEY, PURCHASE_OPTIONS_KEY, PURCHASE_STAGES, PURCHASE_STATUS_LABEL, Purchase, PurchaseItem, PurchaseMoveDialog,
   PurchaseOptions, PurchaseStageBadge, PurchaseStatus, allowedMoves, isForward, moveLabel, nextStage, purchasesApi,
 } from "../-shared/purchases";
+import { REORDER_STORAGE_KEY, ReorderDraft, qty, readReorderDraft, useItemOptions } from "../-shared/stock";
+import { PurchaseReceiveDialog, pendingOf } from "../-shared/stock-receive";
 
 export const Route = createFileRoute("/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId")({
   component: PurchasePage,
-  validateSearch: (search: Record<string, unknown>): { os?: number } => (Number(search.os) > 0 ? { os: Number(search.os) } : {}),
+  // os: pedido para uma obra; reposicao: linhas vindas de Estoque → Reposição (guardadas no sessionStorage)
+  validateSearch: (search: Record<string, unknown>): { os?: number; reposicao?: "1" } => ({
+    ...(Number(search.os) > 0 ? { os: Number(search.os) } : {}),
+    ...(search.reposicao === "1" || search.reposicao === 1 ? { reposicao: "1" as const } : {}),
+  }),
 });
 
 interface Draft { title: string; group: string; supplierId: string; serviceOrderId: string; neededBy: string; justification: string; items: PurchaseItem[] }
 const emptyItem = (): PurchaseItem => ({ description: "", unit: "", quantity: 1, unitPrice: 0, total: 0 });
-const draftOf = (purchase?: Purchase, os?: number): Draft => ({
-  title: purchase?.title ?? "", group: purchase?.group ?? "material", supplierId: purchase?.supplier ? String(purchase.supplier.id) : "",
+const draftOf = (purchase?: Purchase, os?: number, reorder?: ReorderDraft | null): Draft => ({
+  title: purchase?.title ?? (reorder ? "Reposição de estoque" : ""), group: purchase?.group ?? "material",
+  supplierId: purchase?.supplier ? String(purchase.supplier.id) : reorder?.supplierId ? String(reorder.supplierId) : "",
   serviceOrderId: purchase?.serviceOrder ? String(purchase.serviceOrder.id) : os ? String(os) : "", neededBy: purchase?.neededBy ?? "",
-  justification: purchase?.justification ?? "", items: purchase?.items.length ? purchase.items.map((item) => ({ ...item, unit: item.unit ?? "" })) : [emptyItem()],
+  justification: purchase?.justification ?? (reorder ? "Itens abaixo do estoque mínimo." : ""),
+  items: purchase?.items.length ? purchase.items.map((item) => ({ ...item, unit: item.unit ?? "" }))
+    : reorder ? reorder.items.map((item) => ({ ...item, total: item.quantity * item.unitPrice })) : [emptyItem()],
 });
 const totalOf = (items: PurchaseItem[]) => Math.round(items.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.unitPrice || 0), 0) * 100) / 100;
 const KINDS = [{ id: "cotacao", name: "Cotação" }, { id: "nota", name: "Nota do fornecedor" }, { id: "outro", name: "Outro" }];
@@ -43,13 +52,14 @@ const EVENT_LABEL: Record<string, string> = { criado: "Solicitado", avancou: "Av
 /** Pedido de compra: o que se pede, de quem, para qual obra; e por onde ele já passou. */
 function PurchasePage() {
   const { purchaseId } = Route.useParams();
-  const { os } = Route.useSearch();
+  const { os, reposicao } = Route.useSearch();
   const isNew = purchaseId === "novo";
   const { can } = useVerify();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [draft, setDraft] = useState<Draft | null>(isNew ? draftOf(undefined, os) : null);
+  const [draft, setDraft] = useState<Draft | null>(isNew ? draftOf(undefined, os, reposicao ? readReorderDraft() : null) : null);
   const [moving, setMoving] = useState<PurchaseStatus | null>(null);
+  const [receiving, setReceiving] = useState(false);
   const [newSupplier, setNewSupplier] = useState(false);
   const [kind, setKind] = useState("cotacao");
   const [error, setError] = useState("");
@@ -62,6 +72,9 @@ function PurchasePage() {
   });
   const { data: options } = useQuery({ queryKey: [PURCHASE_OPTIONS_KEY], queryFn: () => purchasesApi.get<PurchaseOptions>("options") });
   useEffect(() => { if (purchase) setDraft(draftOf(purchase)); }, [purchase]);
+  // as linhas da reposição já foram lidas: não voltam num próximo "novo pedido"
+  useEffect(() => { if (reposicao) { try { sessionStorage.removeItem(REORDER_STORAGE_KEY); } catch { /* sem armazenamento */ } } }, [reposicao]);
+  const { data: stockItems, isError: noStockItems } = useItemOptions();
 
   const apply = (result: Purchase) => {
     queryClient.setQueryData([PURCHASE_KEY, String(result.id)], result);
@@ -79,7 +92,7 @@ function PurchasePage() {
       const body = {
         title: value.title.trim(), group: value.group, supplierId: value.supplierId || null, serviceOrderId: value.serviceOrderId || null,
         neededBy: value.neededBy || null, justification: value.justification.trim(),
-        items: value.items.filter((item) => item.description.trim()).map((item) => ({ description: item.description.trim(), unit: item.unit || null, quantity: item.quantity, unitPrice: item.unitPrice })),
+        items: value.items.filter((item) => item.description.trim()).map((item) => ({ description: item.description.trim(), unit: item.unit || null, quantity: item.quantity, unitPrice: item.unitPrice, itemId: item.itemId ?? null })),
       };
       if (isNew) return purchasesApi.post<Purchase>("", body);
       return purchasesApi.put<Purchase>(purchaseId, editable ? body : { supplierId: body.supplierId, neededBy: body.neededBy });
@@ -117,6 +130,15 @@ function PurchasePage() {
   const next = purchase ? nextStage(status, canApprove) : null;
   const others = purchase ? allowedMoves(status, canApprove).filter((target) => target !== next) : [];
   const stageIndex = PURCHASE_STAGES.findIndex((stage) => stage.id === status);
+  const stockOptions = (stockItems ?? []).map(({ id, name }) => ({ id, name }));
+  const hasStockLines = !!purchase?.items.some((item) => item.itemId);
+  const canReceive = !!purchase && canUpdate && status === "comprado" && purchase.items.some((item) => item.itemId && pendingOf(item) > 0);
+  const pickStock = (index: number, value: string) => {
+    const option = (stockItems ?? []).find((item) => String(item.id) === value);
+    if (!option) return setItem(index, { itemId: null });
+    const current = draft.items[index];
+    setItem(index, { itemId: option.id, description: current.description.trim() && current.itemId ? option.label : current.description.trim() || option.label, unit: option.unit, ...(current.unitPrice ? {} : { unitPrice: option.lastCost ?? 0 }) });
+  };
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     if (editable) {
@@ -140,7 +162,8 @@ function PurchasePage() {
         </div>
         {purchase && canUpdate && (
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            {next && <Button type="button" disabled={dirty} onClick={() => setMoving(next)}><Icon name="arrow-right" className="w-4 h-4 mr-1" /> {moveLabel(status, next)}</Button>}
+            {canReceive && <Button type="button" variant={next === "recebido" ? "default" : "outline"} disabled={dirty} onClick={() => setReceiving(true)}><Icon name="package-check" className="w-4 h-4 mr-1" /> Receber itens</Button>}
+            {next && <Button type="button" variant={canReceive && next === "recebido" ? "outline" : "default"} disabled={dirty} onClick={() => setMoving(next)}><Icon name="arrow-right" className="w-4 h-4 mr-1" /> {moveLabel(status, next)}</Button>}
             {others.length > 0 && (
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild><Button type="button" variant="outline" className="gap-1">Mais ações <Icon name="chevron-down" className="w-4 h-4" /></Button></DropdownMenuTrigger>
@@ -214,6 +237,7 @@ function PurchasePage() {
 
           <section className="rounded-lg border p-4">
             <h2 className="font-semibold">Itens</h2>
+            {hasStockLines && status === "comprado" && <p className="text-xs text-muted-foreground">As linhas ligadas a um item do estoque entram nele pelo "Receber itens".</p>}
             <div className="mt-3 grid gap-3">
               {draft.items.map((item, index) => (
                 <div key={index} className="grid grid-cols-12 gap-2 items-end">
@@ -239,6 +263,19 @@ function PurchasePage() {
                       <Tip text="Remover o item"><Button type="button" variant="ghost" size="sm" className="h-9 w-9 p-0" aria-label={`Remover o item ${index + 1}`} onClick={() => set("items", draft.items.filter((_, i) => i !== index))}><Icon name="trash-2" className="w-4 h-4" /></Button></Tip>
                     )}
                   </div>
+                  {(!noStockItems || item.itemId) && (editable || item.itemId) && (
+                    <div className="col-span-12 flex flex-wrap items-center gap-x-3 gap-y-1 -mt-1">
+                      <div className="w-full sm:w-80">
+                        <Select name={`stock-${index}`} options={stockOptions} state={item.itemId ? String(item.itemId) : ""} clearable disabled={!editable} modal={false}
+                          onChange={(_, value) => pickStock(index, String(value ?? ""))} placeholder="Item do estoque (opcional)" />
+                      </div>
+                      {item.itemId && purchase && (status === "comprado" || status === "recebido") && (
+                        <span className={cn("text-xs", pendingOf(item) > 0 ? "text-muted-foreground" : "text-green-700 dark:text-green-400")}>
+                          recebido {qty(item.receivedQuantity ?? 0)} de {qty(item.quantity)} {item.unit ?? ""}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -336,6 +373,7 @@ function PurchasePage() {
       </div>
 
       {purchase && moving && <PurchaseMoveDialog purchase={purchase} target={moving} onClose={() => setMoving(null)} />}
+      {purchase && receiving && <PurchaseReceiveDialog purchase={purchase} onClose={() => setReceiving(false)} />}
       {newSupplier && (
         <SupplierDialog onClose={() => setNewSupplier(false)} onCreated={(supplier) => {
           queryClient.setQueryData<PurchaseOptions>([PURCHASE_OPTIONS_KEY], (current) => (current ? { ...current, suppliers: [...current.suppliers, supplier].sort((a, b) => a.name.localeCompare(b.name)) } : current));

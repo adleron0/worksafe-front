@@ -25,6 +25,7 @@ import { DiaryPanel } from "../-shared/reports";
 import { TEAM_OPTIONS_KEY, TeamEditor } from "../-shared/team";
 import { ResultPanel } from "../-shared/results";
 import { OrderPurchasesPanel } from "../../suprimentos/-shared/purchases";
+import { OrderStockPanel } from "../../suprimentos/-shared/stock-order";
 import { TEAM_DOCUMENTS_KEY, TeamDocumentsPanel } from "../../rh/-shared/team-documents";
 import { RecordFilesPanel } from "../../arquivos/-shared/record-files";
 import { PointDialog } from "../../rh/-shared/places";
@@ -186,6 +187,7 @@ function OrderPage() {
           <TeamDocumentsPanel orderId={order.id} orderNumber={order.number} />
           <RecordFilesPanel entity="service_order" entityId={order.id} title="Arquivos da obra" hint="ART, projetos, autorizações e o que mais for desta ordem de serviço. Quem vê a OS vê os arquivos." />
           <OrderPurchasesPanel orderId={order.id} canRequest={!locked} />
+          <OrderStockPanel orderId={order.id} />
           {order.canSeeCosts && <ResultPanel orderId={order.id} />}
 
           {order.schedule && order.schedule.steps.length > 0 && (

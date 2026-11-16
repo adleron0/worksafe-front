@@ -25,11 +25,14 @@ import {
 } from "../-shared/purchases";
 import { REORDER_STORAGE_KEY, ReorderDraft, qty, readReorderDraft, useItemOptions } from "../-shared/stock";
 import { PurchaseReceiveDialog, pendingOf } from "../-shared/stock-receive";
+import { SERVICE_STORAGE_KEY, ServiceDraft, readServiceDraft } from "../-shared/equipment";
 
 export const Route = createFileRoute("/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId")({
   component: PurchasePage,
   // os: pedido para uma obra; reposicao: linhas vindas de Estoque → Reposição (guardadas no sessionStorage)
-  validateSearch: (search: Record<string, unknown>): { os?: number; reposicao?: "1" } => ({
+  // servico: pedido da calibração/manutenção de uma peça (Equipamentos → Calibração e manutenção)
+  validateSearch: (search: Record<string, unknown>): { os?: number; reposicao?: "1"; servico?: "1" } => ({
+    ...(search.servico === "1" || search.servico === 1 ? { servico: "1" as const } : {}),
     ...(Number(search.os) > 0 ? { os: Number(search.os) } : {}),
     ...(search.reposicao === "1" || search.reposicao === 1 ? { reposicao: "1" as const } : {}),
   }),
@@ -45,6 +48,10 @@ const draftOf = (purchase?: Purchase, os?: number, reorder?: ReorderDraft | null
   items: purchase?.items.length ? purchase.items.map((item) => ({ ...item, unit: item.unit ?? "" }))
     : reorder ? reorder.items.map((item) => ({ ...item, total: item.quantity * item.unitPrice })) : [emptyItem()],
 });
+const serviceDraftOf = (service: ServiceDraft, os?: number): Draft => ({
+  ...draftOf(undefined, os), title: service.title, group: service.group || "outros", supplierId: service.supplierId ? String(service.supplierId) : "",
+  justification: "Serviço de calibração/manutenção de equipamento do estoque.", items: service.items.map((item) => ({ ...item, total: item.quantity * item.unitPrice })),
+});
 const totalOf = (items: PurchaseItem[]) => Math.round(items.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.unitPrice || 0), 0) * 100) / 100;
 const KINDS = [{ id: "cotacao", name: "Cotação" }, { id: "nota", name: "Nota do fornecedor" }, { id: "outro", name: "Outro" }];
 const EVENT_LABEL: Record<string, string> = { criado: "Solicitado", avancou: "Avançou", voltou: "Voltou", recusado: "Recusado", cancelado: "Cancelado" };
@@ -52,12 +59,14 @@ const EVENT_LABEL: Record<string, string> = { criado: "Solicitado", avancou: "Av
 /** Pedido de compra: o que se pede, de quem, para qual obra; e por onde ele já passou. */
 function PurchasePage() {
   const { purchaseId } = Route.useParams();
-  const { os, reposicao } = Route.useSearch();
+  const { os, reposicao, servico } = Route.useSearch();
   const isNew = purchaseId === "novo";
   const { can } = useVerify();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [draft, setDraft] = useState<Draft | null>(isNew ? draftOf(undefined, os, reposicao ? readReorderDraft() : null) : null);
+  // o pedido do serviço de calibração/manutenção: título, grupo, fornecedor e a linha do serviço
+  const [service] = useState<ServiceDraft | null>(() => (isNew && servico ? readServiceDraft() : null));
+  const [draft, setDraft] = useState<Draft | null>(isNew ? (service ? serviceDraftOf(service, os) : draftOf(undefined, os, reposicao ? readReorderDraft() : null)) : null);
   const [moving, setMoving] = useState<PurchaseStatus | null>(null);
   const [receiving, setReceiving] = useState(false);
   const [newSupplier, setNewSupplier] = useState(false);
@@ -74,6 +83,7 @@ function PurchasePage() {
   useEffect(() => { if (purchase) setDraft(draftOf(purchase)); }, [purchase]);
   // as linhas da reposição já foram lidas: não voltam num próximo "novo pedido"
   useEffect(() => { if (reposicao) { try { sessionStorage.removeItem(REORDER_STORAGE_KEY); } catch { /* sem armazenamento */ } } }, [reposicao]);
+  useEffect(() => { if (servico) { try { sessionStorage.removeItem(SERVICE_STORAGE_KEY); } catch { /* sem armazenamento */ } } }, [servico]);
   const { data: stockItems, isError: noStockItems } = useItemOptions();
 
   const apply = (result: Purchase) => {
@@ -94,7 +104,7 @@ function PurchasePage() {
         neededBy: value.neededBy || null, justification: value.justification.trim(),
         items: value.items.filter((item) => item.description.trim()).map((item) => ({ description: item.description.trim(), unit: item.unit || null, quantity: item.quantity, unitPrice: item.unitPrice, itemId: item.itemId ?? null })),
       };
-      if (isNew) return purchasesApi.post<Purchase>("", body);
+      if (isNew) return purchasesApi.post<Purchase>("", service ? { ...body, stockServiceEventId: service.stockServiceEventId } : body);
       return purchasesApi.put<Purchase>(purchaseId, editable ? body : { supplierId: body.supplierId, neededBy: body.neededBy });
     },
     onSuccess: (result) => {

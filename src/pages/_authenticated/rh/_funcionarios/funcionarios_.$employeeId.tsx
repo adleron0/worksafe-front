@@ -19,6 +19,7 @@ import {
 } from "../-shared/employees";
 import { DOCS_ABILITY, EmployeeDocuments } from "../-shared/documents";
 import { EmployeeAllocation } from "../-shared/allocation";
+import { EmployeePpeTab } from "../../suprimentos/-shared/ppe";
 
 export const Route = createFileRoute("/_authenticated/rh/_funcionarios/funcionarios_/$employeeId")({
   component: EmployeePage,
@@ -62,6 +63,7 @@ function EmployeePage() {
   };
   const editable = isNew ? can(`create_${EMPLOYEES_ABILITY}`) : can(`update_${EMPLOYEES_ABILITY}`);
   const canSeeDocuments = can(`view_${DOCS_ABILITY}`);
+  const canSeePpe = can("view_entregas_epi") || can(`view_${EMPLOYEES_ABILITY}`);
   const seesPersonal = isNew ? !!options?.canSeePersonal : !!employee?.canSeePersonal;
 
   const { mutate: save, isPending: saving } = useMutation({
@@ -145,9 +147,11 @@ function EmployeePage() {
             <TabsTrigger value="dados">Dados</TabsTrigger>
             {canSeeDocuments && <TabsTrigger value="documentos">Documentos</TabsTrigger>}
             <TabsTrigger value="alocacao">Alocação</TabsTrigger>
+            {canSeePpe && <TabsTrigger value="epi">EPI e equipamentos</TabsTrigger>}
           </TabsList>
         )}
         {employee && <TabsContent value="alocacao" className="mt-4"><EmployeeAllocation employeeId={employee.id} /></TabsContent>}
+        {employee && canSeePpe && <TabsContent value="epi" className="mt-4"><EmployeePpeTab employeeId={employee.id} /></TabsContent>}
         {employee && canSeeDocuments && <TabsContent value="documentos" className="mt-4"><EmployeeDocuments employeeId={employee.id} /></TabsContent>}
         <TabsContent value="dados" className="mt-4">
       <div className="grid xl:grid-cols-3 gap-4 items-start">

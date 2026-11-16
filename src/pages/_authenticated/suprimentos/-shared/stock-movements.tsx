@@ -14,14 +14,15 @@ import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import SlideConfirm from "@/components/general-components/SlideConfirm";
 import { NumField, Tip, dateBr, errorMessage, money, newUid, todayIso } from "../../comercial/-shared/commercial";
+import { LotPicker, UnitPicker } from "./stock-pickers";
 import {
-  BalanceRow, ImportResult, ItemOption, MANUAL_TYPES, ManualType, Movement, PERM_ADJUST, STOCK_KEYS, qty, stockApi, useItemOptions, useStockOptions,
+  ImportResult, ItemOption, MANUAL_TYPES, ManualType, Movement, PERM_ADJUST, STOCK_KEYS, qty, stockApi, useItemOptions, useStockOptions,
 } from "./stock";
 
 // ---------------------------------------------------------------- linhas de itens (lançamento, romaneio)
 
-export interface LineDraft { key: string; itemId: string; quantity: number; unitCost: number | null; lotNumber: string; expiresAt: string; lotId: string }
-export const emptyLine = (): LineDraft => ({ key: newUid(), itemId: "", quantity: 1, unitCost: null, lotNumber: "", expiresAt: "", lotId: "" });
+export interface LineDraft { key: string; itemId: string; quantity: number; unitCost: number | null; lotNumber: string; expiresAt: string; lotId: string; unitId: string }
+export const emptyLine = (): LineDraft => ({ key: newUid(), itemId: "", quantity: 1, unitCost: null, lotNumber: "", expiresAt: "", lotId: "", unitId: "" });
 /** entrada: de fora para o local (pede lote novo); saida: do local para fora (escolhe o lote que existe); ajuste: com sinal. */
 export type LinesMode = "entrada" | "saida" | "ajuste";
 
@@ -37,8 +38,8 @@ export function linesError(mode: LinesMode, lines: LineDraft[], items: ItemOptio
     if (!line.quantity || Number.isNaN(line.quantity)) return `${label}: informe a quantidade.`;
     if (mode !== "ajuste" && line.quantity < 0) return `${label}: a quantidade não pode ser negativa.`;
     if (!item) continue;
-    if (item.tracking === "unidade" && !lineIn(mode, line)) return `${label}: peça rastreada sai escolhendo a etiqueta, o que ainda não dá para fazer aqui.`;
-    if (item.tracking === "unidade" && mode === "ajuste") return `${label}: peça rastreada não se ajusta por quantidade.`;
+    if (item.tracking === "unidade" && mode === "ajuste") return `${label}: peça rastreada não se ajusta por quantidade (use baixa ou entrada).`;
+    if (item.tracking === "unidade" && !lineIn(mode, line) && !line.unitId) return `${label}: escolha a peça (etiqueta).`;
     if (item.tracking === "unidade" && !Number.isInteger(line.quantity)) return `${label}: peças são inteiras.`;
     if (item.tracking === "lote" && lineIn(mode, line) && !line.lotNumber.trim()) return `${label}: informe o número do lote.`;
     if (item.tracking === "lote" && !lineIn(mode, line) && !line.lotId) return `${label}: escolha o lote.`;
@@ -56,24 +57,9 @@ export function linesBody(mode: LinesMode, lines: LineDraft[], items: ItemOption
       ...(mode === "entrada" && line.unitCost !== null ? { unitCost: line.unitCost } : {}),
       ...(item?.tracking === "lote" && entering ? { lotNumber: line.lotNumber.trim(), expiresAt: line.expiresAt || null } : {}),
       ...(item?.tracking === "lote" && !entering ? { lotId: Number(line.lotId) } : {}),
+      ...(item?.tracking === "unidade" && !entering && line.unitId ? { unitId: Number(line.unitId), quantity: 1 } : {}),
     };
   });
-}
-
-/** Lotes de um item que têm saldo no local. */
-function LotPicker({ itemId, locationId, value, onChange }: { itemId: string; locationId: string; value: string; onChange: (value: string) => void }) {
-  const { data, isLoading, error } = useQuery({
-    queryKey: [STOCK_KEYS.balances, { holderType: "local", holderId: locationId, itemId }],
-    queryFn: () => stockApi.get<{ rows: BalanceRow[] }>("balances", { holderType: "local", holderId: locationId, itemId }),
-    enabled: !!itemId && !!locationId,
-    retry: false,
-  });
-  if (!locationId) return <p className="text-xs text-muted-foreground pb-2">Escolha o local para ver os lotes.</p>;
-  if (error) return <p className="text-xs text-red-500 pb-2">Não foi possível listar os lotes: {errorMessage(error)}</p>;
-  const options = (data?.rows ?? []).filter((row) => row.lotId).map((row) => ({
-    id: row.lotId!, name: `${row.lot ?? "Lote"} · ${qty(row.quantity)} ${row.unit}${row.expiresAt ? ` · vence ${dateBr(row.expiresAt)}` : ""}`,
-  }));
-  return <Select name={`lot-${itemId}`} options={options} state={value} isLoading={isLoading} modal onChange={(_, v) => onChange(String(v ?? ""))} placeholder={options.length ? "Escolha o lote" : "Nenhum lote com saldo aqui"} />;
 }
 
 export function LinesEditor({ mode, locationId, lines, onChange, items, itemsLoading, showCost }: {
@@ -92,7 +78,7 @@ export function LinesEditor({ mode, locationId, lines, onChange, items, itemsLoa
               <div className="col-span-12 sm:col-span-7">
                 {index === 0 && <Label className="text-xs">Item</Label>}
                 <Select name={`item-${line.key}`} options={options} state={line.itemId} isLoading={itemsLoading} modal
-                  onChange={(_, value) => setLine(line.key, { itemId: String(value ?? ""), lotId: "", lotNumber: "", expiresAt: "" })} placeholder="Escolha o item" />
+                  onChange={(_, value) => setLine(line.key, { itemId: String(value ?? ""), lotId: "", lotNumber: "", expiresAt: "", unitId: "" })} placeholder="Escolha o item" />
               </div>
               <div className={showCost && mode === "entrada" ? "col-span-5 sm:col-span-2" : "col-span-10 sm:col-span-4"}>
                 {index === 0 && <Label className="text-xs">{mode === "ajuste" ? "Diferença (+ ou −)" : "Quantidade"}</Label>}
@@ -121,13 +107,20 @@ export function LinesEditor({ mode, locationId, lines, onChange, items, itemsLoa
             )}
             {item?.tracking === "lote" && !entering && (
               <div><Label className="text-xs">Lote <span>*</span></Label>
-                <LotPicker itemId={line.itemId} locationId={locationId} value={line.lotId} onChange={(value) => setLine(line.key, { lotId: value })} /></div>
+                <LotPicker name={`lot-${line.key}`} itemId={line.itemId} locationId={locationId} unit={item.unit} value={line.lotId} onChange={(value) => setLine(line.key, { lotId: value })} /></div>
             )}
             {item?.tracking === "unidade" && mode === "entrada" && (
               <p className="text-xs text-muted-foreground">Peça rastreada: entram {Math.max(0, Math.round(line.quantity))} peça(s), cada uma com etiqueta própria gerada pelo código do item.</p>
             )}
-            {item?.tracking === "unidade" && mode !== "entrada" && (
-              <p className="text-xs text-amber-600 dark:text-amber-400">Peça rastreada anda pela etiqueta: a escolha da peça chega com a tela de Equipamentos.</p>
+            {item?.tracking === "unidade" && mode === "saida" && (
+              <div><Label className="text-xs">Peça <span>*</span></Label>
+                {locationId ? <UnitPicker name={`unit-${line.key}`} itemId={line.itemId} holderType="local" holderId={locationId} value={line.unitId}
+                  exclude={lines.filter((l) => l.key !== line.key && l.unitId).map((l) => l.unitId)} onChange={(value) => setLine(line.key, { unitId: value, quantity: 1 })} />
+                  : <p className="text-xs text-muted-foreground">Escolha o local para ver as peças.</p>}
+              </div>
+            )}
+            {item?.tracking === "unidade" && mode === "ajuste" && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">Peça rastreada não se ajusta por quantidade: use a baixa na ficha da peça ou uma entrada.</p>
             )}
           </div>
         );
@@ -203,7 +196,7 @@ export function NewMovementDialog({ initialType, onClose, onDone }: { initialTyp
             <div><Label>Data</Label>
               <CalendarPicker mode="single" name="date" className="mt-1 w-full" value={date} fromYear={2020} toYear={2040} onValueChange={(_, value) => setDate(String(value ?? "") || todayIso())} /></div>
             <div><Label>{type === "transferencia" ? "Sai de" : mode === "entrada" ? "Entra em" : "Local"} <span>*</span></Label>
-              <Select name="locationId" options={locations} state={location} modal onChange={(_, value) => { setLocationId(String(value ?? "")); setLines((current) => current.map((line) => ({ ...line, lotId: "" }))); }} placeholder="Escolha o local" /></div>
+              <Select name="locationId" options={locations} state={location} modal onChange={(_, value) => { setLocationId(String(value ?? "")); setLines((current) => current.map((line) => ({ ...line, lotId: "", unitId: "" }))); }} placeholder="Escolha o local" /></div>
           </div>
           {type === "transferencia" && (
             <div className="sm:w-1/3"><Label>Vai para <span>*</span></Label>

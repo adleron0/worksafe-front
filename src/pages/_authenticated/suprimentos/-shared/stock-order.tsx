@@ -152,7 +152,7 @@ function DispatchDialog({ orderId, orderNumber, onClose, onDone }: { orderId: nu
           <div className="grid sm:grid-cols-2 gap-3">
             <div><Label>Sai de <span>*</span></Label>
               {unavailable ? <p className="text-sm text-muted-foreground mt-2">Sem acesso à lista de locais de estoque.</p>
-                : <Select name="locationId" options={locations} state={location} modal onChange={(_, value) => { setLocationId(String(value ?? "")); setLines((current) => current.map((line) => ({ ...line, lotId: "" }))); }} placeholder="Escolha o local" />}</div>
+                : <Select name="locationId" options={locations} state={location} modal onChange={(_, value) => { setLocationId(String(value ?? "")); setLines((current) => current.map((line) => ({ ...line, lotId: "", unitId: "" }))); }} placeholder="Escolha o local" />}</div>
             <div><Label htmlFor="receivedBy">Quem recebeu</Label>
               <Input id="receivedBy" name="receivedBy" value={receivedBy} maxLength={160} onValueChange={(_, value) => setReceivedBy(String(value))} className="mt-1" placeholder="Nome de quem levou para a obra" /></div>
           </div>

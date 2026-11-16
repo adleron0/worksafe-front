@@ -15,7 +15,7 @@ import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { dateBr, errorMessage, money, todayIso } from "../../comercial/-shared/commercial";
 import { PAYABLES_KEY, PAYABLES_SUMMARY_KEY } from "../../financeiro/-shared/payables";
-import { STOCK_KEYS, useStockOptions } from "./stock";
+import { STOCK_KEYS, useCanPick, useStockOptions } from "./stock";
 import { paymentMethodOptions } from "../../financeiro/_receber/-components/options";
 
 /** Pedido de compra: tipos (espelham a API), etapas e a passagem entre elas. */
@@ -167,10 +167,10 @@ export function PurchaseMoveDialog({ purchase, target, onClose, onDone }: { purc
   const items = purchase.items ?? full?.items ?? [];
   const toObra = (purchase.serviceOrder ?? full?.serviceOrder ?? null) !== null;
   const stockPending = receiving && isForward(from, target) && items.some((item) => item.itemId && (item.receivedQuantity ?? 0) < item.quantity);
-  const { can: canDo } = useVerify();
+  const canPick = useCanPick();
   const { data: stockOptions, isError: stockOptionsError } = useStockOptions(stockPending && !toObra);
-  // sem ver o estoque não vem a lista de locais: a API usa o local padrão
-  const noStockOptions = stockOptionsError || !canDo("list_itens_estoque");
+  // sem a lista de locais, a API usa o local padrão
+  const noStockOptions = stockOptionsError || !canPick;
   const locations = stockOptions?.locations ?? [];
   const count = Number(installments);
 

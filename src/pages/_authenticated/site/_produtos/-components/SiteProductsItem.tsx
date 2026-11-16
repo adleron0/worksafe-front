@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import HeaderRow from "@/components/general-components/HeaderRow";
+import { SiteStockBadge } from "@/pages/_authenticated/suprimentos/-shared/inventory";
 // Interfaces
 import { IEntity } from "@/pages/_authenticated/site/_produtos/-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -135,6 +136,7 @@ const SiteProductsItem = ({ item, index, entity, setFormData, setOpenForm, openI
                 {[item.category?.name, item.brand?.name].filter(Boolean).join(" · ")}
               </p>
             )}
+            <SiteStockBadge productId={Number(item.id)} />
           </div>
         </div>
 

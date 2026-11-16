@@ -3,7 +3,9 @@ import { cn } from "@/lib/utils";
 
 export type ProposalKind = "servico" | "treinamento" | "misto";
 export type ProposalStatus = "rascunho" | "enviada" | "visualizada" | "aceita" | "recusada" | "expirada" | "cancelada" | "substituida";
-export type ItemType = "mao_de_obra" | "locacao" | "material" | "treinamento" | "avulso";
+export type ItemType = "mao_de_obra" | "locacao" | "material" | "treinamento" | "avulso" | "locacao_cliente";
+/** Período da locação a cliente (item do estoque). */
+export type RentPeriod = "dia" | "semana" | "mes";
 /** Marcação sobre a imagem, em percentual da largura e da altura. */
 export type Annotation =
   | { type: "circulo"; x: number; y: number; w: number; h: number; label: string }
@@ -23,12 +25,16 @@ export interface DraftItem {
   id?: number; type: ItemType; description: string; unit: string | null; quantity: number;
   professionalId: number | null; night: boolean; travel: boolean; weekend: boolean;
   workDays: number | null; weekendDays: number | null; hoursPerDay: number | null; overtimeHours: number;
-  courseId: number | null; extra: { students?: number | null; workload?: number | null; dates?: string; location?: string } | null;
+  courseId: number | null;
+  /** locação a cliente: o item alugável do estoque */
+  stockItemId?: number | null;
+  extra: { students?: number | null; workload?: number | null; dates?: string; location?: string; period?: RentPeriod; periods?: number | null; rate?: number | null } | null;
   unitCost: number; extraCost: number; margin?: number | null; finalValue: number | null; showInDocument: boolean;
 }
 /** Linha recém-adicionada e ainda sem nada: não entra no cálculo nem é salva. */
-export const isBlankItem = (item: Pick<DraftItem, "type" | "professionalId" | "courseId" | "description" | "unitCost" | "extraCost" | "finalValue">) =>
+export const isBlankItem = (item: Pick<DraftItem, "type" | "professionalId" | "courseId" | "description" | "unitCost" | "extraCost" | "finalValue"> & { stockItemId?: number | null }) =>
   item.type === "mao_de_obra" ? !item.professionalId
+    : item.type === "locacao_cliente" ? !item.stockItemId && !item.description.trim() && (item.finalValue === null || item.finalValue === undefined)
     : !item.description.trim() && !item.courseId && !item.unitCost && !item.extraCost && (item.finalValue === null || item.finalValue === undefined);
 export interface DraftSection { uid: string; id?: number; title: string; kind: ItemType; margin?: number; showInDocument: boolean; items: DraftItem[] }
 export interface DraftInstallment { uid: string; percent: number | null; amount: number | null; dueRule: DueRule; dueDate: string | null; dueDays: number | null; description: string | null }
@@ -130,7 +136,7 @@ export const PROPOSAL_KEY = "commercialProposal";
 
 export const KIND_LABEL: Record<ProposalKind, string> = { servico: "Serviço", treinamento: "Treinamento", misto: "Serviço + treinamento" };
 export const ITEM_LABEL: Record<ItemType, string> = {
-  mao_de_obra: "Mão de obra", locacao: "Locação", material: "Material", treinamento: "Treinamento", avulso: "Item avulso",
+  mao_de_obra: "Mão de obra", locacao: "Locação", material: "Material", treinamento: "Treinamento", avulso: "Item avulso", locacao_cliente: "Locação a cliente",
 };
 export const STATUS_LABEL: Record<ProposalStatus, string> = {
   rascunho: "Rascunho", enviada: "Enviada", visualizada: "Visualizada", aceita: "Aceita", recusada: "Recusada",

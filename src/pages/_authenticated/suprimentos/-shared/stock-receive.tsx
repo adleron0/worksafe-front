@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
-import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -11,7 +10,7 @@ import Select from "@/components/general-components/Select";
 import { NumField, errorMessage, todayIso } from "../../comercial/-shared/commercial";
 import { PAYABLES_KEY } from "../../financeiro/-shared/payables";
 import { PURCHASES_KEY, PURCHASE_KEY, Purchase, purchasesApi } from "./purchases";
-import { STOCK_ABILITY, STOCK_KEYS, qty, useItemOptions, useStockOptions } from "./stock";
+import { STOCK_KEYS, qty, useCanPick, useItemOptions, useStockOptions } from "./stock";
 
 /** Quanto falta receber de uma linha do pedido. */
 export const pendingOf = (item: { quantity: number; receivedQuantity?: number }) => Math.max(0, Math.round((Number(item.quantity) - Number(item.receivedQuantity ?? 0)) * 1000) / 1000);
@@ -25,10 +24,10 @@ interface LineState { quantity: number; locationId: string; lotNumber: string; e
 export function PurchaseReceiveDialog({ purchase, onClose }: { purchase: Purchase; onClose: () => void }) {
   const queryClient = useQueryClient();
   const toObra = !!purchase.serviceOrder;
-  const { can } = useVerify();
+  const canPick = useCanPick();
   const { data: options, isError: optionsError } = useStockOptions(!toObra);
-  // sem ver o estoque não vem a lista de locais: a API usa o local padrão
-  const noOptions = optionsError || !can(`list_${STOCK_ABILITY}`);
+  // sem a lista de locais, a API usa o local padrão
+  const noOptions = optionsError || !canPick;
   const { data: itemOptions = [] } = useItemOptions();
   const locations = options?.locations ?? [];
   const firstLocation = locations[0] ? String(locations[0].id) : "";

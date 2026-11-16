@@ -20,6 +20,9 @@ import {
   DueBadge, HOLDER_LABEL, ItemDetail, ItemPurchase, KardexRow, PRESET_OPTIONS, Pill, STOCK_ABILITY, STOCK_KEYS, TRACKING_LABEL, TRACKING_OPTIONS, Tracking, qty, stockApi, toOptions, useStockOptions,
 } from "../-shared/stock";
 import { MovementDetailDialog } from "../-shared/stock-movements";
+import { RecordFilesPanel } from "../../arquivos/-shared/record-files";
+import { DueStateBadge, EQUIP_KEYS, PrintLabelsDialog, UnitRow, UnitStatusBadge } from "../-shared/equipment";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/suprimentos/estoque/itens_/$itemId")({
   component: ItemPage,
@@ -57,6 +60,7 @@ function ItemPage() {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Draft | null>(isNew ? draftOf() : null);
   const [preset, setPreset] = useState("consumivel");
+  const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
   const { data: options } = useStockOptions();
   const { data: item, isLoading, error: loadError } = useQuery({
@@ -172,6 +176,10 @@ function ItemPage() {
               </ConfirmDialog>
             )}
             {!item.active && can(`activate_${STOCK_ABILITY}`) && <Button type="button" variant="outline" size="sm" onClick={() => setActive(true)}><Icon name="archive-restore" className="w-4 h-4 mr-1" /> Reativar</Button>}
+            {item.active && !item.product && can(`update_${STOCK_ABILITY}`) && can("create_loja_site") && (
+              <Button type="button" variant="outline" size="sm" onClick={() => setPublishing(true)}><Icon name="store" className="w-4 h-4 mr-1" /> Publicar na loja</Button>
+            )}
+            {item.product && <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><Icon name="store" className="w-3 h-3" /> Na loja: {item.product.name}{item.product.active ? "" : " (inativo)"}</span>}
           </div>
         )}
       </div>
@@ -183,9 +191,13 @@ function ItemPage() {
             <TabsTrigger value="saldos">Saldos</TabsTrigger>
             <TabsTrigger value="movimentacoes">Movimentações</TabsTrigger>
             <TabsTrigger value="compras">Compras</TabsTrigger>
+            {item.tracking === "unidade" && can("view_equipamentos") && <TabsTrigger value="pecas">Peças</TabsTrigger>}
+            <TabsTrigger value="arquivos">Arquivos</TabsTrigger>
           </TabsList>
         )}
         {item && <TabsContent value="saldos" className="mt-4"><ItemBalances item={item} /></TabsContent>}
+        {item && item.tracking === "unidade" && can("view_equipamentos") && <TabsContent value="pecas" className="mt-4"><ItemUnits itemId={item.id} /></TabsContent>}
+        {item && <TabsContent value="arquivos" className="mt-4"><RecordFilesPanel entity="stock_item" entityId={item.id} title="Arquivos do item" hint="Manual, ficha técnica, certificado de aprovação (CA) e o que mais valer para todas as peças deste item." /></TabsContent>}
         {item && <TabsContent value="movimentacoes" className="mt-4"><ItemKardex itemId={item.id} unit={item.unit} /></TabsContent>}
         {item && <TabsContent value="compras" className="mt-4"><ItemPurchases itemId={item.id} /></TabsContent>}
         <TabsContent value="dados" className="mt-4">
@@ -298,6 +310,7 @@ function ItemPage() {
           </form>
         </TabsContent>
       </Tabs>
+      {item && publishing && <PublishDialog itemId={item.id} name={item.name} suggested={item.averageCost} onClose={() => setPublishing(false)} />}
     </>
   );
 }
@@ -409,5 +422,78 @@ function ItemPurchases({ itemId }: { itemId: number }) {
         </ul>
       )}
     </section>
+  );
+}
+
+/** Peças do item (controle por unidade), com a impressão das etiquetas. */
+function ItemUnits({ itemId }: { itemId: number }) {
+  const [printing, setPrinting] = useState(false);
+  const params = { itemId, limit: 500 };
+  const { data, isLoading, error } = useQuery({ queryKey: [EQUIP_KEYS.units, params], queryFn: () => stockApi.get<{ rows: UnitRow[]; total: number }>("units", params) });
+  if (error) return <p className="text-destructive text-sm">Erro: {errorMessage(error)}</p>;
+  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  const rows = data?.rows ?? [];
+  return (
+    <section className="rounded-lg border overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 bg-muted/50">
+        <h2 className="font-semibold text-sm">Peças ({data?.total ?? 0})</h2>
+        <div className="flex gap-2">
+          <Button type="button" size="sm" variant="outline" disabled={!rows.length} onClick={() => setPrinting(true)}><Icon name="qr-code" className="w-3 h-3 mr-1" /> Imprimir etiquetas</Button>
+          <Button asChild size="sm" variant="outline"><Link to="/suprimentos/equipamentos" search={{ itemId }}>Ver em Equipamentos</Link></Button>
+        </div>
+      </div>
+      {rows.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhuma peça. Elas nascem na entrada (compra, entrada avulsa, saldo inicial).</p>}
+      {rows.map((unit) => (
+        <Link key={unit.id} to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(unit.id) }} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-t text-sm hover:bg-muted/40">
+          <div className="lg:w-40 font-semibold tabular-nums">{unit.tag}</div>
+          <div className="flex-1 min-w-0 text-muted-foreground truncate">{unit.serialNumber ? `série ${unit.serialNumber}` : ""}</div>
+          <div className="lg:w-44"><UnitStatusBadge status={unit.status} needsInspection={unit.needsInspection} /></div>
+          <div className="lg:w-56 text-muted-foreground truncate">{unit.holder}</div>
+          <div className="lg:w-56 flex flex-wrap gap-1">
+            {unit.dues.inspection && <DueStateBadge state={unit.dues.inspection} label="Inspeção" />}
+            {unit.dues.calibration && <DueStateBadge state={unit.dues.calibration} label="Calibração" />}
+            {unit.dues.life && <DueStateBadge state={unit.dues.life} label="Vida útil" />}
+          </div>
+        </Link>
+      ))}
+      {printing && <PrintLabelsDialog units={rows.map((unit) => ({ tag: unit.tag, item: unit.item }))} onClose={() => setPrinting(false)} />}
+    </section>
+  );
+}
+
+/** Publicar na loja: cria o produto do site ligado ao item, com o preço. */
+function PublishDialog({ itemId, name, suggested, onClose }: { itemId: number; name: string; suggested: number | null; onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const [price, setPrice] = useState<number>(0);
+  const [error, setError] = useState("");
+  const { mutate, isPending } = useMutation({
+    mutationFn: () => stockApi.post<{ id: number; name: string }>(`items/${itemId}/publish`, { price }),
+    onSuccess: (product) => {
+      queryClient.invalidateQueries({ queryKey: [STOCK_KEYS.item] });
+      queryClient.invalidateQueries({ queryKey: ["stockSiteProducts"] });
+      toast({ title: `Publicado na loja: ${product.name}`, description: "Complete as fotos e a descrição em Site → Produtos.", variant: "success" });
+      onClose();
+    },
+    onError: (err) => setError(errorMessage(err)),
+  });
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Publicar na loja</DialogTitle>
+          <DialogDescription>Cria o produto "{name}" na loja do site, ligado a este item: a loja mostra "pronta entrega" quando há saldo disponível.</DialogDescription>
+        </DialogHeader>
+        <form className="grid gap-4" onSubmit={(event) => { event.preventDefault(); if (!(price > 0)) return setError("Informe o preço de venda."); setError(""); mutate(); }}>
+          <div><Label className="text-sm">Preço de venda <span>*</span></Label>
+            <NumField value={price} kind="money" className="mt-1" ariaLabel="Preço de venda" onChange={setPrice} />
+            {suggested !== null && suggested > 0 && <p className="text-xs text-muted-foreground mt-1">Custo médio: {money(suggested)}</p>}</div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" disabled={isPending}>{isPending ? "Publicando..." : "Publicar"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input as ShadInput } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -7,7 +8,13 @@ import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { NumField, Tip, decimal, money, newUid, percent } from "../-shared/commercial";
-import { CalcLine, DraftItem, DraftSection, ITEM_LABEL, ItemType, ProposalCalc, ProposalDraft, ProposalOptions, isBlankItem } from "../-shared/proposals";
+import { CalcLine, DraftItem, DraftSection, ITEM_LABEL, ItemType, ProposalCalc, ProposalDraft, ProposalOptions, RentPeriod, isBlankItem } from "../-shared/proposals";
+import { ItemOption, STOCK_KEYS, stockApi } from "../../suprimentos/-shared/stock";
+
+/** Item alugável do estoque, com os valores de aluguel do cadastro. */
+type RentItem = ItemOption & { rent?: { dia: number | null; semana: number | null; mes: number | null } };
+const RENT_PERIODS: Array<{ id: RentPeriod; name: string }> = [{ id: "dia", name: "Dia" }, { id: "semana", name: "Semana" }, { id: "mes", name: "Mês" }];
+const PERIOD_WORD: Record<RentPeriod, [string, string]> = { dia: ["dia", "dias"], semana: ["semana", "semanas"], mes: ["mês", "meses"] };
 
 interface Props {
   draft: ProposalDraft;
@@ -21,7 +28,8 @@ interface Props {
 const newItem = (type: ItemType): DraftItem => ({
   uid: newUid(), type, description: "", unit: null, quantity: 1, professionalId: null, night: false, travel: false, weekend: false,
   workDays: null, weekendDays: null, hoursPerDay: null, overtimeHours: 0, courseId: null,
-  extra: type === "treinamento" ? { students: null, workload: null, dates: "", location: "" } : null,
+  extra: type === "treinamento" ? { students: null, workload: null, dates: "", location: "" } : type === "locacao_cliente" ? { period: "mes", periods: 1, rate: null } : null,
+  ...(type === "locacao_cliente" ? { stockItemId: null } : {}),
   unitCost: 0, extraCost: 0, margin: null, finalValue: null, showInDocument: true,
 });
 
@@ -38,7 +46,7 @@ const Cell = ({ label, className, children }: { label: string; className?: strin
 );
 
 const ADD_LABEL: Record<ItemType, string> = {
-  mao_de_obra: "Adicionar profissional", locacao: "Adicionar locação", material: "Adicionar material", treinamento: "Adicionar treinamento", avulso: "Adicionar item",
+  mao_de_obra: "Adicionar profissional", locacao: "Adicionar locação", material: "Adicionar material", treinamento: "Adicionar treinamento", avulso: "Adicionar item", locacao_cliente: "Adicionar equipamento alugado",
 };
 
 /**
@@ -51,6 +59,13 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
   const [newKind, setNewKind] = useState<ItemType>("avulso");
   // seção com itens pede confirmação antes de sair
   const [removing, setRemoving] = useState<DraftSection | null>(null);
+  // itens alugáveis do estoque, só quando a proposta tem locação a cliente
+  const hasRent = draft.sections.some((section) => section.kind === "locacao_cliente" || section.items.some((item) => item.type === "locacao_cliente"));
+  const { data: rentItems = [] } = useQuery({
+    queryKey: [STOCK_KEYS.itemOptions, "alugavel"],
+    queryFn: () => stockApi.get<RentItem[]>("items/options", { flag: "alugavel" }),
+    enabled: hasRent, retry: false, staleTime: 30_000,
+  });
   const removeSection = (uid: string) => setSections((list) => list.filter((x) => x.uid !== uid));
   const updateSection = (uid: string, patch: Partial<DraftSection>) => setSections((list) => list.map((s) => (s.uid === uid ? { ...s, ...patch } : s)));
   const updateItem = (sectionUid: string, itemUid: string, patch: Partial<DraftItem>) =>
@@ -71,7 +86,7 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
       {draft.sections.length === 0 && <p className="rounded-lg border p-4 text-sm text-muted-foreground">Nenhuma seção. Adicione uma abaixo para começar a incluir itens.</p>}
       {draft.sections.map((section, s) => {
         const sectionCalc = calc?.sections[s];
-        const labor = section.kind === "mao_de_obra", training = section.kind === "treinamento";
+        const labor = section.kind === "mao_de_obra", training = section.kind === "treinamento", rent = section.kind === "locacao_cliente";
         return (
           <section key={section.uid} className="rounded-lg border overflow-hidden">
             <header className="flex flex-wrap items-center gap-x-3 gap-y-2 pl-3 pr-2 py-2 border-b bg-muted/50">
@@ -116,12 +131,13 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
 
             {section.items.length > 0 && (
               <div className="hidden @3xl:flex items-center gap-2 px-3 py-1.5 border-b text-xs font-medium text-muted-foreground">
-                <div className="flex-1">{labor ? "Profissional" : training ? "Curso" : "Descrição"}</div>
-                {!labor && !training && <div className="w-14">Un.</div>}
+                <div className="flex-1">{labor ? "Profissional" : training ? "Curso" : rent ? "Equipamento alugável" : "Descrição"}</div>
+                {!labor && !training && !rent && <div className="w-14">Un.</div>}
                 <div className="w-16">{training ? "Turmas" : "Qtd."}</div>
                 {labor && <div className="w-[104px]">Adicionais</div>}
                 {training && <div className="w-16">Alunos</div>}
-                {!labor && !training && <><div className="w-28">R$ unitário</div><div className="w-28">{section.kind === "material" ? "Frete" : "Taxas"}</div></>}
+                {rent && <><div className="w-28">Período</div><div className="w-16">Períodos</div><div className="w-28">R$ por período</div></>}
+                {!labor && !training && !rent && <><div className="w-28">R$ unitário</div><div className="w-28">{section.kind === "material" ? "Frete" : "Taxas"}</div></>}
                 {canSeeCosts && <div className="w-24 text-right">Custo</div>}
                 <div className="w-32">Valor final</div>
                 <div className="w-[68px]" />
@@ -132,7 +148,7 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
               {section.items.length === 0 && <p className="px-4 py-3 text-sm text-muted-foreground">Nenhum item nesta seção.</p>}
               {section.items.map((item, i) => (
                 // o cálculo não recebe as linhas em branco: a posição conta só as preenchidas
-                <ItemRow key={item.uid} item={item} line={isBlankItem(item) ? undefined : sectionCalc?.lines[section.items.slice(0, i).filter((x) => !isBlankItem(x)).length]} draft={draft} options={options} readOnly={readOnly} canSeeCosts={canSeeCosts}
+                <ItemRow key={item.uid} item={item} line={isBlankItem(item) ? undefined : sectionCalc?.lines[section.items.slice(0, i).filter((x) => !isBlankItem(x)).length]} draft={draft} options={options} rentItems={rentItems} readOnly={readOnly} canSeeCosts={canSeeCosts}
                   update={(patch) => updateItem(section.uid, item.uid, patch)}
                   remove={() => updateSection(section.uid, { items: section.items.filter((x) => x.uid !== item.uid) })} />
               ))}
@@ -169,7 +185,7 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
 }
 
 interface RowProps {
-  item: DraftItem; line?: CalcLine; draft: ProposalDraft; options: ProposalOptions; readOnly: boolean; canSeeCosts: boolean;
+  item: DraftItem; line?: CalcLine; draft: ProposalDraft; options: ProposalOptions; rentItems: RentItem[]; readOnly: boolean; canSeeCosts: boolean;
   update: (patch: Partial<DraftItem>) => void; remove: () => void;
 }
 
@@ -187,8 +203,12 @@ const FlagsLegend = () => (
   </p>
 );
 
-function ItemRow({ item, line, draft, options, readOnly, canSeeCosts, update, remove }: RowProps) {
-  const labor = item.type === "mao_de_obra", training = item.type === "treinamento";
+function ItemRow({ item, line, draft, options, rentItems, readOnly, canSeeCosts, update, remove }: RowProps) {
+  const labor = item.type === "mao_de_obra", training = item.type === "treinamento", rent = item.type === "locacao_cliente";
+  const period: RentPeriod = item.extra?.period ?? "mes";
+  const rentItem = rentItems.find((option) => option.id === item.stockItemId);
+  /** Valor do período sugerido pelo cadastro do item. */
+  const suggestedRate = (option: RentItem | undefined, value: RentPeriod) => option?.rent?.[value] ?? null;
   const adjusted = labor
     ? item.workDays !== null || item.weekendDays !== null || item.overtimeHours > 0
     : training ? Boolean(item.extra?.dates || item.extra?.location || item.unitCost) : false;
@@ -216,7 +236,20 @@ function ItemRow({ item, line, draft, options, readOnly, canSeeCosts, update, re
               }} />
           </Cell>
         )}
-        {!labor && !training && (
+        {rent && (
+          <Cell label="Equipamento alugável" className="@3xl:flex-1">
+            <Select name={`rent-${item.uid}`} state={item.stockItemId ? String(item.stockItemId) : ""} disabled={readOnly} modal={false} clearable placeholder="Selecione o item do estoque"
+              options={[...rentItems.map((option) => ({ id: option.id, name: option.name })), ...(item.stockItemId && !rentItem ? [{ id: item.stockItemId, name: item.description || "Item do estoque" }] : [])]}
+              onChange={(_, value) => {
+                const picked = rentItems.find((option) => String(option.id) === String(value));
+                update({
+                  stockItemId: picked?.id ?? null, description: picked?.label ?? (value ? item.description : ""), unit: picked?.unit ?? item.unit,
+                  extra: { ...item.extra, period, periods: item.extra?.periods ?? 1, rate: suggestedRate(picked, period) ?? item.extra?.rate ?? null },
+                });
+              }} />
+          </Cell>
+        )}
+        {!labor && !training && !rent && (
           <Cell label="Descrição" className="@3xl:flex-1">
             <ShadInput value={item.description} maxLength={300} disabled={readOnly} aria-label="Descrição do item"
               placeholder={item.type === "locacao" ? "Ex.: Andaime tubular" : item.type === "material" ? "Ex.: Tinta epóxi" : "Ex.: Mobilização"}
@@ -225,7 +258,7 @@ function ItemRow({ item, line, draft, options, readOnly, canSeeCosts, update, re
         )}
 
         <div className="grid grid-cols-2 @md:grid-cols-4 @3xl:contents gap-2">
-          {!labor && !training && (
+          {!labor && !training && !rent && (
             <Cell label="Unidade" className="@3xl:w-14">
               <ShadInput value={item.unit ?? ""} maxLength={30} disabled={readOnly} aria-label="Unidade" placeholder="un" onChange={(event) => update({ unit: event.target.value || null })} />
             </Cell>
@@ -258,7 +291,24 @@ function ItemRow({ item, line, draft, options, readOnly, canSeeCosts, update, re
                 onChange={(students) => update({ extra: { ...item.extra, students } })} onEmpty={() => update({ extra: { ...item.extra, students: null } })} />
             </Cell>
           )}
-          {!labor && !training && <>
+          {rent && <>
+            <Cell label="Período" className="@3xl:w-28">
+              <Select name={`period-${item.uid}`} state={period} disabled={readOnly} modal={false} options={RENT_PERIODS}
+                onChange={(_, value) => {
+                  const next = (String(value || "mes")) as RentPeriod;
+                  update({ extra: { ...item.extra, period: next, rate: suggestedRate(rentItem, next) ?? item.extra?.rate ?? null } });
+                }} />
+            </Cell>
+            <Cell label="Períodos" className="@3xl:w-16">
+              <NumField digits={0} value={item.extra?.periods ?? 1} disabled={readOnly} ariaLabel="Quantidade de períodos"
+                onChange={(periods) => update({ extra: { ...item.extra, periods } })} onEmpty={() => update({ extra: { ...item.extra, periods: 1 } })} />
+            </Cell>
+            <Cell label="R$ por período" className="@3xl:w-28">
+              <NumField kind="money" value={item.extra?.rate} disabled={readOnly} ariaLabel="Valor do período"
+                onChange={(rate) => update({ extra: { ...item.extra, rate } })} onEmpty={() => update({ extra: { ...item.extra, rate: null } })} />
+            </Cell>
+          </>}
+          {!labor && !training && !rent && <>
             <Cell label="R$ unitário" className="@3xl:w-28">
               <NumField kind="money" value={item.unitCost} disabled={readOnly} ariaLabel="Custo unitário" onChange={(unitCost) => update({ unitCost })} onEmpty={() => update({ unitCost: 0 })} />
             </Cell>
@@ -301,9 +351,11 @@ function ItemRow({ item, line, draft, options, readOnly, canSeeCosts, update, re
         {labor && item.weekend && !(item.weekendDays ?? draft.weekendDays) && <span className="text-amber-700 dark:text-amber-300"> · informe os dias de fim de semana/feriado nos ajustes da linha</span>}
         {labor && canSeeCosts && line?.hourCost ? ` · custo hora ${money(line.hourCost)}` : ""}
         {training && (!item.courseId ? "Escolha o curso para usar a tabela in-company" : line?.listPrice != null ? `Tabela in-company: ${money(line.listPrice)}` : "Curso sem tabela in-company: digite o valor final")}
-        {!labor && !training && !typed && (line ? "Valor final: usando o sugerido" : "Descreva o item e informe o valor unitário")}
+        {rent && (!item.stockItemId ? "Escolha o item alugável do estoque"
+          : `${decimal(item.quantity, 0)} × ${decimal(item.extra?.periods ?? 1, 0)} ${PERIOD_WORD[period][(item.extra?.periods ?? 1) === 1 ? 0 : 1]} × ${money(item.extra?.rate)}${line?.listPrice != null ? ` = ${money(line.listPrice)}` : ""}${suggestedRate(rentItem, period) === null && rentItem ? " · item sem valor de aluguel para esse período no cadastro" : ""}`)}
+        {!labor && !training && !rent && !typed && (line ? "Valor final: usando o sugerido" : "Descreva o item e informe o valor unitário")}
         {typed && line && <span className={cn("tabular-nums", diff !== null && diff < 0 && "text-amber-700 dark:text-amber-300")}>
-          {labor || training ? " · " : ""}sugerido {money(line.suggested)}{diff !== null && ` (${diff >= 0 ? "+" : "−"}${percent(Math.abs(diff), 1)})`}
+          {labor || training || rent ? " · " : ""}sugerido {money(line.suggested)}{diff !== null && ` (${diff >= 0 ? "+" : "−"}${percent(Math.abs(diff), 1)})`}
         </span>}
         {typed && !readOnly && <> · <button type="button" className="underline" onClick={() => update({ finalValue: null })}>usar o sugerido</button></>}
         {canSeeCosts && line?.margin != null && <span className={cn("tabular-nums", line.margin < 0 && "text-destructive font-medium")}> · margem {percent(line.margin, 1)}</span>}

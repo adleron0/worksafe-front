@@ -34,8 +34,11 @@ import { Route as AuthenticatedSuprimentosFornecedoresRouteImport } from './page
 import { Route as AuthenticatedInventariosDashboardRouteImport } from './pages/_authenticated/inventarios/dashboard'
 import { Route as AuthenticatedInventariosAutorizadosRouteImport } from './pages/_authenticated/inventarios/autorizados'
 import { Route as AuthenticatedInventariosAccessControlRouteImport } from './pages/_authenticated/inventarios/access-control'
+import { Route as AuthenticatedETagRouteImport } from './pages/_authenticated/e/$tag'
 import { Route as AuthenticatedUsuariosUsuariosIndexRouteImport } from './pages/_authenticated/usuarios/_usuarios/index'
+import { Route as AuthenticatedSuprimentosLocacoesIndexRouteImport } from './pages/_authenticated/suprimentos/locacoes/index'
 import { Route as AuthenticatedSuprimentosEstoqueIndexRouteImport } from './pages/_authenticated/suprimentos/estoque/index'
+import { Route as AuthenticatedSuprimentosEquipamentosIndexRouteImport } from './pages/_authenticated/suprimentos/equipamentos/index'
 import { Route as AuthenticatedInventariosAreasIndexRouteImport } from './pages/_authenticated/inventarios/areas/index'
 import { Route as IndexPropostaRascunhoProposalIdRouteImport } from './pages/_index/proposta_.rascunho.$proposalId'
 import { Route as IndexCertificadosNomeIdRouteImport } from './pages/_index/certificados/$nome.$id'
@@ -49,11 +52,21 @@ import { Route as AuthenticatedTreinamentosCursosCursosRouteImport } from './pag
 import { Route as AuthenticatedTreinamentosCertificadosCertificadosRouteImport } from './pages/_authenticated/treinamentos/_certificados/certificados'
 import { Route as AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRouteImport } from './pages/_authenticated/treinamentos/_certificados-modelos/certificados-modelos'
 import { Route as AuthenticatedTreinamentosAlunosAlunosRouteImport } from './pages/_authenticated/treinamentos/_alunos/alunos'
+import { Route as AuthenticatedSuprimentosLocacoesDisponibilidadeRouteImport } from './pages/_authenticated/suprimentos/locacoes/disponibilidade'
+import { Route as AuthenticatedSuprimentosLocacoesRentalIdRouteImport } from './pages/_authenticated/suprimentos/locacoes/$rentalId'
 import { Route as AuthenticatedSuprimentosEstoqueSaldosRouteImport } from './pages/_authenticated/suprimentos/estoque/saldos'
+import { Route as AuthenticatedSuprimentosEstoqueRelatoriosRouteImport } from './pages/_authenticated/suprimentos/estoque/relatorios'
 import { Route as AuthenticatedSuprimentosEstoqueMovimentacoesRouteImport } from './pages/_authenticated/suprimentos/estoque/movimentacoes'
 import { Route as AuthenticatedSuprimentosEstoqueLocaisRouteImport } from './pages/_authenticated/suprimentos/estoque/locais'
 import { Route as AuthenticatedSuprimentosEstoqueItensRouteImport } from './pages/_authenticated/suprimentos/estoque/itens'
+import { Route as AuthenticatedSuprimentosEstoqueInventarioRouteImport } from './pages/_authenticated/suprimentos/estoque/inventario'
+import { Route as AuthenticatedSuprimentosEstoqueEpiRouteImport } from './pages/_authenticated/suprimentos/estoque/epi'
 import { Route as AuthenticatedSuprimentosEstoqueCategoriasRouteImport } from './pages/_authenticated/suprimentos/estoque/categorias'
+import { Route as AuthenticatedSuprimentosEquipamentosVencimentosRouteImport } from './pages/_authenticated/suprimentos/equipamentos/vencimentos'
+import { Route as AuthenticatedSuprimentosEquipamentosRoteirosRouteImport } from './pages/_authenticated/suprimentos/equipamentos/roteiros'
+import { Route as AuthenticatedSuprimentosEquipamentosInspecoesRouteImport } from './pages/_authenticated/suprimentos/equipamentos/inspecoes'
+import { Route as AuthenticatedSuprimentosEquipamentosCalibracaoRouteImport } from './pages/_authenticated/suprimentos/equipamentos/calibracao'
+import { Route as AuthenticatedSuprimentosEquipamentosUnitIdRouteImport } from './pages/_authenticated/suprimentos/equipamentos/$unitId'
 import { Route as AuthenticatedSuprimentosComprasReposicaoRouteImport } from './pages/_authenticated/suprimentos/compras/reposicao'
 import { Route as AuthenticatedSuprimentosPedidosPedidosDeCompraRouteImport } from './pages/_authenticated/suprimentos/_pedidos/pedidos-de-compra'
 import { Route as AuthenticatedSiteServicosServicosRouteImport } from './pages/_authenticated/site/_servicos/servicos'
@@ -108,6 +121,7 @@ import { Route as AuthenticatedArquivosPastasLixeiraRouteImport } from './pages/
 import { Route as AuthenticatedTreinamentosTurmasTurmasNovaRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.nova'
 import { Route as AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.$turmaId'
 import { Route as AuthenticatedSuprimentosEstoqueItensItemIdRouteImport } from './pages/_authenticated/suprimentos/estoque/itens_.$itemId'
+import { Route as AuthenticatedSuprimentosEstoqueInventarioCountIdRouteImport } from './pages/_authenticated/suprimentos/estoque/inventario_.$countId'
 import { Route as AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRouteImport } from './pages/_authenticated/suprimentos/_pedidos/pedidos-de-compra_.$purchaseId'
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoOrderIdRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico_.$orderId'
 import { Route as AuthenticatedRhFuncionariosFuncionariosEmployeeIdRouteImport } from './pages/_authenticated/rh/_funcionarios/funcionarios_.$employeeId'
@@ -251,16 +265,33 @@ const AuthenticatedInventariosAccessControlRoute =
     path: '/inventarios/access-control',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedETagRoute = AuthenticatedETagRouteImport.update({
+  id: '/e/$tag',
+  path: '/e/$tag',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedUsuariosUsuariosIndexRoute =
   AuthenticatedUsuariosUsuariosIndexRouteImport.update({
     id: '/usuarios/_usuarios/',
     path: '/usuarios/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSuprimentosLocacoesIndexRoute =
+  AuthenticatedSuprimentosLocacoesIndexRouteImport.update({
+    id: '/suprimentos/locacoes/',
+    path: '/suprimentos/locacoes/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSuprimentosEstoqueIndexRoute =
   AuthenticatedSuprimentosEstoqueIndexRouteImport.update({
     id: '/suprimentos/estoque/',
     path: '/suprimentos/estoque/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEquipamentosIndexRoute =
+  AuthenticatedSuprimentosEquipamentosIndexRouteImport.update({
+    id: '/suprimentos/equipamentos/',
+    path: '/suprimentos/equipamentos/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedInventariosAreasIndexRoute =
@@ -341,10 +372,28 @@ const AuthenticatedTreinamentosAlunosAlunosRoute =
     path: '/treinamentos/alunos',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSuprimentosLocacoesDisponibilidadeRoute =
+  AuthenticatedSuprimentosLocacoesDisponibilidadeRouteImport.update({
+    id: '/suprimentos/locacoes/disponibilidade',
+    path: '/suprimentos/locacoes/disponibilidade',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosLocacoesRentalIdRoute =
+  AuthenticatedSuprimentosLocacoesRentalIdRouteImport.update({
+    id: '/suprimentos/locacoes/$rentalId',
+    path: '/suprimentos/locacoes/$rentalId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSuprimentosEstoqueSaldosRoute =
   AuthenticatedSuprimentosEstoqueSaldosRouteImport.update({
     id: '/suprimentos/estoque/saldos',
     path: '/suprimentos/estoque/saldos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEstoqueRelatoriosRoute =
+  AuthenticatedSuprimentosEstoqueRelatoriosRouteImport.update({
+    id: '/suprimentos/estoque/relatorios',
+    path: '/suprimentos/estoque/relatorios',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedSuprimentosEstoqueMovimentacoesRoute =
@@ -365,10 +414,52 @@ const AuthenticatedSuprimentosEstoqueItensRoute =
     path: '/suprimentos/estoque/itens',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSuprimentosEstoqueInventarioRoute =
+  AuthenticatedSuprimentosEstoqueInventarioRouteImport.update({
+    id: '/suprimentos/estoque/inventario',
+    path: '/suprimentos/estoque/inventario',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEstoqueEpiRoute =
+  AuthenticatedSuprimentosEstoqueEpiRouteImport.update({
+    id: '/suprimentos/estoque/epi',
+    path: '/suprimentos/estoque/epi',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSuprimentosEstoqueCategoriasRoute =
   AuthenticatedSuprimentosEstoqueCategoriasRouteImport.update({
     id: '/suprimentos/estoque/categorias',
     path: '/suprimentos/estoque/categorias',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEquipamentosVencimentosRoute =
+  AuthenticatedSuprimentosEquipamentosVencimentosRouteImport.update({
+    id: '/suprimentos/equipamentos/vencimentos',
+    path: '/suprimentos/equipamentos/vencimentos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEquipamentosRoteirosRoute =
+  AuthenticatedSuprimentosEquipamentosRoteirosRouteImport.update({
+    id: '/suprimentos/equipamentos/roteiros',
+    path: '/suprimentos/equipamentos/roteiros',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEquipamentosInspecoesRoute =
+  AuthenticatedSuprimentosEquipamentosInspecoesRouteImport.update({
+    id: '/suprimentos/equipamentos/inspecoes',
+    path: '/suprimentos/equipamentos/inspecoes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEquipamentosCalibracaoRoute =
+  AuthenticatedSuprimentosEquipamentosCalibracaoRouteImport.update({
+    id: '/suprimentos/equipamentos/calibracao',
+    path: '/suprimentos/equipamentos/calibracao',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEquipamentosUnitIdRoute =
+  AuthenticatedSuprimentosEquipamentosUnitIdRouteImport.update({
+    id: '/suprimentos/equipamentos/$unitId',
+    path: '/suprimentos/equipamentos/$unitId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedSuprimentosComprasReposicaoRoute =
@@ -695,6 +786,12 @@ const AuthenticatedSuprimentosEstoqueItensItemIdRoute =
     path: '/suprimentos/estoque/itens/$itemId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSuprimentosEstoqueInventarioCountIdRoute =
+  AuthenticatedSuprimentosEstoqueInventarioCountIdRouteImport.update({
+    id: '/suprimentos/estoque/inventario_/$countId',
+    path: '/suprimentos/estoque/inventario/$countId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute =
   AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRouteImport.update({
     id: '/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId',
@@ -761,6 +858,7 @@ export interface FileRoutesByFullPath {
   '/student/profile': typeof StudentProfileRoute
   '/': typeof IndexIndexRoute
   '/student/': typeof StudentIndexRoute
+  '/e/$tag': typeof AuthenticatedETagRoute
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
@@ -827,11 +925,21 @@ export interface FileRoutesByFullPath {
   '/site/servicos': typeof AuthenticatedSiteServicosServicosRoute
   '/suprimentos/pedidos-de-compra': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraRoute
   '/suprimentos/compras/reposicao': typeof AuthenticatedSuprimentosComprasReposicaoRoute
+  '/suprimentos/equipamentos/$unitId': typeof AuthenticatedSuprimentosEquipamentosUnitIdRoute
+  '/suprimentos/equipamentos/calibracao': typeof AuthenticatedSuprimentosEquipamentosCalibracaoRoute
+  '/suprimentos/equipamentos/inspecoes': typeof AuthenticatedSuprimentosEquipamentosInspecoesRoute
+  '/suprimentos/equipamentos/roteiros': typeof AuthenticatedSuprimentosEquipamentosRoteirosRoute
+  '/suprimentos/equipamentos/vencimentos': typeof AuthenticatedSuprimentosEquipamentosVencimentosRoute
   '/suprimentos/estoque/categorias': typeof AuthenticatedSuprimentosEstoqueCategoriasRoute
+  '/suprimentos/estoque/epi': typeof AuthenticatedSuprimentosEstoqueEpiRoute
+  '/suprimentos/estoque/inventario': typeof AuthenticatedSuprimentosEstoqueInventarioRoute
   '/suprimentos/estoque/itens': typeof AuthenticatedSuprimentosEstoqueItensRoute
   '/suprimentos/estoque/locais': typeof AuthenticatedSuprimentosEstoqueLocaisRoute
   '/suprimentos/estoque/movimentacoes': typeof AuthenticatedSuprimentosEstoqueMovimentacoesRoute
+  '/suprimentos/estoque/relatorios': typeof AuthenticatedSuprimentosEstoqueRelatoriosRoute
   '/suprimentos/estoque/saldos': typeof AuthenticatedSuprimentosEstoqueSaldosRoute
+  '/suprimentos/locacoes/$rentalId': typeof AuthenticatedSuprimentosLocacoesRentalIdRoute
+  '/suprimentos/locacoes/disponibilidade': typeof AuthenticatedSuprimentosLocacoesDisponibilidadeRoute
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
   '/treinamentos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
@@ -845,7 +953,9 @@ export interface FileRoutesByFullPath {
   '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/proposta/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
+  '/suprimentos/equipamentos': typeof AuthenticatedSuprimentosEquipamentosIndexRoute
   '/suprimentos/estoque': typeof AuthenticatedSuprimentosEstoqueIndexRoute
+  '/suprimentos/locacoes': typeof AuthenticatedSuprimentosLocacoesIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/bots/relatorios/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
@@ -855,6 +965,7 @@ export interface FileRoutesByFullPath {
   '/rh/funcionarios/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/suprimentos/pedidos-de-compra/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
+  '/suprimentos/estoque/inventario/$countId': typeof AuthenticatedSuprimentosEstoqueInventarioCountIdRoute
   '/suprimentos/estoque/itens/$itemId': typeof AuthenticatedSuprimentosEstoqueItensItemIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
@@ -868,6 +979,7 @@ export interface FileRoutesByTo {
   '/student/profile': typeof StudentProfileRoute
   '/': typeof IndexIndexRoute
   '/student': typeof StudentIndexRoute
+  '/e/$tag': typeof AuthenticatedETagRoute
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
@@ -934,11 +1046,21 @@ export interface FileRoutesByTo {
   '/site/servicos': typeof AuthenticatedSiteServicosServicosRoute
   '/suprimentos/pedidos-de-compra': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraRoute
   '/suprimentos/compras/reposicao': typeof AuthenticatedSuprimentosComprasReposicaoRoute
+  '/suprimentos/equipamentos/$unitId': typeof AuthenticatedSuprimentosEquipamentosUnitIdRoute
+  '/suprimentos/equipamentos/calibracao': typeof AuthenticatedSuprimentosEquipamentosCalibracaoRoute
+  '/suprimentos/equipamentos/inspecoes': typeof AuthenticatedSuprimentosEquipamentosInspecoesRoute
+  '/suprimentos/equipamentos/roteiros': typeof AuthenticatedSuprimentosEquipamentosRoteirosRoute
+  '/suprimentos/equipamentos/vencimentos': typeof AuthenticatedSuprimentosEquipamentosVencimentosRoute
   '/suprimentos/estoque/categorias': typeof AuthenticatedSuprimentosEstoqueCategoriasRoute
+  '/suprimentos/estoque/epi': typeof AuthenticatedSuprimentosEstoqueEpiRoute
+  '/suprimentos/estoque/inventario': typeof AuthenticatedSuprimentosEstoqueInventarioRoute
   '/suprimentos/estoque/itens': typeof AuthenticatedSuprimentosEstoqueItensRoute
   '/suprimentos/estoque/locais': typeof AuthenticatedSuprimentosEstoqueLocaisRoute
   '/suprimentos/estoque/movimentacoes': typeof AuthenticatedSuprimentosEstoqueMovimentacoesRoute
+  '/suprimentos/estoque/relatorios': typeof AuthenticatedSuprimentosEstoqueRelatoriosRoute
   '/suprimentos/estoque/saldos': typeof AuthenticatedSuprimentosEstoqueSaldosRoute
+  '/suprimentos/locacoes/$rentalId': typeof AuthenticatedSuprimentosLocacoesRentalIdRoute
+  '/suprimentos/locacoes/disponibilidade': typeof AuthenticatedSuprimentosLocacoesDisponibilidadeRoute
   '/treinamentos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
   '/treinamentos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/treinamentos/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
@@ -952,7 +1074,9 @@ export interface FileRoutesByTo {
   '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/proposta/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
+  '/suprimentos/equipamentos': typeof AuthenticatedSuprimentosEquipamentosIndexRoute
   '/suprimentos/estoque': typeof AuthenticatedSuprimentosEstoqueIndexRoute
+  '/suprimentos/locacoes': typeof AuthenticatedSuprimentosLocacoesIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/bots/relatorios/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
@@ -962,6 +1086,7 @@ export interface FileRoutesByTo {
   '/rh/funcionarios/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/suprimentos/pedidos-de-compra/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
+  '/suprimentos/estoque/inventario/$countId': typeof AuthenticatedSuprimentosEstoqueInventarioCountIdRoute
   '/suprimentos/estoque/itens/$itemId': typeof AuthenticatedSuprimentosEstoqueItensItemIdRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
@@ -979,6 +1104,7 @@ export interface FileRoutesById {
   '/student/profile': typeof StudentProfileRoute
   '/_index/': typeof IndexIndexRoute
   '/student/': typeof StudentIndexRoute
+  '/_authenticated/e/$tag': typeof AuthenticatedETagRoute
   '/_authenticated/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/_authenticated/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/_authenticated/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
@@ -1045,11 +1171,21 @@ export interface FileRoutesById {
   '/_authenticated/site/_servicos/servicos': typeof AuthenticatedSiteServicosServicosRoute
   '/_authenticated/suprimentos/_pedidos/pedidos-de-compra': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraRoute
   '/_authenticated/suprimentos/compras/reposicao': typeof AuthenticatedSuprimentosComprasReposicaoRoute
+  '/_authenticated/suprimentos/equipamentos/$unitId': typeof AuthenticatedSuprimentosEquipamentosUnitIdRoute
+  '/_authenticated/suprimentos/equipamentos/calibracao': typeof AuthenticatedSuprimentosEquipamentosCalibracaoRoute
+  '/_authenticated/suprimentos/equipamentos/inspecoes': typeof AuthenticatedSuprimentosEquipamentosInspecoesRoute
+  '/_authenticated/suprimentos/equipamentos/roteiros': typeof AuthenticatedSuprimentosEquipamentosRoteirosRoute
+  '/_authenticated/suprimentos/equipamentos/vencimentos': typeof AuthenticatedSuprimentosEquipamentosVencimentosRoute
   '/_authenticated/suprimentos/estoque/categorias': typeof AuthenticatedSuprimentosEstoqueCategoriasRoute
+  '/_authenticated/suprimentos/estoque/epi': typeof AuthenticatedSuprimentosEstoqueEpiRoute
+  '/_authenticated/suprimentos/estoque/inventario': typeof AuthenticatedSuprimentosEstoqueInventarioRoute
   '/_authenticated/suprimentos/estoque/itens': typeof AuthenticatedSuprimentosEstoqueItensRoute
   '/_authenticated/suprimentos/estoque/locais': typeof AuthenticatedSuprimentosEstoqueLocaisRoute
   '/_authenticated/suprimentos/estoque/movimentacoes': typeof AuthenticatedSuprimentosEstoqueMovimentacoesRoute
+  '/_authenticated/suprimentos/estoque/relatorios': typeof AuthenticatedSuprimentosEstoqueRelatoriosRoute
   '/_authenticated/suprimentos/estoque/saldos': typeof AuthenticatedSuprimentosEstoqueSaldosRoute
+  '/_authenticated/suprimentos/locacoes/$rentalId': typeof AuthenticatedSuprimentosLocacoesRentalIdRoute
+  '/_authenticated/suprimentos/locacoes/disponibilidade': typeof AuthenticatedSuprimentosLocacoesDisponibilidadeRoute
   '/_authenticated/treinamentos/_alunos/alunos': typeof AuthenticatedTreinamentosAlunosAlunosRoute
   '/_authenticated/treinamentos/_certificados-modelos/certificados-modelos': typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   '/_authenticated/treinamentos/_certificados/certificados': typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
@@ -1063,7 +1199,9 @@ export interface FileRoutesById {
   '/_index/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/_index/proposta_/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
   '/_authenticated/inventarios/areas/': typeof AuthenticatedInventariosAreasIndexRoute
+  '/_authenticated/suprimentos/equipamentos/': typeof AuthenticatedSuprimentosEquipamentosIndexRoute
   '/_authenticated/suprimentos/estoque/': typeof AuthenticatedSuprimentosEstoqueIndexRoute
+  '/_authenticated/suprimentos/locacoes/': typeof AuthenticatedSuprimentosLocacoesIndexRoute
   '/_authenticated/usuarios/_usuarios/': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/_authenticated/bots/_relatorios/relatorios_/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   '/_authenticated/comercial/_contratos/contratos_/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
@@ -1073,6 +1211,7 @@ export interface FileRoutesById {
   '/_authenticated/rh/_funcionarios/funcionarios_/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
+  '/_authenticated/suprimentos/estoque/inventario_/$countId': typeof AuthenticatedSuprimentosEstoqueInventarioCountIdRoute
   '/_authenticated/suprimentos/estoque/itens_/$itemId': typeof AuthenticatedSuprimentosEstoqueItensItemIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
@@ -1089,6 +1228,7 @@ export interface FileRouteTypes {
     | '/student/profile'
     | '/'
     | '/student/'
+    | '/e/$tag'
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
@@ -1155,11 +1295,21 @@ export interface FileRouteTypes {
     | '/site/servicos'
     | '/suprimentos/pedidos-de-compra'
     | '/suprimentos/compras/reposicao'
+    | '/suprimentos/equipamentos/$unitId'
+    | '/suprimentos/equipamentos/calibracao'
+    | '/suprimentos/equipamentos/inspecoes'
+    | '/suprimentos/equipamentos/roteiros'
+    | '/suprimentos/equipamentos/vencimentos'
     | '/suprimentos/estoque/categorias'
+    | '/suprimentos/estoque/epi'
+    | '/suprimentos/estoque/inventario'
     | '/suprimentos/estoque/itens'
     | '/suprimentos/estoque/locais'
     | '/suprimentos/estoque/movimentacoes'
+    | '/suprimentos/estoque/relatorios'
     | '/suprimentos/estoque/saldos'
+    | '/suprimentos/locacoes/$rentalId'
+    | '/suprimentos/locacoes/disponibilidade'
     | '/treinamentos/alunos'
     | '/treinamentos/certificados-modelos'
     | '/treinamentos/certificados'
@@ -1173,7 +1323,9 @@ export interface FileRouteTypes {
     | '/certificados/$nome/$id'
     | '/proposta/rascunho/$proposalId'
     | '/inventarios/areas'
+    | '/suprimentos/equipamentos'
     | '/suprimentos/estoque'
+    | '/suprimentos/locacoes'
     | '/usuarios'
     | '/bots/relatorios/$reportId'
     | '/comercial/contratos/$contractId'
@@ -1183,6 +1335,7 @@ export interface FileRouteTypes {
     | '/rh/funcionarios/$employeeId'
     | '/servicos/ordens-de-servico/$orderId'
     | '/suprimentos/pedidos-de-compra/$purchaseId'
+    | '/suprimentos/estoque/inventario/$countId'
     | '/suprimentos/estoque/itens/$itemId'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
@@ -1196,6 +1349,7 @@ export interface FileRouteTypes {
     | '/student/profile'
     | '/'
     | '/student'
+    | '/e/$tag'
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
@@ -1262,11 +1416,21 @@ export interface FileRouteTypes {
     | '/site/servicos'
     | '/suprimentos/pedidos-de-compra'
     | '/suprimentos/compras/reposicao'
+    | '/suprimentos/equipamentos/$unitId'
+    | '/suprimentos/equipamentos/calibracao'
+    | '/suprimentos/equipamentos/inspecoes'
+    | '/suprimentos/equipamentos/roteiros'
+    | '/suprimentos/equipamentos/vencimentos'
     | '/suprimentos/estoque/categorias'
+    | '/suprimentos/estoque/epi'
+    | '/suprimentos/estoque/inventario'
     | '/suprimentos/estoque/itens'
     | '/suprimentos/estoque/locais'
     | '/suprimentos/estoque/movimentacoes'
+    | '/suprimentos/estoque/relatorios'
     | '/suprimentos/estoque/saldos'
+    | '/suprimentos/locacoes/$rentalId'
+    | '/suprimentos/locacoes/disponibilidade'
     | '/treinamentos/alunos'
     | '/treinamentos/certificados-modelos'
     | '/treinamentos/certificados'
@@ -1280,7 +1444,9 @@ export interface FileRouteTypes {
     | '/certificados/$nome/$id'
     | '/proposta/rascunho/$proposalId'
     | '/inventarios/areas'
+    | '/suprimentos/equipamentos'
     | '/suprimentos/estoque'
+    | '/suprimentos/locacoes'
     | '/usuarios'
     | '/bots/relatorios/$reportId'
     | '/comercial/contratos/$contractId'
@@ -1290,6 +1456,7 @@ export interface FileRouteTypes {
     | '/rh/funcionarios/$employeeId'
     | '/servicos/ordens-de-servico/$orderId'
     | '/suprimentos/pedidos-de-compra/$purchaseId'
+    | '/suprimentos/estoque/inventario/$countId'
     | '/suprimentos/estoque/itens/$itemId'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
@@ -1306,6 +1473,7 @@ export interface FileRouteTypes {
     | '/student/profile'
     | '/_index/'
     | '/student/'
+    | '/_authenticated/e/$tag'
     | '/_authenticated/inventarios/access-control'
     | '/_authenticated/inventarios/autorizados'
     | '/_authenticated/inventarios/dashboard'
@@ -1372,11 +1540,21 @@ export interface FileRouteTypes {
     | '/_authenticated/site/_servicos/servicos'
     | '/_authenticated/suprimentos/_pedidos/pedidos-de-compra'
     | '/_authenticated/suprimentos/compras/reposicao'
+    | '/_authenticated/suprimentos/equipamentos/$unitId'
+    | '/_authenticated/suprimentos/equipamentos/calibracao'
+    | '/_authenticated/suprimentos/equipamentos/inspecoes'
+    | '/_authenticated/suprimentos/equipamentos/roteiros'
+    | '/_authenticated/suprimentos/equipamentos/vencimentos'
     | '/_authenticated/suprimentos/estoque/categorias'
+    | '/_authenticated/suprimentos/estoque/epi'
+    | '/_authenticated/suprimentos/estoque/inventario'
     | '/_authenticated/suprimentos/estoque/itens'
     | '/_authenticated/suprimentos/estoque/locais'
     | '/_authenticated/suprimentos/estoque/movimentacoes'
+    | '/_authenticated/suprimentos/estoque/relatorios'
     | '/_authenticated/suprimentos/estoque/saldos'
+    | '/_authenticated/suprimentos/locacoes/$rentalId'
+    | '/_authenticated/suprimentos/locacoes/disponibilidade'
     | '/_authenticated/treinamentos/_alunos/alunos'
     | '/_authenticated/treinamentos/_certificados-modelos/certificados-modelos'
     | '/_authenticated/treinamentos/_certificados/certificados'
@@ -1390,7 +1568,9 @@ export interface FileRouteTypes {
     | '/_index/certificados/$nome/$id'
     | '/_index/proposta_/rascunho/$proposalId'
     | '/_authenticated/inventarios/areas/'
+    | '/_authenticated/suprimentos/equipamentos/'
     | '/_authenticated/suprimentos/estoque/'
+    | '/_authenticated/suprimentos/locacoes/'
     | '/_authenticated/usuarios/_usuarios/'
     | '/_authenticated/bots/_relatorios/relatorios_/$reportId'
     | '/_authenticated/comercial/_contratos/contratos_/$contractId'
@@ -1400,6 +1580,7 @@ export interface FileRouteTypes {
     | '/_authenticated/rh/_funcionarios/funcionarios_/$employeeId'
     | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId'
     | '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId'
+    | '/_authenticated/suprimentos/estoque/inventario_/$countId'
     | '/_authenticated/suprimentos/estoque/itens_/$itemId'
     | '/_authenticated/treinamentos/_turmas/turmas_/$turmaId'
     | '/_authenticated/treinamentos/_turmas/turmas_/nova'
@@ -1589,6 +1770,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventariosAccessControlRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/e/$tag': {
+      id: '/_authenticated/e/$tag'
+      path: '/e/$tag'
+      fullPath: '/e/$tag'
+      preLoaderRoute: typeof AuthenticatedETagRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/usuarios/_usuarios/': {
       id: '/_authenticated/usuarios/_usuarios/'
       path: '/usuarios'
@@ -1596,11 +1784,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsuariosUsuariosIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/suprimentos/locacoes/': {
+      id: '/_authenticated/suprimentos/locacoes/'
+      path: '/suprimentos/locacoes'
+      fullPath: '/suprimentos/locacoes'
+      preLoaderRoute: typeof AuthenticatedSuprimentosLocacoesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/suprimentos/estoque/': {
       id: '/_authenticated/suprimentos/estoque/'
       path: '/suprimentos/estoque'
       fullPath: '/suprimentos/estoque'
       preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/equipamentos/': {
+      id: '/_authenticated/suprimentos/equipamentos/'
+      path: '/suprimentos/equipamentos'
+      fullPath: '/suprimentos/equipamentos'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEquipamentosIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/inventarios/areas/': {
@@ -1694,11 +1896,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTreinamentosAlunosAlunosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/suprimentos/locacoes/disponibilidade': {
+      id: '/_authenticated/suprimentos/locacoes/disponibilidade'
+      path: '/suprimentos/locacoes/disponibilidade'
+      fullPath: '/suprimentos/locacoes/disponibilidade'
+      preLoaderRoute: typeof AuthenticatedSuprimentosLocacoesDisponibilidadeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/locacoes/$rentalId': {
+      id: '/_authenticated/suprimentos/locacoes/$rentalId'
+      path: '/suprimentos/locacoes/$rentalId'
+      fullPath: '/suprimentos/locacoes/$rentalId'
+      preLoaderRoute: typeof AuthenticatedSuprimentosLocacoesRentalIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/suprimentos/estoque/saldos': {
       id: '/_authenticated/suprimentos/estoque/saldos'
       path: '/suprimentos/estoque/saldos'
       fullPath: '/suprimentos/estoque/saldos'
       preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueSaldosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/estoque/relatorios': {
+      id: '/_authenticated/suprimentos/estoque/relatorios'
+      path: '/suprimentos/estoque/relatorios'
+      fullPath: '/suprimentos/estoque/relatorios'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueRelatoriosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/suprimentos/estoque/movimentacoes': {
@@ -1722,11 +1945,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueItensRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/suprimentos/estoque/inventario': {
+      id: '/_authenticated/suprimentos/estoque/inventario'
+      path: '/suprimentos/estoque/inventario'
+      fullPath: '/suprimentos/estoque/inventario'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueInventarioRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/estoque/epi': {
+      id: '/_authenticated/suprimentos/estoque/epi'
+      path: '/suprimentos/estoque/epi'
+      fullPath: '/suprimentos/estoque/epi'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueEpiRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/suprimentos/estoque/categorias': {
       id: '/_authenticated/suprimentos/estoque/categorias'
       path: '/suprimentos/estoque/categorias'
       fullPath: '/suprimentos/estoque/categorias'
       preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueCategoriasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/equipamentos/vencimentos': {
+      id: '/_authenticated/suprimentos/equipamentos/vencimentos'
+      path: '/suprimentos/equipamentos/vencimentos'
+      fullPath: '/suprimentos/equipamentos/vencimentos'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEquipamentosVencimentosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/equipamentos/roteiros': {
+      id: '/_authenticated/suprimentos/equipamentos/roteiros'
+      path: '/suprimentos/equipamentos/roteiros'
+      fullPath: '/suprimentos/equipamentos/roteiros'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEquipamentosRoteirosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/equipamentos/inspecoes': {
+      id: '/_authenticated/suprimentos/equipamentos/inspecoes'
+      path: '/suprimentos/equipamentos/inspecoes'
+      fullPath: '/suprimentos/equipamentos/inspecoes'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEquipamentosInspecoesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/equipamentos/calibracao': {
+      id: '/_authenticated/suprimentos/equipamentos/calibracao'
+      path: '/suprimentos/equipamentos/calibracao'
+      fullPath: '/suprimentos/equipamentos/calibracao'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEquipamentosCalibracaoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/equipamentos/$unitId': {
+      id: '/_authenticated/suprimentos/equipamentos/$unitId'
+      path: '/suprimentos/equipamentos/$unitId'
+      fullPath: '/suprimentos/equipamentos/$unitId'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEquipamentosUnitIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/suprimentos/compras/reposicao': {
@@ -2107,6 +2379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueItensItemIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/suprimentos/estoque/inventario_/$countId': {
+      id: '/_authenticated/suprimentos/estoque/inventario_/$countId'
+      path: '/suprimentos/estoque/inventario/$countId'
+      fullPath: '/suprimentos/estoque/inventario/$countId'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueInventarioCountIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId': {
       id: '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId'
       path: '/suprimentos/pedidos-de-compra/$purchaseId'
@@ -2176,6 +2455,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedBuildingRoute: typeof AuthenticatedBuildingRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedETagRoute: typeof AuthenticatedETagRoute
   AuthenticatedInventariosAccessControlRoute: typeof AuthenticatedInventariosAccessControlRoute
   AuthenticatedInventariosAutorizadosRoute: typeof AuthenticatedInventariosAutorizadosRoute
   AuthenticatedInventariosDashboardRoute: typeof AuthenticatedInventariosDashboardRoute
@@ -2237,11 +2517,21 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSiteServicosServicosRoute: typeof AuthenticatedSiteServicosServicosRoute
   AuthenticatedSuprimentosPedidosPedidosDeCompraRoute: typeof AuthenticatedSuprimentosPedidosPedidosDeCompraRoute
   AuthenticatedSuprimentosComprasReposicaoRoute: typeof AuthenticatedSuprimentosComprasReposicaoRoute
+  AuthenticatedSuprimentosEquipamentosUnitIdRoute: typeof AuthenticatedSuprimentosEquipamentosUnitIdRoute
+  AuthenticatedSuprimentosEquipamentosCalibracaoRoute: typeof AuthenticatedSuprimentosEquipamentosCalibracaoRoute
+  AuthenticatedSuprimentosEquipamentosInspecoesRoute: typeof AuthenticatedSuprimentosEquipamentosInspecoesRoute
+  AuthenticatedSuprimentosEquipamentosRoteirosRoute: typeof AuthenticatedSuprimentosEquipamentosRoteirosRoute
+  AuthenticatedSuprimentosEquipamentosVencimentosRoute: typeof AuthenticatedSuprimentosEquipamentosVencimentosRoute
   AuthenticatedSuprimentosEstoqueCategoriasRoute: typeof AuthenticatedSuprimentosEstoqueCategoriasRoute
+  AuthenticatedSuprimentosEstoqueEpiRoute: typeof AuthenticatedSuprimentosEstoqueEpiRoute
+  AuthenticatedSuprimentosEstoqueInventarioRoute: typeof AuthenticatedSuprimentosEstoqueInventarioRoute
   AuthenticatedSuprimentosEstoqueItensRoute: typeof AuthenticatedSuprimentosEstoqueItensRoute
   AuthenticatedSuprimentosEstoqueLocaisRoute: typeof AuthenticatedSuprimentosEstoqueLocaisRoute
   AuthenticatedSuprimentosEstoqueMovimentacoesRoute: typeof AuthenticatedSuprimentosEstoqueMovimentacoesRoute
+  AuthenticatedSuprimentosEstoqueRelatoriosRoute: typeof AuthenticatedSuprimentosEstoqueRelatoriosRoute
   AuthenticatedSuprimentosEstoqueSaldosRoute: typeof AuthenticatedSuprimentosEstoqueSaldosRoute
+  AuthenticatedSuprimentosLocacoesRentalIdRoute: typeof AuthenticatedSuprimentosLocacoesRentalIdRoute
+  AuthenticatedSuprimentosLocacoesDisponibilidadeRoute: typeof AuthenticatedSuprimentosLocacoesDisponibilidadeRoute
   AuthenticatedTreinamentosAlunosAlunosRoute: typeof AuthenticatedTreinamentosAlunosAlunosRoute
   AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute: typeof AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute
   AuthenticatedTreinamentosCertificadosCertificadosRoute: typeof AuthenticatedTreinamentosCertificadosCertificadosRoute
@@ -2252,7 +2542,9 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTreinamentosTurmasTurmasRoute: typeof AuthenticatedTreinamentosTurmasTurmasRoute
   AuthenticatedUsuariosPerfisPerfisRoute: typeof AuthenticatedUsuariosPerfisPerfisRoute
   AuthenticatedInventariosAreasIndexRoute: typeof AuthenticatedInventariosAreasIndexRoute
+  AuthenticatedSuprimentosEquipamentosIndexRoute: typeof AuthenticatedSuprimentosEquipamentosIndexRoute
   AuthenticatedSuprimentosEstoqueIndexRoute: typeof AuthenticatedSuprimentosEstoqueIndexRoute
+  AuthenticatedSuprimentosLocacoesIndexRoute: typeof AuthenticatedSuprimentosLocacoesIndexRoute
   AuthenticatedUsuariosUsuariosIndexRoute: typeof AuthenticatedUsuariosUsuariosIndexRoute
   AuthenticatedBotsRelatoriosRelatoriosReportIdRoute: typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   AuthenticatedComercialContratosContratosContractIdRoute: typeof AuthenticatedComercialContratosContratosContractIdRoute
@@ -2262,6 +2554,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute: typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute: typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
+  AuthenticatedSuprimentosEstoqueInventarioCountIdRoute: typeof AuthenticatedSuprimentosEstoqueInventarioCountIdRoute
   AuthenticatedSuprimentosEstoqueItensItemIdRoute: typeof AuthenticatedSuprimentosEstoqueItensItemIdRoute
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   AuthenticatedTreinamentosTurmasTurmasNovaRoute: typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
@@ -2271,6 +2564,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBuildingRoute: AuthenticatedBuildingRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
+  AuthenticatedETagRoute: AuthenticatedETagRoute,
   AuthenticatedInventariosAccessControlRoute:
     AuthenticatedInventariosAccessControlRoute,
   AuthenticatedInventariosAutorizadosRoute:
@@ -2377,16 +2671,36 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedSuprimentosPedidosPedidosDeCompraRoute,
   AuthenticatedSuprimentosComprasReposicaoRoute:
     AuthenticatedSuprimentosComprasReposicaoRoute,
+  AuthenticatedSuprimentosEquipamentosUnitIdRoute:
+    AuthenticatedSuprimentosEquipamentosUnitIdRoute,
+  AuthenticatedSuprimentosEquipamentosCalibracaoRoute:
+    AuthenticatedSuprimentosEquipamentosCalibracaoRoute,
+  AuthenticatedSuprimentosEquipamentosInspecoesRoute:
+    AuthenticatedSuprimentosEquipamentosInspecoesRoute,
+  AuthenticatedSuprimentosEquipamentosRoteirosRoute:
+    AuthenticatedSuprimentosEquipamentosRoteirosRoute,
+  AuthenticatedSuprimentosEquipamentosVencimentosRoute:
+    AuthenticatedSuprimentosEquipamentosVencimentosRoute,
   AuthenticatedSuprimentosEstoqueCategoriasRoute:
     AuthenticatedSuprimentosEstoqueCategoriasRoute,
+  AuthenticatedSuprimentosEstoqueEpiRoute:
+    AuthenticatedSuprimentosEstoqueEpiRoute,
+  AuthenticatedSuprimentosEstoqueInventarioRoute:
+    AuthenticatedSuprimentosEstoqueInventarioRoute,
   AuthenticatedSuprimentosEstoqueItensRoute:
     AuthenticatedSuprimentosEstoqueItensRoute,
   AuthenticatedSuprimentosEstoqueLocaisRoute:
     AuthenticatedSuprimentosEstoqueLocaisRoute,
   AuthenticatedSuprimentosEstoqueMovimentacoesRoute:
     AuthenticatedSuprimentosEstoqueMovimentacoesRoute,
+  AuthenticatedSuprimentosEstoqueRelatoriosRoute:
+    AuthenticatedSuprimentosEstoqueRelatoriosRoute,
   AuthenticatedSuprimentosEstoqueSaldosRoute:
     AuthenticatedSuprimentosEstoqueSaldosRoute,
+  AuthenticatedSuprimentosLocacoesRentalIdRoute:
+    AuthenticatedSuprimentosLocacoesRentalIdRoute,
+  AuthenticatedSuprimentosLocacoesDisponibilidadeRoute:
+    AuthenticatedSuprimentosLocacoesDisponibilidadeRoute,
   AuthenticatedTreinamentosAlunosAlunosRoute:
     AuthenticatedTreinamentosAlunosAlunosRoute,
   AuthenticatedTreinamentosCertificadosModelosCertificadosModelosRoute:
@@ -2407,8 +2721,12 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedUsuariosPerfisPerfisRoute,
   AuthenticatedInventariosAreasIndexRoute:
     AuthenticatedInventariosAreasIndexRoute,
+  AuthenticatedSuprimentosEquipamentosIndexRoute:
+    AuthenticatedSuprimentosEquipamentosIndexRoute,
   AuthenticatedSuprimentosEstoqueIndexRoute:
     AuthenticatedSuprimentosEstoqueIndexRoute,
+  AuthenticatedSuprimentosLocacoesIndexRoute:
+    AuthenticatedSuprimentosLocacoesIndexRoute,
   AuthenticatedUsuariosUsuariosIndexRoute:
     AuthenticatedUsuariosUsuariosIndexRoute,
   AuthenticatedBotsRelatoriosRelatoriosReportIdRoute:
@@ -2427,6 +2745,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute,
   AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute:
     AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute,
+  AuthenticatedSuprimentosEstoqueInventarioCountIdRoute:
+    AuthenticatedSuprimentosEstoqueInventarioCountIdRoute,
   AuthenticatedSuprimentosEstoqueItensItemIdRoute:
     AuthenticatedSuprimentosEstoqueItensItemIdRoute,
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute:

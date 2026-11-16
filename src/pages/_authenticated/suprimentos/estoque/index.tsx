@@ -25,9 +25,9 @@ function StockOverviewPage() {
     { icon: "hard-hat", label: "Obras com material", value: String(data.atOrders), hint: "OS com material ou equipamento na obra agora", to: "/suprimentos/estoque/saldos", search: { holderType: "os" } },
     { icon: "package-check", label: "Recebimentos pendentes", value: String(data.pendingReceipts), hint: "Pedidos comprados com itens do estoque ainda por receber", alert: data.pendingReceipts > 0, to: "/suprimentos/pedidos-de-compra" },
     { icon: "users", label: "Peças fora", value: String(data.outside), hint: "Com funcionários, em locação ou no fornecedor", to: "/suprimentos/estoque/saldos", search: { outside: "1" } },
-    { icon: "list-checks", label: "Inspeções", value: String(data.inspections), hint: "Peças com inspeção vencida ou a vencer em 30 dias (tela de Equipamentos na próxima etapa)", alert: data.inspections > 0 },
-    { icon: "gauge", label: "Calibrações", value: String(data.calibrations), hint: "Instrumentos com calibração vencida ou a vencer em 30 dias", alert: data.calibrations > 0 },
-    { icon: "handshake", label: "Locações ativas", value: String(data.rentalsActive), hint: data.rentalsLate ? `${data.rentalsLate} atrasada(s)` : "Nenhuma atrasada", alert: data.rentalsLate > 0 },
+    { icon: "list-checks", label: "Inspeções", value: String(data.inspections), hint: "Peças com inspeção vencida ou a vencer em 30 dias", alert: data.inspections > 0, to: "/suprimentos/equipamentos/inspecoes" },
+    { icon: "gauge", label: "Calibrações", value: String(data.calibrations), hint: "Instrumentos com calibração vencida ou a vencer em 30 dias", alert: data.calibrations > 0, to: "/suprimentos/equipamentos/calibracao" },
+    { icon: "handshake", label: "Locações ativas", value: String(data.rentalsActive), hint: data.rentalsLate ? `${data.rentalsLate} atrasada(s)` : "Nenhuma atrasada", alert: data.rentalsLate > 0, to: "/suprimentos/locacoes" },
     ...(data.value !== null ? [{ icon: "wallet", label: "Valor em estoque", value: money(data.value), hint: "Saldo de todos os itens pelo custo médio", to: "/suprimentos/estoque/itens" }] : []),
   ] : [];
 

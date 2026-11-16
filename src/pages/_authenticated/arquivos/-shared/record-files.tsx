@@ -18,7 +18,7 @@ import { uploadLarge } from "./upload";
  * pode alterá-lo envia, renomeia, troca a versão e apaga. Não depende da
  * permissão do módulo Arquivos.
  */
-export type RecordEntity = "customer" | "proposal" | "service_order";
+export type RecordEntity = "customer" | "proposal" | "service_order" | "stock_item" | "stock_unit";
 const BASE = "record-files" as const;
 interface Sending { key: string; name: string; progress: number; status: "enviando" | "erro"; error?: string }
 

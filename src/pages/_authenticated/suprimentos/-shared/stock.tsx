@@ -33,6 +33,9 @@ export const STOCK_KEYS = {
   categories: "stockCategories",
   locations: "stockLocations",
   order: "stockServiceOrder",
+  unitOptions: "stockUnitOptions",
+  lotOptions: "stockLotOptions",
+  suppliers: "stockSuppliers",
 } as const;
 
 // ---------------------------------------------------------------- tipos
@@ -137,6 +140,7 @@ export const MANUAL_TYPES = [
   { id: "entrada_avulsa", name: "Entrada avulsa", permission: PERM_MOVE, icon: "package-plus", hint: "Chegou sem pedido de compra (doação, devolução, achado)." },
   { id: "transferencia", name: "Transferência", permission: PERM_MOVE, icon: "arrow-left-right", hint: "De um local de estoque para outro." },
   { id: "consumo_interno", name: "Consumo interno", permission: PERM_MOVE, icon: "package-minus", hint: "Gasto da própria empresa, fora de obra." },
+  { id: "venda", name: "Venda", permission: PERM_MOVE, icon: "badge-dollar-sign", hint: "Saída vendida a um cliente (fora da loja do site)." },
   { id: "saldo_inicial", name: "Saldo inicial", permission: PERM_ADJUST, icon: "package-open", hint: "O que já existia antes de usar o sistema." },
   { id: "ajuste", name: "Ajuste", permission: PERM_ADJUST, icon: "sliders-horizontal", hint: "Corrige a diferença (+ ou −) com o motivo." },
 ] as const;
@@ -167,13 +171,21 @@ export const Pill = ({ children, tone = "muted" }: { children: React.ReactNode; 
 
 // ---------------------------------------------------------------- consultas comuns
 
-/** Opções dos formulários (categorias, locais, centros de custo...). Pede `list_itens_estoque`. */
-export function useStockOptions(enabled = true) {
+/** Quem pode buscar as opções de escolha (locais, itens, peças, lotes): as mesmas permissões da API. */
+export const PICKER_PERMISSIONS = ["list_itens_estoque", "movimentar_estoque", "create_pedidos_de_compra", "update_pedidos_de_compra", "create_entregas_epi", "create_locacoes", "update_locacoes", "list_equipamentos", "inspecoes_equipamentos", "update_comercial"];
+export function useCanPick() {
   const { can } = useVerify();
+  return PICKER_PERMISSIONS.some((permission) => can(permission));
+}
+
+/** Opções dos formulários (categorias, locais, centros de custo...): também para quem só movimenta, compra, entrega EPI ou aluga. */
+export function useStockOptions(enabled = true) {
+  const canPick = useCanPick();
   return useQuery({
     queryKey: [STOCK_KEYS.options],
     queryFn: () => stockApi.get<StockOptions>("options"),
-    enabled: enabled && can(`list_${STOCK_ABILITY}`),
+    enabled: enabled && canPick,
+    retry: false,
     staleTime: 60_000,
   });
 }

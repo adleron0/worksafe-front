@@ -571,6 +571,10 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
         queryClient.invalidateQueries({
           queryKey: [`list${ENTITY.pluralName}`],
         });
+        // a tela de edição guarda a turma em ["classes", id]: sem isso, reabrir a turma
+        // mostrava a versão antiga e o próximo salvamento regravava dados velhos
+        // (ex.: o endereço de uma foto que a API já tinha apagado ao trocar)
+        queryClient.invalidateQueries({ queryKey: ["classes"] });
         onSuccess();
       },
       onError: (error: ApiError) => {
@@ -612,6 +616,12 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
       landingLayout: dataForm.landingLayout || "classico",
       landingAbTest: !!dataForm.landingAbTest && (dataForm.landingAbLayouts || []).length >= 2,
     } as unknown as FormData;
+
+    // a foto muda pelo upload (campo image) ou é removida (imageUrl vazio); reenviar o
+    // mesmo endereço não muda nada e, com dado velho, pode apontar para foto apagada
+    if (formData && (submissionData as unknown as Record<string, unknown>).imageUrl === formData.imageUrl) {
+      delete (submissionData as unknown as Record<string, unknown>).imageUrl;
+    }
 
     if (formData) {
       updateCustomerMutation(submissionData);

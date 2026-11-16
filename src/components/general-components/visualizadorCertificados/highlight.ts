@@ -121,7 +121,7 @@ export function renderVersion(
   const h = resolveHighlight(cert);
   if (!h || !cert.updatedAt) return cert.updatedAt;
   let hash = 0;
-  for (const ch of `${h.kind}|${h.theme}|${h.label}|${h.pattern}|${h.border}|selo11`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
+  for (const ch of `${h.kind}|${h.theme}|${h.label}|${h.pattern}|${h.border}|selo12`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
   return `${new Date(cert.updatedAt).getTime()}-${h.theme}-${(hash >>> 0).toString(36)}`;
 }
 

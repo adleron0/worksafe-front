@@ -121,7 +121,7 @@ export function renderVersion(
   const h = resolveHighlight(cert);
   if (!h || !cert.updatedAt) return cert.updatedAt;
   let hash = 0;
-  for (const ch of `${h.kind}|${h.theme}|${h.label}|${h.pattern}|${h.border}|selo7`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
+  for (const ch of `${h.kind}|${h.theme}|${h.label}|${h.pattern}|${h.border}|selo8`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
   return `${new Date(cert.updatedAt).getTime()}-${h.theme}-${(hash >>> 0).toString(36)}`;
 }
 
@@ -178,10 +178,10 @@ const PATTERN_TUNE: Record<FoilPattern, { intensity: number; scale: number }> = 
 export type HighlightBorder = "corda" | "reflexo" | "glitter" | "cristais" | "nenhum";
 
 export const HIGHLIGHT_BORDERS: { id: HighlightBorder; name: string; description: string }[] = [
-  { id: "corda", name: "Corda", description: "Tinge a corda e trança fios de luz nela (padrão)" },
-  { id: "reflexo", name: "Reflexo", description: "Corda tingida com faixas de luz suaves" },
+  { id: "corda", name: "Trança", description: "Fios de luz dourados entrelaçados sobre a corda (padrão)" },
+  { id: "reflexo", name: "Reflexo", description: "Linhas finas de luz que acendem e apagam ao longo da borda" },
   { id: "glitter", name: "Glitter", description: "Quadradinhos de brilho na borda" },
-  { id: "cristais", name: "Cristais", description: "Losangos facetados, como vidro lapidado" },
+  { id: "cristais", name: "Cristais", description: "Triângulos pequenos de brilho" },
   { id: "nenhum", name: "Sem brilho", description: "Só a moldura do modelo" },
 ];
 

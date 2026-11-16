@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { post, put } from "@/services/api";
@@ -8,18 +8,6 @@ import { z } from "zod";
 import { AlertCircle, ArrowLeft, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/ui/tabs";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import {
   AlertDialog,
@@ -41,12 +29,13 @@ import Step6Media from "./steps/Step6Media";
 import Step7Evaluation from "./steps/Step7Evaluation";
 import Step8Page from "./steps/Step8Page";
 import PaginaResultados from "./pagina/PaginaResultados";
-import { compactLandingContent, parseLandingContent } from "./pagina/landing";
+import { compactLandingContent, layoutName, parseLandingContent } from "./pagina/landing";
+import { useTheme } from "@/context/ThemeContext";
+import { cn } from "@/lib/utils";
 import DuplicateTurmaModal from "./DuplicateTurmaModal";
 
 import { IEntity } from "../-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
-import useWindowSize from "@/hooks/use-windowSize";
 import { useFormDraft } from "@/hooks/use-form-draft";
 
 // ─── Schema (idêntico ao de TurmasFormSteps, sem alterações) ─────────────────
@@ -58,7 +47,7 @@ const Schema = z
       .min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     imageUrl: z.string().nullable(),
     customerId: z.number().optional().nullable(),
-    courseId: z.number().min(1, { message: "Id do curso é obrigatório" }),
+    courseId: z.number().min(1, { message: "Escolha o curso" }),
     certificateId: z.number().optional().nullable(),
     highlightTheme: z.enum(["ouro", "prata", "holografico"]).optional().nullable(),
     highlightLabel: z.string().max(60, "Máximo de 60 caracteres").optional().nullable(),
@@ -303,76 +292,49 @@ const generateClassCode = (): string => {
   return code;
 };
 
-// ─── Mapeamento campo → tab ───────────────────────────────────────────────────
-
-const FIELD_TO_TAB: Record<string, string> = {
-  courseId: "basico",
-  name: "basico",
-  hasOnlineCourse: "basico",
-  onlineCourseModelId: "basico",
-  openClass: "basico",
-  certificateId: "basico",
-  highlightTheme: "basico",
-  highlightLabel: "basico",
-  highlightPattern: "basico",
-  highlightBorder: "basico",
-  hoursDuration: "periodo",
-  daysDuration: "periodo",
-  initialDate: "periodo",
-  finalDate: "periodo",
-  landingPagesDates: "periodo",
-  periodClass: "periodo",
-  allowSubscriptions: "inscricoes",
-  maxSubscriptions: "inscricoes",
-  unlimitedSubscriptions: "inscricoes",
-  minimumQuorum: "inscricoes",
-  periodSubscriptionsType: "inscricoes",
-  periodSubscriptionsInitialDate: "inscricoes",
-  periodSubscriptionsFinalDate: "inscricoes",
-  price: "pagamento",
-  discountPrice: "pagamento",
-  dividedIn: "pagamento",
-  paymentMethods: "pagamento",
-  allowCheckout: "pagamento",
-  description: "conteudo",
-  gradeTheory: "conteudo",
-  gradePracticle: "conteudo",
-  gifts: "conteudo",
-  whyUs: "conteudo",
-  imageUrl: "midia",
-  image: "midia",
-  videoUrl: "midia",
-  videoTitle: "midia",
-  videoSubtitle: "midia",
-  videoDescription: "midia",
-  faq: "midia",
-  allowExam: "avaliacao",
-  allowReview: "avaliacao",
-  classCode: "avaliacao",
-  address: "avaliacao",
-  addressNumber: "avaliacao",
-  addressComplement: "avaliacao",
-  neighborhood: "avaliacao",
-  city: "avaliacao",
-  state: "avaliacao",
-  zipCode: "avaliacao",
-};
-
-// ─── Tabs config ──────────────────────────────────────────────────────────────
+// ─── Passos do formulário ─────────────────────────────────────────────────────
+// Agrupados pelo que a pessoa pensa ao montar uma turma. O slug fica na URL (?tab=)
+// e continua o mesmo de antes onde o assunto não mudou.
 
 const TABS = [
-  { slug: "basico", label: "Básico" },
-  { slug: "periodo", label: "Período" },
-  { slug: "inscricoes", label: "Inscrições" },
-  { slug: "pagamento", label: "Pagamento" },
-  { slug: "conteudo", label: "Conteúdo" },
-  { slug: "midia", label: "Mídia" },
-  { slug: "pagina", label: "Página" },
-  { slug: "avaliacao", label: "Avaliação" },
-  { slug: "resultados", label: "Resultados" },
+  { slug: "basico", label: "Turma", heading: "Que turma é esta", description: "Nome, curso, se é aberta ao público ou fechada para um cliente, e o certificado." },
+  { slug: "periodo", label: "Datas e local", heading: "Quando e onde", description: "Carga horária, datas e como elas aparecem no site. O endereço aparece na página da turma." },
+  { slug: "inscricoes", label: "Vagas e inscrições", heading: "Quem pode se inscrever e até quando", description: "Abra as inscrições, defina o período (até a véspera do início) e o limite de vagas." },
+  { slug: "pagamento", label: "Valores", heading: "Quanto custa e como pagar", description: "Valor zerado aparece como \"sob consulta\". Com checkout ligado, o aluno paga direto no site." },
+  { slug: "conteudo", label: "Conteúdo", heading: "O que o aluno aprende", description: "Descrição, grade teórica e prática, o que está incluso, dúvidas frequentes e por que escolher a WorkSafe." },
+  { slug: "pagina", label: "Página no site", heading: "Como a turma aparece no site", description: "Foto, vídeo, layout da página e teste A/B. O que ficar vazio não aparece." },
+  { slug: "avaliacao", label: "Prova e avaliação", heading: "Depois da turma", description: "Prova online com código de acesso e a avaliação do curso pelos alunos." },
+  { slug: "resultados", label: "Resultados", heading: "Resultados da página", description: "Visitas, inscrições e qual layout da página converte mais." },
 ] as const;
 
 type TabSlug = (typeof TABS)[number]["slug"];
+
+/** Em qual passo cada campo fica (para levar a pessoa ao lugar certo do erro). */
+const FIELD_TO_TAB: Record<string, TabSlug> = {
+  courseId: "basico", name: "basico", hasOnlineCourse: "basico", onlineCourseModelId: "basico", openClass: "basico", customerId: "basico",
+  certificateId: "basico", highlightTheme: "basico", highlightLabel: "basico", highlightPattern: "basico", highlightBorder: "basico",
+  hoursDuration: "periodo", daysDuration: "periodo", initialDate: "periodo", finalDate: "periodo", landingPagesDates: "periodo", periodClass: "periodo",
+  address: "periodo", addressNumber: "periodo", addressComplement: "periodo", neighborhood: "periodo", city: "periodo", state: "periodo", zipCode: "periodo",
+  allowSubscriptions: "inscricoes", maxSubscriptions: "inscricoes", unlimitedSubscriptions: "inscricoes", minimumQuorum: "inscricoes",
+  periodSubscriptionsType: "inscricoes", periodSubscriptionsInitialDate: "inscricoes", periodSubscriptionsFinalDate: "inscricoes",
+  price: "pagamento", discountPrice: "pagamento", dividedIn: "pagamento", paymentMethods: "pagamento", allowCheckout: "pagamento",
+  description: "conteudo", gradeTheory: "conteudo", gradePracticle: "conteudo", gifts: "conteudo", whyUs: "conteudo", faq: "conteudo",
+  imageUrl: "pagina", image: "pagina", videoUrl: "pagina", videoTitle: "pagina", videoSubtitle: "pagina", videoDescription: "pagina",
+  landingContent: "pagina", landingLayout: "pagina", landingAbTest: "pagina", landingAbLayouts: "pagina",
+  allowExam: "avaliacao", allowReview: "avaliacao", classCode: "avaliacao",
+};
+
+/** Nome do campo como aparece na tela (lista do que falta). */
+const FIELD_LABEL: Record<string, string> = {
+  courseId: "Curso", name: "Nome da turma", onlineCourseModelId: "Modelo do curso online", customerId: "Cliente",
+  hoursDuration: "Carga horária", daysDuration: "Dias de duração", initialDate: "Data de início", finalDate: "Data de fim",
+  landingPagesDates: "Datas no site", maxSubscriptions: "Máximo de inscrições", periodSubscriptionsInitialDate: "Início das inscrições",
+  periodSubscriptionsFinalDate: "Fim das inscrições", price: "Valor", discountPrice: "Valor promocional", dividedIn: "Parcelamento",
+  description: "Descrição", gradeTheory: "Grade teórica", gradePracticle: "Grade prática", whyUs: "Por que nos escolher", faq: "Perguntas frequentes",
+  videoUrl: "URL do vídeo", image: "Imagem", classCode: "Código de acesso da prova", highlightLabel: "Texto da faixa",
+};
+
+const tabOf = (field: string): TabSlug => FIELD_TO_TAB[field.split(".")[0]] ?? "basico";
 
 const ENTITY = {
   name: "Turma",
@@ -443,8 +405,9 @@ function buildDefaults(formData?: IEntity): FormData {
     landingLayout: formData?.landingLayout || "classico",
     landingAbTest: !!formData?.landingAbTest,
     landingAbLayouts: Array.isArray(formData?.landingAbLayouts) ? formData.landingAbLayouts : [],
+    // a API devolve o JSON como objeto (antes vinha texto); o editor trabalha com texto
     whyUs:
-      fd?.whyUs ||
+      (fd?.whyUs && typeof fd.whyUs === "object" ? JSON.stringify(fd.whyUs) : fd?.whyUs) ||
       JSON.stringify({
         active: true,
         title: "Por que nos escolher?",
@@ -491,72 +454,22 @@ function buildDefaults(formData?: IEntity): FormData {
   };
 }
 
-// ─── Validação visual por tab (reutiliza lógica de validateAllSteps) ──────────
+// ─── Validação ────────────────────────────────────────────────────────────────
 
-function computeTabErrors(
-  dataForm: FormData,
-): Record<TabSlug, boolean> {
-  const result: Record<TabSlug, boolean> = {
-    basico: false,
-    periodo: false,
-    inscricoes: false,
-    pagamento: false,
-    conteudo: false,
-    midia: false,
-    pagina: false,
-    avaliacao: false,
-    resultados: false,
-  };
-
-  // basico
-  if (!dataForm.courseId || dataForm.courseId === 0) result.basico = true;
-  if (!dataForm.name || dataForm.name.trim().length < 3) result.basico = true;
-  if (
-    dataForm.hasOnlineCourse &&
-    (!dataForm.onlineCourseModelId || dataForm.onlineCourseModelId <= 0)
-  )
-    result.basico = true;
-
-  // periodo
-  if (!dataForm.hoursDuration || dataForm.hoursDuration < 1)
-    result.periodo = true;
-  if (!dataForm.daysDuration || dataForm.daysDuration < 1)
-    result.periodo = true;
-  if (dataForm.periodClass === "LIMITED") {
-    if (!dataForm.initialDate) result.periodo = true;
-    if (!dataForm.finalDate) result.periodo = true;
-    if (!dataForm.landingPagesDates || dataForm.landingPagesDates.trim() === "")
-      result.periodo = true;
-  }
-
-  // inscricoes
-  if (dataForm.allowSubscriptions) {
-    if (dataForm.periodSubscriptionsType === "LIMITED") {
-      if (!dataForm.periodSubscriptionsInitialDate) result.inscricoes = true;
-      if (!dataForm.periodSubscriptionsFinalDate) result.inscricoes = true;
-    }
-    if (
-      !dataForm.unlimitedSubscriptions &&
-      (!dataForm.maxSubscriptions || dataForm.maxSubscriptions <= 0)
-    )
-      result.inscricoes = true;
-  }
-
-  // conteudo
-  if (!dataForm.description || dataForm.description.length < 10)
-    result.conteudo = true;
-  if (!dataForm.gradeTheory || dataForm.gradeTheory.length < 10)
-    result.conteudo = true;
-
-  // avaliacao
-  if (
-    dataForm.allowExam &&
-    (!dataForm.classCode || dataForm.classCode.trim() === "")
-  )
-    result.avaliacao = true;
-
-  return result;
+/** Erros do formulário inteiro, pelo mesmo Schema do envio (campo → mensagem). */
+function collectErrors(dataForm: FormData): Record<string, string> {
+  const result = Schema.safeParse(dataForm);
+  if (result.success) return {};
+  const out: Record<string, string> = {};
+  result.error.errors.forEach((error) => {
+    const path = error.path.join(".");
+    if (path && !out[path]) out[path] = error.message;
+  });
+  return out;
 }
+
+const errorsOfTab = (errors: Record<string, string>, tab: TabSlug) =>
+  Object.fromEntries(Object.entries(errors).filter(([field]) => tabOf(field) === tab));
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
@@ -564,12 +477,12 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { showLoader, hideLoader } = useLoader();
-  const { width } = useWindowSize();
-  const isMobile = (width ?? 0) < 768;
 
   // Lê ?tab= da URL (useSearch precisa de um tipo; usamos as any para não depender do tipo gerado)
   const search = useSearch({ strict: false }) as Record<string, string>;
-  const activeTab = (search.tab as TabSlug) || "basico";
+  // "midia" não existe mais: foto e vídeo foram para "Página no site"
+  const requestedTab = search.tab === "midia" ? "pagina" : search.tab;
+  const activeTab: TabSlug = TABS.some((tab) => tab.slug === requestedTab) ? (requestedTab as TabSlug) : "basico";
 
   const [dataForm, setDataForm] = useState<FormData>(() =>
     buildDefaults(formData),
@@ -578,7 +491,17 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
   const [initialSnapshot] = useState(() => JSON.stringify(buildDefaults(formData)));
   const [openDuplicateModal, setOpenDuplicateModal] = useState(false);
 
-  const tabErrors = computeTabErrors(dataForm);
+  // Erros do formulário inteiro a cada mudança; `errors` (o que aparece em vermelho)
+  // só ganha campos quando a pessoa tenta avançar ou salvar, e perde os que ela corrige
+  const liveErrors = useMemo(() => collectErrors(dataForm), [dataForm]);
+  useEffect(() => {
+    setErrors((prev) => {
+      const kept = Object.fromEntries(Object.keys(prev).filter((field) => liveErrors[field]).map((field) => [field, liveErrors[field]]));
+      return Object.keys(kept).length === Object.keys(prev).length ? prev : kept;
+    });
+  }, [liveErrors]);
+  // passos já visitados (na criação, os de depois ficam "a fazer" até a pessoa chegar neles)
+  const [visited, setVisited] = useState<Set<TabSlug>>(() => new Set(formData ? TABS.map((tab) => tab.slug) : ["basico"]));
   // Resultados só existe para turma salva
   const visibleTabs = formData ? TABS : TABS.filter((tab) => tab.slug !== "resultados");
 
@@ -599,6 +522,7 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
         search: (prev: Record<string, string>) => ({ ...prev, tab }),
         replace: true,
       });
+      setVisited((prev) => (prev.has(tab as TabSlug) ? prev : new Set([...prev, tab as TabSlug])));
       document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
     },
     [navigate],
@@ -661,31 +585,15 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = () => {
-    const result = Schema.safeParse(dataForm);
-
-    if (!result.success) {
-      const newErrors: { [key: string]: string } = {};
-      result.error.errors.forEach((error) => {
-        const path = error.path.join(".");
-        if (path) {
-          newErrors[path] = error.message;
-        }
-      });
-      setErrors(newErrors);
-
-      // Encontra a primeira tab com campo em erro
-      const firstTabWithError = TABS.find((tab) =>
-        Object.keys(newErrors).some(
-          (field) => FIELD_TO_TAB[field] === tab.slug,
-        ),
-      );
-      if (firstTabWithError) {
-        handleTabChange(firstTabWithError.slug);
-      }
-
+    const all = collectErrors(dataForm);
+    if (Object.keys(all).length) {
+      setErrors(all);
+      const first = TABS.find((tab) => Object.keys(all).some((field) => tabOf(field) === tab.slug));
+      if (first && first.slug !== activeTab) handleTabChange(first.slug);
+      focusFirstError();
       toast({
-        title: "Erro de validação",
-        description: "Por favor, verifique todos os campos obrigatórios.",
+        title: "Falta corrigir antes de salvar",
+        description: first ? `Os campos marcados em "${first.label}".` : "Confira os campos marcados.",
         variant: "destructive",
       });
       return;
@@ -777,54 +685,133 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
     ? `Editar Turma: ${formData.name}`
     : "Nova Turma";
 
-  // ── Conteúdo de cada step ──────────────────────────────────────────────────
+  // ── Conteúdo de cada passo ────────────────────────────────────────────────
   const stepProps = { dataForm, setDataForm, errors, setErrors };
 
   const stepContent: Record<TabSlug, React.ReactNode> = {
-    basico: <Step1BasicInfo {...stepProps} />,
-    periodo: <Step2Period {...stepProps} />,
+    basico: <Step1BasicInfo {...stepProps} section="dados" />,
+    periodo: (
+      <div className="space-y-8">
+        <Step2Period {...stepProps} />
+        <Step7Evaluation {...stepProps} generateClassCode={generateClassCode} section="local" />
+      </div>
+    ),
     inscricoes: <Step3Subscriptions {...stepProps} />,
     pagamento: <Step4Payment {...stepProps} />,
-    conteudo: <Step5Content {...stepProps} />,
-    midia: <Step6Media {...stepProps} />,
-    pagina: <Step8Page {...stepProps} classId={formData?.id} />,
-    resultados: formData?.id ? <PaginaResultados classId={formData.id} /> : null,
-    avaliacao: (
-      <Step7Evaluation
-        {...stepProps}
-        generateClassCode={generateClassCode}
-      />
+    conteudo: (
+      <div className="space-y-8">
+        <Step5Content {...stepProps} />
+        <Step6Media {...stepProps} section="conteudo" />
+      </div>
     ),
+    pagina: (
+      <div className="space-y-8">
+        <section className="rounded-lg border p-4 space-y-4">
+          <div>
+            <h3 className="font-semibold">Foto e vídeo da turma</h3>
+            <p className="text-xs text-muted-foreground">A foto aparece na lista de turmas e no topo da página. O vídeo é opcional.</p>
+          </div>
+          <Step1BasicInfo {...stepProps} section="imagem" />
+          <Step6Media {...stepProps} section="video" />
+        </section>
+        <Step8Page {...stepProps} classId={formData?.id} />
+      </div>
+    ),
+    avaliacao: <Step7Evaluation {...stepProps} generateClassCode={generateClassCode} section="prova" />,
+    resultados: formData?.id ? <PaginaResultados classId={formData.id} /> : null,
   };
 
   const isSaving = isPending || isPendingUpdate;
 
-  // ── Navegação entre tabs ───────────────────────────────────────────────────
-  // Próximo/Voltar/Salvar percorrem só as abas do formulário; Resultados é só leitura
+  // ── Navegação entre passos ─────────────────────────────────────────────────
+  // Avança só com o passo completo; Resultados é só leitura e fica fora da sequência
   const formTabs = TABS.filter((tab) => tab.slug !== "resultados");
   const currentTabIndex = formTabs.findIndex((tab) => tab.slug === activeTab);
   const isFirstTab = currentTabIndex <= 0;
   const isLastTab = activeTab === "resultados" || currentTabIndex === formTabs.length - 1;
+
+  /** Leva a pessoa ao primeiro campo marcado (depois que a tela troca de passo). */
+  const focusFirstError = () => {
+    window.setTimeout(() => {
+      const el = formRef.current?.querySelector<HTMLElement>("[data-field-error]");
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (typeof el.focus === "function") el.focus({ preventScroll: true });
+    }, 120);
+  };
+
+  /** Mostra os erros de um passo e diz o que falta. Devolve true se o passo está completo. */
+  const checkTab = (tab: TabSlug) => {
+    const mine = errorsOfTab(collectErrors(dataForm), tab);
+    if (!Object.keys(mine).length) return true;
+    setErrors((prev) => ({ ...prev, ...mine }));
+    const label = TABS.find((t) => t.slug === tab)?.label ?? "";
+    toast({ title: `Falta preencher em "${label}"`, description: "Os campos marcados em vermelho são obrigatórios ou estão inválidos.", variant: "destructive" });
+    return false;
+  };
+
+  const goToTab = (target: TabSlug) => {
+    if (target === activeTab) return;
+    const targetIndex = formTabs.findIndex((tab) => tab.slug === target);
+    // voltar ou ir para Resultados é livre; avançar exige os passos do caminho completos
+    if (target !== "resultados" && targetIndex > currentTabIndex) {
+      for (const tab of formTabs.slice(Math.max(0, currentTabIndex), targetIndex)) {
+        if (!checkTab(tab.slug)) {
+          if (tab.slug !== activeTab) handleTabChange(tab.slug);
+          focusFirstError();
+          return;
+        }
+      }
+    }
+    handleTabChange(target);
+  };
   const goToNextTab = () => {
     const next = formTabs[currentTabIndex + 1];
-    if (next) handleTabChange(next.slug);
+    if (!next) return;
+    if (!checkTab(activeTab)) return focusFirstError();
+    handleTabChange(next.slug);
   };
   const goToPrevTab = () => {
     const prev = formTabs[currentTabIndex - 1];
     if (prev) handleTabChange(prev.slug);
   };
 
-  // ── Botão Voltar (anterior) — escondido na primeira tab ────────────────────
-  const PrevTabButton = !isFirstTab ? (
-    <Button variant="outline" onClick={goToPrevTab}>
-      <ChevronLeft className="w-4 h-4 mr-2" />
-      Voltar
-    </Button>
-  ) : null;
+  // Marca em vermelho exatamente os campos com erro do passo aberto
+  const formRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = formRef.current;
+    if (!root) return;
+    root.querySelectorAll("[data-field-error]").forEach((el) => {
+      el.removeAttribute("data-field-error");
+      el.removeAttribute("aria-invalid");
+    });
+    Object.keys(errors).forEach((field) => {
+      const name = field.split(".")[0];
+      const el =
+        root.querySelector<HTMLElement>(`#${CSS.escape(name)}, [name="${CSS.escape(name)}"]`) ??
+        // seletores próprios (Select, calendário) não têm id: marca o controle logo abaixo do rótulo
+        root.querySelector<HTMLElement>(`label[for="${CSS.escape(name)}"]`)?.parentElement?.querySelector<HTMLElement>("button, input, textarea, [role=combobox]") ??
+        null;
+      if (el) {
+        el.setAttribute("data-field-error", "");
+        el.setAttribute("aria-invalid", "true");
+      }
+    });
+  });
 
-  // ── Botão de ação principal: Próximo (tabs intermediárias) ou Salvar (última) ─
-  const PrimaryActionButton = isLastTab ? (
-    <Button onClick={handleSubmit} disabled={isSaving}>
+  const tabState = (tab: TabSlug): "done" | "attention" | "todo" => {
+    if (tab === "resultados") return "todo";
+    const has = Object.keys(liveErrors).some((field) => tabOf(field) === tab);
+    if (!visited.has(tab)) return "todo";
+    return has ? "attention" : "done";
+  };
+
+  const currentErrors = Object.entries(errors).filter(([field]) => tabOf(field) === activeTab);
+  const pendingTabs = formTabs.filter((tab) => Object.keys(liveErrors).some((field) => tabOf(field) === tab.slug));
+  const tabInfo = TABS.find((tab) => tab.slug === activeTab) ?? TABS[0];
+
+  const SaveButton = (
+    <Button onClick={handleSubmit} disabled={isSaving} variant={isLastTab || !formData ? "default" : "outline"}>
       {isSaving ? (
         <>
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -836,11 +823,6 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
           Salvar
         </>
       )}
-    </Button>
-  ) : (
-    <Button onClick={goToNextTab}>
-      Próximo
-      <ChevronRight className="w-4 h-4 ml-2" />
     </Button>
   );
 
@@ -893,74 +875,56 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {isMobile ? (
-        <>
-          {/* ── Header sticky (mobile) ─────────────────────────────────────── */}
-          <div className="sticky top-0 z-10 bg-background border-b">
-            {HeaderBar}
-          </div>
+      <style>{`.turma-form [data-field-error]{border-color:hsl(var(--destructive))!important;box-shadow:0 0 0 1px hsl(var(--destructive))!important}`}</style>
+      <div className="sticky top-0 z-10 bg-background border-b">
+        {HeaderBar}
+        <div className="px-4 pb-3">
+          <StepsBar tabs={visibleTabs} current={activeTab} state={tabState} onGo={goToTab} />
+        </div>
+      </div>
 
-          {/* ── Accordion em mobile ────────────────────────────────────────── */}
-          <div className="flex-1 px-4 py-4">
-            <Accordion type="single" collapsible className="w-full">
-              {visibleTabs.map((tab) => (
-                <AccordionItem key={tab.slug} value={tab.slug}>
-                  <AccordionTrigger>
-                    <span className="flex items-center gap-2">
-                      {tab.label}
-                      {tabErrors[tab.slug] && (
-                        <AlertCircle className="w-4 h-4 text-destructive" />
-                      )}
-                    </span>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    {stepContent[tab.slug]}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
-        </>
-      ) : (
-        /* ── Desktop: Tabs envolve header (com TabsList) + content ────────── */
-        <Tabs
-          value={activeTab}
-          onValueChange={handleTabChange}
-          className="flex-1 flex flex-col"
-        >
-          {/* Header sticky com TabsList integrada */}
-          <div className="sticky top-0 z-10 bg-background border-b">
-            {HeaderBar}
-            <div className="px-4 pb-2">
-              <TabsList className="w-full overflow-x-auto justify-start h-auto flex-wrap">
-                {visibleTabs.map((tab) => (
-                  <TabsTrigger
-                    key={tab.slug}
-                    value={tab.slug}
-                    className="flex items-center gap-1.5"
-                  >
-                    {tab.label}
-                    {tabErrors[tab.slug] && (
-                      <span className="w-2 h-2 rounded-full bg-destructive inline-block" />
-                    )}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+      <div className="flex-1 px-4 py-4">
+        <div className="grid gap-6 items-start lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div ref={formRef} className="turma-form min-w-0 space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold">{tabInfo.heading}</h2>
+              <p className="text-sm text-muted-foreground">{tabInfo.description}</p>
             </div>
+            {currentErrors.length > 0 && (
+              <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
+                <p className="font-medium text-destructive flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4" /> Falta corrigir {currentErrors.length === 1 ? "1 campo" : `${currentErrors.length} campos`} neste passo
+                </p>
+                <ul className="mt-1.5 space-y-0.5">
+                  {currentErrors.map(([field, message]) => (
+                    <li key={field}>
+                      <button
+                        type="button"
+                        className="text-left hover:underline"
+                        onClick={() => {
+                          const el = formRef.current?.querySelector<HTMLElement>("[data-field-error]");
+                          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                          el?.focus?.({ preventScroll: true });
+                        }}
+                      >
+                        <span className="font-medium">{FIELD_LABEL[field.split(".")[0]] ?? field}:</span> {message}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {stepContent[activeTab]}
           </div>
 
-          {/* Conteúdo da tab ativa */}
-          <div className="flex-1 px-4 py-4">
-            {visibleTabs.map((tab) => (
-              <TabsContent key={tab.slug} value={tab.slug}>
-                {stepContent[tab.slug]}
-              </TabsContent>
-            ))}
-          </div>
-        </Tabs>
-      )}
+          <TurmaSummary dataForm={dataForm} formData={formData} pendingTabs={pendingTabs.map((tab) => tab.label)} onGo={(label) => {
+            const tab = TABS.find((t) => t.label === label);
+            if (tab) handleTabChange(tab.slug);
+          }} />
+        </div>
+      </div>
 
-      {/* ── Footer sticky ──────────────────────────────────────────────────── */}
+      {/* ── Rodapé fixo ──────────────────────────────────────────────────────── */}
       <div className="sticky bottom-0 z-10 bg-background border-t px-4 py-3 flex items-center justify-between gap-2">
         {needsEditConfirmPrompt ? (
           <ConfirmDialog
@@ -980,9 +944,21 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
             Cancelar
           </Button>
         )}
-        <div className="flex gap-2">
-          {PrevTabButton}
-          {PrimaryActionButton}
+        <div className="flex flex-wrap justify-end gap-2">
+          {!isFirstTab && activeTab !== "resultados" && (
+            <Button variant="outline" onClick={goToPrevTab}>
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+          )}
+          {/* na edição dá para salvar de qualquer passo; na criação, no último */}
+          {(formData || isLastTab) && SaveButton}
+          {!isLastTab && (
+            <Button onClick={goToNextTab}>
+              Próximo
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -1000,5 +976,126 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
     </div>
   );
 };
+
+// ─── Linha de passos ──────────────────────────────────────────────────────────
+
+function StepsBar({ tabs, current, state, onGo }: {
+  tabs: readonly { slug: TabSlug; label: string }[];
+  current: TabSlug;
+  state: (tab: TabSlug) => "done" | "attention" | "todo";
+  onGo: (tab: TabSlug) => void;
+}) {
+  const list = useRef<HTMLOListElement>(null);
+  const active = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const row = list.current, button = active.current;
+    if (!row || !button) return;
+    const left = button.getBoundingClientRect().left - row.getBoundingClientRect().left + row.scrollLeft;
+    row.scrollTo({ left: left - (row.clientWidth - button.clientWidth) / 2, behavior: "smooth" });
+  }, [current]);
+  const index = tabs.findIndex((tab) => tab.slug === current);
+  return (
+    <nav aria-label="Passos da turma">
+      <p className="sm:hidden text-xs text-muted-foreground mb-1">Passo {index + 1} de {tabs.length}</p>
+      <ol ref={list} className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {tabs.map((tab, i) => {
+          const isCurrent = tab.slug === current;
+          const st = state(tab.slug);
+          return (
+            <li key={tab.slug} className="flex items-center gap-1.5 shrink-0">
+              {i > 0 && <span aria-hidden className={cn("h-px w-3 sm:w-6", i <= index ? "bg-primary" : "bg-border")} />}
+              <button
+                type="button"
+                ref={isCurrent ? active : undefined}
+                aria-current={isCurrent ? "step" : undefined}
+                onClick={() => onGo(tab.slug)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm transition-colors",
+                  isCurrent ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted text-muted-foreground",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "flex h-4 w-4 items-center justify-center rounded-full text-[10px]",
+                    isCurrent ? "bg-primary-foreground/25" : st === "done" ? "bg-emerald-500 text-white" : st === "attention" ? "bg-destructive text-white" : "border border-border",
+                  )}
+                >
+                  {st === "done" && !isCurrent ? "✓" : st === "attention" && !isCurrent ? "!" : ""}
+                </span>
+                {tab.label}
+                {st === "attention" && <span className="sr-only">(falta preencher)</span>}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+// ─── Resumo fixo ──────────────────────────────────────────────────────────────
+
+const brl = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const shortDate = (value?: string | null) => (value ? new Date(value).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "UTC" }) : null);
+
+function TurmaSummary({ dataForm, formData, pendingTabs, onGo }: { dataForm: FormData; formData?: IEntity; pendingTabs: string[]; onGo: (label: string) => void }) {
+  const { theme } = useTheme();
+  const price = Number(dataForm.price) || 0;
+  const discount = Number(dataForm.discountPrice) || 0;
+  const siteBase = process.env.NODE_ENV === "development" ? "http://localhost:3030" : theme.companyData?.lp_domain ? `https://${theme.companyData.lp_domain}` : "https://www.worksafebrasil.com.br";
+  const abLayouts = (dataForm.landingAbLayouts as string[] | undefined) ?? [];
+  const rows: { label: string; value: React.ReactNode }[] = [
+    { label: "Turma", value: dataForm.name || <span className="text-muted-foreground">Sem nome</span> },
+    { label: "Datas", value: dataForm.periodClass === "UNLIMITED" ? "Turma contínua" : dataForm.landingPagesDates || [shortDate(dataForm.initialDate), shortDate(dataForm.finalDate)].filter(Boolean).join(" a ") || "—" },
+    { label: "Carga", value: `${dataForm.hoursDuration || 0} h · ${dataForm.daysDuration || 0} ${dataForm.daysDuration === 1 ? "dia" : "dias"}` },
+    { label: "Local", value: [dataForm.city, dataForm.state].filter(Boolean).join(" · ") || "—" },
+    {
+      label: "Inscrições",
+      value: !dataForm.allowSubscriptions
+        ? "Fechadas"
+        : dataForm.periodSubscriptionsType === "LIMITED" && dataForm.periodSubscriptionsFinalDate
+          ? `Abertas até ${shortDate(dataForm.periodSubscriptionsFinalDate)}`
+          : "Sempre abertas",
+    },
+    { label: "Vagas", value: dataForm.unlimitedSubscriptions ? "Ilimitadas" : `${dataForm.maxSubscriptions || 0}${dataForm.minimumQuorum ? ` · quórum ${dataForm.minimumQuorum}` : ""}` },
+    { label: "Valor", value: price > 0 ? `${brl(discount > 0 ? discount : price)}${(dataForm.dividedIn || 1) > 1 ? ` em até ${dataForm.dividedIn}x` : ""}` : "Sob consulta" },
+    { label: "Pagamento no site", value: dataForm.allowCheckout ? "Checkout ligado" : "Pelo WhatsApp" },
+    { label: "Página", value: dataForm.landingAbTest && abLayouts.length >= 2 ? `Teste A/B: ${abLayouts.map(layoutName).join(", ")}` : layoutName(dataForm.landingLayout) },
+    { label: "Prova", value: dataForm.allowExam ? `Sim · código ${dataForm.classCode || "—"}` : "Não" },
+  ];
+  return (
+    <aside className="hidden lg:block lg:sticky lg:top-36 rounded-lg border bg-background p-4 text-sm" aria-live="polite">
+      <h2 className="font-semibold">Resumo</h2>
+      <dl className="mt-2 grid gap-2">
+        {rows.map((row) => (
+          <div key={row.label}>
+            <dt className="text-xs text-muted-foreground">{row.label}</dt>
+            <dd className="break-words">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="mt-3 border-t pt-3">
+        {pendingTabs.length ? (
+          <>
+            <p className="text-xs font-medium text-destructive">Falta preencher</p>
+            <ul className="mt-1 space-y-0.5">
+              {pendingTabs.map((label) => (
+                <li key={label}><button type="button" className="text-left text-sm hover:underline" onClick={() => onGo(label)}>{label}</button></li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p className="text-xs text-emerald-600 dark:text-emerald-400">Tudo certo para salvar.</p>
+        )}
+      </div>
+      {formData?.id && (
+        <a href={`${siteBase}/turma/${formData.id}?preview=1`} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:underline">
+          <Icon name="external-link" className="w-3.5 h-3.5" /> Ver a página salva no site
+        </a>
+      )}
+    </aside>
+  );
+}
 
 export default TurmaPage;

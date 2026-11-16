@@ -38,7 +38,7 @@ const Schema = z
       .min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     imageUrl: z.string().nullable(),
     customerId: z.number().optional().nullable(),
-    courseId: z.number().min(1, { message: "Id do curso é obrigatório" }),
+    courseId: z.number().min(1, { message: "Escolha o curso" }),
     certificateId: z.number().optional().nullable(),
     highlightTheme: z.enum(["ouro", "prata", "holografico"]).optional().nullable(),
     highlightLabel: z.string().max(60, "Máximo de 60 caracteres").optional().nullable(),
@@ -334,7 +334,7 @@ const TurmasFormSteps = ({ formData, onClose, entity }: FormProps) => {
     ],
     image: formData?.image || null,
     whyUs:
-      (formData as any)?.whyUs ||
+      ((formData as any)?.whyUs && typeof (formData as any).whyUs === "object" ? JSON.stringify((formData as any).whyUs) : (formData as any)?.whyUs) ||
       JSON.stringify({
         active: true,
         title: "Por que nos escolher?",

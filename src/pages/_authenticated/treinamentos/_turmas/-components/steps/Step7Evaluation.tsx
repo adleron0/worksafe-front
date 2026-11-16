@@ -19,6 +19,8 @@ import { FormData } from "../TurmasFormSteps";
 import { toast } from "@/hooks/use-toast";
 
 interface StepProps {
+  /** mostra só uma parte do passo (o formulário reagrupado usa partes em passos diferentes) */
+  section?: "prova" | "local";
   dataForm: FormData;
   setDataForm: React.Dispatch<React.SetStateAction<FormData>>;
   errors: { [key: string]: string };
@@ -30,10 +32,12 @@ const Step7Evaluation = ({
   dataForm,
   setDataForm,
   errors,
-  generateClassCode
+  generateClassCode,
+  section,
 }: StepProps) => {
   const [isAddressOpen, setIsAddressOpen] = useState<boolean>(
-    !!(dataForm as any)?.address || false
+    // no passo "Datas e local" o endereço já abre visível
+    section === "local" || !!(dataForm as any)?.address || false
   );
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [lastFetchedCep, setLastFetchedCep] = useState<string>("");
@@ -109,6 +113,7 @@ const Step7Evaluation = ({
 
   return (
     <div className="space-y-6">
+      {section !== "local" && (<>
       {/* Habilitar Prova Virtual */}
       <div className={`p-4 bg-muted/30 border border-border/50 rounded-lg ${dataForm.allowExam ? "pb-4" : ""}`}>
         <div className="flex justify-between items-center">
@@ -198,6 +203,9 @@ const Step7Evaluation = ({
         />
       </div>
 
+      </>)}
+
+      {section !== "prova" && (<>
       {/* Endereço do Curso Presencial */}
       <Collapsible
         open={isAddressOpen}
@@ -333,6 +341,7 @@ const Step7Evaluation = ({
           </CollapsibleContent>
         </div>
       </Collapsible>
+      </>)}
     </div>
   );
 };

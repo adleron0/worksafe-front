@@ -6,13 +6,15 @@ import WhyUsEditor from "../WhyUsEditor";
 import { FormData } from "../TurmasFormSteps";
 
 interface StepProps {
+  /** mostra só uma parte do passo (o formulário reagrupado usa partes em passos diferentes) */
+  section?: "video" | "conteudo";
   dataForm: FormData;
   setDataForm: React.Dispatch<React.SetStateAction<FormData>>;
   errors: { [key: string]: string };
   setErrors: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
 }
 
-const Step6Media = ({ dataForm, setDataForm, errors, setErrors }: StepProps) => {
+const Step6Media = ({ dataForm, setDataForm, errors, setErrors, section }: StepProps) => {
   const handleChange = (
     name: string,
     value: string | number | null | string[],
@@ -22,6 +24,7 @@ const Step6Media = ({ dataForm, setDataForm, errors, setErrors }: StepProps) => 
 
   return (
     <div className="space-y-6">
+      {section !== "conteudo" && (<>
       {/* URL do Vídeo */}
       <div className="space-y-2">
         <Label htmlFor="videoUrl">URL do vídeo</Label>
@@ -87,6 +90,9 @@ const Step6Media = ({ dataForm, setDataForm, errors, setErrors }: StepProps) => 
         )}
       </div>
 
+      </>)}
+
+      {section !== "video" && (<>
       {/* Por que nos escolher */}
       <div className="mt-6">
         <WhyUsEditor
@@ -108,6 +114,7 @@ const Step6Media = ({ dataForm, setDataForm, errors, setErrors }: StepProps) => 
           description="Adicione perguntas e respostas comuns sobre o curso"
         />
       </div>
+      </>)}
     </div>
   );
 };

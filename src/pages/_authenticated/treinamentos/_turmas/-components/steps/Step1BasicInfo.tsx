@@ -25,13 +25,15 @@ import {
 } from "@/components/general-components/visualizadorCertificados/highlight";
 
 interface StepProps {
+  /** mostra só uma parte do passo (o formulário reagrupado usa partes em passos diferentes) */
+  section?: "dados" | "imagem";
   dataForm: FormData;
   setDataForm: React.Dispatch<React.SetStateAction<FormData>>;
   errors: { [key: string]: string };
   setErrors?: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
 }
 
-const Step1BasicInfo = ({ dataForm, setDataForm, errors }: StepProps) => {
+const Step1BasicInfo = ({ dataForm, setDataForm, errors, section }: StepProps) => {
   const [preview, setPreview] = useState<string | null>("");
 
   useEffect(() => {
@@ -148,8 +150,27 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors }: StepProps) => {
   return (
     <div className="space-y-6">
       {/* Upload de Imagem */}
+      {section !== "dados" && (
       <div className="h-60 w-full md:w-60">
         <DropUpload preset="card" setImage={setDataForm} EditPreview={preview} />
+      </div>
+      )}
+
+      {section !== "imagem" && (<>
+      {/* Nome da Turma */}
+      <div>
+        <Label htmlFor="name">
+          Nome da Turma <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="name"
+          name="name"
+          placeholder="Digite nome da turma"
+          value={dataForm.name}
+          onValueChange={handleChange}
+          className="mt-1"
+        />
+        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
       </div>
 
       {/* Turma Aberta */}
@@ -378,21 +399,7 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors }: StepProps) => {
       </div>
       )}
 
-      {/* Nome da Turma */}
-      <div>
-        <Label htmlFor="name">
-          Nome da Turma <span className="text-red-500">*</span>
-        </Label>
-        <Input
-          id="name"
-          name="name"
-          placeholder="Digite nome da turma"
-          value={dataForm.name}
-          onValueChange={handleChange}
-          className="mt-1"
-        />
-        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-      </div>
+      </>)}
     </div>
   );
 };

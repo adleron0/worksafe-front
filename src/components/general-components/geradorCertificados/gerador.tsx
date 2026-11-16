@@ -194,6 +194,31 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
   };
 
 
+  // Espaço de instrutor da seleção (instructorSlot 1–4; a API redistribui os preenchidos).
+  // Canvas lido a cada render (como no LayersPanel): o da página pode ser recriado.
+  const liveCanvas: fabric.Canvas | null = getCurrentCanvasRef()?.getCanvas() || null;
+  const [slotSelection, setSlotSelection] = useState<{ count: number; slot: number | null | 'misto' }>({ count: 0, slot: null });
+  const syncSlotSelection = useCallback(() => {
+    const objs = liveCanvas?.getActiveObjects() ?? [];
+    const slots = new Set(objs.map((o) => (o as unknown as { instructorSlot?: number }).instructorSlot ?? null));
+    setSlotSelection({ count: objs.length, slot: slots.size > 1 ? 'misto' : objs.length ? [...slots][0] : null });
+  }, [liveCanvas]);
+  useEffect(() => {
+    if (!liveCanvas) return;
+    syncSlotSelection();
+    const events = ['selection:created', 'selection:updated', 'selection:cleared'] as const;
+    events.forEach((e) => liveCanvas.on(e, syncSlotSelection));
+    return () => events.forEach((e) => liveCanvas.off(e, syncSlotSelection));
+  }, [liveCanvas, syncSlotSelection]);
+  const setInstructorSlot = (slot: number | null) => {
+    if (!liveCanvas) return;
+    liveCanvas.getActiveObjects().forEach((o) => {
+      o.set({ instructorSlot: slot ?? undefined } as never);
+      liveCanvas.fire('object:modified', { target: o } as never);
+    });
+    syncSlotSelection();
+  };
+
   // Atalhos de teclado para Undo/Redo (Ctrl+Z / Ctrl+Shift+Z)
   useEffect(() => {
     const handleUndoRedo = (e: KeyboardEvent) => {
@@ -1166,6 +1191,8 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
                     hasSeal={sealState.has}
                     sealDefault={sealState.src}
                     onSetSealDefault={setSealDefault}
+                    slotSelection={slotSelection}
+                    onSetInstructorSlot={setInstructorSlot}
                   />
                 </CollapsibleContent>
               </Collapsible>

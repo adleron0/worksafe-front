@@ -1,5 +1,6 @@
 import { StudentData, VariableToReplace } from '../types';
 import { isTextObjectType, isTextboxType } from './fabricSetup';
+import { layoutInstructorSlots } from './instructorSlots';
 
 export class VariableReplacer {
   /**
@@ -35,6 +36,8 @@ export class VariableReplacer {
     } else {
       processed = JSON.parse(JSON.stringify(jsonData));
     }
+    // espaços de instrutor vazios saem e os demais se redistribuem (igual à API)
+    processed = layoutInstructorSlots(processed, variables);
     
     
     if (processed.objects && Array.isArray(processed.objects)) {

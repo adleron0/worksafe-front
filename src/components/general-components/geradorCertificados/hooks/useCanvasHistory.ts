@@ -38,6 +38,13 @@ const SNAPSHOT_PROPERTIES = [
   'targetHeight',
   'targetWidth',
   'placeholderNameDebug',
+  // marcadores, selo padrão, altura máxima e espaço de instrutor
+  'placeholderName',
+  'placeholderType',
+  'isPlaceholder',
+  'sealDefaultSrc',
+  'maxHeight',
+  'instructorSlot',
 ];
 
 export interface CanvasHistoryAPI {

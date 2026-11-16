@@ -79,7 +79,7 @@ export function useKeyboardShortcuts({
           case 'd': // Duplicar
             e.preventDefault();
             e.stopPropagation();
-            activeObject.clone().then((cloned: fabric.Object) => {
+            activeObject.clone(['placeholderName', 'placeholderType', 'isPlaceholder', 'sealDefaultSrc', 'maxHeight', 'instructorSlot']).then((cloned: fabric.Object) => {
               canvas.discardActiveObject();
               cloned.set({
                 left: (cloned.left || 0) + 10,

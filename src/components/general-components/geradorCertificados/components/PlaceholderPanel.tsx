@@ -14,6 +14,9 @@ interface PlaceholderPanelProps {
   sealDefault?: string | null;
   hasSeal?: boolean;
   onSetSealDefault?: (url: string | null) => void;
+  /** Espaço de instrutor da seleção atual: quantos objetos e qual espaço (null = nenhum, 'misto'). */
+  slotSelection?: { count: number; slot: number | null | 'misto' };
+  onSetInstructorSlot?: (slot: number | null) => void;
 }
 
 const PlaceholderPanel: React.FC<PlaceholderPanelProps> = ({
@@ -22,6 +25,8 @@ const PlaceholderPanel: React.FC<PlaceholderPanelProps> = ({
   sealDefault,
   hasSeal,
   onSetSealDefault,
+  slotSelection,
+  onSetInstructorSlot,
 }) => {
   const [pickSeal, setPickSeal] = useState(false);
   // const [placeholderName, setPlaceholderName] = useState('');
@@ -197,6 +202,38 @@ const PlaceholderPanel: React.FC<PlaceholderPanelProps> = ({
             </div>
           )}
         </div>
+
+        {/* Espaços de instrutor (1 a 4) */}
+        {onSetInstructorSlot && (
+          <div>
+            <h4 className="text-xs font-medium text-muted-foreground mb-2">Espaço de instrutor</h4>
+            <div className="flex gap-1">
+              {([null, 1, 2, 3, 4] as const).map((n) => {
+                const active = slotSelection && slotSelection.count > 0 && slotSelection.slot === n;
+                return (
+                  <Button
+                    key={String(n)}
+                    type="button"
+                    size="sm"
+                    variant={active ? 'default' : 'outline'}
+                    className="h-7 flex-1 px-0 text-[11px]"
+                    disabled={!slotSelection || slotSelection.count === 0}
+                    onClick={() => onSetInstructorSlot(n)}
+                  >
+                    {n ?? 'Nenhum'}
+                  </Button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {slotSelection && slotSelection.count > 0
+                ? `${slotSelection.count} ${slotSelection.count === 1 ? 'objeto selecionado' : 'objetos selecionados'}${slotSelection.slot === 'misto' ? ' (espaços diferentes)' : ''}. `
+                : 'Selecione os objetos do bloco de um instrutor. '}
+              Marque nome, registro, currículo, assinatura e linha de cada instrutor com o mesmo número.
+              Ao gerar, os espaços sem instrutor somem e os demais se redistribuem na mesma largura.
+            </p>
+          </div>
+        )}
       </div>
 
       <Dialog

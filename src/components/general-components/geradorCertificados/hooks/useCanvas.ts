@@ -5,6 +5,9 @@ import jsPDF from 'jspdf';
 import { applyFontOverrides } from '../utils/fontConfig';
 import { isTextObject } from '../types';
 
+/** Propriedades próprias do certificado que precisam sobreviver a clonar/copiar. */
+const CUSTOM_PROPS = ['placeholderName', 'placeholderType', 'isPlaceholder', 'sealDefaultSrc', 'maxHeight', 'instructorSlot'];
+
 interface CanvasPage {
   id: string;
   orientation: 'landscape' | 'portrait';
@@ -242,7 +245,7 @@ export const useCanvas = () => {
     if (!canvas) return;
 
     // Clonar o objeto
-    target.clone().then((cloned: fabric.Object) => {
+    target.clone(CUSTOM_PROPS).then((cloned: fabric.Object) => {
       // Deslocar o objeto clonado para não ficar exatamente em cima do original
       cloned.set({
         left: (cloned.left || 0) + 20,
@@ -430,6 +433,8 @@ export const useCanvas = () => {
     'placeholderName', 'placeholderType', 'isPlaceholder', 'sealDefaultSrc',
     // altura máxima do texto (o render reduz a fonte até caber)
     'maxHeight',
+    // espaço de instrutor (a API esconde os vazios e redistribui os demais)
+    'instructorSlot',
   ];
 
   /**

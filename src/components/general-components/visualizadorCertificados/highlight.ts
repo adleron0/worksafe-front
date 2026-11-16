@@ -121,7 +121,7 @@ export function renderVersion(
   const h = resolveHighlight(cert);
   if (!h || !cert.updatedAt) return cert.updatedAt;
   let hash = 0;
-  for (const ch of `${h.kind}|${h.theme}|${h.label}|${h.pattern}|${h.border}|selo9`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
+  for (const ch of `${h.kind}|${h.theme}|${h.label}|${h.pattern}|${h.border}|selo10`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
   return `${new Date(cert.updatedAt).getTime()}-${h.theme}-${(hash >>> 0).toString(36)}`;
 }
 
@@ -179,7 +179,7 @@ export type HighlightBorder = "corda" | "reflexo" | "glitter" | "cristais" | "ne
 
 export const HIGHLIGHT_BORDERS: { id: HighlightBorder; name: string; description: string }[] = [
   { id: "corda", name: "Trança", description: "Fios de luz dourados entrelaçados sobre a corda (padrão)" },
-  { id: "reflexo", name: "Reflexo", description: "Linhas finas de luz que acendem e apagam ao longo da borda" },
+  { id: "reflexo", name: "Reflexo", description: "Faixas de poeira brilhante, como luz passando sobre metal" },
   { id: "glitter", name: "Glitter", description: "Quadradinhos de brilho na borda" },
   { id: "cristais", name: "Cristais", description: "Triângulos pequenos de brilho" },
   { id: "nenhum", name: "Sem brilho", description: "Só a moldura do modelo" },

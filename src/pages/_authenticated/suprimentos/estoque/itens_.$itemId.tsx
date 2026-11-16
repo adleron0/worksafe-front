@@ -79,6 +79,8 @@ function ItemPage() {
   const initialKind: ItemKind = ITEM_KINDS.some((option) => option.id === tipo) ? (tipo as ItemKind) : "consumivel";
   const [draft, setDraft] = useState<Draft | null>(isNew ? withKind(draftOf(), initialKind) : null);
   const [kind, setKind] = useState<ItemKind>(initialKind);
+  // a categoria sugere o tipo do item enquanto a pessoa não escolheu um cartão
+  const [kindTouched, setKindTouched] = useState(ITEM_KINDS.some((option) => option.id === tipo));
   const [more, setMore] = useState(false);
   const [entering, setEntering] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -141,9 +143,15 @@ function ItemPage() {
   const canEnter = !!item && item.active && (can(PERM_MOVE) || can(PERM_ADJUST));
   const currentKind: ItemKind = isNew ? kind : kindOf(draft);
   const setLife = (value: number | null) => setDraft((current) => current && ({ ...current, lifeMonths: value, hasLife: value !== null }));
-  const choosePreset = (id: ItemKind) => {
+  const applyKind = (id: ItemKind) => {
     setKind(id);
     setDraft((current) => current && withKind(current, id));
+  };
+  const choosePreset = (id: ItemKind) => { setKindTouched(true); applyKind(id); };
+  const chooseCategory = (value: string) => {
+    set("categoryId", value);
+    const suggested = (options?.categories.find((c) => String(c.id) === value)?.defaults as { kind?: string } | null)?.kind;
+    if (isNew && !kindTouched && suggested && ITEM_KINDS.some((option) => option.id === suggested)) applyKind(suggested as ItemKind);
   };
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -251,7 +259,7 @@ function ItemPage() {
                 <div><Label htmlFor="name">Nome <span>*</span></Label>
                   <Input id="name" name="name" value={draft.name} maxLength={200} disabled={!editable} onValueChange={(_, value) => set("name", String(value))} className="mt-1" placeholder="Ex.: Cinto paraquedista" /></div>
                 <div><Label>Categoria</Label>
-                  <Select name="categoryId" searchable options={toOptions(options?.categories)} state={draft.categoryId} clearable disabled={!editable} onChange={(_, value) => set("categoryId", String(value ?? ""))} placeholder="Sem categoria" /></div>
+                  <Select name="categoryId" searchable options={toOptions(options?.categories)} state={draft.categoryId} clearable disabled={!editable} onChange={(_, value) => chooseCategory(String(value ?? ""))} placeholder="Sem categoria" /></div>
               </div>
               <div className="grid sm:grid-cols-4 gap-4">
                 <div><Label htmlFor="unit" className="text-xs">Unidade</Label>

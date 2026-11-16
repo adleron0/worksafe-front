@@ -115,7 +115,7 @@ export function useSuppliers(enabled = true) {
 export function useEmployees(enabled = true) {
   return useQuery({
     queryKey: [EQUIP_KEYS.employees], enabled, retry: false, staleTime: 60_000,
-    queryFn: () => stockApi.get<Array<{ id: number; name: string; terminated: boolean }>>("ppe/employees"),
+    queryFn: () => stockApi.get<Array<{ id: number; name: string; terminated?: boolean }>>("employees/options"),
   });
 }
 

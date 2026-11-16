@@ -307,13 +307,11 @@ function PpeLinesEditor({ lines, onChange, items, loading, locationId }: { lines
   );
 }
 
-/** Obras abertas para marcar a entrega (custo vai para a OS); só para quem vê os pedidos de compra. */
+/** Obras abertas (que a pessoa vê) para marcar a entrega: o custo vai para a OS. */
 function useServiceOrderOptions() {
-  const { can } = useVerify();
   return useQuery({
-    queryKey: ["purchaseOrderOptions"],
-    queryFn: async () => (await api.get<{ serviceOrders: Array<{ id: number; name: string }> }>("purchase-orders/options")).data,
-    enabled: can("list_pedidos_de_compra"),
+    queryKey: ["stockServiceOrderOptions"],
+    queryFn: async () => ({ serviceOrders: await stockApi.get<Array<{ id: number; name: string }>>("service-orders/options") }),
     retry: false,
   });
 }

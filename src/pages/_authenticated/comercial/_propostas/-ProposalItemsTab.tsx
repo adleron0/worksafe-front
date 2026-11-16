@@ -79,7 +79,8 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
   });
 
   return (
-    <div className="@container grid gap-4">
+    // coluna presa à largura: nenhuma linha de dentro pode alargar a tela (senão aparece rolagem de lado)
+    <div className="@container grid grid-cols-[minmax(0,1fr)] gap-4">
       <ConfirmDialog open={Boolean(removing)} onOpenChange={(open) => { if (!open) setRemoving(null); }}
         title={`Remover a seção "${removing?.title ?? ""}"?`} description={`Os ${removing?.items.length ?? 0} item(ns) dela saem da proposta junto.`}
         onConfirm={() => { if (removing) removeSection(removing.uid); setRemoving(null); }} />
@@ -167,7 +168,7 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
       })}
 
       {!readOnly && (
-        <div className="flex flex-col @md:flex-row @md:items-center gap-2 text-sm">
+        <div className="flex flex-col @md:flex-row @md:flex-wrap @md:items-center gap-2 text-sm">
           <span className="text-muted-foreground">Outra seção:</span>
           <div className="@md:w-56">
             <Select name="newKind" state={newKind} modal={false} options={Object.entries(ITEM_LABEL).map(([id, name]) => ({ id, name }))}
@@ -183,8 +184,8 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
             const target = list.find((section) => section.kind === "locacao_cliente");
             if (target) return list.map((section) => (section.uid === target.uid ? { ...section, items: [...section.items, newItem("locacao_cliente")] } : section));
             return [...list, { uid: newUid(), title: ITEM_LABEL.locacao_cliente, kind: "locacao_cliente", margin: options.defaults.margins?.locacao_cliente ?? 0, showInDocument: true, items: [newItem("locacao_cliente")] }];
-          })}>
-            <Icon name="handshake" className="w-4 h-4 mr-1" /> Adicionar equipamento nosso para alugar
+          })} className="h-auto min-h-8 whitespace-normal text-left">
+            <Icon name="handshake" className="w-4 h-4 mr-1 shrink-0" /> Adicionar equipamento nosso para alugar
           </Button>
         </div>
       )}

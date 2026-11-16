@@ -213,6 +213,12 @@ export function InspectionDialog({ target, onClose, onDone }: { target: Inspecti
 
           {template && (
             <div className="grid gap-2">
+              {okNok.length > 1 && (
+                <Button type="button" variant="outline" className="h-11"
+                  onClick={() => setAnswers((current) => ({ ...current, ...Object.fromEntries(okNok.map((q) => [q.key, "ok"])) }))}>
+                  <Icon name="check-check" className="w-4 h-4 mr-1" /> Tudo OK
+                </Button>
+              )}
               {template.items.map((q, index) => (
                 <div key={q.key} className="rounded border p-3 grid gap-2">
                   <p className="text-sm">{index + 1}. {q.label}{q.required && <span className="text-red-500"> *</span>}</p>

@@ -16,6 +16,8 @@ export interface UnitOption {
   id: number; name: string; tag: string; itemId: number; item: string; status: string; holderType: string; holderId: number | null; where: string; usable: boolean;
   /** motivo em palavras ("inspeção venceu em 02/11") e o atalho que resolve */
   reason?: string | null; fix?: "inspecionar" | "calibrar" | null;
+  /** roteiro de inspeção do item (ou o sugerido pelo nome) */
+  templateId?: number | null;
 }
 export interface LotOption { id: number; name: string; number: string; expiresAt: string | null; status: string; available: number }
 
@@ -76,7 +78,7 @@ export function UnitPicker({ name, itemId, holderType = "local", holderId, value
         </ul>
       )}
       {inspecting && (
-        <InspectionDialog target={{ unitId: inspecting.id, label: `${inspecting.tag} · ${inspecting.item}`, kind: inspecting.status === "em_inspecao" ? "recebimento" : "periodica" }}
+        <InspectionDialog target={{ unitId: inspecting.id, label: `${inspecting.tag} · ${inspecting.item}`, kind: inspecting.status === "em_inspecao" ? "recebimento" : "periodica", templateId: inspecting.templateId ?? null }}
           onClose={() => setInspecting(null)} />
       )}
     </div>

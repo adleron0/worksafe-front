@@ -80,10 +80,13 @@ export function LinesEditor({ mode, locationId, lines, onChange, items, itemsLoa
                 <Select name={`item-${line.key}`} searchable options={options} state={line.itemId} isLoading={itemsLoading} modal
                   onChange={(_, value) => setLine(line.key, { itemId: String(value ?? ""), lotId: "", lotNumber: "", expiresAt: "", unitId: "" })} placeholder="Escolha o item" />
               </div>
-              <div className={showCost && mode === "entrada" ? "col-span-5 sm:col-span-2" : "col-span-10 sm:col-span-4"}>
-                {index === 0 && <Label className="text-xs">{mode === "ajuste" ? "Diferença (+ ou −)" : "Quantidade"}</Label>}
-                <NumField value={line.quantity} digits={3} suffix={item?.unit} ariaLabel={`Quantidade da linha ${index + 1}`} onChange={(value) => setLine(line.key, { quantity: value })} />
-              </div>
+              {/* peça com etiqueta sai uma por linha: a quantidade só importa na entrada (quantas peças chegaram) */}
+              {!(item?.tracking === "unidade" && !entering) && (
+                <div className={showCost && mode === "entrada" ? "col-span-5 sm:col-span-2" : "col-span-10 sm:col-span-4"}>
+                  {index === 0 && <Label className="text-xs">{mode === "ajuste" ? "Diferença (+ ou −)" : item?.tracking === "unidade" ? "Quantas peças" : "Quantidade"}</Label>}
+                  <NumField value={line.quantity} digits={3} suffix={item?.unit} ariaLabel={`Quantidade da linha ${index + 1}`} onChange={(value) => setLine(line.key, { quantity: value })} />
+                </div>
+              )}
               {showCost && mode === "entrada" && (
                 <div className="col-span-5 sm:col-span-2">
                   {index === 0 && <Label className="text-xs">Custo unitário</Label>}

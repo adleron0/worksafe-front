@@ -12,6 +12,10 @@ import {
   DEFAULT_PATTERN,
   HIGHLIGHT_DEFAULT_LABEL,
   HIGHLIGHT_PATTERN_OPTIONS,
+  HIGHLIGHT_BORDER_OPTIONS,
+  DEFAULT_BORDER,
+  borderInfo,
+  type HighlightBorder,
   HIGHLIGHT_THEMES,
   patternInfo,
   themeInfo,
@@ -43,6 +47,9 @@ export default function DestaqueCertificadoDialog({
   const [pattern, setPattern] = useState<HighlightPattern | null>(
     (item.highlightPattern as HighlightPattern) || null,
   );
+  const [border, setBorder] = useState<HighlightBorder | null>(
+    (item.highlightBorder as HighlightBorder) || null,
+  );
   const classTheme = themeInfo(item.class?.highlightTheme);
 
   const { mutate: save, isPending } = useMutation({
@@ -53,6 +60,7 @@ export default function DestaqueCertificadoDialog({
         highlightTheme: student ? theme || "" : "",
         highlightLabel: student ? label.trim() : "",
         highlightPattern: student ? pattern || "" : "",
+        highlightBorder: student ? border || "" : "",
       } as never),
     onSuccess: () => {
       toast({
@@ -136,6 +144,17 @@ export default function DestaqueCertificadoDialog({
                       DEFAULT_PATTERN[theme ?? (item.class?.highlightTheme as Theme) ?? "ouro"],
                   )?.name
                 } (padrão)`}
+                clearable
+              />
+            </div>
+            <div>
+              <p className="mb-1 text-xs text-muted-foreground">Brilho da moldura</p>
+              <Select
+                name="highlightBorder"
+                options={HIGHLIGHT_BORDER_OPTIONS}
+                state={border ?? ""}
+                onChange={(_, value) => setBorder((value as HighlightBorder) || null)}
+                placeholder={`${borderInfo(item.class?.highlightBorder ?? DEFAULT_BORDER)?.name} (padrão)`}
                 clearable
               />
             </div>

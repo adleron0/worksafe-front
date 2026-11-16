@@ -14,7 +14,7 @@ import {
 import { getLogicalCanvasSize } from "../utils/fabricSetup";
 import { certificateImageUrl, hasBackSide } from "./certificateRenderUrls";
 import FoilShaderLayer from "./FoilShaderLayer";
-import { buildFoilSettings, DEFAULT_PATTERN, HOLO_GLOW, type HighlightTheme } from "../highlight";
+import { buildFoilSettings, DEFAULT_PATTERN, HOLO_GLOW, type HighlightBorder, type HighlightTheme } from "../highlight";
 import type { FoilPattern } from "./FoilShaderLayer";
 
 // ============================================================================
@@ -69,6 +69,7 @@ interface CertificateStageProps {
   highlightTheme?: HighlightTheme | null;
   /** Padronagem do centro (sem ela, a padrão do tema). */
   highlightPattern?: FoilPattern | null;
+  highlightBorder?: HighlightBorder | null;
   /** Altura da janela reservada fora do palco (padrão 140 px; maior dentro de diálogos). */
   reservedHeight?: number;
   onError: () => void;
@@ -171,6 +172,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
   reservedHeight = 140,
   highlightTheme,
   highlightPattern,
+  highlightBorder,
   onError,
 }) => {
   const { width: logicalW, height: logicalH } = getLogicalCanvasSize(
@@ -509,7 +511,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
 
   // brilho em volta do cartão nos certificados de destaque
   const effect = highlightTheme
-    ? buildFoilSettings(highlightTheme, highlightPattern ?? DEFAULT_PATTERN[highlightTheme])
+    ? buildFoilSettings(highlightTheme, highlightPattern ?? DEFAULT_PATTERN[highlightTheme], highlightBorder ?? undefined)
     : null;
   const glowStyle: React.CSSProperties = highlightTheme
     ? { boxShadow: `0 18px 40px -12px rgba(0,0,0,0.35), ${HOLO_GLOW[highlightTheme]}` }

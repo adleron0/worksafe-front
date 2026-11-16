@@ -140,7 +140,7 @@ export default function EmitirCertificadosDialog({
         // vazio = usar o padrão (a API trata "" como limpar)
         await put("trainee-certificate", `${r.certificate.id}`, {
           highlightStudent: want,
-          ...(want ? {} : { highlightTheme: "", highlightLabel: "", highlightPattern: "" }),
+          ...(want ? {} : { highlightTheme: "", highlightLabel: "", highlightPattern: "", highlightBorder: "" }),
         } as never);
         marked++;
       }

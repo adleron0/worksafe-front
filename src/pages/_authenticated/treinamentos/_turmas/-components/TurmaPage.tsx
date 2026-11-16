@@ -60,6 +60,7 @@ const Schema = z
     highlightTheme: z.enum(["ouro", "prata", "holografico"]).optional().nullable(),
     highlightLabel: z.string().max(60, "Máximo de 60 caracteres").optional().nullable(),
     highlightPattern: z.enum(["rosetas", "estrelas", "estilhacos", "bolhas", "espiral", "glitter", "arco_iris", "gravado", "nenhum"]).optional().nullable(),
+    highlightBorder: z.enum(["corda", "reflexo", "glitter", "cristais", "nenhum"]).optional().nullable(),
     price: z.number().min(0, { message: "Valor de venda é obrigatório" }),
     discountPrice: z.number(),
     dividedIn: z.number().min(1).optional().nullable(),
@@ -306,6 +307,7 @@ const FIELD_TO_TAB: Record<string, string> = {
   highlightTheme: "basico",
   highlightLabel: "basico",
   highlightPattern: "basico",
+  highlightBorder: "basico",
   hoursDuration: "periodo",
   daysDuration: "periodo",
   initialDate: "periodo",
@@ -391,6 +393,7 @@ function buildDefaults(formData?: IEntity): FormData {
     highlightTheme: (fd?.highlightTheme as FormData["highlightTheme"]) || null,
     highlightLabel: fd?.highlightLabel || null,
     highlightPattern: (fd?.highlightPattern as FormData["highlightPattern"]) || null,
+    highlightBorder: (fd?.highlightBorder as FormData["highlightBorder"]) || null,
     price: Number(formData?.price) || 0,
     discountPrice: Number(fd?.discountPrice) || 0,
     dividedIn: fd?.dividedIn || null,
@@ -677,6 +680,7 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
       highlightTheme: dataForm.highlightTheme || "",
       highlightLabel: dataForm.highlightLabel || "",
       highlightPattern: dataForm.highlightPattern || "",
+      highlightBorder: dataForm.highlightBorder || "",
     } as unknown as FormData;
 
     if (formData) {

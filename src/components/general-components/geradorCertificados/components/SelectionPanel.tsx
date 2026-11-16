@@ -15,7 +15,16 @@ import {
   Type,
   Group,
   PanelRightClose,
+  AlignStartVertical,
+  AlignCenterVertical,
+  AlignEndVertical,
+  AlignStartHorizontal,
+  AlignCenterHorizontal,
+  AlignEndHorizontal,
+  Layers2,
 } from 'lucide-react';
+
+export type AlignMode = 'left' | 'hcenter' | 'right' | 'top' | 'vcenter' | 'bottom';
 
 export type SelectionKind = 'texto' | 'imagem' | 'forma' | 'dinamico' | 'varios';
 
@@ -55,6 +64,8 @@ interface SelectionPanelProps {
   onBringForward: () => void;
   onSendBackward: () => void;
   onLock: () => void;
+  onAlign: (mode: AlignMode) => void;
+  onSelectBelow: () => void;
   onSetInstructorSlot: (slot: number | null) => void;
   onSetShowIf: (variable: string | null) => void;
   /** Recolhe o painel para ganhar espaço. */
@@ -114,6 +125,8 @@ const SelectionPanel: React.FC<SelectionPanelProps> = ({
   onBringForward,
   onSendBackward,
   onLock,
+  onAlign,
+  onSelectBelow,
   onSetInstructorSlot,
   onSetShowIf,
   onCollapse,
@@ -140,6 +153,8 @@ const SelectionPanel: React.FC<SelectionPanelProps> = ({
           <li><kbd className="rounded border px-1">Shift</kbd> + clique seleciona vários</li>
           <li><kbd className="rounded border px-1">Ctrl</kbd> + <kbd className="rounded border px-1">Z</kbd> desfaz</li>
           <li><kbd className="rounded border px-1">Del</kbd> exclui o selecionado</li>
+          <li><kbd className="rounded border px-1">Alt</kbd> + clique pega o elemento de baixo</li>
+          <li>Botão direito abre mais ações</li>
           <li>Elementos travados ficam na aba Camadas</li>
         </ul>
       </div>
@@ -168,12 +183,24 @@ const SelectionPanel: React.FC<SelectionPanelProps> = ({
             {single && <Action label="Duplicar" icon={Copy} onClick={onDuplicate} />}
             <Action label="Trazer para frente" icon={ArrowUp} onClick={onBringForward} />
             <Action label="Enviar para trás" icon={ArrowDown} onClick={onSendBackward} />
+            {single && <Action label="Selecionar o de baixo (Alt+clique)" icon={Layers2} onClick={onSelectBelow} />}
             <Action label="Travar (destrava na aba Camadas)" icon={Lock} onClick={onLock} />
           </div>
           <Action label="Excluir" icon={Trash2} onClick={onDelete} danger />
         </div>
 
         <div className="flex-1 overflow-y-auto">
+          <div className="flex items-center justify-between gap-1 border-b px-3 py-2">
+            <span className="text-[11px] text-muted-foreground">{single ? 'Na página' : 'Entre si'}</span>
+            <div className="flex">
+              <Action label="Alinhar à esquerda" icon={AlignStartVertical} onClick={() => onAlign('left')} />
+              <Action label="Centralizar na horizontal" icon={AlignCenterVertical} onClick={() => onAlign('hcenter')} />
+              <Action label="Alinhar à direita" icon={AlignEndVertical} onClick={() => onAlign('right')} />
+              <Action label="Alinhar ao topo" icon={AlignStartHorizontal} onClick={() => onAlign('top')} />
+              <Action label="Centralizar na vertical" icon={AlignCenterHorizontal} onClick={() => onAlign('vcenter')} />
+              <Action label="Alinhar à base" icon={AlignEndHorizontal} onClick={() => onAlign('bottom')} />
+            </div>
+          </div>
           {children && <div className="p-3">{children}</div>}
 
           <Section

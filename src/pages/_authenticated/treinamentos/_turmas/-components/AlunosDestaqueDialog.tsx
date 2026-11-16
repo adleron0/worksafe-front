@@ -13,6 +13,10 @@ import {
   DEFAULT_PATTERN,
   HIGHLIGHT_DEFAULT_LABEL,
   HIGHLIGHT_PATTERN_OPTIONS,
+  HIGHLIGHT_BORDER_OPTIONS,
+  DEFAULT_BORDER,
+  borderInfo,
+  type HighlightBorder,
   HIGHLIGHT_THEMES,
   patternInfo,
   themeInfo,
@@ -35,6 +39,7 @@ interface CandidateRow {
   highlightTheme: Theme | null;
   highlightLabel: string | null;
   highlightPattern: HighlightPattern | null;
+  highlightBorder?: HighlightBorder | null;
   trainee?: { id: number; name: string; imageUrl?: string | null } | null;
   examScore: number | null;
   examPassed: boolean | null;
@@ -42,11 +47,11 @@ interface CandidateRow {
 }
 
 interface CandidatesResponse {
-  class: { id: number; name: string; highlightTheme: Theme | null; highlightLabel: string | null; highlightPattern?: HighlightPattern | null };
+  class: { id: number; name: string; highlightTheme: Theme | null; highlightLabel: string | null; highlightPattern?: HighlightPattern | null; highlightBorder?: HighlightBorder | null };
   rows: CandidateRow[];
 }
 
-type Draft = Pick<CandidateRow, "highlightStudent" | "highlightTheme" | "highlightLabel" | "highlightPattern">;
+type Draft = Pick<CandidateRow, "highlightStudent" | "highlightTheme" | "highlightLabel" | "highlightPattern" | "highlightBorder">;
 
 const initials = (name?: string) =>
   (name || "?")
@@ -90,6 +95,7 @@ export default function AlunosDestaqueDialog({
             highlightTheme: r.highlightTheme,
             highlightLabel: r.highlightLabel,
             highlightPattern: r.highlightPattern ?? null,
+            highlightBorder: r.highlightBorder ?? null,
           },
         ]),
       ),
@@ -105,7 +111,8 @@ export default function AlunosDestaqueDialog({
           (d.highlightStudent !== r.highlightStudent ||
             (d.highlightTheme ?? null) !== (r.highlightTheme ?? null) ||
             (d.highlightLabel || null) !== (r.highlightLabel || null) ||
-            (d.highlightPattern ?? null) !== (r.highlightPattern ?? null))
+            (d.highlightPattern ?? null) !== (r.highlightPattern ?? null) ||
+            (d.highlightBorder ?? null) !== (r.highlightBorder ?? null))
         );
       }),
     [data, drafts],
@@ -121,6 +128,7 @@ export default function AlunosDestaqueDialog({
           highlightTheme: d.highlightStudent ? d.highlightTheme || "" : "",
           highlightLabel: d.highlightStudent ? d.highlightLabel || "" : "",
           highlightPattern: d.highlightStudent ? d.highlightPattern || "" : "",
+          highlightBorder: d.highlightStudent ? d.highlightBorder || "" : "",
         } as never);
       }
     },
@@ -241,6 +249,14 @@ export default function AlunosDestaqueDialog({
                           DEFAULT_PATTERN[d.highlightTheme ?? data?.class.highlightTheme ?? "ouro"],
                       )?.name
                     } (padrão)`}
+                    clearable
+                  />
+                  <Select
+                    name={`border-${row.id}`}
+                    options={HIGHLIGHT_BORDER_OPTIONS}
+                    state={d.highlightBorder ?? ""}
+                    onChange={(_, value) => update(row.id, { highlightBorder: (value as HighlightBorder) || null })}
+                    placeholder={`Brilho: ${borderInfo(data?.class.highlightBorder ?? DEFAULT_BORDER)?.name} (padrão)`}
                     clearable
                   />
                   <Input

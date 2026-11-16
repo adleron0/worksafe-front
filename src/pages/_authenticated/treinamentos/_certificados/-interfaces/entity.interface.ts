@@ -10,6 +10,7 @@ export interface ICertificate {
   highlightTheme?: string | null;
   highlightLabel?: string | null;
   highlightPattern?: string | null;
+  highlightBorder?: string | null;
   fabricJsonFront?: any;
   fabricJsonBack?: any;
   variableToReplace?: any;
@@ -37,6 +38,7 @@ export interface ICertificate {
     highlightTheme?: string | null;
     highlightLabel?: string | null;
     highlightPattern?: string | null;
+  highlightBorder?: string | null;
   };
 }
 

@@ -15,10 +15,12 @@ export interface IssuedCertificateSource {
   highlightTheme?: string | null;
   highlightLabel?: string | null;
   highlightPattern?: string | null;
+  highlightBorder?: string | null;
   class?: {
     highlightTheme?: string | null;
     highlightLabel?: string | null;
     highlightPattern?: string | null;
+  highlightBorder?: string | null;
   } | null;
 }
 
@@ -51,6 +53,7 @@ export const IssuedCertificateView: React.FC<{
       version={version}
       highlightTheme={highlight?.theme ?? null}
       highlightPattern={highlight?.pattern ?? null}
+      highlightBorder={highlight?.border ?? null}
       reservedHeight={reservedHeight}
       onError={onError}
       actions={

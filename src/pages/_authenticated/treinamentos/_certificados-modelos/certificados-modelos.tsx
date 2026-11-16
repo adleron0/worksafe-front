@@ -7,6 +7,7 @@ import Pagination from "@/components/general-components/Pagination";
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
 import Dialog from '@/components/general-components/Dialog';
+import ConfirmDialog from '@/components/general-components/ConfirmDialog';
 import GeradorCertificados from '@/components/general-components/geradorCertificados/gerador';
 import ItemSkeleton from "./-skeletons/ItemSkeleton";
 import CertificateItem from "./-components/CertificateItem";
@@ -25,6 +26,14 @@ function CertificadosPage() {
   const [openSearch, setOpenSearch] = useState(false);
   const [openEditor, setOpenEditor] = useState(false);
   const [editingCertificate, setEditingCertificate] = useState<ICertificate | undefined>();
+  // editor com alterações não gravadas: fechar pede confirmação
+  const editorDirty = useRef(false);
+  const [confirmClose, setConfirmClose] = useState(false);
+  const closeEditor = () => {
+    editorDirty.current = false;
+    setOpenEditor(false);
+    setEditingCertificate(undefined);
+  };
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
@@ -186,14 +195,14 @@ function CertificadosPage() {
         }
         open={openEditor}
         onOpenChange={(open) => {
-          if (!open) {
-            setEditingCertificate(undefined);
-          }
-          setOpenEditor(open);
+          if (open) return setOpenEditor(true);
+          if (editorDirty.current) return setConfirmClose(true);
+          closeEditor();
         }}
       >
         <GeradorCertificados 
           editingData={editingCertificate}
+          onDirtyChange={(d) => { editorDirty.current = d; }}
           onClose={() => {
             setOpenEditor(false);
             setEditingCertificate(undefined);
@@ -202,6 +211,14 @@ function CertificadosPage() {
           }}
         />
       </Dialog>
+
+      <ConfirmDialog
+        open={confirmClose}
+        onOpenChange={setConfirmClose}
+        title="Sair sem salvar?"
+        description="Há alterações no modelo que ainda não foram gravadas no sistema. Se sair agora, elas se perdem."
+        onConfirm={closeEditor}
+      />
     </>
   );
 }

@@ -19,6 +19,9 @@ import {
   HIGHLIGHT_PATTERNS,
   HIGHLIGHT_THEMES,
   patternInfo,
+  HIGHLIGHT_BORDERS,
+  DEFAULT_BORDER,
+  borderInfo,
 } from "@/components/general-components/visualizadorCertificados/highlight";
 
 interface StepProps {
@@ -277,6 +280,19 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors }: StepProps) => {
               state={dataForm.highlightPattern ?? ""}
               onChange={(name, value) => handleChange(name, value || null)}
               placeholder={`Padrão do tema (${patternInfo(DEFAULT_PATTERN[dataForm.highlightTheme])?.name})`}
+              clearable
+            />
+          </div>
+        )}
+        {dataForm.highlightTheme && (
+          <div>
+            <Label htmlFor="highlightBorder">Brilho da moldura</Label>
+            <Select
+              name="highlightBorder"
+              options={HIGHLIGHT_BORDERS.map((b) => ({ id: b.id, name: `${b.name} — ${b.description}` }))}
+              state={dataForm.highlightBorder ?? ""}
+              onChange={(name, value) => handleChange(name, value || null)}
+              placeholder={`Padrão (${borderInfo(DEFAULT_BORDER)?.name})`}
               clearable
             />
           </div>

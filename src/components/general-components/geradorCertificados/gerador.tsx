@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { get, del } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Image as ImageIcon, Loader2, Shapes, Frame, Trash2, Type, Layers, Copy, FileText, Braces, Sparkles, PanelLeftClose, PanelRightOpen, MousePointerClick } from 'lucide-react';
+import { Image as ImageIcon, Loader2, Shapes, Frame, Trash2, Type, Layers, Copy, FileText, Braces, Sparkles, PanelLeftClose, PanelRightOpen, MousePointerClick, ArrowUp, ArrowDown, ArrowUpToLine, ArrowDownToLine, AlignCenterHorizontal, AlignCenterVertical, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import * as fabric from 'fabric';
 import {
@@ -28,9 +28,13 @@ import LayersPanel from './components/LayersPanel';
 import PageControls from './components/PageControls';
 import PlaceholderPanel from './components/PlaceholderPanel';
 import SelectionPanel, { EMPTY_SELECTION } from './components/SelectionPanel';
+import type { AlignMode } from './components/SelectionPanel';
+import { selectBelow } from './hooks/useClickThrough';
 import type { SelectionInfo, SelectionKind } from './components/SelectionPanel';
 import { CertificateToolbar } from './components/CertificateToolbar';
 import { CertificateSaveModal } from './components/CertificateSaveModal';
+import VariablesPanel from './components/VariablesPanel';
+import PreviewDialog from './components/PreviewDialog';
 // import TestProxyImage from './components/TestProxyImage'; // Componente de teste do proxy
 
 // Hooks
@@ -69,9 +73,11 @@ interface GeradorCertificadosProps {
     fabricJsonBack: any | null;
   };
   onClose?: () => void;
+  /** Avisa quem abriu o editor se há alterações não gravadas (para confirmar ao fechar). */
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
-const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, onClose }) => {
+const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, onClose, onDirtyChange }) => {
   const imageType = 'certificate';
   const selectedType = 'certificate';
   const [currentPage, setCurrentPage] = useState(0);
@@ -324,6 +330,60 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
   const duplicateSelected = () => {
     const o = liveCanvas?.getActiveObject();
     if (o) handleDuplicateObject(o);
+  };
+  const bringSelectedToFront = () => changeSelected((o) => liveCanvas?.bringObjectToFront(o));
+  const sendSelectedToBack = () =>
+    changeSelected((o) => {
+      if (!liveCanvas) return;
+      // fica logo acima do fundo do certificado, nunca por baixo dele
+      const objs = liveCanvas.getObjects();
+      const floor = objs.filter(isBackground).reduce((max, b) => Math.max(max, objs.indexOf(b)), -1);
+      liveCanvas.moveObjectTo(o, floor + 1);
+    });
+  const selectBelowSelected = () => {
+    if (liveCanvas && !selectBelow(liveCanvas)) toast.info('Não há outro elemento embaixo deste.');
+  };
+  /**
+   * Alinha: um elemento → em relação à página; vários → entre si (pela caixa
+   * que envolve a seleção).
+   */
+  const alignSelected = (mode: AlignMode) => {
+    if (!liveCanvas) return;
+    const objs = liveCanvas.getActiveObjects();
+    if (!objs.length) return;
+    const z = liveCanvas.getZoom() || 1;
+    liveCanvas.discardActiveObject();
+    const boxes = objs.map((o) => {
+      o.setCoords();
+      return o.getBoundingRect();
+    });
+    const ref =
+      objs.length === 1
+        ? { left: 0, top: 0, right: liveCanvas.getWidth() / z, bottom: liveCanvas.getHeight() / z }
+        : {
+            left: Math.min(...boxes.map((b) => b.left)),
+            top: Math.min(...boxes.map((b) => b.top)),
+            right: Math.max(...boxes.map((b) => b.left + b.width)),
+            bottom: Math.max(...boxes.map((b) => b.top + b.height)),
+          };
+    objs.forEach((o, i) => {
+      const b = boxes[i];
+      let dx = 0;
+      let dy = 0;
+      if (mode === 'left') dx = ref.left - b.left;
+      if (mode === 'hcenter') dx = (ref.left + ref.right) / 2 - (b.left + b.width / 2);
+      if (mode === 'right') dx = ref.right - (b.left + b.width);
+      if (mode === 'top') dy = ref.top - b.top;
+      if (mode === 'vcenter') dy = (ref.top + ref.bottom) / 2 - (b.top + b.height / 2);
+      if (mode === 'bottom') dy = ref.bottom - (b.top + b.height);
+      o.set({ left: (o.left || 0) + dx, top: (o.top || 0) + dy });
+      o.setCoords();
+      liveCanvas.fire('object:modified', { target: o } as never);
+    });
+    if (objs.length > 1) liveCanvas.setActiveObject(new fabric.ActiveSelection(objs, { canvas: liveCanvas }));
+    else liveCanvas.setActiveObject(objs[0]);
+    liveCanvas.requestRenderAll();
+    syncSelection();
   };
 
   // Atalhos de teclado para Undo/Redo (Ctrl+Z / Ctrl+Shift+Z)
@@ -665,6 +725,13 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
 
   const handleContextMenu = useCallback((e: MouseEvent, target: fabric.Object | null) => {
     if (target) {
+      // as ações do menu valem para a seleção: o alvo passa a ser o selecionado
+      // (a não ser que já faça parte de uma seleção de vários)
+      const c = target.canvas as fabric.Canvas | undefined;
+      if (c && !c.getActiveObjects().includes(target)) {
+        c.setActiveObject(target);
+        c.requestRenderAll();
+      }
       setContextMenu({
         x: e.clientX,
         y: e.clientY,
@@ -678,68 +745,23 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
 
   const getContextMenuItems = () => {
     if (!contextMenu.target) return { title: '', items: [] };
-    
     const target = contextMenu.target as fabric.Object & { name?: string; constructor: { name: string } };
     const isImage = target.constructor.name === 'FabricImage' || target.type === 'image';
-    
-    if (isImage) {
-      return {
-        title: 'Ações Rápidas - Imagem',
-        items: [
-          {
-            icon: Copy,
-            label: 'Duplicar',
-            action: () => handleDuplicateObject(contextMenu.target!),
-          },
-          {
-            icon: Frame,
-            label: 'Aplicar como fundo',
-            action: () => handleApplyAsBackground(contextMenu.target!),
-          },
-          {
-            icon: Trash2,
-            label: 'Excluir do canvas',
-            action: () => handleDeleteFromCanvas(contextMenu.target!),
-          },
-        ]
-      };
-    }
-    
-    const targetName = target.name || target.type || '';
-    const isShape = ['rectangle', 'circle', 'triangle', 'line', 'rect'].includes(targetName);
-    if (isShape) {
-      return {
-        title: 'Ações Rápidas - Forma',
-        items: [
-          {
-            icon: Copy,
-            label: 'Duplicar',
-            action: () => handleDuplicateObject(contextMenu.target!),
-          },
-          {
-            icon: Trash2,
-            label: 'Excluir do canvas',
-            action: () => handleDeleteFromCanvas(contextMenu.target!),
-          }
-        ]
-      };
-    }
-    
-    return {
-      title: 'Ações Rápidas',
-      items: [
-        {
-          icon: Copy,
-          label: 'Duplicar',
-          action: () => handleDuplicateObject(contextMenu.target!),
-        },
-        {
-          icon: Trash2,
-          label: 'Excluir',
-          action: () => handleDeleteFromCanvas(contextMenu.target!),
-        }
-      ]
-    };
+    const many = (liveCanvas?.getActiveObjects().length ?? 0) > 1;
+    const items = [
+      ...(many ? [] : [{ icon: Copy, label: 'Duplicar', hint: 'Ctrl+D', action: duplicateSelected }]),
+      { icon: ArrowUp, label: 'Trazer para frente', action: bringSelectedForward, separator: !many },
+      { icon: ArrowDown, label: 'Enviar para trás', action: sendSelectedBackward },
+      { icon: ArrowUpToLine, label: 'Trazer para o topo', action: bringSelectedToFront },
+      { icon: ArrowDownToLine, label: 'Enviar para o fundo', action: sendSelectedToBack },
+      ...(many ? [] : [{ icon: MousePointerClick, label: 'Selecionar o de baixo', hint: 'Alt+clique', action: selectBelowSelected }]),
+      { icon: AlignCenterHorizontal, label: many ? 'Centralizar entre si' : 'Centralizar na página', action: () => alignSelected('hcenter'), separator: true },
+      { icon: AlignCenterVertical, label: many ? 'Alinhar no meio entre si' : 'Centralizar na altura', action: () => alignSelected('vcenter') },
+      ...(isImage && !many ? [{ icon: Frame, label: 'Aplicar como fundo', action: () => handleApplyAsBackground(target), separator: true }] : []),
+      { icon: Lock, label: 'Travar', action: lockSelected, separator: !(isImage && !many) },
+      { icon: Trash2, label: 'Excluir', hint: 'Del', action: deleteSelected, danger: true },
+    ];
+    return { title: many ? `${liveCanvas?.getActiveObjects().length} elementos` : selection.label || 'Elemento', items };
   };
 
   const handleDragStart = (e: React.DragEvent, imageUrl: string, imageName: string) => {
@@ -1002,31 +1024,44 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
     }
   }, [editingData, loadCanvasData, isInitialLoad, getCurrentCanvasRef, fontsLoaded]);
 
-  // Marcar como modificado quando houver mudanças no canvas
-  useEffect(() => {
-    const handleCanvasModified = () => {
-      if (certificateInfo.id && !isInitialLoad) {
-        setCertificateInfo(prev => ({ ...prev, isModified: true }));
-      }
-    };
-
-    // Adicionar listener para mudanças no canvas
-    const canvasRef = getCurrentCanvasRef();
-    if (canvasRef) {
-      const canvas = canvasRef.getCanvas();
-      if (canvas) {
-        canvas.on('object:modified', handleCanvasModified);
-        canvas.on('object:added', handleCanvasModified);
-        canvas.on('object:removed', handleCanvasModified);
-        
-        return () => {
-          canvas.off('object:modified', handleCanvasModified);
-          canvas.off('object:added', handleCanvasModified);
-          canvas.off('object:removed', handleCanvasModified);
-        };
-      }
+  // "Alterações não salvas" = o desenho atual é diferente do que está gravado.
+  // Compara com uma foto tirada ao terminar de carregar (e a cada salvamento),
+  // então eventos do carregamento não contam e desfazer até o original volta a "salvo".
+  const baselineRef = useRef<string | null>(null);
+  const snapshotDesign = useCallback(() => {
+    try {
+      const d = getCanvasData();
+      return d ? JSON.stringify([d.fabricJsonFront, d.fabricJsonBack]) : null;
+    } catch {
+      return null;
     }
-  }, [getCurrentCanvasRef, certificateInfo.id, isInitialLoad]);
+  }, [getCanvasData]);
+  useEffect(() => {
+    if (!certificateInfo.id || isInitialLoad || isLoadingTemplate || baselineRef.current !== null) return;
+    const t = setTimeout(() => {
+      baselineRef.current = snapshotDesign();
+      setCertificateInfo((prev) => ({ ...prev, isModified: false }));
+    }, 800);
+    return () => clearTimeout(t);
+  }, [certificateInfo.id, isInitialLoad, isLoadingTemplate, snapshotDesign]);
+  useEffect(() => {
+    if (!liveCanvas) return;
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const check = () => {
+      if (baselineRef.current === null) return;
+      clearTimeout(t);
+      t = setTimeout(() => {
+        const changed = snapshotDesign() !== baselineRef.current;
+        setCertificateInfo((prev) => (prev.isModified === changed ? prev : { ...prev, isModified: changed }));
+      }, 300);
+    };
+    const events = ['object:modified', 'object:added', 'object:removed', 'text:changed'] as const;
+    events.forEach((e) => liveCanvas.on(e, check));
+    return () => {
+      clearTimeout(t);
+      events.forEach((e) => liveCanvas.off(e, check));
+    };
+  }, [liveCanvas, snapshotDesign]);
 
   // Função para aplicar template
   const handleApplyTemplate = async (template: CertificateTemplate) => {
@@ -1122,6 +1157,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
             isModified: false
           });
           setLastSavedTime(new Date());
+          baselineRef.current = snapshotDesign();
         }
       } else {
         // Criar novo certificado
@@ -1136,6 +1172,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
             isModified: false
           });
           setLastSavedTime(new Date());
+          baselineRef.current = snapshotDesign();
         }
       }
       
@@ -1159,6 +1196,60 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
   };
 
 
+
+  // Salvar: modelo existente grava direto; novo abre o formulário (nome e curso)
+  const quickSave = () => {
+    if (certificateInfo.id && certificateInfo.name && certificateInfo.courseId) {
+      handleSaveCertificate({ name: certificateInfo.name, courseId: certificateInfo.courseId });
+    } else {
+      setShowSaveModal(true);
+    }
+  };
+  const quickSaveRef = useRef(quickSave);
+  quickSaveRef.current = quickSave;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        quickSaveRef.current();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const dirty = !certificateInfo.id ? false : !!certificateInfo.isModified;
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+
+  // Prévia com aluno de exemplo
+  const [previewData, setPreviewData] = useState<ReturnType<typeof getCanvasData> | null>(null);
+  const openPreview = () => {
+    const d = getCanvasData();
+    if (!d) return;
+    setPreviewData(d);
+  };
+
+  // Variável: entra no fim do texto selecionado ou vira um texto novo
+  const insertVariable = (key: string) => {
+    const token = `{{${key}}}`;
+    const active = liveCanvas?.getActiveObject();
+    if (liveCanvas && isTextObject(active)) {
+      const t = active.text || '';
+      active.set('text', t + (t ? ' ' : '') + token);
+      liveCanvas.fire('object:modified', { target: active } as never);
+      liveCanvas.requestRenderAll();
+      syncSelection();
+      toast.success(`${token} adicionada ao texto`);
+    } else {
+      handleAddText(token, {
+        fontFamily: 'Open Sans', fontSize: 18, fontWeight: 'normal', fontStyle: 'normal', underline: false,
+        fill: '#000000', textAlign: 'left', originY: 'center', lineHeight: 1.16, letterSpacing: 0,
+        listType: 'none', listIndent: 0, listItemSpacing: 8, stroke: '', strokeWidth: 0,
+      });
+    }
+  };
 
   const menuData = getContextMenuItems();
 
@@ -1222,7 +1313,10 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
       
       {/* Toolbar */}
       <CertificateToolbar
-        onSaveClick={() => setShowSaveModal(true)}
+        onSaveClick={quickSave}
+        onDetailsClick={() => setShowSaveModal(true)}
+        onPreviewClick={openPreview}
+        savedAt={lastSavedTime}
         certificateInfo={certificateInfo}
         isLoading={createCertificate.isPending || updateCertificate.isPending}
         onUndo={undo}
@@ -1281,13 +1375,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
           </TabsContent>
 
           <TabsContent value="variables" className="mt-0 flex-1 overflow-y-auto p-2.5">
-            <TextPanel
-              sections={['variables']}
-              selectedText={selectedText}
-              onAddText={handleAddText}
-              onUpdateText={handleUpdateText}
-              canvas={liveCanvas}
-            />
+            <VariablesPanel hasTextSelected={selection.kind === 'texto' && selection.count === 1} onInsert={insertVariable} />
           </TabsContent>
 
           <TabsContent value="dynamic" className="mt-0 flex-1 overflow-y-auto p-2.5">
@@ -1464,6 +1552,8 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
           onDelete={deleteSelected}
           onBringForward={bringSelectedForward}
           onSendBackward={sendSelectedBackward}
+          onAlign={alignSelected}
+          onSelectBelow={selectBelowSelected}
           onLock={lockSelected}
           onSetInstructorSlot={setInstructorSlot}
           onSetShowIf={setShowIf}
@@ -1502,6 +1592,13 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         onClose={() => setShowContextMenu(false)}
       />
       
+      <PreviewDialog
+        open={!!previewData}
+        onOpenChange={(o) => !o && setPreviewData(null)}
+        data={previewData}
+        name={certificateInfo.name}
+      />
+
       {/* Save Modal */}
       <CertificateSaveModal
         open={showSaveModal}

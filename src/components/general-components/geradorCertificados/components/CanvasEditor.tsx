@@ -13,6 +13,7 @@ import { useZoomControls } from '../hooks/useZoomControls';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useContextMenuSetup } from '../hooks/useContextMenuSetup';
 import { useTextEditing } from '../hooks/useTextEditing';
+import { useClickThrough } from '../hooks/useClickThrough';
 import './CanvasEditor.css';
 
 export interface CanvasEditorRef {
@@ -89,6 +90,9 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   // Ref para acesso imperativo (useImperativeHandle, addImage, etc.)
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   useEffect(() => { fabricCanvasRef.current = canvas; }, [canvas]);
+
+  // Clique atravessa áreas transparentes de elementos grandes; Alt+clique desce na pilha
+  useClickThrough(canvas);
 
   // 2. Zoom (wheel, pinch, applyZoom)
   const { applyZoom, MIN_ZOOM_PERCENT, MAX_ZOOM_PERCENT } = useZoomControls({

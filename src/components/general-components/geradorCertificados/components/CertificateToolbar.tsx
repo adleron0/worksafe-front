@@ -7,7 +7,8 @@ import {
   AlertCircle,
   Edit,
   Undo2,
-  Redo2
+  Redo2,
+  Eye,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -18,7 +19,10 @@ import {
 } from '@/components/ui/tooltip';
 
 interface CertificateToolbarProps {
+  /** Salvar: modelo existente grava direto; modelo novo abre o formulário (nome e curso). */
   onSaveClick: () => void;
+  /** Abre nome e curso do modelo. */
+  onDetailsClick?: () => void;
   certificateInfo?: {
     id?: number;
     name?: string;
@@ -26,79 +30,78 @@ interface CertificateToolbarProps {
     companyId?: number;
     isModified?: boolean;
   };
+  /** Quando foi gravado no sistema pela última vez (nesta sessão). */
+  savedAt?: Date | null;
   isLoading?: boolean;
   onUndo?: () => void;
   onRedo?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
+  /** Botão de prévia com dados de exemplo. */
+  onPreviewClick?: () => void;
 }
 
 export const CertificateToolbar: React.FC<CertificateToolbarProps> = ({
   onSaveClick,
+  onDetailsClick,
   certificateInfo,
+  savedAt = null,
   isLoading = false,
   onUndo,
   onRedo,
   canUndo = false,
-  canRedo = false
+  canRedo = false,
+  onPreviewClick,
 }) => {
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const isEditMode = !!certificateInfo?.id;
   const hasUnsavedChanges = certificateInfo?.isModified || false;
-
-  // Atualizar última vez salvo quando certificateInfo mudar
+  // reavalia o "há X minutos" de tempos em tempos
+  const [, tick] = useState(0);
   useEffect(() => {
-    if (certificateInfo?.id && !certificateInfo?.isModified) {
-      setLastSaved(new Date());
-    }
-  }, [certificateInfo?.id, certificateInfo?.isModified]);
+    const t = setInterval(() => tick((n) => n + 1), 30000);
+    return () => clearInterval(t);
+  }, []);
 
+  const savedText = () => {
+    if (!savedAt) return 'Salvo no sistema';
+    const diff = Math.floor((Date.now() - savedAt.getTime()) / 1000);
+    if (diff < 60) return 'Salvo no sistema agora';
+    if (diff < 3600) return `Salvo no sistema há ${Math.floor(diff / 60)} min`;
+    return `Salvo no sistema às ${savedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+  };
+
+  /** Uma frase só, sem ambiguidade: gravado no sistema ou não. */
   const getStatusBadge = () => {
     if (isLoading) {
       return (
-        <Badge variant="secondary" className="gap-1">
-          <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" />
-          Processando...
+        <Badge variant="secondary" className="gap-1.5">
+          <div className="h-2 w-2 animate-pulse rounded-full bg-yellow-500" />
+          Salvando…
         </Badge>
       );
     }
-
-    if (!certificateInfo?.id) {
+    if (!isEditMode) {
       return (
-        <Badge variant="outline" className="gap-1">
+        <Badge variant="outline" className="gap-1.5">
           <AlertCircle className="h-3 w-3" />
-          Novo Modelo
+          Modelo novo — ainda não salvo
         </Badge>
       );
     }
-
     if (hasUnsavedChanges) {
       return (
-        <Badge variant="secondary" className="gap-1">
-          <div className="h-2 w-2 rounded-full bg-yellow-500" />
+        <Badge variant="secondary" className="gap-1.5 border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+          <div className="h-2 w-2 rounded-full bg-amber-500" />
           Alterações não salvas
         </Badge>
       );
     }
-
     return (
-      <Badge variant="secondary" className="gap-1 text-green-700 bg-green-50 border-green-200">
+      <Badge variant="secondary" className="gap-1.5 border-green-200 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
         <Check className="h-3 w-3" />
-        Salvo
+        {savedText()}
       </Badge>
     );
-  };
-
-  const getLastSavedText = () => {
-    if (!lastSaved || !certificateInfo?.id) return null;
-
-    const now = new Date();
-    const diff = Math.floor((now.getTime() - lastSaved.getTime()) / 1000);
-
-    if (diff < 60) return 'Salvo há alguns segundos';
-    if (diff < 3600) return `Salvo há ${Math.floor(diff / 60)} minutos`;
-    if (diff < 86400) return `Salvo há ${Math.floor(diff / 3600)} horas`;
-    return `Salvo em ${lastSaved.toLocaleDateString()}`;
   };
 
   return (
@@ -109,16 +112,16 @@ export const CertificateToolbar: React.FC<CertificateToolbarProps> = ({
           {getStatusBadge()}
           
           {certificateInfo?.name && (
-            <>
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium">{certificateInfo.name}</span>
-              </div>
-            </>
-          )}
-
-          {lastSaved && certificateInfo?.id && !hasUnsavedChanges && (
-            <span className="text-xs text-gray-500">{getLastSavedText()}</span>
+            <button
+              type="button"
+              onClick={onDetailsClick}
+              className="flex items-center gap-2 rounded-md px-1.5 py-0.5 hover:bg-muted"
+              aria-label="Nome e curso do modelo"
+            >
+              <FileText className="h-4 w-4 text-gray-500" />
+              <span className="text-sm font-medium">{certificateInfo.name}</span>
+              {onDetailsClick && <Edit className="h-3 w-3 text-muted-foreground" />}
+            </button>
           )}
         </div>
       </div>
@@ -163,31 +166,28 @@ export const CertificateToolbar: React.FC<CertificateToolbarProps> = ({
 
         <div className="w-px h-6 bg-border" />
 
+        {onPreviewClick && (
+          <Button variant="outline" size="sm" onClick={onPreviewClick}>
+            <Eye className="mr-2 h-4 w-4" />
+            Prévia
+          </Button>
+        )}
+
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant={hasUnsavedChanges ? "default" : "outline"}
+                variant={!isEditMode || hasUnsavedChanges ? 'default' : 'outline'}
                 size="sm"
                 onClick={onSaveClick}
                 disabled={isLoading}
-                className={hasUnsavedChanges ? "animate-pulse" : ""}
               >
-                {isEditMode ? (
-                  <>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Atualizar
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Salvar
-                  </>
-                )}
+                <Save className="mr-2 h-4 w-4" />
+                Salvar
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{isEditMode ? 'Atualizar modelo existente' : 'Salvar como novo modelo'}</p>
+              <p>{isEditMode ? 'Grava no sistema (Ctrl+S)' : 'Dar nome e escolher o curso, e gravar (Ctrl+S)'}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

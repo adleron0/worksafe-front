@@ -59,6 +59,8 @@ export interface CertificateHighlight {
   theme: HighlightTheme;
   label: string;
   pattern: FoilPattern;
+  /** Brilho da moldura (o PNG da API já vem com ele; aqui só ajusta a animação). */
+  border: HighlightBorder;
 }
 
 interface HighlightSource {
@@ -66,10 +68,12 @@ interface HighlightSource {
   highlightTheme?: string | null;
   highlightLabel?: string | null;
   highlightPattern?: string | null;
+  highlightBorder?: string | null;
   class?: {
     highlightTheme?: string | null;
     highlightLabel?: string | null;
     highlightPattern?: string | null;
+    highlightBorder?: string | null;
   } | null;
 }
 
@@ -77,6 +81,8 @@ const asTheme = (value?: string | null): HighlightTheme | null =>
   themeInfo(value)?.id ?? null;
 const asPattern = (value?: string | null): FoilPattern | null =>
   HIGHLIGHT_PATTERNS.some((p) => p.id === value) ? (value as FoilPattern) : null;
+const asBorder = (value?: string | null): HighlightBorder | null =>
+  HIGHLIGHT_BORDERS.some((b) => b.id === value) ? (value as HighlightBorder) : null;
 
 export function resolveHighlight(cert?: HighlightSource | null): CertificateHighlight | null {
   if (!cert) return null;
@@ -87,6 +93,7 @@ export function resolveHighlight(cert?: HighlightSource | null): CertificateHigh
       theme,
       label: cert.highlightLabel?.trim() || HIGHLIGHT_DEFAULT_LABEL.aluno,
       pattern: asPattern(cert.highlightPattern) ?? asPattern(cert.class?.highlightPattern) ?? DEFAULT_PATTERN[theme],
+      border: asBorder(cert.highlightBorder) ?? asBorder(cert.class?.highlightBorder) ?? DEFAULT_BORDER,
     };
   }
   const classTheme = asTheme(cert.class?.highlightTheme);
@@ -96,6 +103,7 @@ export function resolveHighlight(cert?: HighlightSource | null): CertificateHigh
       theme: classTheme,
       label: cert.class?.highlightLabel?.trim() || HIGHLIGHT_DEFAULT_LABEL.turma,
       pattern: asPattern(cert.class?.highlightPattern) ?? DEFAULT_PATTERN[classTheme],
+      border: asBorder(cert.class?.highlightBorder) ?? DEFAULT_BORDER,
     };
   }
   return null;
@@ -113,7 +121,7 @@ export function renderVersion(
   const h = resolveHighlight(cert);
   if (!h || !cert.updatedAt) return cert.updatedAt;
   let hash = 0;
-  for (const ch of `${h.kind}|${h.theme}|${h.label}|${h.pattern}|selo6`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
+  for (const ch of `${h.kind}|${h.theme}|${h.label}|${h.pattern}|${h.border}|selo7`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
   return `${new Date(cert.updatedAt).getTime()}-${h.theme}-${(hash >>> 0).toString(36)}`;
 }
 
@@ -166,15 +174,47 @@ const PATTERN_TUNE: Record<FoilPattern, { intensity: number; scale: number }> = 
   nenhum: { intensity: 0, scale: 1 },
 };
 
+// ── Brilho da moldura (igual à API: render/highlight-border.ts) ────────────
+export type HighlightBorder = "corda" | "reflexo" | "glitter" | "cristais" | "nenhum";
+
+export const HIGHLIGHT_BORDERS: { id: HighlightBorder; name: string; description: string }[] = [
+  { id: "corda", name: "Corda", description: "Tinge a corda e trança fios de luz nela (padrão)" },
+  { id: "reflexo", name: "Reflexo", description: "Corda tingida com faixas de luz suaves" },
+  { id: "glitter", name: "Glitter", description: "Quadradinhos de brilho na borda" },
+  { id: "cristais", name: "Cristais", description: "Losangos facetados, como vidro lapidado" },
+  { id: "nenhum", name: "Sem brilho", description: "Só a moldura do modelo" },
+];
+
+export const DEFAULT_BORDER: HighlightBorder = "corda";
+
+export const borderInfo = (id?: string | null) =>
+  HIGHLIGHT_BORDERS.find((b) => b.id === id) ?? null;
+
+/** Opções de brilho da moldura para os selects do admin. */
+export const HIGHLIGHT_BORDER_OPTIONS = HIGHLIGHT_BORDERS.map((b) => ({ id: b.id, name: `${b.name} — ${b.description}` }));
+
+/** Quanto da cintilação animada vai na borda, por estilo (o desenho fixo vem no PNG). */
+const BORDER_EDGE: Record<HighlightBorder, number> = {
+  corda: 0.5,
+  reflexo: 0.3,
+  glitter: 0.8,
+  cristais: 0.5,
+  nenhum: 0,
+};
+
 export const patternInfo = (id?: string | null) =>
   HIGHLIGHT_PATTERNS.find((p) => p.id === id) ?? null;
 
-export function buildFoilSettings(theme: HighlightTheme, pattern: FoilPattern): FoilSettings {
+export function buildFoilSettings(
+  theme: HighlightTheme,
+  pattern: FoilPattern,
+  border: HighlightBorder = DEFAULT_BORDER,
+): FoilSettings {
   return {
     pattern,
     ...THEME_FOIL[theme],
     ...PATTERN_TUNE[pattern],
-    edge: 0.8,
+    edge: BORDER_EDGE[border] ?? 0.8,
     frame: 0.035,
   };
 }

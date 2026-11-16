@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import HeaderRow from "@/components/general-components/HeaderRow";
-import PermissionsForm from "./UserFormPermissions";
+import { Link } from "@tanstack/react-router";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
@@ -247,8 +247,13 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
                   )
                 }
 
-                { can('update_profile') && (
-                    <PermissionsForm user={user} />
+                { can('list_profile') && (
+                    <Button asChild variant="ghost" className="flex justify-start gap-2 p-2 items-baseline w-full h-fit">
+                      <Link to="/usuarios/$userId/permissoes" params={{ userId: String(user.id) }}>
+                        <Icon name="lock-keyhole-open" className="w-3 h-3" />
+                        <p>Permissões</p>
+                      </Link>
+                    </Button>
                   )
                 }
                 

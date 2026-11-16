@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import HeaderRow from "@/components/general-components/HeaderRow";
-import PermissionsForm from "./ProfileFormPermissions";
+import { Link } from "@tanstack/react-router";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -170,8 +170,13 @@ const ProfileItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPro
                 )
               }
 
-              { can(`update_${entity.ability}`) && (
-                  <PermissionsForm profile={item} />
+              { can(`list_${entity.ability}`) && (
+                  <Button asChild variant="ghost" className="flex justify-start gap-2 p-2 items-baseline w-full h-fit">
+                    <Link to="/usuarios/perfis/$profileId/permissoes" params={{ profileId: String(item.id) }}>
+                      <Icon name="lock-keyhole-open" className="w-3 h-3" />
+                      <p>Permissões</p>
+                    </Link>
+                  </Button>
                 )
               }
               

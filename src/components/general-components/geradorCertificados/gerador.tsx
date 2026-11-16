@@ -832,8 +832,9 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
                   // Verificar charSpacing - o problema dos espaços entre letras
                   const currentCharSpacing = (obj as any).charSpacing || 0;
 
-                  // Se charSpacing estiver muito alto, resetar para 0
-                  if (currentCharSpacing !== 0) {
+                  // Só zera valores absurdos (modelos antigos); espaçamento de
+                  // design (ex.: "AUTENTICIDADE" com 180) é mantido
+                  if (Math.abs(currentCharSpacing) > 600) {
                     (obj as any).charSpacing = 0;
                     obj.set('charSpacing' as keyof fabric.Textbox, 0 as any);
                   }

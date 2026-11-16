@@ -216,6 +216,8 @@ export interface RenderOptions {
   area: PixelArea;
   /** Rotação em graus, múltiplo de 90. */
   rotation: number;
+  /** Espelhamento, aplicado antes da rotação (como no recorte). */
+  flip?: { horizontal: boolean; vertical: boolean };
   preset: ImagePreset;
   trim: boolean;
   /** O fundo foi removido: força PNG. */
@@ -224,17 +226,18 @@ export interface RenderOptions {
 }
 
 /** Gera o arquivo final a partir da área escolhida no recorte. */
-export async function renderCrop({ src, area, rotation, preset, trim, transparent, source }: RenderOptions): Promise<File> {
+export async function renderCrop({ src, area, rotation, flip, preset, trim, transparent, source }: RenderOptions): Promise<File> {
   const img = await loadImage(src);
   const rot = ((rotation % 360) + 360) % 360;
   const swap = rot === 90 || rot === 270;
   const w = img.naturalWidth;
   const h = img.naturalHeight;
 
-  // 1. Imagem girada inteira (a área do react-easy-crop é relativa a ela).
+  // 1. Imagem espelhada e girada inteira (a área do react-easy-crop é relativa a ela).
   const rotated = makeCanvas(swap ? h : w, swap ? w : h);
   rotated.ctx.translate(rotated.canvas.width / 2, rotated.canvas.height / 2);
   rotated.ctx.rotate((rot * Math.PI) / 180);
+  rotated.ctx.scale(flip?.horizontal ? -1 : 1, flip?.vertical ? -1 : 1);
   rotated.ctx.drawImage(img, -w / 2, -h / 2);
 
   // 2. Recorte.

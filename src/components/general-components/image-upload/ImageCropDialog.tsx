@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Cropper, { type Area } from "react-easy-crop";
-import { Loader2, RotateCcw, RotateCw, ZoomIn, ZoomOut, Crosshair } from "lucide-react";
+import { Loader2, RotateCcw, RotateCw, ZoomIn, ZoomOut, Crosshair, FlipHorizontal2, FlipVertical2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -38,16 +38,26 @@ const CHECKER: React.CSSProperties = {
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 5;
 
-function IconAction({ label, onClick, children, disabled }: {
+function IconAction({ label, onClick, children, disabled, active }: {
   label: string;
   onClick: () => void;
   children: React.ReactNode;
   disabled?: boolean;
+  /** Liga/desliga (espelhar): destaca quando ligado. */
+  active?: boolean;
 }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button type="button" variant="outline" size="icon" onClick={onClick} disabled={disabled} aria-label={label}>
+        <Button
+          type="button"
+          variant={active ? "default" : "outline"}
+          size="icon"
+          onClick={onClick}
+          disabled={disabled}
+          aria-label={label}
+          aria-pressed={active}
+        >
           {children}
         </Button>
       </TooltipTrigger>
@@ -60,6 +70,7 @@ export function ImageCropDialog({ open, image, preset, onCancel, onConfirm }: Im
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const [flip, setFlip] = useState({ horizontal: false, vertical: false });
   const [aspectIndex, setAspectIndex] = useState(0);
   const [area, setArea] = useState<Area | null>(null);
   const [trim, setTrim] = useState(!!preset.trim);
@@ -77,6 +88,7 @@ export function ImageCropDialog({ open, image, preset, onCancel, onConfirm }: Im
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setRotation(0);
+    setFlip({ horizontal: false, vertical: false });
     setAspectIndex(0);
     setTrim(!!preset.trim);
     setBgRemoved(!!preset.removeBackgroundDefault);
@@ -146,6 +158,7 @@ export function ImageCropDialog({ open, image, preset, onCancel, onConfirm }: Im
         src: processedUrl ?? image.url,
         area,
         rotation,
+        flip,
         preset,
         trim,
         transparent: !!processedUrl,
@@ -185,6 +198,13 @@ export function ImageCropDialog({ open, image, preset, onCancel, onConfirm }: Im
               crop={crop}
               zoom={zoom}
               rotation={rotation}
+              transform={[
+                `translate(${crop.x}px, ${crop.y}px)`,
+                `rotateZ(${rotation}deg)`,
+                `rotateY(${flip.horizontal ? 180 : 0}deg)`,
+                `rotateX(${flip.vertical ? 180 : 0}deg)`,
+                `scale(${zoom})`,
+              ].join(" ")}
               aspect={aspect}
               minZoom={MIN_ZOOM}
               maxZoom={MAX_ZOOM}
@@ -228,32 +248,50 @@ export function ImageCropDialog({ open, image, preset, onCancel, onConfirm }: Im
           </div>
         )}
 
-        <div className="flex items-center gap-2">
-          <IconAction label="Diminuir zoom" onClick={() => setZoom((z) => Math.max(MIN_ZOOM, z - 0.25))}>
-            <ZoomOut className="h-4 w-4" />
-          </IconAction>
-          <Slider
-            className="flex-1"
-            min={MIN_ZOOM}
-            max={MAX_ZOOM}
-            step={0.01}
-            value={[zoom]}
-            onValueChange={([z]) => setZoom(z)}
-            aria-label="Zoom"
-          />
-          <IconAction label="Aumentar zoom" onClick={() => setZoom((z) => Math.min(MAX_ZOOM, z + 0.25))}>
-            <ZoomIn className="h-4 w-4" />
-          </IconAction>
-          <div className="mx-1 h-6 w-px bg-border" />
-          <IconAction label="Girar para a esquerda" onClick={() => rotate(-90)}>
-            <RotateCcw className="h-4 w-4" />
-          </IconAction>
-          <IconAction label="Girar para a direita" onClick={() => rotate(90)}>
-            <RotateCw className="h-4 w-4" />
-          </IconAction>
-          <IconAction label="Centralizar" onClick={recenter}>
-            <Crosshair className="h-4 w-4" />
-          </IconAction>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex flex-1 items-center gap-2">
+            <IconAction label="Diminuir zoom" onClick={() => setZoom((z) => Math.max(MIN_ZOOM, z - 0.25))}>
+              <ZoomOut className="h-4 w-4" />
+            </IconAction>
+            <Slider
+              className="flex-1"
+              min={MIN_ZOOM}
+              max={MAX_ZOOM}
+              step={0.01}
+              value={[zoom]}
+              onValueChange={([z]) => setZoom(z)}
+              aria-label="Zoom"
+            />
+            <IconAction label="Aumentar zoom" onClick={() => setZoom((z) => Math.min(MAX_ZOOM, z + 0.25))}>
+              <ZoomIn className="h-4 w-4" />
+            </IconAction>
+          </div>
+          <div className="hidden h-6 w-px bg-border sm:block" />
+          <div className="flex items-center justify-center gap-2">
+            <IconAction label="Girar para a esquerda" onClick={() => rotate(-90)}>
+              <RotateCcw className="h-4 w-4" />
+            </IconAction>
+            <IconAction label="Girar para a direita" onClick={() => rotate(90)}>
+              <RotateCw className="h-4 w-4" />
+            </IconAction>
+            <IconAction
+              label="Espelhar na horizontal"
+              active={flip.horizontal}
+              onClick={() => setFlip((f) => ({ ...f, horizontal: !f.horizontal }))}
+            >
+              <FlipHorizontal2 className="h-4 w-4" />
+            </IconAction>
+            <IconAction
+              label="Espelhar na vertical"
+              active={flip.vertical}
+              onClick={() => setFlip((f) => ({ ...f, vertical: !f.vertical }))}
+            >
+              <FlipVertical2 className="h-4 w-4" />
+            </IconAction>
+            <IconAction label="Centralizar" onClick={recenter}>
+              <Crosshair className="h-4 w-4" />
+            </IconAction>
+          </div>
         </div>
 
         {(preset.removeBackground || preset.trim) && (
@@ -300,7 +338,8 @@ export function ImageCropDialog({ open, image, preset, onCancel, onConfirm }: Im
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 
-        <DialogFooter className="gap-2 sm:gap-2">
+        {/* No celular o rodapé fica preso embaixo, para o Aplicar não sumir sob os controles. */}
+        <DialogFooter className="sticky -bottom-4 z-10 -mx-4 -mb-4 gap-2 border-t bg-background px-4 py-3 sm:static sm:m-0 sm:gap-2 sm:border-0 sm:bg-transparent sm:p-0">
           <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
             Cancelar
           </Button>

@@ -1,130 +1,96 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
-import { Button } from "../../components/ui/button";
-import { useGeneralContext } from "@/context/GeneralContext";
 import Icon from "@/components/general-components/Icon";
-import useVerify from "@/hooks/use-verify";
+import { isDivider, type SidebarSubitem } from "./items";
 
 interface SidebarItemProps {
   title: string;
-  ability?: string;
-  /** Alternativa ao ability: vê quem tem QUALQUER uma destas permissões exatas (ex.: "usar_bots"). */
-  permissions?: string[];
-  isProduct?: string;
-  icon: string; // Changed any to string
+  icon: string;
   path: string;
-  subitems?: { title: string; path: string; icon: string; ability?: string; permissions?: string[] }[]; // Changed any to string
-  className?: string;
+  /** Já filtrados pelas permissões (ver Sidebar). */
+  subitems?: SidebarSubitem[];
   activePath: string | null;
-  setActivePath: (path: string | null) => void;
+  onNavigate: () => void;
 }
 
-const SidebarItem = ({
-  title,
-  ability,
-  permissions,
-  isProduct,
-  icon,
-  path,
-  subitems,
-  className,
-  activePath,
-  setActivePath,
-}: SidebarItemProps) => {
-  const { can, has } = useVerify();
-  const [isOpen, setIsOpen] = useState(false);
-  const { setOpenSidebar } = useGeneralContext();
+const linkBase =
+  "flex items-center rounded-s gap-4 text-muted-foreground ease-in-out duration-100";
+const linkState = (active: boolean) =>
+  active ? "bg-primary text-inverse-foreground!" : "hover:text-inverse-foreground hover:bg-primary";
 
-  const toggleCollapse = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
-    setIsOpen(!isOpen);
-  };
+const SidebarItem = ({ title, icon, path, subitems, activePath, onNavigate }: SidebarItemProps) => {
+  const links = subitems?.filter((s) => !isDivider(s)) as { path: string }[] | undefined;
+  const containsActive = !!links?.some((s) => s.path === activePath);
+  const [isOpen, setIsOpen] = useState(containsActive);
 
-  const handleItemClick = (path: string, hasSubItems?: boolean) => {
-    setActivePath(null);
-    setActivePath(path);
-    if (hasSubItems) return;
-    setOpenSidebar(false);
-  };
+  // Ao entrar numa tela deste menu (por link, voltar ou endereço), ele abre sozinho.
+  useEffect(() => {
+    if (containsActive) setIsOpen(true);
+  }, [containsActive]);
 
-  const isActive = (path: string) => path === activePath;
-  
-  let canView: boolean = true;
-  canView = isProduct ? has(isProduct) : canView;
-  canView = ability ? can(`view_${ability}`) : canView;
-  canView = permissions ? permissions.some((permission) => can(permission)) : canView;
-  if (!canView) return;
+  if (!subitems) {
+    return (
+      <Link
+        to={path}
+        className={`${linkBase} w-full text-base my-1 px-2.5 py-2 ${linkState(path === activePath)}`}
+        onClick={onNavigate}
+      >
+        <Icon name={icon} className="h-4 w-4" />
+        {title}
+      </Link>
+    );
+  }
+
+  if (subitems.length === 0) return null;
 
   return (
     <div>
-        <>
-          {
-            !subitems ?
-            <Link
-              to={path}
-              className={`${className} w-full flex text-base items-center rounded-s gap-4 my-1 px-2.5 py-2 text-muted-foreground ease-in-out duration-100 
-              ${isActive(path) ? "bg-primary text-inverse-foreground!" : "hover:text-inverse-foreground hover:bg-primary"}`}
-              onClick={() => {
-                handleItemClick(path);
-              }}
-            >
-              <Icon name={icon} className="h-4 w-4" />
-              {title}
-            </Link> :
-            <div
-              className={`${className} w-full cursor-pointer flex text-base items-center rounded-s gap-4 my-1 px-2.5 py-2 text-muted-foreground ease-in-out duration-100 
-              ${isActive(path) ? "hover:text-inverse-foreground hover:bg-primary" : "hover:text-inverse-foreground hover:bg-primary"}`}
-              onClick={() => {
-                const hasSubItems = subitems && subitems?.length > 0;
-                handleItemClick(path, hasSubItems);
-                setIsOpen(!isOpen);
-              }}
-            >
-              <Icon name={icon} className="h-4 w-4" />
-              {title}
-              {subitems && subitems?.length > 0 &&
-                <Button
-                  variant="ghost"
-                  size="mini"
-                  className="ml-auto aspect-square rounded bg-muted hover:bg-background"
-                  onClick={toggleCollapse}
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        className={`${linkBase} w-full cursor-pointer text-base my-1 px-2.5 py-2 hover:text-inverse-foreground hover:bg-primary ${
+          containsActive && !isOpen ? "text-primary" : ""
+        }`}
+        onClick={() => setIsOpen((open) => !open)}
+      >
+        <Icon name={icon} className="h-4 w-4" />
+        {title}
+        <span className="ml-auto aspect-square rounded bg-muted p-1">
+          <ChevronRight className={`${isOpen ? "rotate-90" : ""} text-foreground duration-150 ease-linear w-3 h-3`} />
+        </span>
+      </button>
+      {/* grid-rows 0fr→1fr anima a altura real, sem cortar submenus longos */}
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+          isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="flex flex-col pl-8 border-y gap-1 py-1">
+            {subitems.map((item) =>
+              isDivider(item) ? (
+                <p
+                  key={`div-${item.divider}`}
+                  className="px-2.5 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 select-none"
                 >
-                  <ChevronRight className={`${isOpen ? "rotate-90" : ""} text-foreground duration-150 ease-linear w-3 h-3`} />
-                </Button>
-              }
-            </div>
-          }
-          {subitems && (
-            <div
-              className={`transition-[max-height] duration-300 ease-in-out overflow-hidden ${
-                isOpen ? `max-h-80` : "max-h-0"
-              }`}
-            >
-              <div className="flex flex-col pl-8 border-y gap-1 py-1">
-                {subitems.map((item) => {
-                  // Check ability for subitem if it exists
-                  const canViewSubitem = item.permissions ? item.permissions.some((permission) => can(permission)) : item.ability ? can(`view_${item.ability}`) : true;
-                  if (!canViewSubitem) return null; // Don't render if cannot view
-
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                    className={`${className} flex text-sm items-center rounded-s gap-4 px-2.5 py-1 text-muted-foreground ease-in-out duration-100 
-                      ${isActive(item.path) ? "bg-primary text-inverse-foreground!" : "hover:text-inverse-foreground hover:bg-primary"}`}
-                    onClick={() => handleItemClick(item.path)}
-                  >
-                      <Icon name={item.icon} className="h-4 w-4" />
-                      {item.title}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </>
+                  {item.divider}
+                </p>
+              ) : (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`${linkBase} text-sm px-2.5 py-1 ${linkState(item.path === activePath)}`}
+                  onClick={onNavigate}
+                >
+                  <Icon name={item.icon} className="h-4 w-4" />
+                  {item.title}
+                </Link>
+              ),
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

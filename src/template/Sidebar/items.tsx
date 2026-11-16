@@ -1,443 +1,248 @@
 // Cursos Online e Aulas Online saíram do menu: curso online está desligado
 // (ver src/lib/features.ts e archive/curso-online/).
-export const items = [
+
+/** Regras de visibilidade comuns a itens e subitens. */
+export interface SidebarAccess {
+  /** Produto contratado pela empresa (has). */
+  isProduct?: string;
+  /** Vê quem tem `view_<ability>`. */
+  ability?: string;
+  /** Alternativa ao ability: vê quem tem QUALQUER uma destas permissões exatas (ex.: "usar_bots"). */
+  permissions?: string[];
+}
+
+export interface SidebarLink extends SidebarAccess {
+  title: string;
+  icon: string;
+  path: string;
+}
+
+/** Rótulo pequeno que separa partes de um submenu (ex.: "cadastros"). */
+export interface SidebarDivider {
+  divider: string;
+}
+
+export type SidebarSubitem = SidebarLink | SidebarDivider;
+
+export interface SidebarEntry extends SidebarLink {
+  subitems?: SidebarSubitem[];
+}
+
+export interface SidebarGroup {
+  /** Sem rótulo, os itens aparecem soltos no topo (ex.: Home). */
+  label?: string;
+  items: SidebarEntry[];
+}
+
+export const isDivider = (item: SidebarSubitem): item is SidebarDivider => "divider" in item;
+
+export const groups: SidebarGroup[] = [
   {
-    title: "Home",
-    icon: "rocket",
-    path: "/home",
+    items: [{ title: "Home", icon: "rocket", path: "/home" }],
   },
   {
-    title: "Bots",
-    icon: "bot",
-    path: "/bots",
-    permissions: ["usar_bots", "usar_mcp", "update_bots", "view_auditoria_bots"],
-    subitems: [
-      { title: "Equipe", permissions: ["usar_bots"], icon: "users-round", path: "/bots/equipe" },
-      { title: "Conversar", permissions: ["usar_bots"], icon: "messages-square", path: "/bots/conversas" },
-      { title: "Agenda", permissions: ["usar_bots"], icon: "calendar-clock", path: "/bots/agenda" },
-      { title: "Ações pendentes", permissions: ["usar_bots", "usar_mcp"], icon: "shield-alert", path: "/bots/acoes" },
-      { title: "Relatórios", permissions: ["usar_bots"], icon: "file-chart-column", path: "/bots/relatorios" },
-      { title: "Conectar apps de IA", permissions: ["usar_mcp", "update_bots"], icon: "plug", path: "/bots/conexoes" },
-      { title: "Configurar bots", permissions: ["update_bots"], icon: "sliders-horizontal", path: "/bots/configuracao" },
-      { title: "Auditoria e gasto", permissions: ["view_auditoria_bots"], icon: "scroll-text", path: "/bots/auditoria" },
-    ],
-  },
-  {
-    title: "Clientes",
-    icon: "heart-handshake",
-    path: "/clientes",
-    isProduct: "clientes",
-    ability: "clientes",
-  },
-  {
-    title: "Comercial",
-    icon: "briefcase-business",
-    path: "/comercial",
-    isProduct: "comercial",
-    ability: "comercial",
-    subitems: [
+    label: "Vendas",
+    items: [
       {
-        title: "Propostas",
-        ability: "comercial",
-        icon: "file-text",
-        path: "/comercial/propostas",
+        title: "Clientes",
+        icon: "heart-handshake",
+        path: "/clientes",
+        isProduct: "clientes",
+        ability: "clientes",
       },
       {
-        title: "Acompanhamento",
+        title: "Comercial",
+        icon: "briefcase-business",
+        path: "/comercial",
+        isProduct: "comercial",
         ability: "comercial",
-        icon: "calendar-check",
-        path: "/comercial/acompanhamento",
-      },
-      {
-        title: "Vendedores",
-        ability: "comercial",
-        icon: "user-round-check",
-        path: "/comercial/vendedores",
-      },
-      {
-        title: "Cupons",
-        ability: "cupoms",
-        icon: "ticket-percent",
-        path: "/comercial/cupons",
-      },
-      {
-        title: "Identidade e modelos",
-        ability: "comercial",
-        icon: "file-pen-line",
-        path: "/comercial/modelos",
-      },
-      {
-        title: "Base de cálculo",
-        ability: "comercial",
-        icon: "calculator",
-        path: "/comercial/base-calculo",
+        subitems: [
+          { title: "Propostas", ability: "comercial", icon: "file-text", path: "/comercial/propostas" },
+          { title: "Acompanhamento", ability: "comercial", icon: "calendar-check", path: "/comercial/acompanhamento" },
+          { title: "Vendedores", ability: "comercial", icon: "user-round-check", path: "/comercial/vendedores" },
+          { title: "Cupons", ability: "cupoms", icon: "ticket-percent", path: "/comercial/cupons" },
+          { divider: "configuração" },
+          { title: "Identidade e modelos", ability: "comercial", icon: "file-pen-line", path: "/comercial/modelos" },
+          { title: "Base de cálculo", ability: "comercial", icon: "calculator", path: "/comercial/base-calculo" },
+        ],
       },
     ],
   },
   {
-    title: "Operação",
-    icon: "drill",
-    path: "/servicos",
-    isProduct: "servicos",
-    ability: "ordens_de_servico",
-    subitems: [
+    label: "Operação",
+    items: [
       {
-        title: "Ordens de Serviço",
+        title: "Obras e serviços",
+        icon: "drill",
+        path: "/servicos",
+        isProduct: "servicos",
         ability: "ordens_de_servico",
-        icon: "scroll-text",
-        path: "/servicos/ordens-de-servico",
+        subitems: [
+          { title: "Ordens de Serviço", ability: "ordens_de_servico", icon: "scroll-text", path: "/servicos/ordens-de-servico" },
+          { title: "Diário de Obra (RDO)", ability: "ordens_de_servico", icon: "calendar-days", path: "/servicos/diario-de-obra" },
+          { title: "Estatísticas do Diário", ability: "ordens_de_servico", icon: "chart-column", path: "/servicos/estatisticas-do-diario" },
+          { title: "Resultado das Obras", ability: "custos_comercial", icon: "chart-column-big", path: "/servicos/resultado-das-obras" },
+        ],
       },
       {
-        title: "Diário de Obra (RDO)",
-        ability: "ordens_de_servico",
-        icon: "calendar-days",
-        path: "/servicos/diario-de-obra",
-      },
-      {
-        title: "Estatísticas do Diário",
-        ability: "ordens_de_servico",
-        icon: "chart-column",
-        path: "/servicos/estatisticas-do-diario",
-      },
-      {
-        title: "Resultado das Obras",
-        ability: "custos_comercial",
-        icon: "chart-column-big",
-        path: "/servicos/resultado-das-obras",
-      },
-    ],
-  },
-  {
-    title: "Suprimentos",
-    icon: "shopping-cart",
-    path: "/suprimentos",
-    isProduct: "servicos",
-    ability: "pedidos_de_compra",
-    subitems: [
-      {
-        title: "Pedidos de Compra",
+        title: "Suprimentos",
+        icon: "shopping-cart",
+        path: "/suprimentos",
+        isProduct: "servicos",
         ability: "pedidos_de_compra",
-        icon: "clipboard-list",
-        path: "/suprimentos/pedidos-de-compra",
+        subitems: [
+          { title: "Pedidos de Compra", ability: "pedidos_de_compra", icon: "clipboard-list", path: "/suprimentos/pedidos-de-compra" },
+        ],
       },
-    ],
-  },
-  {
-    title: "RH",
-    icon: "id-card",
-    path: "/rh",
-    isProduct: "servicos",
-    ability: "funcionarios",
-    subitems: [
       {
-        title: "Funcionários",
+        title: "RH",
+        icon: "id-card",
+        path: "/rh",
+        isProduct: "servicos",
         ability: "funcionarios",
-        icon: "users-round",
-        path: "/rh/funcionarios",
-      },
-      {
-        title: "Mapa de Alocação",
-        ability: "alocacao",
-        icon: "chart-gantt",
-        path: "/rh/mapa-de-alocacao",
-      },
-      {
-        title: "Locais",
-        ability: "locais",
-        icon: "map-pinned",
-        path: "/rh/locais",
-      },
-      {
-        title: "Vencimentos",
-        ability: "documentos_funcionarios",
-        icon: "calendar-clock",
-        path: "/rh/vencimentos",
-      },
-      {
-        title: "Tipos de Documento",
-        ability: "documentos_funcionarios",
-        icon: "folder-cog",
-        path: "/rh/tipos-de-documento",
+        subitems: [
+          { title: "Funcionários", ability: "funcionarios", icon: "users-round", path: "/rh/funcionarios" },
+          { title: "Mapa de Alocação", ability: "alocacao", icon: "chart-gantt", path: "/rh/mapa-de-alocacao" },
+          { title: "Vencimentos", ability: "documentos_funcionarios", icon: "calendar-clock", path: "/rh/vencimentos" },
+          { divider: "cadastros" },
+          { title: "Locais", ability: "locais", icon: "map-pinned", path: "/rh/locais" },
+          { title: "Tipos de Documento", ability: "documentos_funcionarios", icon: "folder-cog", path: "/rh/tipos-de-documento" },
+        ],
       },
     ],
   },
   {
-    title: "Arquivos",
-    icon: "folder-open",
-    path: "/arquivos",
-    ability: "arquivos",
-    subitems: [
+    label: "Treinamentos",
+    items: [
       {
-        title: "Pastas",
-        ability: "arquivos",
-        icon: "folders",
-        path: "/arquivos/pastas",
-      },
-      {
-        title: "Vencimentos",
-        ability: "arquivos",
-        icon: "calendar-clock",
-        path: "/arquivos/vencimentos",
-      },
-      {
-        title: "Lixeira",
-        ability: "arquivos",
-        icon: "trash-2",
-        path: "/arquivos/lixeira",
-      },
-    ],
-  },
-  {
-    title: "Treinamentos",
-    icon: "hard-hat",
-    path: "/treinamentos",
-    isProduct: "treinamentos",
-    ability: "treinamentos",
-    subitems: [
-      {
-        title: "Cursos",
-        ability: "treinamentos",
-        icon: "square-library",
-        path: "/treinamentos/cursos",
-      },
-      {
-        title: "Turmas",
-        icon: "clipboard-list",
-        path: "/treinamentos/turmas",
-      },
-      {
-        title: "Inscrições",
-        icon: "ticket-check",
-        path: "/treinamentos/inscricoes",
-      },
-      {
-        title: "Instrutores",
-        ability: "instrutores",
-        icon: "contact",
-        path: "/treinamentos/instrutores",
-      },
-      {
-        title: "Alunos",
-        icon: "graduation-cap",
-        path: "/treinamentos/alunos",
-      },
-      {
-        title: "Certificados",
-        icon: "file-badge",
-        path: "/treinamentos/certificados",
-      },
-      {
-        title: "Criar Certificado",
-        icon: "file-pen",
-        path: "/treinamentos/certificados-modelos",
-      },
-      {
-        title: "Divulgação",
-        ability: "divulgacao",
-        icon: "megaphone",
-        path: "/treinamentos/divulgacao",
-      },
-      {
-        title: "Dashboard",
-        icon: "chart-column-big",
+        title: "Treinamentos",
+        icon: "hard-hat",
         path: "/treinamentos",
-      },
-    ],
-  },
-  // {
-  //   title: "Inventarios",
-  //   icon: "vault",
-  //   path: "/inventarios",
-  //   isProduct: "inventarios",
-  //   ability: "inventarios",
-  //   subitems: [
-  //     {
-  //       title: "Áreas",
-  //       icon: "map",
-  //       path: "/inventarios/areas",
-  //     },
-  //     {
-  //       title: "Dashboard",
-  //       icon: "chart-column-big",
-  //       path: "/inventarios/dashboard",
-  //     },
-  //     {
-  //       title: "Acontrole de Acesso",
-  //       icon: "vault",
-  //       path: "/inventarios/access-control",
-  //     },
-  //     {
-  //       title: "Autorizados",
-  //       icon: "Id-card",
-  //       path: "/inventarios/autorizados",
-  //     },
-  //   ],
-  // },
-  // {
-  //   title: "Almoxarifado",
-  //   icon: "warehouse",
-  //   path: "/almox",
-  //   isProduct: "almox",
-  //   ability: "almox",
-  // },
-  {
-    title: "Financeiro",
-    icon: "circle-dollar-sign",
-    path: "/financeiro",
-    isProduct: "financeiro",
-    ability: "financeiro",
-    subitems: [
-      {
-        title: "A Faturar",
-        icon: "receipt",
-        path: "/financeiro/faturar",
-      },
-      {
-        title: "Contas a Receber",
-        icon: "trending-up",
-        path: "/financeiro/receber",
-      },
-      {
-        title: "Contas a Pagar",
-        icon: "trending-down",
-        path: "/financeiro/pagar",
-      },
-      {
-        title: "Recorrentes",
-        icon: "repeat",
-        path: "/financeiro/recorrentes",
-      },
-      {
-        title: "Relatórios",
-        icon: "chart-pie",
-        path: "/financeiro/relatorios",
-      },
-      {
-        title: "Conciliação",
-        icon: "file-check-2",
-        path: "/financeiro/conciliacao",
-      },
-      {
-        title: "Fornecedores",
-        icon: "truck",
-        path: "/financeiro/fornecedores",
-      },
-      {
-        title: "Plano de Contas",
-        icon: "list-tree",
-        path: "/financeiro/plano-contas",
-      },
-      {
-        title: "Centros de Custo",
-        icon: "target",
-        path: "/financeiro/centros-custo",
-      },
-      {
-        title: "Contas Bancárias",
-        icon: "landmark",
-        path: "/financeiro/contas-bancarias",
-      },
-      // {
-      //   title: "Notas Fiscais",
-      //   icon: "receipt",
-      //   path: "/financeiro/notas-fiscais",
-      // },
-    ],
-  },
-  {
-    title: "Site",
-    icon: "globe-lock",
-    path: "/site",
-    ability: "site",
-    subitems: [
-      {
-        title: "Serviços",
-        icon: "wrench",
-        ability: "servicos_site",
-        path: "/site/servicos",
-      },
-      {
-        title: "Produtos",
-        icon: "package",
-        ability: "loja_site",
-        path: "/site/produtos",
-      },
-      {
-        title: "Categorias da Loja",
-        icon: "tags",
-        ability: "loja_site",
-        path: "/site/categorias-loja",
-      },
-      {
-        title: "Marcas",
-        icon: "badge-check",
-        ability: "loja_site",
-        path: "/site/marcas",
+        isProduct: "treinamentos",
+        ability: "treinamentos",
+        subitems: [
+          { title: "Dashboard", icon: "chart-column-big", path: "/treinamentos" },
+          { title: "Turmas", icon: "clipboard-list", path: "/treinamentos/turmas" },
+          { title: "Inscrições", icon: "ticket-check", path: "/treinamentos/inscricoes" },
+          { title: "Alunos", icon: "graduation-cap", path: "/treinamentos/alunos" },
+          { title: "Certificados", icon: "file-badge", path: "/treinamentos/certificados" },
+          { title: "Divulgação", ability: "divulgacao", icon: "megaphone", path: "/treinamentos/divulgacao" },
+          { divider: "cadastros" },
+          { title: "Cursos", ability: "treinamentos", icon: "square-library", path: "/treinamentos/cursos" },
+          { title: "Instrutores", ability: "instrutores", icon: "contact", path: "/treinamentos/instrutores" },
+          { title: "Modelos de certificado", icon: "file-pen", path: "/treinamentos/certificados-modelos" },
+        ],
       },
     ],
   },
   {
-    title: "Blog",
-    icon: "newspaper",
-    path: "/blog",
-    ability: "blog",
-    subitems: [
+    label: "Financeiro",
+    items: [
       {
-        title: "Posts",
-        ability: "blog",
-        icon: "file-text",
-        path: "/blog/posts",
-      },
-      {
-        title: "Categorias",
-        ability: "blog",
-        icon: "folder",
-        path: "/blog/categorias",
-      },
-      {
-        title: "Tags",
-        ability: "blog",
-        icon: "tags",
-        path: "/blog/tags",
-      },
-      {
-        title: "Visitantes",
-        ability: "blog",
-        icon: "users",
-        path: "/blog/visitantes",
-      },
-      {
-        title: "Comentários",
-        ability: "blog",
-        icon: "message-circle",
-        path: "/blog/comentarios",
+        title: "Financeiro",
+        icon: "circle-dollar-sign",
+        path: "/financeiro",
+        isProduct: "financeiro",
+        ability: "financeiro",
+        subitems: [
+          { title: "A Faturar", icon: "receipt", path: "/financeiro/faturar" },
+          { title: "Contas a Receber", icon: "trending-up", path: "/financeiro/receber" },
+          { title: "Contas a Pagar", icon: "trending-down", path: "/financeiro/pagar" },
+          { title: "Recorrentes", icon: "repeat", path: "/financeiro/recorrentes" },
+          { title: "Conciliação", icon: "file-check-2", path: "/financeiro/conciliacao" },
+          { title: "Relatórios", icon: "chart-pie", path: "/financeiro/relatorios" },
+          { divider: "cadastros" },
+          { title: "Fornecedores", icon: "truck", path: "/financeiro/fornecedores" },
+          { title: "Plano de Contas", icon: "list-tree", path: "/financeiro/plano-contas" },
+          { title: "Centros de Custo", icon: "target", path: "/financeiro/centros-custo" },
+          { title: "Contas Bancárias", icon: "landmark", path: "/financeiro/contas-bancarias" },
+          // { title: "Notas Fiscais", icon: "receipt", path: "/financeiro/notas-fiscais" },
+        ],
       },
     ],
   },
   {
-    title: "Integrações",
-    icon: "unplug",
-    path: "/integracoes",
-    ability: "financeiro",
-  },
-  {
-    title: "Equipe",
-    icon: "users",
-    path: "/usuarios",
-    ability: "user",
-    subitems: [
+    label: "Marketing",
+    items: [
       {
-        title: "Usuários",
-        icon: "square-user",
-        ability: "user",
-        path: "/usuarios",
+        title: "Site",
+        icon: "globe-lock",
+        path: "/site",
+        ability: "site",
+        subitems: [
+          { title: "Serviços", icon: "wrench", ability: "servicos_site", path: "/site/servicos" },
+          { title: "Produtos", icon: "package", ability: "loja_site", path: "/site/produtos" },
+          { divider: "cadastros" },
+          { title: "Categorias da Loja", icon: "tags", ability: "loja_site", path: "/site/categorias-loja" },
+          { title: "Marcas", icon: "badge-check", ability: "loja_site", path: "/site/marcas" },
+        ],
       },
       {
-        title: "Perfis",
-        icon: "user-pen",
-        ability: "profile",
-        path: "/usuarios/perfis",
+        title: "Blog",
+        icon: "newspaper",
+        path: "/blog",
+        ability: "blog",
+        subitems: [
+          { title: "Posts", ability: "blog", icon: "file-text", path: "/blog/posts" },
+          { title: "Comentários", ability: "blog", icon: "message-circle", path: "/blog/comentarios" },
+          { title: "Visitantes", ability: "blog", icon: "users", path: "/blog/visitantes" },
+          { divider: "cadastros" },
+          { title: "Categorias", ability: "blog", icon: "folder", path: "/blog/categorias" },
+          { title: "Tags", ability: "blog", icon: "tags", path: "/blog/tags" },
+        ],
+      },
+    ],
+  },
+  {
+    label: "Ferramentas",
+    items: [
+      {
+        title: "Bots",
+        icon: "bot",
+        path: "/bots",
+        permissions: ["usar_bots", "usar_mcp", "update_bots", "view_auditoria_bots"],
+        subitems: [
+          { title: "Equipe", permissions: ["usar_bots"], icon: "users-round", path: "/bots/equipe" },
+          { title: "Conversar", permissions: ["usar_bots"], icon: "messages-square", path: "/bots/conversas" },
+          { title: "Agenda", permissions: ["usar_bots"], icon: "calendar-clock", path: "/bots/agenda" },
+          { title: "Ações pendentes", permissions: ["usar_bots", "usar_mcp"], icon: "shield-alert", path: "/bots/acoes" },
+          { title: "Relatórios", permissions: ["usar_bots"], icon: "file-chart-column", path: "/bots/relatorios" },
+          { divider: "configuração" },
+          { title: "Conectar apps de IA", permissions: ["usar_mcp", "update_bots"], icon: "plug", path: "/bots/conexoes" },
+          { title: "Configurar bots", permissions: ["update_bots"], icon: "sliders-horizontal", path: "/bots/configuracao" },
+          { title: "Auditoria e gasto", permissions: ["view_auditoria_bots"], icon: "scroll-text", path: "/bots/auditoria" },
+        ],
+      },
+      {
+        title: "Arquivos",
+        icon: "folder-open",
+        path: "/arquivos",
+        ability: "arquivos",
+        subitems: [
+          { title: "Pastas", ability: "arquivos", icon: "folders", path: "/arquivos/pastas" },
+          { title: "Vencimentos", ability: "arquivos", icon: "calendar-clock", path: "/arquivos/vencimentos" },
+          { title: "Lixeira", ability: "arquivos", icon: "trash-2", path: "/arquivos/lixeira" },
+        ],
       },
     ],
   },
 ];
+
+/** Fica no rodapé da barra, separado do resto. */
+export const footerGroup: SidebarGroup = {
+  label: "Administração",
+  items: [
+    {
+      title: "Usuários",
+      icon: "users",
+      path: "/usuarios",
+      ability: "user",
+      subitems: [
+        { title: "Usuários", icon: "square-user", ability: "user", path: "/usuarios" },
+        { title: "Perfis", icon: "user-pen", ability: "profile", path: "/usuarios/perfis" },
+      ],
+    },
+    { title: "Integrações", icon: "unplug", path: "/integracoes", ability: "financeiro" },
+    { title: "Empresa", icon: "settings", path: "/empresa" },
+  ],
+};

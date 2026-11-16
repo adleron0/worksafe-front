@@ -84,8 +84,13 @@ export const groups: SidebarGroup[] = [
           { title: "Resultado das Obras", ability: "custos_comercial", icon: "chart-column-big", path: "/servicos/resultado-das-obras" },
         ],
       },
+    ],
+  },
+  {
+    label: "Suprimentos",
+    items: [
       {
-        title: "Suprimentos",
+        title: "Compras",
         icon: "shopping-cart",
         path: "/suprimentos",
         isProduct: "servicos",
@@ -94,8 +99,13 @@ export const groups: SidebarGroup[] = [
           { title: "Pedidos de Compra", ability: "pedidos_de_compra", icon: "clipboard-list", path: "/suprimentos/pedidos-de-compra" },
         ],
       },
+    ],
+  },
+  {
+    label: "RH",
+    items: [
       {
-        title: "RH",
+        title: "Pessoas",
         icon: "id-card",
         path: "/rh",
         isProduct: "servicos",

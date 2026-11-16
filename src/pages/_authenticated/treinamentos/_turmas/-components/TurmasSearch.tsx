@@ -6,12 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import Input from "@/components/general-components/Input";
 import CalendarPicker from "@/components/general-components/Calendar";
-import Select from "@/components/general-components/Select";
 
 interface SearchData {
   name: string;
-  active?: boolean;
-  "or-gte-initialDate"?: string;
+  "gte-initialDate"?: string;
 }
 
 interface SearchFormProps {
@@ -25,8 +23,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
   // Form state
   const [searchData, setSearchData] = useState<SearchData>({
     name: "",
-    active: undefined as boolean | undefined,
-    "or-gte-initialDate": undefined as string | undefined,
+    "gte-initialDate": undefined as string | undefined,
   });
 
   // Load params into form state
@@ -38,12 +35,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
       const value = params[key];
       
       // Type checking for each field
-      if (paramKey === 'active' && (typeof value === 'boolean' || value === undefined)) {
-        newSearchData.active = value as boolean | undefined;
-      } else if (paramKey === 'name' && (typeof value === 'string' || value === undefined)) {
+      if (paramKey === 'name' && (typeof value === 'string' || value === undefined)) {
         newSearchData.name = value as string;
-      } else if (paramKey === 'or-gte-initialDate' && (typeof value === 'string' || value === undefined)) {
-        newSearchData["or-gte-initialDate"] = value as string | undefined;
+      } else if (paramKey === 'gte-initialDate' && (typeof value === 'string' || value === undefined)) {
+        newSearchData["gte-initialDate"] = value as string | undefined;
       }
     });
     
@@ -54,18 +49,12 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
     setSearchData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleStatusChange = (_name: string, value: string | string[]) => {
-    if (typeof value === 'string') {
-      setSearchData(prev => ({ ...prev, active: value === "true" ? true : false }));
-    }
-  };
-
   const handleDateChange = (_name: string, value: string | null) => {
     if (value) {
       // For single date picker, value is an ISO string
-      setSearchData(prev => ({ ...prev, "or-gte-initialDate": value }));
+      setSearchData(prev => ({ ...prev, "gte-initialDate": value }));
     } else {
-      setSearchData(prev => ({ ...prev, "or-gte-initialDate": undefined }));
+      setSearchData(prev => ({ ...prev, "gte-initialDate": undefined }));
     }
   };
 
@@ -79,33 +68,14 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
   const handleClear = () => {
     setSearchData({
       name: "",
-      active: undefined,
-      "or-gte-initialDate": undefined,
+      "gte-initialDate": undefined,
     });
     onClear();
     openSheet(false);
   };
 
-  // Options for selects
-  const statusOptions = [
-    { id: "true", name: "Ativo" },
-    { id: "false", name: "Inativo" }
-  ];
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Status */}
-      <div>
-        <Label htmlFor="active">Status</Label>
-        <Select 
-          name="active"
-          options={statusOptions}
-          state={searchData.active?.toString() || ""}
-          onChange={handleStatusChange}
-          placeholder="Selecione status"
-        />
-      </div>
-
       {/* Nome */}
       <div>
         <Label htmlFor="name">Nome</Label>
@@ -120,11 +90,11 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
 
       {/* Data Inicial */}
       <div>
-        <Label htmlFor="initialDate">A partir de</Label>
+        <Label htmlFor="initialDate">Início a partir de</Label>
         <CalendarPicker
           mode="single"
           name="initialDate"
-          value={searchData["or-gte-initialDate"] || null}
+          value={searchData["gte-initialDate"] || null}
           onValueChange={handleDateChange}
           placeholder="Selecione a data inicial"
           numberOfMonths={1}

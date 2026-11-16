@@ -6,6 +6,7 @@ import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
 import Pagination from "@/components/general-components/Pagination";
 import Dialog from "@/components/general-components/Dialog";
+import QuickFilter from "@/components/general-components/QuickFilter";
 // Template Page list-form
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
@@ -22,6 +23,63 @@ export const Route = createFileRoute('/_authenticated/treinamentos/_turmas/turma
   component: List,
 })
 
+type StatusFilter = 'ativas' | 'inativas' | 'todas';
+type PeriodFilter = 'atuais' | 'andamento' | 'proximas' | 'encerradas' | 'todas';
+
+const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: 'ativas', label: 'Ativas' },
+  { value: 'inativas', label: 'Inativas' },
+  { value: 'todas', label: 'Todas' },
+];
+
+const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
+  { value: 'atuais', label: 'Atuais' },
+  { value: 'andamento', label: 'Em andamento' },
+  { value: 'proximas', label: 'Próximas' },
+  { value: 'encerradas', label: 'Encerradas' },
+  { value: 'todas', label: 'Todas' },
+];
+
+const STATUS_PARAMS: Record<StatusFilter, Record<string, any>> = {
+  ativas: { active: 'true' },
+  inativas: { active: 'false' },
+  todas: {},
+};
+
+/** Dia local (AAAA-MM-DD) deslocado em `offset` dias; toISOString daria o dia em UTC. */
+const localDay = (offset = 0) => {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+/**
+ * Recorte de período. A API trata data sem hora como início do dia em gte e fim
+ * do dia em lte. "Atuais" = ainda não terminou (ou sem fim, começando hoje em
+ * diante) ou turma de período ilimitado (sempre aberta). Os outros recortes só
+ * olham turmas com período definido: as ilimitadas guardam datas antigas que
+ * não valem mais.
+ */
+const periodParams = (period: PeriodFilter): Record<string, any> => {
+  const today = localDay();
+  switch (period) {
+    case 'atuais':
+      return { or: [
+        { 'gte-finalDate': today },
+        { 'null-finalDate': 'true', 'gte-initialDate': today },
+        { periodClass: 'UNLIMITED' },
+      ] };
+    case 'andamento':
+      return { periodClass: 'LIMITED', 'lte-initialDate': today, 'gte-finalDate': today };
+    case 'proximas':
+      return { periodClass: 'LIMITED', 'gte-initialDate': localDay(1) };
+    case 'encerradas':
+      return { periodClass: 'LIMITED', 'lte-finalDate': localDay(-1) };
+    default:
+      return {};
+  }
+};
+
 function List() {
   const { can } = useVerify();
   const navigate = useNavigate();
@@ -29,18 +87,14 @@ function List() {
   const [openInstrutoresModal, setOpenInstrutoresModal] = useState(false);
   const [openSubscriptionsModal, setOpenSubscriptionsModal] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
-  const [searchParams, setSearchParams] = useState({
+  const [searchParams, setSearchParams] = useState<Record<string, any>>({
     limit: 10,
     page: 0,
     'order-name': 'asc',
-    // 'gte-initialDate': new Date().toISOString(), // Data atual
-    // or: [
-    //   { "periodClass": "UNLIMITED" }, 
-    //   { "gte-initialDate": new Date().toISOString() }
-    // ],
-    'or-gte-initialDate': new Date().toISOString().split('T')[0], // Data atual no formato YYYY-MM-DD
-    'or-periodClass': 'UNLIMITED',
   });
+  // Por padrão: só as ativas e as do período atual (em andamento, próximas ou sem período)
+  const [status, setStatus] = useState<StatusFilter>('ativas');
+  const [period, setPeriod] = useState<PeriodFilter>('atuais');
   const initialFormRef = useRef(searchParams);
 
   // Define variáveis de entidade
@@ -62,12 +116,12 @@ function List() {
     isError, 
     error, 
   } = useQuery<Response | undefined, ApiError>({
-    queryKey: [`list${entity.pluralName}`, searchParams],
+    queryKey: [`list${entity.pluralName}`, searchParams, status, period],
     queryFn: async () => {
-      const params = Object.keys(searchParams).map((key) => ({
-        key,
-        value: searchParams[key as keyof typeof searchParams]
-      }));
+      // campo vazio da busca avançada não pode apagar o recorte dos filtros rápidos
+      const filled = Object.fromEntries(Object.entries(searchParams).filter(([, v]) => v !== undefined && v !== null && v !== ''));
+      const merged: Record<string, any> = { ...STATUS_PARAMS[status], ...periodParams(period), ...filled };
+      const params = Object.keys(merged).map((key) => ({ key, value: merged[key] }));
       return get(entity.model, '', params);
     },
   });
@@ -81,6 +135,18 @@ function List() {
 
   const handleClear = () => {
     setSearchParams(initialFormRef.current);
+    setStatus('ativas');
+    setPeriod('atuais');
+  };
+
+  const changeStatus = (value: StatusFilter) => {
+    setStatus(value);
+    setSearchParams((prev) => ({ ...prev, page: 0 }));
+  };
+
+  const changePeriod = (value: PeriodFilter) => {
+    setPeriod(value);
+    setSearchParams((prev) => ({ ...prev, page: 0 }));
   };
   
   const handleLimitChange = (name: string, value: string | number) => {
@@ -125,6 +191,12 @@ function List() {
         side="left"
         form={ <SearchForm onSubmit={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
       />
+
+      {/* Filtros rápidos */}
+      <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+        <QuickFilter label="Status" options={STATUS_OPTIONS} value={status} onChange={changeStatus} />
+        <QuickFilter label="Período" options={PERIOD_OPTIONS} value={period} onChange={changePeriod} />
+      </div>
 
       {/* Listagem de items */}
       <div className="space-y-2 mt-4">

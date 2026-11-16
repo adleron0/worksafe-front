@@ -129,6 +129,11 @@ const Schema = z
     city: z.string().optional().nullable(),
     state: z.string().optional().nullable(),
     zipCode: z.string().optional().nullable(),
+    // Página de inscrição (conteúdo editável, layout e teste A/B)
+    landingContent: z.any().optional().nullable(),
+    landingLayout: z.string().optional().nullable(),
+    landingAbTest: z.boolean().optional(),
+    landingAbLayouts: z.array(z.string()).optional(),
   })
   .refine(
     (data) => {

@@ -39,6 +39,9 @@ import Step4Payment from "./steps/Step4Payment";
 import Step5Content from "./steps/Step5Content";
 import Step6Media from "./steps/Step6Media";
 import Step7Evaluation from "./steps/Step7Evaluation";
+import Step8Page from "./steps/Step8Page";
+import PaginaResultados from "./pagina/PaginaResultados";
+import { compactLandingContent, parseLandingContent } from "./pagina/landing";
 import DuplicateTurmaModal from "./DuplicateTurmaModal";
 
 import { IEntity } from "../-interfaces/entity.interface";
@@ -146,6 +149,11 @@ const Schema = z
     city: z.string().optional().nullable(),
     state: z.string().optional().nullable(),
     zipCode: z.string().optional().nullable(),
+    // Página de inscrição (conteúdo editável, layout e teste A/B)
+    landingContent: z.any().optional().nullable(),
+    landingLayout: z.string().optional().nullable(),
+    landingAbTest: z.boolean().optional(),
+    landingAbLayouts: z.array(z.string()).optional(),
   })
   .refine(
     (data) => {
@@ -359,7 +367,9 @@ const TABS = [
   { slug: "pagamento", label: "Pagamento" },
   { slug: "conteudo", label: "Conteúdo" },
   { slug: "midia", label: "Mídia" },
+  { slug: "pagina", label: "Página" },
   { slug: "avaliacao", label: "Avaliação" },
+  { slug: "resultados", label: "Resultados" },
 ] as const;
 
 type TabSlug = (typeof TABS)[number]["slug"];
@@ -429,6 +439,10 @@ function buildDefaults(formData?: IEntity): FormData {
       "pix",
     ],
     image: formData?.image || null,
+    landingContent: parseLandingContent(formData?.landingContent),
+    landingLayout: formData?.landingLayout || "classico",
+    landingAbTest: !!formData?.landingAbTest,
+    landingAbLayouts: Array.isArray(formData?.landingAbLayouts) ? formData.landingAbLayouts : [],
     whyUs:
       fd?.whyUs ||
       JSON.stringify({
@@ -489,7 +503,9 @@ function computeTabErrors(
     pagamento: false,
     conteudo: false,
     midia: false,
+    pagina: false,
     avaliacao: false,
+    resultados: false,
   };
 
   // basico
@@ -563,6 +579,8 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
   const [openDuplicateModal, setOpenDuplicateModal] = useState(false);
 
   const tabErrors = computeTabErrors(dataForm);
+  // Resultados só existe para turma salva
+  const visibleTabs = formData ? TABS : TABS.filter((tab) => tab.slug !== "resultados");
 
   // ── Rascunho em localStorage (apenas criação) ─────────────────────────────
   const { clearDraft } = useFormDraft({
@@ -681,6 +699,10 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
       highlightLabel: dataForm.highlightLabel || "",
       highlightPattern: dataForm.highlightPattern || "",
       highlightBorder: dataForm.highlightBorder || "",
+      landingContent: JSON.stringify(compactLandingContent(parseLandingContent(dataForm.landingContent))),
+      landingAbLayouts: JSON.stringify(dataForm.landingAbLayouts || []),
+      landingLayout: dataForm.landingLayout || "classico",
+      landingAbTest: !!dataForm.landingAbTest && (dataForm.landingAbLayouts || []).length >= 2,
     } as unknown as FormData;
 
     if (formData) {
@@ -765,6 +787,8 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
     pagamento: <Step4Payment {...stepProps} />,
     conteudo: <Step5Content {...stepProps} />,
     midia: <Step6Media {...stepProps} />,
+    pagina: <Step8Page {...stepProps} classId={formData?.id} />,
+    resultados: formData?.id ? <PaginaResultados classId={formData.id} /> : null,
     avaliacao: (
       <Step7Evaluation
         {...stepProps}
@@ -776,15 +800,17 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
   const isSaving = isPending || isPendingUpdate;
 
   // ── Navegação entre tabs ───────────────────────────────────────────────────
-  const currentTabIndex = TABS.findIndex((tab) => tab.slug === activeTab);
-  const isFirstTab = currentTabIndex === 0;
-  const isLastTab = currentTabIndex === TABS.length - 1;
+  // Próximo/Voltar/Salvar percorrem só as abas do formulário; Resultados é só leitura
+  const formTabs = TABS.filter((tab) => tab.slug !== "resultados");
+  const currentTabIndex = formTabs.findIndex((tab) => tab.slug === activeTab);
+  const isFirstTab = currentTabIndex <= 0;
+  const isLastTab = activeTab === "resultados" || currentTabIndex === formTabs.length - 1;
   const goToNextTab = () => {
-    const next = TABS[currentTabIndex + 1];
+    const next = formTabs[currentTabIndex + 1];
     if (next) handleTabChange(next.slug);
   };
   const goToPrevTab = () => {
-    const prev = TABS[currentTabIndex - 1];
+    const prev = formTabs[currentTabIndex - 1];
     if (prev) handleTabChange(prev.slug);
   };
 
@@ -877,7 +903,7 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
           {/* ── Accordion em mobile ────────────────────────────────────────── */}
           <div className="flex-1 px-4 py-4">
             <Accordion type="single" collapsible className="w-full">
-              {TABS.map((tab) => (
+              {visibleTabs.map((tab) => (
                 <AccordionItem key={tab.slug} value={tab.slug}>
                   <AccordionTrigger>
                     <span className="flex items-center gap-2">
@@ -907,7 +933,7 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
             {HeaderBar}
             <div className="px-4 pb-2">
               <TabsList className="w-full overflow-x-auto justify-start h-auto flex-wrap">
-                {TABS.map((tab) => (
+                {visibleTabs.map((tab) => (
                   <TabsTrigger
                     key={tab.slug}
                     value={tab.slug}
@@ -925,7 +951,7 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
 
           {/* Conteúdo da tab ativa */}
           <div className="flex-1 px-4 py-4">
-            {TABS.map((tab) => (
+            {visibleTabs.map((tab) => (
               <TabsContent key={tab.slug} value={tab.slug}>
                 {stepContent[tab.slug]}
               </TabsContent>

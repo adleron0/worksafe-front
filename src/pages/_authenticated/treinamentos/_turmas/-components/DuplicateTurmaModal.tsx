@@ -150,6 +150,9 @@ const DuplicateTurmaModal = ({
       instructors: undefined,
       subscriptions: undefined,
       _count: undefined,
+      // a página (conteúdo, layout e teste A/B) vem junto; os resultados não
+      landingContent: turma?.landingContent ? JSON.stringify(turma.landingContent) : undefined,
+      landingAbLayouts: JSON.stringify(turma?.landingAbLayouts || []),
     };
 
     duplicateTurma(duplicateData);

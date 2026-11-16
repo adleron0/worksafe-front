@@ -29,6 +29,10 @@ export interface IEntity {
   initialDate?: string | null;
   finalDate?: string | null;
   landingPagesDates?: string | null;
+  landingContent?: unknown;
+  landingLayout?: string | null;
+  landingAbTest?: boolean;
+  landingAbLayouts?: string[] | null;
   allowExam?: boolean;
   allowReview?: boolean;
   classCode?: string | null;

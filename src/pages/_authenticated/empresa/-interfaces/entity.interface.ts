@@ -35,6 +35,8 @@ export interface IEmpresa {
   lp_domain?: string;
   system_domain?: string;
   websiteUrl?: string;
+  /** meta mensal de faturamento (resumo da tela inicial) */
+  monthlyRevenueGoal?: number | string | null;
   facebookUrl?: string;
   instagramUrl?: string;
   linkedinUrl?: string;

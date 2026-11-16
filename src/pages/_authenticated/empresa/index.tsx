@@ -697,6 +697,19 @@ const Empresa = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="monthlyRevenueGoal">Meta mensal de faturamento</Label>
+                  <Input
+                    id="monthlyRevenueGoal"
+                    name="monthlyRevenueGoal"
+                    format="currency"
+                    value={Number(formData?.monthlyRevenueGoal || 0)}
+                    onValueChange={(name, value) => handleChange(name, Number(value) || null)}
+                    disabled={!isEditing}
+                  />
+                  <p className="text-xs text-muted-foreground">Aparece no resumo da tela inicial. Deixe em zero para não acompanhar.</p>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="operational_email">E-mail Operacional</Label>
                   <Input
                     id="operational_email"

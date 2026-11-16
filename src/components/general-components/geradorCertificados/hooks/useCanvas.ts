@@ -6,7 +6,7 @@ import { applyFontOverrides } from '../utils/fontConfig';
 import { isTextObject } from '../types';
 
 /** Propriedades próprias do certificado que precisam sobreviver a clonar/copiar. */
-const CUSTOM_PROPS = ['placeholderName', 'placeholderType', 'isPlaceholder', 'sealDefaultSrc', 'maxHeight', 'instructorSlot'];
+const CUSTOM_PROPS = ['placeholderName', 'placeholderType', 'isPlaceholder', 'sealDefaultSrc', 'maxHeight', 'instructorSlot', 'showIf'];
 
 interface CanvasPage {
   id: string;
@@ -435,6 +435,8 @@ export const useCanvas = () => {
     'maxHeight',
     // espaço de instrutor (a API esconde os vazios e redistribui os demais)
     'instructorSlot',
+    // "mostrar só se": o objeto some quando a variável está vazia
+    'showIf',
   ];
 
   /**

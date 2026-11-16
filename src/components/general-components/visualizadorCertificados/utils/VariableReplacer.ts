@@ -1,6 +1,7 @@
 import { StudentData, VariableToReplace } from '../types';
 import { isTextObjectType, isTextboxType } from './fabricSetup';
 import { layoutInstructorSlots } from './instructorSlots';
+import { applyConditionalVisibility } from './conditionalVisibility';
 
 export class VariableReplacer {
   /**
@@ -37,7 +38,8 @@ export class VariableReplacer {
       processed = JSON.parse(JSON.stringify(jsonData));
     }
     // espaços de instrutor vazios saem e os demais se redistribuem (igual à API)
-    processed = layoutInstructorSlots(processed, variables);
+    // objetos com "mostrar só se" saem quando a variável está vazia
+    processed = layoutInstructorSlots(applyConditionalVisibility(processed, variables), variables);
     
     
     if (processed.objects && Array.isArray(processed.objects)) {

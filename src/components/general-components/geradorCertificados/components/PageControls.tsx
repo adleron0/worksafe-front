@@ -27,7 +27,7 @@ const PageControls: React.FC<PageControlsProps> = ({
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
-        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Páginas:</span>
+        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Lado:</span>
         
         <div className="flex items-center gap-1">
         {pages.map((page, index) => (
@@ -36,9 +36,9 @@ const PageControls: React.FC<PageControlsProps> = ({
               variant={currentPageIndex === index ? 'default' : 'ghost'}
               size="sm"
               onClick={() => onPageSelect(index)}
-              className="relative h-9 w-9 p-0"
+              className="relative h-9 min-w-9 px-4"
             >
-              <span className="text-sm font-medium">{index + 1}</span>
+              <span className="text-sm font-medium">{page.name || index + 1}</span>
             </Button>
             
             {canRemovePage && (
@@ -63,17 +63,14 @@ const PageControls: React.FC<PageControlsProps> = ({
             variant="ghost"
             size="sm"
             onClick={onPageAdd}
-            className="h-9 w-9 p-0"
-            title="Adicionar página"
+            className="h-9 px-3"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 mr-1" />
+            Adicionar verso
           </Button>
         )}
       </div>
       
-        <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-          {pages.length}/{maxPages} páginas
-        </span>
       </div>
       
       {/* {onExportPDF && (

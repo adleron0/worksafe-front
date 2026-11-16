@@ -47,6 +47,15 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
   // Função para obter o nome do layer
   const getLayerName = (obj: fabric.Object, index: number) => {
     const objWithName = obj as fabric.Object & { name?: string };
+    // imagens dinâmicas (marcadores): nome pelo que vão virar na geração
+    const ph = obj as fabric.Object & { isPlaceholder?: boolean; placeholderName?: string; placeholderType?: string };
+    if (ph.isPlaceholder || ph.placeholderName || ph.placeholderType) {
+      const n = String(ph.placeholderType || ph.placeholderName || '');
+      if (n.includes('selo')) return 'Selo';
+      if (n.includes('qrcode')) return 'QR Code';
+      if (n.includes('assinatura')) return `Assinatura ${n.match(/\d+/)?.[0] ?? ''}`.trim();
+      if (n.includes('foto')) return 'Foto do aluno';
+    }
     
     if (obj.type === 'image' || obj.constructor.name === 'FabricImage') {
       return objWithName.name || `Imagem ${index}`;

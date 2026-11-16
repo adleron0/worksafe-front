@@ -14,6 +14,8 @@ interface TextPanelProps {
   onAddText: (text: string, settings: TextSettings) => void;
   onUpdateText: (settings: Partial<TextSettings>) => void;
   canvas?: fabric.Canvas | null;
+  /** Partes a mostrar: botão de adicionar, ajustes do texto e lista de variáveis. */
+  sections?: Array<'add' | 'settings' | 'variables'>;
 }
 
 export interface TextSettings {
@@ -42,7 +44,8 @@ const TextPanel: React.FC<TextPanelProps> = ({
   selectedText,
   onAddText,
   onUpdateText,
-  canvas
+  canvas,
+  sections = ['add', 'settings', 'variables'],
 }) => {
   const [textSettings, setTextSettings] = useState<TextSettings>({
     text: 'Clique para editar',
@@ -170,6 +173,7 @@ const TextPanel: React.FC<TextPanelProps> = ({
   return (
     <div className="space-y-6">
       {/* Adicionar novo texto */}
+      {sections.includes('add') && (
       <Card>
         <div className="p-4">
           <h3 className="text-sm font-semibold mb-3">Adicionar Texto</h3>
@@ -187,7 +191,10 @@ const TextPanel: React.FC<TextPanelProps> = ({
         </div>
       </Card>
 
+      )}
+
       {/* Configurações de texto */}
+      {sections.includes('settings') && (
       <Card>
         <div className="p-4 space-y-4">
           <h3 className="text-sm font-semibold">
@@ -482,7 +489,10 @@ const TextPanel: React.FC<TextPanelProps> = ({
         </div>
       </Card>
       
+      )}
+
       {/* Variáveis disponíveis */}
+      {sections.includes('variables') && (
       <Card>
         <div className="p-4">
           <div className="flex items-center gap-2 mb-3">
@@ -494,7 +504,7 @@ const TextPanel: React.FC<TextPanelProps> = ({
           </p>
           
           {/* Lista de variáveis organizadas por categoria */}
-          <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+          <div className={`space-y-2.5 pr-1 ${sections.length > 1 ? "max-h-60 overflow-y-auto" : ""}`}>
             {/* Dados do Aluno */}
             <div>
               <h4 className="text-xs font-medium text-muted-foreground mb-1">Aluno</h4>
@@ -679,6 +689,7 @@ const TextPanel: React.FC<TextPanelProps> = ({
           </div>
         </div>
       </Card>
+      )}
     </div>
   );
 };

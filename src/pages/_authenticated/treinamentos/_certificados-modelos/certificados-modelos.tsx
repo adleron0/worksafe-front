@@ -175,6 +175,9 @@ function CertificadosPage() {
         showBttn={false}
         showHeader={false}
         preventDismiss
+        // editor em tela cheia: precisa de espaço para as abas, o certificado e o painel do selecionado
+        className="h-[100dvh] max-h-[100dvh] w-screen max-w-[100vw] gap-0 rounded-none p-0 pr-0 sm:max-w-[100vw] sm:rounded-none"
+        classNameContent="h-[100dvh] overflow-hidden p-0 pr-0"
         title={editingCertificate ? "Editar Certificado" : "Criar Novo Certificado"}
         description={
           editingCertificate 

@@ -3,8 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { get, del } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Image as ImageIcon, Loader2, Shapes, Frame, Trash2, Type, Layers, Copy, ChevronDown, ChevronRight, FileText } from 'lucide-react';
+import { Image as ImageIcon, Loader2, Shapes, Frame, Trash2, Type, Layers, Copy, FileText, Braces, Sparkles, PanelLeftClose, PanelRightOpen, MousePointerClick } from 'lucide-react';
 import { toast } from 'sonner';
 import * as fabric from 'fabric';
 import {
@@ -28,6 +27,8 @@ import ContextMenu from './components/ContextMenu';
 import LayersPanel from './components/LayersPanel';
 import PageControls from './components/PageControls';
 import PlaceholderPanel from './components/PlaceholderPanel';
+import SelectionPanel, { EMPTY_SELECTION } from './components/SelectionPanel';
+import type { SelectionInfo, SelectionKind } from './components/SelectionPanel';
 import { CertificateToolbar } from './components/CertificateToolbar';
 import { CertificateSaveModal } from './components/CertificateSaveModal';
 // import TestProxyImage from './components/TestProxyImage'; // Componente de teste do proxy
@@ -45,6 +46,18 @@ import { ImageListResponse, ShapeSettings, ContextMenuData, isTextObject } from 
 // Templates
 import { certificateTemplates, TemplateGrid } from './templates';
 import type { CertificateTemplate } from './templates';
+
+
+/** Abas da esquerda: cada uma adiciona um tipo de coisa ao certificado. */
+const EDITOR_TABS = [
+  { value: 'templates', label: 'Modelos', icon: FileText, title: 'Modelos prontos', hint: 'Comece de um modelo — substitui o conteúdo atual.' },
+  { value: 'text', label: 'Texto', icon: Type, title: 'Texto', hint: 'Adicione um texto e edite no painel da direita.' },
+  { value: 'variables', label: 'Variáveis', icon: Braces, title: 'Variáveis', hint: 'Dados do aluno, turma e instrutor preenchidos na geração. Com um texto selecionado, a variável entra nele.' },
+  { value: 'dynamic', label: 'Dinâmicos', icon: Sparkles, title: 'Imagens dinâmicas', hint: 'Foto do aluno, assinaturas, QR Code e selo.' },
+  { value: 'images', label: 'Imagens', icon: ImageIcon, title: 'Imagens', hint: 'Envie ou escolha imagens fixas (logos, fundos, ícones).' },
+  { value: 'shapes', label: 'Formas', icon: Shapes, title: 'Formas', hint: 'Retângulos, círculos, triângulos e linhas.' },
+  { value: 'layers', label: 'Camadas', icon: Layers, title: 'Camadas', hint: 'Ordem, visibilidade e trava de cada elemento.' },
+] as const;
 
 interface GeradorCertificadosProps {
   editingData?: {
@@ -100,7 +113,22 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
   const [selectedText, setSelectedText] = useState<fabric.Textbox | null>(null);
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>(editingData ? 'layers' : 'templates');
-  const [isPlaceholderOpen, setIsPlaceholderOpen] = useState(false);
+  // Painéis laterais recolhíveis (lembra a escolha neste navegador)
+  const readPanel = (key: string) => {
+    try { return localStorage.getItem(key) !== '0'; } catch { return true; }
+  };
+  const [leftOpen, setLeftOpenState] = useState(() => readPanel('certEditor.left'));
+  const [rightOpen, setRightOpenState] = useState(() => readPanel('certEditor.right'));
+  const setLeftOpen = (v: boolean | ((o: boolean) => boolean)) =>
+    setLeftOpenState((o) => {
+      const n = typeof v === 'function' ? v(o) : v;
+      try { localStorage.setItem('certEditor.left', n ? '1' : '0'); } catch { /* sem storage */ }
+      return n;
+    });
+  const setRightOpen = (n: boolean) => {
+    setRightOpenState(n);
+    try { localStorage.setItem('certEditor.right', n ? '1' : '0'); } catch { /* sem storage */ }
+  };
   const [showTemplateConfirmDialog, setShowTemplateConfirmDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<CertificateTemplate | null>(null);
 
@@ -197,26 +225,105 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
   // Espaço de instrutor da seleção (instructorSlot 1–4; a API redistribui os preenchidos).
   // Canvas lido a cada render (como no LayersPanel): o da página pode ser recriado.
   const liveCanvas: fabric.Canvas | null = getCurrentCanvasRef()?.getCanvas() || null;
-  const [slotSelection, setSlotSelection] = useState<{ count: number; slot: number | null | 'misto' }>({ count: 0, slot: null });
-  const syncSlotSelection = useCallback(() => {
+  const [selection, setSelection] = useState<SelectionInfo>(EMPTY_SELECTION);
+  const syncSelection = useCallback(() => {
     const objs = liveCanvas?.getActiveObjects() ?? [];
-    const slots = new Set(objs.map((o) => (o as unknown as { instructorSlot?: number }).instructorSlot ?? null));
-    setSlotSelection({ count: objs.length, slot: slots.size > 1 ? 'misto' : objs.length ? [...slots][0] : null });
+    // variáveis usadas nos textos da página, para escolher a condição "mostrar só se"
+    const vars = new Set<string>();
+    liveCanvas?.getObjects().forEach((o) => {
+      const text = (o as unknown as { text?: string }).text;
+      if (typeof text === 'string') for (const m of text.matchAll(/\{\{\s*([\w.]+)\s*\}\}/g)) vars.add(m[1]);
+    });
+    if (!objs.length) {
+      setSelection({ ...EMPTY_SELECTION, variables: [...vars].sort() });
+      return;
+    }
+    const meta = objs as unknown as Array<{ instructorSlot?: number; showIf?: string }>;
+    const slots = new Set(meta.map((o) => o.instructorSlot ?? null));
+    const conds = new Set(meta.map((o) => o.showIf || null));
+    conds.forEach((c) => c && c.split(',').forEach((k) => vars.add(k.trim())));
+    const describe = (o: fabric.Object): { kind: SelectionKind; label: string } => {
+      const any = o as unknown as { isPlaceholder?: boolean; placeholderName?: string; placeholderType?: string; name?: string };
+      if (any.isPlaceholder || any.placeholderName || any.placeholderType) {
+        const n = String(any.placeholderType || any.placeholderName || '');
+        const label = n.includes('selo') ? 'Selo' : n.includes('qrcode') ? 'QR Code de validação'
+          : n.includes('assinatura') ? `Assinatura ${n.match(/\d+/)?.[0] ?? ''}`.trim() : n.includes('foto') ? 'Foto do aluno' : n || 'Imagem dinâmica';
+        return { kind: 'dinamico', label };
+      }
+      if (isTextObject(o)) {
+        const t = String((o as fabric.Textbox).text || '').replace(/\s+/g, ' ').trim();
+        return { kind: 'texto', label: t ? (t.length > 40 ? `${t.slice(0, 40)}…` : t) : 'Texto' };
+      }
+      if (o.type === 'image' || o.constructor.name === 'FabricImage') return { kind: 'imagem', label: any.name && any.name !== 'image' ? any.name : 'Imagem' };
+      const shape: Record<string, string> = { rectangle: 'Retângulo', rect: 'Retângulo', circle: 'Círculo', triangle: 'Triângulo', line: 'Linha' };
+      return { kind: 'forma', label: shape[any.name || ''] || shape[o.type || ''] || 'Forma' };
+    };
+    const first = objs.length === 1 ? describe(objs[0]) : { kind: 'varios' as const, label: `${objs.length} elementos` };
+    setSelection({
+      count: objs.length,
+      kind: first.kind,
+      label: first.label,
+      slot: slots.size > 1 ? 'misto' : [...slots][0],
+      showIf: conds.size > 1 ? 'misto' : [...conds][0],
+      variables: [...vars].sort(),
+    });
   }, [liveCanvas]);
   useEffect(() => {
     if (!liveCanvas) return;
-    syncSlotSelection();
-    const events = ['selection:created', 'selection:updated', 'selection:cleared'] as const;
-    events.forEach((e) => liveCanvas.on(e, syncSlotSelection));
-    return () => events.forEach((e) => liveCanvas.off(e, syncSlotSelection));
-  }, [liveCanvas, syncSlotSelection]);
-  const setInstructorSlot = (slot: number | null) => {
+    syncSelection();
+    const events = ['selection:created', 'selection:updated', 'selection:cleared', 'object:modified', 'text:changed'] as const;
+    events.forEach((e) => liveCanvas.on(e, syncSelection));
+    return () => events.forEach((e) => liveCanvas.off(e, syncSelection));
+  }, [liveCanvas, syncSelection]);
+
+  /** Aplica uma mudança a cada objeto selecionado e registra no histórico. */
+  const changeSelected = (fn: (o: fabric.Object) => void) => {
     if (!liveCanvas) return;
     liveCanvas.getActiveObjects().forEach((o) => {
-      o.set({ instructorSlot: slot ?? undefined } as never);
+      fn(o);
       liveCanvas.fire('object:modified', { target: o } as never);
     });
-    syncSlotSelection();
+    liveCanvas.requestRenderAll();
+    syncSelection();
+  };
+  const setInstructorSlot = (slot: number | null) => changeSelected((o) => o.set({ instructorSlot: slot ?? undefined } as never));
+  const setShowIf = (variable: string | null) => changeSelected((o) => o.set({ showIf: variable || undefined } as never));
+  const isBackground = (o: fabric.Object) => ['backgroundRect', 'backgroundImage'].includes((o as unknown as { name?: string }).name || '');
+  const bringSelectedForward = () => changeSelected((o) => liveCanvas?.bringObjectForward(o));
+  const sendSelectedBackward = () =>
+    changeSelected((o) => {
+      if (!liveCanvas) return;
+      const objs = liveCanvas.getObjects();
+      const idx = objs.indexOf(o);
+      // não passa para baixo do fundo do certificado
+      if (idx > 0 && !isBackground(objs[idx - 1])) liveCanvas.sendObjectBackwards(o);
+    });
+  const lockSelected = () => {
+    if (!liveCanvas) return;
+    const objs = liveCanvas.getActiveObjects();
+    liveCanvas.discardActiveObject();
+    objs.forEach((o) => {
+      o.set({
+        selectable: false, evented: false, hasControls: false, hasBorders: false,
+        lockMovementX: true, lockMovementY: true, lockScalingX: true, lockScalingY: true, lockRotation: true,
+      });
+      if (isTextObject(o)) (o as fabric.Textbox).editable = false;
+      o.setCoords();
+      liveCanvas.fire('object:modified', { target: o } as never);
+    });
+    liveCanvas.requestRenderAll();
+    toast.success(objs.length > 1 ? 'Elementos travados. Destrave na aba Camadas.' : 'Elemento travado. Destrave na aba Camadas.');
+  };
+  const deleteSelected = () => {
+    if (!liveCanvas) return;
+    const objs = liveCanvas.getActiveObjects();
+    liveCanvas.discardActiveObject();
+    objs.forEach((o) => liveCanvas.remove(o));
+    liveCanvas.requestRenderAll();
+  };
+  const duplicateSelected = () => {
+    const o = liveCanvas?.getActiveObject();
+    if (o) handleDuplicateObject(o);
   };
 
   // Atalhos de teclado para Undo/Redo (Ctrl+Z / Ctrl+Shift+Z)
@@ -1124,29 +1231,38 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
         canRedo={canRedo}
       />
       
-      <div className="flex gap-6 flex-1 pt-1 pb-4 overflow-hidden">
-      {/* Left column - Tabs and content */}
-      <div className="flex flex-col h-full w-64 border-r pr-2 flex-shrink-0">
-        <Tabs defaultValue={editingData ? "layers" : "templates"} value={activeTab} className="w-full flex flex-col h-full" onValueChange={setActiveTab}>
-          <TabsList className="flex gap-2 w-fit bg-transparent p-0 flex-shrink-0">
-            <TabsTrigger value="templates" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
-              <FileText className="w-4 h-4" />
+      <div className="flex flex-1 overflow-hidden">
+      {/* Esquerda: abas com nome — só para ADICIONAR coisas */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="flex h-full flex-shrink-0 border-r">
+        <TabsList className="flex h-full w-[60px] flex-col justify-start gap-0.5 rounded-none border-r bg-muted/40 p-1">
+          {EDITOR_TABS.map(({ value, label, icon: Icon }) => (
+            <TabsTrigger
+              key={value}
+              value={value}
+              // clicar na aba já aberta recolhe o painel; outra aba abre
+              onMouseDown={() => setLeftOpen((open) => (value === activeTab ? !open : true))}
+              className={`flex h-12 w-full flex-col items-center justify-center gap-0.5 rounded-md px-0 text-[10px] font-medium text-muted-foreground data-[state=active]:text-primary ${
+                leftOpen ? 'data-[state=active]:bg-background data-[state=active]:shadow-sm' : 'data-[state=active]:bg-transparent data-[state=active]:shadow-none'
+              }`}
+            >
+              <Icon className="h-[18px] w-[18px]" />
+              {label}
             </TabsTrigger>
-            <TabsTrigger value="images" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
-              <ImageIcon className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="shapes" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
-              <Shapes className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="text" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
-              <Type className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="layers" className="data-[state=active]:bg-gray-200 dark:data-[state=active]:bg-gray-700 data-[state=active]:border-gray-400 w-10 h-10 p-0 rounded-lg border flex items-center justify-center">
-              <Layers className="w-4 h-4" />
-            </TabsTrigger>
-          </TabsList>
+          ))}
+        </TabsList>
 
-          <TabsContent value="templates" className="mt-4 flex-1 overflow-y-auto pr-2">
+        <div className={`${leftOpen ? 'flex' : 'hidden'} w-64 flex-col overflow-hidden`}>
+          <div className="flex items-start gap-1 border-b py-2.5 pl-3 pr-1.5">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-semibold">{EDITOR_TABS.find((t) => t.value === activeTab)?.title}</h3>
+              <p className="text-[11px] leading-snug text-muted-foreground">{EDITOR_TABS.find((t) => t.value === activeTab)?.hint}</p>
+            </div>
+            <Button type="button" variant="ghost" size="sm" className="h-7 w-7 shrink-0 p-0" onClick={() => setLeftOpen(false)} aria-label="Recolher painel">
+              <PanelLeftClose className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <TabsContent value="templates" className="mt-0 flex-1 overflow-y-auto p-2.5">
             <TemplateGrid
               templates={certificateTemplates}
               onSelectTemplate={handleApplyTemplate}
@@ -1154,50 +1270,38 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
             />
           </TabsContent>
 
-          <TabsContent value="layers" className="mt-4 flex-1 overflow-y-auto pr-2">
-            <LayersPanel
-              canvas={getCurrentCanvasRef()?.getCanvas() || null}
-              onDeleteObject={handleDeleteFromCanvas}
-              onSelectObject={handleObjectSelected}
+          <TabsContent value="text" className="mt-0 flex-1 overflow-y-auto p-2.5">
+            <TextPanel
+              sections={['add']}
+              selectedText={selectedText}
+              onAddText={handleAddText}
+              onUpdateText={handleUpdateText}
+              canvas={liveCanvas}
             />
           </TabsContent>
-          
-          <TabsContent value="images" className="mt-4 flex-1 overflow-y-auto pr-2">
-            <div className="space-y-6">
-              {/* Placeholders Section - Collapsible */}
-              <Collapsible
-                open={isPlaceholderOpen}
-                onOpenChange={setIsPlaceholderOpen}
-                className="border rounded-lg"
-              >
-                <CollapsibleTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                      isPlaceholderOpen ? 'rounded-b-none' : ''
-                    }`}
-                  >
-                    <span className="font-semibold">Imagens Dinâmicas</span>
-                    {isPlaceholderOpen ? (
-                      <ChevronDown className="w-4 h-4" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4" />
-                    )}
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="p-4 pt-0">
-                  <PlaceholderPanel
-                    onAddPlaceholder={addPlaceholderToCanvas}
-                    images={imagesData?.rows ?? []}
-                    hasSeal={sealState.has}
-                    sealDefault={sealState.src}
-                    onSetSealDefault={setSealDefault}
-                    slotSelection={slotSelection}
-                    onSetInstructorSlot={setInstructorSlot}
-                  />
-                </CollapsibleContent>
-              </Collapsible>
 
+          <TabsContent value="variables" className="mt-0 flex-1 overflow-y-auto p-2.5">
+            <TextPanel
+              sections={['variables']}
+              selectedText={selectedText}
+              onAddText={handleAddText}
+              onUpdateText={handleUpdateText}
+              canvas={liveCanvas}
+            />
+          </TabsContent>
+
+          <TabsContent value="dynamic" className="mt-0 flex-1 overflow-y-auto p-2.5">
+            <PlaceholderPanel
+              onAddPlaceholder={addPlaceholderToCanvas}
+              images={imagesData?.rows ?? []}
+              hasSeal={sealState.has}
+              sealDefault={sealState.src}
+              onSetSealDefault={setSealDefault}
+            />
+          </TabsContent>
+
+          <TabsContent value="images" className="mt-0 flex-1 overflow-y-auto p-2.5">
+            <div className="space-y-6">
               <ImageUploadForm imageType={imageType} />
 
               {/* Images section */}
@@ -1251,9 +1355,10 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
               </div>
             </div>
           </TabsContent>
-          
-          <TabsContent value="shapes" className="mt-4 flex-1 overflow-y-auto pr-2">
+
+          <TabsContent value="shapes" className="mt-0 flex-1 overflow-y-auto p-2.5">
             <ShapesPanel
+              sections={['add']}
               shapeSettings={shapeSettings}
               selectedShape={selectedShape}
               onAddShape={(shapeType) => addShapeToCanvas(shapeType, shapeSettings)}
@@ -1262,20 +1367,21 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
               onDragEnd={() => setIsDragging(false)}
             />
           </TabsContent>
-          
-          <TabsContent value="text" className="mt-4 flex-1 overflow-y-auto pr-2">
-            <TextPanel
-              selectedText={selectedText}
-              onAddText={handleAddText}
-              onUpdateText={handleUpdateText}
-              canvas={getCurrentCanvasRef()?.getCanvas()}
+
+          <TabsContent value="layers" className="mt-0 flex-1 overflow-y-auto p-2.5">
+            {/* key: o canvas da página pode ser recriado (modelo aplicado, troca de página) */}
+            <LayersPanel
+              key={`${pages[currentPageIndex]?.id}-${activeTab}`}
+              canvas={liveCanvas}
+              onDeleteObject={handleDeleteFromCanvas}
+              onSelectObject={handleObjectSelected}
             />
           </TabsContent>
-        </Tabs>
-      </div>
+        </div>
+      </Tabs>
 
-      {/* Right column - Canvas and Page Controls */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      {/* Centro: certificado */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-muted/30 p-2">
         {/* Canvas for each page */}
         <div className="flex-1 relative overflow-hidden">
           {/* Loading overlay - shows on top of canvas while loading */}
@@ -1313,15 +1419,15 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
                 onContextMenu={handleContextMenu}
                 selectedShapeRef={selectedShapeRef}
                 isActive={index === currentPageIndex}
+                fitKey={`${leftOpen}-${rightOpen}`}
               />
             </div>
           ))}
         </div>
         
-        {/* Page Controls - Now at the bottom */}
-        <div className="mt-4">
+        <div className="mt-3">
           <PageControls
-            pages={pages.map(p => ({ id: p.id, name: `Página ${pages.indexOf(p) + 1}` }))}
+            pages={pages.map((p, i) => ({ id: p.id, name: i === 0 ? 'Frente' : 'Verso' }))}
             currentPageIndex={currentPageIndex}
             onPageSelect={setCurrentPageIndex}
             onPageAdd={addPage}
@@ -1331,7 +1437,61 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
           />
         </div>
       </div>
-      
+
+      {/* Direita: o que está selecionado */}
+      {!rightOpen ? (
+        <aside className="flex w-11 flex-shrink-0 flex-col items-center gap-2 border-l bg-background py-2">
+          <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setRightOpen(true)} aria-label="Abrir painel do selecionado">
+            <PanelRightOpen className="h-4 w-4" />
+          </Button>
+          {selection.count > 0 && (
+            <button
+              type="button"
+              onClick={() => setRightOpen(true)}
+              className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary"
+              aria-label={`Editar ${selection.label}`}
+            >
+              <MousePointerClick className="h-4 w-4" />
+            </button>
+          )}
+        </aside>
+      ) : (
+      <aside className="w-72 flex-shrink-0 overflow-hidden border-l bg-background">
+        <SelectionPanel
+          onCollapse={() => setRightOpen(false)}
+          selection={selection}
+          onDuplicate={duplicateSelected}
+          onDelete={deleteSelected}
+          onBringForward={bringSelectedForward}
+          onSendBackward={sendSelectedBackward}
+          onLock={lockSelected}
+          onSetInstructorSlot={setInstructorSlot}
+          onSetShowIf={setShowIf}
+        >
+          {selection.count === 1 && selection.kind === 'texto' && selectedText && (
+            <TextPanel
+              sections={['settings']}
+              selectedText={selectedText}
+              onAddText={handleAddText}
+              onUpdateText={handleUpdateText}
+              canvas={liveCanvas}
+            />
+          )}
+          {selection.count === 1 && selection.kind === 'forma' && (
+            <ShapesPanel
+              sections={['settings']}
+              shapeSettings={shapeSettings}
+              selectedShape={selectedShape}
+              onAddShape={(shapeType) => addShapeToCanvas(shapeType, shapeSettings)}
+              onUpdateSettings={updateShapeSettings}
+              onDragStart={handleShapeDragStart}
+              onDragEnd={() => setIsDragging(false)}
+            />
+          )}
+        </SelectionPanel>
+      </aside>
+      )}
+
       {/* Context Menu */}
       <ContextMenu
         show={showContextMenu}

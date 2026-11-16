@@ -2,7 +2,7 @@ import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { Slider } from '@/components/ui/slider';
-import { RectangleHorizontal, RectangleVertical, ZoomIn, ZoomOut, Loader2, RotateCcw } from 'lucide-react';
+import { RectangleHorizontal, RectangleVertical, ZoomIn, ZoomOut, Loader2, Maximize } from 'lucide-react';
 import * as fabric from 'fabric';
 import { createListTextbox } from '../utils/ListTextbox';
 import { createImagePlaceholder } from '../utils/PlaceholderImage';
@@ -37,6 +37,8 @@ interface CanvasEditorProps {
   onContextMenu: (e: MouseEvent, target: fabric.Object | null) => void;
   selectedShapeRef: React.MutableRefObject<fabric.Object | null>;
   isActive: boolean;
+  /** Muda quando os painéis laterais abrem/fecham: reajusta o certificado à área livre. */
+  fitKey?: string;
 }
 
 const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
@@ -52,7 +54,8 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   onSelectionCleared,
   onContextMenu,
   selectedShapeRef,
-  isActive
+  isActive,
+  fitKey,
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -493,7 +496,44 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
   const handleZoomChange = (value: number[]) => applyZoom(value[0]);
   const handleZoomIn = () => applyZoom(Math.min(MAX_ZOOM_PERCENT, zoomLevel + 10));
   const handleZoomOut = () => applyZoom(Math.max(MIN_ZOOM_PERCENT, zoomLevel - 10));
-  const handleZoomReset = () => applyZoom(100);
+  // Ajustar à tela: o maior zoom em que o certificado inteiro cabe na área visível
+  const fitToScreen = () => {
+    const c = containerRef.current;
+    if (!c || !c.clientWidth || !c.clientHeight) return;
+    const { width, height } = getA4Dimensions(orientation);
+    const BASE = 0.6; // mesma escala base dos hooks de zoom
+    const PAD = 120; // padding do container (16px) + da área de rolagem (40px), dos dois lados, e folga
+    const z = Math.min((c.clientWidth - PAD) / (width * BASE), (c.clientHeight - PAD) / (height * BASE)) * 100;
+    applyZoom(Math.floor(z));
+  };
+  // ao abrir, ao voltar para esta página e ao trocar a orientação, a página vem ajustada à tela
+  const fittedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isActive) {
+      fittedRef.current = null;
+      return;
+    }
+    if (isLoadingCanvas || fittedRef.current === orientation) return;
+    const t = setTimeout(() => {
+      fitToScreen();
+      fittedRef.current = orientation;
+    }, 60);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive, isLoadingCanvas, orientation, applyZoom]);
+  // painel lateral abriu/fechou: espera a transição e reajusta
+  const lastFitKey = useRef(fitKey);
+  useEffect(() => {
+    if (lastFitKey.current === fitKey) return;
+    lastFitKey.current = fitKey;
+    if (!isActive) {
+      fittedRef.current = null;
+      return;
+    }
+    const t = setTimeout(fitToScreen, 220);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitKey, isActive]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -574,12 +614,11 @@ const CanvasEditor = forwardRef<CanvasEditorRef, CanvasEditorProps>(({
           <Button
             size="sm"
             variant="ghost"
-            onClick={handleZoomReset}
+            onClick={fitToScreen}
             className="h-6 px-2 text-xs"
-            title="Reset zoom para 100%"
           >
-            <RotateCcw className="w-3 h-3 mr-1" />
-            100%
+            <Maximize className="w-3 h-3 mr-1" />
+            Ajustar à tela
           </Button>
           <span className="text-xs text-gray-500 min-w-[3rem] text-right">{zoomLevel}%</span>
         </div>

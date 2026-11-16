@@ -13,6 +13,8 @@ interface ShapesPanelProps {
   onUpdateSettings: (newSettings: Partial<ShapeSettings>) => void;
   onDragStart: (e: React.DragEvent, shapeType: string) => void;
   onDragEnd: () => void;
+  /** Partes a mostrar: botões de adicionar e ajustes da forma selecionada. */
+  sections?: Array<'add' | 'settings'>;
 }
 
 const ShapesPanel: React.FC<ShapesPanelProps> = ({
@@ -21,7 +23,8 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
   onAddShape,
   onUpdateSettings,
   onDragStart,
-  onDragEnd
+  onDragEnd,
+  sections = ['add', 'settings'],
 }) => {
   const shapes = [
     { type: 'rectangle' as const, icon: Square, label: 'Quadrado' },
@@ -33,6 +36,7 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
   return (
     <div className="space-y-6">
       {/* Shape buttons */}
+      {sections.includes('add') && (
       <Card>
         <div className="p-4">
           <h3 className="text-sm font-semibold mb-3">Formas Geométricas</h3>
@@ -56,7 +60,10 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
         </div>
       </Card>
       
+      )}
+
       {/* Shape settings */}
+      {sections.includes('settings') && (
       <Card>
         <div className="p-4 space-y-4">
           <h3 className="text-sm font-semibold">
@@ -167,6 +174,7 @@ const ShapesPanel: React.FC<ShapesPanelProps> = ({
           )}
         </div>
       </Card>
+      )}
     </div>
   );
 };

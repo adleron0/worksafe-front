@@ -45,6 +45,7 @@ const SNAPSHOT_PROPERTIES = [
   'sealDefaultSrc',
   'maxHeight',
   'instructorSlot',
+  'showIf',
 ];
 
 export interface CanvasHistoryAPI {

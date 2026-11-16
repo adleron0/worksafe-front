@@ -102,7 +102,7 @@ export const CertificateToolbar: React.FC<CertificateToolbarProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-between p-1.5 border-b mb-3">
+    <div className="flex items-center justify-between border-b py-2 pl-4 pr-14">
       <div className="flex items-center gap-4">
         {/* Status e informações do certificado */}
         <div className="flex items-center gap-3">

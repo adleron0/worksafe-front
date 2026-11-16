@@ -67,6 +67,7 @@ import { Route as AuthenticatedFinanceiroRecorrentesRecorrentesRouteImport } fro
 import { Route as AuthenticatedFinanceiroReceberReceberRouteImport } from './pages/_authenticated/financeiro/_receber/receber'
 import { Route as AuthenticatedFinanceiroPlanoContasPlanoContasRouteImport } from './pages/_authenticated/financeiro/_plano-contas/plano-contas'
 import { Route as AuthenticatedFinanceiroPagarPagarRouteImport } from './pages/_authenticated/financeiro/_pagar/pagar'
+import { Route as AuthenticatedFinanceiroImplantacaoImplantacaoRouteImport } from './pages/_authenticated/financeiro/_implantacao/implantacao'
 import { Route as AuthenticatedFinanceiroFornecedoresFornecedoresRouteImport } from './pages/_authenticated/financeiro/_fornecedores/fornecedores'
 import { Route as AuthenticatedFinanceiroFaturarFaturarRouteImport } from './pages/_authenticated/financeiro/_faturar/faturar'
 import { Route as AuthenticatedFinanceiroContasBancariasContasBancariasRouteImport } from './pages/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
@@ -439,6 +440,12 @@ const AuthenticatedFinanceiroPagarPagarRoute =
     path: '/financeiro/pagar',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanceiroImplantacaoImplantacaoRoute =
+  AuthenticatedFinanceiroImplantacaoImplantacaoRouteImport.update({
+    id: '/financeiro/_implantacao/implantacao',
+    path: '/financeiro/implantacao',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedFinanceiroFornecedoresFornecedoresRoute =
   AuthenticatedFinanceiroFornecedoresFornecedoresRouteImport.update({
     id: '/financeiro/_fornecedores/fornecedores',
@@ -734,6 +741,7 @@ export interface FileRoutesByFullPath {
   '/financeiro/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
   '/financeiro/faturar': typeof AuthenticatedFinanceiroFaturarFaturarRoute
   '/financeiro/fornecedores': typeof AuthenticatedFinanceiroFornecedoresFornecedoresRoute
+  '/financeiro/implantacao': typeof AuthenticatedFinanceiroImplantacaoImplantacaoRoute
   '/financeiro/pagar': typeof AuthenticatedFinanceiroPagarPagarRoute
   '/financeiro/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
@@ -831,6 +839,7 @@ export interface FileRoutesByTo {
   '/financeiro/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
   '/financeiro/faturar': typeof AuthenticatedFinanceiroFaturarFaturarRoute
   '/financeiro/fornecedores': typeof AuthenticatedFinanceiroFornecedoresFornecedoresRoute
+  '/financeiro/implantacao': typeof AuthenticatedFinanceiroImplantacaoImplantacaoRoute
   '/financeiro/pagar': typeof AuthenticatedFinanceiroPagarPagarRoute
   '/financeiro/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
@@ -932,6 +941,7 @@ export interface FileRoutesById {
   '/_authenticated/financeiro/_contas-bancarias/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
   '/_authenticated/financeiro/_faturar/faturar': typeof AuthenticatedFinanceiroFaturarFaturarRoute
   '/_authenticated/financeiro/_fornecedores/fornecedores': typeof AuthenticatedFinanceiroFornecedoresFornecedoresRoute
+  '/_authenticated/financeiro/_implantacao/implantacao': typeof AuthenticatedFinanceiroImplantacaoImplantacaoRoute
   '/_authenticated/financeiro/_pagar/pagar': typeof AuthenticatedFinanceiroPagarPagarRoute
   '/_authenticated/financeiro/_plano-contas/plano-contas': typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   '/_authenticated/financeiro/_receber/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
@@ -1032,6 +1042,7 @@ export interface FileRouteTypes {
     | '/financeiro/contas-bancarias'
     | '/financeiro/faturar'
     | '/financeiro/fornecedores'
+    | '/financeiro/implantacao'
     | '/financeiro/pagar'
     | '/financeiro/plano-contas'
     | '/financeiro/receber'
@@ -1129,6 +1140,7 @@ export interface FileRouteTypes {
     | '/financeiro/contas-bancarias'
     | '/financeiro/faturar'
     | '/financeiro/fornecedores'
+    | '/financeiro/implantacao'
     | '/financeiro/pagar'
     | '/financeiro/plano-contas'
     | '/financeiro/receber'
@@ -1229,6 +1241,7 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
     | '/_authenticated/financeiro/_faturar/faturar'
     | '/_authenticated/financeiro/_fornecedores/fornecedores'
+    | '/_authenticated/financeiro/_implantacao/implantacao'
     | '/_authenticated/financeiro/_pagar/pagar'
     | '/_authenticated/financeiro/_plano-contas/plano-contas'
     | '/_authenticated/financeiro/_receber/receber'
@@ -1690,6 +1703,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceiroPagarPagarRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/financeiro/_implantacao/implantacao': {
+      id: '/_authenticated/financeiro/_implantacao/implantacao'
+      path: '/financeiro/implantacao'
+      fullPath: '/financeiro/implantacao'
+      preLoaderRoute: typeof AuthenticatedFinanceiroImplantacaoImplantacaoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/financeiro/_fornecedores/fornecedores': {
       id: '/_authenticated/financeiro/_fornecedores/fornecedores'
       path: '/financeiro/fornecedores'
@@ -2014,6 +2034,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFinanceiroContasBancariasContasBancariasRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
   AuthenticatedFinanceiroFaturarFaturarRoute: typeof AuthenticatedFinanceiroFaturarFaturarRoute
   AuthenticatedFinanceiroFornecedoresFornecedoresRoute: typeof AuthenticatedFinanceiroFornecedoresFornecedoresRoute
+  AuthenticatedFinanceiroImplantacaoImplantacaoRoute: typeof AuthenticatedFinanceiroImplantacaoImplantacaoRoute
   AuthenticatedFinanceiroPagarPagarRoute: typeof AuthenticatedFinanceiroPagarPagarRoute
   AuthenticatedFinanceiroPlanoContasPlanoContasRoute: typeof AuthenticatedFinanceiroPlanoContasPlanoContasRoute
   AuthenticatedFinanceiroReceberReceberRoute: typeof AuthenticatedFinanceiroReceberReceberRoute
@@ -2123,6 +2144,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedFinanceiroFaturarFaturarRoute,
   AuthenticatedFinanceiroFornecedoresFornecedoresRoute:
     AuthenticatedFinanceiroFornecedoresFornecedoresRoute,
+  AuthenticatedFinanceiroImplantacaoImplantacaoRoute:
+    AuthenticatedFinanceiroImplantacaoImplantacaoRoute,
   AuthenticatedFinanceiroPagarPagarRoute:
     AuthenticatedFinanceiroPagarPagarRoute,
   AuthenticatedFinanceiroPlanoContasPlanoContasRoute:

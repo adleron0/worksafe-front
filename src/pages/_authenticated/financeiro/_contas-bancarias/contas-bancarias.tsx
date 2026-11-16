@@ -11,13 +11,14 @@ import CalendarPicker from "@/components/general-components/Calendar";
 import SimpleCrud, { SimpleEntity, useSimpleSave } from "../-shared/SimpleCrud";
 import TransfersSection from "../-shared/transfers";
 import { BankAccount, bankTypeLabel, bankTypeOptions, formatMoney, gatewayOptions } from "../-shared/financial";
+import { formatDate } from "../_receber/-components/options";
 
 const entity: SimpleEntity = {
   name: "Conta Bancária",
   pluralName: "Contas Bancárias",
   model: "financial-bank-accounts",
   article: "a",
-  description: "Contas, caixas e saldos de gateway. O saldo é o saldo inicial + o que entrou − o que saiu ± as transferências.",
+  description: "Contas, caixas e saldos de gateway. O saldo é o saldo inicial + o que entrou − o que saiu ± as transferências, a partir da data inicial (veja Implantação).",
   optionKeys: ["optionsBankAccounts", "financialBankBalances"],
 };
 
@@ -33,11 +34,12 @@ const bankLine = (item: BankAccount) => {
 };
 
 function BankAccounts() {
-  const { data: balances } = useQuery<Array<{ id: number; balance: number }> | undefined>({
+  const { data: balances } = useQuery<Array<{ id: number; balance: number; start: string | null }> | undefined>({
     queryKey: ["financialBankBalances"],
     queryFn: () => get("financial", "bank-balances"),
   });
   const balanceOf = (id: number) => balances?.find((b) => b.id === id)?.balance;
+  const startOf = (id: number) => balances?.find((b) => b.id === id)?.start;
 
   return (
     <>
@@ -62,6 +64,7 @@ function BankAccounts() {
         <div className="lg:w-40 lg:text-right lg:pr-6 tabular-nums font-semibold">
           <span className="lg:hidden text-xs text-muted-foreground font-normal">Saldo: </span>
           {balanceOf(item.id) === undefined ? "—" : formatMoney(balanceOf(item.id))}
+          {startOf(item.id) && <p className="text-xs font-normal text-muted-foreground">desde {formatDate(startOf(item.id)!)}</p>}
         </div>
       </>}
       renderForm={(props) => <BankAccountForm {...props} />}
@@ -190,7 +193,8 @@ function BankAccountForm({ formData, close, onSaved }: { formData?: BankAccount;
         </div>
       </div>
       <p className="text-xs text-muted-foreground -mt-2">
-        Com data, o saldo conta só os recebimentos a partir dela. Sem data, conta todos.
+        O saldo inicial é o do fim do dia anterior à data. Só entra no saldo o que foi pago, recebido ou transferido a partir dela.
+        Sem data, vale a data inicial do financeiro (Implantação).
       </p>
 
       <label className="flex items-center gap-2 text-sm cursor-pointer">

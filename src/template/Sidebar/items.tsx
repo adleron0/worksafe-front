@@ -166,6 +166,7 @@ export const groups: SidebarGroup[] = [
           { title: "Plano de Contas", icon: "list-tree", path: "/financeiro/plano-contas" },
           { title: "Centros de Custo", icon: "target", path: "/financeiro/centros-custo" },
           { title: "Contas Bancárias", icon: "landmark", path: "/financeiro/contas-bancarias" },
+          { title: "Implantação", icon: "rocket", path: "/financeiro/implantacao" },
           // { title: "Notas Fiscais", icon: "receipt", path: "/financeiro/notas-fiscais" },
         ],
       },

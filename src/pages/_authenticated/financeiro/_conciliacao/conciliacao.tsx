@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/services/api";
@@ -19,15 +19,23 @@ import { formatDate } from "../_receber/-components/options";
 export const Route = createFileRoute("/_authenticated/financeiro/_conciliacao/conciliacao")({ component: Reconciliation });
 
 interface Candidate { type: "payable" | "receivable"; mode: "baixar" | "vincular"; id: number; label: string; who: string; value: number; date: string }
-interface Line { fitId: string; date: string; amount: number; memo: string; type: string; status: "conciliado" | "sugerido" | "sem_par"; candidates: Candidate[] }
-interface Preview { bankAccountId: number; period: { from: string; to: string }; totals: { lines: number; reconciled: number; suggested: number; unmatched: number }; items: Line[] }
+interface Line { fitId: string; date: string; amount: number; memo: string; type: string; status: "conciliado" | "sugerido" | "sem_par" | "antes_inicio"; candidates: Candidate[] }
+interface Preview {
+  bankAccountId: number; start: string | null; period: { from: string; to: string };
+  totals: { lines: number; reconciled: number; suggested: number; unmatched: number; beforeStart: number };
+  /** saldo do extrato (LEDGERBAL) x saldo do sistema no fim do mesmo dia */
+  balance: { date: string; statement: number | null; system: number; opening: number };
+  items: Line[];
+}
 interface Choice { action: string; chartAccountId?: string; description?: string; otherBankAccountId?: string }
 
 const STATUS = {
   conciliado: { text: "Já conciliada", className: "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300", icon: "circle-check" },
   sugerido: { text: "Par encontrado", className: "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300", icon: "link" },
   sem_par: { text: "Sem par", className: "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300", icon: "circle-help" },
+  antes_inicio: { text: "Antes da data inicial", className: "bg-muted text-muted-foreground", icon: "history" },
 } as const;
+const SETTLED = (status: Line["status"]) => status === "conciliado" || status === "antes_inicio";
 
 /**
  * Conciliação bancária: sobe o extrato OFX do banco, o sistema procura cada
@@ -43,6 +51,7 @@ function Reconciliation() {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [choices, setChoices] = useState<Record<string, Choice>>({});
   const [hideDone, setHideDone] = useState(true);
+  const [statement, setStatement] = useState<number | null>(null);
 
   const initialChoices = (data: Preview) => Object.fromEntries(data.items.map((line) => [line.fitId, { action: line.status === "sugerido" ? "cand:0" : "ignorar", description: line.memo }]));
   const { mutate: read, isPending: reading } = useMutation({
@@ -52,12 +61,17 @@ function Reconciliation() {
       form.append("file", file!);
       return (await api.post<Preview>("financial/reconciliation/preview", form)).data;
     },
-    onSuccess: (data) => { setPreview(data); setChoices(initialChoices(data)); },
+    onSuccess: (data) => {
+      // relendo o mesmo extrato (ex.: depois de conciliar), o saldo digitado à mão continua
+      const same = preview?.bankAccountId === data.bankAccountId && preview?.balance.date === data.balance.date;
+      setStatement((prev) => data.balance.statement ?? (same ? prev : null));
+      setPreview(data); setChoices(initialChoices(data));
+    },
     onError: (err: ApiError) => toast({ title: "Não foi possível ler o extrato", description: err.response?.data?.message, variant: "destructive" }),
   });
   const { mutate: apply, isPending: applying } = useMutation({
     mutationFn: async () => {
-      const items = preview!.items.filter((line) => line.status !== "conciliado").map((line) => {
+      const items = preview!.items.filter((line) => !SETTLED(line.status)).map((line) => {
         const choice = choices[line.fitId] ?? { action: "ignorar" };
         if (choice.action.startsWith("cand:")) {
           const candidate = line.candidates[Number(choice.action.slice(5))];
@@ -70,7 +84,7 @@ function Reconciliation() {
     },
     onSuccess: (result) => {
       toast({ title: `${result.applied} linha(s) conciliada(s)`, description: result.errors?.length ? `Não deu em ${result.errors.length}: ${result.errors.map((e: { reason: string }) => e.reason).join("; ")}` : undefined, variant: result.errors?.length ? "default" : "success" });
-      for (const k of [PAYABLES_KEY, "listContas a Receber", "financialBankBalances", "financialReports", "financialTransfers"]) queryClient.invalidateQueries({ queryKey: [k] });
+      for (const k of [PAYABLES_KEY, "listContas a Receber", "financialBankBalances", "financialReports", "financialTransfers", "financialSetup"]) queryClient.invalidateQueries({ queryKey: [k] });
       read();
     },
     onError: (err: ApiError | Error) => {
@@ -81,8 +95,18 @@ function Reconciliation() {
 
   if (!can(`view_${FINANCIAL_ABILITY}`)) return null;
   const bankOptions = (banks?.rows ?? []).filter((b) => b.type !== "gateway") as never[];
-  const lines = (preview?.items ?? []).filter((line) => !hideDone || line.status !== "conciliado");
-  const pending = (preview?.items ?? []).filter((line) => line.status !== "conciliado" && !(choices[line.fitId]?.action ?? "ignorar").startsWith("ignorar")).length;
+  const lines = (preview?.items ?? []).filter((line) => !hideDone || !SETTLED(line.status));
+  const chosen = (preview?.items ?? []).filter((line) => !SETTLED(line.status) && !(choices[line.fitId]?.action ?? "ignorar").startsWith("ignorar"));
+  const pending = chosen.length;
+  // o que muda o saldo ao conciliar: baixar, lançar e transferir (vincular já estava no saldo)
+  const moving = chosen.reduce((sum, line) => {
+    const action = choices[line.fitId]?.action ?? "ignorar";
+    if (action.startsWith("cand:")) return line.candidates[Number(action.slice(5))]?.mode === "baixar" ? sum + line.amount : sum;
+    return ["criar", "transferir"].includes(action) ? sum + line.amount : sum;
+  }, 0);
+  const round2 = (v: number) => Math.round(v * 100) / 100;
+  const diffNow = preview && statement !== null ? round2(statement - preview.balance.system) : null;
+  const diffAfter = preview && statement !== null ? round2(statement - preview.balance.system - moving) : null;
   const setChoice = (fitId: string, patch: Partial<Choice>) => setChoices((prev) => ({ ...prev, [fitId]: { ...(prev[fitId] ?? { action: "ignorar" }), ...patch } }));
 
   return (
@@ -112,8 +136,30 @@ function Reconciliation() {
             <span className="rounded bg-green-100 dark:bg-green-950/50 px-2 py-0.5">{preview.totals.reconciled} já conciliada(s)</span>
             <span className="rounded bg-blue-100 dark:bg-blue-950/50 px-2 py-0.5">{preview.totals.suggested} com par</span>
             <span className="rounded bg-amber-100 dark:bg-amber-950/50 px-2 py-0.5">{preview.totals.unmatched} sem par</span>
-            <Button variant="link" size="sm" className="px-0" onClick={() => setHideDone((v) => !v)}>{hideDone ? "Mostrar as já conciliadas" : "Esconder as já conciliadas"}</Button>
+            {preview.totals.beforeStart > 0 && <span className="rounded bg-muted px-2 py-0.5">{preview.totals.beforeStart} antes da data inicial</span>}
+            <Button variant="link" size="sm" className="px-0" onClick={() => setHideDone((v) => !v)}>{hideDone ? "Mostrar as já resolvidas" : "Esconder as já resolvidas"}</Button>
             {can(`update_${FINANCIAL_ABILITY}`) && <Button className="ml-auto" disabled={applying || !pending} onClick={() => apply()}>Conciliar {pending} linha(s)</Button>}
+          </div>
+          {!preview.start && (
+            <p className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200 p-3 mb-3 text-sm">
+              <Icon name="flag" className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>Esta conta ainda não tem data inicial. Defina em <Link to="/financeiro/implantacao" className="underline">Implantação</Link> para o sistema ignorar o que é anterior a ela e o saldo bater com o do banco.</span>
+            </p>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 rounded-lg border p-3 mb-3 text-sm">
+            <div>
+              <Label htmlFor="statement">Saldo do extrato em {formatDate(preview.balance.date)}</Label>
+              <Input id="statement" name="statement" format="currency" value={statement ?? ""} className="mt-1"
+                onValueChange={(_, v) => setStatement(v === "" || v === null || v === undefined ? null : Number(v))} />
+              <p className="text-xs text-muted-foreground mt-1">{preview.balance.statement === null ? "O arquivo não traz o saldo: digite o do extrato." : "Lido do arquivo. Corrija se precisar."}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Saldo no sistema nessa data</p>
+              <p className="text-lg font-semibold tabular-nums">{formatMoney(preview.balance.system)}</p>
+              {preview.start && <p className="text-xs text-muted-foreground">desde {formatDate(preview.start)}, com saldo inicial de {formatMoney(preview.balance.opening)}</p>}
+            </div>
+            <BalanceDiff label="Diferença agora" value={diffNow} />
+            <BalanceDiff label={`Depois de conciliar ${pending} linha(s)`} value={diffAfter} />
           </div>
           <div className="rounded-lg border overflow-hidden">
             {!lines.length && <p className="p-6 text-sm text-center text-muted-foreground">Tudo conciliado.</p>}
@@ -122,23 +168,24 @@ function Reconciliation() {
               const choice = choices[line.fitId] ?? { action: "ignorar" };
               const options = [
                 ...line.candidates.map((c, i) => ({ id: `cand:${i}`, name: `${c.mode === "baixar" ? "Baixar" : "Já baixada:"} ${c.label}${c.who ? ` · ${c.who}` : ""} · ${formatMoney(c.value)} · ${c.mode === "baixar" ? "venc." : "paga em"} ${formatDate(c.date)}` })),
-                ...(line.amount < 0 ? [{ id: "criar", name: "Lançar como nova despesa já paga" }] : []),
+                { id: "criar", name: line.amount < 0 ? "Lançar como nova despesa já paga" : "Lançar como nova receita já recebida (rendimento, estorno...)" },
                 { id: "transferir", name: line.amount < 0 ? "Transferência para outra conta da empresa" : "Transferência vinda de outra conta da empresa" },
                 { id: "ignorar", name: "Ignorar por enquanto" },
               ];
               return (
-                <div key={line.fitId} className={cn("flex flex-col lg:flex-row lg:items-start gap-2 px-4 py-3 border-b last:border-b-0 text-sm", line.status === "conciliado" && "opacity-60")}>
-                  <div className="lg:w-24 text-muted-foreground">{formatDate(line.date)}</div>
-                  <div className="lg:w-4/12 min-w-0 break-words">{line.memo || "Sem histórico"}</div>
-                  <div className={cn("lg:w-32 tabular-nums font-semibold lg:text-right", line.amount < 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400")}>{formatMoney(line.amount)}</div>
-                  <div className="lg:w-32"><span className={cn("inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium", status.className)}><Icon name={status.icon} className="w-3 h-3" />{status.text}</span></div>
-                  {line.status !== "conciliado" && (
-                    <div className="flex-1 flex flex-col gap-2 min-w-0">
+                <div key={line.fitId} className={cn("flex flex-wrap xl:flex-nowrap items-center xl:items-start gap-x-3 gap-y-2 px-4 py-3 border-b last:border-b-0 text-sm", SETTLED(line.status) && "opacity-60")}>
+                  <div className="xl:w-24 shrink-0 text-muted-foreground">{formatDate(line.date)}</div>
+                  <div className="flex-1 xl:flex-none xl:w-4/12 min-w-0 break-words">{line.memo || "Sem histórico"}</div>
+                  <div className={cn("xl:w-32 shrink-0 tabular-nums font-semibold text-right", line.amount < 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400")}>{formatMoney(line.amount)}</div>
+                  <div className="xl:w-32 shrink-0"><span className={cn("inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium", status.className)}><Icon name={status.icon} className="w-3 h-3" />{status.text}</span></div>
+                  {line.status === "antes_inicio" && <p className="w-full xl:w-auto xl:flex-1 text-xs text-muted-foreground">Já está dentro do saldo inicial. Nada a fazer.</p>}
+                  {!SETTLED(line.status) && (
+                    <div className="w-full xl:w-auto xl:flex-1 flex flex-col gap-2 min-w-0">
                       <Select name={`choice-${line.fitId}`} options={options} state={choice.action} onChange={(_, v) => setChoice(line.fitId, { action: String(v) })} />
                       {choice.action === "criar" && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <Input name="description" value={choice.description ?? ""} placeholder="Descrição" maxLength={255} onValueChange={(_, v) => setChoice(line.fitId, { description: String(v) })} />
-                          <AccountSelect accounts={accounts ?? []} value={choice.chartAccountId ?? ""} nature="despesa" clearable onChange={(v) => setChoice(line.fitId, { chartAccountId: v })} placeholder="Conta do plano (opcional)" />
+                          <AccountSelect accounts={accounts ?? []} value={choice.chartAccountId ?? ""} nature={line.amount < 0 ? "despesa" : "receita"} clearable onChange={(v) => setChoice(line.fitId, { chartAccountId: v })} placeholder="Conta do plano (opcional)" />
                         </div>
                       )}
                       {choice.action === "transferir" && (
@@ -151,9 +198,24 @@ function Reconciliation() {
               );
             })}
           </div>
-          <p className="text-xs text-muted-foreground mt-2">Entrada sem par: lance a conta a receber (ou dê baixa nela) e leia o extrato de novo. O par é procurado pelo valor exato, com vencimento até 20 dias de distância.</p>
+          <p className="text-xs text-muted-foreground mt-2">O par é procurado pelo valor exato, com vencimento até 20 dias de distância. Se a entrada for de um cliente com conta a receber lançada com outro valor, ajuste a conta e leia o extrato de novo.</p>
         </>
       )}
     </>
+  );
+}
+
+function BalanceDiff({ label, value }: { label: string; value: number | null }) {
+  const ok = value !== null && Math.abs(value) < 0.005;
+  return (
+    <div>
+      <p className="text-muted-foreground">{label}</p>
+      {value === null ? <p className="text-lg font-semibold">—</p> : (
+        <p className={cn("text-lg font-semibold tabular-nums flex items-center gap-1.5", ok ? "text-green-600 dark:text-green-400" : "text-amber-700 dark:text-amber-300")}>
+          <Icon name={ok ? "circle-check" : "triangle-alert"} className="w-4 h-4" />{ok ? "Bate" : formatMoney(value)}
+        </p>
+      )}
+      {value !== null && !ok && <p className="text-xs text-muted-foreground">{value > 0 ? "o banco tem mais que o sistema" : "o sistema tem mais que o banco"}</p>}
+    </div>
   );
 }

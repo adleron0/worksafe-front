@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ImportCsvButton } from "../-shared/stock-movements";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import useVerify from "@/hooks/use-verify";
@@ -64,14 +65,18 @@ function ItemsPage() {
           <h1 className="text-xl font-bold">Itens do estoque</h1>
           <p className="text-sm text-muted-foreground">Materiais, consumíveis, EPIs e equipamentos: quanto tem, onde e o que precisa repor.</p>
         </div>
-        {can(`create_${STOCK_ABILITY}`) && <Button onClick={() => open("novo")}><Icon name="plus" className="w-4 h-4 mr-1" /> Novo item</Button>}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline"><Link to="/suprimentos/estoque/saldos"><Icon name="boxes" className="w-4 h-4 mr-1" /> Ver por local</Link></Button>
+          <ImportCsvButton label="Importar planilha" showTemplate={false} />
+          {can(`create_${STOCK_ABILITY}`) && <Button onClick={() => open("novo")}><Icon name="plus" className="w-4 h-4 mr-1" /> Novo item</Button>}
+        </div>
       </div>
 
       <div className="flex flex-col xl:flex-row xl:flex-wrap xl:items-center gap-3 my-4 p-4 rounded-lg border">
         <div className="w-full xl:w-72"><Input name="search" value={search} onValueChange={(_, value) => reset(setSearch)(String(value))} placeholder="Buscar por nome, código ou fabricante..." icon="search" /></div>
-        <div className="w-full xl:w-56"><Select name="categoryId" options={toOptions(options?.categories)} state={categoryId} clearable modal={false} placeholder="Todas as categorias" onChange={(_, value) => reset(setCategoryId)(String(value ?? ""))} /></div>
-        <div className="w-full xl:w-44"><Select name="tracking" options={TRACKING_OPTIONS} state={tracking} clearable modal={false} placeholder="Qualquer controle" onChange={(_, value) => reset(setTracking)(String(value ?? ""))} /></div>
-        <div className="w-full xl:w-44"><Select name="flag" options={FLAG_OPTIONS} state={flag} clearable modal={false} placeholder="Qualquer marca" onChange={(_, value) => reset(setFlag)(String(value ?? ""))} /></div>
+        <div className="w-full xl:w-56"><Select name="categoryId" searchable options={toOptions(options?.categories)} state={categoryId} clearable modal={false} placeholder="Todas as categorias" onChange={(_, value) => reset(setCategoryId)(String(value ?? ""))} /></div>
+        <div className="w-full xl:w-44"><Select name="tracking" options={TRACKING_OPTIONS} state={tracking} clearable modal={false} placeholder="Qualquer forma de contar" onChange={(_, value) => reset(setTracking)(String(value ?? ""))} /></div>
+        <div className="w-full xl:w-44"><Select name="flag" options={FLAG_OPTIONS} state={flag} clearable modal={false} placeholder="Qualquer exigência" onChange={(_, value) => reset(setFlag)(String(value ?? ""))} /></div>
         <div className="w-full xl:w-36"><Select name="status" options={STATUS_OPTIONS} state={status} modal={false} onChange={(_, value) => reset(setStatus)(String(value || "ativos"))} /></div>
         <div className="flex items-center gap-2">
           <Checkbox id="low" checked={low} onCheckedChange={(checked) => reset(setLow)(checked === true)} />
@@ -93,7 +98,15 @@ function ItemsPage() {
             {seesCost && <div className="w-32 text-right">Custo médio</div>}
           </div>
           {isLoading && Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
-          {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">{filtered ? "Nenhum item com esses filtros." : "Nenhum item cadastrado ainda. Cadastre um a um ou use a carga por planilha em Movimentações."}</p>}
+          {!isLoading && !data?.rows.length && (filtered ? <p className="p-6 text-sm text-muted-foreground">Nenhum item com esses filtros.</p> : (
+            <div className="p-6 grid gap-3 justify-items-start">
+              <p className="text-sm text-muted-foreground">Nenhum item cadastrado ainda. Cadastre um a um ou traga tudo de uma vez por planilha (nome, quantidade e local já bastam).</p>
+              <div className="flex flex-wrap items-center gap-2">
+                {can(`create_${STOCK_ABILITY}`) && <Button onClick={() => open("novo")}><Icon name="plus" className="w-4 h-4 mr-1" /> Cadastrar item</Button>}
+                <ImportCsvButton label="Importar planilha" />
+              </div>
+            </div>
+          ))}
           {data?.rows.map((item) => (
             <button key={item.id} type="button" onClick={() => open(item.id)} className="w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
               <div className="lg:w-32 font-semibold tabular-nums">{item.code}</div>

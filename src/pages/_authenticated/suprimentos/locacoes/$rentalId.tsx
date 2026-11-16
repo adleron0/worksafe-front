@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { NumField, Tip, dateBr, errorMessage, money, newUid, todayIso } from "../../comercial/-shared/commercial";
 import { paymentMethodOptions } from "../../financeiro/_receber/-components/options";
 import { STOCK_KEYS, qty } from "../-shared/stock";
-import { UnitPicker } from "../-shared/stock-pickers";
+import { LocationField, UnitPicker, useLocationValue } from "../-shared/stock-pickers";
 import { MovementDetailDialog } from "../-shared/stock-movements";
 import {
   CHARGE_LABEL, PERIOD_LABEL, RENTALS_ABILITY, RENTAL_KEYS, RENTAL_STAGES, RENTAL_STATUS_LABEL, Rental, RentalOptions, RentalStageBadge, RentalStatus, RentPeriod, rentalsApi,
@@ -54,6 +54,8 @@ function RentalPage() {
   const [moving, setMoving] = useState<RentalStatus | null>(null);
   const [opened, setOpened] = useState<number | null>(null);
   const [error, setError] = useState("");
+  /** endereço, caução, responsável, condições e observações ficam recolhidos */
+  const [details, setDetails] = useState(false);
 
   const { data: rental, isLoading, error: loadError } = useQuery({
     queryKey: [RENTAL_KEYS.one, rentalId],
@@ -183,11 +185,9 @@ function RentalPage() {
       <div className="grid xl:grid-cols-3 gap-4 items-start">
         <form onSubmit={submit} className="xl:col-span-2 grid gap-4">
           <section className="rounded-lg border p-4 grid gap-4">
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid gap-4">
               <div><Label>Cliente <span>*</span></Label>
-                <Select name="customerId" options={options?.customers ?? []} state={draft.customerId} disabled={!editable || !reserved} onChange={(_, value) => set("customerId", String(value ?? ""))} placeholder="Escolha o cliente" /></div>
-              <div><Label htmlFor="responsibleName">Responsável no cliente</Label>
-                <Input id="responsibleName" name="responsibleName" value={draft.responsibleName} maxLength={160} disabled={!editable} onValueChange={(_, value) => set("responsibleName", String(value))} className="mt-1" /></div>
+                <Select name="customerId" searchable options={options?.customers ?? []} state={draft.customerId} disabled={!editable || !reserved} onChange={(_, value) => set("customerId", String(value ?? ""))} placeholder="Escolha o cliente" /></div>
             </div>
             <div className="grid sm:grid-cols-4 gap-4">
               <div><Label>Início <span>*</span></Label>
@@ -206,12 +206,6 @@ function RentalPage() {
               <div><Label>Cobrança</Label>
                 <Select name="billing" options={BILLING} state={draft.billing} disabled={!editable || !reserved} onChange={(_, value) => set("billing", (String(value || "periodo")) as Draft["billing"])} /></div>
             </div>
-            <div className="grid sm:grid-cols-3 gap-4">
-              <div className="sm:col-span-2"><Label htmlFor="deliveryAddress">Endereço de entrega</Label>
-                <Input id="deliveryAddress" name="deliveryAddress" value={draft.deliveryAddress} maxLength={300} disabled={!editable} onValueChange={(_, value) => set("deliveryAddress", String(value))} className="mt-1" /></div>
-              <div><Label className="text-sm">Caução</Label>
-                <NumField kind="money" className="mt-1" value={draft.deposit} disabled={!editable} placeholder="Sem caução" ariaLabel="Caução" onChange={(value) => set("deposit", value)} onEmpty={() => set("deposit", null)} /></div>
-            </div>
           </section>
 
           <section className="rounded-lg border p-4">
@@ -225,7 +219,7 @@ function RentalPage() {
                       {line.tag && <span className="text-xs text-muted-foreground"> · peça {line.tag}{line.where ? ` (${line.where})` : ""}</span>}
                     </span>
                     <span className="text-xs text-muted-foreground tabular-nums">entregue {qty(line.deliveredQuantity)} · voltou {qty(line.returnedQuantity)} de {qty(line.quantity)} {line.unit}</span>
-                    {line.condition && line.condition !== "ok" && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">{line.condition}</span>}
+                    {line.condition && line.condition !== "ok" && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">{CONDITION_LABEL[line.condition] ?? line.condition}</span>}
                     {line.damageValue ? <span className="text-xs text-red-600 dark:text-red-400 tabular-nums">avaria/falta {money(line.damageValue)}</span> : null}
                     <span className="tabular-nums">{money(line.rate)}<span className="text-xs text-muted-foreground"> /{PERIOD_LABEL[rental.period]}</span></span>
                   </li>
@@ -240,13 +234,13 @@ function RentalPage() {
                     <div key={line.key} className="grid grid-cols-12 gap-2 items-end">
                       <div className="col-span-12 lg:col-span-5">
                         {index === 0 && <Label className="text-xs">Item alugável</Label>}
-                        <Select name={`item-${line.key}`} options={(options?.items ?? []).map(({ id, name }) => ({ id, name }))} state={line.itemId} disabled={!editable}
+                        <Select name={`item-${line.key}`} searchable options={(options?.items ?? []).map(({ id, name }) => ({ id, name }))} state={line.itemId} disabled={!editable}
                           onChange={(_, value) => { const picked = itemOf(String(value ?? "")); setLine(line.key, { itemId: String(value ?? ""), unitId: "", quantity: 1, rate: picked?.rent[draft.period] ?? 0 }); }} placeholder="Escolha o item" />
                       </div>
                       <div className="col-span-12 sm:col-span-5 lg:col-span-3">
                         {index === 0 && <Label className="text-xs">Peça</Label>}
                         {item?.tracking === "unidade" ? (
-                          <Select name={`unit-${line.key}`} options={units.map((unit) => ({ id: unit.id, name: `${unit.name}${unit.available ? "" : " (fora do estoque agora)"}` }))} state={line.unitId} clearable disabled={!editable}
+                          <Select name={`unit-${line.key}`} searchable options={units.map((unit) => ({ id: unit.id, name: `${unit.name}${unit.available ? "" : " (fora do estoque agora)"}` }))} state={line.unitId} clearable disabled={!editable}
                             onChange={(_, value) => setLine(line.key, { unitId: String(value ?? ""), quantity: 1 })} placeholder="Escolher na entrega" />
                         ) : <p className="text-xs text-muted-foreground pb-2.5">{item ? "Por quantidade" : "—"}</p>}
                       </div>
@@ -277,10 +271,24 @@ function RentalPage() {
           </section>
 
           <section className="rounded-lg border p-4 grid gap-4">
+            <button type="button" className="w-fit text-sm font-semibold inline-flex items-center gap-1 text-left" aria-expanded={details} onClick={() => setDetails((value) => !value)}>
+              <Icon name={details ? "chevron-up" : "chevron-down"} className="w-4 h-4 shrink-0" /> Mais detalhes
+              <span className="font-normal text-muted-foreground">(endereço, caução, responsável, condições, observações)</span>
+            </button>
+            {details && (<>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div><Label htmlFor="responsibleName">Responsável no cliente</Label>
+                <Input id="responsibleName" name="responsibleName" value={draft.responsibleName} maxLength={160} disabled={!editable} onValueChange={(_, value) => set("responsibleName", String(value))} className="mt-1" /></div>
+              <div><Label className="text-sm">Caução</Label>
+                <NumField kind="money" className="mt-1" value={draft.deposit} disabled={!editable} placeholder="Sem caução" ariaLabel="Caução" onChange={(value) => set("deposit", value)} onEmpty={() => set("deposit", null)} /></div>
+            </div>
+            <div><Label htmlFor="deliveryAddress">Endereço de entrega</Label>
+              <Input id="deliveryAddress" name="deliveryAddress" value={draft.deliveryAddress} maxLength={300} disabled={!editable} onValueChange={(_, value) => set("deliveryAddress", String(value))} className="mt-1" /></div>
             <div><Label htmlFor="terms">Condições</Label>
               <Textarea id="terms" className="mt-1" rows={3} maxLength={5000} disabled={!editable} value={draft.terms} onChange={(event) => set("terms", event.target.value)} placeholder="Responsabilidade por avaria, limpeza, transporte..." /></div>
             <div><Label htmlFor="notes">Observações</Label>
               <Textarea id="notes" className="mt-1" rows={2} maxLength={1000} disabled={!editable} value={draft.notes} onChange={(event) => set("notes", event.target.value)} /></div>
+            </>)}
           </section>
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -361,8 +369,8 @@ function RentalPage() {
         )}
       </div>
 
-      {rental && dialog === "deliver" && <DeliverDialog rental={rental} locations={options?.locations ?? []} onClose={() => setDialog(null)} onDone={apply} />}
-      {rental && dialog === "return" && <ReturnDialog rental={rental} locations={options?.locations ?? []} onClose={() => setDialog(null)} onDone={apply} />}
+      {rental && dialog === "deliver" && <DeliverDialog rental={rental} onClose={() => setDialog(null)} onDone={apply} />}
+      {rental && dialog === "return" && <ReturnDialog rental={rental} onClose={() => setDialog(null)} onDone={apply} />}
       {rental && dialog === "bill" && <BillDialog rental={rental} onClose={() => setDialog(null)} onDone={apply} />}
       {rental && moving && <MoveDialog rental={rental} target={moving} label={moveLabel(moving)} onClose={() => setMoving(null)} onDone={apply} />}
       {opened && <MovementDetailDialog id={opened} onClose={() => setOpened(null)} />}
@@ -372,8 +380,9 @@ function RentalPage() {
 
 type DialogProps = { rental: Rental; onClose: () => void; onDone: (rental: Rental) => void };
 
-function DeliverDialog({ rental, locations, onClose, onDone }: DialogProps & { locations: Array<{ id: number; name: string }> }) {
-  const [locationId, setLocationId] = useState(locations[0] ? String(locations[0].id) : "");
+function DeliverDialog({ rental, onClose, onDone }: DialogProps) {
+  const [chosenLocation, setLocationId] = useState("");
+  const locationId = useLocationValue(chosenLocation);
   const [date, setDate] = useState(todayIso());
   const [receivedBy, setReceivedBy] = useState(rental.responsibleName ?? "");
   const [note, setNote] = useState("");
@@ -411,8 +420,7 @@ function DeliverDialog({ rental, locations, onClose, onDone }: DialogProps & { l
               <Input id="receivedBy" name="receivedBy" value={receivedBy} maxLength={160} onValueChange={(_, value) => setReceivedBy(String(value))} className="mt-1" placeholder="Nome de quem recebeu no cliente" /></div>
           </div>
           {byQuantity.length > 0 && (
-            <div className="sm:w-1/2"><Label>Sai de <span>*</span></Label>
-              <Select name="locationId" options={locations} state={locationId} modal onChange={(_, value) => setLocationId(String(value ?? ""))} placeholder="Escolha o local" />
+            <div className="sm:w-1/2"><LocationField label="Sai de" value={chosenLocation} onChange={setLocationId} />
               <p className="text-xs text-muted-foreground mt-1">Para os itens por quantidade ({byQuantity.map((line) => line.item).join(", ")}).</p></div>
           )}
           {rental.lines.filter((line) => line.unitId).map((line) => (
@@ -436,13 +444,16 @@ function DeliverDialog({ rental, locations, onClose, onDone }: DialogProps & { l
   );
 }
 
-const CONDITIONS = [{ id: "ok", name: "Em ordem" }, { id: "sujo", name: "Sujo" }, { id: "avariado", name: "Avariado" }, { id: "faltando", name: "Não voltou" }];
+const CONDITIONS = [{ id: "ok", name: "Voltou em ordem" }, { id: "sujo", name: "Voltou sujo" }, { id: "avariado", name: "Voltou avariado" }, { id: "faltando", name: "Não voltou" }];
+/** Condição em palavras (a API guarda ok, sujo, avariado, faltando). */
+const CONDITION_LABEL: Record<string, string> = Object.fromEntries(CONDITIONS.map(({ id, name }) => [id, name]));
 interface BackLine { quantity: number; condition: string; damageValue: number | null; note: string; include: boolean }
 
-function ReturnDialog({ rental, locations, onClose, onDone }: DialogProps & { locations: Array<{ id: number; name: string }> }) {
+function ReturnDialog({ rental, onClose, onDone }: DialogProps) {
   const pendingOf = (line: Rental["lines"][number]) => Math.max(0, Math.round((line.deliveredQuantity - line.returnedQuantity) * 1000) / 1000);
   const open = rental.lines.filter((line) => pendingOf(line) > 0);
-  const [locationId, setLocationId] = useState(locations[0] ? String(locations[0].id) : "");
+  const [chosenLocation, setLocationId] = useState("");
+  const locationId = useLocationValue(chosenLocation);
   const [date, setDate] = useState(todayIso());
   const [note, setNote] = useState("");
   const [lines, setLines] = useState<Record<number, BackLine>>(() => Object.fromEntries(open.map((line) => [line.id, { quantity: pendingOf(line), condition: "ok", damageValue: null, note: "", include: true }])));
@@ -477,8 +488,7 @@ function ReturnDialog({ rental, locations, onClose, onDone }: DialogProps & { lo
         </DialogHeader>
         <form className="grid gap-4" onSubmit={submit}>
           <div className="grid sm:grid-cols-2 gap-3">
-            <div><Label>Volta para <span>*</span></Label>
-              <Select name="locationId" options={locations} state={locationId} modal onChange={(_, value) => setLocationId(String(value ?? ""))} placeholder="Escolha o local" /></div>
+            <LocationField label="Volta para" value={chosenLocation} onChange={setLocationId} />
             <div><Label>Dia da devolução</Label>
               <CalendarPicker mode="single" name="returnDate" className="mt-1 w-full" value={date} fromYear={2024} toYear={2040} onValueChange={(_, value) => setDate(String(value ?? "") || todayIso())} /></div>
           </div>

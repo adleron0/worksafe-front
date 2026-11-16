@@ -137,12 +137,16 @@ function PurchasePage() {
   const setItem = (index: number, patch: Partial<PurchaseItem>) => set("items", draft.items.map((item, i) => (i === index ? { ...item, ...patch } : item)));
   const total = totalOf(draft.items);
   const dirty = isNew || JSON.stringify(draft) !== JSON.stringify(draftOf(purchase));
-  const next = purchase ? nextStage(status, canApprove) : null;
+  const canReceiveEarly = !!purchase && canUpdate && status === "comprado" && purchase.items.some((item) => item.itemId && pendingOf(item) > 0);
+  // com linha do estoque a ação principal é "Receber itens"; marcar recebido de uma vez vai para "Mais ações"
+  const suggested = purchase ? nextStage(status, canApprove) : null;
+  const next = canReceiveEarly && suggested === "recebido" ? null : suggested;
   const others = purchase ? allowedMoves(status, canApprove).filter((target) => target !== next) : [];
   const stageIndex = PURCHASE_STAGES.findIndex((stage) => stage.id === status);
   const stockOptions = (stockItems ?? []).map(({ id, name }) => ({ id, name }));
   const hasStockLines = !!purchase?.items.some((item) => item.itemId);
-  const canReceive = !!purchase && canUpdate && status === "comprado" && purchase.items.some((item) => item.itemId && pendingOf(item) > 0);
+  const canReceive = canReceiveEarly;
+  const savedFirst = (button: React.ReactElement) => (dirty ? <Tip text="Salve as alterações antes de receber"><span tabIndex={0}>{button}</span></Tip> : button);
   const pickStock = (index: number, value: string) => {
     const option = (stockItems ?? []).find((item) => String(item.id) === value);
     if (!option) return setItem(index, { itemId: null });
@@ -172,15 +176,15 @@ function PurchasePage() {
         </div>
         {purchase && canUpdate && (
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            {canReceive && <Button type="button" variant={next === "recebido" ? "default" : "outline"} disabled={dirty} onClick={() => setReceiving(true)}><Icon name="package-check" className="w-4 h-4 mr-1" /> Receber itens</Button>}
-            {next && <Button type="button" variant={canReceive && next === "recebido" ? "outline" : "default"} disabled={dirty} onClick={() => setMoving(next)}><Icon name="arrow-right" className="w-4 h-4 mr-1" /> {moveLabel(status, next)}</Button>}
+            {canReceive && savedFirst(<Button type="button" disabled={dirty} onClick={() => setReceiving(true)}><Icon name="package-check" className="w-4 h-4 mr-1" /> Receber itens</Button>)}
+            {next && savedFirst(<Button type="button" disabled={dirty} onClick={() => setMoving(next)}><Icon name="arrow-right" className="w-4 h-4 mr-1" /> {moveLabel(status, next)}</Button>)}
             {others.length > 0 && (
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild><Button type="button" variant="outline" className="gap-1">Mais ações <Icon name="chevron-down" className="w-4 h-4" /></Button></DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {others.map((target) => (
                     <DropdownMenuItem key={target} className="gap-2" onSelect={() => setMoving(target)}>
-                      <Icon name={target === "cancelado" || target === "recusado" ? "ban" : isForward(status, target) ? "arrow-right" : "undo-2"} className="w-3 h-3" /> {moveLabel(status, target)}
+                      <Icon name={target === "cancelado" || target === "recusado" ? "ban" : isForward(status, target) ? "arrow-right" : "undo-2"} className="w-3 h-3" /> {canReceive && target === "recebido" ? "Marcar recebido de uma vez" : moveLabel(status, target)}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -232,7 +236,7 @@ function PurchasePage() {
             </div>
             <div>
               <Label>Ordem de serviço</Label>
-              <Select name="serviceOrderId" options={[...(options?.serviceOrders ?? []), ...(purchase?.serviceOrder && !options?.serviceOrders.some((o) => o.id === purchase.serviceOrder!.id) ? [{ id: purchase.serviceOrder.id, name: `${purchase.serviceOrder.number} — ${purchase.serviceOrder.customer}` }] : [])]}
+              <Select name="serviceOrderId" searchable options={[...(options?.serviceOrders ?? []), ...(purchase?.serviceOrder && !options?.serviceOrders.some((o) => o.id === purchase.serviceOrder!.id) ? [{ id: purchase.serviceOrder.id, name: `${purchase.serviceOrder.number} — ${purchase.serviceOrder.customer}` }] : [])]}
                 state={draft.serviceOrderId} disabled={!editable} clearable onChange={(_, value) => set("serviceOrderId", String(value ?? ""))} placeholder="Não é para uma obra (gasto da empresa)" />
               <p className="text-xs text-muted-foreground mt-1">Quando é para uma obra, o valor aprovado entra no comprometido daquela OS.</p>
             </div>
@@ -241,7 +245,7 @@ function PurchasePage() {
                 <Label>Fornecedor</Label>
                 {supplierEditable && can(`create_${PURCHASES_ABILITY}`) && <button type="button" className="text-xs underline text-primary" onClick={() => setNewSupplier(true)}>Cadastrar fornecedor</button>}
               </div>
-              <Select name="supplierId" options={(options?.suppliers ?? []).map(({ id, name }) => ({ id, name }))} state={draft.supplierId} disabled={!supplierEditable} clearable onChange={(_, value) => set("supplierId", String(value ?? ""))} placeholder="A definir (obrigatório para comprar)" />
+              <Select name="supplierId" searchable options={(options?.suppliers ?? []).map(({ id, name }) => ({ id, name }))} state={draft.supplierId} disabled={!supplierEditable} clearable onChange={(_, value) => set("supplierId", String(value ?? ""))} placeholder="A definir (obrigatório para comprar)" />
             </div>
           </section>
 
@@ -276,7 +280,7 @@ function PurchasePage() {
                   {(!noStockItems || item.itemId) && (editable || item.itemId) && (
                     <div className="col-span-12 flex flex-wrap items-center gap-x-3 gap-y-1 -mt-1">
                       <div className="w-full sm:w-80">
-                        <Select name={`stock-${index}`} options={stockOptions} state={item.itemId ? String(item.itemId) : ""} clearable disabled={!editable} modal={false}
+                        <Select name={`stock-${index}`} searchable options={stockOptions} state={item.itemId ? String(item.itemId) : ""} clearable disabled={!editable} modal={false}
                           onChange={(_, value) => pickStock(index, String(value ?? ""))} placeholder="Item do estoque (opcional)" />
                       </div>
                       {item.itemId && purchase && (status === "comprado" || status === "recebido") && (

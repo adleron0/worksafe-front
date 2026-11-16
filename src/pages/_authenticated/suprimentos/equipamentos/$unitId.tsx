@@ -16,7 +16,8 @@ import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import SlideConfirm from "@/components/general-components/SlideConfirm";
-import { NumField, Tip, dateBr, errorMessage, money } from "../../comercial/-shared/commercial";
+import { NumField, Tip, dateBr, errorMessage, money, todayIso } from "../../comercial/-shared/commercial";
+import { cn } from "@/lib/utils";
 import { RecordFilesPanel } from "../../arquivos/-shared/record-files";
 import { HOLDER_LABEL, HolderType, PERM_MOVE, stockApi } from "../-shared/stock";
 import { MovementDetailDialog } from "../-shared/stock-movements";
@@ -82,9 +83,10 @@ function UnitPage() {
     canUpdate && unit.status !== "bloqueado" && { key: "block", icon: "lock", label: "Bloquear", run: () => setBlocking(true) },
     canUpdate && unit.status === "bloqueado" && !unit.itemRules.requiresInspection && { key: "free", icon: "lock-open", label: "Liberar", run: () => setState({ action: "liberar" }) },
     canUpdate && inStock && unit.length !== null && { key: "cut", icon: "scissors", label: "Cortar em pedaços", run: () => setDialog("cut") },
-    !retired && can(`inactive_${EQUIP_ABILITY}`) && { key: "retire", icon: "archive-x", label: "Baixar", run: () => setDialog("retire") },
+    !retired && can(`inactive_${EQUIP_ABILITY}`) && { key: "retire", icon: "archive-x", label: "Dar baixa", run: () => setDialog("retire") },
     { key: "labels", icon: "qr-code", label: "Imprimir etiqueta", run: () => setDialog("labels") },
   ].filter(Boolean) as Array<{ key: string; icon: string; label: string; run: () => void }>;
+  const exit = exitState(unit);
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     if (draft.tag.trim().length < 2) return setError("Informe a etiqueta.");
@@ -95,7 +97,7 @@ function UnitPage() {
     <>
       <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link to="/suprimentos/equipamentos" className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1"><Icon name="arrow-left" className="w-3 h-3" /> Equipamentos</Link>
+          <Link to="/suprimentos/equipamentos" className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1"><Icon name="arrow-left" className="w-3 h-3" /> Peças</Link>
           <div className="flex flex-wrap items-center gap-2 mt-1">
             <h1 className="text-xl font-bold tabular-nums">{unit.tag}</h1>
             <UnitStatusBadge status={unit.status} needsInspection={unit.needsInspection} />
@@ -119,7 +121,7 @@ function UnitPage() {
       </div>
 
       <div className="mt-4 grid xl:grid-cols-3 gap-4 items-start">
-        <div className="xl:col-span-2 grid gap-4">
+        <div className="xl:col-span-2 xl:row-span-2 grid gap-4 min-w-0">
           <Tabs defaultValue="dados">
             <TabsList>
               <TabsTrigger value="dados">Dados</TabsTrigger>
@@ -220,9 +222,16 @@ function UnitPage() {
           </Tabs>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-4 order-first xl:order-none">
           <section className="rounded-lg border p-4 text-sm grid gap-2">
             <h2 className="font-semibold">Situação</h2>
+            <div className={cn("rounded-lg px-3 py-2.5 flex items-start gap-2 text-base font-semibold",
+              exit.ok ? "bg-green-100 text-green-800 dark:bg-green-950/50 dark:text-green-300" : exit.out ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300" : "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300")}>
+              <Icon name={exit.ok ? "circle-check" : exit.out ? "map-pin" : "lock"} className="w-5 h-5 mt-0.5 shrink-0" />
+              <span>{exit.ok ? "Pode sair" : exit.out ? `Fora do estoque: ${unit.holder}` : `Não pode sair: ${exit.reason}`}</span>
+            </div>
+            {!exit.ok && exit.fix === "inspecionar" && can(PERM_INSPECT) && <Button type="button" size="sm" className="w-fit" onClick={() => setDialog("inspect")}><Icon name="list-checks" className="w-3 h-3 mr-1" /> Inspecionar agora</Button>}
+            {!exit.ok && exit.fix === "calibrar" && canUpdate && inStock && <Button type="button" size="sm" variant="outline" className="w-fit" onClick={() => setDialog("service")}><Icon name="send" className="w-3 h-3 mr-1" /> Enviar para calibrar</Button>}
             <p><span className="text-muted-foreground">Onde está:</span> {unit.holder}{unit.holderType !== "local" && unit.holderType !== "externo" ? ` (${HOLDER_LABEL[unit.holderType as HolderType] ?? unit.holderType})` : ""}</p>
             {unit.itemRules.requiresInspection && <p className="flex flex-wrap items-center gap-2"><span className="text-muted-foreground">Inspeção:</span> {unit.nextInspectionAt ? dateBr(unit.nextInspectionAt) : "sem registro"} <DueStateBadge state={unit.dues.inspection} /></p>}
             {unit.itemRules.requiresCalibration && <p className="flex flex-wrap items-center gap-2"><span className="text-muted-foreground">Calibração:</span> {unit.nextCalibrationAt ? dateBr(unit.nextCalibrationAt) : "sem registro"} <DueStateBadge state={unit.dues.calibration} /></p>}
@@ -230,6 +239,8 @@ function UnitPage() {
             {unit.itemRules.inspectionBeforeUse && <p className="text-xs text-muted-foreground">Exige inspeção antes de cada uso.</p>}
             {retired && <p className="rounded border border-red-300 dark:border-red-800 p-2">Baixada em {dateBr(unit.retiredAt)}: {unit.retiredReasonLabel}{unit.retiredNote ? ` — ${unit.retiredNote}` : ""}</p>}
           </section>
+        </div>
+        <div className="grid gap-4">
           <section className="rounded-lg border p-4 text-sm grid gap-1">
             <h2 className="font-semibold">Origem</h2>
             <p><span className="text-muted-foreground">Adquirida em</span> {dateBr(unit.acquiredAt)}{unit.acquisitionCost !== null ? ` · ${money(unit.acquisitionCost)}` : ""}</p>
@@ -255,6 +266,27 @@ function UnitPage() {
       {opened && <MovementDetailDialog id={opened} onClose={() => setOpened(null)} />}
     </>
   );
+}
+
+/** Pode sair do estoque? O motivo em palavras e o atalho que resolve (o mesmo critério da API). */
+function exitState(unit: UnitDetail): { ok: boolean; out: boolean; reason: string; fix: "inspecionar" | "calibrar" | null } {
+  const now = todayIso();
+  const late = (date: string | null) => !!date && date < now;
+  const no = (reason: string, fix: "inspecionar" | "calibrar" | null = null) => ({ ok: false, out: false, reason, fix });
+  if (unit.status === "baixado") return no("baixada");
+  if (unit.status === "em_uso") return { ok: false, out: true, reason: "", fix: null };
+  if (unit.status === "bloqueado") return no(unit.itemRules.requiresInspection ? "bloqueada (libera com uma inspeção aprovada)" : "bloqueada", unit.itemRules.requiresInspection ? "inspecionar" : null);
+  if (unit.status === "em_inspecao") return no("esperando inspeção", "inspecionar");
+  if (unit.status === "em_calibracao") return no("em calibração");
+  if (unit.status === "em_manutencao") return no("em manutenção");
+  if (unit.holderType !== "local") return { ok: false, out: true, reason: "", fix: null };
+  if (unit.needsInspection) return no("precisa de inspeção extraordinária", "inspecionar");
+  if (unit.itemRules.requiresInspection && !unit.nextInspectionAt) return no("sem inspeção registrada", "inspecionar");
+  if (unit.itemRules.requiresInspection && late(unit.nextInspectionAt)) return no(`inspeção venceu em ${dateBr(unit.nextInspectionAt)}`, "inspecionar");
+  if (unit.itemRules.requiresCalibration && !unit.nextCalibrationAt) return no("sem calibração registrada", "calibrar");
+  if (unit.itemRules.requiresCalibration && late(unit.nextCalibrationAt)) return no(`calibração venceu em ${dateBr(unit.nextCalibrationAt)}`, "calibrar");
+  if (late(unit.lifeEndsAt)) return no(`vida útil acabou em ${dateBr(unit.lifeEndsAt)}`);
+  return { ok: true, out: false, reason: "", fix: null };
 }
 
 function ExtraDialog({ onClose, onConfirm }: { onClose: () => void; onConfirm: (note: string) => void }) {
@@ -339,7 +371,7 @@ function RetireDialog({ unit, onClose, onDone }: { unit: UnitDetail; onClose: ()
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Baixar {unit.tag}</DialogTitle>
+          <DialogTitle>Dar baixa em {unit.tag}</DialogTitle>
           <DialogDescription>A peça sai do estoque de vez.{unit.holderType === "os" ? " Ela está numa obra: o custo dela conta no resultado da OS (menos em venda)." : ""}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
@@ -348,7 +380,7 @@ function RetireDialog({ unit, onClose, onDone }: { unit: UnitDetail; onClose: ()
           <div><Label htmlFor="retireNote">O que aconteceu{needsNote && <span> *</span>}</Label>
             <Textarea id="retireNote" className="mt-1" rows={2} maxLength={500} value={note} onChange={(event) => setNote(event.target.value)} /></div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <SlideConfirm label="Deslize para baixar a peça" pending={isPending} onConfirm={confirm} />
+          <SlideConfirm label="Deslize para dar baixa na peça" pending={isPending} onConfirm={confirm} />
           <Button type="button" variant="ghost" size="sm" className="w-fit" onClick={onClose}>Desistir</Button>
         </div>
       </DialogContent>

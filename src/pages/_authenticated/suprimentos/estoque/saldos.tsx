@@ -53,16 +53,19 @@ function BalancesPage() {
     <>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">Saldos</h1>
+          <h1 className="text-xl font-bold">Itens por local</h1>
           <p className="text-sm text-muted-foreground">Quanto de cada item há em cada lugar. Sem filtro, mostra só os locais de estoque.</p>
         </div>
         <Button type="button" variant="outline" disabled={!rows.length} onClick={exportCsv}><Icon name="download" className="w-4 h-4 mr-1" /> Exportar planilha</Button>
       </div>
 
       <div className="flex flex-col xl:flex-row xl:flex-wrap xl:items-center gap-3 my-4 p-4 rounded-lg border">
-        <div className="w-full xl:w-52"><Select name="holderType" options={HOLDER_OPTIONS} state={holderType} clearable modal={false} placeholder="Locais de estoque" onChange={(_, value) => { setHolderType(String(value ?? "")); setHolderId(""); }} /></div>
+        <div className="w-full xl:w-60 flex items-center gap-2">
+          <Label className="shrink-0">Onde está</Label>
+          <Select name="holderType" options={HOLDER_OPTIONS} state={holderType} clearable modal={false} placeholder="Nos locais de estoque" onChange={(_, value) => { setHolderType(String(value ?? "")); setHolderId(""); }} />
+        </div>
         {holderType === "local" && <div className="w-full xl:w-52"><Select name="holderId" options={options?.locations ?? []} state={holderId} clearable modal={false} placeholder="Todos os locais" onChange={(_, value) => setHolderId(String(value ?? ""))} /></div>}
-        <div className="w-full xl:w-56"><Select name="categoryId" options={toOptions(options?.categories)} state={categoryId} clearable modal={false} placeholder="Todas as categorias" onChange={(_, value) => setCategoryId(String(value ?? ""))} /></div>
+        <div className="w-full xl:w-56"><Select name="categoryId" searchable options={toOptions(options?.categories)} state={categoryId} clearable modal={false} placeholder="Todas as categorias" onChange={(_, value) => setCategoryId(String(value ?? ""))} /></div>
         <div className="w-full xl:w-72"><Input name="search" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar item por nome ou código..." icon="search" /></div>
         {!holderType && (
           <div className="flex items-center gap-2">

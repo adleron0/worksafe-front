@@ -14,9 +14,9 @@ import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import SlideConfirm from "@/components/general-components/SlideConfirm";
 import { NumField, Tip, dateBr, errorMessage, money, newUid, todayIso } from "../../comercial/-shared/commercial";
-import { LotPicker, UnitPicker } from "./stock-pickers";
+import { LocationField, LotPicker, UnitPicker, useLocationValue } from "./stock-pickers";
 import {
-  ImportResult, ItemOption, MANUAL_TYPES, ManualType, Movement, PERM_ADJUST, STOCK_KEYS, qty, stockApi, useItemOptions, useStockOptions,
+  CONDITION_LABEL, ENTRY_REASONS, IMPORT_TEMPLATE, ImportResult, ItemOption, MANUAL_TYPES, ManualType, Movement, PERM_ADJUST, STOCK_KEYS, downloadCsv, qty, stockApi, useItemOptions, useStockOptions,
 } from "./stock";
 
 // ---------------------------------------------------------------- linhas de itens (lançamento, romaneio)
@@ -77,7 +77,7 @@ export function LinesEditor({ mode, locationId, lines, onChange, items, itemsLoa
             <div className="grid grid-cols-12 gap-2 items-end">
               <div className="col-span-12 sm:col-span-7">
                 {index === 0 && <Label className="text-xs">Item</Label>}
-                <Select name={`item-${line.key}`} options={options} state={line.itemId} isLoading={itemsLoading} modal
+                <Select name={`item-${line.key}`} searchable options={options} state={line.itemId} isLoading={itemsLoading} modal
                   onChange={(_, value) => setLine(line.key, { itemId: String(value ?? ""), lotId: "", lotNumber: "", expiresAt: "", unitId: "" })} placeholder="Escolha o item" />
               </div>
               <div className={showCost && mode === "entrada" ? "col-span-5 sm:col-span-2" : "col-span-10 sm:col-span-4"}>
@@ -142,30 +142,35 @@ export function useStockRefresh() {
 
 // ---------------------------------------------------------------- novo lançamento
 
-export function NewMovementDialog({ initialType, onClose, onDone }: { initialType: ManualType; onClose: () => void; onDone?: (movement: Movement) => void }) {
+export function NewMovementDialog({ initialType, initialItemId, onClose, onDone }: { initialType: ManualType; initialItemId?: number; onClose: () => void; onDone?: (movement: Movement) => void }) {
   const { can } = useVerify();
   const refresh = useStockRefresh();
-  const allowed = MANUAL_TYPES.filter((type) => can(type.permission));
-  const [type, setType] = useState<ManualType>(initialType);
+  // a escolha vem do menu: o diálogo não troca de tipo (e não apaga as linhas)
+  const kind = initialType;
+  const [reason, setReason] = useState("prateleira");
   const [date, setDate] = useState(todayIso());
   const [locationId, setLocationId] = useState("");
   const [toLocationId, setToLocationId] = useState("");
   const [costCenterId, setCostCenterId] = useState("");
   const [note, setNote] = useState("");
-  const [lines, setLines] = useState<LineDraft[]>([emptyLine()]);
+  const [lines, setLines] = useState<LineDraft[]>(() => [{ ...emptyLine(), itemId: initialItemId ? String(initialItemId) : "" }]);
   const [error, setError] = useState("");
   const { data: options } = useStockOptions();
-  const locations = options?.locations ?? [];
-  const location = locationId || (locations[0] ? String(locations[0].id) : "");
+  const location = useLocationValue(locationId);
+  const destination = useLocationValue(toLocationId, location);
   const { data: items = [], isLoading: itemsLoading } = useItemOptions(location || null);
-  const mode: LinesMode = type === "saldo_inicial" || type === "entrada_avulsa" ? "entrada" : type === "ajuste" ? "ajuste" : "saida";
-  const meta = MANUAL_TYPES.find((option) => option.id === type)!;
+  const mode: LinesMode = kind === "entrada" ? "entrada" : kind === "ajuste" ? "ajuste" : "saida";
+  const meta = MANUAL_TYPES.find((option) => option.id === kind)!;
+  // "Já estava na prateleira" é saldo inicial para quem pode ajustar; o resto é entrada avulsa com o motivo na observação
+  const reasonLabel = ENTRY_REASONS.find((option) => option.id === reason)?.name ?? "";
+  const type = kind === "entrada" ? (reason === "prateleira" && can(PERM_ADJUST) ? "saldo_inicial" : "entrada_avulsa") : kind;
+  const fullNote = kind === "entrada" ? [reasonLabel, note.trim()].filter(Boolean).join(" · ") : note.trim();
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => stockApi.post<Movement>("movements", {
-      type, date, locationId: Number(location), note: note.trim() || null,
-      ...(type === "transferencia" ? { toLocationId: Number(toLocationId) } : {}),
-      ...(type === "consumo_interno" && costCenterId ? { costCenterId: Number(costCenterId) } : {}),
+      type, date, locationId: Number(location), note: fullNote || null,
+      ...(kind === "transferencia" ? { toLocationId: Number(destination) } : {}),
+      ...(kind === "consumo_interno" && costCenterId ? { costCenterId: Number(costCenterId) } : {}),
       lines: linesBody(mode, lines, items),
     }),
     onSuccess: (movement) => { refresh(); toast({ title: `${movement.number}: ${movement.typeLabel.toLowerCase()} lançada`, variant: "success" }); onDone?.(movement); onClose(); },
@@ -174,13 +179,14 @@ export function NewMovementDialog({ initialType, onClose, onDone }: { initialTyp
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!location) return setError("Escolha o local.");
-    if (type === "transferencia" && !toLocationId) return setError("Escolha o local de destino.");
-    if (type === "transferencia" && toLocationId === location) return setError("A origem e o destino são o mesmo local.");
-    if (type === "ajuste" && !note.trim()) return setError("Informe o motivo do ajuste.");
+    if (kind === "transferencia" && !destination) return setError("Cadastre outro local de estoque para transferir.");
+    if (kind === "transferencia" && destination === location) return setError("A origem e o destino são o mesmo local.");
+    if (kind === "ajuste" && !note.trim()) return setError("Informe o motivo do ajuste.");
     const problem = linesError(mode, lines, items);
     if (problem) return setError(problem);
     setError(""); mutate();
   };
+  const resetPicks = () => setLines((current) => current.map((line) => ({ ...line, lotId: "", unitId: "" })));
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -190,27 +196,25 @@ export function NewMovementDialog({ initialType, onClose, onDone }: { initialTyp
           <DialogDescription>{meta.hint}</DialogDescription>
         </DialogHeader>
         <form className="grid gap-4" onSubmit={submit}>
-          <div className="grid sm:grid-cols-3 gap-3">
-            <div><Label>Tipo</Label>
-              <Select name="type" options={allowed.map(({ id, name }) => ({ id, name }))} state={type} modal onChange={(_, value) => { setType((String(value || type)) as ManualType); setLines([emptyLine()]); }} placeholder="Selecione" /></div>
+          <div className="grid sm:grid-cols-3 gap-3 items-start">
+            {kind === "entrada" && (
+              <div><Label>Motivo</Label>
+                <Select name="reason" options={ENTRY_REASONS} state={reason} modal onChange={(_, value) => setReason(String(value || "prateleira"))} /></div>
+            )}
             <div><Label>Data</Label>
               <CalendarPicker mode="single" name="date" className="mt-1 w-full" value={date} fromYear={2020} toYear={2040} onValueChange={(_, value) => setDate(String(value ?? "") || todayIso())} /></div>
-            <div><Label>{type === "transferencia" ? "Sai de" : mode === "entrada" ? "Entra em" : "Local"} <span>*</span></Label>
-              <Select name="locationId" options={locations} state={location} modal onChange={(_, value) => { setLocationId(String(value ?? "")); setLines((current) => current.map((line) => ({ ...line, lotId: "", unitId: "" }))); }} placeholder="Escolha o local" /></div>
+            <LocationField label={kind === "transferencia" ? "Sai de" : mode === "entrada" ? "Entra em" : "Local"} value={location} onChange={(value) => { setLocationId(value); resetPicks(); }} />
+            {kind === "transferencia" && <LocationField name="toLocationId" label="Vai para" value={destination} exclude={location} onChange={setToLocationId} />}
+            {kind === "consumo_interno" && (
+              <div><Label>Centro de custo</Label>
+                <Select name="costCenterId" searchable={(options?.costCenters.length ?? 0) > 8} options={options?.costCenters ?? []} state={costCenterId} clearable modal onChange={(_, value) => setCostCenterId(String(value ?? ""))} placeholder="Nenhum" /></div>
+            )}
           </div>
-          {type === "transferencia" && (
-            <div className="sm:w-1/3"><Label>Vai para <span>*</span></Label>
-              <Select name="toLocationId" options={locations.filter((l) => String(l.id) !== location)} state={toLocationId} modal onChange={(_, value) => setToLocationId(String(value ?? ""))} placeholder="Escolha o destino" /></div>
-          )}
-          {type === "consumo_interno" && (
-            <div className="sm:w-1/2"><Label>Centro de custo</Label>
-              <Select name="costCenterId" options={options?.costCenters ?? []} state={costCenterId} clearable modal onChange={(_, value) => setCostCenterId(String(value ?? ""))} placeholder="Nenhum" /></div>
-          )}
           <LinesEditor mode={mode} locationId={location} lines={lines} onChange={setLines} items={items} itemsLoading={itemsLoading} showCost={mode === "entrada"} />
-          <div><Label htmlFor="movementNote">{type === "ajuste" ? "Motivo do ajuste" : "Observação (opcional)"}{type === "ajuste" && <span> *</span>}</Label>
+          <div><Label htmlFor="movementNote">{kind === "ajuste" ? "Motivo do ajuste" : "Observação (opcional)"}{kind === "ajuste" && <span> *</span>}</Label>
             <Textarea id="movementNote" className="mt-1" rows={2} maxLength={1000} value={note} onChange={(event) => setNote(event.target.value)} /></div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 bg-background pt-2">
             <Button type="button" variant="outline" onClick={onClose}>Voltar</Button>
             <Button type="submit" disabled={isPending}>{isPending ? "Lançando..." : "Lançar"}</Button>
           </DialogFooter>
@@ -263,7 +267,7 @@ export function MovementDetailDialog({ id, onClose }: { id: number; onClose: () 
                 <div key={line.id} className="flex flex-col md:flex-row md:items-center gap-1 px-3 py-2 border-t">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{line.code} — {line.item}</p>
-                    <p className="text-xs text-muted-foreground">{[line.lot && `lote ${line.lot}`, line.tag && `peça ${line.tag}`, line.condition && line.condition !== "ok" && `voltou ${line.condition}`, line.chargedToOrder && "conta no custo da obra", line.note].filter(Boolean).join(" · ") || " "}</p>
+                    <p className="text-xs text-muted-foreground">{[line.lot && `lote ${line.lot}`, line.tag && `peça ${line.tag}`, line.condition && line.condition !== "ok" && (CONDITION_LABEL[line.condition] ?? line.condition), line.chargedToOrder && "conta no custo da obra", line.note].filter(Boolean).join(" · ") || " "}</p>
                   </div>
                   <div className="md:w-48 text-xs text-muted-foreground">{line.from} → {line.to}</div>
                   <div className="md:w-24 md:text-right tabular-nums">{qty(line.quantity)} {line.unit}</div>
@@ -303,7 +307,10 @@ async function readText(file: File) {
   try { return new TextDecoder("utf-8", { fatal: true }).decode(buffer); } catch { return new TextDecoder("windows-1252").decode(buffer); }
 }
 
-export function ImportCsvButton() {
+/** Planilha modelo da carga inicial (cabeçalho e uma linha de exemplo). */
+export const downloadImportTemplate = () => downloadCsv("modelo-carga-estoque.csv", [...IMPORT_TEMPLATE.header], [[...IMPORT_TEMPLATE.example]]);
+
+export function ImportCsvButton({ label = "Carga por planilha", variant = "outline", showTemplate = true }: { label?: string; variant?: "outline" | "default"; showTemplate?: boolean }) {
   const { can } = useVerify();
   const refresh = useStockRefresh();
   const queryClient = useQueryClient();
@@ -323,8 +330,9 @@ export function ImportCsvButton() {
     <>
       <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) mutate(file); event.target.value = ""; }} />
       <Tip text="CSV com cabeçalho: código; nome; categoria; unidade; controle; quantidade; local; custo; série; fabricação; lote; validade. Só a coluna nome é obrigatória.">
-        <Button type="button" variant="outline" disabled={isPending} onClick={() => fileRef.current?.click()}><Icon name="file-spreadsheet" className="w-4 h-4 mr-1" /> {isPending ? "Importando..." : "Carga por planilha"}</Button>
+        <Button type="button" variant={variant} disabled={isPending} onClick={() => fileRef.current?.click()}><Icon name="file-spreadsheet" className="w-4 h-4 mr-1" /> {isPending ? "Importando..." : label}</Button>
       </Tip>
+      {showTemplate && <Button type="button" variant="link" size="sm" className="px-1" onClick={downloadImportTemplate}><Icon name="download" className="w-3 h-3 mr-1" /> Baixar planilha modelo</Button>}
       {result && (
         <Dialog open onOpenChange={(open) => { if (!open) setResult(null); }}>
           <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">

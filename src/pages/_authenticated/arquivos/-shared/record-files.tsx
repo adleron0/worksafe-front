@@ -20,6 +20,13 @@ import { uploadLarge } from "./upload";
  */
 export type RecordEntity = "customer" | "proposal" | "service_order" | "stock_item" | "stock_unit";
 const BASE = "record-files" as const;
+
+/** Envia um arquivo a um registro fora do painel (ex.: o certificado no "Receber de volta" da calibração). */
+export async function uploadRecordFile(entity: RecordEntity, entityId: number, file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  return (await api.post(`${BASE}/${entity}/${entityId}`, form)).data;
+}
 interface Sending { key: string; name: string; progress: number; status: "enviando" | "erro"; error?: string }
 
 export function RecordFilesPanel({ entity, entityId, title = "Arquivos", hint, className }: { entity: RecordEntity; entityId: number; title?: string; hint?: string; className?: string }) {

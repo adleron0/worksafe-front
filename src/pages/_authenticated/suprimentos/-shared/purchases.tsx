@@ -15,7 +15,8 @@ import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { dateBr, errorMessage, money, todayIso } from "../../comercial/-shared/commercial";
 import { PAYABLES_KEY, PAYABLES_SUMMARY_KEY } from "../../financeiro/-shared/payables";
-import { STOCK_KEYS, useCanPick, useStockOptions } from "./stock";
+import { STOCK_KEYS } from "./stock";
+import { LocationField, useLocationValue } from "./stock-pickers";
 import { paymentMethodOptions } from "../../financeiro/_receber/-components/options";
 
 /** Pedido de compra: tipos (espelham a API), etapas e a passagem entre elas. */
@@ -167,18 +168,15 @@ export function PurchaseMoveDialog({ purchase, target, onClose, onDone }: { purc
   const items = purchase.items ?? full?.items ?? [];
   const toObra = (purchase.serviceOrder ?? full?.serviceOrder ?? null) !== null;
   const stockPending = receiving && isForward(from, target) && items.some((item) => item.itemId && (item.receivedQuantity ?? 0) < item.quantity);
-  const canPick = useCanPick();
-  const { data: stockOptions, isError: stockOptionsError } = useStockOptions(stockPending && !toObra);
-  // sem a lista de locais, a API usa o local padrão
-  const noStockOptions = stockOptionsError || !canPick;
-  const locations = stockOptions?.locations ?? [];
+  // sem a lista de locais (LocationField avisa), a API usa o local padrão
+  const location = useLocationValue(locationId);
   const count = Number(installments);
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => purchasesApi.patch<Purchase>(`${purchase.id}/status`, {
       status: target, note,
       ...(buying ? { installments: count, firstDueDate, paymentMethod, deliveryDate: deliveryDate || null, date } : {}),
-      ...(receiving ? { date, invoiceNumber, ...(stockPending && !toObra && (locationId || locations[0]) ? { locationId: Number(locationId || locations[0].id) } : {}) } : {}),
+      ...(receiving ? { date, invoiceNumber, ...(stockPending && !toObra && location ? { locationId: Number(location) } : {}) } : {}),
     }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: [PURCHASES_KEY] });
@@ -213,7 +211,7 @@ export function PurchaseMoveDialog({ purchase, target, onClose, onDone }: { purc
     <Dialog open onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{moveLabel(from, target)}: {purchase.number}</DialogTitle>
+          <DialogTitle>{stockPending ? "Marcar recebido de uma vez" : moveLabel(from, target)}: {purchase.number}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <form className="grid gap-4" onSubmit={submit}>
@@ -251,13 +249,10 @@ export function PurchaseMoveDialog({ purchase, target, onClose, onDone }: { purc
           )}
           {stockPending && (toObra ? (
             <p className="text-sm text-muted-foreground -mt-2">Os itens do estoque deste pedido entram direto na obra.</p>
-          ) : noStockOptions ? (
-            <p className="text-sm text-muted-foreground -mt-2">Os itens do estoque entram no local de estoque padrão.</p>
           ) : (
             <div>
-              <Label>Local de estoque onde entra</Label>
-              <Select name="locationId" options={locations} state={locationId || (locations[0] ? String(locations[0].id) : "")} modal onChange={(_, value) => setLocationId(String(value ?? ""))} placeholder="Escolha o local" />
-              <p className="text-xs text-muted-foreground mt-1">Itens por lote ou por peça pedem o "Receber itens", na ficha do pedido.</p>
+              <LocationField label="Os itens do estoque entram em" value={location} onChange={setLocationId} />
+              <p className="text-xs text-muted-foreground mt-1">Entra a quantidade que falta de cada linha. Para informar lote, peças ou entrega parcial, use "Receber itens" na ficha do pedido.</p>
             </div>
           ))}
           <div><Label htmlFor="moveNote">{needsReason ? "Motivo" : "Observação (opcional)"}{needsReason && <span> *</span>}</Label>

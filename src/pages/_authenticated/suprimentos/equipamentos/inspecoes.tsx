@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
 import Pagination from "@/components/general-components/Pagination";
@@ -10,39 +11,55 @@ import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { dateBr, errorMessage } from "../../comercial/-shared/commercial";
 import { DueState, stockApi } from "../-shared/stock";
+import { DuesPanel } from "../-shared/equipment-dues";
 import { DueStateBadge, EQUIP_ABILITY, EQUIP_KEYS, INSPECTION_RESULTS, InspectionDialog, InspectionTarget, PERM_INSPECT, UnitRow, UnitStatusBadge } from "../-shared/equipment";
 
 export const Route = createFileRoute("/_authenticated/suprimentos/equipamentos/inspecoes")({
   component: InspectionsPage,
-  validateSearch: (search: Record<string, unknown>): { view?: "registradas" } => (search.view === "registradas" ? { view: "registradas" } : {}),
+  // view: aba inicial; tipo: filtro inicial dos vencimentos (inspecao, calibracao, vida_util, validade_lote, ca)
+  validateSearch: (search: Record<string, unknown>): { view?: "registradas" | "vencimentos"; tipo?: string } => ({
+    ...(search.view === "registradas" || search.view === "vencimentos" ? { view: search.view } : {}),
+    ...(typeof search.tipo === "string" && search.tipo ? { tipo: search.tipo } : {}),
+  }),
 });
 
-interface Todo { units: Array<UnitRow & { reason: string }>; lots: Array<{ id: number; number: string; itemId: number; item: string; nextInspectionAt: string | null; state: DueState }> }
+interface Todo {
+  units: Array<UnitRow & { reason: string; templateId: number | null }>;
+  lots: Array<{ id: number; number: string; itemId: number; item: string; nextInspectionAt: string | null; state: DueState; templateId: number | null }>;
+}
 interface Done {
   total: number;
   rows: Array<{ id: number; date: string; kind: string; kindLabel: string; result: string; resultLabel: string; unitId: number | null; lotId: number | null; target: string; inspector: string | null; notes: string | null; nextDueAt: string | null }>;
 }
 
-/** Inspeções: o que está para inspecionar (peças e lotes) e o que já foi registrado. */
+/** Inspeções e calibrações: o que inspecionar agora, tudo o que vence (inspeção, calibração, vida útil, lote, CA) e o que já foi registrado. */
 function InspectionsPage() {
   const { can } = useVerify();
   const initial = Route.useSearch();
-  const [view, setView] = useState<"fazer" | "registradas">(initial.view === "registradas" ? "registradas" : "fazer");
+  const [view, setView] = useState<string>(initial.view ?? (initial.tipo ? "vencimentos" : "fazer"));
   const [inspecting, setInspecting] = useState<InspectionTarget | null>(null);
   if (!(can(`view_${EQUIP_ABILITY}`) || can(`view_${PERM_INSPECT}`))) return null;
   return (
     <>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">Inspeções</h1>
-          <p className="text-sm text-muted-foreground">Peças e lotes com inspeção vencida, a vencer em 30 dias, esperando inspeção ou com inspeção extraordinária pedida.</p>
+          <h1 className="text-xl font-bold">Inspeções e calibrações</h1>
+          <p className="text-sm text-muted-foreground">O que inspecionar agora, o que vai vencer e o histórico. Peça com inspeção ou calibração vencida não sai do estoque.</p>
         </div>
-        <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
-          <Button size="sm" variant={view === "fazer" ? "default" : "ghost"} onClick={() => setView("fazer")}>A fazer</Button>
-          <Button size="sm" variant={view === "registradas" ? "default" : "ghost"} onClick={() => setView("registradas")}>Registradas</Button>
-        </div>
+        {can(`view_${EQUIP_ABILITY}`) && (
+          <Button asChild variant="outline"><Link to="/suprimentos/equipamentos/calibracao"><Icon name="gauge" className="w-4 h-4 mr-1" /> Calibração e manutenção</Link></Button>
+        )}
       </div>
-      {view === "fazer" ? <TodoList onInspect={setInspecting} /> : <DoneList />}
+      <Tabs value={view} onValueChange={setView} className="mt-4">
+        <TabsList>
+          <TabsTrigger value="fazer">A fazer</TabsTrigger>
+          {can(`view_${EQUIP_ABILITY}`) && <TabsTrigger value="vencimentos">Vencimentos</TabsTrigger>}
+          <TabsTrigger value="registradas">Registradas</TabsTrigger>
+        </TabsList>
+        <TabsContent value="fazer"><TodoList onInspect={setInspecting} /></TabsContent>
+        {can(`view_${EQUIP_ABILITY}`) && <TabsContent value="vencimentos"><DuesPanel initialType={initial.tipo ?? ""} /></TabsContent>}
+        <TabsContent value="registradas"><DoneList /></TabsContent>
+      </Tabs>
       {inspecting && <InspectionDialog target={inspecting} onClose={() => setInspecting(null)} />}
     </>
   );
@@ -73,7 +90,7 @@ function TodoList({ onInspect }: { onInspect: (target: InspectionTarget) => void
               {unit.nextInspectionAt && <span className="text-xs text-muted-foreground">{dateBr(unit.nextInspectionAt)}</span>}
             </div>
             <div className="lg:w-44 flex lg:justify-end">
-              {canInspect && <Button type="button" size="sm" variant="outline" onClick={() => onInspect({ unitId: unit.id, label: `${unit.tag} · ${unit.item}`, kind: unit.reason === "Extraordinária" ? "extraordinaria" : unit.reason === "Esperando inspeção" ? "recebimento" : "periodica" })}><Icon name="list-checks" className="w-3 h-3 mr-1" /> Inspecionar</Button>}
+              {canInspect && <Button type="button" size="sm" variant="outline" onClick={() => onInspect({ unitId: unit.id, label: `${unit.tag} · ${unit.item}`, templateId: unit.templateId, kind: unit.reason === "Extraordinária" ? "extraordinaria" : unit.reason === "Esperando inspeção" ? "recebimento" : "periodica" })}><Icon name="list-checks" className="w-3 h-3 mr-1" /> Inspecionar</Button>}
             </div>
           </div>
         ))}
@@ -89,7 +106,7 @@ function TodoList({ onInspect }: { onInspect: (target: InspectionTarget) => void
               </div>
               <div className="lg:w-56 flex items-center gap-2"><DueStateBadge state={lot.state} /> <span className="text-xs text-muted-foreground">{lot.nextInspectionAt ? dateBr(lot.nextInspectionAt) : "sem registro"}</span></div>
               <div className="lg:w-44 flex lg:justify-end">
-                {canInspect && <Button type="button" size="sm" variant="outline" onClick={() => onInspect({ lotId: lot.id, label: `Lote ${lot.number} · ${lot.item}` })}><Icon name="list-checks" className="w-3 h-3 mr-1" /> Inspecionar</Button>}
+                {canInspect && <Button type="button" size="sm" variant="outline" onClick={() => onInspect({ lotId: lot.id, label: `Lote ${lot.number} · ${lot.item}`, templateId: lot.templateId })}><Icon name="list-checks" className="w-3 h-3 mr-1" /> Inspecionar</Button>}
               </div>
             </div>
           ))}

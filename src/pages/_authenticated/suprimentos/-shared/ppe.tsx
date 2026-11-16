@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/services/api";
 import { toast } from "@/hooks/use-toast";
@@ -16,7 +15,7 @@ import Select from "@/components/general-components/Select";
 import SignaturePad from "@/components/general-components/SignaturePad";
 import { NumField, Tip, dateBr, errorMessage, newUid } from "../../comercial/-shared/commercial";
 import { DueBadge, DueState, ItemOption, Pill, STOCK_KEYS, qty, stockApi, toOptions, useStockOptions } from "./stock";
-import { LotPicker, UnitPicker } from "./stock-pickers";
+import { LocationField, LotPicker, UnitPicker, useLocationValue } from "./stock-pickers";
 
 /** EPI: entrega (com assinatura), devolução, troca, ficha e pendências. */
 
@@ -279,7 +278,7 @@ function PpeLinesEditor({ lines, onChange, items, loading, locationId }: { lines
             <div className="grid grid-cols-12 gap-2 items-end">
               <div className="col-span-12 sm:col-span-7">
                 {index === 0 && <Label className="text-xs">EPI</Label>}
-                <Select name={`ppe-item-${line.key}`} options={options} state={line.itemId} isLoading={loading} modal onChange={(_, value) => setLine(line.key, { itemId: String(value ?? ""), lotId: "", unitId: "", quantity: 1 })} placeholder="Escolha o EPI" />
+                <Select name={`ppe-item-${line.key}`} searchable options={options} state={line.itemId} isLoading={loading} modal onChange={(_, value) => setLine(line.key, { itemId: String(value ?? ""), lotId: "", unitId: "", quantity: 1 })} placeholder="Escolha o EPI" />
               </div>
               <div className="col-span-10 sm:col-span-4">
                 {index === 0 && <Label className="text-xs">Quantidade</Label>}
@@ -353,10 +352,11 @@ export function PpeDeliverDialog({ employee, exchange = false, holding = [], onC
   const refresh = usePpeRefresh();
   const { data: options } = useStockOptions();
   const { data: orders } = useServiceOrderOptions();
-  const locations = options?.locations ?? [];
   const [locationId, setLocationId] = useState("");
-  const location = locationId || (locations[0] ? String(locations[0].id) : "");
+  const location = useLocationValue(locationId);
   const { data: items = [], isLoading } = usePpeItems(location);
+  const [paperSign, setPaperSign] = useState(false);
+  const [more, setMore] = useState(false);
   const [reason, setReason] = useState(exchange ? "troca_desgaste" : "admissao");
   const [serviceOrderId, setServiceOrderId] = useState("");
   const [costCenterId, setCostCenterId] = useState("");
@@ -374,7 +374,7 @@ export function PpeDeliverDialog({ employee, exchange = false, holding = [], onC
       const body = {
         employeeId: employee.id, locationId: Number(location), reason, note: note.trim() || null,
         ...(serviceOrderId ? { serviceOrderId: Number(serviceOrderId) } : {}), ...(costCenterId ? { costCenterId: Number(costCenterId) } : {}),
-        lines: ppeLinesBody(lines, items), signatureName: signatureName.trim() || null, signatureImage,
+        lines: ppeLinesBody(lines, items), signatureName: paperSign ? null : signatureName.trim() || null, signatureImage: paperSign ? null : signatureImage,
       };
       if (!exchange) return stockApi.post<DeliverResult>("ppe/deliveries", body);
       const done = await stockApi.post<{ delivered: DeliverResult }>("ppe/exchanges", { ...body, discard, returnLines: backBody(back) });
@@ -383,7 +383,8 @@ export function PpeDeliverDialog({ employee, exchange = false, holding = [], onC
     onSuccess: (value) => {
       refresh();
       toast({ title: `${value.number}: ${exchange ? "troca registrada" : "entrega registrada"}`, variant: "success" });
-      if (value.warnings?.length) setResult(value); else onClose();
+      // assinatura no papel: fica a tela para gerar a ficha
+      if (value.warnings?.length || paperSign) setResult(value); else onClose();
     },
     onError: (err) => setError(errorMessage(err)),
   });
@@ -393,7 +394,7 @@ export function PpeDeliverDialog({ employee, exchange = false, holding = [], onC
     if (exchange && !backBody(back).length) return setError("Marque o que o funcionário está devolvendo.");
     const problem = ppeLinesError(lines, items);
     if (problem) return setError(problem);
-    if (!signatureImage) return setError("Peça para o funcionário assinar no quadro.");
+    if (!paperSign && !signatureImage) return setError("Peça para o funcionário assinar no quadro (ou marque \"Assina na ficha impressa\").");
     setError(""); mutate();
   };
 
@@ -402,13 +403,18 @@ export function PpeDeliverDialog({ employee, exchange = false, holding = [], onC
       <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{result.number}: registrada, com avisos</DialogTitle>
-            <DialogDescription>A entrega foi feita. Confira os pontos abaixo.</DialogDescription>
+            <DialogTitle>{result.number}: {exchange ? "troca registrada" : "entrega registrada"}</DialogTitle>
+            <DialogDescription>{paperSign ? "Falta a assinatura: gere a ficha, imprima e peça para o funcionário assinar." : "A entrega foi feita. Confira os pontos abaixo."}</DialogDescription>
           </DialogHeader>
-          <ul className="grid gap-2 text-sm">
-            {result.warnings.map((warning, index) => <li key={index} className="flex gap-2"><Icon name="triangle-alert" className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" /> {warning}</li>)}
-          </ul>
-          <DialogFooter><Button type="button" onClick={onClose}>Entendi</Button></DialogFooter>
+          {result.warnings?.length > 0 && (
+            <ul className="grid gap-2 text-sm">
+              {result.warnings.map((warning, index) => <li key={index} className="flex gap-2"><Icon name="triangle-alert" className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" /> {warning}</li>)}
+            </ul>
+          )}
+          <DialogFooter>
+            {paperSign && <Button type="button" variant="outline" onClick={() => printPpeSheet(employee.id)}><Icon name="printer" className="w-4 h-4 mr-1" /> Gerar ficha para assinar</Button>}
+            <Button type="button" onClick={onClose}>{paperSign ? "Fechar" : "Entendi"}</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     );
@@ -422,20 +428,10 @@ export function PpeDeliverDialog({ employee, exchange = false, holding = [], onC
           <DialogDescription>{exchange ? "O que está com ele volta (ou é descartado) e o novo sai do local escolhido." : "Sai do local escolhido para o funcionário, com a assinatura dele na tela."}</DialogDescription>
         </DialogHeader>
         <form className="grid gap-4" onSubmit={submit}>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div><Label>Sai de <span>*</span></Label>
-              <Select name="locationId" options={locations} state={location} modal onChange={(_, value) => { setLocationId(String(value ?? "")); setLines((current) => current.map((line) => ({ ...line, lotId: "", unitId: "" }))); }} placeholder="Escolha o local" /></div>
+          <div className="grid sm:grid-cols-2 gap-3 items-end">
+            <LocationField label="Sai de" value={locationId} onChange={(value) => { setLocationId(value); setLines((current) => current.map((line) => ({ ...line, lotId: "", unitId: "" }))); }} />
             <div><Label>Motivo</Label>
               <Select name="reason" options={exchange ? EXCHANGE_REASONS : PPE_REASONS} state={reason} modal onChange={(_, value) => setReason(String(value || reason))} /></div>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {orders && (
-              <div><Label>Para a obra</Label>
-                <Select name="serviceOrderId" options={orders.serviceOrders} state={serviceOrderId} clearable modal onChange={(_, value) => setServiceOrderId(String(value ?? ""))} placeholder="Nenhuma (custo da empresa)" />
-                <p className="text-xs text-muted-foreground mt-1">Marcada para uma obra, o custo do EPI conta nela.</p></div>
-            )}
-            <div><Label>Centro de custo</Label>
-              <Select name="costCenterId" options={toOptions(options?.costCenters)} state={costCenterId} clearable modal onChange={(_, value) => setCostCenterId(String(value ?? ""))} placeholder="Nenhum" /></div>
           </div>
           {exchange && (
             <section className="grid gap-2">
@@ -451,12 +447,38 @@ export function PpeDeliverDialog({ employee, exchange = false, holding = [], onC
             {exchange && <h3 className="text-sm font-semibold">O que sai</h3>}
             <PpeLinesEditor lines={lines} onChange={setLines} items={items} loading={isLoading} locationId={location} />
           </section>
-          <div><Label htmlFor="ppeNote">Observação (opcional)</Label>
-            <Textarea id="ppeNote" className="mt-1" rows={2} maxLength={1000} value={note} onChange={(event) => setNote(event.target.value)} /></div>
+          <button type="button" className="w-fit text-sm text-primary inline-flex items-center gap-1" aria-expanded={more} onClick={() => setMore((value) => !value)}>
+            <Icon name={more ? "chevron-up" : "chevron-down"} className="w-4 h-4" /> Mais opções (obra, centro de custo, observação)
+          </button>
+          {more && (
+            <div className="grid gap-3 rounded-lg border p-3">
+              <div className="grid sm:grid-cols-2 gap-3">
+                {orders && (
+                  <div><Label>Para a obra</Label>
+                    <Select name="serviceOrderId" searchable={orders.serviceOrders.length > 8} options={orders.serviceOrders} state={serviceOrderId} clearable modal onChange={(_, value) => setServiceOrderId(String(value ?? ""))} placeholder="Nenhuma (custo da empresa)" />
+                    <p className="text-xs text-muted-foreground mt-1">Marcada para uma obra, o custo do EPI conta nela.</p></div>
+                )}
+                <div><Label>Centro de custo</Label>
+                  <Select name="costCenterId" options={toOptions(options?.costCenters)} state={costCenterId} clearable modal onChange={(_, value) => setCostCenterId(String(value ?? ""))} placeholder="Nenhum" /></div>
+              </div>
+              <div><Label htmlFor="ppeNote">Observação (opcional)</Label>
+                <Textarea id="ppeNote" className="mt-1" rows={2} maxLength={1000} value={note} onChange={(event) => setNote(event.target.value)} /></div>
+            </div>
+          )}
           <section className="grid gap-2 rounded-lg border p-3">
-            <div><Label htmlFor="signatureName">Nome de quem assina</Label>
-              <Input id="signatureName" name="signatureName" value={signatureName} maxLength={160} onValueChange={(_, value) => setSignatureName(String(value))} className="mt-1" /></div>
-            <SignaturePad onChange={setSignatureImage} label="O funcionário assina aqui" />
+            <div className="flex items-center gap-2">
+              <Checkbox id="paperSign" checked={paperSign} onCheckedChange={(checked) => setPaperSign(checked === true)} />
+              <Label htmlFor="paperSign">Assina na ficha impressa</Label>
+            </div>
+            {paperSign ? (
+              <p className="text-xs text-muted-foreground">A entrega fica registrada sem assinatura na tela. Depois de registrar, gere a ficha para o funcionário assinar no papel.</p>
+            ) : (
+              <>
+                <div><Label htmlFor="signatureName">Nome de quem assina</Label>
+                  <Input id="signatureName" name="signatureName" value={signatureName} maxLength={160} onValueChange={(_, value) => setSignatureName(String(value))} className="mt-1" /></div>
+                <SignaturePad onChange={setSignatureImage} label="O funcionário assina aqui" />
+              </>
+            )}
           </section>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <DialogFooter>
@@ -471,14 +493,12 @@ export function PpeDeliverDialog({ employee, exchange = false, holding = [], onC
 
 export function PpeReturnDialog({ employee, holding, onClose }: { employee: { id: number; name: string }; holding: PpeHolding[]; onClose: () => void }) {
   const refresh = usePpeRefresh();
-  const { data: options } = useStockOptions();
-  const locations = options?.locations ?? [];
   const [locationId, setLocationId] = useState("");
   const [discard, setDiscard] = useState(false);
   const [note, setNote] = useState("");
   const [lines, setLines] = useState<BackLine[]>(() => backLinesOf(holding).map((line) => ({ ...line, include: true })));
   const [error, setError] = useState("");
-  const location = locationId || (locations[0] ? String(locations[0].id) : "");
+  const location = useLocationValue(locationId);
   useEffect(() => { setLines(backLinesOf(holding).map((line) => ({ ...line, include: true }))); }, [holding]);
   const { mutate, isPending } = useMutation({
     mutationFn: () => stockApi.post<{ movementId: number; number: string }>("ppe/returns", {
@@ -509,8 +529,7 @@ export function PpeReturnDialog({ employee, holding, onClose }: { employee: { id
             <Label htmlFor="returnDiscard">Descartar (não volta para o estoque)</Label>
           </div>
           {!discard && (
-            <div className="sm:w-1/2"><Label>Volta para <span>*</span></Label>
-              <Select name="returnLocation" options={locations} state={location} modal onChange={(_, value) => setLocationId(String(value ?? ""))} placeholder="Escolha o local" /></div>
+            <div className="sm:w-1/2"><LocationField label="Volta para" name="returnLocation" value={locationId} onChange={setLocationId} /></div>
           )}
           <div><Label htmlFor="returnNote">Observação (opcional)</Label>
             <Textarea id="returnNote" className="mt-1" rows={2} maxLength={1000} value={note} onChange={(event) => setNote(event.target.value)} /></div>
@@ -525,17 +544,22 @@ export function PpeReturnDialog({ employee, holding, onClose }: { employee: { id
   );
 }
 
-/** Para a ficha do funcionário no RH: só leitura, com o atalho para entregar. */
+/**
+ * Para a ficha do funcionário no RH: quem entrega EPI entrega, troca e devolve ali mesmo;
+ * os demais só veem o que está com ele.
+ */
 export function EmployeePpeTab({ employeeId }: { employeeId: number }) {
   const { can } = useVerify();
+  const canMove = can(`create_${PPE_ABILITY}`);
+  const { data } = usePpeEmployee(canMove ? employeeId : null);
+  const [dialog, setDialog] = useState<"deliver" | "return" | "exchange" | null>(null);
+  if (!canMove) return <EmployeePpePanel employeeId={employeeId} readOnly />;
   return (
-    <div className="grid gap-3">
-      {can(`view_${PPE_ABILITY}`) && can(`create_${PPE_ABILITY}`) && (
-        <Button asChild size="sm" variant="outline" className="w-fit">
-          <Link to="/suprimentos/estoque/epi" search={{ employeeId }}><Icon name="hard-hat" className="w-3 h-3 mr-1" /> Entregar EPI</Link>
-        </Button>
-      )}
-      <EmployeePpePanel employeeId={employeeId} readOnly />
-    </div>
+    <>
+      <EmployeePpePanel employeeId={employeeId} onDeliver={() => setDialog("deliver")} onReturn={() => setDialog("return")} onExchange={() => setDialog("exchange")} />
+      {data && dialog === "deliver" && <PpeDeliverDialog employee={data.employee} onClose={() => setDialog(null)} />}
+      {data && dialog === "exchange" && <PpeDeliverDialog employee={data.employee} exchange holding={data.holding} onClose={() => setDialog(null)} />}
+      {data && dialog === "return" && <PpeReturnDialog employee={data.employee} holding={data.holding} onClose={() => setDialog(null)} />}
+    </>
   );
 }

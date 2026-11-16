@@ -84,6 +84,20 @@ export interface WeekItem {
   link: AppLink;
 }
 
+export interface StockSection {
+  low: number;
+  /** nulo sem a permissão de ver custos do estoque */
+  value: number | null;
+  atOrders: number;
+  inspections: number;
+  calibrations: number;
+  outside: number;
+  rentalsActive: number;
+  rentalsLate: number;
+  pendingReceipts: number;
+  link: AppLink;
+}
+
 export interface Dashboard {
   today: string;
   monthDay: number;
@@ -93,5 +107,6 @@ export interface Dashboard {
   operations?: OperationsSection;
   team?: TeamSection;
   training?: TrainingSection;
+  stock?: StockSection;
   week?: WeekItem[];
 }

@@ -6,11 +6,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import CalendarPicker from "@/components/general-components/Calendar";
 import Input from "@/components/general-components/Input";
-import Select from "@/components/general-components/Select";
 import { NumField, errorMessage, todayIso } from "../../comercial/-shared/commercial";
 import { PAYABLES_KEY } from "../../financeiro/-shared/payables";
 import { PURCHASES_KEY, PURCHASE_KEY, Purchase, purchasesApi } from "./purchases";
-import { STOCK_KEYS, qty, useCanPick, useItemOptions, useStockOptions } from "./stock";
+import { STOCK_KEYS, qty, useItemOptions, useStockOptions } from "./stock";
+import { LocationField } from "./stock-pickers";
 
 /** Quanto falta receber de uma linha do pedido. */
 export const pendingOf = (item: { quantity: number; receivedQuantity?: number }) => Math.max(0, Math.round((Number(item.quantity) - Number(item.receivedQuantity ?? 0)) * 1000) / 1000);
@@ -24,10 +24,7 @@ interface LineState { quantity: number; locationId: string; lotNumber: string; e
 export function PurchaseReceiveDialog({ purchase, onClose }: { purchase: Purchase; onClose: () => void }) {
   const queryClient = useQueryClient();
   const toObra = !!purchase.serviceOrder;
-  const canPick = useCanPick();
-  const { data: options, isError: optionsError } = useStockOptions(!toObra);
-  // sem a lista de locais, a API usa o local padrão
-  const noOptions = optionsError || !canPick;
+  const { data: options } = useStockOptions(!toObra);
   const { data: itemOptions = [] } = useItemOptions();
   const locations = options?.locations ?? [];
   const firstLocation = locations[0] ? String(locations[0].id) : "";
@@ -112,11 +109,8 @@ export function PurchaseReceiveDialog({ purchase, onClose }: { purchase: Purchas
                     <NumField value={line.quantity} digits={3} suffix={row.item.unit ?? undefined} ariaLabel={`Quantidade recebida de ${row.item.description}`} onChange={(value) => setLine(row.index, { quantity: value })} /></div>
                   {toObra ? (
                     <p className="text-sm text-muted-foreground sm:pt-6">Entra direto na obra.</p>
-                  ) : noOptions ? (
-                    <p className="text-sm text-muted-foreground sm:pt-6">Entra no local de estoque padrão.</p>
                   ) : (
-                    <div><Label className="text-xs">Local de destino</Label>
-                      <Select name={`location-${row.index}`} options={locations} state={line.locationId || firstLocation} modal onChange={(_, value) => setLine(row.index, { locationId: String(value ?? "") })} placeholder="Escolha o local" /></div>
+                    <div className="sm:pt-5"><LocationField name={`location-${row.index}`} label="Entra em" value={line.locationId || firstLocation} onChange={(value) => setLine(row.index, { locationId: value })} /></div>
                   )}
                 </div>
                 {tracking === "lote" && (

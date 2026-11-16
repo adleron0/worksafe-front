@@ -46,7 +46,7 @@ const Cell = ({ label, className, children }: { label: string; className?: strin
 );
 
 const ADD_LABEL: Record<ItemType, string> = {
-  mao_de_obra: "Adicionar profissional", locacao: "Adicionar locação", material: "Adicionar material", treinamento: "Adicionar treinamento", avulso: "Adicionar item", locacao_cliente: "Adicionar equipamento alugado",
+  mao_de_obra: "Adicionar profissional", locacao: "Adicionar locação de terceiros", material: "Adicionar material", treinamento: "Adicionar treinamento", avulso: "Adicionar item", locacao_cliente: "Adicionar equipamento nosso para alugar",
 };
 
 /**
@@ -178,6 +178,14 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
           }])}>
             <Icon name="plus" className="w-4 h-4 mr-1" /> Adicionar seção
           </Button>
+          {/* atalho: aluguel de equipamento nosso entra na seção dele (cria se não houver) */}
+          <Button type="button" variant="outline" size="sm" onClick={() => setSections((list) => {
+            const target = list.find((section) => section.kind === "locacao_cliente");
+            if (target) return list.map((section) => (section.uid === target.uid ? { ...section, items: [...section.items, newItem("locacao_cliente")] } : section));
+            return [...list, { uid: newUid(), title: ITEM_LABEL.locacao_cliente, kind: "locacao_cliente", margin: options.defaults.margins?.locacao_cliente ?? 0, showInDocument: true, items: [newItem("locacao_cliente")] }];
+          })}>
+            <Icon name="handshake" className="w-4 h-4 mr-1" /> Adicionar equipamento nosso para alugar
+          </Button>
         </div>
       )}
     </div>
@@ -221,14 +229,14 @@ function ItemRow({ item, line, draft, options, rentItems, readOnly, canSeeCosts,
       <div className="flex flex-col @3xl:flex-row @3xl:items-center gap-2">
         {labor && (
           <Cell label="Profissional" className="@3xl:flex-1">
-            <Select name={`pro-${item.uid}`} state={item.professionalId ? String(item.professionalId) : ""} disabled={readOnly} modal={false} placeholder="Selecione o profissional"
+            <Select name={`pro-${item.uid}`} searchable state={item.professionalId ? String(item.professionalId) : ""} disabled={readOnly} modal={false} placeholder="Selecione o profissional"
               options={options.professionals.map((p) => ({ id: p.id, name: canSeeCosts && p.hourCost ? `${p.name} · ${money(p.hourCost)}/h` : p.name }))}
               onChange={(_, value) => { const pro = options.professionals.find((p) => String(p.id) === String(value)); update({ professionalId: Number(value) || null, description: pro?.name ?? "" }); }} />
           </Cell>
         )}
         {training && (
           <Cell label="Curso" className="@3xl:flex-1">
-            <Select name={`course-${item.uid}`} state={item.courseId ? String(item.courseId) : ""} disabled={readOnly} modal={false} clearable placeholder="Selecione o curso"
+            <Select name={`course-${item.uid}`} searchable state={item.courseId ? String(item.courseId) : ""} disabled={readOnly} modal={false} clearable placeholder="Selecione o curso"
               options={options.courses.map((c) => ({ id: c.id, name: c.name }))}
               onChange={(_, value) => {
                 const picked = options.courses.find((c) => String(c.id) === String(value));
@@ -238,7 +246,7 @@ function ItemRow({ item, line, draft, options, rentItems, readOnly, canSeeCosts,
         )}
         {rent && (
           <Cell label="Equipamento alugável" className="@3xl:flex-1">
-            <Select name={`rent-${item.uid}`} state={item.stockItemId ? String(item.stockItemId) : ""} disabled={readOnly} modal={false} clearable placeholder="Selecione o item do estoque"
+            <Select name={`rent-${item.uid}`} searchable state={item.stockItemId ? String(item.stockItemId) : ""} disabled={readOnly} modal={false} clearable placeholder="Selecione o item do estoque"
               options={[...rentItems.map((option) => ({ id: option.id, name: option.name })), ...(item.stockItemId && !rentItem ? [{ id: item.stockItemId, name: item.description || "Item do estoque" }] : [])]}
               onChange={(_, value) => {
                 const picked = rentItems.find((option) => String(option.id) === String(value));

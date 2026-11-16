@@ -136,7 +136,7 @@ export const PROPOSAL_KEY = "commercialProposal";
 
 export const KIND_LABEL: Record<ProposalKind, string> = { servico: "Serviço", treinamento: "Treinamento", misto: "Serviço + treinamento" };
 export const ITEM_LABEL: Record<ItemType, string> = {
-  mao_de_obra: "Mão de obra", locacao: "Locação", material: "Material", treinamento: "Treinamento", avulso: "Item avulso", locacao_cliente: "Locação a cliente",
+  mao_de_obra: "Mão de obra", locacao: "Locação de terceiros (custo)", material: "Material", treinamento: "Treinamento", avulso: "Item avulso", locacao_cliente: "Aluguel de equipamento nosso",
 };
 export const STATUS_LABEL: Record<ProposalStatus, string> = {
   rascunho: "Rascunho", enviada: "Enviada", visualizada: "Visualizada", aceita: "Aceita", recusada: "Recusada",

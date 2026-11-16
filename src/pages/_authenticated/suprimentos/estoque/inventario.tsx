@@ -13,17 +13,21 @@ import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import { PERM_ADJUST, Pill, toOptions, useStockOptions } from "../-shared/stock";
+import { LocationField, useLocationValue } from "../-shared/stock-pickers";
 import { COUNTS_KEY, Count, CountRow, countStatusTone, countsApi } from "../-shared/inventory";
 
 export const Route = createFileRoute("/_authenticated/suprimentos/estoque/inventario")({
   component: CountsPage,
+  // ?novo=1 abre direto a "Nova contagem" (atalho da Visão geral)
+  validateSearch: (search: Record<string, unknown>): { novo?: "1" } => (search.novo === "1" || search.novo === 1 ? { novo: "1" as const } : {}),
 });
 
 /** Inventário: contagens por local; cada uma fecha num ajuste único com as diferenças. */
 function CountsPage() {
   const { can } = useVerify();
   const navigate = useNavigate();
-  const [opening, setOpening] = useState(false);
+  const { novo } = Route.useSearch();
+  const [opening, setOpening] = useState(novo === "1");
   const { data, isLoading, error } = useQuery({ queryKey: [COUNTS_KEY], queryFn: () => countsApi.get<CountRow[]>("") });
   if (!can(`view_${PERM_ADJUST}`)) return null;
   const open = (id: number) => navigate({ to: "/suprimentos/estoque/inventario/$countId", params: { countId: String(id) } });
@@ -65,7 +69,8 @@ function CountsPage() {
 function OpenCountDialog({ onClose, onOpened }: { onClose: () => void; onOpened: (count: Count) => void }) {
   const queryClient = useQueryClient();
   const { data: options } = useStockOptions();
-  const [locationId, setLocationId] = useState("");
+  const [chosenLocation, setLocationId] = useState("");
+  const locationId = useLocationValue(chosenLocation);
   const [categoryId, setCategoryId] = useState("");
   const [blindCount, setBlindCount] = useState(true);
   const [note, setNote] = useState("");
@@ -88,8 +93,7 @@ function OpenCountDialog({ onClose, onOpened }: { onClose: () => void; onOpened:
           <DialogDescription>A lista do que contar sai do saldo do local agora. Às cegas, quem conta não vê o que o sistema espera.</DialogDescription>
         </DialogHeader>
         <form className="grid gap-4" onSubmit={submit}>
-          <div><Label>Local <span>*</span></Label>
-            <Select name="locationId" options={options?.locations ?? []} state={locationId} modal onChange={(_, value) => setLocationId(String(value ?? ""))} placeholder="Escolha o local" /></div>
+          <LocationField label="Local" value={locationId} onChange={setLocationId} />
           <div><Label>Só esta categoria</Label>
             <Select name="categoryId" options={toOptions(options?.categories)} state={categoryId} clearable modal onChange={(_, value) => setCategoryId(String(value ?? ""))} placeholder="Todas" /></div>
           <div className="flex items-center gap-2">

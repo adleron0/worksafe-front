@@ -11,7 +11,7 @@ import {
     DropdownMenuContent,
     DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDownIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,7 +34,12 @@ interface SelectProps {
     onChange?: (name: string, value: string | string[]) => void;
     callBacks?: ((name: string, value: string | string[]) => void)[];
     modal?: boolean;
+    /** Campo de busca no topo da lista (só na seleção única): filtra enquanto digita, sem diferenciar acentos. */
+    searchable?: boolean;
 }
+
+/** Texto para comparar na busca: minúsculo e sem acento. */
+const fold = (text: unknown) => String(text ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 const Select = ({ 
     name = "",
@@ -50,7 +55,10 @@ const Select = ({
     onChange = () => {},
     callBacks = [],
     modal = true,
+    searchable = false,
 }: SelectProps) => {
+  const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const [selectedItems, setSelectedItems] = useState<string[]>(
     multiple ? (Array.isArray(state) ? state : state ? [state] : []) : []
   );
@@ -204,13 +212,34 @@ const Select = ({
       <UiSelect
         value={typeof state === 'string' ? state : ''}
         onValueChange={handleValueChange}
+        onOpenChange={searchable ? (open) => {
+          if (open) setTimeout(() => searchRef.current?.focus(), 0);
+          else setQuery("");
+        } : undefined}
       >
         <SelectTrigger className="w-full" disabled={disabled}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
       <SelectContent>
+        {searchable && (
+          <div className="sticky -top-1 z-10 -mx-1 -mt-1 mb-1 border-b bg-popover p-1.5">
+            <input
+              ref={searchRef}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              // a lista do Radix usa as teclas para pular entre opções: aqui elas são do campo
+              onKeyDown={(event) => { if (event.key !== "Escape") event.stopPropagation(); }}
+              placeholder="Buscar por nome ou código"
+              aria-label="Buscar na lista"
+              className="h-8 w-full rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+          </div>
+        )}
+        {searchable && query.trim() && !options.some((option) => fold(option[label]).includes(fold(query.trim()))) && (
+          <p className="px-2 py-1.5 text-sm text-muted-foreground">Nada encontrado para "{query.trim()}"</p>
+        )}
         {options && options.length > 0 ? (
-          options.map((option, index) => {
+          options.filter((option) => !searchable || !query.trim() || fold(option[label]).includes(fold(query.trim())) || String(option[value]) === state).map((option, index) => {
             const optionValue = option[value];
             const optionLabel = option[label];
             

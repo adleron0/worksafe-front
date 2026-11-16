@@ -108,17 +108,16 @@ export const groups: SidebarGroup[] = [
         path: "/suprimentos/estoque",
         isProduct: "servicos",
         ability: "itens_estoque",
+        // Saldos ("Ver por local") fica dentro de Itens; Relatórios, na Visão geral
         subitems: [
           { title: "Visão geral", ability: "itens_estoque", icon: "layout-dashboard", path: "/suprimentos/estoque" },
           { title: "Itens", ability: "itens_estoque", icon: "package", path: "/suprimentos/estoque/itens" },
-          { title: "Saldos", ability: "itens_estoque", icon: "boxes", path: "/suprimentos/estoque/saldos" },
           { title: "Movimentações", ability: "itens_estoque", icon: "arrow-left-right", path: "/suprimentos/estoque/movimentacoes" },
           { title: "Entregas de EPI", ability: "entregas_epi", icon: "hard-hat", path: "/suprimentos/estoque/epi" },
           { title: "Inventário", ability: "ajuste_estoque", icon: "clipboard-check", path: "/suprimentos/estoque/inventario" },
-          { title: "Relatórios", ability: "itens_estoque", icon: "chart-column", path: "/suprimentos/estoque/relatorios" },
           { divider: "cadastros" },
           { title: "Categorias", ability: "itens_estoque", icon: "tags", path: "/suprimentos/estoque/categorias" },
-          { title: "Locais de estoque", ability: "itens_estoque", icon: "map-pin-house", path: "/suprimentos/estoque/locais" },
+          { title: "Locais", ability: "itens_estoque", icon: "map-pin-house", path: "/suprimentos/estoque/locais" },
         ],
       },
       {
@@ -127,26 +126,16 @@ export const groups: SidebarGroup[] = [
         path: "/suprimentos/equipamentos",
         isProduct: "servicos",
         ability: "equipamentos",
+        // Vencimentos e Calibração ficam dentro de "Inspeções e calibrações"
         subitems: [
-          { title: "Equipamentos", ability: "equipamentos", icon: "scan-barcode", path: "/suprimentos/equipamentos" },
-          { title: "Inspeções", ability: "equipamentos", icon: "list-checks", path: "/suprimentos/equipamentos/inspecoes" },
-          { title: "Calibração e manutenção", ability: "equipamentos", icon: "gauge", path: "/suprimentos/equipamentos/calibracao" },
-          { title: "Vencimentos", ability: "equipamentos", icon: "calendar-clock", path: "/suprimentos/equipamentos/vencimentos" },
+          { title: "Peças", ability: "equipamentos", icon: "scan-barcode", path: "/suprimentos/equipamentos" },
+          { title: "Inspeções e calibrações", ability: "equipamentos", icon: "list-checks", path: "/suprimentos/equipamentos/inspecoes" },
           { divider: "cadastros" },
           { title: "Roteiros de inspeção", ability: "inspecoes_equipamentos", icon: "file-check", path: "/suprimentos/equipamentos/roteiros" },
         ],
       },
-      {
-        title: "Locações",
-        icon: "handshake",
-        path: "/suprimentos/locacoes",
-        isProduct: "servicos",
-        ability: "locacoes",
-        subitems: [
-          { title: "Locações", ability: "locacoes", icon: "calendar-range", path: "/suprimentos/locacoes" },
-          { title: "Disponibilidade", ability: "locacoes", icon: "chart-gantt", path: "/suprimentos/locacoes/disponibilidade" },
-        ],
-      },
+      // Disponibilidade é um botão dentro de Locações
+      { title: "Locações", icon: "handshake", path: "/suprimentos/locacoes", isProduct: "servicos", ability: "locacoes" },
     ],
   },
   {

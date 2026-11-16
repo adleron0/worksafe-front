@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,10 @@ import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { NumField, dateBr, errorMessage, money, todayIso } from "../../comercial/-shared/commercial";
 import { PURCHASES_ABILITY } from "../-shared/purchases";
-import { stockApi, useStockOptions } from "../-shared/stock";
+import { stockApi } from "../-shared/stock";
+import { LocationField, useLocationValue } from "../-shared/stock-pickers";
+import { uploadRecordFile } from "../../arquivos/-shared/record-files";
+import { FILES_KEY } from "../../arquivos/-shared/files";
 import {
   DueStateBadge, EQUIP_ABILITY, EQUIP_KEYS, SERVICE_RESULTS, ServiceRow, ServiceSendDialog, UnitRow, UnitStatusBadge, storeServiceDraft, useEquipmentRefresh,
 } from "../-shared/equipment";
@@ -53,8 +56,9 @@ function ServicesPage() {
   return (
     <>
       <div>
-        <h1 className="text-xl font-bold">Calibração e manutenção</h1>
-        <p className="text-sm text-muted-foreground">Peças no laboratório ou na assistência, as calibrações que vencem em 60 dias e o histórico.</p>
+        <Link to="/suprimentos/equipamentos/inspecoes" className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1"><Icon name="arrow-left" className="w-3 h-3" /> Inspeções e calibrações</Link>
+        <h1 className="text-xl font-bold mt-1">Calibração e manutenção</h1>
+        <p className="text-sm text-muted-foreground">Peças no laboratório ou na assistência, as calibrações que vencem e o histórico.</p>
       </div>
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {isLoading && <div className="mt-4 grid gap-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>}
@@ -135,22 +139,37 @@ function ServicesPage() {
 }
 
 function ReturnDialog({ service, onClose, onDone }: { service: ServiceRow; onClose: () => void; onDone: () => void }) {
-  const { data: options } = useStockOptions();
+  const queryClient = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [certificate, setCertificate] = useState<File | null>(null);
   const [result, setResult] = useState("aprovado");
   const [returnedAt, setReturnedAt] = useState(todayIso());
   const [certificateNumber, setCertificateNumber] = useState("");
   const [cost, setCost] = useState<number | null>(service.cost);
   const [nextDueAt, setNextDueAt] = useState("");
   const [locationId, setLocationId] = useState("");
+  const location = useLocationValue(locationId);
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const calibration = service.kind === "calibracao";
   const { mutate, isPending } = useMutation({
     mutationFn: () => stockApi.post<ServiceRow>(`services/${service.id}/return`, {
       result, returnedAt, certificateNumber: certificateNumber.trim(), cost, nextDueAt: nextDueAt || null, notes: notes.trim() || null,
-      ...(locationId ? { locationId: Number(locationId) } : {}),
+      ...(location ? { locationId: Number(location) } : {}),
     }),
-    onSuccess: () => { onDone(); toast({ title: `${service.tag} recebida de volta`, variant: "success" }); onClose(); },
+    onSuccess: async () => {
+      onDone();
+      // o certificado vai para os arquivos da peça
+      if (certificate) {
+        try {
+          await uploadRecordFile("stock_unit", service.unitId, certificate);
+          queryClient.invalidateQueries({ queryKey: [FILES_KEY] });
+        } catch (err) {
+          toast({ title: "A volta foi registrada, mas o certificado não subiu", description: `${errorMessage(err)} Envie pela aba Arquivos da peça.`, variant: "destructive" });
+        }
+      }
+      toast({ title: `${service.tag} recebida de volta`, variant: "success" }); onClose();
+    },
     onError: (err) => setError(errorMessage(err)),
   });
   return (
@@ -178,12 +197,16 @@ function ReturnDialog({ service, onClose, onDone }: { service: ServiceRow; onClo
               <div><Label>Próxima calibração</Label>
                 <CalendarPicker mode="single" name="nextDueAt" className="mt-1 w-full" value={nextDueAt} placeholder="Pelo intervalo do item" fromYear={2024} toYear={2050} onValueChange={(_, value) => setNextDueAt(String(value ?? ""))} /></div>
             )}
-            <div><Label>Volta para</Label>
-              <Select name="returnLocation" options={options?.locations ?? []} state={locationId} clearable modal onChange={(_, value) => setLocationId(String(value ?? ""))} placeholder="O local de onde saiu" /></div>
+            <LocationField label="Volta para" value={locationId} onChange={setLocationId} name="returnLocation" />
           </div>
           <div><Label htmlFor="returnNotes">Observação</Label>
             <Textarea id="returnNotes" className="mt-1" rows={2} maxLength={1000} value={notes} onChange={(event) => setNotes(event.target.value)} /></div>
-          <p className="text-xs text-muted-foreground">Guarde o certificado nos arquivos da peça.</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input ref={fileRef} type="file" accept="application/pdf,image/*" className="hidden" onChange={(event) => { setCertificate(event.target.files?.[0] ?? null); event.target.value = ""; }} />
+            <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}><Icon name="paperclip" className="w-3 h-3 mr-1" /> {certificate ? "Trocar o certificado" : "Anexar o certificado"}</Button>
+            {certificate ? <span className="text-xs truncate max-w-[16rem]">{certificate.name}</span> : <span className="text-xs text-muted-foreground">PDF ou foto; fica nos arquivos da peça.</span>}
+            {certificate && <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setCertificate(null)}>Tirar</Button>}
+          </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Voltar</Button>

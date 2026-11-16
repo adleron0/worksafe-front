@@ -121,7 +121,8 @@ export interface ImportResult { items: number; categories: number; locations: nu
 
 // ---------------------------------------------------------------- rótulos
 
-export const TRACKING_LABEL: Record<Tracking, string> = { quantidade: "Quantidade", lote: "Lote", unidade: "Unidade (peça)" };
+/** "Como contar" o item. */
+export const TRACKING_LABEL: Record<Tracking, string> = { quantidade: "Só a quantidade", lote: "Por lote (tem validade)", unidade: "Cada peça com etiqueta" };
 export const TRACKING_OPTIONS = (Object.keys(TRACKING_LABEL) as Tracking[]).map((id) => ({ id, name: TRACKING_LABEL[id] }));
 export const FLAG_OPTIONS = [
   { id: "epi", name: "EPI" }, { id: "inspecao", name: "Exige inspeção" }, { id: "calibracao", name: "Exige calibração" },
@@ -129,22 +130,53 @@ export const FLAG_OPTIONS = [
 ];
 export const HOLDER_LABEL: Record<HolderType, string> = { local: "Local de estoque", os: "Obra (OS)", funcionario: "Funcionário", locacao: "Locação", fornecedor: "Fornecedor", externo: "—" };
 export const HOLDER_OPTIONS = (["local", "os", "funcionario", "locacao", "fornecedor"] as HolderType[]).map((id) => ({ id, name: HOLDER_LABEL[id] }));
-export const PRESET_OPTIONS = [
-  { id: "consumivel", name: "Consumível (sai e não volta)" },
-  { id: "reutilizavel", name: "Equipamento reutilizável (peça, com inspeção)" },
-  { id: "calibravel", name: "Instrumento calibrável (peça, com calibração)" },
-  { id: "epi", name: "EPI (entregue ao funcionário)" },
-];
-/** Lançamentos feitos à mão na tela de Movimentações, com a permissão de cada um. */
+/** "Que tipo de item é?": cada tipo pré-marca como contar e o que o item exige. */
+export const ITEM_KINDS = [
+  { id: "consumivel", name: "Consumível", hint: "Sai e não volta (parafuso, fita, disco de corte)", icon: "package" },
+  { id: "ferramenta", name: "Ferramenta ou material que volta", hint: "Vai para a obra e volta, sem inspeção (furadeira, escada, lona)", icon: "wrench" },
+  { id: "reutilizavel", name: "Equipamento com inspeção", hint: "Cada peça com etiqueta e inspeção periódica (cinto, talabarte, mosquetão)", icon: "shield-check" },
+  { id: "calibravel", name: "Instrumento calibrável", hint: "Cada peça com etiqueta e calibração (medidor, dinamômetro)", icon: "gauge" },
+  { id: "epi", name: "EPI", hint: "Entregue ao funcionário com ficha e CA (luva, óculos, capacete)", icon: "hard-hat" },
+] as const;
+export type ItemKind = (typeof ITEM_KINDS)[number]["id"];
+/** O que cada tipo marca (o "ferramenta" é só da tela: quantidade e volta, sem inspeção). */
+export const KIND_FLAGS: Record<ItemKind, { tracking: Tracking; returnable: boolean; requiresInspection: boolean; requiresCalibration: boolean; isPpe: boolean; inspectionIntervalDays?: number; calibrationIntervalMonths?: number }> = {
+  consumivel: { tracking: "quantidade", returnable: false, requiresInspection: false, requiresCalibration: false, isPpe: false },
+  ferramenta: { tracking: "quantidade", returnable: true, requiresInspection: false, requiresCalibration: false, isPpe: false },
+  reutilizavel: { tracking: "unidade", returnable: true, requiresInspection: true, inspectionIntervalDays: 180, requiresCalibration: false, isPpe: false },
+  calibravel: { tracking: "unidade", returnable: true, requiresInspection: false, requiresCalibration: true, calibrationIntervalMonths: 12, isPpe: false },
+  epi: { tracking: "quantidade", returnable: false, requiresInspection: false, requiresCalibration: false, isPpe: true },
+};
+/** O tipo de um item já cadastrado, pelas marcas. */
+export const kindOf = (item: { isPpe: boolean; requiresCalibration: boolean; requiresInspection: boolean; returnable: boolean; tracking: Tracking }): ItemKind =>
+  item.isPpe ? "epi" : item.requiresCalibration ? "calibravel" : item.requiresInspection ? "reutilizavel" : item.returnable || item.tracking === "unidade" ? "ferramenta" : "consumivel";
+/**
+ * Lançamentos feitos à mão (o menu "Novo lançamento"). "Entrada" junta saldo inicial e entrada avulsa:
+ * o motivo escolhido no diálogo decide o tipo que vai para a API.
+ */
 export const MANUAL_TYPES = [
-  { id: "entrada_avulsa", name: "Entrada avulsa", permission: PERM_MOVE, icon: "package-plus", hint: "Chegou sem pedido de compra (doação, devolução, achado)." },
-  { id: "transferencia", name: "Transferência", permission: PERM_MOVE, icon: "arrow-left-right", hint: "De um local de estoque para outro." },
-  { id: "consumo_interno", name: "Consumo interno", permission: PERM_MOVE, icon: "package-minus", hint: "Gasto da própria empresa, fora de obra." },
-  { id: "venda", name: "Venda", permission: PERM_MOVE, icon: "badge-dollar-sign", hint: "Saída vendida a um cliente (fora da loja do site)." },
-  { id: "saldo_inicial", name: "Saldo inicial", permission: PERM_ADJUST, icon: "package-open", hint: "O que já existia antes de usar o sistema." },
-  { id: "ajuste", name: "Ajuste", permission: PERM_ADJUST, icon: "sliders-horizontal", hint: "Corrige a diferença (+ ou −) com o motivo." },
+  { id: "entrada", name: "Entrada (sem pedido de compra)", permissions: [PERM_MOVE, PERM_ADJUST], icon: "package-plus", hint: "O que entra no estoque sem passar por um pedido de compra." },
+  { id: "transferencia", name: "Transferência", permissions: [PERM_MOVE], icon: "arrow-left-right", hint: "De um local de estoque para outro." },
+  { id: "consumo_interno", name: "Consumo interno", permissions: [PERM_MOVE], icon: "package-minus", hint: "Gasto da própria empresa, fora de obra." },
+  { id: "venda", name: "Venda", permissions: [PERM_MOVE], icon: "badge-dollar-sign", hint: "Saída vendida a um cliente (fora da loja do site)." },
+  { id: "ajuste", name: "Ajuste", permissions: [PERM_ADJUST], icon: "sliders-horizontal", hint: "Corrige a diferença (+ ou −) com o motivo." },
 ] as const;
 export type ManualType = (typeof MANUAL_TYPES)[number]["id"];
+/** Motivos da entrada sem pedido. "Já estava na prateleira" vira saldo inicial para quem pode ajustar. */
+export const ENTRY_REASONS = [
+  { id: "prateleira", name: "Já estava na prateleira" },
+  { id: "doacao", name: "Doação" },
+  { id: "devolucao", name: "Devolução" },
+  { id: "achado", name: "Achado" },
+];
+/** Condição de volta em palavras (linha de movimentação e locação). */
+export const CONDITION_LABEL: Record<string, string> = { ok: "Voltou bem", sujo: "Voltou sujo", avariado: "Voltou avariado", faltando: "Não voltou" };
+export const LOT_STATUS_LABEL: Record<string, string> = { liberado: "Liberado", bloqueado: "Bloqueado", baixado: "Baixado" };
+/** Planilha modelo da carga inicial: cabeçalho e uma linha de exemplo. */
+export const IMPORT_TEMPLATE = {
+  header: ["codigo", "nome", "categoria", "unidade", "controle", "quantidade", "local", "custo", "serie", "fabricacao", "lote", "validade"],
+  example: ["", "Luva de vaqueta", "EPI", "par", "quantidade", 50, "Almoxarifado", "12,90", "", "", "", ""],
+};
 export const CONDITION_OPTIONS = [
   { id: "ok", name: "Em ordem" }, { id: "sujo", name: "Sujo" }, { id: "avariado", name: "Avariado" }, { id: "faltando", name: "Não voltou" },
 ];

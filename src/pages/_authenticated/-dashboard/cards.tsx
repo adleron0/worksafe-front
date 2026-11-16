@@ -6,7 +6,7 @@ import Icon from "@/components/general-components/Icon";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
 import { Empty, linkTo, Meter, moneyShort, Panel, pct, RowLink, shortDate, toneText } from "./ui";
-import type { CommercialSection, Dashboard, FinanceSection, OperationsSection, TeamSection, TrainingSection, WeekItem } from "./types";
+import type { CommercialSection, Dashboard, FinanceSection, OperationsSection, StockSection, TeamSection, TrainingSection, WeekItem } from "./types";
 
 /* ------------------------------------------------------------------ */
 /* Precisa de você — reaproveita a "Minha esteira" (my-pipeline)       */
@@ -380,6 +380,30 @@ export function ClassesCard({ training }: { training: TrainingSection }) {
           })}
         </ul>
       )}
+    </Panel>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Estoque                                                             */
+/* ------------------------------------------------------------------ */
+
+export function StockCard({ stock }: { stock: StockSection }) {
+  const calm = !stock.low && !stock.inspections && !stock.calibrations && !stock.rentalsLate && !stock.pendingReceipts;
+  return (
+    <Panel title="Estoque" icon="warehouse" aside={stock.value !== null ? moneyShort(stock.value) : undefined} link={stock.link} linkLabel="Abrir o estoque" className="h-full">
+      {calm && (
+        <div className="flex items-center gap-2 pb-2 text-sm text-muted-foreground">
+          <Icon name="circle-check" className="w-4 h-4 text-emerald-600" /> Nada pedindo atenção no estoque.
+        </div>
+      )}
+      <ul className="divide-y">
+        <RowLink link="/suprimentos/compras/reposicao" value={stock.low} tone={stock.low ? "danger" : "muted"}>Itens abaixo do mínimo</RowLink>
+        <RowLink link="/suprimentos/equipamentos/inspecoes" value={stock.inspections} tone={stock.inspections ? "warning" : "muted"}>Inspeções vencidas ou a vencer</RowLink>
+        <RowLink link="/suprimentos/equipamentos/calibracao" value={stock.calibrations} tone={stock.calibrations ? "warning" : "muted"}>Calibrações vencidas ou a vencer</RowLink>
+        <RowLink link="/suprimentos/locacoes" value={stock.rentalsLate} detail={stock.rentalsActive ? `${stock.rentalsActive} ativa(s)` : undefined} tone={stock.rentalsLate ? "danger" : "muted"}>Locações atrasadas</RowLink>
+        {stock.pendingReceipts > 0 && <RowLink link="/suprimentos/pedidos-de-compra?status=comprado" value={stock.pendingReceipts} tone="warning">Compras para receber no estoque</RowLink>}
+      </ul>
     </Panel>
   );
 }

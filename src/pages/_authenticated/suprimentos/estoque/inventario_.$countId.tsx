@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
@@ -11,9 +11,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
+import { Input as ShadInput } from "@/components/ui/input";
 import SlideConfirm from "@/components/general-components/SlideConfirm";
 import { cn } from "@/lib/utils";
-import { NumField, errorMessage, money } from "../../comercial/-shared/commercial";
+import { NumField, Tip, errorMessage, money } from "../../comercial/-shared/commercial";
 import { PERM_ADJUST, Pill, qty } from "../-shared/stock";
 import { useStockRefresh, MovementDetailDialog } from "../-shared/stock-movements";
 import { COUNTS_KEY, COUNT_KEY, Count, CountLine, countStatusTone, countsApi } from "../-shared/inventory";
@@ -30,6 +31,7 @@ function CountPage() {
   const refresh = useStockRefresh();
   const [edits, setEdits] = useState<Record<number, number | null>>({});
   const [tag, setTag] = useState("");
+  const tagRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
   const [onlyPending, setOnlyPending] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -41,8 +43,9 @@ function CountPage() {
     mutationFn: (body: { lines?: Array<{ id: number; counted: number | null }>; tag?: string }) => countsApi.put<Count>(countId, body),
     onSuccess: (result, body) => {
       apply(result);
-      if (body.lines) setEdits((current) => Object.fromEntries(Object.entries(current).filter(([id]) => !body.lines!.some((line) => String(line.id) === id))));
-      if (body.tag) { setTag(""); toast({ title: `${body.tag.toUpperCase()} achada`, variant: "success" }); } else toast({ title: "Contagem salva", variant: "success" });
+      // tira das pendentes só o que foi salvo e não mudou de novo enquanto salvava
+      if (body.lines) setEdits((current) => Object.fromEntries(Object.entries(current).filter(([id, value]) => !body.lines!.some((line) => String(line.id) === id && line.counted === value))));
+      if (body.tag) { setTag(""); toast({ title: `${body.tag.toUpperCase()} achada`, variant: "success" }); tagRef.current?.focus(); }
     },
     onError: (err) => toast({ title: "Não foi possível salvar", description: errorMessage(err), variant: "destructive" }),
   });
@@ -62,7 +65,14 @@ function CountPage() {
   const term = search.trim().toLowerCase();
   const lines = count.lines.filter((line) => (!term || `${line.code} ${line.item} ${line.tag ?? ""} ${line.lot ?? ""}`.toLowerCase().includes(term)) && (!onlyPending || valueOf(line) === null));
   const done = count.lines.filter((line) => valueOf(line) !== null).length;
-  const setCounted = (line: CountLine, value: number | null) => setEdits((current) => ({ ...current, [line.id]: value }));
+  const setCounted = (line: CountLine, value: number | null, now = false) => {
+    setEdits((current) => ({ ...current, [line.id]: value }));
+    if (now) save({ lines: [{ id: line.id, counted: value }] });
+  };
+  const saveLine = (line: CountLine) => {
+    if (line.id in edits && edits[line.id] !== line.counted) save({ lines: [{ id: line.id, counted: edits[line.id] }] });
+  };
+  const missingCount = count.lines.filter((line) => valueOf(line) === null && !line.unitId).length;
 
   return (
     <div className="pb-24">
@@ -74,6 +84,7 @@ function CountPage() {
             <Pill tone={countStatusTone(count.status)}>{count.status === "aberta" ? "Aberta" : count.status === "fechada" ? "Fechada" : "Cancelada"}</Pill>
             {count.blindCount && <Pill>Às cegas</Pill>}
           </div>
+          {open && missingCount > 0 && <p className="text-xs text-amber-700 dark:text-amber-400">Faltam {missingCount} item(ns) para contar. Dá para fechar assim mesmo, considerando zero.</p>}
           <p className="text-sm text-muted-foreground">{done} de {count.lines.length} contados{count.totalValue !== null ? ` · diferença em valor ${money(count.totalValue)}` : ""}{count.note ? ` · ${count.note}` : ""}</p>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
@@ -83,14 +94,16 @@ function CountPage() {
               <Button type="button" variant="outline" size="sm"><Icon name="ban" className="w-4 h-4 mr-1" /> Cancelar contagem</Button>
             </ConfirmDialog>
           )}
-          {open && <Button type="button" size="sm" disabled={pendingEdits.length > 0} onClick={() => setClosing(true)}><Icon name="clipboard-check" className="w-4 h-4 mr-1" /> Fechar contagem</Button>}
+          {open && (pendingEdits.length > 0 || saving
+            ? <Tip text="Esperando salvar o que foi contado"><span tabIndex={0}><Button type="button" size="sm" disabled><Icon name="clipboard-check" className="w-4 h-4 mr-1" /> Fechar contagem</Button></span></Tip>
+            : <Button type="button" size="sm" onClick={() => setClosing(true)}><Icon name="clipboard-check" className="w-4 h-4 mr-1" /> Fechar contagem</Button>)}
         </div>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 my-4 p-4 rounded-lg border">
         {open && (
           <form className="flex gap-2 w-full sm:w-80" onSubmit={(event) => { event.preventDefault(); if (tag.trim()) save({ tag: tag.trim() }); }}>
-            <Input name="tag" value={tag} onValueChange={(_, value) => setTag(String(value))} placeholder="Etiqueta da peça (ou leia o QR)" icon="scan-barcode" />
+            <ShadInput ref={tagRef} autoFocus name="tag" value={tag} onChange={(event) => setTag(event.target.value)} placeholder="Digite ou bipe a etiqueta" aria-label="Etiqueta da peça" />
             <Button type="submit" variant="outline" disabled={!tag.trim() || saving}>Achei</Button>
           </form>
         )}
@@ -115,12 +128,15 @@ function CountPage() {
               <div className="sm:col-span-4">
                 {line.unitId ? (
                   <div className="flex gap-2">
-                    <Button type="button" size="lg" className="flex-1" variant={value === 1 ? "default" : "outline"} disabled={!open} onClick={() => setCounted(line, 1)}><Icon name="check" className="w-4 h-4 mr-1" /> Achei</Button>
-                    <Button type="button" size="lg" className="flex-1" variant={value === 0 ? "destructive" : "outline"} disabled={!open} onClick={() => setCounted(line, 0)}>Não achei</Button>
+                    <Button type="button" size="lg" className="flex-1" variant={value === 1 ? "default" : "outline"} disabled={!open} onClick={() => setCounted(line, 1, true)}><Icon name="check" className="w-4 h-4 mr-1" /> Achei</Button>
+                    <Button type="button" size="lg" className="flex-1" variant={value === 0 ? "destructive" : "outline"} disabled={!open} onClick={() => setCounted(line, 0, true)}>Não achei</Button>
                   </div>
                 ) : (
-                  <NumField value={value} digits={3} suffix={line.unit} disabled={!open} placeholder="Contado" ariaLabel={`Quantidade contada de ${line.item}`}
-                    onChange={(next) => setCounted(line, next)} onEmpty={() => setCounted(line, null)} />
+                  // salva sozinho ao sair do campo
+                  <div onBlur={() => saveLine(line)}>
+                    <NumField value={value} digits={3} suffix={line.unit} disabled={!open} placeholder="Contado" ariaLabel={`Quantidade contada de ${line.item}`}
+                      onChange={(next) => setCounted(line, next)} onEmpty={() => setCounted(line, null)} />
+                  </div>
                 )}
               </div>
               <div className="sm:col-span-2 text-xs sm:text-right tabular-nums">
@@ -134,7 +150,7 @@ function CountPage() {
 
       {open && pendingEdits.length > 0 && (
         <div className="fixed bottom-0 inset-x-0 z-40 border-t bg-background p-3 flex items-center justify-between gap-3 sm:justify-end">
-          <span className="text-sm text-muted-foreground">{pendingEdits.length} alteração(ões) não salva(s)</span>
+          <span className="text-sm text-muted-foreground">{saving ? "Salvando..." : `${pendingEdits.length} alteração(ões) por salvar`}</span>
           <Button type="button" variant="outline" onClick={() => setEdits({})}>Descartar</Button>
           <Button type="button" disabled={saving} onClick={() => save({ lines: pendingEdits })}>{saving ? "Salvando..." : "Salvar contagem"}</Button>
         </div>

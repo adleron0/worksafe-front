@@ -13,6 +13,7 @@ import {
   OverdueCard,
   RevenueByAreaCard,
   StalledCard,
+  StockCard,
   TeamCard,
   WeekCard,
 } from "./-dashboard/cards";
@@ -94,7 +95,7 @@ function Home() {
     ),
   ].filter(Boolean);
 
-  const nothing = !finance && !commercial && !operations && !team && !training && !week?.length;
+  const nothing = !finance && !commercial && !operations && !team && !training && !week?.length && !data.stock;
 
   return (
     <div className="space-y-4 pb-6">
@@ -135,8 +136,9 @@ function Home() {
         </div>
       )}
 
-      {(team || training || week) && (
+      {(team || training || week || data.stock) && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {data.stock && <StockCard stock={data.stock} />}
           {team && <TeamCard team={team} />}
           {training && <ClassesCard training={training} />}
           {week && <WeekCard week={week} today={data.today} />}

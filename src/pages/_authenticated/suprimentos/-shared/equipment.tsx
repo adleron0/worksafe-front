@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import QRCode from "qrcode";
+import { Link, useNavigate } from "@tanstack/react-router";
+import api from "@/services/api";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import useVerify from "@/hooks/use-verify";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -115,8 +120,17 @@ export function useSuppliers(enabled = true) {
 export function useEmployees(enabled = true) {
   return useQuery({
     queryKey: [EQUIP_KEYS.employees], enabled, retry: false, staleTime: 60_000,
-    queryFn: () => stockApi.get<Array<{ id: number; name: string; terminated?: boolean }>>("employees/options"),
+    queryFn: () => stockApi.get<Array<{ id: number; name: string; terminated?: boolean; userId?: number | null }>>("employees/options"),
   });
+}
+
+const fold = (text: unknown) => String(text ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+/** O funcionário ligado ao usuário logado (pelo `userId`, se a API mandar; senão, pelo nome). */
+export function useMyEmployeeId(employees: Array<{ id: number; name: string; userId?: number | null }>) {
+  const { user } = useAuth();
+  if (!user) return "";
+  const mine = employees.find((e) => e.userId && e.userId === user.sub) ?? employees.find((e) => fold(e.name) === fold(user.username));
+  return mine ? String(mine.id) : "";
 }
 
 // ---------------------------------------------------------------- inspeção
@@ -136,13 +150,23 @@ export function InspectionDialog({ target, onClose, onDone }: { target: Inspecti
   const [date, setDate] = useState(todayIso());
   const [answers, setAnswers] = useState<Record<string, string | number>>({});
   const [result, setResult] = useState("");
+  const [resultTouched, setResultTouched] = useState(false);
   const [notes, setNotes] = useState("");
   const [inspector, setInspector] = useState("");
+  const [inspectorTouched, setInspectorTouched] = useState(false);
   const [error, setError] = useState("");
+  const myEmployee = useMyEmployeeId(employees);
   const template = templates.find((t) => String(t.id) === templateId);
   const hasNok = !!template?.items.some((q) => q.kind === "ok_nok" && answers[q.key] === "nok");
+  const okNok = template?.items.filter((q) => q.kind === "ok_nok") ?? [];
+  const allOk = okNok.length > 0 && okNok.every((q) => answers[q.key] === "ok")
+    && !!template?.items.every((q) => !q.required || (answers[q.key] !== undefined && answers[q.key] !== ""));
   // um "não OK" tira o "aprovado" da escolha
   useEffect(() => { if (hasNok && result === "aprovado") setResult(""); }, [hasNok, result]);
+  // tudo OK: "aprovado" vem marcado sozinho (a pessoa pode trocar)
+  useEffect(() => { if (allOk && !resultTouched) setResult("aprovado"); }, [allOk, resultTouched]);
+  // o inspetor começa com o funcionário de quem está logado
+  useEffect(() => { if (myEmployee && !inspectorTouched) setInspector(myEmployee); }, [myEmployee, inspectorTouched]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => stockApi.post<{ id: number; result: string; nextDueAt: string | null }>("inspections", {
@@ -184,7 +208,7 @@ export function InspectionDialog({ target, onClose, onDone }: { target: Inspecti
               <CalendarPicker mode="single" name="inspectionDate" className="mt-1 w-full" value={date} fromYear={2020} toYear={2040} onValueChange={(_, value) => setDate(String(value ?? "") || todayIso())} /></div>
           </div>
           <div><Label>Roteiro</Label>
-            <Select name="templateId" options={templates.filter((t) => t.active).map(({ id, name }) => ({ id, name }))} state={templateId} clearable isLoading={isLoading} modal
+            <Select name="templateId" searchable options={templates.filter((t) => t.active).map(({ id, name }) => ({ id, name }))} state={templateId} clearable isLoading={isLoading} modal
               onChange={(_, value) => { setTemplateId(String(value ?? "")); setAnswers({}); }} placeholder="Sem roteiro (só o resultado)" /></div>
 
           {template && (
@@ -212,17 +236,18 @@ export function InspectionDialog({ target, onClose, onDone }: { target: Inspecti
                 const disabled = option.id === "aprovado" && hasNok;
                 return (
                   <Button key={option.id} type="button" disabled={disabled} className={cn("h-11", result === option.id && option.id === "reprovado" && "bg-red-600 hover:bg-red-700 text-white")}
-                    variant={result === option.id ? "default" : "outline"} onClick={() => setResult(option.id)}>{option.name}</Button>
+                    variant={result === option.id ? "default" : "outline"} onClick={() => { setResult(option.id); setResultTouched(true); }}>{option.name}</Button>
                 );
               })}
             </div>
             {hasNok && <p className="text-xs text-muted-foreground mt-1">Há item "não OK": aprove com ressalva ou reprove.</p>}
+            {allOk && !resultTouched && <p className="text-xs text-muted-foreground mt-1">Tudo OK: marcamos "Aprovado". Troque se precisar.</p>}
           </div>
           <div><Label htmlFor="inspectionNotes">Observação{result && result !== "aprovado" && <span> *</span>}</Label>
             <Textarea id="inspectionNotes" className="mt-1" rows={2} maxLength={1000} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder={result === "reprovado" ? "O que foi encontrado (a peça fica bloqueada)" : ""} /></div>
           {!noEmployees && (
             <div><Label>Inspetor</Label>
-              <Select name="inspector" options={employees.filter((e) => !e.terminated).map(({ id, name }) => ({ id, name }))} state={inspector} clearable modal onChange={(_, value) => setInspector(String(value ?? ""))} placeholder="Quem está registrando" /></div>
+              <Select name="inspector" searchable options={employees.filter((e) => !e.terminated).map(({ id, name }) => ({ id, name }))} state={inspector} clearable modal onChange={(_, value) => { setInspector(String(value ?? "")); setInspectorTouched(true); }} placeholder="Quem está registrando" /></div>
           )}
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <DialogFooter>
@@ -239,15 +264,29 @@ export function InspectionDialog({ target, onClose, onDone }: { target: Inspecti
 
 export function ServiceSendDialog({ unit, onClose, onDone }: { unit: Pick<UnitRow, "id" | "tag" | "item">; onClose: () => void; onDone?: () => void }) {
   const refresh = useEquipmentRefresh();
+  const { can } = useVerify();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { data: suppliers = [], isLoading } = useSuppliers();
+  const canBuy = can("create_pedidos_de_compra");
   const [kind, setKind] = useState("calibracao");
   const [supplierId, setSupplierId] = useState("");
   const [sentAt, setSentAt] = useState(todayIso());
   const [notes, setNotes] = useState("");
+  const [openPurchase, setOpenPurchase] = useState(canBuy);
+  const [newSupplier, setNewSupplier] = useState(false);
   const [error, setError] = useState("");
   const { mutate, isPending } = useMutation({
     mutationFn: () => stockApi.post<ServiceRow>(`units/${unit.id}/service`, { kind, supplierId: Number(supplierId), sentAt, notes: notes.trim() || null }),
-    onSuccess: () => { refresh(); toast({ title: `${unit.tag} enviada para ${kind === "calibracao" ? "calibração" : "manutenção"}`, variant: "success" }); onDone?.(); onClose(); },
+    onSuccess: (service) => {
+      refresh();
+      toast({ title: `${unit.tag} enviada para ${kind === "calibracao" ? "calibração" : "manutenção"}`, variant: "success" });
+      onDone?.(); onClose();
+      // já abre o pedido de compra do serviço, preenchido
+      if (openPurchase && canBuy && storeServiceDraft({ ...service, tag: service.tag ?? unit.tag, item: service.item ?? unit.item, supplierId: service.supplierId ?? Number(supplierId), kind: service.kind ?? kind })) {
+        navigate({ to: "/suprimentos/pedidos-de-compra/$purchaseId", params: { purchaseId: "novo" }, search: { servico: "1" } });
+      }
+    },
     onError: (err) => setError(errorMessage(err)),
   });
   const submit = (event: React.FormEvent) => {
@@ -269,14 +308,74 @@ export function ServiceSendDialog({ unit, onClose, onDone }: { unit: Pick<UnitRo
             <div><Label>Envio</Label>
               <CalendarPicker mode="single" name="sentAt" className="mt-1 w-full" value={sentAt} fromYear={2020} toYear={2040} onValueChange={(_, value) => setSentAt(String(value ?? "") || todayIso())} /></div>
           </div>
-          <div><Label>Fornecedor <span>*</span></Label>
-            <Select name="supplierId" options={suppliers.map(({ id, name }) => ({ id, name }))} state={supplierId} isLoading={isLoading} modal onChange={(_, value) => setSupplierId(String(value ?? ""))} placeholder="Laboratório ou assistência" /></div>
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <Label>Fornecedor <span>*</span></Label>
+              {canBuy && <button type="button" className="text-xs underline text-primary" onClick={() => setNewSupplier(true)}>Cadastrar fornecedor</button>}
+            </div>
+            <Select name="supplierId" searchable options={suppliers.map(({ id, name }) => ({ id, name }))} state={supplierId} isLoading={isLoading} modal onChange={(_, value) => setSupplierId(String(value ?? ""))} placeholder="Laboratório ou assistência" />
+            {!isLoading && suppliers.length === 0 && (
+              <p className="text-xs text-muted-foreground mt-1">Nenhum fornecedor cadastrado. {canBuy
+                ? <button type="button" className="underline text-primary" onClick={() => setNewSupplier(true)}>Cadastrar agora</button>
+                : <Link to="/suprimentos/fornecedores" className="underline text-primary">Ver fornecedores</Link>}</p>
+            )}
+          </div>
           <div><Label htmlFor="serviceNotes">Observação</Label>
             <Textarea id="serviceNotes" className="mt-1" rows={2} maxLength={1000} value={notes} onChange={(event) => setNotes(event.target.value)} /></div>
+          {canBuy && (
+            <div className="flex items-start gap-2">
+              <Checkbox id="openPurchase" className="mt-0.5" checked={openPurchase} onCheckedChange={(checked) => setOpenPurchase(checked === true)} />
+              <Label htmlFor="openPurchase" className="font-normal">Abrir pedido de compra do serviço (já preenchido, para aprovar e pagar)</Label>
+            </div>
+          )}
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Voltar</Button>
-            <Button type="submit" disabled={isPending}>{isPending ? "Enviando..." : "Enviar"}</Button>
+            <Button type="submit" disabled={isPending}>{isPending ? "Enviando..." : openPurchase && canBuy ? "Enviar e abrir o pedido" : "Enviar"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+      {newSupplier && (
+        <QuickSupplierDialog onClose={() => setNewSupplier(false)} onCreated={(supplier) => {
+          queryClient.invalidateQueries({ queryKey: [EQUIP_KEYS.suppliers] });
+          setSupplierId(String(supplier.id));
+        }} />
+      )}
+    </Dialog>
+  );
+}
+
+/** Cadastro rápido de fornecedor (o mesmo do pedido de compra: só nome, documento e Pix). */
+export function QuickSupplierDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (supplier: { id: number; name: string }) => void }) {
+  const [name, setName] = useState("");
+  const [document, setDocument] = useState("");
+  const [error, setError] = useState("");
+  const { mutate, isPending } = useMutation({
+    mutationFn: async () => (await api.post<{ id: number; name: string }>("purchase-orders/suppliers", { name: name.trim(), document: document.replace(/\D/g, "") })).data,
+    onSuccess: (supplier) => { toast({ title: `${supplier.name} cadastrado`, variant: "success" }); onCreated(supplier); onClose(); },
+    onError: (err) => setError(errorMessage(err)),
+  });
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault(); event.stopPropagation();
+    if (name.trim().length < 2) return setError("Informe o nome do fornecedor.");
+    setError(""); mutate();
+  };
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Cadastrar fornecedor</DialogTitle>
+          <DialogDescription>Só o essencial. O cadastro completo fica em Financeiro → Fornecedores.</DialogDescription>
+        </DialogHeader>
+        <form className="grid gap-4" onSubmit={submit}>
+          <div><Label htmlFor="quickSupplierName">Nome <span>*</span></Label>
+            <Input id="quickSupplierName" name="quickSupplierName" value={name} maxLength={160} onValueChange={(_, value) => setName(String(value))} className="mt-1" placeholder="Ex.: Laboratório de metrologia" /></div>
+          <div><Label htmlFor="quickSupplierDocument">CNPJ ou CPF</Label>
+            <Input id="quickSupplierDocument" name="quickSupplierDocument" value={document} maxLength={18} onValueChange={(_, value) => setDocument(String(value))} className="mt-1" placeholder="Opcional" /></div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>Voltar</Button>
+            <Button type="submit" disabled={isPending}>{isPending ? "Salvando..." : "Cadastrar"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

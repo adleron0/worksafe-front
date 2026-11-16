@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
@@ -18,8 +18,12 @@ import {
   PurchaseStatus, allowedMoves, isForward, moveLabel, needsApproval, nextStage, purchaseWhen, purchasesApi,
 } from "../-shared/purchases";
 
+const STATUSES: PurchaseStatus[] = ["solicitado", "aprovado", "comprado", "recebido", "recusado", "cancelado"];
 export const Route = createFileRoute("/_authenticated/suprimentos/_pedidos/pedidos-de-compra")({
   component: PurchasesPage,
+  // ?status=comprado abre a lista já filtrada (ex.: cartão "Recebimentos pendentes" do estoque)
+  validateSearch: (search: Record<string, unknown>): { status?: PurchaseStatus } =>
+    (STATUSES.includes(search.status as PurchaseStatus) ? { status: search.status as PurchaseStatus } : {}),
 });
 
 const COLUMNS: KanbanColumn[] = PURCHASE_STAGES.map(({ id, name, color }) => ({ id, name, value: id, color }));
@@ -32,7 +36,10 @@ function PurchasesPage() {
   const { can } = useVerify();
   const navigate = useNavigate();
   const [view, changeView] = useStoredView("worksafe.suprimentos.pc.view");
-  const [status, setStatus] = useState("");
+  const initial = Route.useSearch();
+  const [status, setStatus] = useState<string>(initial.status ?? "");
+  // filtro de etapa só existe na lista: chegando filtrado, abre em lista
+  useEffect(() => { if (initial.status) changeView("lista"); }, [initial.status]); // eslint-disable-line react-hooks/exhaustive-deps
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [moving, setMoving] = useState<{ purchase: PurchaseRow; target: PurchaseStatus } | null>(null);

@@ -57,10 +57,10 @@ function UnitsPage() {
     <>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">Equipamentos</h1>
+          <h1 className="text-xl font-bold">Peças</h1>
           <p className="text-sm text-muted-foreground">Cada peça com etiqueta: onde está, a situação e os vencimentos de inspeção, calibração e vida útil.</p>
         </div>
-        <Button type="button" variant="outline" disabled={!rows.length} onClick={() => setPrinting(true)}><Icon name="qr-code" className="w-4 h-4 mr-1" /> Imprimir etiquetas</Button>
+        <Button type="button" variant="outline" disabled={!rows.length} onClick={() => setPrinting(true)}><Icon name="qr-code" className="w-4 h-4 mr-1" /> {rows.length && data && data.total > rows.length ? `Imprimir etiquetas desta página (${rows.length})` : `Imprimir etiquetas${rows.length ? ` (${rows.length})` : ""}`}</Button>
       </div>
 
       <div className="flex flex-col xl:flex-row xl:flex-wrap xl:items-center gap-3 my-4 p-4 rounded-lg border">
@@ -85,7 +85,17 @@ function UnitsPage() {
             <div className="w-64">Vencimentos</div>
           </div>
           {isLoading && Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
-          {!isLoading && !rows.length && <p className="p-6 text-sm text-muted-foreground">{filtered ? "Nenhuma peça com esses filtros." : "Nenhuma peça rastreada ainda. Elas nascem na entrada de itens controlados por unidade."}</p>}
+          {!isLoading && !rows.length && (filtered ? <p className="p-6 text-sm text-muted-foreground">Nenhuma peça com esses filtros.</p> : (
+            <div className="p-6 text-sm grid gap-3 justify-items-start">
+              <p className="font-medium">Nenhuma peça com etiqueta ainda.</p>
+              <p className="text-muted-foreground">Cinto, talabarte, trava-quedas e instrumentos são controlados peça por peça. Cadastre o item como equipamento reutilizável e dê entrada: cada peça ganha uma etiqueta com QR, e a inspeção e a calibração passam a ser cobradas aqui.</p>
+              {can("create_itens_estoque") && (
+                <Button type="button" onClick={() => navigate({ to: "/suprimentos/estoque/itens/$itemId", params: { itemId: "novo" }, search: { tipo: "reutilizavel" } as never })}>
+                  <Icon name="plus" className="w-4 h-4 mr-1" /> Cadastrar equipamento reutilizável
+                </Button>
+              )}
+            </div>
+          ))}
           {rows.map((unit) => (
             <button key={unit.id} type="button" onClick={() => navigate({ to: "/suprimentos/equipamentos/$unitId", params: { unitId: String(unit.id) } })}
               className="w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">

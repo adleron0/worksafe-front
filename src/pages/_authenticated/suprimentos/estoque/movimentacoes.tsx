@@ -41,7 +41,7 @@ function MovementsPage() {
   const reset = <T,>(setter: (value: T) => void) => (value: T) => { setter(value); setPage(0); };
 
   if (!can(`view_${STOCK_ABILITY}`)) return null;
-  const manual = MANUAL_TYPES.filter((option) => can(option.permission));
+  const manual = MANUAL_TYPES.filter((option) => option.permissions.some((permission) => can(permission)));
   const seesCost = !!data?.rows.some((row) => row.total !== null);
 
   return (

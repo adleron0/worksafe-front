@@ -23,7 +23,7 @@ const COLUMNS: KanbanColumn[] = RENTAL_STAGES.map(({ id, name, color }) => ({ id
 function RentalsPage() {
   const { can } = useVerify();
   const navigate = useNavigate();
-  const [view, changeView] = useStoredView("worksafe.suprimentos.locacoes.view");
+  const [view, changeView] = useStoredView("worksafe.suprimentos.locacoes.view", "lista");
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
   const [boardKey, setBoardKey] = useState(0);

@@ -1,1142 +1,369 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useState, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { get } from '@/services/api'
-import useVerify from '@/hooks/use-verify'
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Label,
-  LabelList,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  Rectangle,
-  ReferenceLine,
-  XAxis,
-  YAxis,
-} from "recharts"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select"
-import { ApiError } from "@/general-interfaces/api.interface"
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts";
+import api from "@/services/api";
+import Icon from "@/components/general-components/Icon";
+import Dialog from "@/components/general-components/Dialog";
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { Empty, Kpi, linkTo, moneyShort, Panel, pct, shortDate, toneText } from "../-dashboard/ui";
+import type { ActionTone, RenewalItem, TrainingPanel, UpcomingClass } from "./-painel/types";
 
-export const Route = createFileRoute('/_authenticated/treinamentos/')({
-  component: Dashboard
-})
+export const Route = createFileRoute("/_authenticated/treinamentos/")({
+  component: TrainingDashboard,
+});
 
-interface CourseData {
-  id: number
-  name: string
-  _count?: {
-    subscriptions?: number
+/**
+ * Painel de treinamentos. Tudo vem pronto de `GET /dashboard/training`: o que
+ * pede ação, quatro indicadores, as próximas turmas, as reciclagens a vencer e
+ * a tendência de 6 meses. Segue o desenho da Home (`-dashboard/ui`).
+ */
+function TrainingDashboard() {
+  const { data, isLoading, isError, refetch, dataUpdatedAt } = useQuery({
+    queryKey: ["dashboard-training"],
+    staleTime: 2 * 60 * 1000,
+    queryFn: async () => (await api.get<TrainingPanel>("dashboard/training")).data,
+  });
+  const [renewalsOpen, setRenewalsOpen] = useState(false);
+
+  if (isLoading) return <PanelSkeleton />;
+  if (isError || !data) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-20 text-sm text-muted-foreground">
+        <Icon name="cloud-off" className="w-8 h-8" />
+        Não foi possível carregar o painel de treinamentos.
+        <button type="button" onClick={() => refetch()} className="text-primary hover:underline">Tentar de novo</button>
+      </div>
+    );
   }
-}
 
-interface ClassData {
-  id: number
-  name: string
-  maxSubscriptions: number
-  courseId: number
-  initialDate: string
-  finalDate: string
-  _count?: {
-    subscriptions?: number
-  }
-}
-
-interface StudentData {
-  id: number
-  name: string
-  createdAt: string
-}
-
-interface CertificateData {
-  id: number
-  createdAt: string
-  subscription?: {
-    trainee?: {
-      name: string
-    }
-    class?: {
-      courseId: number
-    }
-  }
-}
-
-interface ApiResponse<T> {
-  rows: T[]
-  total: number
-}
-
-interface SubscriptionData {
-  id: number
-  name?: string
-  cpf?: string
-  email?: string
-  phone?: string
-  workedAt?: string
-  occupation?: string
-  companyId?: number
-  classId?: number
-  traineeId?: number | null
-  subscribeStatus?: 'pending' | 'confirmed' | 'declined'
-  confirmedAt?: string | null
-  declinedReason?: string | null
-  createdAt?: string
-  updatedAt?: string
-  inactiveAt?: string | null
-  class?: {
-    id?: number
-    name?: string
-  }
-}
-
-interface InstructorData {
-  id: number
-  name: string
-  specialty?: string
-  createdAt?: string
-}
-
-function Dashboard() {
-  const { can } = useVerify()
-  const [dateFilter, setDateFilter] = useState('30')
-  
-  // Buscar dados dos cursos
-  const { data: coursesData } = useQuery<ApiResponse<CourseData>, ApiError>({
-    queryKey: ['dashboard-courses', dateFilter],
-    queryFn: async () => {
-      const params = [
-        { key: 'limit', value: 100 },
-        { key: 'order-name', value: 'asc' }
-      ]
-      const result = await get('courses', '', params)
-      return result as ApiResponse<CourseData>
-    },
-    enabled: can('view_treinamentos')
-  })
-
-  // Buscar dados das turmas
-  const { data: classesData } = useQuery<ApiResponse<ClassData>, ApiError>({
-    queryKey: ['dashboard-classes', dateFilter],
-    queryFn: async () => {
-      const params = [
-        { key: 'limit', value: 200 },
-        { key: 'order-initialDate', value: 'desc' }
-      ]
-      const result = await get('classes', '', params)
-      return result as ApiResponse<ClassData>
-    },
-    enabled: can('view_treinamentos')
-  })
-
-  // Buscar dados dos alunos
-  const { data: studentsData } = useQuery<ApiResponse<StudentData>, ApiError>({
-    queryKey: ['dashboard-students', dateFilter],
-    queryFn: async () => {
-      const params = [
-        { key: 'limit', value: 100 },
-        { key: 'order-createdAt', value: 'desc' }
-      ]
-      const result = await get('trainee', '', params)
-      return result as ApiResponse<StudentData>
-    },
-    enabled: can('view_treinamentos')
-  })
-
-  // Buscar dados dos certificados emitidos
-  const { data: certificatesData } = useQuery<ApiResponse<CertificateData>, ApiError>({
-    queryKey: ['dashboard-certificates-issued', dateFilter],
-    queryFn: async () => {
-      const params = [
-        { key: 'limit', value: 100 },
-        { key: 'order-createdAt', value: 'desc' },
-        { key: 'active', value: 'true' }
-      ]
-      const result = await get('trainee-certificate', '', params)
-      return result as ApiResponse<CertificateData>
-    },
-    enabled: can('view_treinamentos')
-  })
-
-  // Buscar dados das inscrições (subscriptions)
-  const { data: subscriptionsData } = useQuery<ApiResponse<SubscriptionData>, ApiError>({
-    queryKey: ['dashboard-subscriptions', dateFilter],
-    queryFn: async () => {
-      const params = [
-        { key: 'limit', value: 500 },
-        { key: 'order-createdAt', value: 'desc' }
-      ]
-      const result = await get('subscription', '', params)
-      return result as ApiResponse<SubscriptionData>
-    },
-    enabled: can('view_treinamentos')
-  })
-
-  // Buscar dados dos instrutores
-  const { data: instructorsData } = useQuery<ApiResponse<InstructorData>, ApiError>({
-    queryKey: ['dashboard-instructors', dateFilter],
-    queryFn: async () => {
-      const params = [
-        { key: 'limit', value: 100 },
-        { key: 'order-name', value: 'asc' }
-      ]
-      const result = await get('instructors', '', params)
-      return result as ApiResponse<InstructorData>
-    },
-    enabled: can('view_treinamentos')
-  })
-
-  // Processar dados para os gráficos
-  const processedData = useMemo(() => {
-    if (!classesData || !studentsData || !certificatesData || !coursesData || !subscriptionsData) {
-      return {
-        turmasPorMes: [],
-        turmasRecentes: [],
-        taxaConclusao: [],
-        ocupacaoTurmas: [],
-        certificadosPorMes: [],
-        alunosPorMes: []
-      }
-    }
-
-    // Turmas por mês (últimos 7 meses)
-    const turmasPorMes: { date: string; turmas: number }[] = []
-    const monthsData: Record<string, number> = {}
-    
-    classesData?.rows?.forEach((turma: ClassData) => {
-      const date = new Date(turma.initialDate)
-      const monthKey = date.toISOString().slice(0, 7) // YYYY-MM
-      monthsData[monthKey] = (monthsData[monthKey] || 0) + 1
-    })
-
-    // Pegar últimos 7 meses
-    const now = new Date()
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const monthKey = date.toISOString().slice(0, 7)
-      const monthName = date.toLocaleDateString('pt-BR', { month: 'short' })
-      turmasPorMes.push({
-        date: monthName,
-        turmas: monthsData[monthKey] || 0
-      })
-    }
-
-    // Turmas recentes (últimas 7)
-    const turmasRecentes = classesData?.rows?.slice(0, 7).map((turma: ClassData) => {
-      // Contar inscrições confirmadas para esta turma
-      const inscricoesConfirmadas = subscriptionsData?.rows?.filter((sub: SubscriptionData) => 
-        sub.classId === turma.id && 
-        sub.subscribeStatus === 'confirmed' &&
-        !sub.inactiveAt
-      ).length || 0
-      
-      return {
-        date: new Date(turma.initialDate).toLocaleDateString('pt-BR', { 
-          day: '2-digit',
-          month: 'short' 
-        }),
-        alunos: inscricoesConfirmadas,
-        capacidade: turma.maxSubscriptions || 0
-      }
-    }) || []
-
-    // Taxa de conclusão por curso (top 5)
-    const taxaConclusao = coursesData?.rows?.slice(0, 5).map((curso: CourseData) => {
-      const turmasDoCurso = classesData?.rows?.filter((turma: ClassData) => 
-        turma.courseId === curso.id
-      ) || []
-      
-      // Contar inscrições confirmadas para as turmas deste curso
-      const turmasIds = turmasDoCurso.map(t => t.id)
-      const inscricoesConfirmadas = subscriptionsData?.rows?.filter((sub: SubscriptionData) => 
-        sub.classId && 
-        turmasIds.includes(sub.classId) && 
-        sub.subscribeStatus === 'confirmed' &&
-        !sub.inactiveAt
-      ).length || 0
-      
-      const certificadosDoCurso = certificatesData?.rows?.filter((cert: CertificateData) => 
-        cert.subscription?.class?.courseId === curso.id
-      ).length || 0
-      
-      const taxa = inscricoesConfirmadas > 0 ? (certificadosDoCurso / inscricoesConfirmadas) * 100 : 0
-      
-      return {
-        curso: curso.name.length > 15 ? curso.name.substring(0, 15) + '...' : curso.name,
-        taxa: Math.round(taxa)
-      }
-    }).filter((item: { taxa: number }) => item.taxa > 0) || []
-
-    // Ocupação das turmas ativas
-    const now2 = new Date()
-    const ocupacaoTurmas = classesData?.rows
-      ?.filter((t: ClassData) => 
-        new Date(t.initialDate) <= now2 && new Date(t.finalDate) >= now2
-      )
-      .slice(0, 3)
-      .map((turma: ClassData) => {
-        // Contar inscrições confirmadas para esta turma
-        const inscricoesConfirmadas = subscriptionsData?.rows?.filter((sub: SubscriptionData) => 
-          sub.classId === turma.id && 
-          sub.subscribeStatus === 'confirmed' &&
-          !sub.inactiveAt
-        ).length || 0
-        
-        const ocupacao = turma.maxSubscriptions > 0 
-          ? Math.round((inscricoesConfirmadas / turma.maxSubscriptions) * 100)
-          : 0
-        return {
-          turma: turma.name.length > 20 ? turma.name.substring(0, 20) + '...' : turma.name,
-          value: ocupacao,
-          label: `${inscricoesConfirmadas}/${turma.maxSubscriptions}`,
-          fill: ocupacao >= 80 ? 'var(--color-high)' : ocupacao >= 50 ? 'var(--color-medium)' : 'var(--color-low)'
-        }
-      }) || []
-
-    // Certificados por mês
-    const certificadosPorMes: { date: string; certificados: number }[] = []
-    const certMonthsData: Record<string, number> = {}
-    
-    certificatesData?.rows?.forEach((cert: CertificateData) => {
-      const date = new Date(cert.createdAt)
-      const monthKey = date.toISOString().slice(0, 7)
-      certMonthsData[monthKey] = (certMonthsData[monthKey] || 0) + 1
-    })
-
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const monthKey = date.toISOString().slice(0, 7)
-      const monthName = date.toLocaleDateString('pt-BR', { month: 'short' })
-      certificadosPorMes.push({
-        date: monthName,
-        certificados: certMonthsData[monthKey] || 0
-      })
-    }
-
-    // Novos alunos por mês
-    const alunosPorMes: { date: string; alunos: number }[] = []
-    const alunosMonthsData: Record<string, number> = {}
-    
-    studentsData?.rows?.forEach((aluno: StudentData) => {
-      const date = new Date(aluno.createdAt)
-      const monthKey = date.toISOString().slice(0, 7)
-      alunosMonthsData[monthKey] = (alunosMonthsData[monthKey] || 0) + 1
-    })
-
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const monthKey = date.toISOString().slice(0, 7)
-      const monthName = date.toLocaleDateString('pt-BR', { month: 'short' })
-      alunosPorMes.push({
-        date: monthName,
-        alunos: alunosMonthsData[monthKey] || 0
-      })
-    }
-
-    return {
-      turmasPorMes,
-      turmasRecentes,
-      taxaConclusao,
-      ocupacaoTurmas,
-      certificadosPorMes,
-      alunosPorMes
-    }
-  }, [classesData, studentsData, certificatesData, coursesData, subscriptionsData])
-
-  // Estatísticas gerais
-  const stats = useMemo(() => {
-    const totalCursos = coursesData?.total || 0
-    const totalTurmas = classesData?.total || 0
-    const totalAlunos = studentsData?.total || 0
-    const totalCertificados = certificatesData?.total || 0
-    const totalInstrutores = instructorsData?.total || 0
-
-    // Calcular turmas ativas (turmas onde a data atual está entre a data inicial e final)
-    const now = new Date()
-    const todayStart = new Date(now)
-    todayStart.setHours(0, 0, 0, 0)
-    const todayEnd = new Date(now)
-    todayEnd.setHours(23, 59, 59, 999)
-    
-    const turmasAtivasData = classesData?.rows?.filter((t: ClassData) => {
-      const inicio = new Date(t.initialDate)
-      const fim = new Date(t.finalDate)
-      
-      // Normalizar as datas para comparação correta
-      inicio.setHours(0, 0, 0, 0)
-      fim.setHours(23, 59, 59, 999)
-      
-      // Turma é ativa se hoje está entre início e fim (inclusive)
-      return inicio <= todayEnd && fim >= todayStart
-    }) || []
-    
-    const turmasAtivas = turmasAtivasData.length
-    
-    // Calcular total de alunos ativos (alunos confirmados em turmas ativas)
-    const turmasAtivasIds = turmasAtivasData.map(t => t.id)
-    const alunosAtivos = subscriptionsData?.rows?.filter((sub: SubscriptionData) => 
-      sub.subscribeStatus === 'confirmed' && 
-      sub.classId && 
-      turmasAtivasIds.includes(sub.classId) &&
-      !sub.inactiveAt
-    ).length || 0
-    
-    // Calcular taxa média de ocupação apenas das turmas ativas
-    const taxaOcupacao = turmasAtivasData.length > 0
-      ? turmasAtivasData.reduce((acc: number, turma: ClassData) => {
-          // Contar inscrições confirmadas para esta turma
-          const inscricoesConfirmadas = subscriptionsData?.rows?.filter((sub: SubscriptionData) => 
-            sub.classId === turma.id && 
-            sub.subscribeStatus === 'confirmed' &&
-            !sub.inactiveAt
-          ).length || 0
-          
-          const ocupacao = turma.maxSubscriptions > 0 
-            ? (inscricoesConfirmadas / turma.maxSubscriptions) * 100 
-            : 0
-          return acc + ocupacao
-        }, 0) / turmasAtivasData.length
-      : 0
-
-    // Alunos este mês
-    const currentMonth = new Date().toISOString().slice(0, 7)
-    const alunosEsteMes = studentsData?.rows?.filter((aluno: StudentData) => 
-      aluno.createdAt.slice(0, 7) === currentMonth
-    ).length || 0
-
-    // Certificados este mês
-    const certificadosEsteMes = certificatesData?.rows?.filter((cert: CertificateData) => 
-      cert.createdAt.slice(0, 7) === currentMonth
-    ).length || 0
-
-    return {
-      totalCursos,
-      totalTurmas,
-      totalAlunos,
-      totalCertificados,
-      turmasAtivas,
-      taxaOcupacao: Math.round(taxaOcupacao),
-      alunosEsteMes,
-      certificadosEsteMes,
-      alunosAtivos,
-      totalInstrutores
-    }
-  }, [coursesData, classesData, studentsData, certificatesData, subscriptionsData, instructorsData])
-
-  if (!can('view_treinamentos')) return null
+  const { kpis } = data;
+  const month = new Date(`${data.today}T12:00:00`).toLocaleDateString("pt-BR", { month: "long" });
+  const delta = (now: number, before: number) => now - before;
+  const trainedDelta = delta(kpis.trained.value, kpis.trained.previous);
 
   return (
-    <div className="p-6 w-full max-w-7xl mx-auto">
-      {/* Header com filtros */}
-      <div className="w-full flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard de Treinamentos</h1>
-          <p className="text-muted-foreground text-sm">
-            Acompanhe as métricas e indicadores dos treinamentos
-          </p>
+    <div className="space-y-4 pb-6">
+      <div className="flex flex-wrap items-baseline gap-2">
+        <h1 className="text-lg font-semibold">Treinamentos · {month}</h1>
+        <span className="text-xs text-muted-foreground">
+          atualizado às {new Date(dataUpdatedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+        </span>
+        <Link {...linkTo(data.links.newClass)} className="ml-auto inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-muted/50">
+          <Icon name="plus" className="w-3.5 h-3.5" /> Nova turma
+        </Link>
+      </div>
+
+      {/* Linha 1: o que pede ação | indicadores + tendência */}
+      <div className="grid gap-4 xl:grid-cols-3">
+        <ActionsPanel data={data} />
+        <div className="flex flex-col gap-4 xl:col-span-2 min-w-0">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Kpi
+              label="Alunos treinados no mês"
+              value={String(kpis.trained.value)}
+              hint={kpis.trained.previous || kpis.trained.value ? `${trainedDelta >= 0 ? "+" : ""}${trainedDelta} vs mês passado` : "nenhuma turma encerrada ainda"}
+              hintTone={trainedDelta > 0 ? "success" : trainedDelta < 0 ? "warning" : "muted"}
+              trend={kpis.trained.trend}
+              trendColor="#7c3aed"
+              link={data.links.classes}
+            />
+            <Kpi
+              label="Ocupação das próximas turmas"
+              value={pct(kpis.occupancy.ratio)}
+              hint={kpis.occupancy.seats ? `${kpis.occupancy.taken} de ${kpis.occupancy.seats} vagas em ${kpis.occupancy.classes} ${kpis.occupancy.classes === 1 ? "turma" : "turmas"}` : "nenhuma turma com vagas limitadas"}
+              hintTone={kpis.occupancy.ratio !== null && kpis.occupancy.ratio < 0.5 ? "warning" : "muted"}
+              link={data.links.classes}
+            />
+            {kpis.revenue && (
+              <Kpi
+                label="Recebido de inscrições no mês"
+                value={moneyShort(kpis.revenue.month)}
+                hint={kpis.revenue.open ? `${moneyShort(kpis.revenue.open)} a receber (${kpis.revenue.openCount})` : "nada em aberto"}
+                hintTone={kpis.revenue.month >= kpis.revenue.previous ? "success" : "muted"}
+                trend={kpis.revenue.trend}
+                link={kpis.revenue.link}
+              />
+            )}
+            <Kpi
+              label="Satisfação · aprovação na prova"
+              value={`${kpis.quality.rating !== null ? `${kpis.quality.rating.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}/5` : "—"} · ${pct(kpis.quality.approval)}`}
+              hint={`${kpis.quality.reviews} ${kpis.quality.reviews === 1 ? "avaliação" : "avaliações"}, ${kpis.quality.exams} ${kpis.quality.exams === 1 ? "prova" : "provas"} · ${kpis.quality.days} dias`}
+              hintTone={kpis.quality.rating !== null && kpis.quality.rating < 4 ? "warning" : "muted"}
+              link={data.links.reviews}
+            />
+          </div>
+          <TrendPanel trend={data.trend} />
         </div>
-        <Select value={dateFilter} onValueChange={setDateFilter}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Período" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7">7 dias</SelectItem>
-            <SelectItem value="30">30 dias</SelectItem>
-            <SelectItem value="90">90 dias</SelectItem>
-            <SelectItem value="365">1 ano</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
-      {/* Grid principal */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {/* Card de Turmas Ativas */}
-        <Card className="col-span-1 md:col-span-2 lg:col-span-2">
-          <CardHeader className="space-y-0 pb-2 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-t-lg">
-            <CardDescription className="text-blue-700 dark:text-blue-300 font-medium">Período Atual</CardDescription>
-            <CardTitle className="text-4xl tabular-nums text-blue-900 dark:text-blue-100">
-              {classesData ? (
-                <>
-                  {stats.turmasAtivas}{" "}
-                  <span className="font-sans text-sm font-normal tracking-normal text-muted-foreground">
-                    turmas ativas
-                  </span>
-                </>
-              ) : (
-                <Skeleton className="h-10 w-48" />
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {classesData ? (
-              <ChartContainer
-              config={{
-                turmas: {
-                  label: "Turmas",
-                  color: "hsl(var(--chart-1))",
-                },
-              }}
-            >
-              <BarChart
-                accessibilityLayer
-                margin={{
-                  left: -4,
-                  right: -4,
-                }}
-                data={processedData.turmasPorMes}
-              >
-                <Bar
-                  dataKey="turmas"
-                  fill="var(--color-turmas)"
-                  radius={5}
-                  fillOpacity={0.6}
-                  activeBar={<Rectangle fillOpacity={0.8} />}
-                />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={4}
-                />
-                <ChartTooltip
-                  defaultIndex={2}
-                  content={
-                    <ChartTooltipContent
-                      hideIndicator
-                      labelFormatter={(value) => `Mês: ${value}`}
-                    />
-                  }
-                  cursor={false}
-                />
-                <ReferenceLine
-                  y={stats.turmasAtivas}
-                  stroke="hsl(var(--muted-foreground))"
-                  strokeDasharray="3 3"
-                  strokeWidth={1}
-                >
-                  <Label
-                    position="insideBottomLeft"
-                    value="Média de Turmas"
-                    offset={10}
-                    fill="hsl(var(--foreground))"
-                  />
-                  <Label
-                    position="insideTopLeft"
-                    value={stats.turmasAtivas}
-                    className="text-lg"
-                    fill="hsl(var(--foreground))"
-                    offset={10}
-                    startOffset={100}
-                  />
-                </ReferenceLine>
-              </BarChart>
-            </ChartContainer>
-            ) : (
-              <div className="h-[200px] w-full">
-                <Skeleton className="h-full w-full" />
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="flex-col items-start gap-1">
-            {classesData ? (
-              <>
-                <CardDescription>
-                  Total de <span className="font-medium text-foreground">{stats.totalTurmas}</span> turmas
-                  nos últimos {dateFilter} dias
-                </CardDescription>
-                <CardDescription>
-                  Taxa de ocupação média: <span className="font-medium text-foreground">{stats.taxaOcupacao}%</span>
-                </CardDescription>
-              </>
-            ) : (
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-48" />
-                <Skeleton className="h-4 w-36" />
-              </div>
-            )}
-          </CardFooter>
-        </Card>
-
-        {/* Card de Certificados */}
-        <Card className="col-span-1 md:col-span-2 lg:col-span-1">
-          <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2 [&>div]:flex-1 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-t-lg">
-            <div>
-              <CardDescription className="text-emerald-700 dark:text-emerald-300 font-medium">Total</CardDescription>
-              <CardTitle className="flex items-baseline gap-1 text-4xl tabular-nums text-emerald-900 dark:text-emerald-100">
-                {certificatesData ? (
-                  <>
-                    {stats.totalCertificados}
-                    <span className="text-sm font-normal tracking-normal text-muted-foreground">
-                      certificados
-                    </span>
-                  </>
-                ) : (
-                  <Skeleton className="h-10 w-32" />
-                )}
-              </CardTitle>
-            </div>
-            <div>
-              <CardDescription className="text-teal-700 dark:text-teal-300 font-medium">Este mês</CardDescription>
-              <CardTitle className="flex items-baseline gap-1 text-4xl tabular-nums text-teal-900 dark:text-teal-100">
-                {certificatesData ? (
-                  <>
-                    {stats.certificadosEsteMes}
-                    <span className="text-sm font-normal tracking-normal text-muted-foreground">
-                      novos
-                    </span>
-                  </>
-                ) : (
-                  <Skeleton className="h-10 w-24" />
-                )}
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="flex flex-1 items-center">
-            {certificatesData ? (
-              <ChartContainer
-              config={{
-                certificados: {
-                  label: "Certificados",
-                  color: "hsl(var(--chart-2))",
-                },
-              }}
-              className="w-full"
-            >
-              <LineChart
-                accessibilityLayer
-                margin={{
-                  left: 14,
-                  right: 14,
-                  top: 10,
-                }}
-                data={processedData.certificadosPorMes}
-              >
-                <CartesianGrid
-                  strokeDasharray="4 4"
-                  vertical={false}
-                  stroke="hsl(var(--muted-foreground))"
-                  strokeOpacity={0.5}
-                />
-                <YAxis hide domain={["dataMin - 2", "dataMax + 2"]} />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                />
-                <Line
-                  dataKey="certificados"
-                  type="natural"
-                  fill="var(--color-certificados)"
-                  stroke="var(--color-certificados)"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{
-                    fill: "var(--color-certificados)",
-                    stroke: "var(--color-certificados)",
-                    r: 4,
-                  }}
-                />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      indicator="line"
-                      labelFormatter={(value) => `Mês: ${value}`}
-                    />
-                  }
-                  cursor={false}
-                />
-              </LineChart>
-            </ChartContainer>
-            ) : (
-              <div className="h-[150px] w-full">
-                <Skeleton className="h-full w-full" />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        {/* Card de Taxa de Ocupação com Gráfico de Rosca */}
-        <Card className="col-span-1 border-0 shadow-lg bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-950/20 dark:to-rose-950/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold text-rose-900 dark:text-rose-100">Taxa de Ocupação</CardTitle>
-            <CardDescription>Ocupação média das turmas ativas</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-center">
-              {classesData && subscriptionsData ? (
-                <ChartContainer
-                  config={{
-                    ocupado: {
-                      label: "Ocupado",
-                      color: "hsl(var(--chart-1))",
-                    },
-                    disponivel: {
-                      label: "Disponível",
-                      color: "hsl(var(--muted))",
-                    },
-                  }}
-                  className="h-[180px] w-[180px]"
-                >
-                  <PieChart>
-                  <Pie
-                    data={[
-                      { name: "Ocupado", value: stats.taxaOcupacao, fill: "url(#gradientOcupado)" },
-                      { name: "Disponível", value: 100 - stats.taxaOcupacao, fill: "#e5e7eb" }
-                    ]}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={75}
-                    startAngle={90}
-                    endAngle={-270}
-                    dataKey="value"
-                  >
-                    <Label
-                      value={`${stats.taxaOcupacao}%`}
-                      position="center"
-                      className="text-3xl font-bold fill-foreground"
-                    />
-                  </Pie>
-                  <defs>
-                    <linearGradient id="gradientOcupado" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#8b5cf6" />
-                      <stop offset="100%" stopColor="#ec4899" />
-                    </linearGradient>
-                  </defs>
-                  <ChartTooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="rounded-lg bg-white p-2 shadow-lg">
-                            <p className="text-sm font-medium">{payload[0].name}</p>
-                            <p className="text-sm text-muted-foreground">{payload[0].value}%</p>
-                          </div>
-                        )
-                      }
-                      return null
-                    }}
-                  />
-                  </PieChart>
-                </ChartContainer>
-              ) : (
-                <div className="h-[180px] w-[180px]">
-                  <Skeleton className="h-full w-full rounded-full" />
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card Principal com Cards Internos */}
-        <Card className="col-span-1 md:col-span-2 lg:col-span-1 border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-100">Visão Geral</CardTitle>
-            <CardDescription className="text-blue-700 dark:text-blue-300">
-              Métricas principais do sistema
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3">
-            {classesData && studentsData && certificatesData ? (
-              <>
-                {/* Mini Card Turmas */}
-                <div className="rounded-lg bg-gradient-to-r from-violet-500 to-purple-600 p-4 text-white shadow-md">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-medium opacity-90">Turmas</p>
-                      <p className="text-2xl font-bold">
-                        {stats.turmasAtivas}/{stats.totalTurmas}
-                      </p>
-                      <p className="text-xs opacity-75">ativas</p>
-                    </div>
-                <div className="rounded-full bg-white/20 p-3">
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Mini Card Alunos */}
-            <div className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 p-4 text-white shadow-md">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium opacity-90">Alunos</p>
-                  <p className="text-2xl font-bold">{stats.alunosEsteMes}</p>
-                  <p className="text-xs opacity-75">novos este mês</p>
-                </div>
-                <div className="rounded-full bg-white/20 p-3">
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Mini Card Certificados */}
-            <div className="rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 p-4 text-white shadow-md">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium opacity-90">Certificados</p>
-                  <p className="text-2xl font-bold">{stats.certificadosEsteMes}</p>
-                  <p className="text-xs opacity-75">emitidos este mês</p>
-                </div>
-                <div className="rounded-full bg-white/20 p-3">
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-              </>
-            ) : (
-              <>
-                <Skeleton className="h-24 w-full rounded-lg" />
-                <Skeleton className="h-24 w-full rounded-lg" />
-                <Skeleton className="h-24 w-full rounded-lg" />
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Card de Performance dos Cursos */}
-        <Card className="col-span-1 md:col-span-2 lg:col-span-1 border-0 shadow-lg bg-gradient-to-br from-cyan-50 to-teal-50 dark:from-cyan-950/20 dark:to-teal-950/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold text-teal-900 dark:text-teal-100">Performance dos Cursos</CardTitle>
-            <CardDescription>Taxa de conclusão por curso</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {coursesData && certificatesData && subscriptionsData ? (
-              processedData.taxaConclusao.length > 0 ? (
-              <ChartContainer
-                config={{
-                  conclusao: {
-                    label: "Taxa de Conclusão",
-                    color: "hsl(var(--chart-2))",
-                  },
-                }}
-                className="h-[250px] w-full"
-              >
-                <BarChart
-                  data={processedData.taxaConclusao.slice(0, 5)}
-                  layout="horizontal"
-                  margin={{
-                    left: 80,
-                    right: 20,
-                    top: 10,
-                    bottom: 10,
-                  }}
-                >
-                  <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
-                  <YAxis dataKey="curso" type="category" width={75} />
-                  <Bar dataKey="taxa" radius={[0, 8, 8, 0]}>
-                    {processedData.taxaConclusao.slice(0, 5).map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={
-                          entry.taxa >= 80 ? '#10b981' : 
-                          entry.taxa >= 60 ? '#f59e0b' : 
-                          entry.taxa >= 40 ? '#fb923c' : '#ef4444'
-                        } 
-                      />
-                    ))}
-                    <LabelList dataKey="taxa" position="right" formatter={(value: number) => `${value}%`} />
-                  </Bar>
-                  <ChartTooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="rounded-lg bg-white p-2 shadow-lg">
-                            <p className="text-sm font-medium">{payload[0].payload.curso}</p>
-                            <p className="text-sm text-muted-foreground">Conclusão: {payload[0].value}%</p>
-                          </div>
-                        )
-                      }
-                      return null
-                    }}
-                  />
-                </BarChart>
-              </ChartContainer>
-              ) : (
-                <div className="flex items-center justify-center h-[250px] text-muted-foreground">
-                  <p>Sem dados de conclusão disponíveis</p>
-                </div>
-              )
-            ) : (
-              <div className="h-[250px] w-full">
-                <Skeleton className="h-full w-full" />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Card de Timeline de Certificações */}
-        <Card className="col-span-1 border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold text-amber-900 dark:text-amber-100">Evolução de Certificações</CardTitle>
-            <CardDescription>Comparativo mensal de certificados</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {certificatesData && studentsData ? (
-              processedData.certificadosPorMes.length > 0 && processedData.alunosPorMes.length > 0 ? (
-              <ChartContainer
-                config={{
-                  certificados: {
-                    label: "Certificados",
-                    color: "hsl(var(--chart-3))",
-                  },
-                  alunos: {
-                    label: "Novos Alunos",
-                    color: "hsl(var(--chart-1))",
-                  },
-                }}
-                className="h-[200px] w-full"
-              >
-                <LineChart
-                  data={processedData.certificadosPorMes.map((cert, index) => ({
-                    date: cert.date || '',
-                    certificados: cert.certificados || 0,
-                    alunos: processedData.alunosPorMes[index]?.alunos || 0
-                  }))}
-                  margin={{
-                    left: 10,
-                    right: 10,
-                    top: 10,
-                    bottom: 0,
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 11 }}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 11 }}
-                    tickLine={false}
-                    axisLine={false}
-                    domain={[0, 'auto']}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="certificados"
-                    stroke="#f59e0b"
-                    strokeWidth={2}
-                    dot={{ r: 3, fill: '#f59e0b' }}
-                    activeDot={{ r: 5 }}
-                    connectNulls
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="alunos"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    dot={{ r: 3, fill: '#3b82f6' }}
-                    activeDot={{ r: 5 }}
-                    connectNulls
-                  />
-                  <ChartTooltip
-                    content={({ active, payload, label }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="rounded-lg bg-white p-2 shadow-lg">
-                            <p className="text-sm font-medium">{label}</p>
-                            {payload.map((entry, index) => (
-                              <p key={index} className="text-sm" style={{ color: entry.color }}>
-                                {entry.name}: {entry.value || 0}
-                              </p>
-                            ))}
-                          </div>
-                        )
-                      }
-                      return null
-                    }}
-                  />
-                </LineChart>
-              </ChartContainer>
-              ) : (
-                <div className="flex items-center justify-center h-[200px] text-muted-foreground">
-                  <p>Sem dados disponíveis</p>
-                </div>
-              )
-            ) : (
-              <div className="h-[200px] w-full">
-                <Skeleton className="h-full w-full" />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Card de Alunos por Turma */}
-        <Card className="col-span-1">
-          <CardHeader className="p-4 pb-0">
-            <CardTitle>Inscrições Recentes</CardTitle>
-            <CardDescription>
-              Alunos inscritos nas últimas turmas
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-row items-baseline gap-4 p-4 pt-2">
-            {classesData && subscriptionsData ? (
-              <>
-                <div className="flex items-baseline gap-2 text-3xl font-bold tabular-nums leading-none">
-                  {processedData.turmasRecentes.reduce((acc, t) => acc + t.alunos, 0)}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    alunos
-                  </span>
-                </div>
-                <ChartContainer
-              config={{
-                alunos: {
-                  label: "Alunos",
-                  color: "hsl(var(--chart-1))",
-                },
-              }}
-              className="ml-auto w-[64px]"
-            >
-              <BarChart
-                accessibilityLayer
-                margin={{
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                }}
-                data={processedData.turmasRecentes}
-              >
-                <Bar
-                  dataKey="alunos"
-                  fill="var(--color-alunos)"
-                  radius={2}
-                  fillOpacity={0.2}
-                  activeIndex={6}
-                  activeBar={<Rectangle fillOpacity={0.8} />}
-                />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={4}
-                  hide
-                />
-              </BarChart>
-            </ChartContainer>
-              </>
-            ) : (
-              <Skeleton className="h-16 w-full" />
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Card de Crescimento de Alunos */}
-        <Card className="col-span-1">
-          <CardHeader className="space-y-0 pb-0">
-            <CardDescription>Novos Alunos</CardDescription>
-            <CardTitle className="flex items-baseline gap-1 text-4xl tabular-nums">
-              {studentsData ? (
-                <>
-                  {stats.alunosEsteMes}
-                  <span className="font-sans text-sm font-normal tracking-normal text-muted-foreground">
-                    este mês
-                  </span>
-                </>
-              ) : (
-                <Skeleton className="h-10 w-24" />
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {studentsData ? (
-              <ChartContainer
-              config={{
-                alunos: {
-                  label: "Alunos",
-                  color: "hsl(var(--chart-4))",
-                },
-              }}
-            >
-              <AreaChart
-                accessibilityLayer
-                data={processedData.alunosPorMes}
-                margin={{
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                }}
-              >
-                <XAxis dataKey="date" hide />
-                <YAxis domain={["dataMin - 2", "dataMax + 2"]} hide />
-                <defs>
-                  <linearGradient id="fillAlunos" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="5%"
-                      stopColor="var(--color-alunos)"
-                      stopOpacity={0.8}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="var(--color-alunos)"
-                      stopOpacity={0.1}
-                    />
-                  </linearGradient>
-                </defs>
-                <Area
-                  dataKey="alunos"
-                  type="natural"
-                  fill="url(#fillAlunos)"
-                  fillOpacity={0.4}
-                  stroke="var(--color-alunos)"
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideLabel />}
-                  formatter={(value) => (
-                    <div className="flex min-w-[120px] items-center text-xs text-muted-foreground">
-                      Novos alunos
-                      <div className="ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums text-foreground">
-                        {value}
-                        <span className="font-normal text-muted-foreground">
-                          alunos
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                />
-              </AreaChart>
-            </ChartContainer>
-            ) : (
-              <div className="h-[120px] w-full">
-                <Skeleton className="h-full w-full" />
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* Linha 2: turmas + reciclagem */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2"><UpcomingPanel classes={data.upcoming} link={data.links.classes} /></div>
+        <RenewalsPanel renewals={data.renewals} onOpen={() => setRenewalsOpen(true)} />
       </div>
+
+      <RenewalsDialog open={renewalsOpen} onOpenChange={setRenewalsOpen} renewals={data.renewals} />
     </div>
-  )
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+const TONE_STYLE: Record<ActionTone, { icon: string; box: string }> = {
+  danger: { icon: "triangle-alert", box: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300" },
+  warning: { icon: "clock", box: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" },
+  info: { icon: "info", box: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300" },
+};
+
+function ActionsPanel({ data }: { data: TrainingPanel }) {
+  const extra = data.actionsTotal - data.actions.length;
+  return (
+    <Panel title="Precisa de você" icon="hand" aside={data.actionsTotal || undefined} className="h-full">
+      {data.actions.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-1 py-6 text-sm text-muted-foreground">
+          <Icon name="circle-check" className="w-6 h-6 text-emerald-600" />
+          Nada pendente nas turmas agora.
+        </div>
+      ) : (
+        <ul className="divide-y">
+          {data.actions.map((action) => (
+            <li key={action.key}>
+              <Link {...linkTo(action.link)} className="flex items-center gap-3 py-2 text-sm hover:bg-muted/50 -mx-2 px-2 rounded-md">
+                <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-md", TONE_STYLE[action.tone].box)}>
+                  <Icon name={TONE_STYLE[action.tone].icon} className="w-3.5 h-3.5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate">{action.title}</span>
+                  <span className="block text-xs text-muted-foreground truncate">{action.detail}</span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+      {extra > 0 && <p className="mt-2 text-xs text-muted-foreground">e mais {extra} {extra === 1 ? "aviso" : "avisos"} nas turmas</p>}
+    </Panel>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+function UpcomingPanel({ classes, link }: { classes: UpcomingClass[]; link: string }) {
+  return (
+    <Panel title="Próximas turmas" icon="graduation-cap" aside="60 dias" link={link} linkLabel="Ver todas as turmas" className="h-full">
+      {classes.length === 0 ? <Empty>Nenhuma turma marcada para os próximos 60 dias.</Empty> : (
+        <ul className="divide-y">
+          {classes.map((c) => <UpcomingRow key={c.id} turma={c} />)}
+        </ul>
+      )}
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-emerald-600" />no caminho</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-amber-500" />menos da metade</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-red-500" />abaixo do quórum</span>
+        <span className="flex items-center gap-1.5"><span className="h-3 w-px bg-foreground/60" />quórum mínimo</span>
+      </div>
+    </Panel>
+  );
+}
+
+function UpcomingRow({ turma }: { turma: UpcomingClass }) {
+  const ratio = turma.seats ? Math.min(1, turma.enrolled / turma.seats) : null;
+  const belowQuorum = turma.quorum !== null && turma.enrolled < turma.quorum;
+  const tone = belowQuorum ? "danger" : ratio !== null && ratio < 0.5 ? "warning" : "success";
+  const bar = tone === "danger" ? "bg-red-500" : tone === "warning" ? "bg-amber-500" : "bg-emerald-600";
+  const quorumAt = turma.seats && turma.quorum ? Math.min(1, turma.quorum / turma.seats) : null;
+  const flags = [
+    turma.ongoing && "acontecendo",
+    turma.pending > 0 && `${turma.pending} a confirmar`,
+    turma.instructors === 0 && "sem instrutor",
+  ].filter(Boolean) as string[];
+
+  return (
+    <li>
+      <Link {...linkTo(turma.link)} className="grid grid-cols-[3.25rem_minmax(0,1fr)] sm:grid-cols-[3.25rem_minmax(0,1fr)_9rem_3.5rem] items-center gap-x-3 gap-y-1 py-2 -mx-2 px-2 rounded-md hover:bg-muted/50 text-sm">
+        <span className="text-xs text-muted-foreground tabular-nums">{shortDate(turma.date)}</span>
+        <span className="min-w-0">
+          <span className="block truncate">{turma.name}</span>
+          {flags.length > 0 && <span className="block truncate text-xs text-muted-foreground">{flags.join(" · ")}</span>}
+        </span>
+        <span className="col-start-2 sm:col-start-auto">
+          {ratio !== null ? (
+            <span className="relative block h-1.5 rounded-full bg-muted">
+              <span className={cn("absolute inset-y-0 left-0 rounded-full", bar)} style={{ width: `${ratio * 100}%` }} />
+              {quorumAt !== null && <span className="absolute -top-1 h-3.5 w-px bg-foreground/60" style={{ left: `${quorumAt * 100}%` }} />}
+            </span>
+          ) : <span className="text-xs text-muted-foreground">vagas livres</span>}
+        </span>
+        <span className={cn("hidden sm:block text-right tabular-nums", toneText(tone === "success" ? undefined : tone))}>
+          {turma.enrolled}{turma.seats ? `/${turma.seats}` : ""}
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+function RenewalsPanel({ renewals, onOpen }: { renewals: TrainingPanel["renewals"]; onOpen: () => void }) {
+  const top = renewals.byCourse.slice(0, 5);
+  const rest = renewals.byCourse.slice(5).reduce((sum, c) => sum + c.count, 0);
+  return (
+    <Panel title="Reciclagens a vencer" icon="refresh-cw" aside={`${renewals.days} dias`} className="h-full">
+      {renewals.total === 0 ? <Empty>Nenhum certificado vencendo nos próximos {renewals.days} dias.</Empty> : (
+        <>
+          <p className="text-2xl font-semibold tabular-nums leading-tight">{renewals.total} {renewals.total === 1 ? "aluno" : "alunos"}</p>
+          <p className="text-xs text-muted-foreground mb-3">com certificado vencendo e sem turma nova marcada</p>
+          <ul className="space-y-1.5 text-sm">
+            {top.map((c) => (
+              <li key={c.courseId} className="flex items-center gap-2">
+                <span className="truncate flex-1">{c.name}</span>
+                <span className="tabular-nums text-muted-foreground">{c.count}</span>
+              </li>
+            ))}
+            {rest > 0 && <li className="flex text-sm text-muted-foreground"><span className="flex-1">outros cursos</span><span className="tabular-nums">{rest}</span></li>}
+          </ul>
+          <button type="button" onClick={onOpen} className="mt-3 text-xs text-primary hover:underline w-fit">Ver lista e contatos →</button>
+        </>
+      )}
+    </Panel>
+  );
+}
+
+const onlyDigits = (value: string) => value.replace(/\D/g, "");
+const whatsappUrl = (phone: string) => {
+  const digits = onlyDigits(phone);
+  return `https://wa.me/${digits.length <= 11 ? `55${digits}` : digits}`;
+};
+
+function RenewalsDialog({ open, onOpenChange, renewals }: { open: boolean; onOpenChange: (open: boolean) => void; renewals: TrainingPanel["renewals"] }) {
+  const [courseId, setCourseId] = useState<number | null>(null);
+  const items = useMemo(() => renewals.items.filter((item) => courseId === null || item.courseId === courseId), [renewals.items, courseId]);
+  const phones = items.map((item) => item.phone).filter(Boolean) as string[];
+
+  const copyPhones = async () => {
+    try {
+      await navigator.clipboard.writeText(items.filter((i) => i.phone).map((i) => `${i.trainee}\t${i.phone}\t${i.course}\t${shortDate(i.expiresAt)}`).join("\n"));
+      toast({ title: "Contatos copiados", description: `${phones.length} ${phones.length === 1 ? "telefone" : "telefones"} na área de transferência.` });
+    } catch {
+      toast({ title: "Não foi possível copiar", variant: "destructive" });
+    }
+  };
+
+  return (
+    <Dialog
+      showBttn={false}
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Reciclagens a vencer"
+      description={`Alunos com certificado vencendo nos próximos ${renewals.days} dias e sem turma nova do mesmo curso.`}
+      className="w-[min(94vw,760px)] sm:max-w-[94vw]"
+      classNameContent="h-auto max-h-[65vh] pb-2"
+    >
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <Chip active={courseId === null} onClick={() => setCourseId(null)}>Todos ({renewals.total})</Chip>
+        {renewals.byCourse.map((c) => (
+          <Chip key={c.courseId} active={courseId === c.courseId} onClick={() => setCourseId(c.courseId)}>{c.name} ({c.count})</Chip>
+        ))}
+        {phones.length > 0 && (
+          <Button variant="outline" size="sm" className="ml-auto h-7" onClick={copyPhones}>
+            <Icon name="copy" className="w-3.5 h-3.5" /> Copiar contatos
+          </Button>
+        )}
+      </div>
+      <ul className="divide-y">
+        {items.map((item) => <RenewalRow key={item.id} item={item} />)}
+      </ul>
+      {renewals.items.length < renewals.total && (
+        <p className="pt-2 text-xs text-muted-foreground">Mostrando os {renewals.items.length} que vencem primeiro.</p>
+      )}
+    </Dialog>
+  );
+}
+
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn("rounded-full border px-2.5 py-0.5 text-xs transition-colors", active ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted/60")}
+    >
+      {children}
+    </button>
+  );
+}
+
+function RenewalRow({ item }: { item: RenewalItem }) {
+  return (
+    <li className="flex items-center gap-3 py-2 text-sm">
+      <span className="min-w-0 flex-1">
+        <span className="block truncate">{item.trainee}</span>
+        <span className="block truncate text-xs text-muted-foreground">{item.course} · vence {shortDate(item.expiresAt)}</span>
+      </span>
+      {item.phone && (
+        <a href={whatsappUrl(item.phone)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-muted/60">
+          <Icon name="message-circle" className="w-3.5 h-3.5" /> WhatsApp
+        </a>
+      )}
+      {item.email && (
+        <a href={`mailto:${item.email}`} className="inline-flex items-center rounded-md border p-1.5 hover:bg-muted/60" aria-label={`E-mail para ${item.trainee}`}>
+          <Icon name="mail" className="w-3.5 h-3.5" />
+        </a>
+      )}
+    </li>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+const trendConfig = {
+  trained: { label: "Alunos treinados", color: "hsl(var(--primary))" },
+  enrolled: { label: "Inscrições recebidas", color: "#f97316" },
+} satisfies ChartConfig;
+
+function TrendPanel({ trend }: { trend: TrainingPanel["trend"] }) {
+  const points = trend.map((t) => ({
+    ...t,
+    label: new Date(`${t.month}-15T12:00:00`).toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""),
+  }));
+  const hasData = trend.some((t) => t.trained || t.enrolled);
+  return (
+    <Panel title="Últimos 6 meses" icon="chart-column">
+      {!hasData ? <Empty>Ainda sem turmas nos últimos 6 meses.</Empty> : (
+        <>
+          <ChartContainer config={trendConfig} className="aspect-auto h-40 w-full">
+            <ComposedChart data={points} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
+              <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={6} />
+              <YAxis tickLine={false} axisLine={false} width={32} allowDecimals={false} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="trained" fill="var(--color-trained)" radius={[4, 4, 0, 0]} maxBarSize={36} isAnimationActive={false} />
+              <Line dataKey="enrolled" type="monotone" stroke="var(--color-enrolled)" strokeWidth={2} dot={{ r: 3 }} isAnimationActive={false} />
+            </ComposedChart>
+          </ChartContainer>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-primary" />Alunos treinados (turmas encerradas)</span>
+            <span className="flex items-center gap-1.5"><span className="h-0.5 w-3 bg-orange-500" />Inscrições recebidas</span>
+          </div>
+        </>
+      )}
+    </Panel>
+  );
+}
+
+function PanelSkeleton() {
+  const box = "rounded-xl border bg-card animate-pulse";
+  return (
+    <div className="space-y-4">
+      <div className="h-6 w-56 rounded bg-muted animate-pulse" />
+      <div className="grid gap-4 xl:grid-cols-3">
+        <div className={`${box} h-56`} />
+        <div className="grid gap-4 sm:grid-cols-2 xl:col-span-2">{[0, 1, 2, 3].map((i) => <div key={i} className={`${box} h-24`} />)}</div>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-3"><div className={`${box} h-72 lg:col-span-2`} /><div className={`${box} h-72`} /></div>
+    </div>
+  );
 }

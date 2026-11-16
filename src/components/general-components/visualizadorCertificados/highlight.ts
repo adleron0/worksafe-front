@@ -121,7 +121,7 @@ export function renderVersion(
   const h = resolveHighlight(cert);
   if (!h || !cert.updatedAt) return cert.updatedAt;
   let hash = 0;
-  for (const ch of `${h.kind}|${h.theme}|${h.label}|${h.pattern}|${h.border}|selo8`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
+  for (const ch of `${h.kind}|${h.theme}|${h.label}|${h.pattern}|${h.border}|selo9`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
   return `${new Date(cert.updatedAt).getTime()}-${h.theme}-${(hash >>> 0).toString(36)}`;
 }
 
@@ -191,7 +191,8 @@ export const borderInfo = (id?: string | null) =>
   HIGHLIGHT_BORDERS.find((b) => b.id === id) ?? null;
 
 /** Opções de brilho da moldura para os selects do admin. */
-export const HIGHLIGHT_BORDER_OPTIONS = HIGHLIGHT_BORDERS.map((b) => ({ id: b.id, name: `${b.name} — ${b.description}` }));
+// só o nome (o texto longo estourava o campo); a descrição vai embaixo do select
+export const HIGHLIGHT_BORDER_OPTIONS = HIGHLIGHT_BORDERS.map((b) => ({ id: b.id, name: b.name }));
 
 /** Quanto da cintilação animada vai na borda, por estilo (o desenho fixo vem no PNG). */
 const BORDER_EDGE: Record<HighlightBorder, number> = {

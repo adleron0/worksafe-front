@@ -289,12 +289,15 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors }: StepProps) => {
             <Label htmlFor="highlightBorder">Brilho da moldura</Label>
             <Select
               name="highlightBorder"
-              options={HIGHLIGHT_BORDERS.map((b) => ({ id: b.id, name: `${b.name} — ${b.description}` }))}
+              options={HIGHLIGHT_BORDERS.map((b) => ({ id: b.id, name: b.name }))}
               state={dataForm.highlightBorder ?? ""}
               onChange={(name, value) => handleChange(name, value || null)}
               placeholder={`Padrão (${borderInfo(DEFAULT_BORDER)?.name})`}
               clearable
             />
+            <p className="mt-1 text-xs text-muted-foreground">
+              {borderInfo(dataForm.highlightBorder ?? DEFAULT_BORDER)?.description}
+            </p>
           </div>
         )}
         {dataForm.highlightTheme && (

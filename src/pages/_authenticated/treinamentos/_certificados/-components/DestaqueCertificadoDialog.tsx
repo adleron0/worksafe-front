@@ -157,6 +157,9 @@ export default function DestaqueCertificadoDialog({
                 placeholder={`${borderInfo(item.class?.highlightBorder ?? DEFAULT_BORDER)?.name} (padrão)`}
                 clearable
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {borderInfo(border ?? item.class?.highlightBorder ?? DEFAULT_BORDER)?.description}
+              </p>
             </div>
             <div>
               <p className="mb-1 text-xs text-muted-foreground">Texto da faixa</p>

@@ -384,7 +384,7 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
         {/* Imagem de Capa */}
         <div>
           <Label htmlFor="image">Imagem de Capa *</Label>
-          <DropUpload
+          <DropUpload preset="cover"
             setImage={setDataForm}
             EditPreview={preview}
             acceptedFiles="image/*"

@@ -182,7 +182,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
-      <DropUpload
+      <DropUpload preset="product"
         setImage={setDataForm}
         EditPreview={preview}
       />

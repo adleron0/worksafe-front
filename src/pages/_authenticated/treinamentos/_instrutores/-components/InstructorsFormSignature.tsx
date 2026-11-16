@@ -143,12 +143,11 @@ const SignatureForm = ({ formData, openSheet, entity }: FormProps) => {
     <form onSubmit={handleSubmit} className="flex flex-col gap-8 w-full mt-4">
       <div className="h-60">
         <Label>Assinatura do instrutor </Label>
-        <DropUpload
+        <DropUpload preset="signature"
           setImage={setDataForm}
           EditPreview={preview}
           itemFormData="signature"
           cover={false}
-          acceptedFiles="image/png"
           clearFields={["signatureUrl"]}
         />
       </div>

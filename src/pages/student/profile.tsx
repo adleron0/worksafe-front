@@ -285,7 +285,7 @@ function StudentProfile() {
               <div className="flex flex-col items-center gap-4">
                 <div className="text-center w-50 h-50">
                   <Label htmlFor="image" className="mb-2">Foto de Perfil</Label>
-                  <DropUpload
+                  <DropUpload preset="avatar"
                     setImage={setDataForm}
                     EditPreview={preview}
                     acceptedFiles="image/*"

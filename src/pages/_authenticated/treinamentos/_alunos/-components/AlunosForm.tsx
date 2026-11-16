@@ -9,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import Loader from "@/components/general-components/Loader";
 import { IEntity } from "../-interfaces/entity.interface";
 import Select from "@/components/general-components/Select";
-import DropUpload from "@/components/general-components/DropUpload";
+import ImageUpload from "@/components/general-components/image-upload/ImageUpload";
 import CalendarPicker from "@/components/general-components/Calendar";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -261,23 +261,6 @@ const AlunosForm = ({ formData, openSheet, entity }: FormProps) => {
     setDataForm(prev => ({ ...prev, birthDate: value }));
   };
 
-  const handleImageChange = (files: File[] | null) => {
-    if (files && files.length > 0) {
-      const file = files[0];
-      setDataForm((prev) => ({ ...prev, image: file }));
-      
-      // Criar preview da imagem
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setDataForm((prev) => ({ ...prev, image: null }));
-      setPreview(null);
-    }
-  };
-
   const statusOptions = [
     { id: "true", name: "Ativo" },
     { id: "false", name: "Inativo" }
@@ -508,16 +491,13 @@ const AlunosForm = ({ formData, openSheet, entity }: FormProps) => {
       {/* Imagem */}
       <div>
         <Label htmlFor="image">Foto</Label>
-        <DropUpload
-          setImage={(file: any) => handleImageChange(file ? [file] : null)}
-          EditPreview={preview}
-          acceptedFiles="image/*"
-        />
-        {preview && (
-          <div className="mt-2">
-            <img src={preview} alt="Preview" className="w-20 h-20 object-cover rounded" />
-          </div>
-        )}
+        <div className="h-56">
+          <ImageUpload
+            previewUrl={preview}
+            preset="avatar"
+            onChange={(file) => setDataForm((prev) => ({ ...prev, image: file }))}
+          />
+        </div>
         {errors.image && <p className="text-red-500 text-sm">{errors.image}</p>}
       </div>
 

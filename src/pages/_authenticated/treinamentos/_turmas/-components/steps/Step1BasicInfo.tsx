@@ -149,7 +149,7 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors }: StepProps) => {
     <div className="space-y-6">
       {/* Upload de Imagem */}
       <div className="h-60 w-full md:w-60">
-        <DropUpload setImage={setDataForm} EditPreview={preview} />
+        <DropUpload preset="card" setImage={setDataForm} EditPreview={preview} />
       </div>
 
       {/* Turma Aberta */}

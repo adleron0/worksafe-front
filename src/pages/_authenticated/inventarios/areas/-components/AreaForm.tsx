@@ -208,7 +208,7 @@ const AreaForm = ({ areaToEdit }: { areaToEdit?: Area }) => {
           </DialogDescription>
         </SheetHeader>
           <form onSubmit={handleSubmit} className="flex flex-col gap-2 mt-4">
-            <DropUpload
+            <DropUpload preset="card"
               setImage={setFormData}
               EditPreview={preview}
             />

@@ -300,7 +300,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
         onlyPassword !== 'only' && (
           <>
             <div className="h-60 mb-2">
-              <DropUpload
+              <DropUpload preset="avatar"
                 setImage={setDataForm}
                 EditPreview={preview}
               />

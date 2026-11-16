@@ -488,7 +488,7 @@ const Empresa = () => {
                     <Label>Logo da Empresa</Label>
                     {isEditing ? (
                       <div className="h-56">
-                        <DropUpload
+                        <DropUpload preset="logo"
                           setImage={setFormData}
                           EditPreview={preview}
                           itemFormData="image"
@@ -513,7 +513,7 @@ const Empresa = () => {
                     {isEditing ? (
                       <div className="h-48 flex items-center justify-center">
                         <div className="w-48 h-48">
-                          <DropUpload
+                          <DropUpload preset="favicon"
                             setImage={setFormData}
                             EditPreview={faviconPreview}
                             itemFormData="favicon"

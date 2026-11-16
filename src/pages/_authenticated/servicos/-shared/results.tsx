@@ -47,14 +47,14 @@ const CELL = "py-1.5 px-2 text-right tabular-nums whitespace-nowrap";
 export function ResultPanel({ orderId }: { orderId: number }) {
   const { data, isLoading, error } = useQuery({ queryKey: [ORDER_RESULT_KEY, String(orderId)], queryFn: () => ordersApi.get<OrderResult>(`${orderId}/result`) });
   if (isLoading) return <Skeleton className="h-48 w-full" />;
-  if (error || !data) return <section className="rounded-lg border p-4"><h2 className="font-semibold">Resultado da obra</h2><p className="mt-2 text-sm text-destructive">{errorMessage(error)}</p></section>;
+  if (error || !data) return <section className="min-w-0 rounded-lg border p-4"><h2 className="font-semibold">Resultado da obra</h2><p className="mt-2 text-sm text-destructive">{errorMessage(error)}</p></section>;
   const { totals, revenue } = data;
   const finished = data.status === "concluida" || data.status === "encerrada" || data.status === "cancelada";
   const lastTitle = finished ? "Resultado" : "Projeção";
   const over = (line: ResultLine) => line.projected > line.budget + 0.005;
 
   return (
-    <section className="rounded-lg border p-4">
+    <section className="min-w-0 rounded-lg border p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="font-semibold">Resultado da obra</h2>
         {data.progress.done !== null && <span className="text-xs text-muted-foreground tabular-nums">{decimal(data.progress.done, 0)}% da obra feita</span>}

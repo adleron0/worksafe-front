@@ -423,7 +423,7 @@ function CertificadoPublico() {
       // Fazendo a requisição para buscar o certificado pelo ID com query params
       const params = [
         { key: 'key', value: id },
-        { key: 'show', value: ['class', 'trainee', 'company'] }
+        { key: 'show', value: ['class', 'trainee', 'company', 'course'] }
       ];
       
       const response = await get('trainee-certificate', 'public', params);

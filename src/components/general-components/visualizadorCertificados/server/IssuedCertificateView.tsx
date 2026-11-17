@@ -22,6 +22,8 @@ export interface IssuedCertificateSource {
     highlightPattern?: string | null;
   highlightBorder?: string | null;
   } | null;
+  /** Curso: a cor pinta a luz em volta do cartão. */
+  course?: { name?: string; color?: string | null } | null;
 }
 
 /**
@@ -54,6 +56,7 @@ export const IssuedCertificateView: React.FC<{
       highlightTheme={highlight?.theme ?? null}
       highlightPattern={highlight?.pattern ?? null}
       highlightBorder={highlight?.border ?? null}
+      glowColor={certificate.course?.color ?? null}
       reservedHeight={reservedHeight}
       onError={onError}
       actions={

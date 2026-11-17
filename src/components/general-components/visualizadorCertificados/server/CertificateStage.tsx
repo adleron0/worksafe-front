@@ -70,6 +70,8 @@ interface CertificateStageProps {
   /** Padronagem do centro (sem ela, a padrão do tema). */
   highlightPattern?: FoilPattern | null;
   highlightBorder?: HighlightBorder | null;
+  /** Cor do curso (#rrggbb): pinta a luz em volta do cartão. */
+  glowColor?: string | null;
   /** Altura da janela reservada fora do palco (padrão 140 px; maior dentro de diálogos). */
   reservedHeight?: number;
   onError: () => void;
@@ -161,6 +163,15 @@ const usePrefersReducedMotion = () => {
   return reduced;
 };
 
+/** Luz suave na cor do curso (fio de 1 px + halo), como a do destaque. */
+function hexGlow(hex?: string | null): string | null {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  const rgb = `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+  return `0 0 0 1px rgba(${rgb},.35), 0 0 34px -6px rgba(${rgb},.55)`;
+}
+
 export const CertificateStage: React.FC<CertificateStageProps> = ({
   certificateKey,
   name,
@@ -173,6 +184,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
   highlightTheme,
   highlightPattern,
   highlightBorder,
+  glowColor,
   onError,
 }) => {
   const { width: logicalW, height: logicalH } = getLogicalCanvasSize(
@@ -592,9 +604,13 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
   const effect = highlightTheme
     ? buildFoilSettings(highlightTheme, highlightPattern ?? DEFAULT_PATTERN[highlightTheme], highlightBorder ?? undefined)
     : null;
-  const glowStyle: React.CSSProperties = highlightTheme
-    ? { boxShadow: `0 18px 40px -12px rgba(0,0,0,0.35), ${HOLO_GLOW[highlightTheme]}` }
-    : {};
+  // luz em volta do cartão: a cor do curso; sem ela, a do tema de destaque
+  const courseGlow = hexGlow(glowColor);
+  const glowStyle: React.CSSProperties = courseGlow
+    ? { boxShadow: `0 18px 40px -12px rgba(0,0,0,0.35), ${courseGlow}` }
+    : highlightTheme
+      ? { boxShadow: `0 18px 40px -12px rgba(0,0,0,0.35), ${HOLO_GLOW[highlightTheme]}` }
+      : {};
   const zoomed = view.scale > 1;
   const hiRes = view.scale >= HI_RES_FROM;
   const animate = !reducedMotion && !zoomed && !dragging;

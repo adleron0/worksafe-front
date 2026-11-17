@@ -5,6 +5,8 @@ import Header from '@/template/Header';
 import BreadCrumbs from '@/components/general-components/BreadCrumbs';
 import Loader from '@/components/general-components/Loader';
 import Footer from '@/template/Footer';
+import { HelpProvider } from '@/help/HelpContext';
+import { HelpCenter } from '@/help/HelpCenter';
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: async ({ context }) => {
@@ -19,6 +21,7 @@ export const Route = createFileRoute('/_authenticated')({
   pendingComponent: () => <Loader title={'Validando Sessão...'}/>,
   
   component: () => (
+    <HelpProvider>
     <div className='flex h-dvh w-screen overflow-x-hidden'>
       <Sidebar />
       <section id='main' className='w-full h-full flex flex-col bg-muted/40'>
@@ -29,6 +32,8 @@ export const Route = createFileRoute('/_authenticated')({
         </main>
         <Footer />
       </section>
+      <HelpCenter />
     </div>
+    </HelpProvider>
   ),
 })

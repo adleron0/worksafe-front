@@ -4,6 +4,7 @@ import { PanelLeft } from "lucide-react";
 import { Button } from "../components/ui/button";
 import AvatarMenu from "../components/general-components/AvatarMenu";
 import { ThemeToggle } from "../components/general-components/ThemeToggle";
+import { HelpButton } from "@/help/HelpCenter";
 
 const Header = () => {
   const { setOpenSidebar } = useGeneralContext();
@@ -27,7 +28,8 @@ const Header = () => {
           { user?.username?.split(" ")[1] }
         </div>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
+        <HelpButton />
         <ThemeToggle variant="ghost" />
         <AvatarMenu />
       </div>

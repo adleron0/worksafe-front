@@ -391,17 +391,29 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
     gyroBase.current = null;
     setGyroOn(true);
   }, [gyroOn]);
+  // começa a ouvir na hora: Android (e o que já liberou) manda o movimento sem
+  // pedir nada. O botão só aparece se nada chegar e o aparelho pedir permissão
+  // (iPhone). O Chrome do Android também tem requestPermission, mas já libera.
+  const gyroLive = useRef(false);
   useEffect(() => {
     if (!coarse || reducedMotion || typeof window === "undefined" || !("DeviceOrientationEvent" in window)) return;
+    startGyro();
     const Ctor = window.DeviceOrientationEvent as OrientationCtor;
-    if (typeof Ctor.requestPermission === "function") setGyroNeedsTap(true);
-    else startGyro();
+    if (typeof Ctor.requestPermission !== "function") return;
+    const t = window.setTimeout(() => {
+      if (!gyroLive.current) setGyroNeedsTap(true);
+    }, 1200);
+    return () => window.clearTimeout(t);
   }, [coarse, reducedMotion, startGyro]);
   useEffect(() => {
     if (!gyroOn) return;
     const RANGE = 22; // graus de inclinação do aparelho para chegar ao máximo
     const onOrient = (e: DeviceOrientationEvent) => {
       if (e.beta == null || e.gamma == null) return;
+      if (!gyroLive.current) {
+        gyroLive.current = true;
+        setGyroNeedsTap(false);
+      }
       if (viewRef.current.scale > 1 || pointers.current.size > 0) return;
       const base = (gyroBase.current ??= { b: e.beta, g: e.gamma });
       // o centro acompanha devagar a postura de quem segura
@@ -428,7 +440,10 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
     try {
       const Ctor = window.DeviceOrientationEvent as OrientationCtor;
       const res = await Ctor.requestPermission?.();
-      if (res === "granted") startGyro();
+      if (res === "granted") {
+        gyroBase.current = null;
+        setGyroOn(true);
+      }
     } finally {
       setGyroNeedsTap(false);
     }
@@ -755,7 +770,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
         )}
 
         {/* iPhone: libera o giroscópio com um toque */}
-        {gyroNeedsTap && !gyroOn && !zoomed && (
+        {gyroNeedsTap && !zoomed && (
           <div className="pointer-events-none absolute left-3 z-20 flex items-center" style={{ top: 0, height: TOPBAR }}>
             <button
               type="button"

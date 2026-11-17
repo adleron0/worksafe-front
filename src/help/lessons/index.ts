@@ -41,4 +41,21 @@ export const LESSONS: Lesson[] = [
       { title: "Registrar e agendar", start: 115.8 },
     ],
   },
+  {
+    id: "servicos.rdo",
+    title: "Diário de obra (RDO) no celular",
+    screen: "Diário de obra",
+    minutes: 4,
+    requires: ["view_ordens_de_servico"],
+    routes: ["/servicos/diario-de-obra", "/servicos/ordens-de-servico/:orderId/rdo/:reportId"],
+    video: { src: `${BASE}/rdo.mp4`, portrait: `${BASE}/rdo-vertical.mp4`, captions: `${BASE}/rdo.vtt` },
+    chapters: [
+      { title: "As obras do dia", start: 0 },
+      { title: "Começo do dia", start: 23.4 },
+      { title: "Equipe do dia", start: 52.5 },
+      { title: "O trabalho do dia", start: 85 },
+      { title: "Fim do dia", start: 109.9 },
+      { title: "Salvar e fechar", start: 147.3 },
+    ],
+  },
 ];

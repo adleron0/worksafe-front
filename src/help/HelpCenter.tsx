@@ -74,6 +74,8 @@ function Player({ lesson }: { lesson: Lesson }) {
   const chapters = lesson.chapters ?? [];
   const current = chapters.reduce((found, chapter, index) => (time + 0.25 >= chapter.start ? index : found), -1);
   const done = Boolean(states[lesson.id]?.completedAt);
+  // tutorial gravado no celular, visto no celular: a versão em pé ocupa a tela em vez de uma faixa
+  const [portrait] = useState(() => Boolean(lesson.video.portrait) && window.matchMedia("(max-width: 640px)").matches);
 
   useEffect(() => { track({ event: "lesson_start", tourId: lesson.id }); return () => track({ event: "lesson_exit", tourId: lesson.id }); }, [lesson.id, track]);
 
@@ -87,8 +89,8 @@ function Player({ lesson }: { lesson: Lesson }) {
 
   return (
     <div className={cn("grid gap-4", chapters.length > 0 && "lg:grid-cols-[minmax(0,1fr)_16rem]")}>
-      <video ref={video} src={lesson.video.src} poster={lesson.video.poster} controls autoPlay playsInline preload="metadata" crossOrigin="anonymous"
-        className="w-full aspect-video rounded-lg border bg-black"
+      <video ref={video} src={portrait ? lesson.video.portrait : lesson.video.src} poster={lesson.video.poster} controls autoPlay playsInline preload="metadata" crossOrigin="anonymous"
+        className={cn("rounded-lg border bg-black", portrait ? "mx-auto h-[60vh] w-auto max-w-full aspect-[462/1000]" : "w-full aspect-video")}
         onTimeUpdate={(event) => setTime(event.currentTarget.currentTime)}
         onPlay={() => track({ event: "video_play", tourId: lesson.id })}
         onEnded={() => { markDone(lesson.id); track({ event: "lesson_complete", tourId: lesson.id }); }}>

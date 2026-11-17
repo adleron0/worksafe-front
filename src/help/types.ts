@@ -21,7 +21,8 @@ export interface Lesson {
   requires: string[];
   /** telas em que o tutorial aparece; ":param" casa um trecho */
   routes: string[];
-  video: { src: string; captions?: string; poster?: string };
+  /** `portrait`: versão em pé (gravação de celular), usada quando a tela é estreita */
+  video: { src: string; captions?: string; poster?: string; portrait?: string };
   /** partes do vídeo, para pular direto */
   chapters?: Chapter[];
 }

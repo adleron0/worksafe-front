@@ -8,14 +8,6 @@ import { postLogin } from "@/services/auth/loginService";
 import { useForm, Controller } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -25,7 +17,7 @@ import { LoginData } from "@/general-interfaces/auth.interface";
 import { useAuth } from "@/context/AuthContext";
 import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
 import DynamicLogo from "@/components/general-components/DynamicLogo";
-// import { ArrowLeft } from "lucide-react";
+import { ArrowUpRight, Building2, KeyRound, Lock, Mail, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_index/")({
   loader: async () => {
@@ -105,95 +97,121 @@ function Login() {
   };
 
   return (
-    <main className="h-screen flex flex-col md:flex-row w-full">
-      <div className="relative bg-muted/50 w-full h-1/3 md:h-full flex flex-col gap-8 items-center justify-center p-4 md:p-16">
-        {/* Botão de Voltar para Home */}
-        {/*<Button
-          variant="default"
-          onClick={() => navigate({ to: "/" })}
-          className="absolute top-4 left-4 bg-transparent hover:bg-primary-light border border-primary text-primary p-2 hover:scale-110 hover:text-white rounded-md transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button>*/}
-        <div className="bg-muted md:bg-transparent p-4 rounded-md">
-          <div className="flex w-full max-w-3xl">
-            <div className="flex gap-3 items-center justify-center w-full">
-              <DynamicLogo width={220} height={80} />
-            </div>
-          </div>
-          <div className="flex flex-col gap-4 items-center justify-center w-full max-w-3xl">
-            <h1 className="text-2xl md:text-3xl font-bold text-primary">
-              Bem-vindo de volta!
-            </h1>
-            <p className="text-foreground text-sm max-w-4/5 md:text-base mt-2">
-              Aqui você acessa o sistema de gerenciamento de turmas e gestão de
-              treinamentos.
-            </p>
-            <p className="hidden md:block text-muted-foreground font-light max-w-4/5 text-sm md:text-base mt-2">
-              Se ainda não possui acesso ao sistema, entre em contato com seu
-              superior ou suporte para avaliarmos seus caso e liberação do
-              acesso.
-            </p>
-          </div>
+    <main className="flex min-h-screen w-full flex-col bg-background md:flex-row">
+      {/* Painel da marca: sempre grafite, com as faixas diagonais da identidade */}
+      <aside className="relative isolate flex w-full flex-col justify-between overflow-hidden bg-[#141312] px-6 py-8 text-white md:min-h-screen md:w-[46%] md:px-14 md:py-12">
+        <div aria-hidden className="pointer-events-none absolute -right-24 -top-1/4 -z-10 h-[150%] w-2/3 -skew-x-[24deg] bg-[linear-gradient(90deg,rgb(229_33_39/0.12)_0_62%,rgb(240_196_25/0.1)_62%_100%)]" />
+        <div className="flex items-center justify-between gap-4">
+          <DynamicLogo width={170} height={56} forceWhite />
+          <a
+            href="https://worksafebrasil.com.br"
+            className="hidden items-center gap-1.5 text-xs text-white/60 transition hover:text-white md:inline-flex"
+          >
+            Ir para o site <ArrowUpRight className="h-3.5 w-3.5" />
+          </a>
         </div>
-      </div>
-      <section className="flex items-center justify-center bg-background h-full max-w-3xl w-full p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="-mb-4">
-            <CardTitle className="text-primary text-2xl font-bold tracking-tighter">
-              Entre com sua conta
-            </CardTitle>
-            <CardDescription className="text-xs md:text-sm">
-              Entre com suas credenciais para acessar o sistema
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <CardContent>
-              <div>
-                <Label htmlFor="email">E-mail</Label>
+
+        <div className="mt-8 max-w-md md:mt-0">
+          <span className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
+            <span aria-hidden className="ws-cut" />
+            Intranet WorkSafe
+          </span>
+          <h1 className="mt-4 font-condensed text-5xl uppercase leading-[0.92] md:text-7xl">
+            Área restrita à <span className="text-ws-yellow-400">equipe</span>
+          </h1>
+          <p className="mt-4 text-sm text-white/70 md:text-base">
+            Sistema interno de gestão: turmas e certificados, comercial, obras e serviços, estoque, financeiro e
+            pessoas.
+          </p>
+          <ul className="mt-6 hidden flex-wrap gap-2 md:flex">
+            {[
+              ["Resgate", "bg-ws-red-500"],
+              ["Treinamentos", "bg-emerald-500"],
+              ["Serviços", "bg-ws-yellow-500"],
+              ["Loja e locações", "bg-ws-blue-500"],
+            ].map(([label, dot]) => (
+              <li key={label} className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-3 py-1 text-xs text-white/80">
+                <span className={`h-1.5 w-1.5 rounded-full ${dot}`} /> {label}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="mt-8 hidden md:block">
+          <p className="flex items-center gap-2 text-xs text-white/50">
+            <Lock className="h-3.5 w-3.5" /> Acesso exclusivo para colaboradores. Os acessos são registrados.
+          </p>
+          <p className="mt-2 text-xs text-white/50">
+            Procurando validar um certificado?{" "}
+            <a href="/certificados" className="text-white/80 underline-offset-4 hover:text-white hover:underline">
+              Consulte aqui
+            </a>
+            .
+          </p>
+        </div>
+        {/* assinatura das quatro frentes */}
+        <div aria-hidden className="ws-fita absolute inset-x-0 bottom-0" />
+      </aside>
+
+      {/* Formulário */}
+      <section className="flex flex-1 items-center justify-center px-4 py-10 md:px-10">
+        <div className="w-full max-w-sm">
+          <div className="mb-8">
+            <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              <ShieldCheck className="h-4 w-4 text-primary" /> Acesso seguro
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">Entrar na intranet</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Use seu e-mail de acesso, sua senha e o CNPJ da empresa.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">E-mail</Label>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Controller
                   name="email"
                   control={control}
                   render={({ field }) => (
-                    <Input
-                      id="email"
-                      placeholder="exemple@email.com"
-                      type="email"
-                      {...field}
-                    />
+                    <Input id="email" placeholder="voce@empresa.com.br" type="email" autoComplete="username" className="h-11 rounded-xl pl-10" {...field} />
                   )}
                 />
               </div>
-              <div className="mt-1 relative">
-                <Label htmlFor="password">Senha</Label>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Senha</Label>
+              <div className="relative">
+                <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Controller
                   name="password"
                   control={control}
                   render={({ field }) => (
                     <Input
                       id="password"
-                      placeholder="sua senha secreta"
+                      placeholder="Sua senha"
                       type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      className="h-11 rounded-xl pl-10 pr-11"
                       {...field}
                     />
                   )}
                 />
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute inset-y-6 right-0 p-2 h-9 flex items-center border border-gray-200 bg-primary-foreground"
+                  aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
+                  className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? (
-                    <EyeOpenIcon className="w-4 h-4" />
-                  ) : (
-                    <EyeClosedIcon className="w-4 h-4" />
-                  )}
-                </Button>
+                  {showPassword ? <EyeOpenIcon className="h-4 w-4" /> : <EyeClosedIcon className="h-4 w-4" />}
+                </button>
               </div>
-              <div className="mt-1">
-                <Label htmlFor="cnpj">CNPJ</Label>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cnpj">CNPJ da empresa</Label>
+              <div className="relative">
+                <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Controller
                   name="cnpj"
                   control={control}
@@ -202,38 +220,40 @@ function Login() {
                       id="cnpj"
                       placeholder="00.000.000/0000-00"
                       type="text"
+                      inputMode="numeric"
+                      className="h-11 rounded-xl pl-10"
                       value={formatCNPJ(field.value || "")} // Exibe o CNPJ formatado
-                      onChange={(e) =>
-                        field.onChange(unformatCNPJ(e.target.value))
-                      } // Envia o valor sem formatação
+                      onChange={(e) => field.onChange(unformatCNPJ(e.target.value))} // Envia o valor sem formatação
                     />
                   )}
                 />
               </div>
-              <Button
-                disabled={isPending}
-                type="submit"
-                className="mt-4 w-full"
-              >
-                {isPending ? <VscLoading className="animate-spin" /> : "Entrar"}
-              </Button>
-              <div className="flex items-center gap-6 mt-4">
-                <Separator />
-                <span className="text-xs text-muted-foreground">OU</span>
-                <Separator />
-              </div>
-              <Button variant="outline" className="mt-4 w-full">
-                Suporte
-              </Button>
-            </CardContent>
+            </div>
+
+            <Button disabled={isPending} type="submit" size="lg" className="mt-2 h-11 w-full rounded-xl text-[15px]">
+              {isPending ? <VscLoading className="animate-spin" /> : "Entrar"}
+            </Button>
           </form>
-          <CardFooter>
-            <p className="text-muted-foreground text-center text-xs md:text-sm">
-              Ao entrar em nossa plataforma você concorda com nossos Termos de
-              Uso e Política de Privacidade.
-            </p>
-          </CardFooter>
-        </Card>
+
+          <div className="my-6 flex items-center gap-4">
+            <Separator className="flex-1" />
+            <span className="text-xs text-muted-foreground">sem acesso?</span>
+            <Separator className="flex-1" />
+          </div>
+          <Button variant="outline" className="h-11 w-full rounded-xl">
+            Falar com o suporte
+          </Button>
+
+          <p className="mt-8 text-center text-xs text-muted-foreground">
+            Ao entrar você concorda com os Termos de Uso e a Política de Privacidade.
+          </p>
+          <p className="mt-3 text-center text-xs text-muted-foreground md:hidden">
+            Validar um certificado?{" "}
+            <a href="/certificados" className="text-foreground underline underline-offset-4">
+              Consulte aqui
+            </a>
+          </p>
+        </div>
       </section>
     </main>
   );

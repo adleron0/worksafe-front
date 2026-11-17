@@ -14,6 +14,24 @@ import Select from "@/components/general-components/Select";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/useDebounce";
 import { decodeBase64Variables } from "@/utils/decodeBase64Variables";
+import Icon from "@/components/general-components/Icon";
+import { resolveHighlight, themeInfo } from "@/components/general-components/visualizadorCertificados/highlight";
+
+/** Selo de destaque (aluno destaque ou turma especial), no degradê do tema. */
+function HighlightPill({ cert }: { cert: unknown }) {
+  const h = resolveHighlight(cert as Parameters<typeof resolveHighlight>[0]);
+  const theme = themeInfo(h?.theme);
+  if (!h || !theme) return null;
+  return (
+    <span
+      className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide shadow-sm"
+      style={{ background: theme.gradient, color: theme.text }}
+    >
+      <Icon name={theme.icon} className="h-3 w-3" />
+      {h.label}
+    </span>
+  );
+}
 
 export const Route = createFileRoute("/_index/certificados/")({
   component: CertificadosPublicos,
@@ -211,18 +229,17 @@ function CertificadosPublicos() {
         <div className="max-w-6xl mx-auto">
           {/* Header Simples */}
           <div className="mb-8">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="p-2 bg-green-100 dark:bg-green-950/30 rounded-lg">
-                <Shield className="w-6 h-6 text-green-600 dark:text-green-500" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">
-                  Profissionais Certificados
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Encontre profissionais qualificados pela WorkSafe
-                </p>
-              </div>
+            <div className="mb-6">
+              <span className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                <span aria-hidden className="ws-cut" />
+                <Shield className="h-3.5 w-3.5" /> Validação pública
+              </span>
+              <h1 className="mt-3 font-condensed text-5xl uppercase leading-[0.95] text-foreground md:text-6xl">
+                Profissionais <span className="text-ws-red-500">certificados</span>
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Encontre profissionais qualificados pela WorkSafe e confira a autenticidade de cada certificado.
+              </p>
             </div>
 
             {/* Filtros */}
@@ -304,7 +321,7 @@ function CertificadosPublicos() {
             </div>
           ) : (
             <>
-              <div className="bg-card rounded-lg border border-border overflow-hidden">
+              <div className="bg-card rounded-2xl border border-border overflow-hidden">
                 {/* Header da tabela - Desktop */}
                 <div className="hidden md:block bg-muted/50 px-6 py-3 border-b border-border">
                   <div className="grid grid-cols-12 gap-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -341,9 +358,14 @@ function CertificadosPublicos() {
                           <div className="col-span-3">
                             <div className="flex items-center gap-2">
                               <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                              <p className="text-sm font-medium text-foreground truncate">
-                                {variables.aluno_nome?.value || "—"}
-                              </p>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate">
+                                  {variables.aluno_nome?.value || "—"}
+                                </p>
+                                <div className="mt-1 empty:hidden">
+                                  <HighlightPill cert={certificate} />
+                                </div>
+                              </div>
                             </div>
                           </div>
 
@@ -382,7 +404,7 @@ function CertificadosPublicos() {
                               className="text-primary hover:text-primary hover:bg-primary/10"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate({ to: `/certificados/${certificate.id}` });
+                                navigate({ to: `/certificados/${certificate.key}` });
                               }}
                             >
                               <ArrowRight className="w-4 h-4" />
@@ -400,9 +422,12 @@ function CertificadosPublicos() {
                               {formatDate(variables.certificado_emissao?.value || certificate.createdAt)}
                             </span>
                           </div>
-                          <p className="font-medium text-foreground text-sm mb-1">
-                            {variables.aluno_nome?.value || "—"}
-                          </p>
+                          <div className="mb-1 flex flex-wrap items-center gap-2">
+                            <p className="font-medium text-foreground text-sm">
+                              {variables.aluno_nome?.value || "—"}
+                            </p>
+                            <HighlightPill cert={certificate} />
+                          </div>
                           <p className="text-sm text-muted-foreground mb-1">
                             {variables.curso_nome?.value || "—"}
                           </p>

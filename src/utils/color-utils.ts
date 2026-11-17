@@ -73,7 +73,7 @@ export function generateTheme(primaryColorHex: string, secondaryColorHex?: strin
       --card: 40 33% 98%;
       --card-foreground: 24 10% 10%;
       --primary: ${h} ${s}% ${l}%;
-      --primary-foreground: ${h} 40% 98%;
+      --primary-foreground: 0 0% 100%;
       --primary-dark: ${h} ${s}% ${Math.max(l - 30, 10)}%;
       --secondary: ${secondaryHSL.h} ${secondaryHSL.s}% ${secondaryHSL.l}%;
       --secondary-foreground: ${secondaryHSL.h} ${Math.min(secondaryHSL.s + 20, 80)}% ${Math.max(secondaryHSL.l - 40, 10)}%;
@@ -96,8 +96,10 @@ export function generateTheme(primaryColorHex: string, secondaryColorHex?: strin
       --inverse-foreground: 24 10% 10% !important;
       --card: 30 6% 12.2% !important;
       --card-foreground: 45 17% 95% !important;
-      --primary: ${h} 91.2% 59.8% !important;
-      --primary-foreground: ${h} 47.4% 11.2% !important;
+      /* a mesma cor da empresa (só um pouco mais clara para contrastar no escuro),
+         com texto branco — antes virava um verde neon com texto escuro */
+      --primary: ${h} ${s}% ${Math.min(l + 4, 48)}% !important;
+      --primary-foreground: 0 0% 100% !important;
       --primary-dark: ${h} ${s}% ${Math.max(l - 40, 5)}% !important;
       --secondary: ${secondaryHSL.h} ${Math.min(secondaryHSL.s + 10, 60)}% ${Math.max(secondaryHSL.l - 20, 15)}% !important;
       --secondary-foreground: ${secondaryHSL.h} 40% 95% !important;

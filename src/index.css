@@ -383,3 +383,58 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ------------------------------------------------------------------
+   Paleta WorkSafe (a mesma do site): um verde só, e as escalas da marca.
+   emerald-* e green-* apontam para o Verde WorkSafe #149E5E (texto branco
+   sobre ele). Vermelho #E52127, Amarelo #F0C419, Azul-aço #3E6F98.
+   Cor por frente: resgate = vermelho · treinamentos = verde ·
+   serviços = amarelo · loja/locações = azul-aço.
+   ------------------------------------------------------------------ */
+@theme {
+  --color-emerald-50: #ecf8f1;
+  --color-emerald-100: #d2f0df;
+  --color-emerald-200: #a6e1c1;
+  --color-emerald-300: #6fcb9c;
+  --color-emerald-400: #36b378;
+  --color-emerald-500: #149e5e;
+  --color-emerald-600: #0e8a50;
+  --color-emerald-700: #0b7043;
+  --color-emerald-800: #0a5737;
+  --color-emerald-900: #08432b;
+  --color-emerald-950: #04291a;
+  --color-green-50: #ecf8f1;
+  --color-green-100: #d2f0df;
+  --color-green-200: #a6e1c1;
+  --color-green-300: #6fcb9c;
+  --color-green-400: #36b378;
+  --color-green-500: #149e5e;
+  --color-green-600: #0e8a50;
+  --color-green-700: #0b7043;
+  --color-green-800: #0a5737;
+  --color-green-900: #08432b;
+  --color-green-950: #04291a;
+  --color-ws-red-50: #fdecec;
+  --color-ws-red-100: #fbd3d4;
+  --color-ws-red-400: #e8434a;
+  --color-ws-red-500: #e52127;
+  --color-ws-red-600: #c8171d;
+  --color-ws-yellow-100: #fdf0bf;
+  --color-ws-yellow-400: #f2c82b;
+  --color-ws-yellow-500: #f0c419;
+  --color-ws-yellow-700: #9e7a0a;
+  --color-ws-blue-300: #7fa3c4;
+  --color-ws-blue-500: #3e6f98;
+  --font-condensed: "Bebas Neue", "Oswald", Impact, sans-serif;
+}
+
+/* corte do símbolo (vermelho + amarelo inclinados) e assinatura das 4 frentes */
+.ws-cut { display: inline-flex; gap: 4px; flex-shrink: 0; }
+.ws-cut::before, .ws-cut::after { content: ""; height: 4px; transform: skewX(-30deg); }
+.ws-cut::before { width: 18px; background: #e52127; }
+.ws-cut::after { width: 9px; background: #f0c419; }
+.ws-fita {
+  height: 4px;
+  background: linear-gradient(100deg, #e52127 0 40%, transparent 40% 40.5%, #f0c419 40.5% 60%,
+    transparent 60% 60.5%, #149e5e 60.5% 82%, transparent 82% 82.5%, #3e6f98 82.5% 100%);
+}

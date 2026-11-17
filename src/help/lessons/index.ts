@@ -93,4 +93,20 @@ export const LESSONS: Lesson[] = [
       { title: "Editar, duplicar e excluir", start: 180.4 },
     ],
   },
+  {
+    id: "treinamentos.certificados",
+    title: "Certificados: da turma ao QR",
+    screen: "Certificados",
+    minutes: 3,
+    requires: ["view_classes"],
+    routes: ["/treinamentos/turmas", "/treinamentos/turmas/:turmaId", "/treinamentos/certificados", "/treinamentos/inscricoes"],
+    video: { src: `${BASE}/certificados.mp4`, captions: `${BASE}/certificados.vtt` },
+    chapters: [
+      { title: "Antes de emitir", start: 0 },
+      { title: "Presença e inscrições", start: 28.1 },
+      { title: "Emitir", start: 56 },
+      { title: "Certificados emitidos", start: 92.5 },
+      { title: "Cancelar e validar", start: 134.3 },
+    ],
+  },
 ];

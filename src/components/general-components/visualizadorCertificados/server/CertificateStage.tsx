@@ -619,7 +619,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
         className={`select-none overflow-hidden ${
           fullscreen
             ? "fixed inset-0 z-[100] bg-background"
-            : "relative w-full rounded-2xl border border-border bg-gradient-to-b from-muted/30 to-muted/60"
+            : "relative w-full" // sem moldura: cartão e botões flutuam na página
         }`}
         style={{
           height: stageWidth ? stageH : undefined,

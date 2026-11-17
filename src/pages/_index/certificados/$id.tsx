@@ -218,6 +218,18 @@ interface ICompany {
 }
 
 // Interface para o certificado
+interface CancelledCertificate {
+  status: 'cancelado';
+  key: string;
+  canceledAt: string;
+  issuedAt: string;
+  reason?: string | null;
+  replacedByKey?: string | null;
+  traineeName?: string | null;
+  course?: { name?: string; icon?: string | null; color?: string | null } | null;
+  companyName?: string | null;
+}
+
 interface ICertificate {
   id: number;
   key: string;
@@ -437,6 +449,21 @@ function CertificadoPublico() {
 
   // Extrair o certificado do array de rows
   const certificate = certificateData?.rows?.[0];
+
+  // Não achou entre os vivos: pode ser um certificado cancelado. Quem lê o QR
+  // precisa ver "cancelado", não "não encontrado" (que parece falso).
+  const { data: cancelled, isLoading: loadingCancelled } = useQuery<CancelledCertificate | null>({
+    queryKey: [`certificate-cancelled-${id}`],
+    queryFn: async () => {
+      try {
+        return (await get<CancelledCertificate>('trainee-certificate', `public/${id}/status`)) ?? null;
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!id && !isLoading && !certificate,
+    retry: 0,
+  });
   
   // Extrair dados da turma e instrutores
   const classData = certificate?.class;
@@ -516,7 +543,7 @@ function CertificadoPublico() {
     };
   };
 
-  if (isLoading) {
+  if (isLoading || (!certificate && loadingCancelled)) {
     return (
       <>
         <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
@@ -524,6 +551,67 @@ function CertificadoPublico() {
           <div className="text-center">
             <Icon name="loader-2" className="w-12 h-12 animate-spin mx-auto text-primary mb-4" />
             <p className="text-muted-foreground">Carregando certificado...</p>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
+  if (!certificate && cancelled) {
+    return (
+      <>
+        <NavBar cart={cart} setCart={setCart} handleWhatsApp={handleWhatsApp} />
+        <div className="min-h-screen flex items-center justify-center bg-background px-4 pt-24 pb-16">
+          <div className="w-full max-w-lg overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+            <div className="flex items-center gap-3 border-b border-red-500/20 bg-red-500/[0.07] px-6 py-4">
+              <div className="rounded-lg bg-card p-2.5 shadow-sm">
+                <Icon name="circle-x" className="h-6 w-6 text-red-600" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">Certificado cancelado</h1>
+                <p className="text-sm text-muted-foreground">
+                  Cancelado em {formatDate(cancelled.canceledAt)} · não tem mais validade
+                </p>
+              </div>
+            </div>
+            <div className="space-y-4 p-6">
+              <div className="flex items-center gap-3">
+                <CourseMark icon={cancelled.course?.icon} color={cancelled.course?.color} size="md" />
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-foreground">{cancelled.course?.name || 'Curso'}</p>
+                  {cancelled.traineeName && (
+                    <p className="truncate text-sm text-muted-foreground">{cancelled.traineeName}</p>
+                  )}
+                </div>
+              </div>
+              <dl className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-muted-foreground">Emitido em</dt>
+                  <dd className="font-medium text-foreground">{formatDate(cancelled.issuedAt)}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-muted-foreground">Cancelado em</dt>
+                  <dd className="font-medium text-foreground">{formatDate(cancelled.canceledAt)}</dd>
+                </div>
+              </dl>
+              {cancelled.reason && (
+                <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Motivo</p>
+                  <p className="mt-0.5 text-foreground">{cancelled.reason}</p>
+                </div>
+              )}
+              {cancelled.replacedByKey ? (
+                <Button className="w-full" onClick={() => navigate({ to: '/certificados/$id', params: { id: cancelled.replacedByKey! } })}>
+                  <Icon name="badge-check" className="mr-2 h-4 w-4" />
+                  Ver o certificado que substitui este
+                </Button>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Este certificado foi emitido pela {cancelled.companyName || 'WorkSafe'} e depois cancelado. Ele não comprova a capacitação.
+                </p>
+              )}
+            </div>
           </div>
         </div>
         <Footer />
@@ -614,32 +702,30 @@ function CertificadoPublico() {
             <div className="lg:col-span-2 space-y-6">
             {/* Card Principal - Status e Informações do Certificado */}
             <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-              {/* Header com Status */}
-              <div className="bg-gradient-to-r from-primary/5 to-primary/10 border-b border-border px-6 py-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-card rounded-lg shadow-sm">
-                      <Icon name="badge-check" className="w-6 h-6 text-primary" />
+              {/* Estado único: válido · vencido (autêntico, mas sem validade) */}
+              {(() => {
+                const expired = validationStatus?.status === "expired";
+                const company = certificate.company?.comercial_name || "WorkSafe";
+                const tone = expired
+                  ? { band: "border-amber-500/25 bg-amber-500/[0.08]", icon: "clock-alert", iconColor: "text-amber-600", title: "Certificado vencido" }
+                  : { band: "border-primary/20 bg-primary/[0.07]", icon: "badge-check", iconColor: "text-primary", title: "Certificado válido" };
+                const detail = expired
+                  ? `Autêntico, emitido pela ${company} · venceu em ${formatDate(certificate.expirationDate)}`
+                  : certificate.expirationDate
+                    ? `Autêntico, emitido pela ${company} · válido até ${formatDate(certificate.expirationDate)}`
+                    : `Autêntico, emitido pela ${company} · sem prazo de validade`;
+                return (
+                  <div className={`flex items-center gap-3 border-b px-6 py-4 ${tone.band}`}>
+                    <div className="rounded-lg bg-card p-2.5 shadow-sm">
+                      <Icon name={tone.icon} className={`h-6 w-6 ${tone.iconColor}`} />
                     </div>
-                    <div>
-                      <h1 className="text-xl font-bold text-foreground">Certificado Validado</h1>
-                      <p className="text-sm text-muted-foreground">Sistema oficial de verificação</p>
+                    <div className="min-w-0">
+                      <h1 className="text-xl font-bold text-foreground">{tone.title}</h1>
+                      <p className="text-sm text-muted-foreground">{detail}</p>
                     </div>
                   </div>
-                  {validationStatus && (
-                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
-                      validationStatus.status === "valid" 
-                        ? "bg-green-100 text-green-700 border border-green-200" 
-                        : validationStatus.status === "expired"
-                        ? "bg-orange-100 text-orange-700 border border-orange-200"
-                        : "bg-red-100 text-red-700 border border-red-200"
-                    }`}>
-                      <Icon name={validationStatus.icon} className="w-4 h-4" />
-                      <span className="text-sm font-semibold">{validationStatus.message}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+                );
+              })()}
               
               {/* Informações do Aluno e Curso */}
               <div className="p-6">

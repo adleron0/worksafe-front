@@ -16,7 +16,22 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { decodeBase64Variables } from "@/utils/decodeBase64Variables";
 import Icon from "@/components/general-components/Icon";
 import CourseMark from "@/components/general-components/CourseMark";
+import { Switch } from "@/components/ui/switch";
 import { resolveHighlight, themeInfo } from "@/components/general-components/visualizadorCertificados/highlight";
+
+/** Vencido = a validade já passou (sem validade nunca vence). */
+const isExpired = (c: { expirationDate?: string | null }) =>
+  !!c.expirationDate && new Date(c.expirationDate).getTime() < Date.now();
+
+function ExpiredPill({ cert }: { cert: { expirationDate?: string | null } }) {
+  if (!isExpired(cert)) return null;
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+      <Icon name="clock-alert" className="h-3 w-3" />
+      Vencido
+    </span>
+  );
+}
 
 /** Selo de destaque (aluno destaque ou turma especial), no degradê do tema. */
 function HighlightPill({ cert }: { cert: unknown }) {
@@ -117,13 +132,16 @@ function CertificadosPublicos() {
     }
   });
 
+  // vitrine: por padrão só os que ainda valem (vencidos ficam no histórico)
+  const [validOnly, setValidOnly] = useState(true);
+
   const { 
     data: certificatesData, 
     isLoading,
     isError,
     error
   } = useQuery<ICertificateResponse | undefined>({
-    queryKey: [`certificates-list-${page}-${selectedCourseId}-${debouncedSearchName}`],
+    queryKey: [`certificates-list-${page}-${selectedCourseId}-${debouncedSearchName}-${validOnly}`],
     queryFn: async () => {
       const params = [
         { key: 'active', value: 'true' },
@@ -139,6 +157,13 @@ function CertificadosPublicos() {
         params.push({ key: 'courseId', value: selectedCourseId });
       }
       
+      // Só válidos: vence hoje em diante OU não tem validade
+      if (validOnly) {
+        const now = new Date().toISOString();
+        params.push({ key: 'or.0.gte-expirationDate', value: now });
+        params.push({ key: 'or.1.null-expirationDate', value: true });
+      }
+
       // Adicionar filtro de nome se houver texto de busca
       if (debouncedSearchName) {
         params.push({ key: 'like-trainee.name', value: debouncedSearchName });
@@ -292,6 +317,18 @@ function CertificadosPublicos() {
                     className="pl-10 pr-3 py-2 bg-background border-input"
                   />
                 </div>
+
+                {/* Só válidos */}
+                <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-muted-foreground">
+                  <Switch
+                    checked={validOnly}
+                    onCheckedChange={(v) => {
+                      setValidOnly(!!v);
+                      setPage(0);
+                    }}
+                  />
+                  Só válidos
+                </label>
               </div>
             </div>
 
@@ -364,8 +401,9 @@ function CertificadosPublicos() {
                                 <p className="text-sm font-medium text-foreground truncate">
                                   {variables.aluno_nome?.value || "—"}
                                 </p>
-                                <div className="mt-1 empty:hidden">
+                                <div className="mt-1 flex flex-wrap gap-1 empty:hidden">
                                   <HighlightPill cert={certificate} />
+                                  <ExpiredPill cert={certificate} />
                                 </div>
                               </div>
                             </div>
@@ -429,6 +467,7 @@ function CertificadosPublicos() {
                               {variables.aluno_nome?.value || "—"}
                             </p>
                             <HighlightPill cert={certificate} />
+                            <ExpiredPill cert={certificate} />
                           </div>
                           <div className="mb-1 flex items-center gap-2">
                             <CourseMark icon={certificate.course?.icon} color={certificate.course?.color} />

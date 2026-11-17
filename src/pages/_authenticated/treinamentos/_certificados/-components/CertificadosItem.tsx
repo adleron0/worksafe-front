@@ -27,6 +27,7 @@ import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { renderVersion, resolveHighlight, themeInfo } from "@/components/general-components/visualizadorCertificados/highlight";
 import DestaqueCertificadoDialog from "./DestaqueCertificadoDialog";
+import CancelarCertificadoDialog from "./CancelarCertificadoDialog";
 import IssuedCertificateView from "@/components/general-components/visualizadorCertificados/server/IssuedCertificateView";
 
 interface ItemsProps {
@@ -52,6 +53,7 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
   // emitido → mesmo visualizador da página pública (palco + brilho + Baixar)
   const issuedView = isIssuedCertificateKey(item.key?.toString()) && !stageFailed;
   const [openDestaque, setOpenDestaque] = useState(false);
+  const [openCancel, setOpenCancel] = useState(false);
 
   // Mutation para inativar
   const { mutate: deactivate } = useMutation({
@@ -527,14 +529,10 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
                   )
                 ) : (
                   can(`inactive_${entity.ability}`) && (
-                      <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                        <ConfirmDialog
-                          title={`Inativar certificado?`}
-                          description={`Ao prosseguir, o certificado será inativado.`}
-                          onConfirm={() => handleConfirmAction("deactivate")}
-                          titleBttn="Inativar"
-                          iconBttn="power-off"
-                        />
+                      // fecha o menu antes de abrir o diálogo (menu aberto bloqueia cliques)
+                      <DropdownMenuItem onSelect={() => setTimeout(() => setOpenCancel(true))} className="gap-2">
+                        <Icon name="circle-x" className="w-3 h-3" />
+                        <p>Cancelar certificado</p>
                       </DropdownMenuItem>
                   )
                 )
@@ -584,6 +582,9 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
         </div>
         )}
       </Dialog>
+      {openCancel && (
+        <CancelarCertificadoDialog item={item} open={openCancel} onOpenChange={setOpenCancel} />
+      )}
       {openDestaque && (
         <DestaqueCertificadoDialog item={item} open={openDestaque} onOpenChange={setOpenDestaque} />
       )}

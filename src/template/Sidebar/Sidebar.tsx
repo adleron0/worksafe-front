@@ -4,7 +4,7 @@ import { useGeneralContext } from "@/context/GeneralContext";
 import useVerify from "@/hooks/use-verify";
 import SidebarItem from "./SidebarItem";
 import { Button } from "../../components/ui/button";
-import { X, Bell, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { X, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "@/context/ThemeContext";
 import useWindowSize from "@/hooks/use-windowSize";
@@ -178,16 +178,42 @@ const Sidebar = () => {
               <X className="h-4 w-4 text-primary" />
             </Button>
             {collapsed ? (
-              <CompactLogo />
+              // Recolhida: o ícone da empresa é o próprio botão de expandir (troca no hover).
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Expandir menu"
+                    className="group relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-md hover:bg-muted"
+                    onClick={toggleCollapsed}
+                  >
+                    <span className="group-hover:opacity-0 group-focus-visible:opacity-0">
+                      <CompactLogo />
+                    </span>
+                    <PanelLeftOpen className="absolute h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={8}>Expandir menu</TooltipContent>
+              </Tooltip>
             ) : (
               <>
                 <div className="flex gap-1 items-center min-w-0">
                   <DynamicLogo width={150} height={50} />
                 </div>
-                <Button variant="outline" size="icon" className="ml-auto h-8 w-8 rounded hidden md:flex">
-                  <Bell className="h-4 w-4" />
-                  <span className="sr-only">Notificações</span>
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="ml-auto h-8 w-8 rounded hidden md:flex text-muted-foreground"
+                      aria-label="Recolher menu"
+                      onClick={toggleCollapsed}
+                    >
+                      <PanelLeftClose className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={8}>Recolher menu</TooltipContent>
+                </Tooltip>
               </>
             )}
           </div>
@@ -199,25 +225,6 @@ const Sidebar = () => {
               <div className="border-t mt-2">{renderGroup(visibleFooter)}</div>
             )}
           </nav>
-          {/* Recolher/expandir: só no computador */}
-          <div className={`hidden md:flex border-t p-2 ${collapsed ? "justify-center" : "justify-end"}`}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded text-muted-foreground"
-                  aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
-                  onClick={toggleCollapsed}
-                >
-                  {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8}>
-                {collapsed ? "Expandir menu" : "Recolher menu"}
-              </TooltipContent>
-            </Tooltip>
-          </div>
         </aside>
     </>
   );

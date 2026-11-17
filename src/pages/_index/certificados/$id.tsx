@@ -857,7 +857,7 @@ function CertificadoPublico() {
                   <div className="flex items-start gap-3 p-4 bg-background rounded-lg">
                     <Icon name="calendar-check" className="w-5 h-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Válido até</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{validationStatus?.status === "expired" ? "Venceu em" : "Válido até"}</p>
                       <p className="text-sm font-semibold text-foreground">{formatDate(certificate?.expirationDate)}</p>
                     </div>
                   </div>

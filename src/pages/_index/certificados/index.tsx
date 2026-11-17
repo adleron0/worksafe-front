@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
-import { Loader2, Award, Calendar, User, ArrowRight, GraduationCap, Shield, Filter, Search } from "lucide-react";
+import { Loader2, Award, Calendar, User, ArrowRight, Shield, Filter, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/useDebounce";
 import { decodeBase64Variables } from "@/utils/decodeBase64Variables";
 import Icon from "@/components/general-components/Icon";
+import CourseMark from "@/components/general-components/CourseMark";
 import { resolveHighlight, themeInfo } from "@/components/general-components/visualizadorCertificados/highlight";
 
 /** Selo de destaque (aluno destaque ou turma especial), no degradê do tema. */
@@ -53,6 +54,7 @@ interface ICertificate {
   createdAt: string;
   updatedAt: string;
   inactiveAt?: string;
+  course?: { name?: string; icon?: string | null; color?: string | null } | null;
 }
 
 // Interface para a resposta da API
@@ -128,7 +130,7 @@ function CertificadosPublicos() {
         { key: 'order-createdAt', value: 'desc' },
         { key: 'page', value: page.toString() },
         { key: 'limit', value: limit.toString() },
-        { key: 'show', value: ['trainee'] },
+        { key: 'show', value: ['trainee', 'course'] },
         { key: 'showOnWebsiteConsent', value: true },
       ];
       
@@ -372,7 +374,7 @@ function CertificadosPublicos() {
                           {/* Curso */}
                           <div className="col-span-3">
                             <div className="flex items-center gap-2">
-                              <GraduationCap className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              <CourseMark icon={certificate.course?.icon} color={certificate.course?.color} />
                               <p className="text-sm text-muted-foreground truncate">
                                 {variables.curso_nome?.value || "—"}
                               </p>
@@ -428,9 +430,12 @@ function CertificadosPublicos() {
                             </p>
                             <HighlightPill cert={certificate} />
                           </div>
-                          <p className="text-sm text-muted-foreground mb-1">
-                            {variables.curso_nome?.value || "—"}
-                          </p>
+                          <div className="mb-1 flex items-center gap-2">
+                            <CourseMark icon={certificate.course?.icon} color={certificate.course?.color} />
+                            <p className="text-sm text-muted-foreground">
+                              {variables.curso_nome?.value || "—"}
+                            </p>
+                          </div>
                           <p className="text-xs text-muted-foreground">
                             Turma: {variables.turma_nome?.value || "—"}
                           </p>

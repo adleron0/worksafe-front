@@ -1,3 +1,4 @@
+import CourseMark from "@/components/general-components/CourseMark";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
@@ -238,6 +239,7 @@ interface ICertificate {
   class?: IClass;
   trainee?: ITrainee;
   company?: ICompany;
+  course?: { name?: string; icon?: string | null; color?: string | null } | null;
   canvasWidth?: number;
   canvasHeight?: number;
 }
@@ -645,7 +647,10 @@ function CertificadoPublico() {
                 <div className="space-y-4">
                   {/* Nome do Curso */}
                   <div>
-                    <h2 className="text-2xl font-bold text-foreground">{variables.curso_nome?.value || "Curso não informado"}</h2>
+                    <div className="flex items-center gap-3">
+                      <CourseMark icon={certificate.course?.icon} color={certificate.course?.color} size="lg" />
+                      <h2 className="text-2xl font-bold text-foreground">{variables.curso_nome?.value || "Curso não informado"}</h2>
+                    </div>
                     {highlight && highlightTheme && (
                       <span
                         className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold shadow-sm"

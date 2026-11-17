@@ -178,23 +178,7 @@ const Sidebar = () => {
               <X className="h-4 w-4 text-primary" />
             </Button>
             {collapsed ? (
-              // Recolhida: o ícone da empresa é o próprio botão de expandir (troca no hover).
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="Expandir menu"
-                    className="group relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-md hover:bg-muted"
-                    onClick={toggleCollapsed}
-                  >
-                    <span className="group-hover:opacity-0 group-focus-visible:opacity-0">
-                      <CompactLogo />
-                    </span>
-                    <PanelLeftOpen className="absolute h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" sideOffset={8}>Expandir menu</TooltipContent>
-              </Tooltip>
+              <CompactLogo />
             ) : (
               <>
                 <div className="flex gap-1 items-center min-w-0">
@@ -220,7 +204,28 @@ const Sidebar = () => {
           <nav className={`flex flex-col h-full gap-2 text-lg font-medium pt-2 pb-2 justify-between overflow-y-auto overflow-x-hidden scrollbar-thin ${
             collapsed ? "px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" : "pl-4"
           }`}>
-            <div>{visibleGroups.map(renderGroup)}</div>
+            <div>
+              {collapsed && (
+                // Recolhida: expandir é o primeiro item, logo abaixo do logo.
+                <>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label="Expandir menu"
+                        className="flex items-center justify-center rounded-md h-9 w-9 my-1 mx-auto cursor-pointer text-muted-foreground ease-in-out duration-100 hover:text-inverse-foreground hover:bg-primary"
+                        onClick={toggleCollapsed}
+                      >
+                        <PanelLeftOpen className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={8}>Expandir menu</TooltipContent>
+                  </Tooltip>
+                  <div className="mx-3 my-2 border-t" />
+                </>
+              )}
+              {visibleGroups.map(renderGroup)}
+            </div>
             {visibleFooter.items.length > 0 && (
               <div className="border-t mt-2">{renderGroup(visibleFooter)}</div>
             )}

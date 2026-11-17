@@ -25,4 +25,20 @@ export const LESSONS: Lesson[] = [
       { title: "Depois do envio", start: 727.7 },
     ],
   },
+  {
+    id: "comercial.acompanhamento",
+    title: "Acompanhamento: retornos com o cliente",
+    screen: "Acompanhamento",
+    minutes: 3,
+    requires: ["view_comercial"],
+    routes: ["/comercial/acompanhamento"],
+    video: { src: `${BASE}/acompanhamento.mp4`, captions: `${BASE}/acompanhamento.vtt` },
+    chapters: [
+      { title: "A agenda", start: 0 },
+      { title: "Cada atividade", start: 30.5 },
+      { title: "Concluir e marcar o próximo", start: 63.4 },
+      { title: "Editar, cancelar e reabrir", start: 91.4 },
+      { title: "Registrar e agendar", start: 115.8 },
+    ],
+  },
 ];

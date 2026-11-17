@@ -319,19 +319,26 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
   );
 
   // Roda do mouse amplia/reduz sobre o certificado. Na escala 100%, rolar para
-  // baixo (reduzir) não tem o que fazer: deixa a página rolar. Pinça do
-  // trackpad chega como roda + Ctrl e é mais sensível.
+  // baixo (reduzir) não tem o que fazer: deixa a página rolar — mas só depois
+  // que o gesto de zoom terminou. Enquanto a pessoa ainda está reduzindo (e a
+  // inércia do trackpad continua mandando rolagem), a página fica parada.
+  // Pinça do trackpad chega como roda + Ctrl e é mais sensível.
   const viewRef = useRef(view);
   viewRef.current = view;
+  const lastZoomWheel = useRef(0);
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
+    const GESTURE_GAP = 450; // ms sem roda para considerar o gesto encerrado
     const onWheel = (e: WheelEvent) => {
       if ((e.target as HTMLElement).closest("[data-stage-control]")) return;
       const current = viewRef.current;
       const pinch = e.ctrlKey || e.metaKey;
-      if (!pinch && current.scale <= 1 && e.deltaY > 0) return;
+      const now = performance.now();
+      const midGesture = now - lastZoomWheel.current < GESTURE_GAP;
+      if (!pinch && current.scale <= 1 && e.deltaY > 0 && !midGesture) return;
       e.preventDefault();
+      lastZoomWheel.current = now;
       setShowHint(false);
       const factor = Math.exp(-e.deltaY * (pinch ? 0.01 : 0.0025));
       const p = centerOf(e.clientX, e.clientY);

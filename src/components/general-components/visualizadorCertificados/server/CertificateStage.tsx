@@ -616,7 +616,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
       `}</style>
       <div
         ref={stageRef}
-        className={`select-none overflow-hidden ${
+        className={`select-none ${zoomed || fullscreen ? "overflow-hidden" : "overflow-visible"} ${
           fullscreen
             ? "fixed inset-0 z-[100] bg-background"
             : "relative w-full" // sem moldura: cartão e botões flutuam na página
@@ -641,7 +641,8 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
       >
         {/* Área do cartão */}
         <div
-          className="absolute inset-x-0 flex items-center justify-center overflow-hidden"
+          // fora do zoom não corta: a luz em volta do cartão aparece inteira
+          className={`absolute inset-x-0 flex items-center justify-center ${zoomed ? "overflow-hidden" : "overflow-visible"}`}
           style={{ top, bottom: TOOLBAR, perspective: 1600 }}
         >
           {/* zoom + arrastar */}

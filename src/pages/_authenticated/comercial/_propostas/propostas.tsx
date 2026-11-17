@@ -14,6 +14,7 @@ import KanbanView, { KanbanColumn } from "@/components/general-components/Kanban
 import Input from "@/components/general-components/Input";
 import Pagination from "@/components/general-components/Pagination";
 import Select from "@/components/general-components/Select";
+import SummaryCards, { SummaryCard } from "@/components/general-components/SummaryCards";
 import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, dateBr, errorMessage, money } from "../-shared/commercial";
 import { FollowUpChip } from "../-shared/activities";
@@ -41,6 +42,9 @@ const STATUS_COLOR: Record<string, string> = {
 const COLUMNS: KanbanColumn[] = STATUS_OPTIONS.map(({ id, name }) => ({ id, name, value: id, color: STATUS_COLOR[id] }));
 /** Situações em que a proposta já tem link do cliente. */
 const LINKED: ProposalStatus[] = ["enviada", "visualizada", "aceita", "recusada", "expirada"];
+/** Filtro de situação da lista: uma situação ou "Em negociação" (enviadas + visualizadas). */
+type StatusFilter = "" | ProposalStatus | "negociacao";
+const NEGOTIATION: ProposalStatus[] = ["enviada", "visualizada"];
 type View = "lista" | "kanban";
 const VIEW_KEY = "worksafe.comercial.propostas.view";
 const KANBAN_LIMIT = 100;
@@ -50,7 +54,7 @@ function ProposalsPage() {
   const { can } = useVerify();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [status, setStatus] = useState<"" | ProposalStatus>("");
+  const [status, setStatus] = useState<StatusFilter>("");
   const [kind, setKind] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -66,7 +70,7 @@ function ProposalsPage() {
   // no kanban as colunas já são as situações: vêm todas de uma vez, sem paginação
   const params = kanban
     ? { page: 0, limit: KANBAN_LIMIT, ...(kind ? { kind } : {}), ...(search.trim() ? { search: search.trim() } : {}), ...(archived ? { inactive: "true" } : {}) }
-    : { page, limit: LIMIT, ...(status ? { status } : {}), ...(kind ? { kind } : {}), ...(search.trim() ? { search: search.trim() } : {}), ...(archived ? { inactive: "true" } : {}) };
+    : { page, limit: LIMIT, ...(status ? { status: status === "negociacao" ? NEGOTIATION.join(",") : status } : {}), ...(kind ? { kind } : {}), ...(search.trim() ? { search: search.trim() } : {}), ...(archived ? { inactive: "true" } : {}) };
   const { data, isLoading, error } = useQuery({
     queryKey: [PROPOSALS_KEY, params],
     queryFn: () => commercialApi.get<ListResponse>("proposals", params),
@@ -189,6 +193,14 @@ function ProposalsPage() {
   );
   const summary = data?.summary ?? {};
   const allCount = Object.entries(summary).reduce((sum, [key, value]) => sum + (key === "substituida" ? 0 : value?.count ?? 0), 0);
+  const negotiation = NEGOTIATION.reduce((acc, id) => ({ count: acc.count + (summary[id]?.count ?? 0), total: acc.total + (summary[id]?.total ?? 0) }), { count: 0, total: 0 });
+  const cards: SummaryCard[] = [
+    { view: "negociacao", label: "Em negociação", bucket: negotiation, tone: "text-primary", hint: "enviadas e visualizadas" },
+    ...STATUS_OPTIONS.map(({ id, name }) => ({ view: id, label: name, bucket: { count: summary[id]?.count ?? 0, total: summary[id]?.total ?? 0 }, color: STATUS_COLOR[id] })),
+  ];
+  // clicar no cartão já marcado volta para todas as situações
+  const pickStatus = (next: string) => { setStatus(next === status ? "" : (next as StatusFilter)); setPage(0); };
+  const hasFilters = !!(search.trim() || kind || archived);
 
   return (
     <>
@@ -197,42 +209,56 @@ function ProposalsPage() {
           <h1 className="text-xl font-bold">Propostas</h1>
           <p className="text-sm text-muted-foreground">Propostas comerciais de serviços e de treinamentos para empresas.</p>
         </div>
-        {canCreate && <Button onClick={() => navigate({ to: "/comercial/propostas/nova" })} className="shrink-0"><Icon name="plus" className="w-4 h-4 mr-1" /> Nova proposta</Button>}
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div role="group" aria-label="Visualização" className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
+            <Button variant={view === "lista" ? "default" : "ghost"} size="sm" onClick={() => changeView("lista")} aria-pressed={view === "lista"} className="h-7 gap-2">
+              <Icon name="list" className="w-4 h-4" /> Lista
+            </Button>
+            <Button variant={view === "kanban" ? "default" : "ghost"} size="sm" onClick={() => changeView("kanban")} aria-pressed={view === "kanban"} className="h-7 gap-2">
+              <Icon name="columns" className="w-4 h-4" /> Kanban
+            </Button>
+          </div>
+          {canCreate && <Button onClick={() => navigate({ to: "/comercial/propostas/nova" })}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova proposta</Button>}
+        </div>
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-lg border">
-        <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
-          <Button variant={view === "lista" ? "default" : "ghost"} size="sm" onClick={() => changeView("lista")} className="gap-2">
-            <Icon name="list" className="w-4 h-4" /> Lista
-          </Button>
-          <Button variant={view === "kanban" ? "default" : "ghost"} size="sm" onClick={() => changeView("kanban")} className="gap-2">
-            <Icon name="columns" className="w-4 h-4" /> Kanban
-          </Button>
+      <section aria-labelledby="proposals-summary-title" className="mt-5">
+        <div className="flex flex-wrap items-center justify-between gap-2 min-h-7">
+          <h2 id="proposals-summary-title" className="text-sm font-semibold">
+            Situações <span className="font-normal text-muted-foreground">· {allCount} {allCount === 1 ? "proposta" : "propostas"}{archived ? " (com arquivadas)" : ""}</span>
+          </h2>
+          {!kanban && status && (
+            <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => pickStatus(status)}>
+              <Icon name="x" className="w-3 h-3" /> Mostrar todas as situações
+            </Button>
+          )}
         </div>
-        {!kanban && (
-          <div className="w-full xl:w-56">
-            <Select name="status" state={status} clearable placeholder={`Todas as situações (${allCount})`} modal={false}
-              options={STATUS_OPTIONS.map(({ id, name }) => ({ id, name: `${name} (${summary[id]?.count ?? 0})` }))}
-              onChange={(_, value) => { setStatus((String(value ?? "") as "" | ProposalStatus)); setPage(0); }} />
-          </div>
-        )}
-        <div className="w-full xl:w-72">
+        <SummaryCards cards={cards} active={kanban ? undefined : status} onPick={kanban ? undefined : pickStatus} noun={["proposta", "propostas"]}
+          ariaLabel="Resumo por situação" columns="grid-cols-2 md:grid-cols-4 2xl:grid-cols-8" className="mt-2 mb-0" />
+        {kanban && <p className="mt-2 text-xs text-muted-foreground">No kanban cada situação é uma coluna. Para filtrar pelos cartões, use a visão em lista.</p>}
+      </section>
+
+      <div role="search" aria-label="Filtros" className="flex flex-col lg:flex-row lg:items-center gap-3 my-4 p-3 rounded-lg border bg-muted/30">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground shrink-0">
+          <Icon name="sliders-horizontal" className="w-4 h-4" /> Filtros
+        </div>
+        <div className="w-full lg:flex-1 lg:max-w-md">
           <Input name="search" value={search} onValueChange={(_, value) => { setSearch(String(value)); setPage(0); }}
             placeholder="Buscar por número, título ou cliente..." icon="search" />
         </div>
-        <div className="w-full xl:w-56">
+        <div className="w-full lg:w-56">
           <Select name="kind" state={kind} clearable placeholder="Todos os tipos" modal={false}
             options={Object.entries(KIND_LABEL).map(([id, name]) => ({ id, name }))}
-            onChange={(_, value) => { setKind(String(value)); setPage(0); }} />
+            onChange={(_, value) => { setKind(String(value ?? "")); setPage(0); }} />
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Checkbox id="showArchived" checked={archived} onCheckedChange={(checked) => { setArchived(checked === true); setPage(0); }} />
           <Label htmlFor="showArchived" className="cursor-pointer text-sm font-normal">Mostrar arquivadas</Label>
         </div>
-        {summary.enviada && (
-          <p className="xl:ml-auto text-sm text-muted-foreground">
-            Em negociação: <b className="text-foreground tabular-nums">{money(summary.enviada.total + (summary.visualizada?.total ?? 0))}</b>
-          </p>
+        {hasFilters && (
+          <Button variant="ghost" size="sm" className="h-8 gap-1 w-fit lg:ml-auto" onClick={() => { setSearch(""); setKind(""); setArchived(false); setPage(0); }}>
+            <Icon name="eraser" className="w-4 h-4" /> Limpar filtros
+          </Button>
         )}
       </div>
 

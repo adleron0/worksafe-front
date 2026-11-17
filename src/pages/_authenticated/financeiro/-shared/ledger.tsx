@@ -326,23 +326,9 @@ export function SearchBox({ value, onChange, placeholder }: { value: string; onC
 
 /* ------------------------------------------------------------------ cartões */
 
-export interface Bucket { count: number; total: number }
-export function SummaryCards({ cards, active, onPick }: {
-  cards: Array<{ view: string; label: string; bucket?: Bucket; tone?: string; hint?: string }>; active: string; onPick: (view: string) => void;
-}) {
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 my-4">
-      {cards.map((card) => (
-        <button key={card.view} type="button" onClick={() => onPick(card.view)} aria-pressed={active === card.view}
-          className={cn("rounded-lg border p-3 text-left transition-colors hover:bg-muted/50 cursor-pointer min-w-0", active === card.view && "border-primary ring-1 ring-primary bg-primary/5")}>
-          <p className="text-xs text-muted-foreground truncate">{card.label}</p>
-          <p className={cn("text-lg font-bold tabular-nums truncate", card.tone)}>{card.bucket ? formatMoney(card.bucket.total) : "—"}</p>
-          <p className="text-xs text-muted-foreground truncate">{card.bucket ? `${card.bucket.count} ${card.bucket.count === 1 ? "conta" : "contas"}` : " "}{card.hint ? ` · ${card.hint}` : ""}</p>
-        </button>
-      ))}
-    </div>
-  );
-}
+/** Os cartões de resumo viraram componente geral (também usados em Propostas). */
+export { default as SummaryCards } from "@/components/general-components/SummaryCards";
+export type { Bucket } from "@/components/general-components/SummaryCards";
 
 /* ------------------------------------------------------------------ ordenação */
 

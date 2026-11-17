@@ -202,22 +202,23 @@ function ConversationPane({ bot, conversationId, onCreated }: { bot: Bot; conver
           <div className="mb-2 flex flex-wrap gap-2">
             {files.map((file, index) => (
               <span key={index} className="flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs">
-                <Icon name="image" className="h-3.5 w-3.5" /> {file.name}
+                <Icon name={file.type === "application/pdf" ? "file-text" : "image"} className="h-3.5 w-3.5" /> {file.name}
                 <button type="button" className="cursor-pointer" aria-label={`Tirar ${file.name}`} onClick={() => setFiles(files.filter((_, n) => n !== index))}><Icon name="x" className="h-3 w-3" /></button>
               </span>
             ))}
           </div>
         )}
         <div className="flex items-end gap-2">
-          <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" multiple className="hidden" onChange={(event) => {
+          <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp,application/pdf" multiple className="hidden" onChange={(event) => {
             const picked = Array.from(event.target.files ?? []);
-            const tooBig = picked.find((file) => file.size > 5 * 1024 * 1024);
-            if (tooBig) toast({ title: "Imagem grande demais", description: `${tooBig.name} passa de 5 MB`, variant: "destructive" });
-            setFiles([...files, ...picked.filter((file) => file.size <= 5 * 1024 * 1024)].slice(0, 3));
+            const limit = (file: File) => (file.type === "application/pdf" ? 10 : 5) * 1024 * 1024;
+            const tooBig = picked.find((file) => file.size > limit(file));
+            if (tooBig) toast({ title: "Arquivo grande demais", description: `${tooBig.name} passa de ${tooBig.type === "application/pdf" ? "10" : "5"} MB`, variant: "destructive" });
+            setFiles([...files, ...picked.filter((file) => file.size <= limit(file))].slice(0, 3));
             event.target.value = "";
           }} />
-          <Tip text="Anexar imagem (foto de pedido, documento...)">
-            <Button type="button" variant="outline" size="sm" className="h-10 w-10 shrink-0 p-0" aria-label="Anexar imagem" onClick={() => fileInput.current?.click()}><Icon name="paperclip" className="h-4 w-4" /></Button>
+          <Tip text="Anexar imagem ou PDF (extrato, nota, foto de pedido...)">
+            <Button type="button" variant="outline" size="sm" className="h-10 w-10 shrink-0 p-0" aria-label="Anexar imagem ou PDF" onClick={() => fileInput.current?.click()}><Icon name="paperclip" className="h-4 w-4" /></Button>
           </Tip>
           <Textarea
             value={text}

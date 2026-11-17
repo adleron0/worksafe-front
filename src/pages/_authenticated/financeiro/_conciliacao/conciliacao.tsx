@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
@@ -16,7 +16,10 @@ import { FINANCIAL_ABILITY, formatMoney, useBankAccounts, useChartAccounts } fro
 import { PAYABLES_KEY } from "../-shared/payables";
 import { formatDate } from "../_receber/-components/options";
 
-export const Route = createFileRoute("/_authenticated/financeiro/_conciliacao/conciliacao")({ component: Reconciliation });
+export const Route = createFileRoute("/_authenticated/financeiro/_conciliacao/conciliacao")({
+  component: Reconciliation,
+  validateSearch: (search: Record<string, unknown>): { rascunho?: number } => (Number(search.rascunho) > 0 ? { rascunho: Number(search.rascunho) } : {}),
+});
 
 interface Candidate { type: "payable" | "receivable"; mode: "baixar" | "vincular"; id: number; label: string; who: string; value: number; date: string }
 interface Line { fitId: string; date: string; amount: number; memo: string; type: string; status: "conciliado" | "sugerido" | "sem_par" | "antes_inicio"; candidates: Candidate[] }
@@ -27,7 +30,17 @@ interface Preview {
   balance: { date: string; statement: number | null; system: number; opening: number };
   items: Line[];
 }
-interface Choice { action: string; chartAccountId?: string; description?: string; otherBankAccountId?: string }
+interface Choice { action: string; chartAccountId?: string; description?: string; otherBankAccountId?: string; supplierId?: number; customerId?: number; costCenterId?: number }
+interface Proposal { action: string; type?: "payable" | "receivable"; targetId?: number; chartAccountId?: number; costCenterId?: number; supplierId?: number; customerId?: number; otherBankAccountId?: number; description?: string }
+/** Extrato lido pelo assistente (PDF) ou mandado pelo MCP: mesma conciliação, com a soma conferida e a ação proposta por linha. */
+interface Draft extends Preview {
+  id: number; status: "rascunho" | "nao_confere" | "parcial" | "lancado" | "descartado"; source: string; fileName: string | null;
+  bankAccount: { id: number; name: string };
+  check: { opening: number; closing: number; credits: number; debits: number; difference: number; ok: boolean };
+  items: Array<Line & { proposed: Proposal | null }>;
+}
+interface DraftRow { id: number; bankAccount: string; status: Draft["status"]; source: string; fileName: string | null; periodFrom: string; periodTo: string; difference: number }
+const DRAFT_STATUS: Record<Draft["status"], string> = { rascunho: "aguardando revisão", nao_confere: "soma não confere", parcial: "lançado em parte", lancado: "lançado", descartado: "descartado" };
 
 const STATUS = {
   conciliado: { text: "Já conciliada", className: "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300", icon: "circle-check" },
@@ -52,6 +65,43 @@ function Reconciliation() {
   const [choices, setChoices] = useState<Record<string, Choice>>({});
   const [hideDone, setHideDone] = useState(true);
   const [statement, setStatement] = useState<number | null>(null);
+  const { rascunho } = Route.useSearch();
+  const navigate = useNavigate();
+  const { data: draft, refetch: refetchDraft } = useQuery<Draft>({
+    queryKey: ["financialStatementDraft", rascunho],
+    queryFn: async () => (await api.get<Draft>(`financial/statement-drafts/${rascunho}`)).data,
+    enabled: !!rascunho,
+  });
+  const { data: openDrafts } = useQuery<DraftRow[]>({
+    queryKey: ["financialStatementDrafts"],
+    queryFn: async () => (await api.get<DraftRow[]>("financial/statement-drafts", { params: { status: "rascunho,nao_confere,parcial" } })).data,
+    enabled: !rascunho,
+  });
+  // rascunho aberto pelo link do assistente: carrega como se o extrato tivesse sido lido aqui
+  useEffect(() => {
+    if (!draft) return;
+    setBankAccountId(String(draft.bankAccount.id));
+    setPreview(draft);
+    setStatement(draft.check.closing);
+    setChoices(Object.fromEntries(draft.items.map((line) => {
+      const p = line.proposed;
+      if (!p) return [line.fitId, { action: "ignorar", description: line.memo }];
+      if ((p.action === "baixar" || p.action === "vincular") && p.targetId) {
+        const index = line.candidates.findIndex((c) => c.id === p.targetId && c.type === p.type);
+        if (index >= 0) return [line.fitId, { action: `cand:${index}`, description: line.memo }];
+      }
+      return [line.fitId, {
+        action: ["criar", "transferir", "ignorar"].includes(p.action) ? p.action : "ignorar", description: p.description ?? line.memo,
+        chartAccountId: p.chartAccountId ? String(p.chartAccountId) : undefined, otherBankAccountId: p.otherBankAccountId ? String(p.otherBankAccountId) : undefined,
+        supplierId: p.supplierId, customerId: p.customerId, costCenterId: p.costCenterId,
+      }];
+    })));
+  }, [draft]);
+  const { mutate: discard, isPending: discarding } = useMutation({
+    mutationFn: async () => (await api.patch(`financial/statement-drafts/${rascunho}/discard`)).data,
+    onSuccess: () => { toast({ title: "Extrato descartado" }); queryClient.invalidateQueries({ queryKey: ["financialStatementDrafts"] }); setPreview(null); navigate({ to: "/financeiro/conciliacao", search: {} }); },
+    onError: (err: ApiError) => toast({ title: "Não foi possível descartar", description: err.response?.data?.message, variant: "destructive" }),
+  });
 
   const initialChoices = (data: Preview) => Object.fromEntries(data.items.map((line) => [line.fitId, { action: line.status === "sugerido" ? "cand:0" : "ignorar", description: line.memo }]));
   const { mutate: read, isPending: reading } = useMutation({
@@ -77,15 +127,16 @@ function Reconciliation() {
           const candidate = line.candidates[Number(choice.action.slice(5))];
           return { ...line, action: candidate.mode, type: candidate.type, targetId: candidate.id };
         }
-        return { ...line, action: choice.action, chartAccountId: choice.chartAccountId || null, description: choice.description, otherBankAccountId: choice.otherBankAccountId };
+        return { ...line, action: choice.action, chartAccountId: choice.chartAccountId || null, description: choice.description, otherBankAccountId: choice.otherBankAccountId, supplierId: choice.supplierId, customerId: choice.customerId, costCenterId: choice.costCenterId };
       }).filter((item) => item.action !== "ignorar");
       if (!items.length) throw new Error("none");
+      if (draft) return (await api.post(`financial/statement-drafts/${draft.id}/apply`, { items })).data;
       return (await api.post("financial/reconciliation/apply", { bankAccountId, items })).data;
     },
     onSuccess: (result) => {
       toast({ title: `${result.applied} linha(s) conciliada(s)`, description: result.errors?.length ? `Não deu em ${result.errors.length}: ${result.errors.map((e: { reason: string }) => e.reason).join("; ")}` : undefined, variant: result.errors?.length ? "default" : "success" });
-      for (const k of [PAYABLES_KEY, "listContas a Receber", "financialBankBalances", "financialReports", "financialTransfers", "financialSetup"]) queryClient.invalidateQueries({ queryKey: [k] });
-      read();
+      for (const k of [PAYABLES_KEY, "listContas a Receber", "financialBankBalances", "financialReports", "financialTransfers", "financialSetup", "financialStatementDrafts"]) queryClient.invalidateQueries({ queryKey: [k] });
+      if (draft) refetchDraft(); else read();
     },
     onError: (err: ApiError | Error) => {
       if ((err as Error).message === "none") return toast({ title: "Escolha o que fazer em ao menos uma linha" });
@@ -116,7 +167,40 @@ function Reconciliation() {
         <p className="text-sm text-muted-foreground">Suba o extrato OFX do banco (exportado no internet banking). Cada linha é comparada com as contas lançadas; você confirma e a baixa sai com a data do extrato. Importar o mesmo extrato de novo não baixa nada duas vezes.</p>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-end gap-3 rounded-lg border p-3 my-4">
+      {draft && (
+        <div className={cn("flex flex-wrap items-center gap-3 rounded-lg border p-3 my-4 text-sm", draft.check.ok ? "border-green-300 dark:border-green-900" : "border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40")}>
+          <Icon name="file-text" className="w-5 h-5 shrink-0 text-muted-foreground" />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium break-words">{draft.source === "mcp" ? "Extrato enviado pelo assistente" : "Extrato lido do PDF pelo assistente"}{draft.fileName ? ` · ${draft.fileName}` : ""} · {draft.bankAccount.name} · {DRAFT_STATUS[draft.status]}</p>
+            <p className="text-muted-foreground">
+              {formatMoney(draft.check.opening)} + {formatMoney(draft.check.credits)} − {formatMoney(Math.abs(draft.check.debits))} = {formatMoney(draft.check.closing)}{" "}
+              {draft.check.ok
+                ? <span className="font-medium text-green-600 dark:text-green-400">· a soma confere</span>
+                : <span className="font-medium text-amber-700 dark:text-amber-300">· a soma não confere: diferença de {formatMoney(draft.check.difference)}. Peça ao assistente para reler o extrato.</span>}
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            {draft.status !== "lancado" && draft.status !== "descartado" && can(`update_${FINANCIAL_ABILITY}`) && <Button variant="outline" size="sm" disabled={discarding} onClick={() => discard()}>Descartar</Button>}
+            <Button variant="ghost" size="sm" onClick={() => { setPreview(null); navigate({ to: "/financeiro/conciliacao", search: {} }); }}>Subir um OFX</Button>
+          </div>
+        </div>
+      )}
+      {!rascunho && !!openDrafts?.length && (
+        <div className="rounded-lg border p-3 mt-4 text-sm">
+          <p className="font-medium mb-2">Extratos lidos pelo assistente esperando revisão</p>
+          <div className="flex flex-col gap-1">
+            {openDrafts.map((row) => (
+              <Link key={row.id} to="/financeiro/conciliacao" search={{ rascunho: row.id }} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded px-2 py-1.5 hover:bg-muted">
+                <span className="font-medium">{row.bankAccount}</span>
+                <span className="text-muted-foreground">{formatDate(row.periodFrom)} a {formatDate(row.periodTo)}</span>
+                {row.fileName && <span className="text-muted-foreground truncate max-w-56">{row.fileName}</span>}
+                <span className={cn("rounded px-1.5 py-0.5 text-xs", row.status === "nao_confere" ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300" : "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300")}>{DRAFT_STATUS[row.status]}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+      {!rascunho && <div className="flex flex-col md:flex-row md:items-end gap-3 rounded-lg border p-3 my-4">
         <div className="w-full md:w-64">
           <Label>Conta do extrato <span>*</span></Label>
           <Select name="bank" options={bankOptions} state={bankAccountId} onChange={(_, v) => { setBankAccountId(String(v)); setPreview(null); }} placeholder="Selecione a conta" />
@@ -127,7 +211,7 @@ function Reconciliation() {
           <span className="text-sm text-muted-foreground truncate max-w-56">{file?.name ?? "Nenhum arquivo"}</span>
         </div>
         <Button className="md:ml-auto" disabled={!bankAccountId || !file || reading} onClick={() => read()}>{reading ? "Lendo..." : "Ler extrato"}</Button>
-      </div>
+      </div>}
 
       {preview && (
         <>
@@ -138,7 +222,7 @@ function Reconciliation() {
             <span className="rounded bg-amber-100 dark:bg-amber-950/50 px-2 py-0.5">{preview.totals.unmatched} sem par</span>
             {preview.totals.beforeStart > 0 && <span className="rounded bg-muted px-2 py-0.5">{preview.totals.beforeStart} antes da data inicial</span>}
             <Button variant="link" size="sm" className="px-0" onClick={() => setHideDone((v) => !v)}>{hideDone ? "Mostrar as já resolvidas" : "Esconder as já resolvidas"}</Button>
-            {can(`update_${FINANCIAL_ABILITY}`) && <Button className="ml-auto" disabled={applying || !pending} onClick={() => apply()}>Conciliar {pending} linha(s)</Button>}
+            {can(`update_${FINANCIAL_ABILITY}`) && <Button className="ml-auto" disabled={applying || !pending || (!!draft && (!draft.check.ok || draft.status === "lancado" || draft.status === "descartado"))} onClick={() => apply()}>{draft ? "Lançar" : "Conciliar"} {pending} linha(s)</Button>}
           </div>
           {!preview.start && (
             <p className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200 p-3 mb-3 text-sm">

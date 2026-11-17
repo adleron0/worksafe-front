@@ -65,39 +65,52 @@ export function generateTheme(primaryColorHex: string, secondaryColorHex?: strin
   // Cria CSS completo com tema claro e escuro
   const themeCSS = `
     :root {
-      --background: 0 0% 100%;
-      --background-muted: 0 0% 99%;
-      --foreground: ${h} 84% 4.9%;
-      --inverse-foreground: ${h} 40% 98%;
-      --card: 0 0% 100%;
-      --card-foreground: ${h} 84% 4.9%;
+      /* superfícies neutras (chumbo quente): a cor da empresa fica para os detalhes */
+      --background: 45 17% 95%;
+      --background-muted: 40 14% 93%;
+      --foreground: 24 10% 10%;
+      --inverse-foreground: 45 17% 97%;
+      --card: 40 33% 98%;
+      --card-foreground: 24 10% 10%;
       --primary: ${h} ${s}% ${l}%;
       --primary-foreground: ${h} 40% 98%;
       --primary-dark: ${h} ${s}% ${Math.max(l - 30, 10)}%;
       --secondary: ${secondaryHSL.h} ${secondaryHSL.s}% ${secondaryHSL.l}%;
       --secondary-foreground: ${secondaryHSL.h} ${Math.min(secondaryHSL.s + 20, 80)}% ${Math.max(secondaryHSL.l - 40, 10)}%;
-      --muted: ${h} 40% 96.1%;
-      --muted-foreground: ${h} 16.3% 46.9%;
-      --popover: 0 0% 100%;
-      --popover-foreground: 222.2 84% 4.9%;
+      --muted: 40 12% 92%;
+      --muted-foreground: 25 5% 45%;
+      --popover: 40 33% 98%;
+      --popover-foreground: 24 10% 10%;
+      --border: 40 10% 88%;
+      --input: 40 10% 88%;
+      --sidebar: hsl(40 20% 97%);
+      --sidebar-accent: hsl(40 12% 92%);
+      --sidebar-border: hsl(40 10% 88%);
     }
     
     .dark {
-      --background: ${h} 84% 4.9% !important;
-      --background-muted: ${h} 84% 7.9% !important;
-      --foreground: ${h} 40% 98% !important;
-      --inverse-foreground: ${h} 84% 4.9% !important;
-      --card: ${h} 84% 4.9% !important;
-      --card-foreground: ${h} 40% 98% !important;
+      /* superfícies neutras (chumbo quente): sem tingir de verde */
+      --background: 30 5% 8.6% !important;
+      --background-muted: 40 6% 10.4% !important;
+      --foreground: 45 17% 95% !important;
+      --inverse-foreground: 24 10% 10% !important;
+      --card: 30 6% 12.2% !important;
+      --card-foreground: 45 17% 95% !important;
       --primary: ${h} 91.2% 59.8% !important;
       --primary-foreground: ${h} 47.4% 11.2% !important;
       --primary-dark: ${h} ${s}% ${Math.max(l - 40, 5)}% !important;
       --secondary: ${secondaryHSL.h} ${Math.min(secondaryHSL.s + 10, 60)}% ${Math.max(secondaryHSL.l - 20, 15)}% !important;
       --secondary-foreground: ${secondaryHSL.h} 40% 95% !important;
-      --muted: ${h} 32.6% 17.5% !important;
-      --muted-foreground: ${h} 20.2% 65.1% !important;
-      --popover: ${h} 84% 4.9% !important;
-      --popover-foreground: ${h} 40% 98% !important;
+      --muted: 36 6% 15.5% !important;
+      --muted-foreground: 24 6% 64% !important;
+      --popover: 36 7% 13.1% !important;
+      --popover-foreground: 45 17% 95% !important;
+      --border: 30 7% 17.6% !important;
+      --input: 30 7% 17.6% !important;
+      --sidebar: hsl(30 6% 10.5%) !important;
+      --sidebar-accent: hsl(36 6% 15.5%) !important;
+      --sidebar-border: hsl(30 7% 17.6%) !important;
+      --sidebar-foreground: hsl(45 17% 92%) !important;
     }
   `;
   

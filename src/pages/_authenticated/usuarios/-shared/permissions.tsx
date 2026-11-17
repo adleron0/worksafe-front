@@ -217,7 +217,8 @@ export function PermissionMatrix({ mode, targetId, title, subtitle, backTo, back
   const askSave = () => (removes.length ? setConfirmSave(true) : save());
 
   // Sair com mudança não salva pede confirmação (no diálogo do sistema, não no do navegador).
-  const blocker = useBlocker({ shouldBlockFn: () => dirty && !saving, withResolver: true });
+  // Recarregar ou fechar a aba só pergunta se houver mudança: sem isto o roteador pergunta sempre.
+  const blocker = useBlocker({ shouldBlockFn: () => dirty && !saving, enableBeforeUnload: () => dirty && !saving, withResolver: true });
   const leaving = useRef(false);
 
   return (

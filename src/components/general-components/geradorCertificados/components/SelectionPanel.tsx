@@ -38,6 +38,8 @@ export interface SelectionInfo {
   showIf: string | null | 'misto';
   /** Variáveis usadas nos textos da página, para escolher a condição. */
   variables: string[];
+  /** Estilo do QR de validação (só quando o selecionado é o QR). */
+  qrStyle?: 'selo' | 'suave' | null;
 }
 
 export const EMPTY_SELECTION: SelectionInfo = {
@@ -68,6 +70,7 @@ interface SelectionPanelProps {
   onSelectBelow: () => void;
   onSetInstructorSlot: (slot: number | null) => void;
   onSetShowIf: (variable: string | null) => void;
+  onSetQrStyle?: (style: 'selo' | 'suave') => void;
   /** Recolhe o painel para ganhar espaço. */
   onCollapse?: () => void;
   /** Propriedades do tipo selecionado (texto, forma…). */
@@ -129,6 +132,7 @@ const SelectionPanel: React.FC<SelectionPanelProps> = ({
   onSelectBelow,
   onSetInstructorSlot,
   onSetShowIf,
+  onSetQrStyle,
   onCollapse,
   children,
 }) => {
@@ -202,6 +206,28 @@ const SelectionPanel: React.FC<SelectionPanelProps> = ({
             </div>
           </div>
           {children && <div className="p-3">{children}</div>}
+
+          {selection.qrStyle !== undefined && onSetQrStyle && (
+            <Section
+              title="Estilo do QR"
+              hint="Reto: quadradinhos limpos, como um selo digital. Suave: cantos arredondados. Os dois têm o mosquetão no centro e leem igual."
+            >
+              <div className="flex gap-1.5">
+                {([['selo', 'Reto'], ['suave', 'Suave']] as const).map(([id, name]) => (
+                  <Button
+                    key={id}
+                    type="button"
+                    size="sm"
+                    variant={(selection.qrStyle ?? 'suave') === id ? 'default' : 'outline'}
+                    className="h-7 flex-1 text-xs"
+                    onClick={() => onSetQrStyle(id)}
+                  >
+                    {name}
+                  </Button>
+                ))}
+              </div>
+            </Section>
+          )}
 
           <Section
             title="Mostrar só se preenchida"

@@ -46,6 +46,7 @@ const SNAPSHOT_PROPERTIES = [
   'maxHeight',
   'instructorSlot',
   'showIf',
+  'qrStyle',
 ];
 
 export interface CanvasHistoryAPI {

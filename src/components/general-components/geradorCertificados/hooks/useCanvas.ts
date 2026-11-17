@@ -6,7 +6,7 @@ import { applyFontOverrides } from '../utils/fontConfig';
 import { isTextObject } from '../types';
 
 /** Propriedades próprias do certificado que precisam sobreviver a clonar/copiar. */
-const CUSTOM_PROPS = ['placeholderName', 'placeholderType', 'isPlaceholder', 'sealDefaultSrc', 'maxHeight', 'instructorSlot', 'showIf'];
+const CUSTOM_PROPS = ['placeholderName', 'placeholderType', 'isPlaceholder', 'sealDefaultSrc', 'maxHeight', 'instructorSlot', 'showIf', 'qrStyle'];
 
 interface CanvasPage {
   id: string;
@@ -437,6 +437,8 @@ export const useCanvas = () => {
     'instructorSlot',
     // "mostrar só se": o objeto some quando a variável está vazia
     'showIf',
+    // estilo do QR de validação ("selo" = reto, "suave" = arredondado)
+    'qrStyle',
   ];
 
   /**

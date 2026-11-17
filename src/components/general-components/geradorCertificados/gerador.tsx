@@ -272,6 +272,9 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
       slot: slots.size > 1 ? 'misto' : [...slots][0],
       showIf: conds.size > 1 ? 'misto' : [...conds][0],
       variables: [...vars].sort(),
+      ...(objs.length === 1 && first.label === 'QR Code de validação'
+        ? { qrStyle: ((objs[0] as unknown as { qrStyle?: 'selo' | 'suave' }).qrStyle ?? null) }
+        : {}),
     });
   }, [liveCanvas]);
   useEffect(() => {
@@ -294,6 +297,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
   };
   const setInstructorSlot = (slot: number | null) => changeSelected((o) => o.set({ instructorSlot: slot ?? undefined } as never));
   const setShowIf = (variable: string | null) => changeSelected((o) => o.set({ showIf: variable || undefined } as never));
+  const setQrStyle = (style: 'selo' | 'suave') => changeSelected((o) => o.set({ qrStyle: style } as never));
   const isBackground = (o: fabric.Object) => ['backgroundRect', 'backgroundImage'].includes((o as unknown as { name?: string }).name || '');
   const bringSelectedForward = () => changeSelected((o) => liveCanvas?.bringObjectForward(o));
   const sendSelectedBackward = () =>
@@ -1557,6 +1561,7 @@ const GeradorCertificados: React.FC<GeradorCertificadosProps> = ({ editingData, 
           onLock={lockSelected}
           onSetInstructorSlot={setInstructorSlot}
           onSetShowIf={setShowIf}
+          onSetQrStyle={setQrStyle}
         >
           {selection.count === 1 && selection.kind === 'texto' && selectedText && (
             <TextPanel

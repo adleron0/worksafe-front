@@ -377,6 +377,63 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
     [reducedMotion],
   );
 
+  // --- Giroscópio (celular): inclinar o aparelho move o certificado e o brilho -
+  // A posição em que a pessoa segura vira o "centro" (e acompanha devagar, para
+  // não ficar torto se ela mudar de postura). Pausa com zoom ou dedo na tela.
+  // iPhone exige um toque para liberar (DeviceOrientationEvent.requestPermission).
+  type OrientationCtor = typeof DeviceOrientationEvent & { requestPermission?: () => Promise<"granted" | "denied"> };
+  const [gyroOn, setGyroOn] = useState(false);
+  const [gyroNeedsTap, setGyroNeedsTap] = useState(false);
+  const gyroBase = useRef<{ b: number; g: number } | null>(null);
+  const gyroFrame = useRef(0);
+  const startGyro = useCallback(() => {
+    if (gyroOn) return;
+    gyroBase.current = null;
+    setGyroOn(true);
+  }, [gyroOn]);
+  useEffect(() => {
+    if (!coarse || reducedMotion || typeof window === "undefined" || !("DeviceOrientationEvent" in window)) return;
+    const Ctor = window.DeviceOrientationEvent as OrientationCtor;
+    if (typeof Ctor.requestPermission === "function") setGyroNeedsTap(true);
+    else startGyro();
+  }, [coarse, reducedMotion, startGyro]);
+  useEffect(() => {
+    if (!gyroOn) return;
+    const RANGE = 22; // graus de inclinação do aparelho para chegar ao máximo
+    const onOrient = (e: DeviceOrientationEvent) => {
+      if (e.beta == null || e.gamma == null) return;
+      if (viewRef.current.scale > 1 || pointers.current.size > 0) return;
+      const base = (gyroBase.current ??= { b: e.beta, g: e.gamma });
+      // o centro acompanha devagar a postura de quem segura
+      base.b += (e.beta - base.b) * 0.01;
+      base.g += (e.gamma - base.g) * 0.01;
+      const dx = Math.max(-1, Math.min(1, (e.gamma - base.g) / RANGE));
+      const dy = Math.max(-1, Math.min(1, (e.beta - base.b) / RANGE));
+      cancelAnimationFrame(gyroFrame.current);
+      gyroFrame.current = requestAnimationFrame(() => {
+        const el = tiltRef.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        // reaproveita a inclinação do mouse: um "ponteiro" virtual no cartão
+        setTilt(rect.left + ((dx + 1) / 2) * rect.width, rect.top + ((dy + 1) / 2) * rect.height);
+      });
+    };
+    window.addEventListener("deviceorientation", onOrient);
+    return () => {
+      window.removeEventListener("deviceorientation", onOrient);
+      cancelAnimationFrame(gyroFrame.current);
+    };
+  }, [gyroOn, setTilt]);
+  const askGyro = async () => {
+    try {
+      const Ctor = window.DeviceOrientationEvent as OrientationCtor;
+      const res = await Ctor.requestPermission?.();
+      if (res === "granted") startGyro();
+    } finally {
+      setGyroNeedsTap(false);
+    }
+  };
+
   // --- Ponteiros: arrastar (ampliado), pinça (2 dedos) e clique (virar) -------
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<{
@@ -694,6 +751,21 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
               <span />
             )}
             <div data-stage-control>{actions}</div>
+          </div>
+        )}
+
+        {/* iPhone: libera o giroscópio com um toque */}
+        {gyroNeedsTap && !gyroOn && !zoomed && (
+          <div className="pointer-events-none absolute left-3 z-20 flex items-center" style={{ top: 0, height: TOPBAR }}>
+            <button
+              type="button"
+              data-stage-control
+              onClick={askGyro}
+              className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-border bg-card/95 px-3 py-1.5 text-xs font-medium text-foreground shadow-sm backdrop-blur hover:bg-muted"
+            >
+              <Icon name="smartphone" className="h-3.5 w-3.5" />
+              Ativar movimento
+            </button>
           </div>
         )}
 

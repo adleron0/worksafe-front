@@ -1,10 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "@tanstack/react-router";
 import { useGeneralContext } from "@/context/GeneralContext";
 import useVerify from "@/hooks/use-verify";
 import SidebarItem from "./SidebarItem";
 import { Button } from "../../components/ui/button";
-import { X, Bell } from "lucide-react";
+import { X, Bell, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTheme } from "@/context/ThemeContext";
+import useWindowSize from "@/hooks/use-windowSize";
 import {
   groups,
   footerGroup,
@@ -60,6 +63,30 @@ const findActivePath = (pathname: string, allGroups: SidebarGroup[]) => {
     .sort((a, b) => b.length - a.length)[0] ?? null;
 };
 
+const COLLAPSED_KEY = "ws:sidebar-recolhida";
+
+const readCollapsed = () => {
+  try {
+    return localStorage.getItem(COLLAPSED_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
+
+/** Logo do modo recolhido: o ícone (favicon) da empresa; sem ele, a inicial. */
+const CompactLogo = () => {
+  const { theme } = useTheme();
+  const [error, setError] = useState(false);
+  if (theme.faviconUrl && !error) {
+    return <img src={theme.faviconUrl} alt="Logo" className="h-8 w-8 object-contain" onError={() => setError(true)} />;
+  }
+  return (
+    <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
+      {(theme.companyData?.comercial_name || "W").charAt(0).toUpperCase()}
+    </span>
+  );
+};
+
 const GroupLabel = ({ label }: { label: string }) => (
   <p className="px-2.5 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 select-none">
     {label}
@@ -70,6 +97,23 @@ const Sidebar = () => {
   const { openSidebar, setOpenSidebar } = useGeneralContext();
   const { can, has } = useVerify();
   const { pathname } = useLocation();
+  const { width } = useWindowSize();
+  const [collapsedPref, setCollapsedPref] = useState(readCollapsed);
+  // No celular o menu é gaveta e abre sempre inteiro.
+  const isDesktop = (width ?? window.innerWidth) >= 768;
+  const collapsed = collapsedPref && isDesktop;
+
+  const toggleCollapsed = () => {
+    setCollapsedPref((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(COLLAPSED_KEY, String(next));
+      } catch {
+        /* sem armazenamento: vale só nesta visita */
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     // Adiciona o efeito de desfoque ao documento principal
@@ -89,7 +133,8 @@ const Sidebar = () => {
 
   const renderGroup = (group: SidebarGroup) => (
     <div key={group.label ?? "topo"}>
-      {group.label && <GroupLabel label={group.label} />}
+      {group.label &&
+        (collapsed ? <div className="mx-3 my-2 border-t" /> : <GroupLabel label={group.label} />)}
       {group.items.map((item) => (
         <SidebarItem
           key={item.path}
@@ -99,6 +144,7 @@ const Sidebar = () => {
           subitems={item.subitems}
           activePath={activePath}
           onNavigate={() => setOpenSidebar(false)}
+          collapsed={collapsed}
         />
       ))}
     </div>
@@ -115,10 +161,14 @@ const Sidebar = () => {
       )}
 
       {/* Sidebar */}
-      <aside className={`${openSidebar ? "fixed translate-x-0 duration-300 ease-linear left-0 top-0 z-50"
-          : "fixed left-0 top-0 z-50 -translate-x-full duration-300 ease-linear"}
-          md:translate-x-0 md:static w-3/4 md:w-64 md:min-w-64 h-full bg-background flex flex-col border-r`}>
-          <div className="relative flex px-4 md:justify-between items-center w-full max-h-16 min-h-16 border-b">
+      <aside className={`${openSidebar ? "fixed translate-x-0 left-0 top-0 z-50"
+          : "fixed left-0 top-0 z-50 -translate-x-full"}
+          transition-[translate,width,min-width] duration-300 ease-in-out
+          md:translate-x-0 md:static w-3/4 ${collapsed ? "md:w-16 md:min-w-16" : "md:w-64 md:min-w-64"}
+          h-full bg-background flex flex-col border-r`}>
+          <div className={`relative flex items-center w-full max-h-16 min-h-16 border-b ${
+            collapsed ? "justify-center px-2" : "px-4 md:justify-between"
+          }`}>
             <Button
               size="icon"
               variant="outline"
@@ -127,20 +177,47 @@ const Sidebar = () => {
             >
               <X className="h-4 w-4 text-primary" />
             </Button>
-            <div className="flex gap-1 items-center">
-              <DynamicLogo width={180} height={50} />
-            </div>
-            <Button variant="outline" size="icon" className="ml-auto h-8 w-8 rounded hidden md:flex">
-              <Bell className="h-4 w-4" />
-              <span className="sr-only">Toggle notifications</span>
-            </Button>
+            {collapsed ? (
+              <CompactLogo />
+            ) : (
+              <>
+                <div className="flex gap-1 items-center min-w-0">
+                  <DynamicLogo width={150} height={50} />
+                </div>
+                <Button variant="outline" size="icon" className="ml-auto h-8 w-8 rounded hidden md:flex">
+                  <Bell className="h-4 w-4" />
+                  <span className="sr-only">Notificações</span>
+                </Button>
+              </>
+            )}
           </div>
-          <nav className="flex flex-col h-full gap-2 text-lg font-medium pl-4 pt-2 pb-2 justify-between overflow-y-scroll scrollbar-thin">
+          <nav className={`flex flex-col h-full gap-2 text-lg font-medium pt-2 pb-2 justify-between overflow-y-auto overflow-x-hidden scrollbar-thin ${
+            collapsed ? "px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" : "pl-4"
+          }`}>
             <div>{visibleGroups.map(renderGroup)}</div>
             {visibleFooter.items.length > 0 && (
               <div className="border-t mt-2">{renderGroup(visibleFooter)}</div>
             )}
           </nav>
+          {/* Recolher/expandir: só no computador */}
+          <div className={`hidden md:flex border-t p-2 ${collapsed ? "justify-center" : "justify-end"}`}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded text-muted-foreground"
+                  aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+                  onClick={toggleCollapsed}
+                >
+                  {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                {collapsed ? "Expandir menu" : "Recolher menu"}
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </aside>
     </>
   );

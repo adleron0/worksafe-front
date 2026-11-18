@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useRef, useState, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
 import Pagination from "@/components/general-components/Pagination";
@@ -58,6 +58,8 @@ function List() {
     error,
   } = useQuery<Response | undefined, ApiError>({
     queryKey: [`list${entity.pluralName}`, searchParams, order],
+    // ao reordenar/paginar, a lista atual fica na tela até chegar a nova (o cabeçalho com as setinhas não some)
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       const params: { key: string; value: unknown }[] = Object.keys(searchParams).map((key) => ({
         key,

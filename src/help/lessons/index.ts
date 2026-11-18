@@ -146,12 +146,12 @@ export const LESSONS: Lesson[] = [
     screen: "Clientes",
     minutes: 2,
     requires: ["view_clientes"],
-    routes: ["/clientes"],
+    routes: ["/clientes", "/clientes/novo", "/clientes/:customerId"],
     video: { src: `${BASE}/clientes.mp4`, captions: `${BASE}/clientes.vtt` },
     chapters: [
       { title: "A lista", start: 0 },
-      { title: "Cadastrar um cliente", start: 33.4 },
-      { title: "Contatos, arquivos e edição", start: 69.4 },
+      { title: "Cadastrar um cliente", start: 32.1 },
+      { title: "Contatos e arquivos", start: 66.7 },
     ],
   },
   {

@@ -16,7 +16,8 @@ import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import { AVATAR_LOOKS, BotAvatar } from "../-shared/avatar";
-import { BOTS_KEY, BotFull, BotsConfig, CatalogTool, RISK_CLASS, RISK_LABEL, aiApi, dateTimeBr } from "../-shared/bots";
+import { BOTS_KEY, BotFull, BotsConfig, CatalogTool, RISK_CLASS, RISK_LABEL, STATUS_KEY, TEAM_KEY, aiApi, dateTimeBr } from "../-shared/bots";
+import api from "@/services/api";
 
 export const Route = createFileRoute("/_authenticated/bots/_admin/configuracao")({
   component: ConfigPage,
@@ -62,6 +63,8 @@ function ConfigPage() {
 }
 
 function ProvidersCard({ config }: { config: BotsConfig }) {
+  const { can } = useVerify();
+  const [keysOpen, setKeysOpen] = useState(false);
   return (
     <div className="rounded-lg border p-4 text-sm">
       <div className="flex flex-wrap items-center gap-2">
@@ -72,8 +75,93 @@ function ProvidersCard({ config }: { config: BotsConfig }) {
           </span>
         ))}
         {!config.enabled && <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">Bots desligados (AI_BOTS_ENABLED)</span>}
+        {can("chaves_ia_bots") && (
+          <Button type="button" size="sm" variant="outline" className="ml-auto" onClick={() => setKeysOpen(true)}>
+            <Icon name="key-round" className="h-4 w-4" /> Chaves de IA
+          </Button>
+        )}
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">As chaves ficam nas variáveis do servidor (GEMINI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY...), nunca na tela. Um bot cujo fornecedor está sem chave avisa quem tenta conversar.</p>
+      <p className="mt-2 text-xs text-muted-foreground">A chave cadastrada aqui vale antes da variável do servidor (GEMINI_API_KEY, ANTHROPIC_API_KEY...). Ela fica guardada criptografada e a tela só mostra o final. Um bot cujo fornecedor está sem chave avisa quem tenta conversar.</p>
+      {keysOpen && <ProviderKeysDialog onClose={() => setKeysOpen(false)} />}
+    </div>
+  );
+}
+
+interface ProviderKeyRow { provider: string; label: string; envName: string; source: "tela" | "servidor" | null; hint: string | null; updatedAt: string | null; unavailableReason: string | null }
+const KEYS_KEY = "aiProviderKeys";
+
+/** Cadastrar, trocar ou remover a chave de cada fornecedor. A chave é testada no fornecedor antes de salvar. */
+function ProviderKeysDialog({ onClose }: { onClose: () => void }) {
+  const { data, isLoading, error } = useQuery({ queryKey: [KEYS_KEY], queryFn: () => aiApi.get<ProviderKeyRow[]>("provider-keys") });
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Chaves de IA</DialogTitle>
+          <DialogDescription>Cole a chave nova e salve: ela é testada no fornecedor antes de valer e passa a ser usada por todos os bots na hora. Remover volta a usar a variável do servidor, se houver.</DialogDescription>
+        </DialogHeader>
+        {error && <p className="text-sm text-destructive">Erro: {errorMessage(error)}</p>}
+        {isLoading && <Skeleton className="h-40 w-full" />}
+        <div className="grid gap-3">
+          {data?.map((row) => <ProviderKeyItem key={row.provider} row={row} />)}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ProviderKeyItem({ row }: { row: ProviderKeyRow }) {
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState("");
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: [KEYS_KEY] });
+    queryClient.invalidateQueries({ queryKey: [CONFIG_KEY] });
+    queryClient.invalidateQueries({ queryKey: [STATUS_KEY] });
+    queryClient.invalidateQueries({ queryKey: [BOTS_KEY] });
+    queryClient.invalidateQueries({ queryKey: [TEAM_KEY] });
+  };
+  const save = useMutation({
+    mutationFn: () => aiApi.put<ProviderKeyRow>(`provider-keys/${row.provider}`, { key: value }),
+    onSuccess: () => { setValue(""); setEditing(false); refresh(); toast({ title: `Chave do ${row.label} salva`, description: "Testada no fornecedor e já em uso.", variant: "success" }); },
+    onError: (err) => toast({ title: "A chave não foi salva", description: errorMessage(err), variant: "destructive" }),
+  });
+  const remove = useMutation({
+    mutationFn: async () => (await api.delete<ProviderKeyRow>(`ai/provider-keys/${row.provider}`)).data,
+    onSuccess: () => { refresh(); toast({ title: `Chave do ${row.label} removida`, variant: "success" }); },
+    onError: (err) => toast({ title: "Não foi possível remover", description: errorMessage(err), variant: "destructive" }),
+  });
+  const badge = row.source === "tela"
+    ? { text: `Cadastrada aqui ${row.hint ?? ""}`, cls: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300" }
+    : row.source === "servidor"
+      ? { text: `Variável do servidor (${row.envName})`, cls: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300" }
+      : { text: "Sem chave", cls: "bg-muted text-muted-foreground" };
+
+  return (
+    <div className="rounded-md border p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-medium">{row.label}</span>
+        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.cls}`}>{badge.text}</span>
+        {row.source === "tela" && row.updatedAt && <span className="text-xs text-muted-foreground">desde {dateTimeBr(row.updatedAt)}</span>}
+        <div className="ml-auto flex gap-2">
+          {!editing && <Button type="button" size="sm" variant="outline" onClick={() => setEditing(true)}>{row.source ? "Trocar chave" : "Cadastrar chave"}</Button>}
+          {row.source === "tela" && !editing && (
+            <ConfirmDialog title={`Remover a chave do ${row.label}?`} description={row.envName ? `Os bots voltam a usar a variável ${row.envName} do servidor; se ela não existir, quem usa ${row.label} fica sem chave.` : "Os bots que usam este fornecedor ficam sem chave."} onConfirm={() => remove.mutate()}>
+              <Button type="button" size="sm" variant="ghost" disabled={remove.isPending}>Remover</Button>
+            </ConfirmDialog>
+          )}
+        </div>
+      </div>
+      {row.unavailableReason && <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">{row.unavailableReason}</p>}
+      {editing && (
+        <form className="mt-3 flex flex-col gap-2 sm:flex-row" onSubmit={(event) => { event.preventDefault(); if (value.trim()) save.mutate(); }}>
+          <Input id={`key-${row.provider}`} name={`key-${row.provider}`} type="password" autoComplete="off" className="flex-1" value={value} onValueChange={(_, next) => setValue(String(next))} placeholder={`Cole aqui a chave do ${row.label}`} autoFocus />
+          <div className="flex gap-2">
+            <Button type="submit" disabled={!value.trim() || save.isPending}>{save.isPending ? "Testando..." : "Testar e salvar"}</Button>
+            <Button type="button" variant="ghost" onClick={() => { setEditing(false); setValue(""); }} disabled={save.isPending}>Cancelar</Button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

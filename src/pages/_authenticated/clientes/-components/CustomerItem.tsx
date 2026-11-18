@@ -187,7 +187,7 @@ const CustomerItem = ({ item, index, entity }: ItemsProps) => {
               <DropdownMenuItem className="p-0" onSelect={open}>
                 <Button variant="ghost" className="flex justify-start gap-2 p-2 items-baseline w-full h-fit">
                   <Icon name="square-arrow-out-up-right" className="w-3 h-3" />
-                  <p>Abrir (dados, contatos e arquivos)</p>
+                  <p>Abrir</p>
                 </Button>
               </DropdownMenuItem>
 

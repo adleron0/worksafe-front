@@ -8,6 +8,7 @@ import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
 import Dialog from "@/components/general-components/Dialog";
 import { Button } from "@/components/ui/button";
+import { SortButton } from "@/components/general-components/SortButton";
 import ItemSkeleton from "./-skeletons/ItemSkeleton";
 import ItemList from "./-components/PostItem";
 import Form from "./-components/PostForm";
@@ -24,10 +25,11 @@ function List() {
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<IPost>();
+  // Ordenação rápida: "campo:asc" | "campo:desc"; vazio = padrão (mais recentes primeiro)
+  const [order, setOrder] = useState("");
   const [searchParams, setSearchParams] = useState<{
     limit: number;
     page: number;
-    'order-createdAt': string;
     'like-title'?: string;
     status?: string;
     'in-categoryId'?: number | number[];
@@ -35,7 +37,6 @@ function List() {
   }>({
     limit: 10,
     page: 0,
-    'order-createdAt': 'desc',
   });
   const initialFormRef = useRef(searchParams);
 
@@ -57,12 +58,16 @@ function List() {
     isError,
     error,
   } = useQuery<Response | undefined, ApiError>({
-    queryKey: [`list${entity.pluralName}`, searchParams],
+    queryKey: [`list${entity.pluralName}`, searchParams, order],
     queryFn: async () => {
-      const params = Object.keys(searchParams).map((key) => ({
+      const params: { key: string; value: unknown }[] = Object.keys(searchParams).map((key) => ({
         key,
         value: searchParams[key as keyof typeof searchParams]
       }));
+      const [field, dir] = order ? order.split(":") : ["createdAt", "desc"];
+      params.push({ key: `order-${field}`, value: dir });
+      // empate (ex.: mesmo número de visualizações): mais recente primeiro, ordem estável
+      if (field !== "createdAt") params.push({ key: "order-createdAt", value: "desc" });
       // Adiciona os relacionamentos
       params.push({ key: 'show', value: '[author,category,tags,_count]' });
       return get(entity.model, '', params);
@@ -85,6 +90,12 @@ function List() {
 
   const handleClear = () => {
     setSearchParams(initialFormRef.current);
+    setOrder("");
+  };
+
+  const handleSort = (next: string) => {
+    setOrder(next);
+    setSearchParams((prev) => ({ ...prev, page: 0 }));
   };
 
   const handleLimitChange = (name: string, value: string | number) => {
@@ -170,7 +181,15 @@ function List() {
         <Form formData={formData} openSheet={setOpenForm} entity={entity} />
       </Dialog>
 
-      <div className="space-y-2 mt-4">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mt-3">
+        <span className="text-muted-foreground">Ordenar por:</span>
+        <SortButton label="Visualizações" field="viewCount" order={order} onSort={handleSort} />
+        <SortButton label="Publicação" field="publishedAt" order={order} onSort={handleSort} />
+        <SortButton label="Criação" field="createdAt" order={order} onSort={handleSort} />
+        <SortButton label="Título" field="title" order={order} onSort={handleSort} />
+      </div>
+
+      <div className="space-y-2 mt-3">
         {isLoading
           ? skeletons.map((_, i) => <ItemSkeleton key={i} index={i} />)
           : isError

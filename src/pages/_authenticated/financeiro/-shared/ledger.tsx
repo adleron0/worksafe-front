@@ -332,17 +332,8 @@ export type { Bucket } from "@/components/general-components/SummaryCards";
 
 /* ------------------------------------------------------------------ ordenação */
 
-export function SortButton({ label, field, order, onSort, className }: { label: string; field: string; order?: string; onSort: (order: string) => void; className?: string }) {
-  const [current, dir] = (order ?? "").split(":");
-  const active = current === field;
-  return (
-    <button type="button" className={cn("inline-flex items-center gap-1 hover:underline", className)}
-      onClick={() => onSort(active && dir === "asc" ? `${field}:desc` : active && dir === "desc" ? "" : `${field}:asc`)}>
-      {label}
-      <Icon name={active ? (dir === "asc" ? "arrow-up" : "arrow-down") : "arrow-up-down"} className={cn("w-3 h-3", !active && "opacity-50")} />
-    </button>
-  );
-}
+// SortButton virou componente geral (blog, financeiro…); reexportado para os imports antigos
+export { SortButton } from "@/components/general-components/SortButton";
 
 /* ------------------------------------------------------------------ seleção e lote */
 

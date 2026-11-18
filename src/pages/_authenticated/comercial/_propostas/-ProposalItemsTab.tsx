@@ -63,7 +63,8 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
   const hasRent = draft.sections.some((section) => section.kind === "locacao_cliente" || section.items.some((item) => item.type === "locacao_cliente"));
   const { data: rentItems = [] } = useQuery({
     queryKey: [STOCK_KEYS.itemOptions, "alugavel"],
-    queryFn: () => stockApi.get<RentItem[]>("items/options", { flag: "alugavel" }),
+    // item que só sai com operador nosso é serviço: não aparece para alugar
+    queryFn: async () => (await stockApi.get<RentItem[]>("items/options", { flag: "alugavel" })).filter((option) => option.rentMode !== "com_operador"),
     enabled: hasRent, retry: false, staleTime: 30_000,
   });
   const removeSection = (uid: string) => setSections((list) => list.filter((x) => x.uid !== uid));
@@ -216,6 +217,7 @@ function ItemRow({ item, line, draft, options, rentItems, readOnly, canSeeCosts,
   const labor = item.type === "mao_de_obra", training = item.type === "treinamento", rent = item.type === "locacao_cliente";
   const period: RentPeriod = item.extra?.period ?? "mes";
   const rentItem = rentItems.find((option) => option.id === item.stockItemId);
+  const rental = line?.rental ?? null;
   /** Valor do período sugerido pelo cadastro do item. */
   const suggestedRate = (option: RentItem | undefined, value: RentPeriod) => option?.rent?.[value] ?? null;
   const adjusted = labor
@@ -253,7 +255,8 @@ function ItemRow({ item, line, draft, options, rentItems, readOnly, canSeeCosts,
                 const picked = rentItems.find((option) => String(option.id) === String(value));
                 update({
                   stockItemId: picked?.id ?? null, description: picked?.label ?? (value ? item.description : ""), unit: picked?.unit ?? item.unit,
-                  extra: { ...item.extra, period, periods: item.extra?.periods ?? 1, rate: suggestedRate(picked, period) ?? item.extra?.rate ?? null },
+                  // o valor do período sai da base de cálculo da locação; digitar aqui é exceção
+                  extra: { ...item.extra, period: (picked?.minRentPeriod && period === "dia" ? picked.minRentPeriod : period) as RentPeriod, periods: item.extra?.periods ?? 1, rate: picked?.rentPriceMode === "manual" ? suggestedRate(picked, period) : null },
                 });
               }} />
           </Cell>
@@ -305,15 +308,27 @@ function ItemRow({ item, line, draft, options, rentItems, readOnly, canSeeCosts,
               <Select name={`period-${item.uid}`} state={period} disabled={readOnly} modal={false} options={RENT_PERIODS}
                 onChange={(_, value) => {
                   const next = (String(value || "mes")) as RentPeriod;
-                  update({ extra: { ...item.extra, period: next, rate: suggestedRate(rentItem, next) ?? item.extra?.rate ?? null } });
+                  update({ extra: { ...item.extra, period: next, closed: next === "mes" ? item.extra?.closed : false, rate: rentItem?.rentPriceMode === "manual" ? suggestedRate(rentItem, next) : item.extra?.rate ?? null } });
                 }} />
             </Cell>
-            <Cell label="Períodos" className="@3xl:w-16">
-              <NumField digits={0} value={item.extra?.periods ?? 1} disabled={readOnly} ariaLabel="Quantidade de períodos"
-                onChange={(periods) => update({ extra: { ...item.extra, periods } })} onEmpty={() => update({ extra: { ...item.extra, periods: 1 } })} />
+            <Cell label="Períodos" className="@3xl:w-24">
+              <div className="flex gap-1">
+                <NumField className="flex-1" digits={0} value={item.extra?.periods ?? 1} disabled={readOnly} ariaLabel="Quantidade de períodos"
+                  onChange={(periods) => update({ extra: { ...item.extra, periods } })} onEmpty={() => update({ extra: { ...item.extra, periods: 1 } })} />
+                {period === "mes" && (
+                  <Tip text={item.extra?.closed ? "Período fechado: com o desconto do prazo da base" : "Marcar como período fechado (desconto do prazo)"}>
+                    <button type="button" disabled={readOnly} aria-pressed={Boolean(item.extra?.closed)} aria-label="Período fechado"
+                      onClick={() => update({ extra: { ...item.extra, closed: !item.extra?.closed } })}
+                      className={cn("h-9 w-8 shrink-0 rounded-md border flex items-center justify-center disabled:cursor-not-allowed", item.extra?.closed ? "bg-primary text-inverse-foreground border-primary" : "text-muted-foreground hover:bg-muted")}>
+                      <Icon name="lock" className="w-4 h-4" />
+                    </button>
+                  </Tip>
+                )}
+              </div>
             </Cell>
             <Cell label="R$ por período" className="@3xl:w-28">
-              <NumField kind="money" value={item.extra?.rate} disabled={readOnly} ariaLabel="Valor do período"
+              <NumField kind="money" value={item.extra?.rate} disabled={readOnly} ariaLabel="Valor do período (opcional)"
+                placeholder={rental && "periodValue" in rental && !item.extra?.rate ? decimal(rental.periodValue) : "pela base"}
                 onChange={(rate) => update({ extra: { ...item.extra, rate } })} onEmpty={() => update({ extra: { ...item.extra, rate: null } })} />
             </Cell>
           </>}
@@ -360,8 +375,7 @@ function ItemRow({ item, line, draft, options, rentItems, readOnly, canSeeCosts,
         {labor && item.weekend && !(item.weekendDays ?? draft.weekendDays) && <span className="text-amber-700 dark:text-amber-300"> · informe os dias de fim de semana/feriado nos ajustes da linha</span>}
         {labor && canSeeCosts && line?.hourCost ? ` · custo hora ${money(line.hourCost)}` : ""}
         {training && (!item.courseId ? "Escolha o curso para usar a tabela in-company" : line?.listPrice != null ? `Tabela in-company: ${money(line.listPrice)}` : "Curso sem tabela in-company: digite o valor final")}
-        {rent && (!item.stockItemId ? "Escolha o item alugável do estoque"
-          : `${decimal(item.quantity, 0)} × ${decimal(item.extra?.periods ?? 1, 0)} ${PERIOD_WORD[period][(item.extra?.periods ?? 1) === 1 ? 0 : 1]} × ${money(item.extra?.rate)}${line?.listPrice != null ? ` = ${money(line.listPrice)}` : ""}${suggestedRate(rentItem, period) === null && rentItem ? " · item sem valor de aluguel para esse período no cadastro" : ""}`)}
+        {rent && (!item.stockItemId ? "Escolha o item alugável do estoque" : <RentNote item={item} line={line} period={period} canSeeCosts={canSeeCosts} />)}
         {!labor && !training && !rent && !typed && (line ? "Valor final: usando o sugerido" : "Descreva o item e informe o valor unitário")}
         {typed && line && <span className={cn("tabular-nums", diff !== null && diff < 0 && "text-amber-700 dark:text-amber-300")}>
           {labor || training || rent ? " · " : ""}sugerido {money(line.suggested)}{diff !== null && ` (${diff >= 0 ? "+" : "−"}${percent(Math.abs(diff), 1)})`}
@@ -399,5 +413,25 @@ function ItemRow({ item, line, draft, options, rentItems, readOnly, canSeeCosts,
         </div>
       )}
     </div>
+  );
+}
+
+/** Linha de contexto da locação: de onde vem o valor do período, desconto, preparação e a checagem de mercado. */
+function RentNote({ item, line, period, canSeeCosts }: { item: DraftItem; line?: CalcLine; period: RentPeriod; canSeeCosts: boolean }) {
+  const periods = item.extra?.periods ?? 1;
+  const words = `${decimal(item.quantity, 0)} × ${decimal(periods, 0)} ${PERIOD_WORD[period][periods === 1 ? 0 : 1]}`;
+  const rental = line?.rental;
+  if (item.extra?.rate) return <>{words} × {money(item.extra.rate)} (digitado){line?.listPrice != null ? ` = ${money(line.listPrice)}` : ""}</>;
+  if (!rental) return <>{words} · valor pelo cadastro do item</>;
+  if ("error" in rental) return <span className="text-amber-700 dark:text-amber-300">{words} · sem conta: {rental.error} (complete o cadastro do item ou digite o valor)</span>;
+  return (
+    <>
+      {words}{item.extra?.closed ? ", fechado" : ""} · {money(rental.periodValue)} por período e peça
+      {rental.discountRate > 0 && ` · desconto do prazo ${percent(rental.discountRate, 0)}`}
+      {canSeeCosts && rental.perRentedMonth != null && <> · custo {money(rental.perRentedMonth)}/mês alugado + preparação {money(rental.handling)}</>}
+      {canSeeCosts && rental.valueShare != null && (
+        <span className={cn(rental.market !== "dentro" && "text-amber-700 dark:text-amber-300")}> · {percent(rental.valueShare, 1)} do bem ao mês{rental.market !== "dentro" ? ` (${rental.market} da faixa de mercado)` : ""}</span>
+      )}
+    </>
   );
 }

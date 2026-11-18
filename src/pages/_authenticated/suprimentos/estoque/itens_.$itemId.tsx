@@ -21,6 +21,7 @@ import {
   DueBadge, HOLDER_LABEL, ITEM_KINDS, ItemDetail, ItemKind, ItemPurchase, KIND_FLAGS, KardexRow, LOT_STATUS_LABEL, PERM_ADJUST, PERM_MOVE, Pill, STOCK_ABILITY, STOCK_KEYS, TRACKING_LABEL, TRACKING_OPTIONS, Tracking, kindOf, qty, stockApi, toOptions, useStockOptions,
 } from "../-shared/stock";
 import { MovementDetailDialog, NewMovementDialog } from "../-shared/stock-movements";
+import { ItemRentalSection, RentalDraft, rentalDraftOf, rentalPayload } from "../-shared/item-rental";
 import { RecordFilesPanel } from "../../arquivos/-shared/record-files";
 import { DueStateBadge, EQUIP_KEYS, PrintLabelsDialog, UnitRow, UnitStatusBadge } from "../-shared/equipment";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/_authenticated/suprimentos/estoque/itens_
 });
 
 type N = number | null;
-interface Draft {
+interface Draft extends RentalDraft {
   name: string; code: string; categoryId: string; unit: string; description: string; manufacturer: string; model: string; notes: string;
   tracking: Tracking; returnable: boolean; minQuantity: N; reorderQuantity: N; purchaseUnit: string; purchaseFactor: N;
   requiresInspection: boolean; inspectionIntervalDays: N; inspectionBeforeUse: boolean;
@@ -55,6 +56,7 @@ const draftOf = (item?: ItemDetail): Draft => ({
   requiresCalibration: item?.requiresCalibration ?? false, calibrationIntervalMonths: item?.calibrationIntervalMonths ?? null,
   isPpe: item?.isPpe ?? false, caNumber: item?.caNumber ?? "", caExpiry: item?.caExpiry ?? "", replaceEveryDays: item?.replaceEveryDays ?? null,
   rentable: item?.rentable ?? false, rentDaily: item?.rentDaily ?? null, rentWeekly: item?.rentWeekly ?? null, rentMonthly: item?.rentMonthly ?? null, replacementValue: item?.replacementValue ?? null,
+  ...rentalDraftOf(item),
 });
 const LIFE_FROM = [{ id: "fabricacao", name: "Da fabricação" }, { id: "primeiro_uso", name: "Do primeiro uso" }];
 
@@ -110,8 +112,11 @@ function ItemPage() {
         lifeMonths: value.hasLife ? value.lifeMonths : null, lifeFrom: value.lifeFrom, warnDays: value.warnDays,
         requiresCalibration: value.requiresCalibration, calibrationIntervalMonths: value.requiresCalibration ? value.calibrationIntervalMonths : null,
         isPpe: value.isPpe, caNumber: value.isPpe ? value.caNumber : "", caExpiry: value.isPpe && value.caExpiry ? value.caExpiry : null, replaceEveryDays: value.isPpe ? value.replaceEveryDays : null,
-        rentable: value.rentable, rentDaily: value.rentable ? value.rentDaily : null, rentWeekly: value.rentable ? value.rentWeekly : null,
-        rentMonthly: value.rentable ? value.rentMonthly : null, replacementValue: value.rentable ? value.replacementValue : null,
+        rentable: value.rentable, replacementValue: value.rentable ? value.replacementValue : null,
+        // no modo calculado a API grava dia/semana/mês sozinha; no manual valem os digitados
+        ...(value.rentable && value.rentPriceMode === "manual" ? { rentDaily: value.rentDaily, rentWeekly: value.rentWeekly, rentMonthly: value.rentMonthly } : {}),
+        ...(!value.rentable ? { rentDaily: null, rentWeekly: null, rentMonthly: null } : {}),
+        ...rentalPayload(value),
         // "ferramenta" é só da tela: vai como consumível com "volta" marcado (os campos acima mandam)
         ...(isNew ? { preset: kind === "ferramenta" ? "consumivel" : kind } : {}),
       };
@@ -355,13 +360,10 @@ function ItemPage() {
                       {optNum("replaceEveryDays", "Troca a cada (dias)", { placeholder: "Sem troca periódica" })}
                     </div>
                   ))}
-                  {flag("rentable", "Alugável", "Pode ser alugado a clientes (precisa voltar depois de sair).", (
-                    <div className="grid sm:grid-cols-4 gap-4">
-                      {optNum("rentDaily", "Diária", { kind: "money", digits: 2 })}
-                      {optNum("rentWeekly", "Semanal", { kind: "money", digits: 2 })}
-                      {optNum("rentMonthly", "Mensal", { kind: "money", digits: 2 })}
-                      {optNum("replacementValue", "Valor de reposição", { kind: "money", digits: 2 })}
-                    </div>
+                  {flag("rentable", "Alugável", "Pode ser alugado a clientes (precisa voltar depois de sair). O preço sai da base de cálculo da locação.", (
+                    <ItemRentalSection draft={draft} item={item} editable={editable} canSeeCosts={can("custos_estoque")}
+                      set={(key, value) => set(key as keyof Draft, value as never)}
+                      apply={(patch) => setDraft((current) => (current ? { ...current, ...patch } : current))} />
                   ))}
                 </section>
 

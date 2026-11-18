@@ -60,6 +60,8 @@ export interface StockOptions {
 export interface ItemOption {
   id: number; code: string; name: string; label: string; unit: string; tracking: Tracking; returnable: boolean; isPpe: boolean; rentable: boolean;
   available: number; lastCost: number | null; averageCost: number | null;
+  rent?: { dia: number | null; semana: number | null; mes: number | null };
+  rentPriceMode?: "calculado" | "manual"; rentMode?: "locacao" | "com_operador" | "ambos"; minRentPeriod?: "dia" | "semana" | "mes" | null; isKit?: boolean;
 }
 export interface StockItem {
   id: number; code: string; name: string; description: string | null; categoryId: number | null; category?: string | null;
@@ -70,14 +72,37 @@ export interface StockItem {
   requiresCalibration: boolean; calibrationIntervalMonths: number | null;
   isPpe: boolean; caNumber: string | null; caExpiry: string | null; caState: DueState | null; replaceEveryDays: number | null;
   rentable: boolean; rentDaily: number | null; rentWeekly: number | null; rentMonthly: number | null; replacementValue: number | null;
+  /** base de cálculo da locação (plano 09): vazio = padrão da categoria e da base */
+  rentPriceMode: "calculado" | "manual"; rentMode: "locacao" | "com_operador" | "ambos"; minRentPeriod: "dia" | "semana" | "mes" | null;
+  economicLifeMonths: number | null; residualRate: number | null; maintenanceRate: number | null; inspectionCost: number | null;
+  calibrationCost: number | null; lossRate: number | null; handlingCost: number | null; occupancy: number | null;
   siteProductId: number | null; notes: string | null; active: boolean;
   averageCost: number | null; lastCost: number | null; lastPurchaseAt: string | null;
   inStock: number; out: number; available: number; low: boolean;
 }
 export type DueState = "vencido" | "a_vencer" | "em_dia";
 export interface ItemList { total: number; lowCount: number; value: number | null; rows: StockItem[] }
+export interface RentalPrice {
+  month: number; week: number; day: number; handling: number; floorMonth: number; valueShare: number; market: "abaixo" | "dentro" | "acima";
+  margin: number; tax: { name: string | null; inside: number; rental: boolean };
+  cost: {
+    value: number; occupancy: number; depreciation: number; capital: number; insurance: number; maintenance: number; inspection: number;
+    calibration: number; ownMonthly: number; loss: number; perRentedMonth: number; handling: number;
+  };
+  error: null;
+}
+export interface RentalPreset {
+  key: string; label: string; source: string; minRentPeriod: "dia" | "semana" | "mes";
+  value: number; lifeMonths: number; residualRate: number; maintenanceRate: number; occupancy: number; lossRate: number; handlingCost: number;
+  inspectionCost?: number; inspectionMonths?: number; calibrationCost?: number; calibrationMonths?: number;
+}
 export interface ItemDetail extends StockItem {
   product: { id: number; name: string; active: boolean } | null;
+  /** kit: os componentes; e de que kits este item faz parte */
+  components: Array<{ itemId: number; code: string; name: string; quantity: number }>;
+  partOf: Array<{ id: number; code: string; name: string }>;
+  /** conta da locação com a base vigente (só com a permissão de custos e item alugável) */
+  rentalPrice: RentalPrice | { error: string } | null;
   balances: Array<{ holderType: HolderType; holderId: number; holder: string; lotId: number | null; lot: string | null; quantity: number }>;
   lots: Array<{ id: number; number: string; manufacturedAt: string | null; expiresAt: string | null; expiryState: DueState | null; status: string; nextInspectionAt: string | null; inspectionState: DueState | null; quantity: number }>;
 }

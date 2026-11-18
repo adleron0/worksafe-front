@@ -23,6 +23,7 @@ import CoursePricesTab from "./-CoursePricesTab";
 import ProfessionalsTab from "./-ProfessionalsTab";
 import SimulatorTab from "./-SimulatorTab";
 import TaxTab from "./-TaxTab";
+import RentalTab from "./-RentalTab";
 
 export const Route = createFileRoute("/_authenticated/comercial/_base-calculo/base-calculo")({
   component: CostBasePage,
@@ -168,7 +169,7 @@ function CostBasePage() {
         <div>
           <h1 className="text-xl font-bold">Base de cálculo</h1>
           <p className="text-sm text-muted-foreground max-w-2xl">
-            Transforma salário em custo hora e alimenta os valores sugeridos das propostas de serviço. É sugestão: na proposta, todo valor continua editável.
+            Transforma salário em custo hora e o valor dos equipamentos em preço de locação, e alimenta os valores sugeridos das propostas. É sugestão: na proposta, todo valor continua editável.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -239,6 +240,7 @@ function CostBasePage() {
             <TabsTrigger value="outros">Outros custos</TabsTrigger>
             <TabsTrigger value="profissionais">Profissionais</TabsTrigger>
             <TabsTrigger value="treinamentos">Treinamentos</TabsTrigger>
+            <TabsTrigger value="locacao">Locação</TabsTrigger>
             <TabsTrigger value="imposto">Imposto</TabsTrigger>
             <TabsTrigger value="padroes">Padrões</TabsTrigger>
             <TabsTrigger value="simulador">Simulador</TabsTrigger>
@@ -255,6 +257,7 @@ function CostBasePage() {
             onChanged={() => { setRecompute((n) => n + 1); queryClient.invalidateQueries({ queryKey: ["commercialSim"] }); }} />
         </TabsContent>
         <TabsContent value="treinamentos" className="mt-4"><CoursePricesTab canUpdate={canUpdate} /></TabsContent>
+        <TabsContent value="locacao" className="mt-4"><RentalTab defaults={draft.defaults} setDefaults={setDefaults} disabled={disabled} dirty={dirty} /></TabsContent>
         <TabsContent value="imposto" className="mt-4">
           <TaxTab canCreate={canCreate} canUpdate={canUpdate} canInactivate={can(`inactive_${COMMERCIAL_ABILITY}`)} canActivate={can(`activate_${COMMERCIAL_ABILITY}`)} />
         </TabsContent>

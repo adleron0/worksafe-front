@@ -64,6 +64,31 @@ export interface Defaults {
   contingencyRate: number;
   /** padrão da comissão nas propostas; desligado = proposta nova começa com zero */
   commission: { enabled: boolean; rate: number; base: "faturado" | "lucro"; inPrice: boolean };
+  /** parâmetros comuns da locação de equipamento ao cliente (plano 09); versões antigas podem não ter */
+  rental?: RentalDefaults;
+}
+
+export interface RentalDefaults {
+  capitalRate: number; insuranceRate: number; residualRate: number; maintenanceRate: number; occupancy: number; lossRate: number;
+  handlingCost: number; inspectionMonths: number; calibrationMonths: number; weekFactor: number; dayFactor: number;
+  longDiscounts: Array<{ fromMonths: number; rate: number }>; marketBand: { min: number; max: number }; depositRate: number;
+}
+
+export interface RentalCostBreakdown {
+  value: number; occupancy: number; depreciation: number; capital: number; insurance: number; maintenance: number;
+  inspection: number; calibration: number; ownMonthly: number; loss: number; perRentedMonth: number; handling: number; floorMonth?: number;
+}
+
+export interface RentalPresetRow {
+  key: string; label: string; source: string | null; cost: RentalCostBreakdown;
+  month: number; week: number; day: number; handling: number; floorMonth: number; valueShare: number; market: "abaixo" | "dentro" | "acima";
+  monthWithServiceTax: number; sensitivity: Array<{ occupancy: number; month: number }>;
+}
+
+export interface RentalPreview {
+  date: string; margin: number; defaults: RentalDefaults;
+  tax: { profile: string; regime: string; rental: boolean; inside: number; service: number };
+  presets: RentalPresetRow[];
 }
 
 export const COMMISSION_BASES = [{ id: "lucro", name: "Lucro" }, { id: "faturado", name: "Valor faturado" }];
@@ -90,6 +115,8 @@ export interface TaxProfile {
   mode: "nominal" | "efetiva" | "manual"; rbt12: number; manualRate: number | null;
   ibsCbsShare: number; outsideRate: number; brackets: TaxBracket[];
   isDefault: boolean; notes: string | null; inactiveAt: string | null; current: boolean; tax: TaxResult;
+  /** locação de bens móveis: alíquota por dentro (sem ISS); nulo = a do serviço */
+  rentalRate: number | null; rentalOutsideRate: number | null; rentalTax?: TaxResult & { rental: boolean };
 }
 
 export interface PriceTotals {

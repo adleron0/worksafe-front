@@ -335,6 +335,14 @@ function ProposalEditorPage() {
           <CustomerOrderCard contractId={proposal.contract.id} order={proposal.contract.customerOrder} canEdit={canUpdate}
             onSaved={() => queryClient.invalidateQueries({ queryKey: [PROPOSAL_KEY] })} />
         )}
+        {(proposal.overlap?.length ?? 0) > 0 && (
+          <div className="rounded-md border border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200 px-3 py-2 text-sm">
+            O mesmo cliente tem {proposal.overlap![0].kind === "servico" ? "proposta de serviço" : "proposta de locação"} perto desta data:{" "}
+            {proposal.overlap!.map((other, index) => (
+              <span key={other.id}>{index > 0 && ", "}<Link to="/comercial/propostas/$proposalId" params={{ proposalId: String(other.id) }} className="underline">{other.number}</Link> ({other.title})</span>
+            ))}. Locação e serviço em notas separadas só valem se o equipamento for operado pela equipe do cliente; se a nossa equipe usa o equipamento no serviço, ele é insumo do serviço. Confirme antes de enviar.
+          </div>
+        )}
         {proposal.baseOutdated && !readOnly && (
           <div className="rounded-md border border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200 px-3 py-2 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span>A base de cálculo ou o imposto mudaram depois que esta proposta foi calculada (em {dateBr(proposal.baseCapturedAt)}). Os valores sugeridos aqui ainda são os de antes.</span>

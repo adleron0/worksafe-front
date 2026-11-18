@@ -28,7 +28,7 @@ export interface DraftItem {
   courseId: number | null;
   /** locação a cliente: o item alugável do estoque */
   stockItemId?: number | null;
-  extra: { students?: number | null; workload?: number | null; dates?: string; location?: string; period?: RentPeriod; periods?: number | null; rate?: number | null } | null;
+  extra: { students?: number | null; workload?: number | null; dates?: string; location?: string; period?: RentPeriod; periods?: number | null; rate?: number | null; closed?: boolean } | null;
   unitCost: number; extraCost: number; margin?: number | null; finalValue: number | null; showInDocument: boolean;
 }
 /** Linha recém-adicionada e ainda sem nada: não entra no cálculo nem é salva. */
@@ -53,7 +53,15 @@ export interface ProposalDraft {
   sections: DraftSection[]; installments: DraftInstallment[];
 }
 
-export interface CalcLine { suggested: number; value: number; hours: number | null; listPrice: number | null; cost?: number; margin?: number | null; hourCost?: number | null }
+export interface CalcLine {
+  suggested: number; value: number; hours: number | null; listPrice: number | null; cost?: number; margin?: number | null; hourCost?: number | null;
+  /** locação pela base (plano 09); custo, piso e mercado só para quem vê custos */
+  rental?: RentalLineCalc | { error: string } | null;
+}
+export interface RentalLineCalc {
+  months: number; discountRate: number; periodValue: number;
+  perRentedMonth?: number; handling?: number; value?: number; floorCost?: number; monthPrice?: number; valueShare?: number; market?: "abaixo" | "dentro" | "acima";
+}
 export interface ProposalCalc {
   sections: Array<{ suggested: number; value: number; cost?: number; margin?: number; lines: CalcLine[] }>;
   totals: {
@@ -78,6 +86,8 @@ export interface Proposal {
   expired: boolean; editable: boolean; canSeeCosts: boolean; customer: CustomerOption;
   sentAt: string | null; decidedAt: string | null; statusNote: string | null; createdAt: string; updatedAt: string;
   baseOutdated: boolean; baseCapturedAt: string;
+  /** serviço × locação do mesmo cliente perto da mesma data (confirmar que o cliente opera o equipamento) */
+  overlap?: Array<{ id: number; number: string; title: string; status: ProposalStatus; kind: string }>;
   publicKey: string | null; publicUrl: string | null; documentFrozen: boolean; documentHash: string | null; viewedAt: string | null;
   emailConfigured: boolean; events: ProposalEvent[];
   contract: { id: number; number: string; status: string; customerOrder?: { number: string | null; date: string | null; fileUrl: string | null; fileName: string | null }; serviceOrder?: { id: number; number: string; status: string } | null } | null;

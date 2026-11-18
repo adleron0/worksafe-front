@@ -255,7 +255,8 @@ export function ItemsTab({ group, items, setItems, result, disabled, params, set
 }
 
 const SECTION_LABELS: Record<string, string> = {
-  mao_de_obra: "Mão de obra", locacao: "Locações", material: "Materiais de consumo", treinamento: "Treinamento", avulso: "Itens avulsos",
+  mao_de_obra: "Mão de obra", locacao: "Locações de terceiros (custo)", material: "Materiais de consumo", treinamento: "Treinamento", avulso: "Itens avulsos",
+  locacao_cliente: "Aluguel de equipamento nosso",
 };
 
 /** Padrões que uma proposta nova já traz preenchidos (tudo editável na proposta). */

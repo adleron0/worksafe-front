@@ -159,6 +159,8 @@ export default function TaxTab({ canCreate, canUpdate, canInactivate, canActivat
                 <dt className="text-muted-foreground">Nominal · efetiva</dt><dd className="text-right">{percent(profile.tax.nominal)} · {percent(profile.tax.effective)}</dd>
                 <dt className="text-muted-foreground">Por dentro do preço</dt><dd className="text-right font-medium">{percent(profile.tax.inside)}</dd>
                 <dt className="text-muted-foreground">Por fora (destacado)</dt><dd className="text-right font-medium">{percent(profile.tax.outside)}</dd>
+                <dt className="text-muted-foreground">Locação (sem ISS)</dt>
+                <dd className="text-right font-medium">{profile.rentalRate === null ? "igual ao serviço" : percent(profile.rentalRate)}</dd>
               </dl>
               {profile.notes && <p className="mt-2 text-xs text-muted-foreground">{profile.notes}</p>}
               <div className="mt-2 flex gap-1">
@@ -195,6 +197,7 @@ function TaxProfileDialog({ profile, onClose, onSaved }: { profile?: TaxProfile;
     name: profile?.name ?? "", regime: profile?.regime ?? "tradicional", effectiveFrom: profile?.effectiveFrom ?? todayIso(),
     mode: profile?.mode ?? "efetiva", rbt12: profile?.rbt12 ?? 0, manualRate: profile?.manualRate ?? 0,
     ibsCbsShare: profile?.ibsCbsShare ?? 0, outsideRate: profile?.outsideRate ?? 0, notes: profile?.notes ?? "",
+    rentalRate: profile?.rentalRate ?? null as number | null, rentalOutsideRate: profile?.rentalOutsideRate ?? null as number | null,
   });
   const [brackets, setBrackets] = useState<TaxBracket[]>(profile?.brackets ?? []);
   const [error, setError] = useState("");
@@ -243,6 +246,17 @@ function TaxProfileDialog({ profile, onClose, onSaved }: { profile?: TaxProfile;
             <div><Label htmlFor="taxOutside">CBS + IBS por fora</Label>
               <NumField id="taxOutside" kind="percent" className="mt-1" value={state.outsideRate} onChange={(value) => set("outsideRate", value)} disabled={state.regime !== "hibrido"} />
               <p className="text-xs text-muted-foreground mt-1">Só no híbrido: somado ao preço líquido e destacado na nota.</p></div>
+            <div><Label htmlFor="taxRental">Alíquota da locação (sem ISS)</Label>
+              <NumField id="taxRental" kind="percent" className="mt-1" value={state.rentalRate} placeholder="igual à do serviço"
+                onChange={(value) => set("rentalRate", value)} onEmpty={() => set("rentalRate", null)} />
+              <p className="text-xs text-muted-foreground mt-1">
+                Locação de bem móvel não paga ISS (no Simples: Anexo III menos a parcela do ISS; na faixa atual, perto de 12,51%).
+                Vazio = usa a do serviço. Preencha só com o número do contador.
+              </p></div>
+            <div><Label htmlFor="taxRentalOutside">CBS + IBS por fora da locação</Label>
+              <NumField id="taxRentalOutside" kind="percent" className="mt-1" value={state.rentalOutsideRate} placeholder="igual à do serviço" disabled={state.regime !== "hibrido"}
+                onChange={(value) => set("rentalOutsideRate", value)} onEmpty={() => set("rentalOutsideRate", null)} />
+              <p className="text-xs text-muted-foreground mt-1">Só no híbrido. Vazio = o mesmo do serviço.</p></div>
           </div>
 
           {state.mode !== "manual" && (

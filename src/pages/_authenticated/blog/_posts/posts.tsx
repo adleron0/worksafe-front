@@ -8,7 +8,6 @@ import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
 import Dialog from "@/components/general-components/Dialog";
 import { Button } from "@/components/ui/button";
-import { SortButton } from "@/components/general-components/SortButton";
 import ItemSkeleton from "./-skeletons/ItemSkeleton";
 import ItemList from "./-components/PostItem";
 import Form from "./-components/PostForm";
@@ -181,15 +180,7 @@ function List() {
         <Form formData={formData} openSheet={setOpenForm} entity={entity} />
       </Dialog>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mt-3">
-        <span className="text-muted-foreground">Ordenar por:</span>
-        <SortButton label="Visualizações" field="viewCount" order={order} onSort={handleSort} />
-        <SortButton label="Publicação" field="publishedAt" order={order} onSort={handleSort} />
-        <SortButton label="Criação" field="createdAt" order={order} onSort={handleSort} />
-        <SortButton label="Título" field="title" order={order} onSort={handleSort} />
-      </div>
-
-      <div className="space-y-2 mt-3">
+      <div className="space-y-2 mt-4">
         {isLoading
           ? skeletons.map((_, i) => <ItemSkeleton key={i} index={i} />)
           : isError
@@ -205,6 +196,8 @@ function List() {
                   index={i}
                   setFormData={setFormData}
                   setOpenForm={setOpenForm}
+                  order={order}
+                  onSort={handleSort}
                 />
               ))
               : (

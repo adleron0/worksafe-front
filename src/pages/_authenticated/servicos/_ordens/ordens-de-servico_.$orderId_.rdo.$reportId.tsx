@@ -45,6 +45,18 @@ const formOf = (report: Report): Form => ({
 const MAX_PHOTOS = 30;
 /** Horas digitadas: aceita vírgula e não deixa passar texto. */
 const toHours = (value: string) => { const out = Number(value.replace(",", ".")); return Number.isFinite(out) && out >= 0 ? out : 0; };
+const hoursField = (value: number) => String(value).replace(".", ",");
+
+/** Campo de horas que aceita vírgula ("1,5"): guarda o texto como foi digitado e repassa só o número.
+ *  Quando o número muda por fora (horas recalculadas pela entrada e saída), o texto acompanha. */
+function HoursInput({ value, onValue, ...props }: Omit<React.ComponentProps<typeof ShadInput>, "value" | "onChange"> & { value: number; onValue: (hours: number) => void }) {
+  const [text, setText] = useState(() => hoursField(value));
+  useEffect(() => { setText((current) => (toHours(current) === value ? current : hoursField(value))); }, [value]);
+  return (
+    <ShadInput {...props} inputMode="decimal" value={text}
+      onChange={(event) => { const next = event.target.value.replace(/[^\d.,]/g, ""); setText(next); onValue(toHours(next)); }} />
+  );
+}
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -270,11 +282,11 @@ function ReportPage() {
                   <Select name={`role-${index}`} state={member.role} clearable disabled={!editable} modal={false} placeholder="Escolha" options={roles.map((role) => ({ id: role, name: role }))}
                     onChange={(_, value) => { const role = String(value ?? ""); setCrew(index, { role, professionalId: roleIdOf(role) }); }} /></div>
                 <div><Label htmlFor={`hours-${index}`} className="text-xs">Horas</Label>
-                  <ShadInput id={`hours-${index}`} className="mt-1 text-center" inputMode="decimal" value={String(member.hours).replace(".", ",")} disabled={!editable}
-                    onChange={(event) => setCrew(index, { hours: toHours(event.target.value) })} /></div>
+                  <HoursInput id={`hours-${index}`} className="mt-1 text-center" value={member.hours} disabled={!editable}
+                    onValue={(hours) => setCrew(index, { hours })} /></div>
                 <div><Label htmlFor={`overtime-${index}`} className="text-xs">Extras</Label>
-                  <ShadInput id={`overtime-${index}`} className="mt-1 text-center" inputMode="decimal" value={String(member.overtime).replace(".", ",")} disabled={!editable}
-                    onChange={(event) => setCrew(index, { overtime: toHours(event.target.value) })} /></div>
+                  <HoursInput id={`overtime-${index}`} className="mt-1 text-center" value={member.overtime} disabled={!editable}
+                    onValue={(overtime) => setCrew(index, { overtime })} /></div>
               </div>
             </div>
           ))}
@@ -315,8 +327,8 @@ function ReportPage() {
                 <div><Label className="text-xs">Tipo</Label>
                   <Select name={`occurrence-${index}`} state={item.type} disabled={!editable} modal={false} options={OCCURRENCE_OPTIONS} onChange={(_, value) => setOccurrence(index, { type: String(value || "outro") })} /></div>
                 <div><Label htmlFor={`lost-${index}`} className="text-xs">Horas paradas</Label>
-                  <ShadInput id={`lost-${index}`} className="mt-1 text-center" inputMode="decimal" value={String(item.hoursLost).replace(".", ",")} disabled={!editable}
-                    onChange={(event) => setOccurrence(index, { hoursLost: toHours(event.target.value) })} /></div>
+                  <HoursInput id={`lost-${index}`} className="mt-1 text-center" value={item.hoursLost} disabled={!editable}
+                    onValue={(hoursLost) => setOccurrence(index, { hoursLost })} /></div>
                 {editable && <Button type="button" variant="ghost" size="sm" className="h-9 w-9 p-0" aria-label="Remover ocorrência" onClick={() => set("occurrences", form.occurrences.filter((_, i) => i !== index))}><Icon name="x" className="w-4 h-4" /></Button>}
               </div>
               <Textarea aria-label="O que aconteceu" rows={2} maxLength={1000} value={item.description} disabled={!editable} placeholder="O que aconteceu" onChange={(event) => setOccurrence(index, { description: event.target.value })} />

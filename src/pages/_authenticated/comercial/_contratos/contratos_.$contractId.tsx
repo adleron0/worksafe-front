@@ -194,6 +194,22 @@ function ContractPage() {
             </section>
           )}
 
+          {(contract.otherClasses?.length ?? 0) > 0 && (
+            <section className="rounded-lg border p-4">
+              <h2 className="font-semibold">Turmas ligadas a esta venda</h2>
+              <p className="text-xs text-muted-foreground">Ligadas pela própria turma (venda rápida ou "ligar a uma venda"), fora dos itens acima.</p>
+              <div className="mt-2 grid gap-1 text-sm">
+                {contract.otherClasses!.map((klass) => (
+                  <p key={klass.id}>
+                    <Icon name="graduation-cap" className="w-3 h-3 inline mr-1" />
+                    <Link to="/treinamentos/turmas/$turmaId" params={{ turmaId: String(klass.id) }} className="underline">{klass.name}</Link>
+                    {klass.initialDate ? ` · ${dateBr(klass.initialDate)}` : ""}{klass.inactiveAt ? " · inativa" : ""}
+                  </p>
+                ))}
+              </div>
+            </section>
+          )}
+
           <section className="rounded-lg border p-4 grid gap-3">
             <h2 className="font-semibold">Execução</h2>
             <div className="grid sm:grid-cols-2 gap-3">

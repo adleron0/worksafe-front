@@ -1,7 +1,7 @@
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
 
-export type ProposalKind = "servico" | "treinamento" | "misto";
+export type ProposalKind = "servico" | "treinamento" | "locacao";
 export type ProposalStatus = "rascunho" | "enviada" | "visualizada" | "aceita" | "recusada" | "expirada" | "cancelada" | "substituida";
 export type ItemType = "mao_de_obra" | "locacao" | "material" | "treinamento" | "avulso" | "locacao_cliente";
 /** Período da locação a cliente (item do estoque). */
@@ -139,9 +139,24 @@ export interface ProposalOptions {
 export const PROPOSALS_KEY = "commercialProposals";
 export const PROPOSAL_KEY = "commercialProposal";
 
-export const KIND_LABEL: Record<ProposalKind, string> = { servico: "Serviço", treinamento: "Treinamento", misto: "Serviço + treinamento" };
+export const KIND_LABEL: Record<ProposalKind, string> = { servico: "Serviço", treinamento: "Treinamento", locacao: "Locação" };
+/** O que nasce do aceite de cada tipo (texto de ajuda na escolha do tipo). */
+export const KIND_HINT: Record<ProposalKind, string> = {
+  servico: "O aceite abre a ordem de serviço.",
+  treinamento: "O aceite libera criar a turma fechada do cliente.",
+  locacao: "O aceite reserva os equipamentos e abre a ordem de locação.",
+};
 export const ITEM_LABEL: Record<ItemType, string> = {
   mao_de_obra: "Mão de obra", locacao: "Locação de terceiros (custo)", material: "Material", treinamento: "Treinamento", avulso: "Item avulso", locacao_cliente: "Aluguel de equipamento nosso",
+};
+/**
+ * Itens que cada tipo aceita (igual à API). Serviço e locação juntos são duas
+ * propostas, uma de cada tipo, e duas notas.
+ */
+export const KIND_ITEMS: Record<ProposalKind, ItemType[]> = {
+  servico: ["mao_de_obra", "locacao", "material", "avulso"],
+  treinamento: ["treinamento", "material", "avulso"],
+  locacao: ["locacao_cliente", "material", "avulso"],
 };
 export const STATUS_LABEL: Record<ProposalStatus, string> = {
   rascunho: "Rascunho", enviada: "Enviada", visualizada: "Visualizada", aceita: "Aceita", recusada: "Recusada",
@@ -171,9 +186,9 @@ export function StatusBadge({ status, expired }: { status: ProposalStatus; expir
 const KIND_STYLE: Record<ProposalKind, { icon: string; className: string }> = {
   servico: { icon: "wrench", className: "border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-200" },
   treinamento: { icon: "graduation-cap", className: "border-violet-300 bg-violet-50 text-violet-800 dark:border-violet-900 dark:bg-violet-950 dark:text-violet-200" },
-  misto: { icon: "layers", className: "border-teal-300 bg-teal-50 text-teal-800 dark:border-teal-900 dark:bg-teal-950 dark:text-teal-200" },
+  locacao: { icon: "handshake", className: "border-teal-300 bg-teal-50 text-teal-800 dark:border-teal-900 dark:bg-teal-950 dark:text-teal-200" },
 };
-/** Etiqueta do tipo da proposta (serviço, treinamento ou os dois), com ícone e cor próprios. */
+/** Etiqueta do tipo da proposta (serviço, treinamento ou locação), com ícone e cor próprios. */
 export function KindBadge({ kind, className }: { kind: ProposalKind; className?: string }) {
   const style = KIND_STYLE[kind] ?? KIND_STYLE.servico;
   return (

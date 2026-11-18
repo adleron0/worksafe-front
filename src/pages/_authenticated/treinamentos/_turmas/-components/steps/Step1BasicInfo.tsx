@@ -221,6 +221,11 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors, section }: StepProps) =
           {errors.customerId && (
             <p className="text-red-500 text-sm mt-1">{errors.customerId}</p>
           )}
+          {dataForm.customerId ? (
+            <p className="text-xs text-muted-foreground mt-1">
+              Turma vendida a um cliente: depois de salvar, a aba <strong>Venda</strong> liga a turma a uma venda (ou registra uma venda rápida, ou marca "sem cobrança").
+            </p>
+          ) : null}
         </div>
       )}
 

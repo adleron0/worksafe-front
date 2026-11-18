@@ -29,6 +29,7 @@ import Step6Media from "./steps/Step6Media";
 import Step7Evaluation from "./steps/Step7Evaluation";
 import Step8Page from "./steps/Step8Page";
 import PaginaResultados from "./pagina/PaginaResultados";
+import TurmaVenda from "./TurmaVenda";
 import { compactLandingContent, layoutName, parseLandingContent } from "./pagina/landing";
 import { useTheme } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
@@ -304,10 +305,13 @@ const TABS = [
   { slug: "conteudo", label: "Conteúdo", heading: "O que o aluno aprende", description: "Descrição, grade teórica e prática, o que está incluso, dúvidas frequentes e por que escolher a WorkSafe." },
   { slug: "pagina", label: "Página no site", heading: "Como a turma aparece no site", description: "Foto, vídeo, layout da página e teste A/B. O que ficar vazio não aparece." },
   { slug: "avaliacao", label: "Prova e avaliação", heading: "Depois da turma", description: "Prova online com código de acesso e a avaliação do curso pelos alunos." },
+  { slug: "venda", label: "Venda", heading: "De onde vem o dinheiro desta turma", description: "Turma fechada precisa de uma venda (contrato) ou da marcação \"sem cobrança\", com o motivo. Sem isso o financeiro não fica sabendo da turma." },
   { slug: "resultados", label: "Resultados", heading: "Resultados da página", description: "Visitas, inscrições e qual layout da página converte mais." },
 ] as const;
 
 type TabSlug = (typeof TABS)[number]["slug"];
+/** Abas só de consulta: ficam fora da sequência de passos do formulário. */
+const VIEW_TABS: readonly TabSlug[] = ["venda", "resultados"];
 
 /** Em qual passo cada campo fica (para levar a pessoa ao lugar certo do erro). */
 const FIELD_TO_TAB: Record<string, TabSlug> = {
@@ -502,8 +506,10 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
   }, [liveErrors]);
   // passos já visitados (na criação, os de depois ficam "a fazer" até a pessoa chegar neles)
   const [visited, setVisited] = useState<Set<TabSlug>>(() => new Set(formData ? TABS.map((tab) => tab.slug) : ["basico"]));
-  // Resultados só existe para turma salva
-  const visibleTabs = formData ? TABS : TABS.filter((tab) => tab.slug !== "resultados");
+  // Resultados e Venda só existem para turma salva; Venda, só para turma fechada (com cliente)
+  const visibleTabs = formData
+    ? TABS.filter((tab) => tab.slug !== "venda" || Boolean(formData.customerId))
+    : TABS.filter((tab) => !VIEW_TABS.includes(tab.slug));
 
   // ── Rascunho em localStorage (apenas criação) ─────────────────────────────
   const { clearDraft } = useFormDraft({
@@ -728,6 +734,7 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
       </div>
     ),
     avaliacao: <Step7Evaluation {...stepProps} generateClassCode={generateClassCode} section="prova" />,
+    venda: formData?.id ? <TurmaVenda classId={formData.id} /> : null,
     resultados: formData?.id ? <PaginaResultados classId={formData.id} /> : null,
   };
 
@@ -735,10 +742,10 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
 
   // ── Navegação entre passos ─────────────────────────────────────────────────
   // Avança só com o passo completo; Resultados é só leitura e fica fora da sequência
-  const formTabs = TABS.filter((tab) => tab.slug !== "resultados");
+  const formTabs = TABS.filter((tab) => !VIEW_TABS.includes(tab.slug));
   const currentTabIndex = formTabs.findIndex((tab) => tab.slug === activeTab);
   const isFirstTab = currentTabIndex <= 0;
-  const isLastTab = activeTab === "resultados" || currentTabIndex === formTabs.length - 1;
+  const isLastTab = VIEW_TABS.includes(activeTab) || currentTabIndex === formTabs.length - 1;
 
   /** Leva a pessoa ao primeiro campo marcado (depois que a tela troca de passo). */
   const focusFirstError = () => {
@@ -764,7 +771,7 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
     if (target === activeTab) return;
     const targetIndex = formTabs.findIndex((tab) => tab.slug === target);
     // voltar ou ir para Resultados é livre; avançar exige os passos do caminho completos
-    if (target !== "resultados" && targetIndex > currentTabIndex) {
+    if (!VIEW_TABS.includes(target) && targetIndex > currentTabIndex) {
       for (const tab of formTabs.slice(Math.max(0, currentTabIndex), targetIndex)) {
         if (!checkTab(tab.slug)) {
           if (tab.slug !== activeTab) handleTabChange(tab.slug);
@@ -810,7 +817,7 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
   });
 
   const tabState = (tab: TabSlug): "done" | "attention" | "todo" => {
-    if (tab === "resultados") return "todo";
+    if (VIEW_TABS.includes(tab)) return "todo";
     const has = Object.keys(liveErrors).some((field) => tabOf(field) === tab);
     if (!visited.has(tab)) return "todo";
     return has ? "attention" : "done";
@@ -955,7 +962,7 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
           </Button>
         )}
         <div className="flex flex-wrap justify-end gap-2">
-          {!isFirstTab && activeTab !== "resultados" && (
+          {!isFirstTab && !VIEW_TABS.includes(activeTab) && (
             <Button variant="outline" onClick={goToPrevTab}>
               <ChevronLeft className="w-4 h-4 mr-2" />
               Voltar

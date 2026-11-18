@@ -15,6 +15,8 @@ export function defaultSchedule(kind: ProposalKind, workDays: number): Schedule 
   const work = Math.max(1, Math.round(workDays) || 1);
   const titles: Array<[string, number]> = kind === "treinamento"
     ? [["Agendamento e preparação", 2], ["Realização do treinamento", work], ["Emissão dos certificados", 3]]
+    : kind === "locacao"
+    ? [["Separação e inspeção dos equipamentos", 1], ["Entrega ao cliente", 1], ["Período de locação", work], ["Devolução e conferência", 1]]
     : [["Mobilização da equipe e dos materiais", 2], ["Execução dos serviços", work], ["Desmobilização", 1], ["Relatório fotográfico", 3]];
   let start = 1;
   const steps = titles.map(([title, duration]) => { const step = { title, start, duration }; start += duration; return step; });

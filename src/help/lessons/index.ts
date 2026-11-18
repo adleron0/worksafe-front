@@ -77,6 +77,20 @@ export const LESSONS: Lesson[] = [
     ],
   },
   {
+    id: "financeiro.faturar",
+    title: "A faturar: da parcela à conta a receber",
+    screen: "A faturar",
+    minutes: 2,
+    requires: ["view_financeiro", "view_comercial"],
+    routes: ["/financeiro/faturar", "/comercial/contratos", "/comercial/contratos/:contractId"],
+    video: { src: `${BASE}/faturar.mp4`, captions: `${BASE}/faturar.vtt` },
+    chapters: [
+      { title: "As parcelas", start: 0 },
+      { title: "Registrar a nota", start: 35.4 },
+      { title: "Contratos", start: 86.6 },
+    ],
+  },
+  {
     id: "financeiro.pagar",
     title: "Contas a pagar: lançar e pagar",
     screen: "Contas a Pagar",
@@ -184,6 +198,21 @@ export const LESSONS: Lesson[] = [
       { title: "Itens", start: 34.5 },
       { title: "Entradas e saídas", start: 104.3 },
       { title: "Saldos, reposição e inventário", start: 177.4 },
+    ],
+  },
+  {
+    id: "suprimentos.locacoes",
+    title: "Locações: reservar, entregar, faturar e receber",
+    screen: "Locações",
+    minutes: 2,
+    requires: ["view_locacoes"],
+    routes: ["/suprimentos/locacoes", "/suprimentos/locacoes/disponibilidade", "/suprimentos/locacoes/:rentalId"],
+    video: { src: `${BASE}/locacoes.mp4`, captions: `${BASE}/locacoes.vtt` },
+    chapters: [
+      { title: "Reservar", start: 0 },
+      { title: "Entregar e cobrar", start: 57.1 },
+      { title: "Receber de volta", start: 78.8 },
+      { title: "Disponibilidade", start: 92.6 },
     ],
   },
   {

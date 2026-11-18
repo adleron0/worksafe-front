@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
@@ -273,6 +273,16 @@ function MessageView({ message, actionsById, bot }: { message: Message; actionsB
         {message.results.map((result, index) => {
           const action = result.pendingActionId ? actionsById.get(result.pendingActionId) : undefined;
           if (action) return <ActionCard key={index} action={action} />;
+          if (result.handoff) {
+            const handoff = result.handoff;
+            return (
+              <div key={index} className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+                <Icon name="arrow-right-left" className="h-4 w-4 text-primary" />
+                <span className="flex-1">Conversa passada para {handoff.persona}, já com o resumo.</span>
+                <Button asChild size="sm"><Link to="/bots/conversas" search={{ bot: handoff.botId, conversa: handoff.conversationId }}>Abrir conversa com {handoff.persona}</Link></Button>
+              </div>
+            );
+          }
           if (result.status === "ok") return null;
           return <p key={index} className="text-xs text-muted-foreground"><Icon name="info" className="mr-1 inline h-3.5 w-3.5" />{result.name}: {STATUS_LABEL[result.status] ?? result.status}</p>;
         })}

@@ -37,7 +37,7 @@ export interface RunStep { at: string; kind: "tool" | "notice"; label: string; t
 export interface Run { id: number; status: "running" | "done" | "error" | "stopped"; steps: RunStep[]; error: string | null; startedAt: string; endedAt: string | null }
 export type Message =
   | { id: number; role: "user" | "assistant" | "notice"; text: string; attachments: Array<{ name: string; mediaType: string; size: number }>; toolCalls: Array<{ name: string; title: string }>; createdAt: string }
-  | { id: number; role: "tool"; results: Array<{ name: string; status: string; pendingActionId: number | null }>; createdAt: string };
+  | { id: number; role: "tool"; results: Array<{ name: string; status: string; pendingActionId: number | null; handoff?: { conversationId: number; botId: number; persona: string } | null }>; createdAt: string };
 export interface PendingAction {
   id: number; tool: string; title: string; summary: string; details: Array<{ label: string; value: string }>;
   status: "pendente" | "confirmada" | "cancelada" | "expirada" | "falhou"; expiresAt: string; result: { message?: string; link?: string | null } | null; error: string | null;

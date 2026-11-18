@@ -5,7 +5,7 @@ import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import { cn } from "@/lib/utils";
 import { commercialApi, errorMessage } from "../-shared/commercial";
-import { CustomerOption, KIND_LABEL, ProposalKind, formatCnpj } from "../-shared/proposals";
+import { CustomerOption, KIND_HINT, KIND_LABEL, ProposalKind, formatCnpj } from "../-shared/proposals";
 
 interface Props {
   kind: ProposalKind;
@@ -45,6 +45,7 @@ export default function CustomerStep({ kind, onKind, selected, onSelect, readOnl
           </button>
         ))}
       </div>
+      <p className="-mt-2 text-xs text-muted-foreground">{KIND_HINT[kind]}</p>
 
       <label className="grid gap-1.5">
         <span className="text-sm font-medium">Cliente</span>

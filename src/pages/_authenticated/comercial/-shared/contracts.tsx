@@ -29,6 +29,8 @@ export interface Contract {
   signer: { name?: string; cpf?: string; role?: string; email?: string; ip?: string; userAgent?: string; at?: string; codeVerified?: boolean; manual?: boolean; note?: string } | null;
   billed: number; received: number; toBill: number;
   installments: ContractInstallment[]; classes: ContractClassSlot[];
+  /** turmas ligadas pela própria turma, fora dos itens de treinamento */
+  otherClasses?: ContractClassSlot["classes"];
 }
 
 /** Uma parcela na fila "A faturar" do Financeiro. */

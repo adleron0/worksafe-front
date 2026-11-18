@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, post } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
@@ -9,6 +9,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import Icon from "@/components/general-components/Icon";
+import Select from "@/components/general-components/Select";
+import { escapeHtml, printHtml } from "../-empresas/print";
+import { formatCnpj, formatCpf } from "../-empresas/api";
 import type { ColumnDef } from "@/components/ui/kibo-ui/table";
 import {
   TableBody,
@@ -40,7 +46,12 @@ interface AttendanceResponse {
   total: number;
 }
 
-const ListaPresenca = ({ classId, daysDuration = 1 }: ListaPresencaProps) => {
+/** Empresa do aluno nesta turma: a contratante (vaga comprada / turma fechada) ou a que ele digitou. */
+const companyOf = (s: ISubscription) => (s.customer ? s.customer.corporateName || s.customer.name : s.workedAt || "");
+const SITE = "__site__";
+
+const ListaPresenca = ({ classId, className, daysDuration = 1 }: ListaPresencaProps) => {
+  const [companyFilter, setCompanyFilter] = useState("");
   const { can } = useVerify();
   const queryClient = useQueryClient();
   useLoader();
@@ -59,7 +70,7 @@ const ListaPresenca = ({ classId, daysDuration = 1 }: ListaPresencaProps) => {
       const params = [
         { key: 'classId', value: classId },
         { key: 'subscribeStatus', value: 'confirmed' },
-        { key: 'show', value: 'trainee' },
+        { key: 'show', value: ['trainee', 'customer'] },
         { key: 'limit', value: 'all' },
         { key: 'order-id', value: 'asc' },
       ];
@@ -152,8 +163,37 @@ const ListaPresenca = ({ classId, daysDuration = 1 }: ListaPresencaProps) => {
     });
   };
 
+  // Empresas da turma (contratantes), para filtrar e agrupar
+  const companies = useMemo(() => {
+    const map = new Map<string, string>();
+    subscriptions?.rows.forEach((s) => { if (s.customerId && s.customer) map.set(String(s.customerId), companyOf(s)); });
+    return [...map.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  }, [subscriptions]);
+  const visibleRows = useMemo(() => {
+    const rows = (subscriptions?.rows ?? []).filter((s) =>
+      !companyFilter ? true : companyFilter === SITE ? !s.customerId : String(s.customerId) === companyFilter);
+    // alunos de empresa agrupados por empresa; os do site por último
+    return [...rows].sort((a, b) =>
+      Number(!a.customerId) - Number(!b.customerId) ||
+      (a.customerId ? companyOf(a) : "").localeCompare(b.customerId ? companyOf(b) : "", "pt-BR") ||
+      (a.trainee?.name ?? "").localeCompare(b.trainee?.name ?? "", "pt-BR"));
+  }, [subscriptions, companyFilter]);
+
+  /** Lista para imprimir e colher assinatura, com a empresa e o CNPJ de cada aluno. */
+  const printList = () => {
+    const days = Array.from({ length: daysDuration }, (_, i) => i + 1);
+    const rows = visibleRows.map((s, i) => `<tr><td class="c">${i + 1}</td><td>${escapeHtml(s.trainee?.name ?? s.name)}</td><td>${escapeHtml(formatCpf(s.trainee?.cpf ?? s.cpf))}</td>
+      <td>${escapeHtml(companyOf(s))}${s.customer?.cnpj ? `<br><span class="muted">${escapeHtml(formatCnpj(s.customer.cnpj))}</span>` : ""}</td>
+      ${days.map((d) => `<td class="c">${attendanceData.get(`${s.traineeId}-${d}`) ? "P" : ""}</td>`).join("")}<td class="sign"></td></tr>`).join("");
+    const filterName = companyFilter === SITE ? "Alunos do site" : companies.find((c) => c.id === companyFilter)?.name;
+    printHtml(`Lista de presença ${className ?? ""}`, `
+      <h1>Lista de presença</h1>
+      <div class="meta muted">${escapeHtml(className ?? "")}${filterName ? ` · ${escapeHtml(filterName)}` : ""} · ${visibleRows.length} aluno(s)</div>
+      <table><thead><tr><th class="c">#</th><th>Aluno</th><th>CPF</th><th>Empresa</th>${days.map((d) => `<th class="c">Dia ${d}</th>`).join("")}<th>Assinatura</th></tr></thead><tbody>${rows}</tbody></table>`);
+  };
+
   // Preparar dados para a tabela
-  const tableData: IAttendanceRow[] = subscriptions?.rows.map(subscription => {
+  const tableData: IAttendanceRow[] = visibleRows.map(subscription => {
     const attendance: { [day: number]: boolean } = {};
     
     for (let day = 1; day <= daysDuration; day++) {
@@ -166,7 +206,7 @@ const ListaPresenca = ({ classId, daysDuration = 1 }: ListaPresencaProps) => {
       subscription,
       attendance,
     };
-  }) || [];
+  });
 
   // Definir colunas da tabela
   const columns: ColumnDef<IAttendanceRow>[] = [
@@ -200,6 +240,25 @@ const ListaPresenca = ({ classId, daysDuration = 1 }: ListaPresencaProps) => {
       cell: ({ row }) => (
         <span className="text-sm">{row.original.trainee.cpf || '-'}</span>
       ),
+    },
+    {
+      id: 'company',
+      accessorFn: (row: IAttendanceRow) => companyOf(row.subscription),
+      header: ({ column }: any) => (
+        <TableColumnHeader column={column} title="Empresa" />
+      ),
+      cell: ({ row }: any) => {
+        const sub: ISubscription = row.original.subscription;
+        const name = companyOf(sub);
+        return (
+          <div className="text-sm">
+            <p>{name || '-'}</p>
+            {sub.customerId ? (
+              <Badge variant="outline" className="mt-0.5 text-[10px]">{sub.reservationId ? 'vaga de empresa' : 'cliente'}</Badge>
+            ) : name ? <span className="text-xs text-muted-foreground">informada pelo aluno</span> : null}
+          </div>
+        );
+      },
     },
     // Adicionar colunas dinamicamente para cada dia
     ...Array.from({ length: daysDuration }, (_, i) => i + 1).map(day => ({
@@ -289,9 +348,27 @@ const ListaPresenca = ({ classId, daysDuration = 1 }: ListaPresencaProps) => {
         {className && (
           <p className="text-sm text-muted-foreground">Turma: {className}</p>
         )} */}
-        <p className="text-sm text-muted-foreground">
-          Total de alunos confirmados: {subscriptions.rows.length}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm text-muted-foreground">
+            Total de alunos confirmados: {subscriptions.rows.length}
+            {companyFilter ? ` · mostrando ${visibleRows.length}` : ""}
+          </p>
+          <div className="flex items-center gap-2">
+            {companies.length > 0 && (
+              <div className="w-56">
+                <Select
+                  name="company" modal clearable state={companyFilter}
+                  options={[...companies, { id: SITE, name: "Alunos do site / avulsos" }]}
+                  onChange={(_, value) => setCompanyFilter(String(value ?? ""))}
+                  placeholder="Todas as empresas"
+                />
+              </div>
+            )}
+            <Button size="sm" variant="outline" onClick={printList}>
+              <Icon name="printer" className="w-4 h-4 mr-1" /> Imprimir
+            </Button>
+          </div>
+        </div>
       </div>
 
       <div className="border rounded-lg overflow-hidden">

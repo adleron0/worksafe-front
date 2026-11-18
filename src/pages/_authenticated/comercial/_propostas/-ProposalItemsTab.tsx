@@ -8,7 +8,7 @@ import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { NumField, Tip, decimal, money, newUid, percent } from "../-shared/commercial";
-import { CalcLine, DraftItem, DraftSection, ITEM_LABEL, ItemType, ProposalCalc, ProposalDraft, ProposalOptions, RentPeriod, isBlankItem } from "../-shared/proposals";
+import { CalcLine, DraftItem, DraftSection, ITEM_LABEL, KIND_ITEMS, ItemType, ProposalCalc, ProposalDraft, ProposalOptions, RentPeriod, isBlankItem } from "../-shared/proposals";
 import { ItemOption, STOCK_KEYS, stockApi } from "../../suprimentos/-shared/stock";
 
 /** Item alugável do estoque, com os valores de aluguel do cadastro. */
@@ -56,7 +56,9 @@ const ADD_LABEL: Record<ItemType, string> = {
  * treinamento) fica recolhido em cada linha.
  */
 export default function ProposalItemsTab({ draft, setSections, calc, options, readOnly, canSeeCosts }: Props) {
-  const [newKind, setNewKind] = useState<ItemType>("avulso");
+  const allowed = KIND_ITEMS[draft.kind] ?? KIND_ITEMS.servico;
+  const [pickedKind, setNewKind] = useState<ItemType>("avulso");
+  const newKind: ItemType = allowed.includes(pickedKind) ? pickedKind : "avulso";
   // seção com itens pede confirmação antes de sair
   const [removing, setRemoving] = useState<DraftSection | null>(null);
   // itens alugáveis do estoque, só quando a proposta tem locação a cliente
@@ -172,7 +174,7 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
         <div className="flex flex-col @md:flex-row @md:flex-wrap @md:items-center gap-2 text-sm">
           <span className="text-muted-foreground">Outra seção:</span>
           <div className="@md:w-56">
-            <Select name="newKind" state={newKind} modal={false} options={Object.entries(ITEM_LABEL).map(([id, name]) => ({ id, name }))}
+            <Select name="newKind" state={newKind} modal={false} options={allowed.map((id) => ({ id, name: ITEM_LABEL[id] }))}
               onChange={(_, value) => setNewKind(String(value) as ItemType)} />
           </div>
           <Button type="button" variant="outline" size="sm" onClick={() => setSections((list) => [...list, {
@@ -181,13 +183,13 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
             <Icon name="plus" className="w-4 h-4 mr-1" /> Adicionar seção
           </Button>
           {/* atalho: aluguel de equipamento nosso entra na seção dele (cria se não houver) */}
-          <Button type="button" variant="outline" size="sm" onClick={() => setSections((list) => {
+          {allowed.includes("locacao_cliente") && <Button type="button" variant="outline" size="sm" onClick={() => setSections((list) => {
             const target = list.find((section) => section.kind === "locacao_cliente");
             if (target) return list.map((section) => (section.uid === target.uid ? { ...section, items: [...section.items, newItem("locacao_cliente")] } : section));
             return [...list, { uid: newUid(), title: ITEM_LABEL.locacao_cliente, kind: "locacao_cliente", margin: options.defaults.margins?.locacao_cliente ?? 0, showInDocument: true, items: [newItem("locacao_cliente")] }];
           })} className="h-auto min-h-8 whitespace-normal text-left">
             <Icon name="handshake" className="w-4 h-4 mr-1 shrink-0" /> Adicionar equipamento nosso para alugar
-          </Button>
+          </Button>}
         </div>
       )}
     </div>

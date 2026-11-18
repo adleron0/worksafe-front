@@ -22,6 +22,7 @@ import { BillDialog, CustomerOrderCard } from "../-shared/billing";
 import { DocumentPaper } from "../-shared/document";
 import { KIND_LABEL, formatCnpj } from "../-shared/proposals";
 import { docLabel } from "@/utils/documento";
+import VagasDoItem, { useContractReservations } from "@/pages/_authenticated/treinamentos/_turmas/-empresas/VagasDoItem";
 
 export const Route = createFileRoute("/_authenticated/comercial/_contratos/contratos_/$contractId")({
   component: ContractPage,
@@ -44,6 +45,7 @@ function ContractPage() {
     queryKey: [CONTRACT_KEY, contractId],
     queryFn: () => commercialApi.get<Contract>(`contracts/${contractId}`),
   });
+  const { data: reservations } = useContractReservations(Number(contractId), Boolean(contract?.classes.length) && (can("list_classes") || can("list_comercial")));
   useEffect(() => { if (contract) setDates({ startDate: contract.startDate, endDate: contract.endDate, notes: contract.notes ?? "" }); }, [contract]);
 
   const apply = (result: Contract) => {
@@ -162,10 +164,13 @@ function ContractPage() {
           {contract.classes.length > 0 && (
             <section className="rounded-lg border p-4">
               <h2 className="font-semibold">Treinamentos do contrato</h2>
-              <p className="text-xs text-muted-foreground">Cada item pode virar uma turma fechada: ligada ao cliente, fora do site e sem cobrança individual dos alunos.</p>
+              <p className="text-xs text-muted-foreground">Cada item pode virar uma turma fechada (só do cliente) ou usar vagas de turmas abertas que já estão no site. Nos dois casos os alunos não pagam nada: quem cobra é esta venda, e o certificado sai com a empresa.</p>
               <div className="mt-2 divide-y">
                 {contract.classes.map((slot) => {
                   const wanted = Math.max(1, Math.ceil(slot.quantity));
+                  // vagas todas reservadas em turmas abertas: não precisa de turma fechada
+                  const seatOption = reservations?.slots.find((s) => s.index === slot.index);
+                  const coveredByOpenClasses = Boolean(seatOption && seatOption.reserved > 0 && seatOption.missing === 0);
                   return (
                     <div key={slot.index} className="py-3 flex flex-col lg:flex-row lg:items-start gap-2 lg:gap-4 text-sm">
                       <div className="flex-1 min-w-0">
@@ -180,8 +185,9 @@ function ContractPage() {
                             {klass.initialDate ? ` · ${dateBr(klass.initialDate)}` : ""}{klass.inactiveAt ? " · inativa" : ""}
                           </p>
                         ))}
+                        <VagasDoItem contractId={contract.id} index={slot.index} disabled={contract.status === "cancelado"} />
                       </div>
-                      {contract.status !== "cancelado" && slot.courseId && slot.classes.length < wanted && can("create_classes") && (
+                      {contract.status !== "cancelado" && slot.courseId && slot.classes.length < wanted && !coveredByOpenClasses && can("create_classes") && (
                         <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => setCreatingClass(slot)}>
                           <Icon name="plus" className="w-4 h-4 mr-1" /> Criar turma fechada
                         </Button>
@@ -190,6 +196,22 @@ function ContractPage() {
                     </div>
                   );
                 })}
+              </div>
+            </section>
+          )}
+
+          {(contract.otherClasses?.length ?? 0) > 0 && (
+            <section className="rounded-lg border p-4">
+              <h2 className="font-semibold">Turmas ligadas a esta venda</h2>
+              <p className="text-xs text-muted-foreground">Ligadas pela própria turma (venda rápida ou "ligar a uma venda"), fora dos itens acima.</p>
+              <div className="mt-2 grid gap-1 text-sm">
+                {contract.otherClasses!.map((klass) => (
+                  <p key={klass.id}>
+                    <Icon name="graduation-cap" className="w-3 h-3 inline mr-1" />
+                    <Link to="/treinamentos/turmas/$turmaId" params={{ turmaId: String(klass.id) }} className="underline">{klass.name}</Link>
+                    {klass.initialDate ? ` · ${dateBr(klass.initialDate)}` : ""}{klass.inactiveAt ? " · inativa" : ""}
+                  </p>
+                ))}
               </div>
             </section>
           )}

@@ -12,7 +12,7 @@ import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, NumField, Tip, commercialApi, dateBr, errorMessage, money, newUid, percent, MARGIN_ZONES, marginZoneOf } from "../-shared/commercial";
 import {
-  CustomerOption, DraftSection, KIND_LABEL, isBlankItem, PROPOSALS_KEY, PROPOSAL_KEY, Proposal, ProposalCalc, ProposalDraft, ProposalOptions, STATUS_LABEL, StatusBadge,
+  CustomerOption, DraftSection, KIND_ITEMS, KIND_LABEL, isBlankItem, PROPOSALS_KEY, PROPOSAL_KEY, Proposal, ProposalCalc, ProposalDraft, ProposalOptions, STATUS_LABEL, StatusBadge,
 } from "../-shared/proposals";
 import { ACTIVITY_PERMISSION, ActivityPanel } from "../-shared/activities";
 import { downloadProposalPdf } from "../-shared/pdf";
@@ -62,6 +62,8 @@ function ProposalEditorPage() {
   const [calc, setCalc] = useState<ProposalCalc | null>(null);
   const [calcError, setCalcError] = useState("");
   const [customer, setCustomer] = useState<CustomerOption | null>(null);
+  // troca de tipo que tira itens já lançados: espera a confirmação
+  const [kindChange, setKindChange] = useState<ProposalDraft["kind"] | null>(null);
   const [tab, setTab] = useState<StepKey>("proposta");
   const [landed, setLanded] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
@@ -207,15 +209,25 @@ function ProposalEditorPage() {
   const setDraftSafe = (updater: (d: ProposalDraft) => ProposalDraft) => setDraft((prev) => (prev ? updater(prev) : prev));
   const setSections = (updater: (sections: DraftSection[]) => DraftSection[]) => setDraftSafe((d) => ({ ...d, sections: updater(d.sections) }));
   const titled = draft.title.trim().length >= 2 && draft.title !== PLACEHOLDER_TITLE;
-  // trocar o tipo antes de lançar itens troca também as seções sugeridas
-  const changeKind = (kind: ProposalDraft["kind"]) => setDraftSafe((d) => {
+  // Trocar o tipo troca as seções sugeridas. Com itens lançados, fica o que o
+  // tipo novo aceita (material e avulso, por exemplo) e sai o resto: antes,
+  // pede confirmação dizendo quantos itens saem.
+  const presetsOf = (kind: ProposalDraft["kind"]) => options.presets[kind].map((preset) => ({ uid: newUid(), title: preset.title, kind: preset.kind, margin: preset.margin ?? options.defaults.margins?.[preset.kind] ?? 0, showInDocument: true, items: [] }));
+  const applyKind = (kind: ProposalDraft["kind"]) => setDraftSafe((d) => {
     if (d.kind === kind) return d;
-    const empty = d.sections.every((section) => section.items.length === 0);
-    return {
-      ...d, kind,
-      sections: empty ? options.presets[kind].map((preset) => ({ uid: newUid(), title: preset.title, kind: preset.kind, margin: preset.margin ?? options.defaults.margins?.[preset.kind] ?? 0, showInDocument: true, items: [] })) : d.sections,
-    };
+    const allowed = KIND_ITEMS[kind];
+    const kept = d.sections
+      .filter((section) => allowed.includes(section.kind))
+      .map((section) => ({ ...section, items: section.items.filter((item) => allowed.includes(item.type)) }))
+      .filter((section) => section.items.some((item) => !isBlankItem(item)));
+    return { ...d, kind, sections: kept.length ? kept : presetsOf(kind) };
   });
+  const droppedBy = (kind: ProposalDraft["kind"]) => draft.sections.reduce((sum, section) => sum + section.items.filter((item) => !isBlankItem(item) && (!KIND_ITEMS[kind].includes(section.kind) || !KIND_ITEMS[kind].includes(item.type))).length, 0);
+  const changeKind = (kind: ProposalDraft["kind"]) => {
+    if (kind === draft.kind) return;
+    if (droppedBy(kind) > 0) setKindChange(kind);
+    else applyKind(kind);
+  };
   const sent = proposal.status === "enviada" || proposal.status === "visualizada";
   const itemCount = draft.sections.reduce((sum, section) => sum + section.items.filter((item) => !isBlankItem(item)).length, 0);
 
@@ -371,6 +383,10 @@ function ProposalEditorPage() {
             <p className="text-sm text-muted-foreground">{STEPS[stepIndex].description}</p>
           </div>
 
+          <ConfirmDialog open={Boolean(kindChange)} onOpenChange={(open) => { if (!open) setKindChange(null); }}
+            title={`Trocar para proposta de ${kindChange ? KIND_LABEL[kindChange].toLowerCase() : ""}?`}
+            description={kindChange ? `${droppedBy(kindChange) === 1 ? "1 item sai" : `${droppedBy(kindChange)} itens saem`} da proposta, porque esse tipo não os aceita. Para vender os dois, faça uma proposta de cada tipo.` : ""}
+            onConfirm={() => { if (kindChange) applyKind(kindChange); setKindChange(null); }} />
           {tab === "cliente" && (
             <CustomerStep kind={draft.kind} onKind={changeKind} selected={customer} readOnly={readOnly}
               onSelect={(picked) => { setCustomer(picked); setDraftSafe((d) => ({ ...d, customerId: picked.id })); }} />

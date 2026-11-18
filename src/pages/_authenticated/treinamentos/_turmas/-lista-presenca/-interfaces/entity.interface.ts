@@ -13,6 +13,14 @@ export interface ISubscription {
   classId: number;
   traineeId: number;
   subscribeStatus: string;
+  name?: string;
+  cpf?: string;
+  workedAt?: string | null;
+  customerId?: number | null;
+  contractId?: number | null;
+  reservationId?: number | null;
+  origin?: string | null;
+  customer?: { id: number; name: string; corporateName: string; cnpj: string } | null;
   trainee?: ITrainee;
   createdAt?: string;
   updatedAt?: string;

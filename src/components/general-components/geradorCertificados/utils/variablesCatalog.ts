@@ -67,7 +67,10 @@ export const CERTIFICATE_VARIABLES: CertificateVariableInfo[] = [
 
   { key: 'inscricao_nome', label: 'Nome na inscrição', group: 'Inscrição', example: 'Maria Aparecida dos Santos' },
   { key: 'inscricao_ocupacao', label: 'Ocupação', group: 'Inscrição', example: 'Técnica de manutenção' },
-  { key: 'inscricao_empresa', label: 'Empresa em que trabalha', group: 'Inscrição', example: 'Worksafe Serviços Ltda' },
+  { key: 'inscricao_empresa', label: 'Empresa (contratante ou a digitada)', group: 'Inscrição', example: 'INDÚSTRIA ALFA SA' },
+  { key: 'inscricao_empresa_cnpj', label: 'CNPJ da empresa contratante', group: 'Inscrição', example: '11.222.333/0001-81' },
+  { key: 'contratante_nome', label: 'Empresa contratante (só com contrato/cliente)', group: 'Inscrição', example: 'INDÚSTRIA ALFA SA' },
+  { key: 'contratante_cnpj', label: 'CNPJ da contratante', group: 'Inscrição', example: '11.222.333/0001-81' },
   { key: 'inscricao_data_confirmacao', label: 'Data da confirmação', group: 'Inscrição', example: '01/08/2026' },
 
   { key: 'instituicao_nome', label: 'Nome da instituição', group: 'Instituição', example: 'WorkSafe Brasil' },
@@ -86,7 +89,7 @@ export function sampleVariables(opts: { instructors?: number; withCompany?: bool
     // dado que falta vai vazio (como a API faz), não some da lista
     const missing =
       (m && v.group === 'Instrutores' && Number(m[1]) > n) ||
-      (v.key === 'inscricao_empresa' && opts.withCompany === false);
+      (['inscricao_empresa', 'inscricao_empresa_cnpj', 'contratante_nome', 'contratante_cnpj'].includes(v.key) && opts.withCompany === false);
     out[v.key] = { type: v.type ?? 'string', value: missing ? '' : v.example };
   }
   return out;

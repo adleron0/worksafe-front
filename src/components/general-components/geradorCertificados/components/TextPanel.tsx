@@ -663,7 +663,8 @@ const TextPanel: React.FC<TextPanelProps> = ({
                 {[
                   { key: 'inscricao_nome', label: 'Nome' },
                   { key: 'inscricao_ocupacao', label: 'Ocupação' },
-                  { key: 'inscricao_empresa', label: 'Empresa que Trabalha' },
+                  { key: 'inscricao_empresa', label: 'Empresa' },
+                  { key: 'inscricao_empresa_cnpj', label: 'CNPJ da Empresa' },
                   { key: 'inscricao_data_confirmacao', label: 'Confirmação' },
                 ].map(variable => (
                   <Button

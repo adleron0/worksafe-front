@@ -74,7 +74,8 @@ function TrainingDashboard() {
             <Kpi
               label="Ocupação das próximas turmas"
               value={pct(kpis.occupancy.ratio)}
-              hint={kpis.occupancy.seats ? `${kpis.occupancy.taken} de ${kpis.occupancy.seats} vagas em ${kpis.occupancy.classes} ${kpis.occupancy.classes === 1 ? "turma" : "turmas"}` : "nenhuma turma com vagas limitadas"}
+              hint={(kpis.occupancy.seats ? `${kpis.occupancy.taken} de ${kpis.occupancy.seats} vagas em ${kpis.occupancy.classes} ${kpis.occupancy.classes === 1 ? "turma" : "turmas"}` : "nenhuma turma com vagas limitadas") +
+                (kpis.companySeats?.seats ? ` · ${kpis.companySeats.seats} vendida${kpis.companySeats.seats === 1 ? "" : "s"} a ${kpis.companySeats.customers} empresa${kpis.companySeats.customers === 1 ? "" : "s"}${kpis.companySeats.value ? ` (${moneyShort(kpis.companySeats.value)})` : ""}` : "")}
               hintTone={kpis.occupancy.ratio !== null && kpis.occupancy.ratio < 0.5 ? "warning" : "muted"}
               link={data.links.classes}
             />
@@ -171,14 +172,17 @@ function UpcomingPanel({ classes, link }: { classes: UpcomingClass[]; link: stri
 }
 
 function UpcomingRow({ turma }: { turma: UpcomingClass }) {
-  const ratio = turma.seats ? Math.min(1, turma.enrolled / turma.seats) : null;
-  const belowQuorum = turma.quorum !== null && turma.enrolled < turma.quorum;
+  // vaga de empresa ainda sem nome já está vendida: conta na ocupação e no quórum
+  const taken = turma.enrolled + (turma.reserved ?? 0);
+  const ratio = turma.seats ? Math.min(1, taken / turma.seats) : null;
+  const belowQuorum = turma.quorum !== null && taken < turma.quorum;
   const tone = belowQuorum ? "danger" : ratio !== null && ratio < 0.5 ? "warning" : "success";
   const bar = tone === "danger" ? "bg-red-500" : tone === "warning" ? "bg-amber-500" : "bg-emerald-600";
   const quorumAt = turma.seats && turma.quorum ? Math.min(1, turma.quorum / turma.seats) : null;
   const flags = [
     turma.ongoing && "acontecendo",
     turma.pending > 0 && `${turma.pending} a confirmar`,
+    (turma.companySeats ?? 0) > 0 && `${turma.companySeats} de empresas${turma.reserved ? ` (${turma.reserved} sem nome)` : ""}`,
     turma.instructors === 0 && "sem instrutor",
   ].filter(Boolean) as string[];
 
@@ -199,7 +203,7 @@ function UpcomingRow({ turma }: { turma: UpcomingClass }) {
           ) : <span className="text-xs text-muted-foreground">vagas livres</span>}
         </span>
         <span className={cn("hidden sm:block text-right tabular-nums", toneText(tone === "success" ? undefined : tone))}>
-          {turma.enrolled}{turma.seats ? `/${turma.seats}` : ""}
+          {taken}{turma.seats ? `/${turma.seats}` : ""}
         </span>
       </Link>
     </li>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { post, put } from "@/services/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { get, post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import { useLoader } from "@/context/GeneralContext";
 // Components
@@ -120,13 +120,21 @@ const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal 
     },
   });
 
+  const { data: customers } = useQuery({
+    queryKey: ["listClientes"],
+    queryFn: () => get<{ rows: Array<{ id: number; name: string }> }>("customer", "", [{ key: "limit", value: "all" }, { key: "order-name", value: "asc" }]),
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+    // só os campos da inscrição (sem os objetos que vêm junto na listagem)
+    const { class: _class, company: _company, customer: _customer, ...payload } = data;
+    // "null" limpa o cliente (o envio multipart pula valor nulo)
+    const body = { ...payload, customerId: data.customerId ? data.customerId : formData?.customerId ? ("null" as unknown as null) : undefined };
     if (formData?.id) {
-      update(data);
+      update(body);
     } else {
-      create(data);
+      create(body);
     }
   };
 
@@ -196,6 +204,29 @@ const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal 
           value={data.workedAt}
           onValueChange={handleChange}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="customerId">Empresa contratante</Label>
+        {data.reservationId ? (
+          <p className="text-sm text-muted-foreground">
+            {data.customer?.corporateName || data.customer?.name || "Empresa"} — vaga comprada pela empresa (mude em Vagas de empresas).
+          </p>
+        ) : (
+          <>
+            <Select
+              name="customerId"
+              modal={isInsideModal}
+              searchable
+              clearable
+              options={customers?.rows ?? []}
+              state={data.customerId ? String(data.customerId) : ""}
+              onChange={(name, value) => handleChange(name, value ? Number(value) : null)}
+              placeholder="Nenhuma (aluno do site / avulso)"
+            />
+            <p className="text-xs text-muted-foreground">Cliente que paga a vaga deste aluno: o nome e o CNPJ dele saem no certificado.</p>
+          </>
+        )}
       </div>
 
       <div className="space-y-2">

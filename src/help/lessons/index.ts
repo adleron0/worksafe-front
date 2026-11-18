@@ -216,6 +216,37 @@ export const LESSONS: Lesson[] = [
     ],
   },
   {
+    id: "suprimentos.equipamentos",
+    title: "Equipamentos: peças, inspeções e vencimentos",
+    screen: "Equipamentos",
+    minutes: 2,
+    requires: ["view_equipamentos"],
+    routes: [
+      "/suprimentos/equipamentos", "/suprimentos/equipamentos/:unitId", "/suprimentos/equipamentos/inspecoes",
+      "/suprimentos/equipamentos/vencimentos", "/suprimentos/equipamentos/roteiros",
+    ],
+    video: { src: `${BASE}/equipamentos.mp4`, captions: `${BASE}/equipamentos.vtt` },
+    chapters: [
+      { title: "As peças", start: 0 },
+      { title: "Inspecionar", start: 39.1 },
+      { title: "Vencimentos e roteiros", start: 72.1 },
+    ],
+  },
+  {
+    id: "rh.alocacao",
+    title: "Mapa de alocação: quem está onde",
+    screen: "Mapa de alocação",
+    minutes: 2,
+    requires: ["view_alocacao"],
+    routes: ["/rh/mapa-de-alocacao"],
+    video: { src: `${BASE}/alocacao.mp4`, captions: `${BASE}/alocacao.vtt` },
+    chapters: [
+      { title: "A linha do tempo", start: 0 },
+      { title: "Atividades", start: 41.5 },
+      { title: "No mapa", start: 65.8 },
+    ],
+  },
+  {
     id: "suprimentos.epi",
     title: "Entrega de EPI com assinatura",
     screen: "Entregas de EPI",

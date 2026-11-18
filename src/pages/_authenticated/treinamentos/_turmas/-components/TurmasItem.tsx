@@ -31,6 +31,7 @@ import Dialog from "@/components/general-components/Dialog";
 import { useState } from "react";
 import DuplicateTurmaModal from "./DuplicateTurmaModal";
 import ListaPresenca from "../-lista-presenca";
+import VagasEmpresas from "../-empresas/VagasEmpresas";
 import DivulgarDialog from "../../_divulgacao/-components/DivulgarDialog";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
@@ -67,6 +68,7 @@ const SiteServicesItem = ({
   const [openIssue, setOpenIssue] = useState(false);
   const [openDuplicateModal, setOpenDuplicateModal] = useState(false);
   const [openAttendanceModal, setOpenAttendanceModal] = useState(false);
+  const [openCompanies, setOpenCompanies] = useState(false);
   const [openDivulgar, setOpenDivulgar] = useState(false);
 
   // Links públicos do WorkSafe (sem slug: uma empresa por domínio).
@@ -489,6 +491,16 @@ const SiteServicesItem = ({
                 </Button>
               </DropdownMenuItem>
 
+              {!item.customerId && (can("list_classes") || can("list_comercial")) && (
+                <DropdownMenuItem
+                  className="flex justify-start gap-2 p-2 items-baseline w-full h-fit cursor-pointer"
+                  onSelect={() => setTimeout(() => setOpenCompanies(true), 0)}
+                >
+                  <Icon name="building-2" className="w-3 h-3" />
+                  <p>Vagas de empresas</p>
+                </DropdownMenuItem>
+              )}
+
               {/* fecha o menu antes de abrir o diálogo (menu aberto bloqueia os cliques) */}
               <DropdownMenuItem
                 className="flex justify-start gap-2 p-2 items-baseline w-full h-fit cursor-pointer"
@@ -659,6 +671,18 @@ const SiteServicesItem = ({
         open={openDuplicateModal}
         onOpenChange={setOpenDuplicateModal}
       />
+
+      {/* Vagas compradas por empresas (turma aberta) */}
+      <Dialog
+        open={openCompanies}
+        onOpenChange={setOpenCompanies}
+        title={`Vagas de empresas - ${item.name}`}
+        description="Empresas que compraram vagas nesta turma. Os alunos delas entram sem cobrança e o certificado sai com a empresa."
+        showBttn={false}
+        className="max-w-2xl"
+      >
+        {openCompanies && <VagasEmpresas classId={item.id!} isClosed={Boolean(item.customerId)} />}
+      </Dialog>
 
       {/* Modal de Lista de Presença */}
       <Dialog

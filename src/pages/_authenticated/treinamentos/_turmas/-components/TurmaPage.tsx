@@ -30,6 +30,7 @@ import Step7Evaluation from "./steps/Step7Evaluation";
 import Step8Page from "./steps/Step8Page";
 import PaginaResultados from "./pagina/PaginaResultados";
 import TurmaVenda from "./TurmaVenda";
+import VagasEmpresas from "../-empresas/VagasEmpresas";
 import { compactLandingContent, layoutName, parseLandingContent } from "./pagina/landing";
 import { useTheme } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
@@ -307,11 +308,12 @@ const TABS = [
   { slug: "avaliacao", label: "Prova e avaliação", heading: "Depois da turma", description: "Prova online com código de acesso e a avaliação do curso pelos alunos." },
   { slug: "venda", label: "Venda", heading: "De onde vem o dinheiro desta turma", description: "Turma fechada precisa de uma venda (contrato) ou da marcação \"sem cobrança\", com o motivo. Sem isso o financeiro não fica sabendo da turma." },
   { slug: "resultados", label: "Resultados", heading: "Resultados da página", description: "Visitas, inscrições e qual layout da página converte mais." },
+  { slug: "empresas", label: "Vagas de empresas", heading: "Vagas compradas por empresas", description: "Empresas que compraram vagas nesta turma aberta. Os alunos delas entram sem cobrança e o certificado sai com a empresa contratante." },
 ] as const;
 
 type TabSlug = (typeof TABS)[number]["slug"];
 /** Abas só de consulta: ficam fora da sequência de passos do formulário. */
-const VIEW_TABS: readonly TabSlug[] = ["venda", "resultados"];
+const VIEW_TABS: readonly TabSlug[] = ["venda", "resultados", "empresas"];
 
 /** Em qual passo cada campo fica (para levar a pessoa ao lugar certo do erro). */
 const FIELD_TO_TAB: Record<string, TabSlug> = {
@@ -506,9 +508,10 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
   }, [liveErrors]);
   // passos já visitados (na criação, os de depois ficam "a fazer" até a pessoa chegar neles)
   const [visited, setVisited] = useState<Set<TabSlug>>(() => new Set(formData ? TABS.map((tab) => tab.slug) : ["basico"]));
-  // Resultados e Venda só existem para turma salva; Venda, só para turma fechada (com cliente)
+  // Resultados, Venda e Vagas de empresas só existem para turma salva; Venda, só para turma
+  // fechada (com cliente); Vagas de empresas, só para turma aberta
   const visibleTabs = formData
-    ? TABS.filter((tab) => tab.slug !== "venda" || Boolean(formData.customerId))
+    ? TABS.filter((tab) => (tab.slug !== "venda" || Boolean(formData.customerId)) && (tab.slug !== "empresas" || !formData.customerId))
     : TABS.filter((tab) => !VIEW_TABS.includes(tab.slug));
 
   // ── Rascunho em localStorage (apenas criação) ─────────────────────────────
@@ -736,6 +739,7 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
     avaliacao: <Step7Evaluation {...stepProps} generateClassCode={generateClassCode} section="prova" />,
     venda: formData?.id ? <TurmaVenda classId={formData.id} /> : null,
     resultados: formData?.id ? <PaginaResultados classId={formData.id} /> : null,
+    empresas: formData?.id ? <VagasEmpresas classId={formData.id} isClosed={Boolean(formData.customerId)} /> : null,
   };
 
   const isSaving = isPending || isPendingUpdate;

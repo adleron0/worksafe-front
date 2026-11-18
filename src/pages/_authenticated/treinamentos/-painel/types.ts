@@ -17,6 +17,10 @@ export interface UpcomingClass {
   endDate: string | null;
   ongoing: boolean;
   enrolled: number;
+  /** vagas de empresas ainda sem nome (já vendidas) */
+  reserved?: number;
+  /** vagas reservadas para empresas, com ou sem nome */
+  companySeats?: number;
   pending: number;
   seats: number | null;
   quorum: number | null;
@@ -42,6 +46,8 @@ export interface TrainingPanel {
   kpis: {
     trained: { value: number; previous: number; trend: number[] };
     occupancy: { ratio: number | null; taken: number; seats: number; classes: number };
+    /** vagas vendidas para empresas nas próximas turmas (valor ausente sem a permissão do financeiro) */
+    companySeats?: { seats: number; customers: number; value?: number };
     /** ausente sem a permissão de ver o financeiro */
     revenue?: { month: number; previous: number; trend: number[]; open: number; openCount: number; link: string };
     quality: { rating: number | null; reviews: number; approval: number | null; exams: number; days: number };

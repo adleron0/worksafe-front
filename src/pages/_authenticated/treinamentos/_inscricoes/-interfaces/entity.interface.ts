@@ -5,6 +5,12 @@ export interface IEntity {
   email?: string;
   phone?: string;
   workedAt?: string;
+  /** empresa contratante: sai no certificado (vaga de empresa ou turma fechada) */
+  customerId?: number | null;
+  contractId?: number | null;
+  reservationId?: number | null;
+  origin?: string | null;
+  customer?: { id: number; name: string; corporateName?: string; cnpj?: string } | null;
   occupation?: string;
   companyId?: number;
   classId?: number;

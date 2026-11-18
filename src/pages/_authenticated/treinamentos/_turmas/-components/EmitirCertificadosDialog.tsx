@@ -33,6 +33,9 @@ interface IssuanceRow {
   name: string;
   cpf: string;
   workedAt?: string | null;
+  /** empresa que sai no certificado (contratante da vaga ou a digitada) */
+  company?: string | null;
+  companyFromContract?: boolean;
   imageUrl?: string | null;
   certificate: IssuedCertificate | null;
   examScore: number | null;
@@ -277,6 +280,7 @@ export default function EmitirCertificadosDialog({
                     <p className="truncate text-sm font-medium">{r.name}</p>
                     <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                       <span>CPF {maskCpf(r.cpf)}</span>
+                      {r.company && <span>· {r.company}{r.companyFromContract ? " (contratante)" : ""}</span>}
                       {r.examScore !== null && (
                         <span className={r.examPassed === false ? "text-destructive" : ""}>
                           · Nota {r.examScore.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}

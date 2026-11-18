@@ -8,7 +8,7 @@ import CalendarPicker from "@/components/general-components/Calendar";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
 import {
-  BaseResult, CostGroup, CostItem, CostParams, Defaults, NumField, ResultRow, Row, Sensitivity, decimal, money, newUid, percent,
+  BaseResult, COMMISSION_BASES, CostGroup, CostItem, CostParams, Defaults, NumField, ResultRow, Row, Sensitivity, decimal, money, newUid, percent,
 } from "../-shared/commercial";
 
 interface TabProps {
@@ -285,22 +285,39 @@ export function DefaultsTab({ defaults, setDefaults, disabled }: { defaults: Def
             </div>
           ))}
         </Card>
-        <Card title="Comissão">
-          <Row label="Comissão padrão" htmlFor="commissionRate">
-            <NumField id="commissionRate" kind="percent" value={defaults.commission.rate} disabled={disabled}
-              onChange={(value) => setDefaults((d) => ({ ...d, commission: { ...d.commission, rate: value } }))} />
-          </Row>
-          <Row label="Calculada sobre">
-            <Select name="commissionBase" state={defaults.commission.base} disabled={disabled} modal={false}
-              options={[{ id: "faturado", name: "Valor faturado" }, { id: "lucro", name: "Lucro" }]}
-              onChange={(_, value) => setDefaults((d) => ({ ...d, commission: { ...d.commission, base: String(value) as "faturado" | "lucro" } }))} />
-          </Row>
-          <Row label="Comissão dentro do preço" hint="Ligado: a margem pedida já é líquida de comissão (só quando a base é o faturado). Desligado = igual à planilha.">
-            <div className="flex justify-end">
-              <Switch checked={defaults.commission.inPrice} disabled={disabled} aria-label="Comissão dentro do preço"
-                onCheckedChange={(checked) => setDefaults((d) => ({ ...d, commission: { ...d.commission, inPrice: checked } }))} />
-            </div>
-          </Row>
+        <Card title="Comissão padrão das propostas"
+          description="Valor inicial da comissão do vendedor numa proposta nova. A comissão própria do vendedor (em Comercial → Vendedores) vale antes desta, e na proposta sempre dá para mudar à mão.">
+          <label className="flex items-center justify-between gap-4 py-2 border-b last:border-b-0">
+            <span className="min-w-0">
+              <span className="text-sm font-medium">Usar comissão padrão</span>
+              <span className="block text-xs text-muted-foreground">
+                {defaults.commission.enabled ? "Ligada: proposta nova nasce com a comissão abaixo." : "Desligada: proposta nova nasce com comissão zero."}
+              </span>
+            </span>
+            <Switch className="shrink-0" checked={defaults.commission.enabled} disabled={disabled} aria-label="Usar comissão padrão"
+              onCheckedChange={(checked) => setDefaults((d) => ({ ...d, commission: { ...d.commission, enabled: checked } }))} />
+          </label>
+          {defaults.commission.enabled && (
+            <>
+              <Row label="Taxa" htmlFor="commissionRate">
+                <NumField id="commissionRate" kind="percent" value={defaults.commission.rate} disabled={disabled}
+                  onChange={(value) => setDefaults((d) => ({ ...d, commission: { ...d.commission, rate: value } }))} />
+              </Row>
+              <Row label="Calculada sobre">
+                <Select name="commissionBase" state={defaults.commission.base} disabled={disabled} modal={false}
+                  options={COMMISSION_BASES}
+                  onChange={(_, value) => setDefaults((d) => ({ ...d, commission: { ...d.commission, base: String(value) as "faturado" | "lucro" } }))} />
+              </Row>
+              {defaults.commission.base === "faturado" && (
+                <Row label="Já embutida no preço" hint="Ligado: o preço sobe para pagar a comissão sem comer a margem. Desligado = igual à planilha.">
+                  <div className="flex justify-end">
+                    <Switch checked={defaults.commission.inPrice} disabled={disabled} aria-label="Comissão já embutida no preço"
+                      onCheckedChange={(checked) => setDefaults((d) => ({ ...d, commission: { ...d.commission, inPrice: checked } }))} />
+                  </div>
+                </Row>
+              )}
+            </>
+          )}
         </Card>
       </div>
     </div>

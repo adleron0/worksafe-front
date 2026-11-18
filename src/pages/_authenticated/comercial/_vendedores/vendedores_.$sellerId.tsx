@@ -18,7 +18,7 @@ import Pagination from "@/components/general-components/Pagination";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { useBankAccounts } from "../../financeiro/-shared/financial";
-import { COMMERCIAL_ABILITY, NumField, Tip, commercialApi, dateBr, decimal, errorMessage, money, todayIso } from "../-shared/commercial";
+import { COMMERCIAL_ABILITY, COMMISSION_BASES, NumField, Tip, commercialApi, dateBr, decimal, errorMessage, money, percent, todayIso } from "../-shared/commercial";
 import {
   EntriesResponse, EntryStatusBadge, EntryType, ORIGIN_LABEL, PAYMENT_METHODS, SELLERS_KEY, TYPE_LABEL, WALLET_ENTRIES_KEY, WALLET_KEY,
   WalletDetail, WalletEntry, WalletOrigin, initials, paymentLabel,
@@ -43,7 +43,7 @@ function SellerWalletPage() {
   const [type, setType] = useState<"" | EntryType>("");
   const [origin, setOrigin] = useState("");
   const [page, setPage] = useState(0);
-  const [dialog, setDialog] = useState<"" | "pay" | "adjust">("");
+  const [dialog, setDialog] = useState<"" | "pay" | "adjust" | "commission">("");
   const [reversing, setReversing] = useState<WalletEntry | null>(null);
 
   const { data: wallet, isLoading, error } = useQuery({
@@ -126,6 +126,23 @@ function SellerWalletPage() {
         <Figure label="Já pago" value={money(wallet.paid)} hint={wallet.lastPayment ? `Último: ${money(wallet.lastPayment.amount)} em ${dateBr(wallet.lastPayment.at)}.` : "Nenhum pagamento lançado."} />
         <Figure label="Total gerado" value={money(wallet.generated)} hint={wallet.sales ? `${wallet.sales} venda(s) · média de ${money(wallet.averageCommission)}.` : "Nenhuma comissão liberada ainda."} />
       </div>
+
+      <section className="rounded-lg border p-4 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h2 className="text-sm font-semibold">Comissão nas propostas</h2>
+          <p className="text-sm">
+            {wallet.commission
+              ? <><span className="font-medium tabular-nums">{percent(wallet.commission.rate)}</span> sobre o {wallet.commission.base === "lucro" ? "lucro" : "valor faturado"}</>
+              : <span className="text-muted-foreground">Segue o padrão da base de cálculo (zero, se o padrão estiver desligado).</span>}
+          </p>
+          <p className="text-xs text-muted-foreground">Valor inicial das propostas em que {seller.name} é o vendedor. Na proposta dá para mudar à mão.</p>
+        </div>
+        {can("update_base_calculo") && (
+          <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => setDialog("commission")}>
+            <Icon name="percent" className="w-4 h-4 mr-1" /> {wallet.commission ? "Alterar" : "Definir comissão própria"}
+          </Button>
+        )}
+      </section>
 
       <div className="grid lg:grid-cols-2 gap-3 mb-4">
         <section className="rounded-lg border p-4">
@@ -248,6 +265,7 @@ function SellerWalletPage() {
       {entries && entries.total > LIMIT && <div className="mt-4"><Pagination totalItems={entries.total} itemsPerPage={LIMIT} currentPage={page} onPageChange={setPage} maxVisiblePages={5} /></div>}
 
       {dialog === "pay" && <PaymentDialog wallet={wallet} onClose={() => setDialog("")} onDone={() => { setDialog(""); refresh(); }} />}
+      {dialog === "commission" && <CommissionDialog wallet={wallet} onClose={() => setDialog("")} onDone={() => { setDialog(""); refresh(); }} />}
       {dialog === "adjust" && <AdjustDialog wallet={wallet} onClose={() => setDialog("")} onDone={() => { setDialog(""); refresh(); }} />}
       {reversing && <ReverseDialog entry={reversing} onClose={() => setReversing(null)} onDone={() => { setReversing(null); refresh(); }} />}
     </>
@@ -383,6 +401,54 @@ function AdjustDialog({ wallet, onClose, onDone }: { wallet: WalletDetail; onClo
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
             <Button type="submit" disabled={isPending}>{isPending ? "Lançando..." : "Lançar ajuste"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Comissão própria do vendedor nas propostas (vale antes do padrão da base). Só a diretoria define. */
+function CommissionDialog({ wallet, onClose, onDone }: { wallet: WalletDetail; onClose: () => void; onDone: () => void }) {
+  const [rate, setRate] = useState<number | null>(wallet.commission?.rate ?? null);
+  const [base, setBase] = useState<"faturado" | "lucro">(wallet.commission?.base ?? "lucro");
+  const [error, setError] = useState("");
+  const { mutate, isPending } = useMutation({
+    mutationFn: (body: { rate: number | null; base?: string }) => commercialApi.put(`sellers/${wallet.seller.id}/commission`, body),
+    onSuccess: () => { toast({ title: "Comissão do vendedor salva", variant: "success" }); onDone(); },
+    onError: (err) => setError(errorMessage(err)),
+  });
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (rate === null) return setError("Informe a taxa (pode ser 0%)");
+    if (rate < 0 || rate > 0.5) return setError("A comissão deve ficar entre 0% e 50%");
+    setError(""); mutate({ rate, base });
+  };
+  return (
+    <Dialog open onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Comissão de {wallet.seller.name}</DialogTitle>
+          <DialogDescription>
+            Vale como valor inicial das propostas em que {wallet.seller.name} é o vendedor, antes do padrão da base de cálculo. Propostas já salvas não mudam.
+          </DialogDescription>
+        </DialogHeader>
+        <form className="grid gap-3" onSubmit={submit}>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label htmlFor="sellerCommissionRate" className="text-xs">Taxa</Label>
+              <NumField id="sellerCommissionRate" kind="percent" className="mt-1" value={rate} onChange={setRate} onEmpty={() => setRate(null)} /></div>
+            <div><Label className="text-xs">Calculada sobre</Label>
+              <div className="mt-1"><Select name="sellerCommissionBase" state={base} modal={false} options={COMMISSION_BASES} onChange={(_, value) => setBase(String(value) as "faturado" | "lucro")} /></div></div>
+          </div>
+          {error && <p className="text-destructive text-sm" role="alert">{error}</p>}
+          <DialogFooter className="gap-2 sm:justify-between">
+            {wallet.commission ? (
+              <Button type="button" variant="ghost" disabled={isPending} onClick={() => mutate({ rate: null })}>Voltar ao padrão</Button>
+            ) : <span />}
+            <div className="flex gap-2 justify-end">
+              <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+              <Button type="submit" disabled={isPending}>{isPending ? "Salvando..." : "Salvar"}</Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

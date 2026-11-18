@@ -9,10 +9,10 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
-import { NumField, money, newUid, percent } from "../-shared/commercial";
+import { COMMISSION_BASES, NumField, money, newUid, percent } from "../-shared/commercial";
 import ProposalSchedule from "./-ProposalSchedule";
 import {
-  CustomerOption, DUE_RULE_OPTIONS, DraftInstallment, DueRule, ProposalCalc, ProposalDraft, ProposalOptions,
+  CustomerOption, DUE_RULE_OPTIONS, DraftInstallment, DueRule, ProposalCalc, ProposalCommission, ProposalDraft, ProposalOptions,
 } from "../-shared/proposals";
 
 type SetDraft = (updater: (draft: ProposalDraft) => ProposalDraft) => void;
@@ -52,6 +52,24 @@ export function ProposalInfoStep({ draft, setDraft, options, readOnly, canSeeCos
   const levels = options.defaults.contingencyLevels;
   const custom = !levels.some((l) => Math.abs(l.rate - draft.contingencyRate) < 1e-9);
   const automaticBase = (options.costBases ?? []).find((base) => base.current);
+  // comissão inicial: a do vendedor; senão o padrão da base (se ligado); senão zero
+  const suggestedFor = (sellerId: number | null): ProposalCommission =>
+    options.sellers.find((s) => s.id === sellerId)?.commission ?? options.defaults.commission ?? { rate: 0, base: "lucro", inPrice: false, source: "zero" };
+  const changeSeller = (sellerId: number | null) => setDraft((d) => {
+    // quem não vê custos não mexe na comissão: a API aplica a regra ao gravar
+    if (!canSeeCosts) return { ...d, sellerId };
+    const next = suggestedFor(sellerId);
+    return { ...d, sellerId, commissionRate: next.rate, commissionBase: next.base, commissionInPrice: next.inPrice };
+  });
+  const suggested = suggestedFor(draft.sellerId);
+  const commissionBase = draft.commissionBase ?? "lucro";
+  const commissionRate = draft.commissionRate ?? 0;
+  const isSuggested = Math.abs(commissionRate - suggested.rate) < 1e-9 && (commissionRate === 0 || commissionBase === suggested.base);
+  const sellerName = options.sellers.find((s) => s.id === draft.sellerId)?.name;
+  const commissionOrigin = !isSuggested ? "Alterada à mão nesta proposta."
+    : suggested.source === "vendedor" ? `Comissão própria de ${sellerName ?? "o vendedor"}.`
+    : suggested.source === "padrao" ? "Padrão da base de cálculo."
+    : "Sem comissão: não há padrão ligado na base de cálculo nem comissão própria do vendedor.";
 
   return (
     <div className="grid gap-4">
@@ -93,7 +111,7 @@ export function ProposalInfoStep({ draft, setDraft, options, readOnly, canSeeCos
       <div className="border-t pt-3">
         <button type="button" className="flex items-center gap-2 text-sm font-medium" aria-expanded={more} onClick={() => setMore(!more)}>
           <Icon name={more ? "chevron-down" : "chevron-right"} className="w-4 h-4" /> Mais opções
-          <span className="font-normal text-muted-foreground">contato, vendedor, {canSeeCosts ? "base de cálculo, imposto, comissão, " : ""}observações</span>
+          <span className="font-normal text-muted-foreground">contato, vendedor, {canSeeCosts ? "comissão, base de cálculo, imposto, " : ""}observações</span>
         </button>
       </div>
 
@@ -123,7 +141,7 @@ export function ProposalInfoStep({ draft, setDraft, options, readOnly, canSeeCos
             <div className="grid sm:grid-cols-2 gap-3">
               <F label="Vendedor">
                 <Select name="sellerId" state={draft.sellerId ? String(draft.sellerId) : ""} disabled={readOnly} modal={false} clearable placeholder="Sem vendedor"
-                  options={options.sellers} onChange={(_, value) => set("sellerId", Number(value) || null)} />
+                  options={options.sellers.map(({ id, name }) => ({ id, name }))} onChange={(_, value) => changeSeller(Number(value) || null)} />
               </F>
               <F label="Data prevista do serviço" hint="Define a base de cálculo e o imposto vigentes.">
                 <CalendarPicker mode="single" name="referenceDate" className="w-full" value={draft.referenceDate} disabled={readOnly} fromYear={2024} toYear={2040}
@@ -136,7 +154,37 @@ export function ProposalInfoStep({ draft, setDraft, options, readOnly, canSeeCos
           </Card>
 
           {canSeeCosts && (
-            <Card title="Base de cálculo, imposto e comissão" description="Só quem tem a permissão de custos vê e altera.">
+            <Card title="Comissão do vendedor" description={commissionOrigin}>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <F label="Taxa">
+                  <NumField kind="percent" value={commissionRate} disabled={readOnly} ariaLabel="Comissão" onChange={(rate) => set("commissionRate", rate)} />
+                </F>
+                <F label="Calculada sobre">
+                  <Select name="commissionBase" state={commissionBase} disabled={readOnly} modal={false} options={COMMISSION_BASES}
+                    onChange={(_, value) => setDraft((d) => {
+                      const base = String(value) as "faturado" | "lucro";
+                      // "embutida no preço" só existe sobre o faturado
+                      return { ...d, commissionBase: base, commissionInPrice: base === "faturado" ? d.commissionInPrice : false };
+                    })} />
+                </F>
+              </div>
+              {commissionBase === "faturado" && commissionRate > 0 && (
+                <label className="flex items-start gap-2 text-sm">
+                  <Switch className="mt-0.5" checked={Boolean(draft.commissionInPrice)} disabled={readOnly} aria-label="Comissão já embutida no preço" onCheckedChange={(checked) => set("commissionInPrice", checked)} />
+                  <span>Já embutida no preço<span className="block text-xs text-muted-foreground">O preço sobe para pagar a comissão sem comer a margem.</span></span>
+                </label>
+              )}
+              {!readOnly && !isSuggested && (
+                <Button type="button" variant="link" size="sm" className="h-auto p-0 w-fit"
+                  onClick={() => setDraft((d) => ({ ...d, commissionRate: suggested.rate, commissionBase: suggested.base, commissionInPrice: suggested.inPrice }))}>
+                  Voltar para {suggested.rate > 0 ? `${percent(suggested.rate)} sobre o ${suggested.base === "lucro" ? "lucro" : "faturado"}` : "comissão zero"}
+                </Button>
+              )}
+            </Card>
+          )}
+
+          {canSeeCosts && (
+            <Card title="Base de cálculo e imposto" description="Só quem tem a permissão de custos vê e altera.">
               <F label="Base de cálculo" hint={draft.costBaseId
                 ? "Base escolhida à mão: os valores sugeridos usam esta, qualquer que seja a data."
                 : `Automática: usa a base vigente na data prevista do serviço${automaticBase ? ` (hoje, "${automaticBase.name}")` : ""}.`}>
@@ -145,25 +193,11 @@ export function ProposalInfoStep({ draft, setDraft, options, readOnly, canSeeCos
                   options={(options.costBases ?? []).map((base) => ({ id: base.id, name: `${base.name} · desde ${base.effectiveFrom.split("-").reverse().join("/")}${base.current ? " · vigente" : ""}` }))}
                   onChange={(_, value) => set("costBaseId", Number(value) || null)} />
               </F>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <F label="Regime tributário" hint="Vale só para esta proposta.">
-                  <Select name="taxRegime" state={draft.taxRegime ?? ""} disabled={readOnly} modal={false} clearable placeholder="Padrão da empresa"
-                    options={[{ id: "tradicional", name: "Simples tradicional" }, { id: "hibrido", name: "Simples híbrido" }]}
-                    onChange={(_, value) => set("taxRegime", (String(value) || null) as ProposalDraft["taxRegime"])} />
-                </F>
-                <F label="Comissão">
-                  <NumField kind="percent" value={draft.commissionRate ?? 0} disabled={readOnly} ariaLabel="Comissão" onChange={(rate) => set("commissionRate", rate)} />
-                </F>
-                <F label="Comissão sobre">
-                  <Select name="commissionBase" state={draft.commissionBase ?? "faturado"} disabled={readOnly} modal={false}
-                    options={[{ id: "faturado", name: "Valor faturado" }, { id: "lucro", name: "Lucro" }]}
-                    onChange={(_, value) => set("commissionBase", String(value) as "faturado" | "lucro")} />
-                </F>
-                <label className="flex items-center gap-2 text-sm sm:pt-6">
-                  <Switch checked={Boolean(draft.commissionInPrice)} disabled={readOnly} aria-label="Comissão dentro do preço" onCheckedChange={(checked) => set("commissionInPrice", checked)} />
-                  Comissão dentro do preço
-                </label>
-              </div>
+              <F label="Regime tributário" hint="Vale só para esta proposta.">
+                <Select name="taxRegime" state={draft.taxRegime ?? ""} disabled={readOnly} modal={false} clearable placeholder="Padrão da empresa"
+                  options={[{ id: "tradicional", name: "Simples tradicional" }, { id: "hibrido", name: "Simples híbrido" }]}
+                  onChange={(_, value) => set("taxRegime", (String(value) || null) as ProposalDraft["taxRegime"])} />
+              </F>
             </Card>
           )}
 

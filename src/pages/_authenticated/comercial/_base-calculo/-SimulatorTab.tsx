@@ -21,7 +21,8 @@ export default function SimulatorTab({ professionals, versions, defaults, headco
   const [alt, setAlt] = useState<Scenario>({ headcount: Math.max(1, Math.round(headcount * 0.7)), regime: "", costBaseId: "", date: todayIso() });
 
   const input = {
-    workDays: job.workDays, contingencyRate: job.contingencyRate, commission: defaults.commission,
+    workDays: job.workDays, contingencyRate: job.contingencyRate, // comissão só entra quando o padrão está ligado (como numa proposta nova)
+    commission: defaults.commission.enabled ? defaults.commission : { rate: 0, base: "lucro", inPrice: false },
     sections: [{ margin: job.margin, items: [{ type: "mao_de_obra", professionalId: job.professionalId, quantity: job.quantity }] }],
   };
   const enabled = job.professionalId > 0 && job.workDays > 0 && job.quantity > 0;

@@ -119,14 +119,18 @@ export interface ProposalRow {
   followUp?: { next: { id: number; type: "ligacao" | "whatsapp" | "email" | "reuniao" | "visita" | "tarefa" | "nota"; subject: string; dueDate: string; dueTime: string | null; overdue: boolean; today: boolean } | null; pending: number; lastAt: string | null };
 }
 
+/** Comissão inicial: a do vendedor, o padrão da base (se ligado) ou zero. */
+export interface ProposalCommission { rate: number; base: "faturado" | "lucro"; inPrice: boolean; source: "vendedor" | "padrao" | "zero" }
+
 export interface ProposalOptions {
   date: string; canSeeCosts: boolean; hoursPerDay: number;
-  defaults: { contingencyLevels: Array<{ label: string; rate: number }>; contingencyRate: number; margins?: Record<string, number>; commission?: { rate: number; base: string; inPrice: boolean } };
+  defaults: { contingencyLevels: Array<{ label: string; rate: number }>; contingencyRate: number; margins?: Record<string, number>; commission?: ProposalCommission };
   presets: Record<ProposalKind, Array<{ title: string; kind: ItemType; margin?: number }>>;
   tax: { regime: "tradicional" | "hibrido"; name?: string };
   professionals: Array<{ id: number; name: string; hourCost?: number }>;
   courses: Array<{ id: number; name: string; hoursDuration: number | null; classPrice: number | null; includedStudents: number | null; studentPrice: number | null }>;
-  sellers: Array<{ id: number; name: string }>;
+  /** `commission` só vem para quem vê custos; nula = o vendedor segue o padrão */
+  sellers: Array<{ id: number; name: string; commission?: ProposalCommission | null }>;
   templates: TemplateOption[]; terms: TermOption[]; variables: VariableOption[];
   brandReady?: boolean;
   costBases?: Array<{ id: number; name: string; effectiveFrom: string; current: boolean }>;

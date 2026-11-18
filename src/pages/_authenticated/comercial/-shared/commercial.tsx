@@ -62,8 +62,11 @@ export interface Defaults {
   margins: Record<string, number>;
   contingencyLevels: Array<{ label: string; rate: number }>;
   contingencyRate: number;
-  commission: { rate: number; base: "faturado" | "lucro"; inPrice: boolean };
+  /** padrão da comissão nas propostas; desligado = proposta nova começa com zero */
+  commission: { enabled: boolean; rate: number; base: "faturado" | "lucro"; inPrice: boolean };
 }
+
+export const COMMISSION_BASES = [{ id: "lucro", name: "Lucro" }, { id: "faturado", name: "Valor faturado" }];
 
 export interface Computed { result: BaseResult; professionals: ProfessionalRow[]; sensitivity: Sensitivity[] }
 

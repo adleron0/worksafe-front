@@ -28,6 +28,8 @@ export interface SellerCandidate { id: number; name: string; email: string; imag
 export interface WalletDetail extends WalletTotals {
   seller: { id: number; name: string; email: string; phone: string | null; imageUrl: string | null; isSeller: boolean; inactiveAt: string | null };
   walletId: number; createdAt: string; averageCommission: number;
+  /** comissão própria nas propostas; nula = segue o padrão da base de cálculo */
+  commission: { rate: number; base: "faturado" | "lucro" } | null;
   lastPayment: { at: string; amount: number } | null;
   months: Array<{ month: string; generated: number; paid: number }>;
 }

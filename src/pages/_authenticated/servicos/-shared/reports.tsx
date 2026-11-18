@@ -22,12 +22,14 @@ export interface Report {
   startTime: string | null; endTime: string | null; breakMinutes: number; weatherEnd: string | null;
   startCondition: string | null; endCondition: string | null; startNote: string | null; endNote: string | null;
   crew: CrewMember[]; activities: string | null; progress: StepProgress[]; occurrences: Occurrence[]; equipment: string | null; photos: Photo[]; notes: string | null;
-  createdBy: string | null; closedAt: string | null; closedBy: string | null; order: ReportOrder; roles: string[]; roleOptions?: Array<{ name: string; professionalId: number | null }>; hoursPerDay?: number;
+  createdBy: string | null; closedAt: string | null; closedBy: string | null; returned?: ReportReturn | null; order: ReportOrder; roles: string[]; roleOptions?: Array<{ name: string; professionalId: number | null }>; hoursPerDay?: number;
 }
+/** Devolvido para quem preencheu corrigir: vale até fechar de novo. */
+export interface ReportReturn { note: string | null; at: string; by?: string | null }
 export interface ReportRow {
   id: number; orderId: number; date: string; shift: string; shiftLabel: string; weather: string; status: "rascunho" | "fechado";
   people: number; hours: number; overtime: number; activities: string | null; occurrences: number; photos: number; createdBy: string | null;
-  startTime: string | null; endTime: string | null; earlyLeaves: number;
+  startTime: string | null; endTime: string | null; earlyLeaves: number; returned?: ReportReturn | null;
 }
 export interface DiarySummary {
   reports: number; days: number; drafts: number; lastDate: string | null;
@@ -131,7 +133,8 @@ function Meter({ value, total, label, detail }: { value: number; total: number; 
   );
 }
 
-export function ReportStatusBadge({ status }: { status: string }) {
+export function ReportStatusBadge({ status, returned }: { status: string; returned?: boolean }) {
+  if (returned && status !== "fechado") return <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-950 dark:text-red-200 whitespace-nowrap">Devolvido</span>;
   return status === "fechado"
     ? <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-950 dark:text-green-200 whitespace-nowrap">Fechado</span>
     : <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-200 whitespace-nowrap">Rascunho</span>;
@@ -145,7 +148,7 @@ export function ReportLine({ row, orderId, context }: { row: ReportRow; orderId:
         className="flex items-start gap-3 py-2.5 text-sm hover:bg-muted/40 -mx-2 px-2 rounded-md">
         <Icon name={WEATHER_ICON[row.weather] ?? "sun"} className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
         <div className="min-w-0 flex-1">
-          <p className="font-medium">{dateBr(row.date)}{row.shift !== "integral" ? ` · ${row.shiftLabel}` : ""} <ReportStatusBadge status={row.status} /></p>
+          <p className="font-medium">{dateBr(row.date)}{row.shift !== "integral" ? ` · ${row.shiftLabel}` : ""} <ReportStatusBadge status={row.status} returned={!!row.returned} /></p>
           {context && <p className="text-xs text-muted-foreground truncate">{context}</p>}
           <p className="text-xs text-muted-foreground">
             {row.startTime ? `${row.startTime}${row.endTime ? ` às ${row.endTime}` : " (sem saída)"} · ` : ""}
@@ -154,6 +157,7 @@ export function ReportLine({ row, orderId, context }: { row: ReportRow; orderId:
             {row.occurrences > 0 ? ` · ${row.occurrences} ocorrência${row.occurrences === 1 ? "" : "s"}` : ""}{row.photos > 0 ? ` · ${row.photos} foto${row.photos === 1 ? "" : "s"}` : ""}
             {row.createdBy ? ` · ${row.createdBy}` : ""}
           </p>
+          {row.returned?.note && <p className="mt-0.5 text-xs text-red-700 dark:text-red-300 line-clamp-2">Corrigir: {row.returned.note}</p>}
           {row.activities && <p className="mt-0.5 text-muted-foreground line-clamp-2">{row.activities}</p>}
         </div>
         <Icon name="chevron-right" className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />

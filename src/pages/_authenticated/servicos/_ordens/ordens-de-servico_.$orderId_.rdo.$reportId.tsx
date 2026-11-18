@@ -101,7 +101,7 @@ function ReportPage() {
   const input = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<Form | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [reopening, setReopening] = useState(false);
+  const [noting, setNoting] = useState<"reopen" | "return" | null>(null);
 
   // quem pode entrar na equipe do dia: os funcionários, com a disponibilidade na data do RDO
   const pickDate = form?.date ?? "";
@@ -152,6 +152,8 @@ function ReportPage() {
   if (isLoading || !report || !form) return <div className="grid gap-3 max-w-2xl mx-auto"><Skeleton className="h-16 w-full" /><Skeleton className="h-40 w-full" /><Skeleton className="h-40 w-full" /></div>;
 
   const editable = report.editable && can(RDO_PERMISSION);
+  // devolver para quem preencheu é do coordenador (quem altera a OS)
+  const canReturn = !isNew && can(`update_${ORDERS_ABILITY}`) && !report.returned;
   const dirty = isNew || JSON.stringify(form) !== JSON.stringify(formOf(report));
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm((current) => (current ? { ...current, [key]: value } : current));
   const hoursPerDay = report.hoursPerDay ?? 8;
@@ -208,9 +210,16 @@ function ReportPage() {
       {back}
       <div className="flex flex-wrap items-center gap-2 mt-1">
         <h1 className="text-xl font-bold">RDO de {dateBr(form.date)}</h1>
-        {!isNew && <ReportStatusBadge status={report.status} />}
+        {!isNew && <ReportStatusBadge status={report.status} returned={!!report.returned} />}
       </div>
       <p className="text-sm text-muted-foreground truncate">{report.order.customer?.name} · {report.order.number} · {report.order.title}</p>
+      {report.returned && (
+        <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-100">
+          <p className="font-medium flex items-center gap-1.5"><Icon name="undo-2" className="w-4 h-4" /> Devolvido para correção{report.returned.by ? ` por ${report.returned.by}` : ""} em {new Date(report.returned.at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</p>
+          {report.returned.note && <p className="mt-1 whitespace-pre-line">{report.returned.note}</p>}
+          <p className="mt-1 text-xs opacity-80">Corrija e feche o RDO de novo.</p>
+        </div>
+      )}
       {report.status === "fechado" && (
         <p className="mt-3 rounded-md border px-3 py-2 text-sm text-muted-foreground">
           RDO fechado{report.closedBy ? ` por ${report.closedBy}` : ""}{report.closedAt ? ` em ${new Date(report.closedAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}` : ""}: somente leitura.
@@ -403,7 +412,7 @@ function ReportPage() {
       </div>
 
       {/* ações sempre à mão, no rodapé */}
-      {can(RDO_PERMISSION) && (
+      {(can(RDO_PERMISSION) || canReturn) && (
         <div className={cn("fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 backdrop-blur px-4 py-3")}>
           <div className="max-w-2xl mx-auto flex flex-wrap items-center justify-end gap-2">
             {editable && !isNew && (
@@ -417,7 +426,8 @@ function ReportPage() {
                 <Button type="button" disabled={saving || uploading}><Icon name="check" className="w-4 h-4 mr-1" /> Fechar o RDO</Button>
               </ConfirmDialog>
             )}
-            {report.status === "fechado" && <Button type="button" variant="outline" onClick={() => setReopening(true)}><Icon name="lock-open" className="w-4 h-4 mr-1" /> Reabrir para corrigir</Button>}
+            {canReturn && <Button type="button" variant="outline" onClick={() => setNoting("return")}><Icon name="undo-2" className="w-4 h-4 mr-1" /> Devolver para correção</Button>}
+            {report.status === "fechado" && can(RDO_PERMISSION) && <Button type="button" variant="outline" onClick={() => setNoting("reopen")}><Icon name="lock-open" className="w-4 h-4 mr-1" /> Reabrir para corrigir</Button>}
           </div>
         </div>
       )}
@@ -435,34 +445,41 @@ function ReportPage() {
             })] }) : current));
           }} />
       )}
-      {reopening && <ReopenDialog reportId={Number(reportId)} onClose={() => setReopening(false)} onDone={(result) => { refreshAll(); queryClient.setQueryData([REPORT_KEY, orderId, reportId], result); }} />}
+      {noting && <NoteDialog mode={noting} reportId={Number(reportId)} filledBy={report.createdBy} onClose={() => setNoting(null)} onDone={(result) => { refreshAll(); queryClient.setQueryData([REPORT_KEY, orderId, reportId], result); }} />}
     </div>
   );
 }
 
-/** Reabrir um RDO fechado pede o motivo, que fica no histórico. */
-function ReopenDialog({ reportId, onClose, onDone }: { reportId: number; onClose: () => void; onDone: (report: Report) => void }) {
+/**
+ * Reabrir (quem preencheu corrige o próprio RDO) ou devolver (o coordenador manda
+ * de volta para quem preencheu): os dois pedem o motivo, que fica no histórico;
+ * o da devolução aparece para quem preencheu até fechar de novo.
+ */
+function NoteDialog({ mode, reportId, filledBy, onClose, onDone }: { mode: "reopen" | "return"; reportId: number; filledBy: string | null; onClose: () => void; onDone: (report: Report) => void }) {
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+  const returning = mode === "return";
   const { mutate, isPending } = useMutation({
-    mutationFn: () => reportsApi.patch<Report>(`service-reports/${reportId}/reopen`, { note }),
-    onSuccess: (result) => { onDone(result); toast({ title: "RDO reaberto", variant: "success" }); onClose(); },
+    mutationFn: () => reportsApi.patch<Report>(`service-reports/${reportId}/${returning ? "return" : "reopen"}`, { note }),
+    onSuccess: (result) => { onDone(result); toast({ title: returning ? "RDO devolvido para correção" : "RDO reaberto", variant: "success" }); onClose(); },
     onError: (err) => setError(errorMessage(err)),
   });
   return (
     <Dialog open onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Reabrir o RDO</DialogTitle>
-          <DialogDescription>O RDO volta a ser rascunho para você corrigir. O motivo fica guardado.</DialogDescription>
+          <DialogTitle>{returning ? "Devolver para correção" : "Reabrir o RDO"}</DialogTitle>
+          <DialogDescription>{returning
+            ? `O RDO volta a ser rascunho para ${filledBy ?? "quem preencheu"} corrigir. O motivo aparece na tela e na esteira da pessoa até ela fechar de novo.`
+            : "O RDO volta a ser rascunho para você corrigir. O motivo fica guardado."}</DialogDescription>
         </DialogHeader>
         <form className="grid gap-4" onSubmit={(event) => { event.preventDefault(); if (!note.trim()) return setError("Informe o motivo da correção."); setError(""); mutate(); }}>
-          <div><Label htmlFor="reopenNote">Motivo <span>*</span></Label>
-            <Textarea id="reopenNote" className="mt-1" rows={3} maxLength={500} value={note} onChange={(event) => setNote(event.target.value)} placeholder="Ex.: faltou lançar as horas extras do João" /></div>
+          <div><Label htmlFor="reopenNote">{returning ? "O que corrigir" : "Motivo"} <span>*</span></Label>
+            <Textarea id="reopenNote" className="mt-1" rows={3} maxLength={500} value={note} onChange={(event) => setNote(event.target.value)} placeholder={returning ? "Ex.: faltam as fotos do dia e a descrição do que foi jateado" : "Ex.: faltou lançar as horas extras do João"} /></div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Voltar</Button>
-            <Button type="submit" disabled={isPending}>{isPending ? "Reabrindo..." : "Reabrir"}</Button>
+            <Button type="submit" disabled={isPending}>{isPending ? (returning ? "Devolvendo..." : "Reabrindo...") : (returning ? "Devolver" : "Reabrir")}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

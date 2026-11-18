@@ -26,6 +26,8 @@ export interface IFinancialRecord {
     name: string;
     email?: string;
     cnpj?: string;
+    // só os contatos padrão de cobrança (financeiro) e de nota (fiscal)
+    contacts?: Array<{ id: number; name: string; email: string; phone: string; defaultFinancial: boolean; defaultFiscal: boolean }>;
   };
   paymentMethod: string;
   value?: number;

@@ -20,11 +20,14 @@ type Lookup = { status: "idle" | "loading" | "ok" | "notfound" | "error"; info?:
 
 interface FormProps {
   formData?: IEntity;
-  openSheet: (open: boolean) => void;
+  openSheet?: (open: boolean) => void;
   entity: IDefaultEntity;
+  /** Na página do cliente: o formulário fica aberto e avisa quem chamou ao salvar. */
+  page?: boolean;
+  onSaved?: (row: IEntity) => void;
 }
 
-const Form = ({ formData, openSheet, entity }: FormProps) => {
+const Form = ({ formData, openSheet, entity, page = false, onSaved }: FormProps) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
 
@@ -102,17 +105,21 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       showLoader(`Registrando ${entity.name}...`);
       return post<IEntity>(entity.model, '', newItem);
     },
-    onSuccess: () => {
+    onSuccess: (row) => {
       hideLoader();
       toast({
         title: `${entity.name} cadastrado!`,
-        description: `Novo ${entity.name} cadastrado com sucesso.`,
+        description: page ? "Agora cadastre os contatos e os arquivos do cliente." : `Novo ${entity.name} cadastrado com sucesso.`,
         variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
+      if (page) {
+        if (row) onSaved?.(row);
+        return;
+      }
       // Limpa o formulário e fecha o Sheet
       setDataForm(initialFormRef.current);
-      openSheet(false);
+      openSheet?.(false);
     },
     onError: (error: ApiError) => {
       hideLoader();
@@ -129,7 +136,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
       showLoader(`Atualizando ${entity.name}...`);
       return put<IEntity>(entity.model, `${formData?.id}`, updatedItem);
     },
-    onSuccess: () => {
+    onSuccess: (row) => {
       hideLoader();
       toast({
         title: `${entity.name} atualizado!`,
@@ -137,9 +144,14 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
+      if (page) {
+        queryClient.invalidateQueries({ queryKey: ["customer", formData?.id] });
+        if (row) onSaved?.(row);
+        return;
+      }
       // Limpa o formulário e fecha o Sheet
       setDataForm(initialFormRef.current);
-      openSheet(false);
+      openSheet?.(false);
     },
     onError: (error: ApiError) => {
       hideLoader();
@@ -295,12 +307,14 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   });
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
-      <DropUpload preset="logo"
-        setImage={setDataForm}
-        EditPreview={preview}
-      />
-      <div>
+    <form onSubmit={handleSubmit} className={page ? "grid md:grid-cols-2 gap-x-6 gap-y-3 w-full" : "flex flex-col gap-2 w-full mt-4"}>
+      <div className={page ? "md:col-span-2 md:max-w-md" : ""}>
+        <DropUpload preset="logo"
+          setImage={setDataForm}
+          EditPreview={preview}
+        />
+      </div>
+      <div className={page ? "md:col-span-2" : ""}>
         <Label>Tipo de cliente</Label>
         <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit mt-1">
           <Button type="button" size="sm" variant={tipo === "pj" ? "default" : "ghost"} className="gap-2" onClick={() => trocarTipo("pj")}>
@@ -510,7 +524,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         />
       </div>
       
-      <div>
+      <div className={page ? "md:col-span-2" : ""}>
         <Label htmlFor="description">Descrição</Label>
         <Input
           id="description"
@@ -524,7 +538,7 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
 
       <Button
         type="submit"
-        className="w-full my-4"
+        className={page ? "md:col-span-2 md:w-fit md:justify-self-end mt-2" : "w-full my-4"}
         disabled={isPending || isPendingUpdate}
       >
         {isPending || isPendingUpdate
@@ -532,8 +546,8 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
             ? "Atualizando..."
             : "Registrando..."
           : formData
-          ? `Atualizar ${entity.name}`
-          : `Registrar ${entity.name}`}
+          ? page ? "Salvar alterações" : `Atualizar ${entity.name}`
+          : page ? "Cadastrar e continuar" : `Registrar ${entity.name}`}
       </Button>
     </form>
   );

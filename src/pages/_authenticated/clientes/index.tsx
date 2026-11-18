@@ -1,19 +1,16 @@
-import { createFileRoute  } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 // Serviços
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
 import Pagination from "@/components/general-components/Pagination";
-import Dialog from "@/components/general-components/Dialog";
 // Template Page
 import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
 import ItemSkeleton from "./-skeletons/ItemSkeleton";
 import ItemList from "./-components/CustomerItem";
-import Form from "./-components/CustomerForm";
 import SearchForm from "./-components/CustomerSeach";
-import CustomerContacts from "@/pages/_authenticated/clientes/-clientes-contatos";
 // Interfaces
 import { IEntity } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
@@ -25,9 +22,7 @@ export const Route = createFileRoute('/_authenticated/clientes/')({
 function List() {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
-  const [openForm, setOpenForm] = useState(false);
-  const [openContactModal, setOpenContactModal] = useState(false);
-  const [formData, setFormData] = useState<IEntity>();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useState({
     limit: 10,
     page: 0,
@@ -102,8 +97,7 @@ function List() {
         searchParams={searchParams}
         onlimitChange={handleLimitChange}
         openSearch={setOpenSearch}
-        openForm={setOpenForm}
-        setFormData={setFormData} 
+        openForm={() => navigate({ to: "/clientes/$customerId", params: { customerId: "novo" } })}
         setFormType={() => {}}
         iconForm="plus"
       />
@@ -116,20 +110,6 @@ function List() {
         description={`Preencha os campos abaixo para filtrar ${entity.pluralName}.`}
         side="left"
         form={ <SearchForm onSubmit={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
-      />
-
-      {/* Formulário de cadastro */}
-      <SideForm
-        openSheet={openForm}
-        setOpenSheet={setOpenForm}
-        title={formData 
-          ? `Editar ${entity.name} ${formData.name}`
-          : `Cadastrar ${entity.name}`}
-        description={formData 
-          ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
-          : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
-        side="right"
-        form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} /> }
       />
 
       {/* Listagem de items */}
@@ -147,30 +127,15 @@ function List() {
                 item={item} 
                 entity={entity}
                 index={i} 
-                setFormData={setFormData} 
-                setOpenForm={setOpenForm}
-                openContactModal={setOpenContactModal}
               />
             ))
           : (
             <div className="w-full flex justify-center items-center font-medium text-primary py-4 rounded border border-primary">
-              <p>Nenhum usuário encontrado!</p>
+              <p>Nenhum cliente encontrado!</p>
             </div>
           )
         }
       </div>
-
-      {/* Modal de contato */}
-      <Dialog 
-        open={openContactModal}
-        onOpenChange={setOpenContactModal}
-        showBttn={false}
-        showHeader={true}
-        title="Contato"
-        description="Gestão de contatos do cliente."
-      >
-        <CustomerContacts customerId={formData?.id || 0} />
-      </Dialog>
 
       {/* Paginação */}
       <div className="mt-4">

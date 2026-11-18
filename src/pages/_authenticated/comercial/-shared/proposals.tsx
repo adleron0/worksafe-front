@@ -69,7 +69,8 @@ export interface ProposalCalc {
 
 export interface CustomerOption {
   id: number; name: string; corporateName: string; cnpj: string; email: string; phone: string;
-  contacts?: Array<{ id: number; name: string; email: string; phone: string }>;
+  // vem com o comercial padrão primeiro (é o que a proposta nova usa)
+  contacts?: Array<{ id: number; name: string; email: string; phone: string; isCommercial?: boolean; defaultCommercial?: boolean }>;
 }
 
 export interface Proposal {

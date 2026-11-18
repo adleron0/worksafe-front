@@ -27,6 +27,7 @@ function NewProposalPage() {
 
   const { mutate: create, isPending } = useMutation({
     mutationFn: () => {
+      // a API manda o contato comercial padrão primeiro
       const contact = customer?.contacts?.[0];
       return commercialApi.post<Proposal>("proposals", {
         kind, customerId: customer!.id, title: "Nova proposta",

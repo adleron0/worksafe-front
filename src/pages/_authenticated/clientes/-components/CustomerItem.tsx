@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 // Serviços
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { patch } from "@/services/api";
@@ -12,9 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
-import { RecordFilesPanel } from "../../arquivos/-shared/record-files";
 import Icon from "@/components/general-components/Icon";
 import HeaderRow from "@/components/general-components/HeaderRow";
 // Interfaces
@@ -26,16 +24,14 @@ interface ItemsProps {
   item: IEntity;
   index: number;
   entity: IDefaultEntity;
-  setFormData: (data: IEntity) => void;
-  setOpenForm: (open: boolean) => void;
-  openContactModal: (open: boolean) => void;
 }
 
-const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openContactModal }: ItemsProps) => {
+const CustomerItem = ({ item, index, entity }: ItemsProps) => {
+  const navigate = useNavigate();
+  const open = () => navigate({ to: "/clientes/$customerId", params: { customerId: String(item.id) } });
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
-  const [filesOpen, setFilesOpen] = useState(false);
 
    // Mutation para inativar
   const { mutate: deactivate } = useMutation({
@@ -126,7 +122,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
             <AvatarFallback>{item.name[0]}</AvatarFallback>
           </Avatar>
           <div className="break-all">
-            <h2 className="text-sm font-semibold">{item.name}</h2>
+            <Link to="/clientes/$customerId" params={{ customerId: String(item.id) }} className="text-sm font-semibold hover:underline">{item.name}</Link>
             <p className="text-sm text-gray-600 dark:text-gray-100">{formatDocumento(item.cnpj)}</p>
           </div>
         </div>
@@ -188,42 +184,13 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
             </DropdownMenuTrigger>
             <DropdownMenuContent>
 
-              { can(`update_${entity.ability}`) && (
-                  <Button 
-                    variant="ghost" 
-                    className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
-                    onClick={() => {
-                      setFormData(item);
-                      setOpenForm(true);
-                    }}
-                  >
-                    <Icon name="edit-3" className="w-3 h-3" /> 
-                    <p>Editar</p>
-                  </Button>
-                )
-              }
-
-              <DropdownMenuItem className="p-0" onSelect={() => setFilesOpen(true)}>
+              <DropdownMenuItem className="p-0" onSelect={open}>
                 <Button variant="ghost" className="flex justify-start gap-2 p-2 items-baseline w-full h-fit">
-                  <Icon name="folder-open" className="w-3 h-3" />
-                  <p>Arquivos</p>
+                  <Icon name="square-arrow-out-up-right" className="w-3 h-3" />
+                  <p>Abrir (dados, contatos e arquivos)</p>
                 </Button>
               </DropdownMenuItem>
 
-              <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                <Button 
-                  variant="ghost" 
-                  className="flex justify-start gap-2 p-2 items-baseline w-full h-fit"
-                  onClick={() => {
-                    openContactModal(true);
-                    setFormData(item);
-                  }}
-                >
-                  <Icon name="phone" className="w-3 h-3" /> 
-                  <p>Contados</p>
-                </Button>
-              </DropdownMenuItem>
-              
               {
                 item.active ? (
                   can(`inactive_${entity.ability}`) && (
@@ -255,17 +222,6 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
           </DropdownMenu>
         </div>
       </div>
-      {filesOpen && (
-        <Dialog open onOpenChange={(open) => { if (!open) setFilesOpen(false); }}>
-          <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Arquivos de {item.name}</DialogTitle>
-              <DialogDescription>Contrato, cadastro, certidões e o que mais for deste cliente.</DialogDescription>
-            </DialogHeader>
-            <RecordFilesPanel entity="customer" entityId={Number(item.id)} title="Arquivos do cliente" hint="Quem vê o cliente vê os arquivos; quem pode editar o cliente envia e apaga." className="border-0 p-0" />
-          </DialogContent>
-        </Dialog>
-      )}
     </>
   )
 };

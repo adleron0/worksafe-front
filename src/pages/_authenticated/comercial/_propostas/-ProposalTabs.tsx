@@ -103,7 +103,7 @@ export function ProposalInfoStep({ draft, setDraft, options, readOnly, canSeeCos
             {!readOnly && Boolean(customer.contacts?.length) && (
               <F label="Usar um contato cadastrado">
                 <Select name="contact" state="" modal={false} placeholder="Escolha para preencher os campos abaixo"
-                  options={customer.contacts!.map((c) => ({ id: c.id, name: `${c.name} — ${c.email}` }))}
+                  options={customer.contacts!.map((c) => ({ id: c.id, name: `${c.name} — ${c.email}${c.defaultCommercial ? " (comercial padrão)" : c.isCommercial ? " (comercial)" : ""}` }))}
                   onChange={(_, id) => {
                     const contact = customer.contacts!.find((c) => String(c.id) === String(id));
                     if (contact) setDraft((d) => ({ ...d, contactName: contact.name, contactEmail: contact.email, contactPhone: contact.phone }));

@@ -63,7 +63,11 @@ const Item = ({ item, index, entity, setFormData, setOpenForm, selected, onSelec
   });
 
   const name = item.customer?.name || item.trainee?.name || item.subscription?.name || "-";
-  const contact = item.trainee?.email || item.subscription?.email || item.customer?.email;
+  // cliente com contato financeiro padrão: a cobrança vai para ele
+  const billingContact = item.customer?.contacts?.find((c) => c.defaultFinancial);
+  const fiscalContact = item.customer?.contacts?.find((c) => c.defaultFiscal);
+  const contact = item.trainee?.email || item.subscription?.email
+    || (billingContact ? `Cobrança: ${billingContact.name} · ${billingContact.email}` : item.customer?.email);
   const showMenu = canUpdate || can(`inactive_${entity.ability}`) || can(`activate_${entity.ability}`);
 
   return (
@@ -173,6 +177,9 @@ const Item = ({ item, index, entity, setFormData, setOpenForm, selected, onSelec
             </>
           ) : (
             <p className="text-sm text-muted-foreground">Sem NF</p>
+          )}
+          {fiscalContact && (
+            <p className="text-xs text-muted-foreground break-all">Enviar para {fiscalContact.name} · {fiscalContact.email}</p>
           )}
           {item.invoiceUrl && (
             <a href={item.invoiceUrl} target="_blank" rel="noreferrer" className="text-xs underline text-primary w-fit">

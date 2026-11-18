@@ -35,6 +35,7 @@ import { Route as AuthenticatedInventariosDashboardRouteImport } from './pages/_
 import { Route as AuthenticatedInventariosAutorizadosRouteImport } from './pages/_authenticated/inventarios/autorizados'
 import { Route as AuthenticatedInventariosAccessControlRouteImport } from './pages/_authenticated/inventarios/access-control'
 import { Route as AuthenticatedETagRouteImport } from './pages/_authenticated/e/$tag'
+import { Route as AuthenticatedClientesCustomerIdRouteImport } from './pages/_authenticated/clientes/$customerId'
 import { Route as AuthenticatedUsuariosUsuariosIndexRouteImport } from './pages/_authenticated/usuarios/_usuarios/index'
 import { Route as AuthenticatedSuprimentosLocacoesIndexRouteImport } from './pages/_authenticated/suprimentos/locacoes/index'
 import { Route as AuthenticatedSuprimentosEstoqueIndexRouteImport } from './pages/_authenticated/suprimentos/estoque/index'
@@ -272,6 +273,12 @@ const AuthenticatedETagRoute = AuthenticatedETagRouteImport.update({
   path: '/e/$tag',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedClientesCustomerIdRoute =
+  AuthenticatedClientesCustomerIdRouteImport.update({
+    id: '/clientes/$customerId',
+    path: '/clientes/$customerId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedUsuariosUsuariosIndexRoute =
   AuthenticatedUsuariosUsuariosIndexRouteImport.update({
     id: '/usuarios/_usuarios/',
@@ -872,6 +879,7 @@ export interface FileRoutesByFullPath {
   '/student/profile': typeof StudentProfileRoute
   '/': typeof IndexIndexRoute
   '/student/': typeof StudentIndexRoute
+  '/clientes/$customerId': typeof AuthenticatedClientesCustomerIdRoute
   '/e/$tag': typeof AuthenticatedETagRoute
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
@@ -995,6 +1003,7 @@ export interface FileRoutesByTo {
   '/student/profile': typeof StudentProfileRoute
   '/': typeof IndexIndexRoute
   '/student': typeof StudentIndexRoute
+  '/clientes/$customerId': typeof AuthenticatedClientesCustomerIdRoute
   '/e/$tag': typeof AuthenticatedETagRoute
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
@@ -1122,6 +1131,7 @@ export interface FileRoutesById {
   '/student/profile': typeof StudentProfileRoute
   '/_index/': typeof IndexIndexRoute
   '/student/': typeof StudentIndexRoute
+  '/_authenticated/clientes/$customerId': typeof AuthenticatedClientesCustomerIdRoute
   '/_authenticated/e/$tag': typeof AuthenticatedETagRoute
   '/_authenticated/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/_authenticated/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
@@ -1248,6 +1258,7 @@ export interface FileRouteTypes {
     | '/student/profile'
     | '/'
     | '/student/'
+    | '/clientes/$customerId'
     | '/e/$tag'
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
@@ -1371,6 +1382,7 @@ export interface FileRouteTypes {
     | '/student/profile'
     | '/'
     | '/student'
+    | '/clientes/$customerId'
     | '/e/$tag'
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
@@ -1497,6 +1509,7 @@ export interface FileRouteTypes {
     | '/student/profile'
     | '/_index/'
     | '/student/'
+    | '/_authenticated/clientes/$customerId'
     | '/_authenticated/e/$tag'
     | '/_authenticated/inventarios/access-control'
     | '/_authenticated/inventarios/autorizados'
@@ -1801,6 +1814,13 @@ declare module '@tanstack/react-router' {
       path: '/e/$tag'
       fullPath: '/e/$tag'
       preLoaderRoute: typeof AuthenticatedETagRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/clientes/$customerId': {
+      id: '/_authenticated/clientes/$customerId'
+      path: '/clientes/$customerId'
+      fullPath: '/clientes/$customerId'
+      preLoaderRoute: typeof AuthenticatedClientesCustomerIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/usuarios/_usuarios/': {
@@ -2495,6 +2515,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedBuildingRoute: typeof AuthenticatedBuildingRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedClientesCustomerIdRoute: typeof AuthenticatedClientesCustomerIdRoute
   AuthenticatedETagRoute: typeof AuthenticatedETagRoute
   AuthenticatedInventariosAccessControlRoute: typeof AuthenticatedInventariosAccessControlRoute
   AuthenticatedInventariosAutorizadosRoute: typeof AuthenticatedInventariosAutorizadosRoute
@@ -2606,6 +2627,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBuildingRoute: AuthenticatedBuildingRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
+  AuthenticatedClientesCustomerIdRoute: AuthenticatedClientesCustomerIdRoute,
   AuthenticatedETagRoute: AuthenticatedETagRoute,
   AuthenticatedInventariosAccessControlRoute:
     AuthenticatedInventariosAccessControlRoute,

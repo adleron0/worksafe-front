@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { Tip, dateBr, errorMessage } from "../../comercial/-shared/commercial";
 import { ACTIVITY_PERMISSION, ActivityPanel } from "../../comercial/-shared/activities";
 import { formatCnpj } from "../../comercial/-shared/proposals";
+import { docLabel } from "@/utils/documento";
 import {
   ChecklistItem, MoveDialog, ORDERS_ABILITY, ORDERS_KEY, ORDER_KEY, ORDER_STAGES, ORDER_STATUS_LABEL, Order, OrderOptions, OrderStageBadge, OrderStatus, RDO_PERMISSION, ScopeItem, TeamMember,
   isForward, moveLabel, nextStage, ordersApi,
@@ -311,7 +312,7 @@ function OrderPage() {
           <section className="rounded-lg border p-4 text-sm grid gap-1">
             <h2 className="font-semibold text-base">Cliente</h2>
             <p className="font-medium">{order.customer?.corporateName}</p>
-            {order.customer?.cnpj && <p className="text-muted-foreground">CNPJ {formatCnpj(order.customer.cnpj)}</p>}
+            {order.customer?.cnpj && <p className="text-muted-foreground">{docLabel(order.customer.cnpj)} {formatCnpj(order.customer.cnpj)}</p>}
             <p className="text-muted-foreground">{[order.customer?.email, order.customer?.phone].filter(Boolean).join(" · ")}</p>
             {order.proposal && can("view_comercial") && (
               <p className="mt-2">Proposta <Link to="/comercial/propostas/$proposalId" params={{ proposalId: String(order.proposal.id) }} className="underline font-medium">{order.proposal.number}</Link></p>

@@ -141,12 +141,12 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSubmit, onClear, openSheet, p
 
       {/* CNPJ */}
       <div>
-        <Label htmlFor="cnpj">CNPJ</Label>
+        <Label htmlFor="cnpj">CNPJ ou CPF</Label>
         <Input
           id="cnpj"
           name="cnpj"
-          placeholder="00.000.000/0000-00"
-          format="cnpj"
+          placeholder="Digite o CNPJ ou CPF"
+          format="cpfcnpj"
           value={searchData.cnpj}
           onValueChange={handleChange}
         />

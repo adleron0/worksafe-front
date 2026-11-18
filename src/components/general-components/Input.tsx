@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { formatCPF, unformatCPF } from "@/utils/cpf-mask";
 import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
+import { formatDocumento } from "@/utils/documento";
 import { formatPHONE } from "@/utils/phone-mask";
 import { formatCEP } from "@/utils/cep-mask";
 import Icon from "@/components/general-components/Icon";
@@ -17,7 +18,7 @@ type TextareaAttributes = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
 type MergedAttributes = InputAttributes & Omit<TextareaAttributes, keyof InputAttributes>;
 
 export interface FormattedInputProps extends MergedAttributes {
-  format?: "cpf" | "cnpj" | "phone" | "cep" | "currency" | "none";
+  format?: "cpf" | "cnpj" | "cpfcnpj" | "phone" | "cep" | "currency" | "none";
   onValueChange?: (name: string, value: string | number) => void; // Allow number for currency unformat
   unformat?: boolean;
   type?: string; // Include "textArea"
@@ -53,6 +54,7 @@ const Input = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, Formatted
       switch (format) {
         case "cpf": formattedValue = formatCPF(val); break;
         case "cnpj": formattedValue = formatCNPJ(val); break;
+        case "cpfcnpj": formattedValue = formatDocumento(val); break;
         case "phone": formattedValue = formatPHONE(val); break;
         case "cep": formattedValue = formatCEP(val); break;
         default: formattedValue = val;
@@ -91,6 +93,7 @@ const Input = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, Formatted
       switch (format) {
         case "cpf": unformattedValue = unformatCPF(inputValue).slice(0, 11); break;
         case "cnpj": unformattedValue = unformatCNPJ(inputValue).slice(0, 14); break;
+        case "cpfcnpj": unformattedValue = unformatCNPJ(inputValue).slice(0, 14); break;
         case "phone": unformattedValue = inputValue.replace(/\D/g, '').slice(0, 11); break;
         case "cep": unformattedValue = inputValue.replace(/\D/g, '').slice(0, 8); break;
         default: unformattedValue = inputValue; // 'none' format

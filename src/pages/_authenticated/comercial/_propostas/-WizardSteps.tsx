@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 export type StepKey = "cliente" | "proposta" | "itens" | "pagamento" | "documento" | "envio";
 export const STEPS: Array<{ key: StepKey; title: string; heading: string; description: string }> = [
-  { key: "cliente", title: "Cliente", heading: "Para quem é a proposta", description: "Escolha o tipo e o cliente. Dá para filtrar pelo nome ou pelo CNPJ." },
+  { key: "cliente", title: "Cliente", heading: "Para quem é a proposta", description: "Escolha o tipo e o cliente. Dá para filtrar pelo nome, CNPJ ou CPF." },
   { key: "proposta", title: "Proposta", heading: "O que está sendo proposto", description: "Título, prazo e validade. É o cabeçalho da planilha." },
   { key: "itens", title: "Itens", heading: "Itens e valores", description: "Uma linha por item. O sistema sugere o valor; digite o valor final só se quiser outro." },
   { key: "pagamento", title: "Pagamento", heading: "Como o cliente vai pagar", description: "Use um atalho ou monte as parcelas. Elas viram as contas a receber quando houver contrato." },

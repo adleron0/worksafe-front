@@ -185,5 +185,8 @@ export const DUE_RULE_OPTIONS: Array<{ id: DueRule; name: string }> = [
   { id: "data_fixa", name: "Data fixa" },
 ];
 
+/** CNPJ (empresa) ou CPF (cliente pessoa física), formatado. */
 export const formatCnpj = (cnpj?: string) =>
-  cnpj && cnpj.length === 14 ? cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5") : cnpj ?? "";
+  cnpj && cnpj.length === 14 ? cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")
+    : cnpj && cnpj.length === 11 ? cnpj.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4")
+    : cnpj ?? "";

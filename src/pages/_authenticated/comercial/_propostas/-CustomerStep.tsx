@@ -49,7 +49,7 @@ export default function CustomerStep({ kind, onKind, selected, onSelect, readOnl
       <label className="grid gap-1.5">
         <span className="text-sm font-medium">Cliente</span>
         <Input name="customerSearch" value={term} maxLength={120} disabled={readOnly} onValueChange={(_, value) => setTerm(String(value))}
-          placeholder="Digite o nome ou o CNPJ para filtrar" icon="search" aria-label="Filtrar clientes" />
+          placeholder="Digite o nome, CNPJ ou CPF para filtrar" icon="search" aria-label="Filtrar clientes" />
       </label>
 
       <ul className="grid gap-1" role="listbox" aria-label="Clientes">

@@ -21,6 +21,7 @@ import {
 import { BillDialog, CustomerOrderCard } from "../-shared/billing";
 import { DocumentPaper } from "../-shared/document";
 import { KIND_LABEL, formatCnpj } from "../-shared/proposals";
+import { docLabel } from "@/utils/documento";
 
 export const Route = createFileRoute("/_authenticated/comercial/_contratos/contratos_/$contractId")({
   component: ContractPage,
@@ -215,7 +216,7 @@ function ContractPage() {
           <section className="rounded-lg border p-4 text-sm grid gap-1">
             <h2 className="font-semibold text-base">Cliente</h2>
             <p className="font-medium">{contract.customer.corporateName}</p>
-            <p className="text-muted-foreground">CNPJ {formatCnpj(contract.customer.cnpj)}</p>
+            <p className="text-muted-foreground">{docLabel(contract.customer.cnpj)} {formatCnpj(contract.customer.cnpj)}</p>
             <p className="text-muted-foreground">{contract.customer.email} · {contract.customer.phone}</p>
             {contract.proposal && (
               <p className="mt-2">Proposta <Link to="/comercial/propostas/$proposalId" params={{ proposalId: String(contract.proposal.id) }} className="underline font-medium">{contract.proposal.number}</Link></p>

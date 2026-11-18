@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { patch } from "@/services/api";
 import { useLoader } from "@/context/GeneralContext";
 import { toast } from "@/hooks/use-toast";
-import { formatCNPJ } from "@/utils/cpnj-mask";
+import { formatDocumento } from "@/utils/documento";
 import { formatPHONE } from "@/utils/phone-mask";
 import useVerify from "@/hooks/use-verify";
 // Template Page
@@ -127,7 +127,7 @@ const CustomerItem = ({ item, index, entity, setFormData, setOpenForm, openConta
           </Avatar>
           <div className="break-all">
             <h2 className="text-sm font-semibold">{item.name}</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-100">{formatCNPJ(item.cnpj)}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-100">{formatDocumento(item.cnpj)}</p>
           </div>
         </div>
 

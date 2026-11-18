@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import HeaderRow from "@/components/general-components/HeaderRow";
+import { SortButton } from "@/components/general-components/SortButton";
 import RichTextViewer from "@/components/general-components/RichTextViewer";
 import { IPost } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -25,9 +26,12 @@ interface ItemsProps {
   entity: IDefaultEntity;
   setFormData: (data: IPost) => void;
   setOpenForm: (open: boolean) => void;
+  /** ordenação da lista ("campo:asc" | "campo:desc" | ""), setinhas nos títulos das colunas */
+  order?: string;
+  onSort?: (order: string) => void;
 }
 
-const PostItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => {
+const PostItem = ({ item, index, entity, setFormData, setOpenForm, order = "", onSort }: ItemsProps) => {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
@@ -92,11 +96,18 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps)
   return (
     <>
       <HeaderRow show={index === 0}>
-        <div className="w-3/12">Post</div>
+        <div className="w-3/12 flex items-center gap-3">
+          {onSort ? (
+            <>
+              <SortButton label="Post" field="title" order={order} onSort={onSort} />
+              <SortButton label="Data" field="publishedAt" order={order} onSort={onSort} />
+            </>
+          ) : "Post"}
+        </div>
         <div className="w-2/12">Autor</div>
         <div className="w-2/12">Categoria</div>
         <div className="w-1/12">Destaque</div>
-        <div className="w-1/12">Views</div>
+        <div className="w-1/12">{onSort ? <SortButton label="Views" field="viewCount" order={order} onSort={onSort} /> : "Views"}</div>
         <div className="w-1/12">Status</div>
         <div className="w-2/12 text-right">Ações</div>
       </HeaderRow>

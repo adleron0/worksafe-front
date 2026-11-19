@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
 import {
-  Defaults, NumField, RentalDefaults, RentalPreview, RentalPresetRow, ResultRow, Row, Tip, commercialApi, errorMessage, money, percent,
+  Defaults, NumField, RentalDefaults, RentalPreview, RentalPresetRow, RentalStockRow, ResultRow, Row, Tip, commercialApi, errorMessage, money, percent,
 } from "../-shared/commercial";
 import { stockApi } from "../../suprimentos/-shared/stock";
 
@@ -48,7 +49,9 @@ export default function RentalTab({ defaults, setDefaults, disabled, dirty }: Pr
 
   const [preview, setPreview] = useState<RentalPreview | null>(null);
   const [error, setError] = useState("");
-  const [selected, setSelected] = useState("tripe");
+  const [selected, setSelected] = useState("");
+  // itens do estoque marcados "Alugável"; a pesquisa de 18/11/2026 fica só de referência
+  const [showReference, setShowReference] = useState(false);
   const sequence = useRef(0);
   const serialized = JSON.stringify({ rental, margin });
   useEffect(() => {
@@ -76,7 +79,13 @@ export default function RentalTab({ defaults, setDefaults, disabled, dirty }: Pr
       <NumField id={`rental-${key}`} kind="percent" value={rental[key] as number} disabled={disabled} onChange={(value) => set(key, value as never)} />
     </Row>
   );
-  const row = preview?.presets.find((p) => p.key === selected) ?? preview?.presets[0];
+  const items = preview?.items ?? [];
+  const reference = !!preview && (showReference || !items.length);
+  const priced = (r: RentalStockRow): r is RentalStockRow & RentalPresetRow => !r.error && r.cost !== undefined;
+  const rows: Array<RentalPresetRow | RentalStockRow> = reference ? preview?.presets ?? [] : items;
+  const pricedRows = rows.filter((r): r is RentalPresetRow => !("itemId" in r) || priced(r));
+  const row = pricedRows.find((p) => p.key === selected) ?? pricedRows[0];
+  const canCreateItem = can("create_itens_estoque");
 
   return (
     <div className="grid gap-4">
@@ -92,18 +101,41 @@ export default function RentalTab({ defaults, setDefaults, disabled, dirty }: Pr
           <div>
             <h3 className="font-semibold">Preço sugerido por equipamento</h3>
             <p className="text-xs text-muted-foreground max-w-3xl">
-              Valores de partida da pesquisa de 18/11/2026 (tabela do SICRO, lojas e manuais). Cada item do estoque pode trocar valor, vida útil,
-              inspeção e ocupação no próprio cadastro. Margem {percent(margin, 0)} · imposto {percent(preview?.tax.inside, 2)}{preview ? ` (${preview.tax.profile})` : ""}.
+              {reference
+                ? "Referência da pesquisa de 18/11/2026 (tabela do SICRO, lojas e manuais), para comparar e para cadastrar o equipamento no estoque."
+                : "Os itens do estoque marcados como alugáveis. Valor do bem, vida útil, inspeção e ocupação vêm do cadastro de cada item; o que estiver vazio lá usa os parâmetros comuns abaixo."}
+              {" "}Margem {percent(margin, 0)} · imposto {percent(preview?.tax.inside, 2)}{preview ? ` (${preview.tax.profile})` : ""}.
             </p>
           </div>
-          {can("update_itens_estoque") && (
+          <div className="flex flex-wrap gap-2">
+          {items.length > 0 && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setShowReference((v) => !v)}>
+              <Icon name={showReference ? "package" : "book-open"} className="w-4 h-4 mr-1" />
+              {showReference ? `Ver itens do estoque (${items.length})` : "Ver referência da pesquisa"}
+            </Button>
+          )}
+          {canCreateItem && (
+            <Button type="button" variant="outline" size="sm" asChild>
+              <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: "novo" }} search={{ locacao: "1" }}>
+                <Icon name="plus" className="w-4 h-4 mr-1" /> Cadastrar equipamento
+              </Link>
+            </Button>
+          )}
+          {can("update_itens_estoque") && items.length > 0 && (
             <Tip text={dirty ? "Salve a base antes: os itens usam a base salva." : "Grava dia, semana e mês de cada item alugável no modo calculado."}>
               <span><Button type="button" variant="outline" size="sm" disabled={dirty || refreshing} onClick={() => refresh()}>
                 <Icon name="refresh-cw" className="w-4 h-4 mr-1" /> Atualizar preços dos itens do estoque
               </Button></span>
             </Tip>
           )}
+          </div>
         </div>
+        {preview && !items.length && (
+          <p className="mx-4 mb-2 text-sm rounded-md bg-muted px-3 py-2">
+            Nenhum item do estoque está marcado como <b>alugável</b>. Os valores abaixo são só referência da pesquisa.
+            {canCreateItem ? " Use \"Cadastrar\" na linha do equipamento para criar o item já preenchido com eles." : ""}
+          </p>
+        )}
         {error && <p className="mx-4 mb-2 text-sm rounded-md border border-destructive text-destructive px-3 py-2">Não dá para calcular: {error}</p>}
         <div className={cn("overflow-x-auto", error && "opacity-50")}>
           <table className="w-full text-sm">
@@ -122,26 +154,53 @@ export default function RentalTab({ defaults, setDefaults, disabled, dirty }: Pr
               </tr>
             </thead>
             <tbody>
-              {(preview?.presets ?? []).map((p) => (
-                <tr key={p.key} className={cn("border-b last:border-b-0 cursor-pointer hover:bg-muted/40", p.key === row?.key && "bg-muted/60")}
-                  onClick={() => setSelected(p.key)}>
+              {rows.map((p) => {
+                const stock = "itemId" in p ? p : null;
+                if (stock && !priced(stock)) return (
+                  <tr key={p.key} className="border-b last:border-b-0">
+                    <td className="px-4 py-2">
+                      <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: String(stock.itemId) }} className="font-medium hover:underline">{p.label}</Link>
+                    </td>
+                    <td colSpan={9} className="px-2 py-2 text-sm text-amber-700 dark:text-amber-300">
+                      {stock.error?.replace(`${p.label}: `, "").replace(/^./, (c) => c.toUpperCase())} · <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: String(stock.itemId) }} className="underline">completar o cadastro</Link>
+                    </td>
+                  </tr>
+                );
+                const r = p as RentalPresetRow;
+                return (
+                <tr key={r.key} className={cn("border-b last:border-b-0 cursor-pointer hover:bg-muted/40", r.key === row?.key && "bg-muted/60")}
+                  onClick={() => setSelected(r.key)}>
                   <td className="px-4 py-2">
-                    <span className="font-medium">{p.label}</span>
-                    {p.source && <span className="block text-xs text-muted-foreground">{p.source}</span>}
+                    {stock ? (
+                      <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: String(stock.itemId) }} className="font-medium hover:underline" onClick={(e) => e.stopPropagation()}>{r.label}</Link>
+                    ) : <span className="font-medium">{r.label}</span>}
+                    {r.source && <span className="block text-xs text-muted-foreground">{r.source}</span>}
+                    {stock?.manual && (
+                      <span className="block text-xs text-muted-foreground">
+                        Preço digitado no cadastro: {[stock.manual.mes != null && `${money(stock.manual.mes)}/mês`, stock.manual.semana != null && `${money(stock.manual.semana)}/semana`, stock.manual.dia != null && `${money(stock.manual.dia)}/dia`].filter(Boolean).join(" · ") || "vazio"}
+                      </span>
+                    )}
+                    {!stock && canCreateItem && (
+                      <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: "novo" }} search={{ locacao: r.key }} onClick={(e) => e.stopPropagation()}
+                        className="mt-0.5 inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                        <Icon name="plus" className="w-3 h-3" /> Cadastrar no estoque
+                      </Link>
+                    )}
                   </td>
-                  <td className="px-2 py-2 text-right tabular-nums">{money(p.cost.value)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{money(p.cost.ownMonthly)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{money(p.cost.perRentedMonth)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums font-semibold">{money(p.month)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{money(p.week)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{money(p.day)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{money(p.handling)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{money(r.cost.value)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{money(r.cost.ownMonthly)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{money(r.cost.perRentedMonth)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums font-semibold">{money(r.month)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{money(r.week)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{money(r.day)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{money(r.handling)}</td>
                   <td className="px-2 py-2 text-right">
-                    <span className={cn("rounded px-1.5 py-0.5 text-xs tabular-nums", MARKET_TONE[p.market])}>{percent(p.valueShare, 1)}</span>
+                    <span className={cn("rounded px-1.5 py-0.5 text-xs tabular-nums", MARKET_TONE[r.market])}>{percent(r.valueShare, 1)}</span>
                   </td>
-                  <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">{money(p.monthWithServiceTax)}</td>
+                  <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">{money(r.monthWithServiceTax)}</td>
                 </tr>
-              ))}
+                );
+              })}
               {!preview && !error && <tr><td colSpan={10} className="px-4 py-6 text-center text-muted-foreground">Calculando…</td></tr>}
             </tbody>
           </table>
@@ -150,7 +209,7 @@ export default function RentalTab({ defaults, setDefaults, disabled, dirty }: Pr
 
       {row && (
         <div className="grid lg:grid-cols-2 gap-4">
-          <Card title={`Conta aberta — ${row.label}`} description="Clique numa linha da tabela para ver outro equipamento.">
+          <Card title={`Conta aberta — ${row.label}`} description={reference ? "Referência da pesquisa. Clique numa linha da tabela para ver outro equipamento." : "Clique numa linha da tabela para ver outro equipamento."}>
             <ResultRow label="Depreciação (valor − residual) ÷ vida" value={money(row.cost.depreciation)} />
             <ResultRow label="Custo do capital parado" value={money(row.cost.capital)} />
             <ResultRow label="Seguro" value={money(row.cost.insurance)} />

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
@@ -18,10 +18,10 @@ import { cn } from "@/lib/utils";
 import { NumField, dateBr, errorMessage, money } from "../../comercial/-shared/commercial";
 import { PURCHASE_STATUS_LABEL, PurchaseStatus } from "../-shared/purchases";
 import {
-  DueBadge, HOLDER_LABEL, ITEM_KINDS, ItemDetail, ItemKind, ItemPurchase, KIND_FLAGS, KardexRow, LOT_STATUS_LABEL, PERM_ADJUST, PERM_MOVE, Pill, STOCK_ABILITY, STOCK_KEYS, TRACKING_LABEL, TRACKING_OPTIONS, Tracking, kindOf, qty, stockApi, toOptions, useStockOptions,
+  DueBadge, HOLDER_LABEL, ITEM_KINDS, ItemDetail, ItemKind, ItemPurchase, KIND_FLAGS, KardexRow, LOT_STATUS_LABEL, PERM_ADJUST, PERM_MOVE, Pill, RentalPreset, STOCK_ABILITY, STOCK_KEYS, TRACKING_LABEL, TRACKING_OPTIONS, Tracking, kindOf, qty, stockApi, toOptions, useStockOptions,
 } from "../-shared/stock";
 import { MovementDetailDialog, NewMovementDialog } from "../-shared/stock-movements";
-import { ItemRentalSection, RentalDraft, rentalDraftOf, rentalPayload } from "../-shared/item-rental";
+import { ItemRentalSection, RentalDraft, presetPatch, rentalDraftOf, rentalPayload } from "../-shared/item-rental";
 import { RecordFilesPanel } from "../../arquivos/-shared/record-files";
 import { DueStateBadge, EQUIP_KEYS, PrintLabelsDialog, UnitRow, UnitStatusBadge } from "../-shared/equipment";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -30,9 +30,11 @@ export const Route = createFileRoute("/_authenticated/suprimentos/estoque/itens_
   component: ItemPage,
   // criado=1: acabou de cadastrar, oferece "Dar entrada agora"
   // criado: acabou de cadastrar (oferece "Dar entrada"); tipo: já abre com o tipo escolhido (ex.: vindo de Equipamentos)
-  validateSearch: (search: Record<string, unknown>): { criado?: "1"; tipo?: string } => ({
+  // locacao: novo item alugável, vindo da base de cálculo ("1" ou a chave do modelo da pesquisa)
+  validateSearch: (search: Record<string, unknown>): { criado?: "1"; tipo?: string; locacao?: string } => ({
     ...(search.criado === "1" || search.criado === 1 ? { criado: "1" as const } : {}),
     ...(typeof search.tipo === "string" && search.tipo ? { tipo: search.tipo } : {}),
+    ...((typeof search.locacao === "string" && search.locacao) || search.locacao === 1 ? { locacao: String(search.locacao) } : {}),
   }),
 });
 
@@ -77,13 +79,14 @@ function ItemPage() {
   const { can } = useVerify();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { criado, tipo } = Route.useSearch();
-  const initialKind: ItemKind = ITEM_KINDS.some((option) => option.id === tipo) ? (tipo as ItemKind) : "consumivel";
-  const [draft, setDraft] = useState<Draft | null>(isNew ? withKind(draftOf(), initialKind) : null);
+  const { criado, tipo, locacao } = Route.useSearch();
+  const rentalNew = isNew && !!locacao;
+  const initialKind: ItemKind = ITEM_KINDS.some((option) => option.id === tipo) ? (tipo as ItemKind) : rentalNew ? "ferramenta" : "consumivel";
+  const [draft, setDraft] = useState<Draft | null>(isNew ? { ...withKind(draftOf(), initialKind), rentable: rentalNew } : null);
   const [kind, setKind] = useState<ItemKind>(initialKind);
   // a categoria sugere o tipo do item enquanto a pessoa não escolheu um cartão
   const [kindTouched, setKindTouched] = useState(ITEM_KINDS.some((option) => option.id === tipo));
-  const [more, setMore] = useState(false);
+  const [more, setMore] = useState(rentalNew);
   const [entering, setEntering] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
@@ -94,6 +97,22 @@ function ItemPage() {
     enabled: !isNew,
   });
   useEffect(() => { if (item) setDraft(draftOf(item)); }, [item]);
+
+  // vindo da base de cálculo com um modelo da pesquisa: já abre alugável e preenchido
+  const { data: rentalPresets } = useQuery({
+    queryKey: ["stockRentalPresets"], queryFn: () => stockApi.get<RentalPreset[]>("items/rental-presets"), staleTime: Infinity,
+    enabled: rentalNew && locacao !== "1",
+  });
+  const presetApplied = useRef(false);
+  useEffect(() => {
+    const preset = rentalPresets?.find((p) => p.key === locacao);
+    if (!preset || presetApplied.current) return;
+    presetApplied.current = true;
+    const presetKind: ItemKind = preset.calibrationCost ? "calibravel" : preset.inspectionCost ? "reutilizavel" : "ferramenta";
+    setKind(presetKind);
+    setKindTouched(true);
+    setDraft((current) => current && ({ ...withKind(current, presetKind), rentable: true, name: current.name || preset.label, ...presetPatch(preset) }));
+  }, [rentalPresets, locacao]);
 
   const apply = (result: ItemDetail) => {
     queryClient.setQueryData([STOCK_KEYS.item, String(result.id)], result);

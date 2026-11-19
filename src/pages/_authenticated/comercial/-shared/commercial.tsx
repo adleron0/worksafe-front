@@ -89,7 +89,15 @@ export interface RentalPreview {
   date: string; margin: number; defaults: RentalDefaults;
   tax: { profile: string; regime: string; rental: boolean; inside: number; service: number };
   presets: RentalPresetRow[];
+  /** itens do estoque marcados "Alugável"; sem a conta (só label e error) quando o cadastro está incompleto */
+  items?: RentalStockRow[];
 }
+
+export type RentalStockRow = (RentalPresetRow | (Pick<RentalPresetRow, "key" | "label"> & Partial<Omit<RentalPresetRow, "key" | "label">>)) & {
+  itemId: number; priceMode: "calculado" | "manual"; rentMode: string; minRentPeriod: string | null;
+  manual: { dia: number | null; semana: number | null; mes: number | null } | null;
+  error: string | null;
+};
 
 export const COMMISSION_BASES = [{ id: "lucro", name: "Lucro" }, { id: "faturado", name: "Valor faturado" }];
 

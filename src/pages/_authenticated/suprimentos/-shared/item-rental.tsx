@@ -46,6 +46,15 @@ export type RentalFormDraft = RentalDraft & {
   requiresInspection: boolean; requiresCalibration: boolean;
 };
 
+/** Valores da pesquisa (plano 09) para o rascunho do item. */
+export const presetPatch = (preset: RentalPreset): Partial<RentalFormDraft> => ({
+  replacementValue: preset.value, economicLifeMonths: preset.lifeMonths, residualRate: preset.residualRate, maintenanceRate: preset.maintenanceRate,
+  occupancy: preset.occupancy, lossRate: preset.lossRate, handlingCost: preset.handlingCost, minRentPeriod: preset.minRentPeriod,
+  inspectionCost: preset.inspectionCost ?? null, calibrationCost: preset.calibrationCost ?? null,
+  ...(preset.inspectionCost ? { requiresInspection: true, inspectionIntervalDays: Math.round((preset.inspectionMonths ?? 6) * 30) } : {}),
+  ...(preset.calibrationCost ? { calibrationIntervalMonths: preset.calibrationMonths ?? 6 } : {}),
+});
+
 interface Props {
   draft: RentalFormDraft;
   set: (key: keyof RentalFormDraft, value: unknown) => void;
@@ -65,14 +74,7 @@ export function ItemRentalSection({ draft, set, apply, item, editable, canSeeCos
   const { data: itemOptions } = useItemOptions(null, editable);
   const fillFromPreset = (key: string) => {
     const preset = presets?.find((p) => p.key === key);
-    if (!preset) return;
-    apply({
-      replacementValue: preset.value, economicLifeMonths: preset.lifeMonths, residualRate: preset.residualRate, maintenanceRate: preset.maintenanceRate,
-      occupancy: preset.occupancy, lossRate: preset.lossRate, handlingCost: preset.handlingCost, minRentPeriod: preset.minRentPeriod,
-      inspectionCost: preset.inspectionCost ?? null, calibrationCost: preset.calibrationCost ?? null,
-      ...(preset.inspectionCost ? { requiresInspection: true, inspectionIntervalDays: Math.round((preset.inspectionMonths ?? 6) * 30) } : {}),
-      ...(preset.calibrationCost ? { calibrationIntervalMonths: preset.calibrationMonths ?? 6 } : {}),
-    });
+    if (preset) apply(presetPatch(preset));
   };
   const num = (key: keyof RentalDraft | "replacementValue", label: string, opts: { kind?: "money" | "percent"; digits?: number; placeholder?: string; hint?: string } = {}) => (
     <div>

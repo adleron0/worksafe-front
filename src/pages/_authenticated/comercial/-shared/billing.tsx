@@ -9,62 +9,104 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import CalendarPicker from "@/components/general-components/Calendar";
 import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
-import { NumField, commercialApi, dateBr, errorMessage, money, todayIso } from "./commercial";
+import { commercialApi, dateBr, errorMessage, money, todayIso } from "./commercial";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RetentionFields, RetentionRates, RetentionState, rebase, retentionList, retentionState, retentionSum } from "./retentions";
 import { Contract, ContractInstallment, CustomerOrder, PAYMENT_METHOD_OPTIONS, dueRuleText } from "./contracts";
 
-/** Registrar a NF de uma parcela: cria a conta a receber. */
-export function BillDialog({ contract, installment, onClose, onDone }: {
-  contract: { id: number; number: string; customer: { name: string }; customerOrder?: CustomerOrder | null };
-  installment: Pick<ContractInstallment, "id" | "number" | "total" | "value" | "suggestedDue" | "dueRule" | "dueDate" | "dueDays">;
+type BillContract = { id: number; number: string; customer: { name: string }; customerOrder?: CustomerOrder | null; retentionRates?: RetentionRates };
+type BillInstallment = Pick<ContractInstallment, "id" | "number" | "total" | "value" | "suggestedDue" | "dueRule" | "dueDate" | "dueDays">;
+const parcelLabel = (inst: Pick<ContractInstallment, "number" | "total">) => (inst.total > 1 ? `parcela ${inst.number}/${inst.total}` : "pagamento único");
+
+/**
+ * Registrar a NF de uma parcela: cria a conta a receber. Com `others` (as demais
+ * parcelas sem nota do contrato), dá para pôr várias parcelas na mesma nota:
+ * cada uma vira a sua conta a receber, com o vencimento próprio.
+ */
+export function BillDialog({ contract, installment, others = [], onClose, onDone }: {
+  contract: BillContract; installment: BillInstallment; others?: BillInstallment[];
   onClose: () => void; onDone: (contract: Contract) => void;
 }) {
-  const [form, setForm] = useState({ invoiceNumber: "", invoiceIssuedAt: todayIso(), dueDate: installment.suggestedDue, paymentMethod: "boleto", netValue: null as number | null });
+  const [form, setForm] = useState({ invoiceNumber: "", invoiceIssuedAt: todayIso(), paymentMethod: "boleto" });
+  const [extra, setExtra] = useState<number[]>([]);
+  const chosen = [installment, ...others.filter((o) => extra.includes(o.id))].sort((a, b) => a.number - b.number);
+  const [dues, setDues] = useState<Record<number, string>>(() => Object.fromEntries([installment, ...others].map((i) => [i.id, i.suggestedDue])));
+  const base = Math.round(chosen.reduce((sum, i) => sum + i.value, 0) * 100) / 100;
+  const [retentions, setRetentions] = useState<RetentionState>(() => retentionState(installment.value, contract.retentionRates));
   const [error, setError] = useState("");
+  const toggle = (id: number, on: boolean) => {
+    const next = on ? [...extra, id] : extra.filter((x) => x !== id);
+    setExtra(next);
+    const total = Math.round([installment, ...others.filter((o) => next.includes(o.id))].reduce((sum, i) => sum + i.value, 0) * 100) / 100;
+    setRetentions((state) => rebase(state, total));
+  };
   const { mutate, isPending } = useMutation({
-    mutationFn: () => commercialApi.post<Contract>(`contracts/${contract.id}/installments/${installment.id}/bill`, form),
-    onSuccess: (result) => { onDone(result); toast({ title: "Conta a receber criada", description: "A parcela já aparece em Financeiro → Contas a Receber.", variant: "success" }); onClose(); },
+    mutationFn: () => commercialApi.post<Contract>(`contracts/${contract.id}/installments/bill`, {
+      ...form, installmentIds: chosen.map((i) => i.id), dueDates: Object.fromEntries(chosen.map((i) => [i.id, dues[i.id]])), retentions: retentionList(retentions),
+    }),
+    onSuccess: (result) => {
+      onDone(result);
+      toast({ title: chosen.length > 1 ? `${chosen.length} contas a receber criadas` : "Conta a receber criada", description: "Já aparece em Financeiro → Contas a Receber.", variant: "success" });
+      onClose();
+    },
     onError: (err) => setError(errorMessage(err)),
   });
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!form.invoiceNumber.trim()) return setError("Informe o número da nota fiscal");
-    if (!form.invoiceIssuedAt || !form.dueDate) return setError("Informe a data da nota e o vencimento");
+    if (!form.invoiceIssuedAt || chosen.some((i) => !dues[i.id])) return setError("Informe a data da nota e o vencimento");
+    if (retentionSum(retentions) >= base) return setError("As retenções passam do valor da nota");
     setError(""); mutate();
   };
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Registrar nota fiscal — {installment.total > 1 ? `parcela ${installment.number}/${installment.total}` : "pagamento único"}</DialogTitle>
+          <DialogTitle>Registrar nota fiscal — {chosen.length > 1 ? `${chosen.length} parcelas` : parcelLabel(installment)}</DialogTitle>
           <DialogDescription>
-            {contract.number} · {contract.customer.name} · <b>{money(installment.value)}</b>. A nota é emitida fora do sistema; aqui você registra o número e a parcela vira conta a receber.
+            {contract.number} · {contract.customer.name} · <b>{money(base)}</b>. A nota é emitida fora do sistema; aqui você registra o número e {chosen.length > 1 ? "cada parcela vira uma conta a receber" : "a parcela vira conta a receber"}.
             {contract.customerOrder?.number
               ? <span className="block mt-1">Pedido do cliente para citar na nota: <b className="text-foreground">{contract.customerOrder.number}</b>.</span>
               : <span className="block mt-1">Esta venda está sem o número do pedido do cliente.</span>}
           </DialogDescription>
         </DialogHeader>
         <form className="grid gap-4" onSubmit={submit}>
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid sm:grid-cols-3 gap-3">
             <div><Label htmlFor="billNumber">Número da nota <span>*</span></Label>
               <ShadInput id="billNumber" className="mt-1" value={form.invoiceNumber} maxLength={60} autoFocus onChange={(event) => setForm((f) => ({ ...f, invoiceNumber: event.target.value }))} /></div>
             <div><Label>Data da nota <span>*</span></Label>
               <CalendarPicker mode="single" name="invoiceIssuedAt" className="mt-1 w-full" value={form.invoiceIssuedAt} fromYear={2024} toYear={2040}
                 onValueChange={(_, value) => setForm((f) => ({ ...f, invoiceIssuedAt: value ?? "" }))} /></div>
-            <div><Label>Vencimento <span>*</span></Label>
-              <CalendarPicker mode="single" name="dueDate" className="mt-1 w-full" value={form.dueDate} fromYear={2024} toYear={2040}
-                onValueChange={(_, value) => setForm((f) => ({ ...f, dueDate: value ?? "" }))} />
-              <p className="text-xs text-muted-foreground mt-1">Combinado: {dueRuleText(installment)}.</p></div>
             <div><Label>Forma de pagamento</Label>
               <div className="mt-1"><Select name="paymentMethod" state={form.paymentMethod} modal options={PAYMENT_METHOD_OPTIONS} onChange={(_, value) => setForm((f) => ({ ...f, paymentMethod: String(value) }))} /></div></div>
-            <div className="sm:col-span-2"><Label htmlFor="billNet">Valor líquido a receber (opcional)</Label>
-              <NumField id="billNet" kind="money" className="mt-1 sm:w-1/2" value={form.netValue} placeholder={String(installment.value).replace(".", ",")}
-                onChange={(netValue) => setForm((f) => ({ ...f, netValue }))} onEmpty={() => setForm((f) => ({ ...f, netValue: null }))} />
-              <p className="text-xs text-muted-foreground mt-1">Preencha se a nota tiver retenções (ISS, INSS, IR): é o que o cliente deposita de fato.</p></div>
           </div>
+          <div className="rounded-md border divide-y">
+            {[installment, ...others].sort((a, b) => a.number - b.number).map((inst) => {
+              const included = inst.id === installment.id || extra.includes(inst.id);
+              return (
+                <div key={inst.id} className="px-3 py-2 grid sm:grid-cols-[minmax(0,1fr)_8rem_12rem] items-center gap-2 text-sm">
+                  <label className="flex items-center gap-2 min-w-0">
+                    {others.length > 0 && (
+                      <Checkbox checked={included} disabled={inst.id === installment.id} aria-label={`Incluir a ${parcelLabel(inst)} nesta nota`}
+                        onCheckedChange={(on) => toggle(inst.id, on === true)} />
+                    )}
+                    <span className="truncate first-letter:uppercase">{parcelLabel(inst)} <span className="text-xs text-muted-foreground">· combinado: {dueRuleText(inst)}</span></span>
+                  </label>
+                  <span className="tabular-nums font-medium sm:text-right">{money(inst.value)}</span>
+                  {included
+                    ? <CalendarPicker mode="single" name={`due-${inst.id}`} className="w-full" value={dues[inst.id]} fromYear={2024} toYear={2040} placeholder="Vencimento"
+                        onValueChange={(_, value) => setDues((d) => ({ ...d, [inst.id]: value ?? "" }))} />
+                    : <span className="text-xs text-muted-foreground">fora desta nota</span>}
+                </div>
+              );
+            })}
+          </div>
+          {others.length > 0 && <p className="text-xs text-muted-foreground -mt-2">Marque as outras parcelas que vão na mesma nota (NF global). Cada uma continua com o seu vencimento.</p>}
+          <RetentionFields base={base} state={retentions} onChange={setRetentions} idPrefix="billRet" />
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={isPending}>{isPending ? "Registrando..." : "Registrar e criar a conta a receber"}</Button>
+            <Button type="submit" disabled={isPending}>{isPending ? "Registrando..." : chosen.length > 1 ? "Registrar e criar as contas a receber" : "Registrar e criar a conta a receber"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -176,15 +218,16 @@ const plusDays = (days: number) => {
  * receber do contrato, com a comissão proporcional.
  */
 export function MeasurementBillDialog({ contract, rental, lines, onClose, onDone }: {
-  contract: { id: number; number: string; customer: { name: string }; customerOrder?: CustomerOrder | null };
+  contract: BillContract;
   rental: { id: number; number: string }; lines: MeasurementLine[];
   onClose: () => void; onDone: (contract: Contract) => void;
 }) {
   const total = Math.round(lines.reduce((sum, line) => sum + line.value, 0) * 100) / 100;
-  const [form, setForm] = useState({ invoiceNumber: "", invoiceIssuedAt: todayIso(), dueDate: plusDays(7), paymentMethod: "boleto", netValue: null as number | null });
+  const [form, setForm] = useState({ invoiceNumber: "", invoiceIssuedAt: todayIso(), dueDate: plusDays(7), paymentMethod: "boleto" });
+  const [retentions, setRetentions] = useState<RetentionState>(() => retentionState(total, contract.retentionRates));
   const [error, setError] = useState("");
   const { mutate, isPending } = useMutation({
-    mutationFn: () => commercialApi.post<Contract & { billed: { number: string; value: number } }>(`contracts/${contract.id}/measurements`, { rentalId: rental.id, ...form }),
+    mutationFn: () => commercialApi.post<Contract & { billed: { number: string; value: number } }>(`contracts/${contract.id}/measurements`, { rentalId: rental.id, ...form, retentions: retentionList(retentions) }),
     onSuccess: (result) => {
       onDone(result);
       toast({ title: `${result.billed.number} faturada`, description: total > 0 ? "A conta a receber já aparece em Financeiro → Contas a Receber." : "Valor zero (coberto pela caução): nenhuma conta a receber.", variant: "success" });
@@ -195,6 +238,7 @@ export function MeasurementBillDialog({ contract, rental, lines, onClose, onDone
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     if (total > 0 && !form.invoiceNumber.trim()) return setError("Informe o número da nota fiscal");
+    if (total > 0 && retentionSum(retentions) >= total) return setError("As retenções passam do valor da medição");
     setError(""); mutate();
   };
   return (
@@ -217,6 +261,7 @@ export function MeasurementBillDialog({ contract, rental, lines, onClose, onDone
             ))}
             <li className="px-3 py-1.5 flex items-center justify-between gap-3 font-semibold"><span>Total da medição</span><span className="tabular-nums">{money(total)}</span></li>
           </ul>
+          {total > 0 && <RetentionFields base={total} state={retentions} onChange={setRetentions} idPrefix="measRet" />}
           {total > 0 && (
             <div className="grid sm:grid-cols-2 gap-3">
               <div><Label htmlFor="measurementNumber">Número da nota <span>*</span></Label>
@@ -229,10 +274,7 @@ export function MeasurementBillDialog({ contract, rental, lines, onClose, onDone
                   onValueChange={(_, value) => setForm((f) => ({ ...f, dueDate: value ?? "" }))} /></div>
               <div><Label>Forma de pagamento</Label>
                 <div className="mt-1"><Select name="measurementMethod" state={form.paymentMethod} modal options={PAYMENT_METHOD_OPTIONS} onChange={(_, value) => setForm((f) => ({ ...f, paymentMethod: String(value) }))} /></div></div>
-              <div className="sm:col-span-2"><Label htmlFor="measurementNet">Valor líquido a receber (opcional)</Label>
-                <NumField id="measurementNet" kind="money" className="mt-1 sm:w-1/2" value={form.netValue} placeholder={String(total).replace(".", ",")}
-                  onChange={(netValue) => setForm((f) => ({ ...f, netValue }))} onEmpty={() => setForm((f) => ({ ...f, netValue: null }))} />
-                <p className="text-xs text-muted-foreground mt-1">Preencha se a nota tiver retenções: é o que o cliente deposita de fato.</p></div>
+
             </div>
           )}
           {error && <p className="text-red-500 text-sm">{error}</p>}

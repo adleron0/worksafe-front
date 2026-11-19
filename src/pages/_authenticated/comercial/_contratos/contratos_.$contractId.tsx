@@ -19,6 +19,9 @@ import {
   RECORD_STATUS_LABEL, dueRuleText,
 } from "../-shared/contracts";
 import { BillDialog, CustomerOrderCard, MeasurementBillDialog } from "../-shared/billing";
+import { RETENTION_TAXES, RetentionRates } from "../-shared/retentions";
+import { SwitchToMeasurementDialog, WorkMeasurementsSection } from "./-WorkMeasurements";
+import { NumField } from "../-shared/commercial";
 import { DocumentPaper } from "../-shared/document";
 import { KIND_LABEL, formatCnpj } from "../-shared/proposals";
 import { docLabel } from "@/utils/documento";
@@ -40,6 +43,7 @@ function ContractPage() {
   const [creatingClass, setCreatingClass] = useState<ContractClassSlot | null>(null);
   const [document, setDocument] = useState<string | null>(null);
   const [statusTarget, setStatusTarget] = useState<ContractStatus | null>(null);
+  const [switching, setSwitching] = useState(false);
   const [dates, setDates] = useState<{ startDate: string | null; endDate: string | null; notes: string }>({ startDate: null, endDate: null, notes: "" });
 
   const { data: contract, isLoading, error } = useQuery({
@@ -117,7 +121,7 @@ function ContractPage() {
         <Stat label={contract.billingMode === "periodo" ? "Valor previsto" : "Valor da venda"} value={money(contract.value)} />
         <Stat label="Faturado (com nota)" value={money(contract.billed)} />
         <Stat label="Recebido" value={money(contract.received)} />
-        <Stat label="A faturar" value={money(contract.toBill)} highlight={contract.toBill > 0.005 && active} />
+        <Stat label={contract.billingMode === "medicao" ? "Saldo a medir" : "A faturar"} value={money(contract.toBill)} highlight={contract.toBill > 0.005 && active} />
       </div>
 
       <div className="grid xl:grid-cols-[minmax(0,1fr)_340px] gap-4 items-start">
@@ -175,9 +179,20 @@ function ContractPage() {
             </section>
           )}
 
-          {(contract.billingMode !== "periodo" || contract.installments.length > 0) && <section className="rounded-lg border p-4">
-            <h2 className="font-semibold">Parcelas</h2>
-            <p className="text-xs text-muted-foreground">Registrar a nota fiscal de uma parcela cria a conta a receber dela, com baixa manual no financeiro.</p>
+          {contract.billingMode === "medicao" && contract.measurementPlan && contract.works && (
+            <WorkMeasurementsSection contract={contract} canUpdate={canUpdate} canBill={canBill} canUnbill={canUnbill} onDone={apply} />
+          )}
+
+          {contract.billingMode !== "medicao" && (contract.billingMode !== "periodo" || contract.installments.length > 0) && <section className="rounded-lg border p-4">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+              <div>
+                <h2 className="font-semibold">Parcelas</h2>
+                <p className="text-xs text-muted-foreground">Registrar a nota fiscal de uma parcela cria a conta a receber dela, com baixa manual no financeiro. Várias parcelas podem ir na mesma nota.</p>
+              </div>
+              {contract.kind === "servico" && active && canUpdate && contract.billingMode === "parcelas" && contract.billed === 0 && (
+                <Button type="button" size="sm" variant="outline" className="shrink-0" onClick={() => setSwitching(true)}><Icon name="ruler" className="w-4 h-4 mr-1" /> Faturar por medição</Button>
+              )}
+            </div>
             {contract.installments.length === 0 && <p className="mt-3 text-sm text-muted-foreground">A proposta foi aceita sem condições de pagamento.</p>}
             <div className="mt-2 divide-y">
               {contract.installments.map((installment) => (
@@ -194,6 +209,7 @@ function ContractPage() {
                           {RECORD_STATUS_LABEL[installment.record.status] ?? installment.record.status}
                         </span>{" "}
                         NF {installment.record.invoiceNumber} de {dateBr(installment.record.invoiceIssuedAt)} · vence em {dateBr(installment.record.dueDate)}
+                        {installment.record.netValue != null && installment.record.netValue < installment.value ? ` · líquido ${money(installment.record.netValue)}` : ""}
                         {installment.record.paidAt ? ` · pago em ${dateBr(installment.record.paidAt)}` : ""}
                         {!installment.record.hasInvoiceFile && <span className="block text-xs text-muted-foreground">Arquivo da nota ainda não anexado (anexe em Contas a Receber).</span>}
                       </p>
@@ -294,6 +310,7 @@ function ContractPage() {
 
         <aside className="grid gap-4">
           <CustomerOrderCard contractId={contract.id} order={contract.customerOrder} canEdit={canUpdate} onSaved={apply} />
+          <RetentionRatesCard contract={contract} canEdit={canUpdate} onSaved={apply} />
           <section className="rounded-lg border p-4 text-sm grid gap-1">
             <h2 className="font-semibold text-base">Cliente</h2>
             <p className="font-medium">{contract.customer.corporateName}</p>
@@ -322,8 +339,9 @@ function ContractPage() {
         </aside>
       </div>
 
-      {billing && <BillDialog contract={contract} installment={billing} onClose={() => setBilling(null)} onDone={apply} />}
+      {billing && <BillDialog contract={contract} installment={billing} others={contract.installments.filter((i) => !i.record && i.id !== billing.id)} onClose={() => setBilling(null)} onDone={apply} />}
       {measuring && <MeasurementBillDialog contract={contract} rental={measuring} lines={measuring.pending} onClose={() => setMeasuring(null)} onDone={apply} />}
+      {switching && <SwitchToMeasurementDialog contract={contract} steps={contract.scheduleSteps ?? []} onClose={() => setSwitching(false)} onDone={apply} />}
       {creatingClass && <ClassDialog contract={contract} slot={creatingClass} onClose={() => setCreatingClass(null)} onDone={apply} />}
       {statusTarget && <StatusDialog contract={contract} target={statusTarget} onClose={() => setStatusTarget(null)} onDone={apply} />}
       <Dialog open={document !== null} onOpenChange={(open) => { if (!open) setDocument(null); }}>
@@ -415,5 +433,47 @@ function StatusDialog({ contract, target, onClose, onDone }: { contract: Contrac
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Alíquotas que o cliente costuma reter na nota: viram a sugestão ao registrar cada nota desta venda. */
+function RetentionRatesCard({ contract, canEdit, onSaved }: { contract: Contract; canEdit: boolean; onSaved: (contract: Contract) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [rates, setRates] = useState<RetentionRates>(contract.retentionRates ?? {});
+  const saved = Object.entries(contract.retentionRates ?? {}).filter(([, v]) => (v ?? 0) > 0);
+  const { mutate, isPending } = useMutation({
+    mutationFn: () => commercialApi.put<Contract>(`contracts/${contract.id}/retention-rates`, { rates }),
+    onSuccess: (result) => { onSaved(result); setEditing(false); toast({ title: "Retenções do cliente salvas", variant: "success" }); },
+    onError: (err) => toast({ title: "Não foi possível salvar", description: errorMessage(err), variant: "destructive" }),
+  });
+  return (
+    <section className="rounded-lg border p-4 text-sm" aria-label="Retenções do cliente">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-semibold text-base">Retenções do cliente</h2>
+          <p className="text-xs text-muted-foreground">Impostos que este cliente retém na nota. Viram a sugestão ao registrar cada nota.</p>
+        </div>
+        {canEdit && !editing && <Button type="button" size="sm" variant="outline" className="shrink-0" onClick={() => { setRates(contract.retentionRates ?? {}); setEditing(true); }}><Icon name={saved.length ? "pencil" : "plus"} className="w-4 h-4 mr-1" /> {saved.length ? "Editar" : "Informar"}</Button>}
+      </div>
+      {!editing && (saved.length
+        ? <p className="mt-3">{saved.map(([tax, rate]) => `${RETENTION_TAXES.find((t) => t.id === tax)?.name} ${String(rate).replace(".", ",")}%`).join(" · ")}</p>
+        : <p className="mt-3 text-muted-foreground">Nenhuma retenção combinada.</p>)}
+      {editing && (
+        <form className="mt-3 grid gap-2" onSubmit={(event) => { event.preventDefault(); mutate(); }}>
+          {RETENTION_TAXES.map((tax) => (
+            <div key={tax.id} className="grid grid-cols-[4.5rem_6.5rem_minmax(0,1fr)] items-center gap-2">
+              <label htmlFor={`rate-${tax.id}`} className="font-medium">{tax.name}</label>
+              <NumField id={`rate-${tax.id}`} kind="number" digits={2} suffix="%" value={rates[tax.id] ?? null} placeholder="—"
+                onChange={(value) => setRates((r) => ({ ...r, [tax.id]: value }))} onEmpty={() => setRates((r) => { const next = { ...r }; delete next[tax.id]; return next; })} />
+              <span className="text-xs text-muted-foreground truncate">{tax.hint}</span>
+            </div>
+          ))}
+          <div className="flex gap-2 mt-1">
+            <Button type="submit" size="sm" disabled={isPending}>{isPending ? "Salvando..." : "Salvar"}</Button>
+            <Button type="button" size="sm" variant="outline" disabled={isPending} onClick={() => setEditing(false)}>Cancelar</Button>
+          </div>
+        </form>
+      )}
+    </section>
   );
 }

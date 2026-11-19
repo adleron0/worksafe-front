@@ -14,6 +14,7 @@ import { ApiError } from "@/general-interfaces/api.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { IFinancialRecord } from "../-interfaces/entity.interface";
 import SettleDialog from "./SettleDialog";
+import RetentionDialog from "../../-shared/RetentionDialog";
 import { OPEN_STATUSES, formatCurrency, formatDate, paymentMethodLabel, todayInput } from "./options";
 import { SelectBox } from "../../-shared/ledger";
 
@@ -38,6 +39,7 @@ const Item = ({ item, index, entity, setFormData, setOpenForm, selected, onSelec
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const [openSettle, setOpenSettle] = useState(false);
+  const [openRetentions, setOpenRetentions] = useState(false);
 
   const isManual = item.gateway === "manual";
   const isOpen = OPEN_STATUSES.includes(item.status);
@@ -218,6 +220,12 @@ const Item = ({ item, index, entity, setFormData, setOpenForm, selected, onSelec
                     {isManual ? "Editar" : "Nota fiscal"}
                   </DropdownMenuItem>
                 )}
+                {canUpdate && isManual && !item.inactiveAt && item.status !== "cancelled" && (
+                  <DropdownMenuItem className="gap-2" onSelect={() => setOpenRetentions(true)}>
+                    <Icon name="landmark" className="w-3 h-3" />
+                    Impostos retidos
+                  </DropdownMenuItem>
+                )}
                 {canUpdate && isManual && item.status === "received" && (
                   <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
                     <ConfirmDialog
@@ -257,6 +265,7 @@ const Item = ({ item, index, entity, setFormData, setOpenForm, selected, onSelec
         </div>
       </div>
 
+      {openRetentions && <RetentionDialog recordId={item.id} label={item.invoiceNumber ? `NF ${item.invoiceNumber}` : item.description || `conta ${item.id}`} onClose={() => setOpenRetentions(false)} />}
       {openSettle && <SettleDialog item={item} entity={entity} open={openSettle} onOpenChange={setOpenSettle} />}
     </>
   );

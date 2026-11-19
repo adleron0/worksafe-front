@@ -29,6 +29,7 @@ import { Route as AuthenticatedBlogIndexRouteImport } from './pages/_authenticat
 import { Route as IndexProvaClassIdRouteImport } from './pages/_index/prova.$classId'
 import { Route as IndexPropostaKeyRouteImport } from './pages/_index/proposta.$key'
 import { Route as IndexNegociacaoKeyRouteImport } from './pages/_index/negociacao.$key'
+import { Route as IndexMedicaoKeyRouteImport } from './pages/_index/medicao.$key'
 import { Route as IndexCertificadosEfeitosRouteImport } from './pages/_index/certificados/efeitos'
 import { Route as IndexCertificadosIdRouteImport } from './pages/_index/certificados/$id'
 import { Route as AuthenticatedSuprimentosFornecedoresRouteImport } from './pages/_authenticated/suprimentos/fornecedores'
@@ -85,6 +86,7 @@ import { Route as AuthenticatedRhDocumentosVencimentosRouteImport } from './page
 import { Route as AuthenticatedRhDocumentosTiposDeDocumentoRouteImport } from './pages/_authenticated/rh/_documentos/tipos-de-documento'
 import { Route as AuthenticatedRhAlocacaoMapaDeAlocacaoRouteImport } from './pages/_authenticated/rh/_alocacao/mapa-de-alocacao'
 import { Route as AuthenticatedInventariosAreasAreaIdRouteImport } from './pages/_authenticated/inventarios/areas/$areaId'
+import { Route as AuthenticatedFinanceiroRetencoesRetencoesRouteImport } from './pages/_authenticated/financeiro/_retencoes/retencoes'
 import { Route as AuthenticatedFinanceiroRelatoriosRelatoriosRouteImport } from './pages/_authenticated/financeiro/_relatorios/relatorios'
 import { Route as AuthenticatedFinanceiroRecorrentesRecorrentesRouteImport } from './pages/_authenticated/financeiro/_recorrentes/recorrentes'
 import { Route as AuthenticatedFinanceiroReceberReceberRouteImport } from './pages/_authenticated/financeiro/_receber/receber'
@@ -239,6 +241,11 @@ const IndexPropostaKeyRoute = IndexPropostaKeyRouteImport.update({
 const IndexNegociacaoKeyRoute = IndexNegociacaoKeyRouteImport.update({
   id: '/negociacao/$key',
   path: '/negociacao/$key',
+  getParentRoute: () => IndexRoute,
+} as any)
+const IndexMedicaoKeyRoute = IndexMedicaoKeyRouteImport.update({
+  id: '/medicao/$key',
+  path: '/medicao/$key',
   getParentRoute: () => IndexRoute,
 } as any)
 const IndexCertificadosEfeitosRoute =
@@ -575,6 +582,12 @@ const AuthenticatedInventariosAreasAreaIdRoute =
     path: '/inventarios/areas/$areaId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanceiroRetencoesRetencoesRoute =
+  AuthenticatedFinanceiroRetencoesRetencoesRouteImport.update({
+    id: '/financeiro/_retencoes/retencoes',
+    path: '/financeiro/retencoes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedFinanceiroRelatoriosRelatoriosRoute =
   AuthenticatedFinanceiroRelatoriosRelatoriosRouteImport.update({
     id: '/financeiro/_relatorios/relatorios',
@@ -907,6 +920,7 @@ export interface FileRoutesByFullPath {
   '/suprimentos/fornecedores': typeof AuthenticatedSuprimentosFornecedoresRoute
   '/certificados/$id': typeof IndexCertificadosIdRoute
   '/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
+  '/medicao/$key': typeof IndexMedicaoKeyRoute
   '/negociacao/$key': typeof IndexNegociacaoKeyRoute
   '/proposta/$key': typeof IndexPropostaKeyRoute
   '/prova/$classId': typeof IndexProvaClassIdRoute
@@ -953,6 +967,7 @@ export interface FileRoutesByFullPath {
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/financeiro/recorrentes': typeof AuthenticatedFinanceiroRecorrentesRecorrentesRoute
   '/financeiro/relatorios': typeof AuthenticatedFinanceiroRelatoriosRelatoriosRoute
+  '/financeiro/retencoes': typeof AuthenticatedFinanceiroRetencoesRetencoesRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/rh/mapa-de-alocacao': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoRoute
   '/rh/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
@@ -1034,6 +1049,7 @@ export interface FileRoutesByTo {
   '/suprimentos/fornecedores': typeof AuthenticatedSuprimentosFornecedoresRoute
   '/certificados/$id': typeof IndexCertificadosIdRoute
   '/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
+  '/medicao/$key': typeof IndexMedicaoKeyRoute
   '/negociacao/$key': typeof IndexNegociacaoKeyRoute
   '/proposta/$key': typeof IndexPropostaKeyRoute
   '/prova/$classId': typeof IndexProvaClassIdRoute
@@ -1080,6 +1096,7 @@ export interface FileRoutesByTo {
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/financeiro/recorrentes': typeof AuthenticatedFinanceiroRecorrentesRecorrentesRoute
   '/financeiro/relatorios': typeof AuthenticatedFinanceiroRelatoriosRelatoriosRoute
+  '/financeiro/retencoes': typeof AuthenticatedFinanceiroRetencoesRetencoesRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/rh/mapa-de-alocacao': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoRoute
   '/rh/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
@@ -1165,6 +1182,7 @@ export interface FileRoutesById {
   '/_authenticated/suprimentos/fornecedores': typeof AuthenticatedSuprimentosFornecedoresRoute
   '/_index/certificados/$id': typeof IndexCertificadosIdRoute
   '/_index/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
+  '/_index/medicao/$key': typeof IndexMedicaoKeyRoute
   '/_index/negociacao/$key': typeof IndexNegociacaoKeyRoute
   '/_index/proposta/$key': typeof IndexPropostaKeyRoute
   '/_index/prova/$classId': typeof IndexProvaClassIdRoute
@@ -1211,6 +1229,7 @@ export interface FileRoutesById {
   '/_authenticated/financeiro/_receber/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/_authenticated/financeiro/_recorrentes/recorrentes': typeof AuthenticatedFinanceiroRecorrentesRecorrentesRoute
   '/_authenticated/financeiro/_relatorios/relatorios': typeof AuthenticatedFinanceiroRelatoriosRelatoriosRoute
+  '/_authenticated/financeiro/_retencoes/retencoes': typeof AuthenticatedFinanceiroRetencoesRetencoesRoute
   '/_authenticated/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/_authenticated/rh/_alocacao/mapa-de-alocacao': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoRoute
   '/_authenticated/rh/_documentos/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
@@ -1295,6 +1314,7 @@ export interface FileRouteTypes {
     | '/suprimentos/fornecedores'
     | '/certificados/$id'
     | '/certificados/efeitos'
+    | '/medicao/$key'
     | '/negociacao/$key'
     | '/proposta/$key'
     | '/prova/$classId'
@@ -1341,6 +1361,7 @@ export interface FileRouteTypes {
     | '/financeiro/receber'
     | '/financeiro/recorrentes'
     | '/financeiro/relatorios'
+    | '/financeiro/retencoes'
     | '/inventarios/areas/$areaId'
     | '/rh/mapa-de-alocacao'
     | '/rh/tipos-de-documento'
@@ -1422,6 +1443,7 @@ export interface FileRouteTypes {
     | '/suprimentos/fornecedores'
     | '/certificados/$id'
     | '/certificados/efeitos'
+    | '/medicao/$key'
     | '/negociacao/$key'
     | '/proposta/$key'
     | '/prova/$classId'
@@ -1468,6 +1490,7 @@ export interface FileRouteTypes {
     | '/financeiro/receber'
     | '/financeiro/recorrentes'
     | '/financeiro/relatorios'
+    | '/financeiro/retencoes'
     | '/inventarios/areas/$areaId'
     | '/rh/mapa-de-alocacao'
     | '/rh/tipos-de-documento'
@@ -1552,6 +1575,7 @@ export interface FileRouteTypes {
     | '/_authenticated/suprimentos/fornecedores'
     | '/_index/certificados/$id'
     | '/_index/certificados/efeitos'
+    | '/_index/medicao/$key'
     | '/_index/negociacao/$key'
     | '/_index/proposta/$key'
     | '/_index/prova/$classId'
@@ -1598,6 +1622,7 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro/_receber/receber'
     | '/_authenticated/financeiro/_recorrentes/recorrentes'
     | '/_authenticated/financeiro/_relatorios/relatorios'
+    | '/_authenticated/financeiro/_retencoes/retencoes'
     | '/_authenticated/inventarios/areas/$areaId'
     | '/_authenticated/rh/_alocacao/mapa-de-alocacao'
     | '/_authenticated/rh/_documentos/tipos-de-documento'
@@ -1810,6 +1835,13 @@ declare module '@tanstack/react-router' {
       path: '/negociacao/$key'
       fullPath: '/negociacao/$key'
       preLoaderRoute: typeof IndexNegociacaoKeyRouteImport
+      parentRoute: typeof IndexRoute
+    }
+    '/_index/medicao/$key': {
+      id: '/_index/medicao/$key'
+      path: '/medicao/$key'
+      fullPath: '/medicao/$key'
+      preLoaderRoute: typeof IndexMedicaoKeyRouteImport
       parentRoute: typeof IndexRoute
     }
     '/_index/certificados/efeitos': {
@@ -2202,6 +2234,13 @@ declare module '@tanstack/react-router' {
       path: '/inventarios/areas/$areaId'
       fullPath: '/inventarios/areas/$areaId'
       preLoaderRoute: typeof AuthenticatedInventariosAreasAreaIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/financeiro/_retencoes/retencoes': {
+      id: '/_authenticated/financeiro/_retencoes/retencoes'
+      path: '/financeiro/retencoes'
+      fullPath: '/financeiro/retencoes'
+      preLoaderRoute: typeof AuthenticatedFinanceiroRetencoesRetencoesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/financeiro/_relatorios/relatorios': {
@@ -2622,6 +2661,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFinanceiroReceberReceberRoute: typeof AuthenticatedFinanceiroReceberReceberRoute
   AuthenticatedFinanceiroRecorrentesRecorrentesRoute: typeof AuthenticatedFinanceiroRecorrentesRecorrentesRoute
   AuthenticatedFinanceiroRelatoriosRelatoriosRoute: typeof AuthenticatedFinanceiroRelatoriosRelatoriosRoute
+  AuthenticatedFinanceiroRetencoesRetencoesRoute: typeof AuthenticatedFinanceiroRetencoesRetencoesRoute
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
   AuthenticatedRhAlocacaoMapaDeAlocacaoRoute: typeof AuthenticatedRhAlocacaoMapaDeAlocacaoRoute
   AuthenticatedRhDocumentosTiposDeDocumentoRoute: typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
@@ -2768,6 +2808,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedFinanceiroRecorrentesRecorrentesRoute,
   AuthenticatedFinanceiroRelatoriosRelatoriosRoute:
     AuthenticatedFinanceiroRelatoriosRelatoriosRoute,
+  AuthenticatedFinanceiroRetencoesRetencoesRoute:
+    AuthenticatedFinanceiroRetencoesRetencoesRoute,
   AuthenticatedInventariosAreasAreaIdRoute:
     AuthenticatedInventariosAreasAreaIdRoute,
   AuthenticatedRhAlocacaoMapaDeAlocacaoRoute:
@@ -2900,6 +2942,7 @@ interface IndexRouteChildren {
   IndexIndexRoute: typeof IndexIndexRoute
   IndexCertificadosIdRoute: typeof IndexCertificadosIdRoute
   IndexCertificadosEfeitosRoute: typeof IndexCertificadosEfeitosRoute
+  IndexMedicaoKeyRoute: typeof IndexMedicaoKeyRoute
   IndexNegociacaoKeyRoute: typeof IndexNegociacaoKeyRoute
   IndexPropostaKeyRoute: typeof IndexPropostaKeyRoute
   IndexProvaClassIdRoute: typeof IndexProvaClassIdRoute
@@ -2915,6 +2958,7 @@ const IndexRouteChildren: IndexRouteChildren = {
   IndexIndexRoute: IndexIndexRoute,
   IndexCertificadosIdRoute: IndexCertificadosIdRoute,
   IndexCertificadosEfeitosRoute: IndexCertificadosEfeitosRoute,
+  IndexMedicaoKeyRoute: IndexMedicaoKeyRoute,
   IndexNegociacaoKeyRoute: IndexNegociacaoKeyRoute,
   IndexPropostaKeyRoute: IndexPropostaKeyRoute,
   IndexProvaClassIdRoute: IndexProvaClassIdRoute,

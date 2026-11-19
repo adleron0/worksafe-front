@@ -14,6 +14,8 @@ import ViewToggle, { useStoredView } from "@/components/general-components/ViewT
 import { cn } from "@/lib/utils";
 import { commercialApi, dateBr, errorMessage, money } from "../../comercial/-shared/commercial";
 import { BillDialog, MeasurementBillDialog } from "../../comercial/-shared/billing";
+import { WorkBillDialog } from "../../comercial/_contratos/-WorkMeasurements";
+import type { WorkLine } from "../../comercial/-shared/measurement";
 import { BILLING_KEY, BillingQueue, BillingRow, BillingStage, Contract, dueRuleText } from "../../comercial/-shared/contracts";
 import { KIND_LABEL, KindBadge } from "../../comercial/-shared/proposals";
 
@@ -29,7 +31,8 @@ const STAGES: Array<{ id: BillingStage; name: string; color: string; hint: strin
 ];
 const COLUMNS: KanbanColumn[] = STAGES.map(({ id, name, color }) => ({ id, name, value: id, color }));
 
-const isMeasurement = (row: BillingRow) => row.source === "medicao";
+const isWork = (row: BillingRow) => row.source === "obra";
+const isMeasurement = (row: BillingRow) => row.source === "medicao" || row.source === "obra";
 const installmentLabel = (row: BillingRow) => (isMeasurement(row)
   ? row.description ?? "Medição da locação"
   : `${row.total > 1 ? `Parcela ${row.number}/${row.total}` : "Pagamento único"}${row.description ? ` · ${row.description}` : ""}`);
@@ -86,7 +89,7 @@ function BillingPage() {
       )}
       {row.stage === "faturada" && canUnbill && (
         <ConfirmDialog title={isMeasurement(row) ? "Desfazer esta medição?" : "Desfazer o faturamento desta parcela?"}
-          description={isMeasurement(row) ? "A conta a receber da medição é cancelada e os períodos e cobranças dela voltam a ficar pendentes. Use quando a nota foi lançada errada." : "A conta a receber desta parcela é cancelada e a parcela volta a ficar sem nota. Use quando a nota foi lançada errada."}
+          description={isWork(row) ? "A conta a receber do boletim é cancelada, a caução dele volta e o boletim fica aprovado. Só o boletim mais novo do contrato pode ser desfeito." : isMeasurement(row) ? "A conta a receber da medição é cancelada e os períodos e cobranças dela voltam a ficar pendentes. Use quando a nota foi lançada errada." : "A conta a receber desta parcela é cancelada e a parcela volta a ficar sem nota. Use quando a nota foi lançada errada."}
           onConfirm={() => unbill(row)}>
           <Button type="button" variant="ghost" size="sm" className="h-7 px-2">Desfazer</Button>
         </ConfirmDialog>
@@ -96,7 +99,7 @@ function BillingPage() {
   /** Situação da parcela em uma frase. */
   const detail = (row: BillingRow) => (row.record
     ? `NF ${row.record.invoiceNumber ?? "—"} de ${dateBr(row.record.invoiceIssuedAt)} · ${row.record.paid ? `paga em ${dateBr(row.record.paidAt)}` : `vence em ${dateBr(row.record.dueDate)}`}`
-    : row.waitingFor ? `Espera ${row.waitingFor}` : isMeasurement(row) ? `Medição da locação · ${row.lines?.length ?? 0} item(ns)` : `Combinado: ${dueRuleText(row)} · vencimento sugerido ${dateBr(row.suggestedDue)}`);
+    : row.waitingFor ? `Espera ${row.waitingFor}` : isWork(row) ? `Boletim aprovado · nota de ${money(row.invoiceValue ?? row.value)}${row.depositValue ? ` (caução ${money(row.depositValue)})` : ""}` : isMeasurement(row) ? `Medição da locação · ${row.lines?.length ?? 0} item(ns)` : `Combinado: ${dueRuleText(row)} · vencimento sugerido ${dateBr(row.suggestedDue)}`);
   const sale = (row: BillingRow) => (canOpenSale
     ? <Link to="/comercial/contratos/$contractId" params={{ contractId: String(row.contractId) }} className="underline hover:text-foreground">{row.contractNumber}</Link>
     : <span>{row.contractNumber}</span>);
@@ -108,7 +111,7 @@ function BillingPage() {
     <>
       <div>
         <h1 className="text-xl font-bold">A faturar</h1>
-        <p className="text-sm text-muted-foreground">Parcelas das propostas aceitas e medições das locações (cada período vencido). Registrar a nota fiscal cria a conta a receber; a baixa é feita em Contas a Receber.</p>
+        <p className="text-sm text-muted-foreground">Parcelas das propostas aceitas, boletins de medição de obra aprovados e medições das locações (cada período vencido). Registrar a nota fiscal cria a conta a receber; a baixa é feita em Contas a Receber.</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 my-4">
@@ -208,12 +211,17 @@ function BillingPage() {
         </div>
       )}
 
-      {billing && isMeasurement(billing) && billing.rental && (
-        <MeasurementBillDialog contract={{ id: billing.contractId, number: billing.contractNumber, customer: billing.customer, customerOrder: billing.customerOrder }}
+      {billing && isWork(billing) && billing.measurementId && (
+        <WorkBillDialog contract={{ id: billing.contractId, number: billing.contractNumber, customer: billing.customer, customerOrder: billing.customerOrder, retentionRates: billing.retentionRates }}
+          measurement={{ id: billing.measurementId, label: billing.description?.split(" ")[0] ?? "BM", lines: (billing.lines ?? []) as WorkLine[], invoiceValue: billing.invoiceValue ?? billing.value, depositValue: billing.depositValue ?? 0, value: billing.value }}
+          onClose={() => setBilling(null)} onDone={refresh} />
+      )}
+      {billing && isMeasurement(billing) && !isWork(billing) && billing.rental && (
+        <MeasurementBillDialog contract={{ id: billing.contractId, number: billing.contractNumber, customer: billing.customer, customerOrder: billing.customerOrder, retentionRates: billing.retentionRates }}
           rental={{ id: billing.rental.id, number: billing.rental.number ?? "" }} lines={billing.lines ?? []} onClose={() => setBilling(null)} onDone={refresh} />
       )}
       {billing && !isMeasurement(billing) && (
-        <BillDialog contract={{ id: billing.contractId, number: billing.contractNumber, customer: billing.customer, customerOrder: billing.customerOrder }} installment={{ ...billing, id: Number(billing.id) }}
+        <BillDialog contract={{ id: billing.contractId, number: billing.contractNumber, customer: billing.customer, customerOrder: billing.customerOrder, retentionRates: billing.retentionRates }} installment={{ ...billing, id: Number(billing.id) }}
           onClose={() => setBilling(null)} onDone={refresh} />
       )}
     </>

@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
+import { NewDealDialog } from "../_negociacoes/negociacoes";
 import { COMMERCIAL_ABILITY, NumField, Tip, commercialApi, dateBr, errorMessage, money, newUid, percent, MARGIN_ZONES, marginZoneOf } from "../-shared/commercial";
 import {
   CustomerOption, DraftSection, KIND_ITEMS, KIND_LABEL, isBlankItem, PROPOSALS_KEY, PROPOSAL_KEY, Proposal, ProposalCalc, ProposalDraft, ProposalOptions, STATUS_LABEL, StatusBadge,
@@ -69,6 +70,7 @@ function ProposalEditorPage() {
   const [landed, setLanded] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [decision, setDecision] = useState<"aceita" | "recusada" | null>(null);
+  const [newDeal, setNewDeal] = useState(false);
 
   const { data: proposal, isLoading, error } = useQuery({
     queryKey: [PROPOSAL_KEY, proposalId],
@@ -315,6 +317,9 @@ function ProposalEditorPage() {
                 </DropdownMenuItem>
               )}
               {canCreate && <DropdownMenuItem className="gap-2" disabled={copying || dirty} onSelect={() => copy("duplicate")}><Icon name="copy" className="w-3 h-3" /> Duplicar proposta</DropdownMenuItem>}
+              {canCreate && !proposal.deal && proposal.status !== "substituida" && !proposal.inactiveAt && (
+                <DropdownMenuItem className="gap-2" onSelect={() => setNewDeal(true)}><Icon name="handshake" className="w-3 h-3" /> Juntar numa negociação</DropdownMenuItem>
+              )}
               {canUpdate && (proposal.status === "rascunho" || sent) && !proposal.inactiveAt && (
                 <DropdownMenuItem className="p-0" onSelect={(event) => event.preventDefault()}>
                   <ConfirmDialog title={`Cancelar ${proposal.number}?`} description="A proposta deixa de valer. Ela continua no histórico." onConfirm={() => setStatus({ status: "cancelada" })}
@@ -329,6 +334,14 @@ function ProposalEditorPage() {
       <WizardSteps current={tab} states={states} titles={isDraft ? undefined : { envio: "Acompanhar" }} onGo={goTo} />
 
       <div className="grid gap-2 mb-4">
+        {proposal.deal ? (
+          <p className="rounded-md border px-3 py-2 text-sm text-muted-foreground flex flex-wrap items-center gap-1">
+            <Icon name="handshake" className="w-4 h-4" /> Na negociação
+            <Link to="/comercial/negociacoes/$dealId" params={{ dealId: String(proposal.deal.id) }} className="underline font-medium text-foreground">{proposal.deal.number}</Link>
+            <span>· {proposal.deal.title}</span>
+            {(proposal.calc.totals.dealDiscount ?? 0) > 0 && <span>· desconto pelo fechamento conjunto de {money(proposal.calc.totals.dealDiscount ?? 0)}, já no total</span>}
+          </p>
+        ) : null}
         {proposal.status !== "rascunho" && (
           <p className="rounded-md border px-3 py-2 text-sm text-muted-foreground">
             {proposal.status === "substituida" ? "Esta versão foi substituída por uma revisão mais nova." : `Proposta ${STATUS_LABEL[proposal.status].toLowerCase()}: somente leitura.`}
@@ -495,6 +508,7 @@ function ProposalEditorPage() {
 
       <RecordFilesPanel entity="proposal" entityId={proposal.id} className="mt-4" title="Arquivos da proposta" hint="Pedido do cliente, memoriais, fotos da visita e o que mais for desta proposta. Quem vê a proposta vê os arquivos." />
 
+      {newDeal && <NewDealDialog proposalIds={[proposal.id]} onClose={() => setNewDeal(false)} onCreated={(deal) => navigate({ to: "/comercial/negociacoes/$dealId", params: { dealId: String(deal.id) } })} />}
       {decision && (
         <DecisionDialog decision={decision} number={proposal.number} pending={changing} onClose={() => setDecision(null)}
           onConfirm={(note, extra) => setStatus({ status: decision, note, ...extra })} />
@@ -629,6 +643,7 @@ function TotalsPanel({ calc, draft, readOnly, canSeeCosts, stale, onDiscount, cu
             {discountMode === "percent" ? `= ${money(draft.discount)}` : `= ${percent(draft.discount / discountBase, 1)}`} sobre itens + imprevisibilidade
           </p>
         )}
+        {(t?.dealDiscount ?? 0) > 0 && <Line label="Desconto pelo fechamento conjunto" value={`− ${money(t?.dealDiscount)}`} />}
         {t && t.taxOutside > 0 && <>
           <Line label="Valor líquido" value={money(t.net)} />
           <Line label={`Tributos destacados (${percent(calc?.tax.outside)})`} value={money(t.taxOutside)} />

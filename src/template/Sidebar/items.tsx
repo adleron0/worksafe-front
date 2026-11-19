@@ -58,6 +58,7 @@ export const groups: SidebarGroup[] = [
         ability: "comercial",
         subitems: [
           { title: "Propostas", ability: "comercial", icon: "file-text", path: "/comercial/propostas" },
+          { title: "Negociações", ability: "comercial", icon: "handshake", path: "/comercial/negociacoes" },
           { title: "Acompanhamento", ability: "comercial", icon: "calendar-check", path: "/comercial/acompanhamento" },
           { title: "Vendedores", ability: "comercial", icon: "user-round-check", path: "/comercial/vendedores" },
           { title: "Cupons", ability: "cupoms", icon: "ticket-percent", path: "/comercial/cupons" },

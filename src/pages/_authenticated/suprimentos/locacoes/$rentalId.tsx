@@ -16,6 +16,7 @@ import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { NumField, Tip, dateBr, errorMessage, money, newUid, todayIso } from "../../comercial/-shared/commercial";
 import { MeasurementBillDialog } from "../../comercial/-shared/billing";
+import { SaleResultPanel, TargetPurchasesPanel } from "../-shared/purchases";
 import { paymentMethodOptions } from "../../financeiro/_receber/-components/options";
 import { STOCK_KEYS, qty } from "../-shared/stock";
 import { LocationField, UnitPicker, useLocationValue } from "../-shared/stock-pickers";
@@ -449,6 +450,9 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
                 </ul>
               </section>
             )}
+
+            <TargetPurchasesPanel target={{ kind: "ol", id: rental.id }} canRequest={rental.status !== "cancelada" && rental.status !== "encerrada"} />
+            <SaleResultPanel target={{ kind: "ol", id: rental.id }} />
 
             <section className="rounded-lg border p-4 text-sm">
               <h2 className="font-semibold">Histórico</h2>

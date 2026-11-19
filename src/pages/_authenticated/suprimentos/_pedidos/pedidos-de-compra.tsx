@@ -15,7 +15,7 @@ import ViewToggle, { useStoredView } from "@/components/general-components/ViewT
 import { errorMessage, money } from "../../comercial/-shared/commercial";
 import {
   GROUP_LABEL, PURCHASES_ABILITY, PURCHASES_KEY, PURCHASE_MOVES, PURCHASE_STAGES, PURCHASE_STATUS_LABEL, PurchaseList, PurchaseMoveDialog, PurchaseRow, PurchaseStageBadge,
-  PurchaseStatus, allowedMoves, isForward, moveLabel, needsApproval, nextStage, purchaseWhen, purchasesApi,
+  PurchaseStatus, allowedMoves, isForward, moveLabel, needsApproval, nextStage, purchaseWhen, purchasesApi, targetOf,
 } from "../-shared/purchases";
 
 const STATUSES: PurchaseStatus[] = ["solicitado", "aprovado", "comprado", "recebido", "recusado", "cancelado"];
@@ -148,7 +148,7 @@ function PurchasesPage() {
                 </div>
                 <div className="space-y-1 text-xs text-muted-foreground">
                   <p className="flex items-center gap-2 truncate"><Icon name="truck" className="w-3 h-3 shrink-0" /> {row.supplier?.name ?? "Sem fornecedor"}</p>
-                  {row.serviceOrder && <p className="flex items-center gap-2 truncate"><Icon name="scroll-text" className="w-3 h-3 shrink-0" /> {row.serviceOrder.number}</p>}
+                  {targetOf(row) && <p className="flex items-center gap-2 truncate"><Icon name={row.rental ? "package" : row.courseClass ? "graduation-cap" : "scroll-text"} className="w-3 h-3 shrink-0" /> {targetOf(row)}</p>}
                   <p className="flex items-center gap-2"><Icon name="calendar" className="w-3 h-3 shrink-0" /> <span className={row.late ? "font-semibold text-red-600 dark:text-red-400" : ""}>{purchaseWhen(row)}{row.late ? " · atrasado" : ""}</span></p>
                 </div>
                 <p className="pt-2 border-t text-sm font-semibold tabular-nums">{money(row.total)}</p>
@@ -181,7 +181,7 @@ function PurchasesPage() {
               </div>
               <div className="flex-1 min-w-0 pr-10 lg:pr-4">
                 <p className="font-medium truncate">{row.title}</p>
-                <p className="text-xs text-muted-foreground truncate">{[row.supplier?.name ?? "Sem fornecedor", row.serviceOrder?.number, row.requestedBy && `pedido por ${row.requestedBy}`].filter(Boolean).join(" · ")}</p>
+                <p className="text-xs text-muted-foreground truncate">{[row.supplier?.name ?? "Sem fornecedor", targetOf(row), row.requestedBy && `pedido por ${row.requestedBy}`].filter(Boolean).join(" · ")}</p>
               </div>
               <div className="lg:w-40"><PurchaseStageBadge status={row.status} late={row.late} /></div>
               <div className="lg:w-48 text-muted-foreground text-xs">{purchaseWhen(row)}</div>

@@ -12,6 +12,7 @@ import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { NumField, commercialApi, dateBr, errorMessage, money } from "../../../comercial/-shared/commercial";
+import { SaleResultPanel, TargetPurchasesPanel } from "../../../suprimentos/-shared/purchases";
 
 type Mode = "contrato" | "sem_cobranca";
 interface Candidate { id: number; number: string; title: string; kind: string; value: number; acceptedAt: string; freeSlots: number }
@@ -34,6 +35,18 @@ type Choice = "venda" | "rapida" | "sem";
  * com o motivo. Sem nenhuma das três, o painel avisa.
  */
 export default function TurmaVenda({ classId }: { classId: number }) {
+  return (
+    <div className="grid gap-4">
+      <VendaBox classId={classId} />
+      <div className="grid gap-4 lg:grid-cols-2 items-start">
+        <TargetPurchasesPanel target={{ kind: "turma", id: classId }} canRequest />
+        <SaleResultPanel target={{ kind: "turma", id: classId }} />
+      </div>
+    </div>
+  );
+}
+
+function VendaBox({ classId }: { classId: number }) {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const canEdit = can("update_comercial");

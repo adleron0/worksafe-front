@@ -28,6 +28,7 @@ import { Route as AuthenticatedClientesIndexRouteImport } from './pages/_authent
 import { Route as AuthenticatedBlogIndexRouteImport } from './pages/_authenticated/blog/index'
 import { Route as IndexProvaClassIdRouteImport } from './pages/_index/prova.$classId'
 import { Route as IndexPropostaKeyRouteImport } from './pages/_index/proposta.$key'
+import { Route as IndexNegociacaoKeyRouteImport } from './pages/_index/negociacao.$key'
 import { Route as IndexCertificadosEfeitosRouteImport } from './pages/_index/certificados/efeitos'
 import { Route as IndexCertificadosIdRouteImport } from './pages/_index/certificados/$id'
 import { Route as AuthenticatedSuprimentosFornecedoresRouteImport } from './pages/_authenticated/suprimentos/fornecedores'
@@ -97,6 +98,7 @@ import { Route as AuthenticatedFinanceiroConciliacaoConciliacaoRouteImport } fro
 import { Route as AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport } from './pages/_authenticated/financeiro/_centros-custo/centros-custo'
 import { Route as AuthenticatedComercialVendedoresVendedoresRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores'
 import { Route as AuthenticatedComercialPropostasPropostasRouteImport } from './pages/_authenticated/comercial/_propostas/propostas'
+import { Route as AuthenticatedComercialNegociacoesNegociacoesRouteImport } from './pages/_authenticated/comercial/_negociacoes/negociacoes'
 import { Route as AuthenticatedComercialModelosModelosRouteImport } from './pages/_authenticated/comercial/_modelos/modelos'
 import { Route as AuthenticatedComercialCuponsCuponsRouteImport } from './pages/_authenticated/comercial/_cupons/cupons'
 import { Route as AuthenticatedComercialContratosContratosRouteImport } from './pages/_authenticated/comercial/_contratos/contratos'
@@ -130,6 +132,7 @@ import { Route as AuthenticatedRhFuncionariosFuncionariosEmployeeIdRouteImport }
 import { Route as AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores_.$sellerId'
 import { Route as AuthenticatedComercialPropostasPropostasNovaRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.nova'
 import { Route as AuthenticatedComercialPropostasPropostasProposalIdRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.$proposalId'
+import { Route as AuthenticatedComercialNegociacoesNegociacoesDealIdRouteImport } from './pages/_authenticated/comercial/_negociacoes/negociacoes_.$dealId'
 import { Route as AuthenticatedComercialContratosContratosContractIdRouteImport } from './pages/_authenticated/comercial/_contratos/contratos_.$contractId'
 import { Route as AuthenticatedBotsRelatoriosRelatoriosReportIdRouteImport } from './pages/_authenticated/bots/_relatorios/relatorios_.$reportId'
 import { Route as AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRouteImport } from './pages/_authenticated/usuarios/_perfis/perfis_.$profileId.permissoes'
@@ -231,6 +234,11 @@ const IndexProvaClassIdRoute = IndexProvaClassIdRouteImport.update({
 const IndexPropostaKeyRoute = IndexPropostaKeyRouteImport.update({
   id: '/proposta/$key',
   path: '/proposta/$key',
+  getParentRoute: () => IndexRoute,
+} as any)
+const IndexNegociacaoKeyRoute = IndexNegociacaoKeyRouteImport.update({
+  id: '/negociacao/$key',
+  path: '/negociacao/$key',
   getParentRoute: () => IndexRoute,
 } as any)
 const IndexCertificadosEfeitosRoute =
@@ -645,6 +653,12 @@ const AuthenticatedComercialPropostasPropostasRoute =
     path: '/comercial/propostas',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedComercialNegociacoesNegociacoesRoute =
+  AuthenticatedComercialNegociacoesNegociacoesRouteImport.update({
+    id: '/comercial/_negociacoes/negociacoes',
+    path: '/comercial/negociacoes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComercialModelosModelosRoute =
   AuthenticatedComercialModelosModelosRouteImport.update({
     id: '/comercial/_modelos/modelos',
@@ -843,6 +857,12 @@ const AuthenticatedComercialPropostasPropostasProposalIdRoute =
     path: '/comercial/propostas/$proposalId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedComercialNegociacoesNegociacoesDealIdRoute =
+  AuthenticatedComercialNegociacoesNegociacoesDealIdRouteImport.update({
+    id: '/comercial/_negociacoes/negociacoes_/$dealId',
+    path: '/comercial/negociacoes/$dealId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComercialContratosContratosContractIdRoute =
   AuthenticatedComercialContratosContratosContractIdRouteImport.update({
     id: '/comercial/_contratos/contratos_/$contractId',
@@ -887,6 +907,7 @@ export interface FileRoutesByFullPath {
   '/suprimentos/fornecedores': typeof AuthenticatedSuprimentosFornecedoresRoute
   '/certificados/$id': typeof IndexCertificadosIdRoute
   '/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
+  '/negociacao/$key': typeof IndexNegociacaoKeyRoute
   '/proposta/$key': typeof IndexPropostaKeyRoute
   '/prova/$classId': typeof IndexProvaClassIdRoute
   '/blog': typeof AuthenticatedBlogIndexRoute
@@ -918,6 +939,7 @@ export interface FileRoutesByFullPath {
   '/comercial/contratos': typeof AuthenticatedComercialContratosContratosRoute
   '/comercial/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
   '/comercial/modelos': typeof AuthenticatedComercialModelosModelosRoute
+  '/comercial/negociacoes': typeof AuthenticatedComercialNegociacoesNegociacoesRoute
   '/comercial/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -981,6 +1003,7 @@ export interface FileRoutesByFullPath {
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/bots/relatorios/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
+  '/comercial/negociacoes/$dealId': typeof AuthenticatedComercialNegociacoesNegociacoesDealIdRoute
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
@@ -1011,6 +1034,7 @@ export interface FileRoutesByTo {
   '/suprimentos/fornecedores': typeof AuthenticatedSuprimentosFornecedoresRoute
   '/certificados/$id': typeof IndexCertificadosIdRoute
   '/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
+  '/negociacao/$key': typeof IndexNegociacaoKeyRoute
   '/proposta/$key': typeof IndexPropostaKeyRoute
   '/prova/$classId': typeof IndexProvaClassIdRoute
   '/blog': typeof AuthenticatedBlogIndexRoute
@@ -1042,6 +1066,7 @@ export interface FileRoutesByTo {
   '/comercial/contratos': typeof AuthenticatedComercialContratosContratosRoute
   '/comercial/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
   '/comercial/modelos': typeof AuthenticatedComercialModelosModelosRoute
+  '/comercial/negociacoes': typeof AuthenticatedComercialNegociacoesNegociacoesRoute
   '/comercial/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -1105,6 +1130,7 @@ export interface FileRoutesByTo {
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/bots/relatorios/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
+  '/comercial/negociacoes/$dealId': typeof AuthenticatedComercialNegociacoesNegociacoesDealIdRoute
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
@@ -1139,6 +1165,7 @@ export interface FileRoutesById {
   '/_authenticated/suprimentos/fornecedores': typeof AuthenticatedSuprimentosFornecedoresRoute
   '/_index/certificados/$id': typeof IndexCertificadosIdRoute
   '/_index/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
+  '/_index/negociacao/$key': typeof IndexNegociacaoKeyRoute
   '/_index/proposta/$key': typeof IndexPropostaKeyRoute
   '/_index/prova/$classId': typeof IndexProvaClassIdRoute
   '/_authenticated/blog/': typeof AuthenticatedBlogIndexRoute
@@ -1170,6 +1197,7 @@ export interface FileRoutesById {
   '/_authenticated/comercial/_contratos/contratos': typeof AuthenticatedComercialContratosContratosRoute
   '/_authenticated/comercial/_cupons/cupons': typeof AuthenticatedComercialCuponsCuponsRoute
   '/_authenticated/comercial/_modelos/modelos': typeof AuthenticatedComercialModelosModelosRoute
+  '/_authenticated/comercial/_negociacoes/negociacoes': typeof AuthenticatedComercialNegociacoesNegociacoesRoute
   '/_authenticated/comercial/_propostas/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/_authenticated/comercial/_vendedores/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/_authenticated/financeiro/_centros-custo/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -1233,6 +1261,7 @@ export interface FileRoutesById {
   '/_authenticated/usuarios/_usuarios/': typeof AuthenticatedUsuariosUsuariosIndexRoute
   '/_authenticated/bots/_relatorios/relatorios_/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   '/_authenticated/comercial/_contratos/contratos_/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
+  '/_authenticated/comercial/_negociacoes/negociacoes_/$dealId': typeof AuthenticatedComercialNegociacoesNegociacoesDealIdRoute
   '/_authenticated/comercial/_propostas/propostas_/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/_authenticated/comercial/_propostas/propostas_/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/_authenticated/comercial/_vendedores/vendedores_/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
@@ -1266,6 +1295,7 @@ export interface FileRouteTypes {
     | '/suprimentos/fornecedores'
     | '/certificados/$id'
     | '/certificados/efeitos'
+    | '/negociacao/$key'
     | '/proposta/$key'
     | '/prova/$classId'
     | '/blog'
@@ -1297,6 +1327,7 @@ export interface FileRouteTypes {
     | '/comercial/contratos'
     | '/comercial/cupons'
     | '/comercial/modelos'
+    | '/comercial/negociacoes'
     | '/comercial/propostas'
     | '/comercial/vendedores'
     | '/financeiro/centros-custo'
@@ -1360,6 +1391,7 @@ export interface FileRouteTypes {
     | '/usuarios'
     | '/bots/relatorios/$reportId'
     | '/comercial/contratos/$contractId'
+    | '/comercial/negociacoes/$dealId'
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
     | '/comercial/vendedores/$sellerId'
@@ -1390,6 +1422,7 @@ export interface FileRouteTypes {
     | '/suprimentos/fornecedores'
     | '/certificados/$id'
     | '/certificados/efeitos'
+    | '/negociacao/$key'
     | '/proposta/$key'
     | '/prova/$classId'
     | '/blog'
@@ -1421,6 +1454,7 @@ export interface FileRouteTypes {
     | '/comercial/contratos'
     | '/comercial/cupons'
     | '/comercial/modelos'
+    | '/comercial/negociacoes'
     | '/comercial/propostas'
     | '/comercial/vendedores'
     | '/financeiro/centros-custo'
@@ -1484,6 +1518,7 @@ export interface FileRouteTypes {
     | '/usuarios'
     | '/bots/relatorios/$reportId'
     | '/comercial/contratos/$contractId'
+    | '/comercial/negociacoes/$dealId'
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
     | '/comercial/vendedores/$sellerId'
@@ -1517,6 +1552,7 @@ export interface FileRouteTypes {
     | '/_authenticated/suprimentos/fornecedores'
     | '/_index/certificados/$id'
     | '/_index/certificados/efeitos'
+    | '/_index/negociacao/$key'
     | '/_index/proposta/$key'
     | '/_index/prova/$classId'
     | '/_authenticated/blog/'
@@ -1548,6 +1584,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comercial/_contratos/contratos'
     | '/_authenticated/comercial/_cupons/cupons'
     | '/_authenticated/comercial/_modelos/modelos'
+    | '/_authenticated/comercial/_negociacoes/negociacoes'
     | '/_authenticated/comercial/_propostas/propostas'
     | '/_authenticated/comercial/_vendedores/vendedores'
     | '/_authenticated/financeiro/_centros-custo/centros-custo'
@@ -1611,6 +1648,7 @@ export interface FileRouteTypes {
     | '/_authenticated/usuarios/_usuarios/'
     | '/_authenticated/bots/_relatorios/relatorios_/$reportId'
     | '/_authenticated/comercial/_contratos/contratos_/$contractId'
+    | '/_authenticated/comercial/_negociacoes/negociacoes_/$dealId'
     | '/_authenticated/comercial/_propostas/propostas_/$proposalId'
     | '/_authenticated/comercial/_propostas/propostas_/nova'
     | '/_authenticated/comercial/_vendedores/vendedores_/$sellerId'
@@ -1765,6 +1803,13 @@ declare module '@tanstack/react-router' {
       path: '/proposta/$key'
       fullPath: '/proposta/$key'
       preLoaderRoute: typeof IndexPropostaKeyRouteImport
+      parentRoute: typeof IndexRoute
+    }
+    '/_index/negociacao/$key': {
+      id: '/_index/negociacao/$key'
+      path: '/negociacao/$key'
+      fullPath: '/negociacao/$key'
+      preLoaderRoute: typeof IndexNegociacaoKeyRouteImport
       parentRoute: typeof IndexRoute
     }
     '/_index/certificados/efeitos': {
@@ -2250,6 +2295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComercialPropostasPropostasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/comercial/_negociacoes/negociacoes': {
+      id: '/_authenticated/comercial/_negociacoes/negociacoes'
+      path: '/comercial/negociacoes'
+      fullPath: '/comercial/negociacoes'
+      preLoaderRoute: typeof AuthenticatedComercialNegociacoesNegociacoesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_modelos/modelos': {
       id: '/_authenticated/comercial/_modelos/modelos'
       path: '/comercial/modelos'
@@ -2481,6 +2533,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComercialPropostasPropostasProposalIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/comercial/_negociacoes/negociacoes_/$dealId': {
+      id: '/_authenticated/comercial/_negociacoes/negociacoes_/$dealId'
+      path: '/comercial/negociacoes/$dealId'
+      fullPath: '/comercial/negociacoes/$dealId'
+      preLoaderRoute: typeof AuthenticatedComercialNegociacoesNegociacoesDealIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_contratos/contratos_/$contractId': {
       id: '/_authenticated/comercial/_contratos/contratos_/$contractId'
       path: '/comercial/contratos/$contractId'
@@ -2549,6 +2608,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComercialContratosContratosRoute: typeof AuthenticatedComercialContratosContratosRoute
   AuthenticatedComercialCuponsCuponsRoute: typeof AuthenticatedComercialCuponsCuponsRoute
   AuthenticatedComercialModelosModelosRoute: typeof AuthenticatedComercialModelosModelosRoute
+  AuthenticatedComercialNegociacoesNegociacoesRoute: typeof AuthenticatedComercialNegociacoesNegociacoesRoute
   AuthenticatedComercialPropostasPropostasRoute: typeof AuthenticatedComercialPropostasPropostasRoute
   AuthenticatedComercialVendedoresVendedoresRoute: typeof AuthenticatedComercialVendedoresVendedoresRoute
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute: typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -2609,6 +2669,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedUsuariosUsuariosIndexRoute: typeof AuthenticatedUsuariosUsuariosIndexRoute
   AuthenticatedBotsRelatoriosRelatoriosReportIdRoute: typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
   AuthenticatedComercialContratosContratosContractIdRoute: typeof AuthenticatedComercialContratosContratosContractIdRoute
+  AuthenticatedComercialNegociacoesNegociacoesDealIdRoute: typeof AuthenticatedComercialNegociacoesNegociacoesDealIdRoute
   AuthenticatedComercialPropostasPropostasProposalIdRoute: typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   AuthenticatedComercialPropostasPropostasNovaRoute: typeof AuthenticatedComercialPropostasPropostasNovaRoute
   AuthenticatedComercialVendedoresVendedoresSellerIdRoute: typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
@@ -2679,6 +2740,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialCuponsCuponsRoute,
   AuthenticatedComercialModelosModelosRoute:
     AuthenticatedComercialModelosModelosRoute,
+  AuthenticatedComercialNegociacoesNegociacoesRoute:
+    AuthenticatedComercialNegociacoesNegociacoesRoute,
   AuthenticatedComercialPropostasPropostasRoute:
     AuthenticatedComercialPropostasPropostasRoute,
   AuthenticatedComercialVendedoresVendedoresRoute:
@@ -2797,6 +2860,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedBotsRelatoriosRelatoriosReportIdRoute,
   AuthenticatedComercialContratosContratosContractIdRoute:
     AuthenticatedComercialContratosContratosContractIdRoute,
+  AuthenticatedComercialNegociacoesNegociacoesDealIdRoute:
+    AuthenticatedComercialNegociacoesNegociacoesDealIdRoute,
   AuthenticatedComercialPropostasPropostasProposalIdRoute:
     AuthenticatedComercialPropostasPropostasProposalIdRoute,
   AuthenticatedComercialPropostasPropostasNovaRoute:
@@ -2835,6 +2900,7 @@ interface IndexRouteChildren {
   IndexIndexRoute: typeof IndexIndexRoute
   IndexCertificadosIdRoute: typeof IndexCertificadosIdRoute
   IndexCertificadosEfeitosRoute: typeof IndexCertificadosEfeitosRoute
+  IndexNegociacaoKeyRoute: typeof IndexNegociacaoKeyRoute
   IndexPropostaKeyRoute: typeof IndexPropostaKeyRoute
   IndexProvaClassIdRoute: typeof IndexProvaClassIdRoute
   IndexCertificadosIndexRoute: typeof IndexCertificadosIndexRoute
@@ -2849,6 +2915,7 @@ const IndexRouteChildren: IndexRouteChildren = {
   IndexIndexRoute: IndexIndexRoute,
   IndexCertificadosIdRoute: IndexCertificadosIdRoute,
   IndexCertificadosEfeitosRoute: IndexCertificadosEfeitosRoute,
+  IndexNegociacaoKeyRoute: IndexNegociacaoKeyRoute,
   IndexPropostaKeyRoute: IndexPropostaKeyRoute,
   IndexProvaClassIdRoute: IndexProvaClassIdRoute,
   IndexCertificadosIndexRoute: IndexCertificadosIndexRoute,

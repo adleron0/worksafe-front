@@ -30,16 +30,19 @@ export interface PurchaseEvent { id: number; type: string; from: PurchaseStatus 
 export interface PurchaseRow {
   id: number; number: string; title: string; group: string; status: PurchaseStatus; total: number;
   supplier: { id: number; name: string } | null; serviceOrder: { id: number; number: string } | null;
+  rental?: { id: number; number: string } | null; courseClass?: { id: number; number: string } | null;
   neededBy: string | null; deliveryDate: string | null; requestedBy: string | null; late: boolean; createdAt: string;
 }
 export interface PurchaseList {
   rows: PurchaseRow[]; total: number; canApprove: boolean;
   summary: Partial<Record<PurchaseStatus, { count: number; total: number }>>;
 }
-export interface Purchase extends Omit<PurchaseRow, "supplier" | "serviceOrder"> {
+export interface Purchase extends Omit<PurchaseRow, "supplier" | "serviceOrder" | "rental" | "courseClass"> {
   statusLabel: string; nextStatuses: PurchaseStatus[]; statusNote: string | null;
   supplier: { id: number; name: string; document: string | null; pixKey: string | null; phone: string | null; email: string | null } | null;
   serviceOrder: { id: number; number: string; title: string; customer: string } | null;
+  rental: { id: number; number: string; customer: string } | null;
+  courseClass: { id: number; number: string; customer: string } | null;
   items: PurchaseItem[]; justification: string | null; purchasedAt: string | null; receivedAt: string | null;
   paymentTerms: { count: number; firstDueDate: string; method: string | null } | null; invoiceNumber: string | null;
   attachments: PurchaseAttachment[]; approvedBy: string | null; approvedAt: string | null;
@@ -48,7 +51,7 @@ export interface Purchase extends Omit<PurchaseRow, "supplier" | "serviceOrder">
 }
 export interface PurchaseOptions {
   suppliers: Array<{ id: number; name: string; document: string | null }>; groups: Array<{ id: string; name: string }>;
-  serviceOrders: Array<{ id: number; name: string }>; canApprove: boolean;
+  serviceOrders: Array<{ id: number; name: string }>; rentals?: Array<{ id: number; name: string }>; classes?: Array<{ id: number; name: string }>; canApprove: boolean;
 }
 export interface OrderPurchases {
   rows: Array<{ id: number; number: string; title: string; group: string; status: PurchaseStatus; total: number; supplier: string | null }>;
@@ -268,33 +271,45 @@ export function PurchaseMoveDialog({ purchase, target, onClose, onDone }: { purc
   );
 }
 
-/** Compras de uma obra, na tela da OS: o que já está comprometido e os pedidos. */
-export function OrderPurchasesPanel({ orderId, canRequest }: { orderId: number; canRequest: boolean }) {
+/** Destino de um pedido: a obra (OS), a Ordem de Locação ou a turma. */
+export type PurchaseTarget = { kind: "os" | "ol" | "turma"; id: number };
+const TARGET_TEXT: Record<PurchaseTarget["kind"], { path: string; title: string; empty: string }> = {
+  os: { path: "service-order", title: "Compras da obra", empty: "Nenhum pedido de compra para esta obra." },
+  ol: { path: "rental", title: "Compras da locação", empty: "Nenhum pedido de compra para esta locação (frete, sublocação…)." },
+  turma: { path: "class", title: "Compras da turma", empty: "Nenhum pedido de compra para esta turma (material, coffee, instrutor de fora…)." },
+};
+/** Texto curto do destino de um pedido, para listas. */
+export const targetOf = (row: Pick<PurchaseRow, "serviceOrder" | "rental" | "courseClass">) => row.serviceOrder?.number ?? row.rental?.number ?? row.courseClass?.number ?? null;
+
+/** Compras de uma obra, locação ou turma: o que já está comprometido e os pedidos. */
+export function TargetPurchasesPanel({ target, canRequest }: { target: PurchaseTarget; canRequest: boolean }) {
   const { can } = useVerify();
   const seesPurchases = can(`view_${PURCHASES_ABILITY}`);
+  const text = TARGET_TEXT[target.kind];
   const { data } = useQuery({
-    queryKey: [PURCHASES_KEY, "serviceOrder", orderId],
-    queryFn: () => purchasesApi.get<OrderPurchases>(`service-order/${orderId}`),
+    queryKey: [PURCHASES_KEY, target.kind, target.id],
+    queryFn: () => purchasesApi.get<OrderPurchases>(`${text.path}/${target.id}`),
+    retry: false,
   });
   if (!data || (!data.rows.length && !(seesPurchases && canRequest))) return null;
   return (
-    <section className="rounded-lg border p-4">
+    <section className="rounded-lg border p-4 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-semibold">Compras da obra</h2>
+        <h2 className="font-semibold">{text.title}</h2>
         {seesPurchases && canRequest && can(`create_${PURCHASES_ABILITY}`) && (
           <Button asChild size="sm" variant="outline">
-            <Link to="/suprimentos/pedidos-de-compra/$purchaseId" params={{ purchaseId: "novo" }} search={{ os: orderId }}><Icon name="plus" className="w-3 h-3 mr-1" /> Pedir compra</Link>
+            <Link to="/suprimentos/pedidos-de-compra/$purchaseId" params={{ purchaseId: "novo" }} search={{ [target.kind]: target.id }}><Icon name="plus" className="w-3 h-3 mr-1" /> Pedir compra</Link>
           </Button>
         )}
       </div>
-      {data.rows.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">Nenhum pedido de compra para esta obra.</p> : (
+      {data.rows.length === 0 ? <p className="mt-2 text-muted-foreground">{text.empty}</p> : (
         <>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-muted-foreground">
             Comprometido: <span className="font-semibold text-foreground tabular-nums">{money(data.committed)}</span>
             {data.byGroup.length > 0 && ` (${data.byGroup.map((g) => `${g.name} ${money(g.committed)}`).join(" · ")})`}
             {data.pending > 0 && <> · esperando aprovação: <span className="tabular-nums">{money(data.pending)}</span></>}
           </p>
-          <ul className="mt-3 divide-y text-sm">
+          <ul className="mt-3 divide-y">
             {data.rows.map((row) => (
               <li key={row.id} className="py-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                 {seesPurchases
@@ -307,6 +322,78 @@ export function OrderPurchasesPanel({ orderId, canRequest }: { orderId: number; 
             ))}
           </ul>
         </>
+      )}
+    </section>
+  );
+}
+
+/** Compras de uma obra, na tela da OS. */
+export function OrderPurchasesPanel({ orderId, canRequest }: { orderId: number; canRequest: boolean }) {
+  return <TargetPurchasesPanel target={{ kind: "os", id: orderId }} canRequest={canRequest} />;
+}
+
+/** Resultado da OL ou da turma (espelha a API): receita faturada contra as compras ligadas. */
+export interface SaleFigures { revenue: number; cost: number; profit: number; margin: number | null }
+export interface SaleResult {
+  kind: "locacao" | "turma"; id: number; number: string; customer: string | null;
+  contracts: Array<{ id: number; number: string; share: number }>;
+  revenue: { contracted: number; invoiced: number; received: number; toInvoice: number };
+  lines: Array<{ key: string; label: string; realized: number; committed: number; note: string | null }>;
+  totals: { realized: SaleFigures; projected: SaleFigures };
+  pending: string[];
+}
+const pct = (margin: number | null) => (margin === null ? "—" : `${margin.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`);
+
+/** Bloco "Resultado" da OL e da turma. Só para quem vê custos. */
+export function SaleResultPanel({ target }: { target: { kind: "ol" | "turma"; id: number } }) {
+  const { can } = useVerify();
+  const text = TARGET_TEXT[target.kind];
+  const { data, error } = useQuery({
+    queryKey: [PURCHASES_KEY, "result", target.kind, target.id],
+    queryFn: () => purchasesApi.get<SaleResult>(`${text.path}/${target.id}/result`),
+    enabled: can("view_custos_comercial"), retry: false,
+  });
+  if (!can("view_custos_comercial")) return null;
+  if (error) return <section className="rounded-lg border p-4 text-sm"><h2 className="font-semibold">Resultado</h2><p className="mt-2 text-destructive">{errorMessage(error)}</p></section>;
+  if (!data) return null;
+  const { revenue, totals } = data;
+  return (
+    <section className="rounded-lg border p-4 text-sm">
+      <h2 className="font-semibold">Resultado</h2>
+      <p className="text-xs text-muted-foreground">Uso interno. Receita = o que foi faturado{data.kind === "turma" ? " (inscrições pagas e a parte desta turma nas vendas ligadas)" : ""}; custo = pedidos de compra comprados, impostos e comissão.</p>
+      <div className="mt-3 grid gap-2 grid-cols-2">
+        <div className="rounded-md border p-2.5">
+          <p className="text-xs text-muted-foreground">Lucro até agora</p>
+          <p className={cn("text-base font-semibold tabular-nums", totals.realized.profit < 0 && "text-red-600 dark:text-red-400")}>{money(totals.realized.profit)}</p>
+          <p className="text-xs text-muted-foreground">margem {pct(totals.realized.margin)}</p>
+        </div>
+        <div className="rounded-md border p-2.5">
+          <p className="text-xs text-muted-foreground">Lucro projetado</p>
+          <p className={cn("text-base font-semibold tabular-nums", totals.projected.profit < 0 && "text-red-600 dark:text-red-400")}>{money(totals.projected.profit)}</p>
+          <p className="text-xs text-muted-foreground">margem {pct(totals.projected.margin)}</p>
+        </div>
+      </div>
+      <dl className="mt-3 grid gap-1">
+        {revenue.contracted > 0 && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Vendido</dt><dd className="tabular-nums">{money(revenue.contracted)}</dd></div>}
+        <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Faturado</dt><dd className="tabular-nums">{money(revenue.invoiced)}</dd></div>
+        <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Recebido</dt><dd className="tabular-nums">{money(revenue.received)}</dd></div>
+        {revenue.toInvoice > 0 && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">A faturar</dt><dd className="tabular-nums">{money(revenue.toInvoice)}</dd></div>}
+      </dl>
+      {data.lines.length > 0 && (
+        <ul className="mt-3 border-t pt-2 grid gap-1">
+          {data.lines.map((line) => (
+            <li key={line.key} className="flex justify-between gap-3">
+              <span className="text-muted-foreground">{line.label}{line.committed > 0 && <span className="text-xs"> · {money(line.committed)} comprometido</span>}</span>
+              <span className="tabular-nums">{money(line.realized)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {data.contracts.length > 0 && <p className="mt-2 text-xs text-muted-foreground">Venda: {data.contracts.map((c) => `${c.number}${c.share < 1 ? ` (${Math.round(c.share * 100)}% nesta turma)` : ""}`).join(", ")}</p>}
+      {data.pending.length > 0 && (
+        <ul className="mt-2 grid gap-0.5 text-xs text-amber-700 dark:text-amber-300">
+          {data.pending.map((item) => <li key={item}>• {item}</li>)}
+        </ul>
       )}
     </section>
   );

@@ -73,7 +73,7 @@ export interface RentalLineCalc {
 export interface ProposalCalc {
   sections: Array<{ suggested: number; value: number; cost?: number; margin?: number; lines: CalcLine[] }>;
   totals: {
-    suggested: number; subtotal: number; contingency: number; discount: number; net: number; taxOutside: number; total: number;
+    suggested: number; subtotal: number; contingency: number; discount: number; dealDiscount?: number; net: number; taxOutside: number; total: number;
     cost?: number; taxInside?: number; tax?: number; profit?: number; profitRate?: number; commission?: number; customerCredit?: number; customerCost?: number;
   };
   installments: Array<{ value: number }>;
@@ -101,6 +101,8 @@ export interface Proposal {
   availability?: RentalAvailability | null;
   publicKey: string | null; publicUrl: string | null; documentFrozen: boolean; documentHash: string | null; viewedAt: string | null;
   emailConfigured: boolean; events: ProposalEvent[];
+  /** negociação em que a proposta está (agrupa propostas do mesmo cliente) */
+  deal?: { id: number; number: string; title: string } | null;
   contract: { id: number; number: string; status: string; customerOrder?: { number: string | null; date: string | null; fileUrl: string | null; fileName: string | null }; serviceOrder?: { id: number; number: string; status: string } | null } | null;
   /** só na resposta do envio: a proposta foi enviada, mas o e-mail com o link falhou */
   emailError?: string;

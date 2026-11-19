@@ -306,7 +306,7 @@ const TABS = [
   { slug: "conteudo", label: "Conteúdo", heading: "O que o aluno aprende", description: "Descrição, grade teórica e prática, o que está incluso, dúvidas frequentes e por que escolher a WorkSafe." },
   { slug: "pagina", label: "Página no site", heading: "Como a turma aparece no site", description: "Foto, vídeo, layout da página e teste A/B. O que ficar vazio não aparece." },
   { slug: "avaliacao", label: "Prova e avaliação", heading: "Depois da turma", description: "Prova online com código de acesso e a avaliação do curso pelos alunos." },
-  { slug: "venda", label: "Venda", heading: "De onde vem o dinheiro desta turma", description: "Turma fechada precisa de uma venda (contrato) ou da marcação \"sem cobrança\", com o motivo. Sem isso o financeiro não fica sabendo da turma." },
+  { slug: "venda", label: "Venda", heading: "De onde vem o dinheiro desta turma", description: "Turma fechada precisa de uma venda (contrato) ou da marcação \"sem cobrança\", com o motivo. Aqui também ficam as compras da turma (material, coffee, instrutor de fora) e o resultado." },
   { slug: "resultados", label: "Resultados", heading: "Resultados da página", description: "Visitas, inscrições e qual layout da página converte mais." },
   { slug: "empresas", label: "Vagas de empresas", heading: "Vagas compradas por empresas", description: "Empresas que compraram vagas nesta turma aberta. Os alunos delas entram sem cobrança e o certificado sai com a empresa contratante." },
 ] as const;
@@ -511,7 +511,7 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
   // Resultados, Venda e Vagas de empresas só existem para turma salva; Venda, só para turma
   // fechada (com cliente); Vagas de empresas, só para turma aberta
   const visibleTabs = formData
-    ? TABS.filter((tab) => (tab.slug !== "venda" || Boolean(formData.customerId)) && (tab.slug !== "empresas" || !formData.customerId))
+    ? TABS.filter((tab) => tab.slug !== "empresas" || !formData.customerId)
     : TABS.filter((tab) => !VIEW_TABS.includes(tab.slug));
 
   // ── Rascunho em localStorage (apenas criação) ─────────────────────────────

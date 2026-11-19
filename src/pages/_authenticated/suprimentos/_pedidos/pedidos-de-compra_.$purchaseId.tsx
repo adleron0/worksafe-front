@@ -31,25 +31,40 @@ export const Route = createFileRoute("/_authenticated/suprimentos/_pedidos/pedid
   component: PurchasePage,
   // os: pedido para uma obra; reposicao: linhas vindas de Estoque → Reposição (guardadas no sessionStorage)
   // servico: pedido da calibração/manutenção de uma peça (Equipamentos → Calibração e manutenção)
-  validateSearch: (search: Record<string, unknown>): { os?: number; reposicao?: "1"; servico?: "1" } => ({
+  // ol: pedido para uma Ordem de Locação (frete, sublocação); turma: material de curso, coffee, instrutor de fora
+  validateSearch: (search: Record<string, unknown>): { os?: number; ol?: number; turma?: number; reposicao?: "1"; servico?: "1" } => ({
     ...(search.servico === "1" || search.servico === 1 ? { servico: "1" as const } : {}),
     ...(Number(search.os) > 0 ? { os: Number(search.os) } : {}),
+    ...(Number(search.ol) > 0 ? { ol: Number(search.ol) } : {}),
+    ...(Number(search.turma) > 0 ? { turma: Number(search.turma) } : {}),
     ...(search.reposicao === "1" || search.reposicao === 1 ? { reposicao: "1" as const } : {}),
   }),
 });
 
-interface Draft { title: string; group: string; supplierId: string; serviceOrderId: string; neededBy: string; justification: string; items: PurchaseItem[] }
+type Destination = "empresa" | "os" | "ol" | "turma";
+interface Draft { title: string; group: string; supplierId: string; destination: Destination; serviceOrderId: string; rentalId: string; classId: string; neededBy: string; justification: string; items: PurchaseItem[] }
+type Origin = { os?: number; ol?: number; turma?: number };
+const destinationOf = (purchase?: Purchase, origin?: Origin): Destination =>
+  purchase ? (purchase.serviceOrder ? "os" : purchase.rental ? "ol" : purchase.courseClass ? "turma" : "empresa")
+    : origin?.os ? "os" : origin?.ol ? "ol" : origin?.turma ? "turma" : "empresa";
+const DESTINATIONS: Array<{ id: Destination; name: string }> = [
+  { id: "empresa", name: "Gasto da empresa" }, { id: "os", name: "Uma obra (OS)" }, { id: "ol", name: "Uma ordem de locação (OL)" }, { id: "turma", name: "Uma turma" },
+];
 const emptyItem = (): PurchaseItem => ({ description: "", unit: "", quantity: 1, unitPrice: 0, total: 0 });
-const draftOf = (purchase?: Purchase, os?: number, reorder?: ReorderDraft | null): Draft => ({
+const draftOf = (purchase?: Purchase, origin?: Origin, reorder?: ReorderDraft | null): Draft => ({
   title: purchase?.title ?? (reorder ? "Reposição de estoque" : ""), group: purchase?.group ?? "material",
   supplierId: purchase?.supplier ? String(purchase.supplier.id) : reorder?.supplierId ? String(reorder.supplierId) : "",
-  serviceOrderId: purchase?.serviceOrder ? String(purchase.serviceOrder.id) : os ? String(os) : "", neededBy: purchase?.neededBy ?? "",
+  destination: destinationOf(purchase, origin),
+  serviceOrderId: purchase?.serviceOrder ? String(purchase.serviceOrder.id) : origin?.os ? String(origin.os) : "",
+  rentalId: purchase?.rental ? String(purchase.rental.id) : origin?.ol ? String(origin.ol) : "",
+  classId: purchase?.courseClass ? String(purchase.courseClass.id) : origin?.turma ? String(origin.turma) : "",
+  neededBy: purchase?.neededBy ?? "",
   justification: purchase?.justification ?? (reorder ? "Itens abaixo do estoque mínimo." : ""),
   items: purchase?.items.length ? purchase.items.map((item) => ({ ...item, unit: item.unit ?? "" }))
     : reorder ? reorder.items.map((item) => ({ ...item, total: item.quantity * item.unitPrice })) : [emptyItem()],
 });
-const serviceDraftOf = (service: ServiceDraft, os?: number): Draft => ({
-  ...draftOf(undefined, os), title: service.title, group: service.group || "outros", supplierId: service.supplierId ? String(service.supplierId) : "",
+const serviceDraftOf = (service: ServiceDraft, origin?: Origin): Draft => ({
+  ...draftOf(undefined, origin), title: service.title, group: service.group || "outros", supplierId: service.supplierId ? String(service.supplierId) : "",
   justification: "Serviço de calibração/manutenção de equipamento do estoque.", items: service.items.map((item) => ({ ...item, total: item.quantity * item.unitPrice })),
 });
 const totalOf = (items: PurchaseItem[]) => Math.round(items.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.unitPrice || 0), 0) * 100) / 100;
@@ -59,14 +74,15 @@ const EVENT_LABEL: Record<string, string> = { criado: "Solicitado", avancou: "Av
 /** Pedido de compra: o que se pede, de quem, para qual obra; e por onde ele já passou. */
 function PurchasePage() {
   const { purchaseId } = Route.useParams();
-  const { os, reposicao, servico } = Route.useSearch();
+  const { os, ol, turma, reposicao, servico } = Route.useSearch();
+  const origin: Origin = { os, ol, turma };
   const isNew = purchaseId === "novo";
   const { can } = useVerify();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   // o pedido do serviço de calibração/manutenção: título, grupo, fornecedor e a linha do serviço
   const [service] = useState<ServiceDraft | null>(() => (isNew && servico ? readServiceDraft() : null));
-  const [draft, setDraft] = useState<Draft | null>(isNew ? (service ? serviceDraftOf(service, os) : draftOf(undefined, os, reposicao ? readReorderDraft() : null)) : null);
+  const [draft, setDraft] = useState<Draft | null>(isNew ? (service ? serviceDraftOf(service, origin) : draftOf(undefined, origin, reposicao ? readReorderDraft() : null)) : null);
   const [moving, setMoving] = useState<PurchaseStatus | null>(null);
   const [receiving, setReceiving] = useState(false);
   const [newSupplier, setNewSupplier] = useState(false);
@@ -100,7 +116,11 @@ function PurchasePage() {
   const { mutate: save, isPending: saving } = useMutation({
     mutationFn: (value: Draft) => {
       const body = {
-        title: value.title.trim(), group: value.group, supplierId: value.supplierId || null, serviceOrderId: value.serviceOrderId || null,
+        title: value.title.trim(), group: value.group, supplierId: value.supplierId || null,
+        // um destino só: os outros vão vazios
+        serviceOrderId: value.destination === "os" ? value.serviceOrderId || null : null,
+        rentalId: value.destination === "ol" ? value.rentalId || null : null,
+        classId: value.destination === "turma" ? value.classId || null : null,
         neededBy: value.neededBy || null, justification: value.justification.trim(),
         items: value.items.filter((item) => item.description.trim()).map((item) => ({ description: item.description.trim(), unit: item.unit || null, quantity: item.quantity, unitPrice: item.unitPrice, itemId: item.itemId ?? null })),
       };
@@ -159,6 +179,9 @@ function PurchasePage() {
       if (draft.title.trim().length < 2) return setError("Informe o que será comprado.");
       if (!draft.items.some((item) => item.description.trim())) return setError("Informe pelo menos um item.");
       if (total <= 0) return setError("Informe a quantidade e o valor dos itens.");
+      if (draft.destination === "os" && !draft.serviceOrderId) return setError("Escolha a OS do pedido.");
+      if (draft.destination === "ol" && !draft.rentalId) return setError("Escolha a ordem de locação do pedido.");
+      if (draft.destination === "turma" && !draft.classId) return setError("Escolha a turma do pedido.");
     }
     setError(""); save(draft);
   };
@@ -234,12 +257,36 @@ function PurchasePage() {
                   onValueChange={(_, value) => set("neededBy", String(value ?? ""))} />
               </div>
             </div>
-            <div>
-              <Label>Ordem de serviço</Label>
-              <Select name="serviceOrderId" searchable options={[...(options?.serviceOrders ?? []), ...(purchase?.serviceOrder && !options?.serviceOrders.some((o) => o.id === purchase.serviceOrder!.id) ? [{ id: purchase.serviceOrder.id, name: `${purchase.serviceOrder.number} — ${purchase.serviceOrder.customer}` }] : [])]}
-                state={draft.serviceOrderId} disabled={!editable} clearable onChange={(_, value) => set("serviceOrderId", String(value ?? ""))} placeholder="Não é para uma obra (gasto da empresa)" />
-              <p className="text-xs text-muted-foreground mt-1">Quando é para uma obra, o valor aprovado entra no comprometido daquela OS.</p>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Para quê</Label>
+                <Select name="destination" options={DESTINATIONS} state={draft.destination} disabled={!editable} onChange={(_, value) => set("destination", (String(value ?? "empresa") as Destination))} placeholder="Selecione" />
+              </div>
+              {draft.destination === "os" && (
+                <div>
+                  <Label>Ordem de serviço <span>*</span></Label>
+                  <Select name="serviceOrderId" searchable options={[...(options?.serviceOrders ?? []), ...(purchase?.serviceOrder && !options?.serviceOrders.some((o) => o.id === purchase.serviceOrder!.id) ? [{ id: purchase.serviceOrder.id, name: `${purchase.serviceOrder.number} — ${purchase.serviceOrder.customer}` }] : [])]}
+                    state={draft.serviceOrderId} disabled={!editable} onChange={(_, value) => set("serviceOrderId", String(value ?? ""))} placeholder="Escolha a OS" />
+                </div>
+              )}
+              {draft.destination === "ol" && (
+                <div>
+                  <Label>Ordem de locação <span>*</span></Label>
+                  <Select name="rentalId" searchable options={[...(options?.rentals ?? []), ...(purchase?.rental && !options?.rentals?.some((o) => o.id === purchase.rental!.id) ? [{ id: purchase.rental.id, name: `${purchase.rental.number} — ${purchase.rental.customer}` }] : [])]}
+                    state={draft.rentalId} disabled={!editable} onChange={(_, value) => set("rentalId", String(value ?? ""))} placeholder="Escolha a OL" />
+                </div>
+              )}
+              {draft.destination === "turma" && (
+                <div>
+                  <Label>Turma <span>*</span></Label>
+                  <Select name="classId" searchable options={[...(options?.classes ?? []), ...(purchase?.courseClass && !options?.classes?.some((o) => o.id === purchase.courseClass!.id) ? [{ id: purchase.courseClass.id, name: purchase.courseClass.number }] : [])]}
+                    state={draft.classId} disabled={!editable} onChange={(_, value) => set("classId", String(value ?? ""))} placeholder="Escolha a turma" />
+                </div>
+              )}
             </div>
+            <p className="text-xs text-muted-foreground -mt-2">{draft.destination === "os" ? "O valor aprovado entra no comprometido da OS e no resultado da obra."
+              : draft.destination === "ol" ? "Frete, sublocação e outros gastos da locação: entram no resultado da OL."
+                : draft.destination === "turma" ? "Material de curso, coffee, instrutor de fora: entram no resultado da turma." : "Gasto da própria empresa, sem obra, locação ou turma."}</p>
             <div>
               <div className="flex items-center justify-between gap-2">
                 <Label>Fornecedor</Label>

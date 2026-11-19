@@ -37,7 +37,7 @@ function StockOverviewPage() {
     { icon: "users", label: "Peças fora", value: String(data.outside), hint: "Com funcionários, em locação ou no fornecedor", to: "/suprimentos/estoque/saldos", search: { outside: "1" } },
     { icon: "list-checks", label: "Inspeções", value: String(data.inspections), hint: "Peças com inspeção vencida ou a vencer em 30 dias", alert: data.inspections > 0, to: "/suprimentos/equipamentos/inspecoes" },
     { icon: "gauge", label: "Calibrações", value: String(data.calibrations), hint: "Instrumentos com calibração vencida ou a vencer em 30 dias", alert: data.calibrations > 0, to: "/suprimentos/equipamentos/calibracao" },
-    { icon: "handshake", label: "Locações ativas", value: String(data.rentalsActive), hint: data.rentalsLate ? `${data.rentalsLate} atrasada(s)` : "Nenhuma atrasada", alert: data.rentalsLate > 0, to: "/suprimentos/locacoes" },
+    { icon: "handshake", label: "Ordens de locação ativas", value: String(data.rentalsActive), hint: data.rentalsLate ? `${data.rentalsLate} atrasada(s)` : "Nenhuma atrasada", alert: data.rentalsLate > 0, to: "/suprimentos/locacoes" },
     ...(data.value !== null ? [{ icon: "wallet", label: "Valor em estoque", value: money(data.value), hint: "Saldo de todos os itens pelo custo médio", to: "/suprimentos/estoque/itens" }] : []),
   ] : [];
 

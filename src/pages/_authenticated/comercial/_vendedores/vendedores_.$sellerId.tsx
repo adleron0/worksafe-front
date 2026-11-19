@@ -77,8 +77,10 @@ function SellerWalletPage() {
   if (isLoading || !wallet) return <div className="grid gap-3"><Skeleton className="h-16 w-full" /><Skeleton className="h-28 w-full" /><Skeleton className="h-72 w-full" /></div>;
   const canUpdate = can(`update_${COMMERCIAL_ABILITY}`);
   const { seller } = wallet;
-  const services = wallet.byOrigin.servico.generated, trainings = wallet.byOrigin.treinamento.generated, manual = wallet.byOrigin.manual.generated;
-  const split = services + trainings + manual;
+  // a API antiga não manda "locacao": conta como zero
+  const rentalsOrigin = wallet.byOrigin.locacao ?? { generated: 0, pending: 0, sales: 0 };
+  const services = wallet.byOrigin.servico.generated, trainings = wallet.byOrigin.treinamento.generated, manual = wallet.byOrigin.manual.generated, rentals = rentalsOrigin.generated;
+  const split = services + trainings + rentals + manual;
   const peak = Math.max(1, ...wallet.months.map((month) => Math.max(month.generated, month.paid)));
 
   return (
@@ -154,11 +156,13 @@ function SellerWalletPage() {
                 aria-label={`Treinamento ${money(trainings)}, serviço ${money(services)}${manual ? `, manual ${money(manual)}` : ""}`}>
                 <div className="bg-primary" style={{ width: `${(trainings / split) * 100}%` }} />
                 <div className="bg-blue-500" style={{ width: `${(services / split) * 100}%` }} />
+                <div className="bg-amber-500" style={{ width: `${(rentals / split) * 100}%` }} />
                 <div className="bg-muted-foreground/50" style={{ width: `${(manual / split) * 100}%` }} />
               </div>
               <div className="mt-3 grid gap-1.5 text-sm">
                 <Origin color="bg-primary" label="Treinamento" value={trainings} total={split} pending={wallet.byOrigin.treinamento.pending} sales={wallet.byOrigin.treinamento.sales} />
                 <Origin color="bg-blue-500" label="Serviço" value={services} total={split} pending={wallet.byOrigin.servico.pending} sales={wallet.byOrigin.servico.sales} />
+                {(rentals > 0 || rentalsOrigin.pending > 0) && <Origin color="bg-amber-500" label="Locação" value={rentals} total={split} pending={rentalsOrigin.pending} sales={rentalsOrigin.sales} />}
                 {manual > 0 && <Origin color="bg-muted-foreground/50" label="Manual" value={manual} total={split} pending={wallet.byOrigin.manual.pending} sales={wallet.byOrigin.manual.sales} />}
               </div>
             </>

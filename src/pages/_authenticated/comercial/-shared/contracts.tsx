@@ -28,14 +28,35 @@ export interface Contract {
   customer: CustomerOption; proposal: { id: number; number: string } | null; documentHash: string | null; hasDocument: boolean;
   signer: { name?: string; cpf?: string; role?: string; email?: string; ip?: string; userAgent?: string; at?: string; codeVerified?: boolean; manual?: boolean; note?: string } | null;
   billed: number; received: number; toBill: number;
+  /** parcelas (parcelas fixas da proposta) | periodo (locação: cobrada por medição) */
+  billingMode?: "parcelas" | "periodo";
+  /** locação: as ordens de locação e o que cada uma tem para faturar agora */
+  rentals?: ContractRental[];
+  measurements?: ContractMeasurement[];
   installments: ContractInstallment[]; classes: ContractClassSlot[];
   /** turmas ligadas pela própria turma, fora dos itens de treinamento */
   otherClasses?: ContractClassSlot["classes"];
 }
 
-/** Uma parcela na fila "A faturar" do Financeiro. */
+export interface ContractRental {
+  id: number; number: string; status: string; startDate: string | null; expectedEnd: string | null; returnedAt: string | null; billing: "periodo" | "unico"; period: "dia" | "semana" | "mes";
+  billedUntil: string | null; ratePerPeriod: number; pendingValue: number; openPeriod: { start: string; end: string } | null;
+  pending: Array<{ kind: string; description: string; periodStart: string; periodEnd: string; value: number; chargeId: number | null }>;
+}
+export interface ContractMeasurement {
+  id: number; number: number; label: string; source: string; rentalId: number | null; rentalNumber: string | null; periodStart: string | null; periodEnd: string | null; value: number;
+  lines: Array<{ kind: string; description: string; periodStart: string | null; periodEnd: string | null; value: number }>; summary: string;
+  record: ContractInstallment["record"];
+}
+
+/** Uma parcela (ou medição de locação) na fila "A faturar" do Financeiro. */
 export type BillingStage = "aguardando" | "liberada" | "faturada" | "recebida";
-export interface BillingRow extends ContractInstallment {
+export interface BillingRow extends Omit<ContractInstallment, "id"> {
+  /** parcela: o id dela; medição: "ol-<OL>" (a faturar), "op-<OL>" (período em curso) ou "bm-<medição>" */
+  id: number | string;
+  source?: "parcela" | "medicao";
+  rental?: { id: number; number: string | null } | null; measurementId?: number;
+  lines?: Array<{ kind: string; description: string; periodStart: string | null; periodEnd: string | null; value: number }>;
   stage: BillingStage; contractId: number; contractNumber: string; contractStatus: ContractStatus; kind: ProposalKind; title: string;
   proposal: { id: number; number: string } | null; customer: { id: number; name: string }; waitingFor: string | null; customerOrder: CustomerOrder;
 }

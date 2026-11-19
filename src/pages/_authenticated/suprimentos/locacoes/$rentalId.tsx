@@ -15,12 +15,13 @@ import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { NumField, Tip, dateBr, errorMessage, money, newUid, todayIso } from "../../comercial/-shared/commercial";
+import { MeasurementBillDialog } from "../../comercial/-shared/billing";
 import { paymentMethodOptions } from "../../financeiro/_receber/-components/options";
 import { STOCK_KEYS, qty } from "../-shared/stock";
 import { LocationField, UnitPicker, useLocationValue } from "../-shared/stock-pickers";
 import { MovementDetailDialog } from "../-shared/stock-movements";
 import {
-  CHARGE_LABEL, PERIOD_LABEL, RENTALS_ABILITY, RENTAL_KEYS, RENTAL_STAGES, RENTAL_STATUS_LABEL, Rental, RentalOptions, RentalStageBadge, RentalStatus, RentPeriod, rentalsApi,
+  CHARGE_LABEL, PERIOD_LABEL, RENTALS_ABILITY, RENTAL_KEYS, RENTAL_STATUS_LABEL, RENTAL_STEPS, Rental, RentalOptions, RentalStageBadge, RentalStatus, RentPeriod, rentalsApi,
 } from "../-shared/rentals";
 
 export const Route = createFileRoute("/_authenticated/suprimentos/locacoes/$rentalId")({
@@ -39,18 +40,42 @@ const draftOf = (rental?: Rental): Draft => ({
   deposit: rental?.deposit ?? null, terms: rental?.terms ?? "", notes: rental?.notes ?? "",
   lines: rental?.lines.length ? rental.lines.map((line) => ({ key: String(line.id), itemId: String(line.itemId), unitId: line.unitId ? String(line.unitId) : "", quantity: line.quantity, rate: line.rate })) : [emptyLine()],
 });
-const BILLING = [{ id: "periodo", name: "Por período (dia, semana ou mês)" }, { id: "unico", name: "Valor único no fim" }];
-const EVENT_LABEL: Record<string, string> = { criado: "Reservada", avancou: "Avançou", voltou: "Voltou", cancelado: "Cancelada", recusado: "Recusada" };
+const BILLING = [{ id: "periodo", name: "Por período (dia, semana ou mês)" }, { id: "unico", name: "Pagamento único" }];
+const PERIOD_PLURAL: Record<RentPeriod, string> = { dia: "dias", semana: "semanas", mes: "meses" };
+const EVENT_LABEL: Record<string, string> = { criado: "Criada", avancou: "Avançou", voltou: "Voltou", cancelado: "Cancelada", recusado: "Recusada" };
 
-/** Ficha da locação: o que vai, para quem e até quando; entrega, devolução, faturamento e histórico. */
+/**
+ * Ficha da Ordem de Locação: o que vai, para quem e até quando; entrega,
+ * devolução, faturamento (medição no contrato), caução, lembretes e histórico.
+ * OL nova só nasce de proposta aceita: "nova" mostra o caminho.
+ */
 function RentalPage() {
   const { rentalId } = Route.useParams();
-  const isNew = rentalId === "nova";
+  if (rentalId === "nova") return <NoNewRental />;
+  return <RentalSheet rentalId={rentalId} />;
+}
+
+function NoNewRental() {
+  const navigate = useNavigate();
+  return (
+    <div className="max-w-xl rounded-lg border p-6 grid gap-3">
+      <h1 className="text-xl font-bold">Nova locação</h1>
+      <p className="text-sm text-muted-foreground">Toda locação nasce de uma proposta de locação aceita: ela leva o período, a caução, o frete e confere a disponibilidade. Ao ser aceita, a proposta abre a Ordem de Locação (OL) sozinha.</p>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={() => navigate({ to: "/comercial/propostas/nova" })}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova proposta de locação</Button>
+        <Button variant="outline" onClick={() => navigate({ to: "/suprimentos/locacoes" })}>Ver as ordens de locação</Button>
+      </div>
+    </div>
+  );
+}
+
+function RentalSheet({ rentalId }: { rentalId: string }) {
+  const isNew = false;
   const { can } = useVerify();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Draft | null>(isNew ? draftOf() : null);
-  const [dialog, setDialog] = useState<"deliver" | "return" | "bill" | null>(null);
+  const [dialog, setDialog] = useState<"deliver" | "return" | "bill" | "measure" | "deposit" | null>(null);
   const [moving, setMoving] = useState<RentalStatus | null>(null);
   const [opened, setOpened] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -78,6 +103,8 @@ function RentalPage() {
   const canMove = canUpdate && can("movimentar_estoque");
   const pendingCharges = !!rental?.charges.some((charge) => !charge.financialRecordId && charge.kind !== "aluguel");
   const canBill = !!rental && canUpdate && can("update_financeiro") && !rental.fromContract && (!!rental.nextPeriod || pendingCharges);
+  const canMeasure = !!rental?.contract && rental.fromContract && can("create_financeiro") && rental.pending.length > 0;
+  const canSettle = !!rental?.depositState && !rental.depositState.settled && status === "devolvida" && canUpdate && can("update_financeiro");
 
   const { mutate: save, isPending: saving } = useMutation({
     mutationFn: (value: Draft) => {
@@ -93,14 +120,14 @@ function RentalPage() {
     },
     onSuccess: (result) => {
       apply(result);
-      toast({ title: isNew ? `${result.number} reservada` : "Locação salva", variant: "success" });
+      toast({ title: isNew ? `${result.number} criada` : "Ordem de locação salva", variant: "success" });
       if (isNew) navigate({ to: "/suprimentos/locacoes/$rentalId", params: { rentalId: String(result.id) }, replace: true });
     },
     onError: (err) => setError(errorMessage(err)),
   });
 
   if (!can(`view_${RENTALS_ABILITY}`)) return null;
-  if (loadError) return <div className="p-4"><p className="text-destructive font-medium">Erro: {errorMessage(loadError)}</p><Link to="/suprimentos/locacoes" className="underline text-sm">Voltar para as locações</Link></div>;
+  if (loadError) return <div className="p-4"><p className="text-destructive font-medium">Erro: {errorMessage(loadError)}</p><Link to="/suprimentos/locacoes" className="underline text-sm">Voltar para as ordens de locação</Link></div>;
   if ((!isNew && (isLoading || !rental)) || !draft) return <div className="grid gap-3"><Skeleton className="h-16 w-full" /><Skeleton className="h-64 w-full" /></div>;
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => (current ? { ...current, [key]: value } : current));
@@ -109,7 +136,7 @@ function RentalPage() {
   const dirty = isNew || JSON.stringify(draft) !== JSON.stringify(draftOf(rental));
   const total = draft.lines.reduce((sum, line) => sum + (line.unitId ? 1 : line.quantity) * line.rate, 0);
   const others = rental ? rental.nextStatuses.filter((target) => !(status === "reservada" && target === "ativa") && !(status === "ativa" && target === "devolvida")) : [];
-  const stageIndex = RENTAL_STAGES.findIndex((stage) => stage.id === status);
+  const stageIndex = RENTAL_STEPS.findIndex((step) => step.id === status);
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     if (reserved) {
@@ -124,20 +151,23 @@ function RentalPage() {
     if (draft.expectedEnd && draft.expectedEnd < draft.startDate) return setError("A devolução prevista é antes do início.");
     setError(""); save(draft);
   };
-  const moveLabel = (target: RentalStatus) => target === "cancelada" ? "Cancelar a locação" : target === "encerrada" ? "Encerrar" : target === "reservada" ? "Reservar de novo" : status === "devolvida" && target === "ativa" ? "Reabrir (voltar a ativa)" : status === "encerrada" ? "Reabrir (voltar a devolvida)" : RENTAL_STATUS_LABEL[target];
+  const moveLabel = (target: RentalStatus) => target === "cancelada" ? "Cancelar a locação" : target === "encerrada" ? "Encerrar" : target === "reservada" ? "Voltar para a entregar" : status === "devolvida" && target === "ativa" ? "Reabrir (voltar a ativa)" : status === "encerrada" ? "Reabrir (voltar a devolvida)" : RENTAL_STATUS_LABEL[target];
 
   return (
     <>
       <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link to="/suprimentos/locacoes" className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1"><Icon name="arrow-left" className="w-3 h-3" /> Locações</Link>
-          <div className="flex flex-wrap items-center gap-2 mt-1">
-            <h1 className="text-xl font-bold tabular-nums">{rental?.number ?? "Nova locação"}</h1>
-            {rental && <RentalStageBadge status={status} late={rental.late} />}
+          <Link to="/suprimentos/locacoes" className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1"><Icon name="arrow-left" className="w-3 h-3" /> Ordens de locação</Link>
+          <p className="mt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Ordem de Locação</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl font-bold tabular-nums">{rental?.number}</h1>
+            {rental && <RentalStageBadge stage={rental.stage} />}
           </div>
           {rental && (
             <p className="text-sm text-muted-foreground truncate">
-              {rental.customer?.name}{rental.contract ? ` · venda ${rental.contract.number}` : ""}{rental.serviceOrder ? ` · ${rental.serviceOrder.number}` : ""} · {money(rental.ratePerPeriod)} por {PERIOD_LABEL[rental.period]}
+              {rental.customer?.name}
+              {rental.contract && <> · venda <Link to="/comercial/contratos/$contractId" params={{ contractId: String(rental.contract.id) }} className="underline hover:text-foreground">{rental.contract.number}</Link></>}
+              {rental.serviceOrder ? ` · ${rental.serviceOrder.number}` : ""} · {money(rental.ratePerPeriod)} por {PERIOD_LABEL[rental.period]}{rental.billing === "unico" ? " (pagamento único)" : ""}
             </p>
           )}
         </div>
@@ -146,6 +176,8 @@ function RentalPage() {
             {status === "reservada" && canMove && <Button type="button" disabled={dirty} onClick={() => setDialog("deliver")}><Icon name="truck" className="w-4 h-4 mr-1" /> Entregar ao cliente</Button>}
             {status === "ativa" && canMove && <Button type="button" disabled={dirty} onClick={() => setDialog("return")}><Icon name="undo-2" className="w-4 h-4 mr-1" /> Receber de volta</Button>}
             {canBill && <Button type="button" variant={status === "devolvida" ? "default" : "outline"} disabled={dirty} onClick={() => setDialog("bill")}><Icon name="receipt" className="w-4 h-4 mr-1" /> Faturar período</Button>}
+            {canMeasure && <Button type="button" variant={status === "devolvida" ? "default" : "outline"} disabled={dirty} onClick={() => setDialog("measure")}><Icon name="receipt" className="w-4 h-4 mr-1" /> Faturar medição ({money(rental.pendingValue)})</Button>}
+            {canSettle && <Button type="button" variant="outline" disabled={dirty} onClick={() => setDialog("deposit")}><Icon name="piggy-bank" className="w-4 h-4 mr-1" /> Acertar a caução</Button>}
             {canUpdate && others.length > 0 && (
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild><Button type="button" variant="outline" className="gap-1">Mais ações <Icon name="chevron-down" className="w-4 h-4" /></Button></DropdownMenuTrigger>
@@ -163,31 +195,36 @@ function RentalPage() {
       </div>
 
       {rental && status !== "cancelada" && (
-        <ol className="my-4 flex flex-wrap items-center gap-x-1 gap-y-2 text-xs" aria-label="Etapas da locação">
-          {RENTAL_STAGES.map((stage, index) => (
-            <li key={stage.id} className="flex items-center gap-1">
-              <Tip text={stage.hint}>
+        <ol className="my-4 flex flex-wrap items-center gap-x-1 gap-y-2 text-xs" aria-label="Etapas da ordem de locação">
+          {RENTAL_STEPS.map((step, index) => (
+            <li key={step.id} className="flex items-center gap-1">
+              <Tip text={step.hint}>
                 <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1", index === stageIndex ? "border-primary bg-primary/10 font-semibold text-foreground" : index < stageIndex ? "text-foreground" : "text-muted-foreground")}>
-                  {index < stageIndex ? <Icon name="check" className="w-3 h-3 text-primary" /> : <span className="h-2 w-2 rounded-full" style={{ backgroundColor: stage.color }} />} {stage.name}
+                  {index < stageIndex ? <Icon name="check" className="w-3 h-3 text-primary" /> : <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />} {step.name}
                 </span>
               </Tip>
-              {index < RENTAL_STAGES.length - 1 && <Icon name="chevron-right" className="w-3 h-3 text-muted-foreground" />}
+              {index < RENTAL_STEPS.length - 1 && <Icon name="chevron-right" className="w-3 h-3 text-muted-foreground" />}
             </li>
           ))}
+          {(rental.stage === "a_devolver" || rental.stage === "atrasada") && (
+            <li className={cn("ml-2 rounded px-2 py-1 font-medium", rental.stage === "atrasada" ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300" : "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200")}>
+              {rental.stage === "atrasada" ? `Atrasada: devolução prevista em ${dateBr(rental.expectedEnd)}` : `A devolver em ${dateBr(rental.expectedEnd)}`}
+            </li>
+          )}
         </ol>
       )}
       {rental && status === "cancelada" && (
         <p className="my-4 rounded border border-red-300 dark:border-red-800 p-3 text-sm"><span className="font-semibold">Cancelada.</span> {rental.statusNote ?? ""}</p>
       )}
-      {rental?.fromContract && <p className="mb-4 text-sm text-muted-foreground">Nasceu de uma venda: é cobrada pelas parcelas da venda (Financeiro → A Faturar), não pelo "Faturar período".</p>}
-      {isNew && <div className="my-4" />}
+      {rental?.fromContract && <p className="mb-4 text-sm text-muted-foreground">Nasceu da venda {rental.contract?.number}: é cobrada por medição. Cada período vencido, as avarias e o frete entram no A Faturar (Financeiro → A Faturar ou aqui, em "Faturar medição").</p>}
+      {rental && !rental.fromContract && <p className="mb-4 text-sm text-muted-foreground">Locação antiga, criada antes de toda locação passar pela proposta: continua com o "Faturar período".</p>}
 
       <div className="grid xl:grid-cols-3 gap-4 items-start">
         <form onSubmit={submit} className="xl:col-span-2 grid gap-4">
           <section className="rounded-lg border p-4 grid gap-4">
             <div className="grid gap-4">
               <div><Label>Cliente <span>*</span></Label>
-                <Select name="customerId" searchable options={options?.customers ?? []} state={draft.customerId} disabled={!editable || !reserved} onChange={(_, value) => set("customerId", String(value ?? ""))} placeholder="Escolha o cliente" /></div>
+                <Select name="customerId" searchable options={options?.customers ?? []} state={draft.customerId} disabled={!editable || !reserved || !!rental?.fromContract} onChange={(_, value) => set("customerId", String(value ?? ""))} placeholder="Escolha o cliente" /></div>
             </div>
             <div className="grid sm:grid-cols-4 gap-4">
               <div><Label>Início <span>*</span></Label>
@@ -308,9 +345,68 @@ function RentalPage() {
               {rental.deliveredAt && <p><span className="text-muted-foreground">Entregue em</span> {dateBr(rental.deliveredAt)}</p>}
               {rental.returnedAt && <p><span className="text-muted-foreground">Devolvida em</span> {dateBr(rental.returnedAt)}</p>}
               <p><span className="text-muted-foreground">Faturado até</span> {rental.billedUntil ? dateBr(rental.billedUntil) : "nada ainda"}</p>
-              {rental.nextPeriod && <p className="text-amber-700 dark:text-amber-300">Para faturar: {dateBr(rental.nextPeriod.start)} a {dateBr(rental.nextPeriod.end)}</p>}
-              {pendingCharges && <p className="text-amber-700 dark:text-amber-300">Há cobrança de avaria/falta sem faturar.</p>}
+              {rental.periods && <p><span className="text-muted-foreground">Contratado</span> {rental.periods} {rental.periods === 1 ? PERIOD_LABEL[rental.period] : PERIOD_PLURAL[rental.period]}</p>}
+              {rental.fromContract && !rental.expectedEnd && <p><span className="text-muted-foreground">Prazo</span> até devolver</p>}
+              {!rental.fromContract && rental.nextPeriod && <p className="text-amber-700 dark:text-amber-300">Para faturar: {dateBr(rental.nextPeriod.start)} a {dateBr(rental.nextPeriod.end)}</p>}
+              {!rental.fromContract && pendingCharges && <p className="text-amber-700 dark:text-amber-300">Há cobrança de avaria/falta sem faturar.</p>}
+              {rental.fromContract && rental.openPeriod && <p><span className="text-muted-foreground">Período em curso</span> {dateBr(rental.openPeriod.start)} a {dateBr(rental.openPeriod.end)}</p>}
             </section>
+
+            {rental.fromContract && (
+              <section className="rounded-lg border p-4 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="font-semibold">A faturar</h2>
+                  {rental.pending.length > 0 && <span className="font-semibold tabular-nums">{money(rental.pendingValue)}</span>}
+                </div>
+                {rental.pending.length === 0 ? <p className="mt-1 text-muted-foreground">Nada pendente agora.{rental.openPeriod ? ` O período em curso fecha em ${dateBr(rental.openPeriod.end)}.` : ""}</p> : (
+                  <ul className="mt-2 divide-y">
+                    {rental.pending.map((line, index) => (
+                      <li key={index} className="py-1.5 flex items-center justify-between gap-3">
+                        <span className="min-w-0">{line.description}</span>
+                        <span className={cn("tabular-nums shrink-0", line.value < 0 && "text-green-700 dark:text-green-400")}>{money(line.value)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {rental.measurements.length > 0 && (
+                  <>
+                    <h3 className="mt-3 font-medium">Medições faturadas</h3>
+                    <ul className="mt-1 divide-y">
+                      {rental.measurements.map((m) => (
+                        <li key={m.id} className="py-1.5 flex items-center justify-between gap-3">
+                          <span className="min-w-0"><span className="font-medium tabular-nums">{m.label}</span><span className="text-xs text-muted-foreground"> · {m.periodStart ? `${dateBr(m.periodStart)} a ${dateBr(m.periodEnd)}` : ""}{m.invoiceNumber ? ` · NF ${m.invoiceNumber}` : ""}</span></span>
+                          <span className="flex items-center gap-2 shrink-0">
+                            <span className={cn("rounded px-1.5 py-0.5 text-xs", m.recordStatus === "received" ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300" : "bg-muted")}>{m.recordStatus === "received" ? "Recebida" : m.financialRecordId ? "Faturada" : "Sem valor"}</span>
+                            <span className="tabular-nums">{money(m.value)}</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </section>
+            )}
+
+            {rental.depositState && (
+              <section className="rounded-lg border p-4 text-sm grid gap-1">
+                <h2 className="font-semibold">Caução</h2>
+                <p><span className="text-muted-foreground">Valor</span> <span className="tabular-nums">{money(rental.depositState.value)}</span> · {rental.depositState.received ? "recebida" : "aguardando o pagamento (Contas a Receber)"}</p>
+                {rental.depositState.abated > 0 && <p><span className="text-muted-foreground">Abatida</span> <span className="tabular-nums">{money(rental.depositState.abated)}</span></p>}
+                {rental.depositState.returned > 0 && <p><span className="text-muted-foreground">Devolvida ao cliente</span> <span className="tabular-nums">{money(rental.depositState.returned)}</span> (Contas a Pagar)</p>}
+                <p className={rental.depositState.settled ? "text-green-700 dark:text-green-400" : "text-muted-foreground"}>{rental.depositState.settled ? "Acertada." : status === "devolvida" ? `Falta acertar ${money(rental.depositState.left)}.` : "Acertada depois da devolução: cobre avarias e faltas, o resto volta ao cliente."}</p>
+              </section>
+            )}
+
+            {rental.reminders.length > 0 && (
+              <section className="rounded-lg border p-4 text-sm">
+                <h2 className="font-semibold">Lembretes no acompanhamento</h2>
+                <ul className="mt-2 grid gap-1.5">
+                  {rental.reminders.map((reminder) => (
+                    <li key={reminder.id} className="flex items-start gap-2"><Icon name="bell" className="w-3.5 h-3.5 mt-0.5 shrink-0 text-muted-foreground" /><span><span className="tabular-nums text-xs text-muted-foreground">{dateBr(reminder.dueDate)}</span> · {reminder.subject}</span></li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             <section className="rounded-lg border p-4 text-sm">
               <h2 className="font-semibold">Cobranças</h2>
@@ -320,11 +416,11 @@ function RentalPage() {
                     <li key={charge.id} className="py-1.5 flex items-center justify-between gap-3">
                       <span className="min-w-0">
                         <span>{CHARGE_LABEL[charge.kind] ?? charge.kind}</span>
-                        <span className="text-xs text-muted-foreground"> · {charge.kind === "aluguel" ? `${dateBr(charge.periodStart)} a ${dateBr(charge.periodEnd)}` : charge.description ?? dateBr(charge.periodStart)}</span>
+                        <span className="text-xs text-muted-foreground"> · {charge.kind === "aluguel" && !rental.fromContract ? `${dateBr(charge.periodStart)} a ${dateBr(charge.periodEnd)}` : charge.description ?? dateBr(charge.periodStart)}</span>
                       </span>
                       <span className="flex items-center gap-2 shrink-0">
-                        <span className={cn("rounded px-1.5 py-0.5 text-xs", !charge.financialRecordId ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200" : charge.recordStatus === "received" || charge.recordStatus === "confirmed" ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300" : "bg-muted")}>
-                          {!charge.financialRecordId ? "Sem faturar" : charge.recordStatus === "received" || charge.recordStatus === "confirmed" ? "Recebida" : "Faturada"}
+                        <span className={cn("rounded px-1.5 py-0.5 text-xs", !charge.financialRecordId && !charge.measurementId ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200" : charge.recordStatus === "received" || charge.recordStatus === "confirmed" ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300" : "bg-muted")}>
+                          {!charge.financialRecordId && !charge.measurementId ? "Sem faturar" : charge.recordStatus === "received" || charge.recordStatus === "confirmed" ? "Recebida" : "Faturada"}
                         </span>
                         <span className="tabular-nums">{money(charge.value)}</span>
                       </span>
@@ -372,6 +468,11 @@ function RentalPage() {
       {rental && dialog === "deliver" && <DeliverDialog rental={rental} onClose={() => setDialog(null)} onDone={apply} />}
       {rental && dialog === "return" && <ReturnDialog rental={rental} onClose={() => setDialog(null)} onDone={apply} />}
       {rental && dialog === "bill" && <BillDialog rental={rental} onClose={() => setDialog(null)} onDone={apply} />}
+      {rental && dialog === "measure" && rental.contract && rental.customer && (
+        <MeasurementBillDialog contract={{ id: rental.contract.id, number: rental.contract.number, customer: rental.customer }} rental={rental} lines={rental.pending}
+          onClose={() => setDialog(null)} onDone={() => { queryClient.invalidateQueries({ queryKey: [RENTAL_KEYS.one, rentalId] }); queryClient.invalidateQueries({ queryKey: [RENTAL_KEYS.list] }); queryClient.invalidateQueries({ queryKey: ["commercialBilling"] }); }} />
+      )}
+      {rental && dialog === "deposit" && <DepositDialog rental={rental} onClose={() => setDialog(null)} onDone={apply} />}
       {rental && moving && <MoveDialog rental={rental} target={moving} label={moveLabel(moving)} onClose={() => setMoving(null)} onDone={apply} />}
       {opened && <MovementDetailDialog id={opened} onClose={() => setOpened(null)} />}
     </>
@@ -622,6 +723,50 @@ function MoveDialog({ rental, target, label, onClose, onDone }: DialogProps & { 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Voltar</Button>
             <Button type="submit" disabled={isPending}>{isPending ? "Salvando..." : label}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Acertar a caução: primeiro cobre avarias e faltas; o resto volta ao cliente ou abate a última fatura. */
+function DepositDialog({ rental, onClose, onDone }: DialogProps) {
+  const deposit = rental.depositState!;
+  const damages = rental.pending.filter((line) => line.kind === "avaria" || line.kind === "falta").reduce((sum, line) => sum + line.value, 0);
+  const covered = Math.min(deposit.left, damages);
+  const left = Math.round((deposit.left - covered) * 100) / 100;
+  const others = rental.pending.filter((line) => line.kind !== "avaria" && line.kind !== "falta").reduce((sum, line) => sum + line.value, 0);
+  const [mode, setMode] = useState<"devolver" | "abater">("devolver");
+  const [error, setError] = useState("");
+  const { mutate, isPending } = useMutation({
+    mutationFn: () => rentalsApi.post<Rental>(`${rental.id}/deposit`, { mode }),
+    onSuccess: (result) => { onDone(result); toast({ title: "Caução acertada", description: mode === "devolver" && left > 0 ? "A devolução ao cliente entrou em Contas a Pagar." : undefined, variant: "success" }); onClose(); },
+    onError: (err) => setError(errorMessage(err)),
+  });
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Acertar a caução: {rental.number}</DialogTitle>
+          <DialogDescription>Caução de {money(deposit.value)}{deposit.received ? " (recebida)" : " (ainda não recebida: confira em Contas a Receber)"}.</DialogDescription>
+        </DialogHeader>
+        <form className="grid gap-4" onSubmit={(event) => { event.preventDefault(); setError(""); mutate(); }}>
+          <ul className="text-sm grid gap-1">
+            <li>Cobre as avarias e faltas: <b className="tabular-nums">{money(covered)}</b> (entra na próxima medição como abatimento)</li>
+            <li>Sobra: <b className="tabular-nums">{money(left)}</b></li>
+          </ul>
+          {left > 0 && (
+            <div><Label>O que fazer com a sobra</Label>
+              <div className="mt-1"><Select name="depositMode" modal state={mode} onChange={(_, value) => setMode(value === "abater" ? "abater" : "devolver")}
+                options={[{ id: "devolver", name: "Devolver ao cliente (conta a pagar)" }, ...(others >= left ? [{ id: "abater", name: "Abater da última fatura" }] : [])]} /></div>
+              {others < left && <p className="text-xs text-muted-foreground mt-1">Não há fatura pendente que comporte o abatimento: a sobra volta ao cliente.</p>}
+            </div>
+          )}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>Voltar</Button>
+            <Button type="submit" disabled={isPending}>{isPending ? "Acertando..." : "Acertar a caução"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

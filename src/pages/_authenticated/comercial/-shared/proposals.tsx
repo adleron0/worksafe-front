@@ -50,7 +50,15 @@ export interface ProposalDraft {
   templateId: number | null; documentBody: string | null; itemsMode: ItemsMode; termIds: number[];
   images: ProposalImage[];
   schedule: Schedule;
+  /** proposta de locação: período, nº de períodos ou "até devolver", cobrança, caução e entrega */
+  rental?: RentalTerms | null;
   sections: DraftSection[]; installments: DraftInstallment[];
+}
+export interface RentalTerms { period: RentPeriod; periods: number; untilReturn: boolean; billing: "periodo" | "unico"; deposit: number | null; deliveryAddress: string | null }
+/** Disponibilidade dos equipamentos da proposta de locação no período. */
+export interface RentalAvailability {
+  start: string; end: string | null; estimatedEnd: string; ok: boolean;
+  items: Array<{ itemId: number; name: string; requested: number; available: number; ok: boolean; detail: string | null }>;
 }
 
 export interface CalcLine {
@@ -70,6 +78,8 @@ export interface ProposalCalc {
   };
   installments: Array<{ value: number }>;
   installmentsTotal: number; installmentsDiff: number;
+  /** só no cálculo ao vivo (preview) da proposta de locação */
+  availability?: RentalAvailability | null;
   margin?: { realTax: number; unused: number; unusedRate: number; used: number; usedRate: number; minTotal: number; minTotalOperational: number; maxDiscountRate: number };
   tax: { regime: "tradicional" | "hibrido"; outside: number; name?: string; inside?: number };
   costBase?: string;
@@ -88,6 +98,7 @@ export interface Proposal {
   baseOutdated: boolean; baseCapturedAt: string;
   /** serviço × locação do mesmo cliente perto da mesma data (confirmar que o cliente opera o equipamento) */
   overlap?: Array<{ id: number; number: string; title: string; status: ProposalStatus; kind: string }>;
+  availability?: RentalAvailability | null;
   publicKey: string | null; publicUrl: string | null; documentFrozen: boolean; documentHash: string | null; viewedAt: string | null;
   emailConfigured: boolean; events: ProposalEvent[];
   contract: { id: number; number: string; status: string; customerOrder?: { number: string | null; date: string | null; fileUrl: string | null; fileName: string | null }; serviceOrder?: { id: number; number: string; status: string } | null } | null;

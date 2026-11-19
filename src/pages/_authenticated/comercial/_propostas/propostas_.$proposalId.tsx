@@ -25,6 +25,7 @@ import ProposalItemsTab from "./-ProposalItemsTab";
 import { ProposalInfoStep, ProposalPaymentTab } from "./-ProposalTabs";
 import { RecordFilesPanel } from "../../arquivos/-shared/record-files";
 import WizardSteps, { STEPS, StepKey, StepState } from "./-WizardSteps";
+import { RentalConditionsPanel, RentalPeriodPanel } from "./-RentalTerms";
 
 /** Título provisório de quem acabou de escolher o cliente e ainda não deu nome à proposta. */
 const PLACEHOLDER_TITLE = "Nova proposta";
@@ -234,15 +235,20 @@ function ProposalEditorPage() {
   // O que falta em cada passo: alimenta o indicador do passo a passo e a revisão final.
   const total = calc?.totals.total ?? 0;
   const paymentDiff = Math.abs(calc?.installmentsDiff ?? 0);
+  const rentalKind = draft.kind === "locacao";
+  // disponibilidade: a do cálculo ao vivo enquanto há alteração; senão a da proposta salva
+  const availability = dirty ? calc?.availability ?? null : proposal.availability ?? null;
   const checks: Array<{ step: StepKey; ok: boolean; label: string; fix: string }> = [
     { step: "proposta", ok: titled, label: "Título da proposta", fix: "Dê um título à proposta" },
     { step: "proposta", ok: Boolean(draft.validUntil), label: "Validade da proposta", fix: "Defina até quando a proposta vale (dá urgência ao cliente e evita preço antigo)" },
     { step: "itens", ok: itemCount > 0 && total > 0, label: "Itens e valores", fix: itemCount === 0 ? "Adicione ao menos um item" : "O total está zerado: informe os valores" },
-    { step: "pagamento", ok: draft.installments.length > 0 && paymentDiff < 0.005, label: "Condições de pagamento",
-      fix: draft.installments.length === 0 ? "Defina as parcelas" : "As parcelas não fecham o total da proposta" },
+    ...(rentalKind ? [
+      { step: "itens" as StepKey, ok: !availability || availability.ok, label: "Disponibilidade dos equipamentos", fix: "Falta equipamento no período: confira antes de prometer ao cliente" },
+    ] : [{ step: "pagamento" as StepKey, ok: draft.installments.length > 0 && paymentDiff < 0.005, label: "Condições de pagamento",
+      fix: draft.installments.length === 0 ? "Defina as parcelas" : "As parcelas não fecham o total da proposta" }]),
   ];
-  // a validade é recomendação; o resto impede o envio
-  const blocking = checks.filter((check) => !check.ok && check.label !== "Validade da proposta");
+  // validade e disponibilidade são recomendação; o resto impede o envio
+  const blocking = checks.filter((check) => !check.ok && check.label !== "Validade da proposta" && check.label !== "Disponibilidade dos equipamentos");
   const stepIndex = STEPS.findIndex((item) => item.key === tab);
   const isDraft = proposal.status === "rascunho";
   const canEmail = proposal.emailConfigured && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.contactEmail ?? "");
@@ -379,8 +385,8 @@ function ProposalEditorPage() {
         <div className="min-w-0 grid gap-4">
           <section className="rounded-lg border bg-background p-4 sm:p-5 grid gap-4">
           <div>
-            <h2 className="text-lg font-semibold">{STEPS[stepIndex].heading}</h2>
-            <p className="text-sm text-muted-foreground">{STEPS[stepIndex].description}</p>
+            <h2 className="text-lg font-semibold">{rentalKind && tab === "pagamento" ? "Condições da locação" : STEPS[stepIndex].heading}</h2>
+            <p className="text-sm text-muted-foreground">{rentalKind && tab === "pagamento" ? "Como a locação é cobrada, a caução e a entrega. Cada período vencido vira uma medição no A Faturar." : STEPS[stepIndex].description}</p>
           </div>
 
           <ConfirmDialog open={Boolean(kindChange)} onOpenChange={(open) => { if (!open) setKindChange(null); }}
@@ -392,8 +398,11 @@ function ProposalEditorPage() {
               onSelect={(picked) => { setCustomer(picked); setDraftSafe((d) => ({ ...d, customerId: picked.id })); }} />
           )}
           {tab === "proposta" && <ProposalInfoStep draft={draft} setDraft={setDraftSafe} options={options} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} customer={customer} />}
+          {tab === "itens" && rentalKind && <RentalPeriodPanel draft={draft} setDraft={setDraftSafe} readOnly={readOnly} availability={availability} />}
           {tab === "itens" && <ProposalItemsTab draft={draft} setSections={setSections} calc={calc ?? undefined} options={options} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} />}
-          {tab === "pagamento" && <ProposalPaymentTab draft={draft} setDraft={setDraftSafe} calc={calc ?? undefined} readOnly={readOnly} />}
+          {tab === "pagamento" && rentalKind && <RentalConditionsPanel draft={draft} setDraft={setDraftSafe} readOnly={readOnly} total={total}
+            rentTotal={(calc?.sections ?? []).reduce((sum, section, index) => sum + (draft.sections[index]?.kind === "locacao_cliente" ? section.value : 0), 0)} />}
+          {tab === "pagamento" && !rentalKind && <ProposalPaymentTab draft={draft} setDraft={setDraftSafe} calc={calc ?? undefined} readOnly={readOnly} />}
           {tab === "documento" && <ProposalDocumentTab proposal={proposal} draft={draft} setDraft={setDraftSafe} options={options} readOnly={readOnly} payload={payload} />}
           {tab === "envio" && (
             <div className="grid gap-4">

@@ -14,7 +14,7 @@ export interface WalletTotals {
   lastMovementAt: string | null;
   byOrigin: Record<WalletOrigin, { generated: number; pending: number; sales: number }>;
 }
-export type WalletOrigin = "treinamento" | "servico" | "manual";
+export type WalletOrigin = "treinamento" | "servico" | "locacao" | "manual";
 export type EntryType = "comissao" | "pagamento" | "ajuste";
 export type EntryStatus = "prevista" | "liberada" | "cancelada" | "efetivado" | "estornado";
 
@@ -46,7 +46,7 @@ export const SELLERS_KEY = "commercialSellers";
 export const WALLET_KEY = "commercialSellerWallet";
 export const WALLET_ENTRIES_KEY = "commercialSellerWalletEntries";
 
-export const ORIGIN_LABEL: Record<WalletOrigin, string> = { treinamento: "Treinamento", servico: "Serviço", manual: "Manual" };
+export const ORIGIN_LABEL: Record<WalletOrigin, string> = { treinamento: "Treinamento", servico: "Serviço", locacao: "Locação", manual: "Manual" };
 export const TYPE_LABEL: Record<EntryType, string> = { comissao: "Comissão", pagamento: "Pagamento", ajuste: "Ajuste" };
 export const PAYMENT_METHODS: Array<{ id: string; name: string }> = [
   { id: "pix", name: "PIX" }, { id: "transferencia", name: "Transferência" }, { id: "dinheiro", name: "Dinheiro" }, { id: "outro", name: "Outro" },

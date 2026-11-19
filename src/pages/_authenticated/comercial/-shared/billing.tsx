@@ -161,3 +161,87 @@ export function CustomerOrderCard({ contractId, order, canEdit, onSaved }: { con
     </section>
   );
 }
+
+/** Linha pendente de uma OL (o que a medição leva). */
+export interface MeasurementLine { kind: string; description: string; periodStart: string | null; periodEnd: string | null; value: number }
+const plusDays = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+};
+
+/**
+ * Faturar a medição de uma ordem de locação: tudo o que está pendente (períodos
+ * vencidos, avarias, frete, caução abatida) vira um boletim (BM) e uma conta a
+ * receber do contrato, com a comissão proporcional.
+ */
+export function MeasurementBillDialog({ contract, rental, lines, onClose, onDone }: {
+  contract: { id: number; number: string; customer: { name: string }; customerOrder?: CustomerOrder | null };
+  rental: { id: number; number: string }; lines: MeasurementLine[];
+  onClose: () => void; onDone: (contract: Contract) => void;
+}) {
+  const total = Math.round(lines.reduce((sum, line) => sum + line.value, 0) * 100) / 100;
+  const [form, setForm] = useState({ invoiceNumber: "", invoiceIssuedAt: todayIso(), dueDate: plusDays(7), paymentMethod: "boleto", netValue: null as number | null });
+  const [error, setError] = useState("");
+  const { mutate, isPending } = useMutation({
+    mutationFn: () => commercialApi.post<Contract & { billed: { number: string; value: number } }>(`contracts/${contract.id}/measurements`, { rentalId: rental.id, ...form }),
+    onSuccess: (result) => {
+      onDone(result);
+      toast({ title: `${result.billed.number} faturada`, description: total > 0 ? "A conta a receber já aparece em Financeiro → Contas a Receber." : "Valor zero (coberto pela caução): nenhuma conta a receber.", variant: "success" });
+      onClose();
+    },
+    onError: (err) => setError(errorMessage(err)),
+  });
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (total > 0 && !form.invoiceNumber.trim()) return setError("Informe o número da nota fiscal");
+    setError(""); mutate();
+  };
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Faturar a medição — {rental.number}</DialogTitle>
+          <DialogDescription>
+            {contract.number} · {contract.customer.name}. A nota é emitida fora do sistema; aqui você registra o número e a medição vira conta a receber.
+            {contract.customerOrder?.number && <span className="block mt-1">Pedido do cliente para citar na nota: <b className="text-foreground">{contract.customerOrder.number}</b>.</span>}
+          </DialogDescription>
+        </DialogHeader>
+        <form className="grid gap-4" onSubmit={submit}>
+          <ul className="rounded border divide-y text-sm">
+            {lines.map((line, index) => (
+              <li key={index} className="px-3 py-1.5 flex items-center justify-between gap-3">
+                <span className="min-w-0">{line.description}</span>
+                <span className={line.value < 0 ? "tabular-nums text-green-700 dark:text-green-400 shrink-0" : "tabular-nums shrink-0"}>{money(line.value)}</span>
+              </li>
+            ))}
+            <li className="px-3 py-1.5 flex items-center justify-between gap-3 font-semibold"><span>Total da medição</span><span className="tabular-nums">{money(total)}</span></li>
+          </ul>
+          {total > 0 && (
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div><Label htmlFor="measurementNumber">Número da nota <span>*</span></Label>
+                <ShadInput id="measurementNumber" className="mt-1" value={form.invoiceNumber} maxLength={60} autoFocus onChange={(event) => setForm((f) => ({ ...f, invoiceNumber: event.target.value }))} /></div>
+              <div><Label>Data da nota <span>*</span></Label>
+                <CalendarPicker mode="single" name="measurementIssuedAt" className="mt-1 w-full" value={form.invoiceIssuedAt} fromYear={2024} toYear={2040}
+                  onValueChange={(_, value) => setForm((f) => ({ ...f, invoiceIssuedAt: value ?? "" }))} /></div>
+              <div><Label>Vencimento <span>*</span></Label>
+                <CalendarPicker mode="single" name="measurementDue" className="mt-1 w-full" value={form.dueDate} fromYear={2024} toYear={2040}
+                  onValueChange={(_, value) => setForm((f) => ({ ...f, dueDate: value ?? "" }))} /></div>
+              <div><Label>Forma de pagamento</Label>
+                <div className="mt-1"><Select name="measurementMethod" state={form.paymentMethod} modal options={PAYMENT_METHOD_OPTIONS} onChange={(_, value) => setForm((f) => ({ ...f, paymentMethod: String(value) }))} /></div></div>
+              <div className="sm:col-span-2"><Label htmlFor="measurementNet">Valor líquido a receber (opcional)</Label>
+                <NumField id="measurementNet" kind="money" className="mt-1 sm:w-1/2" value={form.netValue} placeholder={String(total).replace(".", ",")}
+                  onChange={(netValue) => setForm((f) => ({ ...f, netValue }))} onEmpty={() => setForm((f) => ({ ...f, netValue: null }))} />
+                <p className="text-xs text-muted-foreground mt-1">Preencha se a nota tiver retenções: é o que o cliente deposita de fato.</p></div>
+            </div>
+          )}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" disabled={isPending}>{isPending ? "Faturando..." : total > 0 ? "Registrar e criar a conta a receber" : "Registrar a medição"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

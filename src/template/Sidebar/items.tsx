@@ -134,8 +134,8 @@ export const groups: SidebarGroup[] = [
           { title: "Roteiros de inspeção", ability: "inspecoes_equipamentos", icon: "file-check", path: "/suprimentos/equipamentos/roteiros" },
         ],
       },
-      // Disponibilidade é um botão dentro de Locações
-      { title: "Locações", icon: "handshake", path: "/suprimentos/locacoes", isProduct: "servicos", ability: "locacoes" },
+      // Disponibilidade é um botão dentro de Ordens de locação
+      { title: "Ordens de locação", icon: "handshake", path: "/suprimentos/locacoes", isProduct: "servicos", ability: "locacoes" },
     ],
   },
   {

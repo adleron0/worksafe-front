@@ -13,7 +13,7 @@ import Select from "@/components/general-components/Select";
 import ViewToggle, { useStoredView } from "@/components/general-components/ViewToggle";
 import { cn } from "@/lib/utils";
 import { commercialApi, dateBr, errorMessage, money } from "../../comercial/-shared/commercial";
-import { BillDialog } from "../../comercial/-shared/billing";
+import { BillDialog, MeasurementBillDialog } from "../../comercial/-shared/billing";
 import { BILLING_KEY, BillingQueue, BillingRow, BillingStage, Contract, dueRuleText } from "../../comercial/-shared/contracts";
 import { KIND_LABEL, KindBadge } from "../../comercial/-shared/proposals";
 
@@ -29,11 +29,15 @@ const STAGES: Array<{ id: BillingStage; name: string; color: string; hint: strin
 ];
 const COLUMNS: KanbanColumn[] = STAGES.map(({ id, name, color }) => ({ id, name, value: id, color }));
 
-const installmentLabel = (row: BillingRow) => `${row.total > 1 ? `Parcela ${row.number}/${row.total}` : "Pagamento único"}${row.description ? ` · ${row.description}` : ""}`;
+const isMeasurement = (row: BillingRow) => row.source === "medicao";
+const installmentLabel = (row: BillingRow) => (isMeasurement(row)
+  ? row.description ?? "Medição da locação"
+  : `${row.total > 1 ? `Parcela ${row.number}/${row.total}` : "Pagamento único"}${row.description ? ` · ${row.description}` : ""}`);
 
 /**
- * "A faturar": as parcelas das vendas fechadas (propostas aceitas), na etapa em que estão.
- * Registrar a nota fiscal de uma parcela cria a conta a receber dela.
+ * "A faturar": as parcelas das vendas fechadas (propostas aceitas) e as medições
+ * das locações (períodos vencidos, avarias, frete), na etapa em que estão.
+ * Registrar a nota fiscal cria a conta a receber.
  */
 function BillingPage() {
   const { can } = useVerify();
@@ -58,7 +62,7 @@ function BillingPage() {
     queryClient.invalidateQueries({ predicate: (query) => String(query.queryKey[0] ?? "").startsWith("list") });
   };
   const { mutate: unbill } = useMutation({
-    mutationFn: (row: BillingRow) => commercialApi.post<Contract>(`contracts/${row.contractId}/installments/${row.id}/unbill`),
+    mutationFn: (row: BillingRow) => commercialApi.post<Contract>(isMeasurement(row) ? `contracts/${row.contractId}/measurements/${row.measurementId}/unbill` : `contracts/${row.contractId}/installments/${row.id}/unbill`),
     onSuccess: () => { refresh(); toast({ title: "Faturamento desfeito", description: "O título saiu do Contas a Receber.", variant: "success" }); },
     onError: (err) => toast({ title: "Não foi possível desfazer", description: errorMessage(err), variant: "destructive" }),
   });
@@ -77,11 +81,12 @@ function BillingPage() {
       {row.stage === "liberada" && canBill && (
         <Button type="button" size="sm" className="h-7 gap-1 px-2" onClick={() => setBilling(row)}><Icon name="receipt" className="w-3.5 h-3.5" /> Registrar NF</Button>
       )}
-      {row.stage === "aguardando" && canBill && (
+      {row.stage === "aguardando" && canBill && !isMeasurement(row) && (
         <Button type="button" size="sm" variant="outline" className="h-7 gap-1 px-2" onClick={() => setBilling(row)}>Faturar mesmo assim</Button>
       )}
       {row.stage === "faturada" && canUnbill && (
-        <ConfirmDialog title="Desfazer o faturamento desta parcela?" description="A conta a receber desta parcela é cancelada e a parcela volta a ficar sem nota. Use quando a nota foi lançada errada."
+        <ConfirmDialog title={isMeasurement(row) ? "Desfazer esta medição?" : "Desfazer o faturamento desta parcela?"}
+          description={isMeasurement(row) ? "A conta a receber da medição é cancelada e os períodos e cobranças dela voltam a ficar pendentes. Use quando a nota foi lançada errada." : "A conta a receber desta parcela é cancelada e a parcela volta a ficar sem nota. Use quando a nota foi lançada errada."}
           onConfirm={() => unbill(row)}>
           <Button type="button" variant="ghost" size="sm" className="h-7 px-2">Desfazer</Button>
         </ConfirmDialog>
@@ -91,7 +96,7 @@ function BillingPage() {
   /** Situação da parcela em uma frase. */
   const detail = (row: BillingRow) => (row.record
     ? `NF ${row.record.invoiceNumber ?? "—"} de ${dateBr(row.record.invoiceIssuedAt)} · ${row.record.paid ? `paga em ${dateBr(row.record.paidAt)}` : `vence em ${dateBr(row.record.dueDate)}`}`
-    : row.waitingFor ? `Espera ${row.waitingFor}` : `Combinado: ${dueRuleText(row)} · vencimento sugerido ${dateBr(row.suggestedDue)}`);
+    : row.waitingFor ? `Espera ${row.waitingFor}` : isMeasurement(row) ? `Medição da locação · ${row.lines?.length ?? 0} item(ns)` : `Combinado: ${dueRuleText(row)} · vencimento sugerido ${dateBr(row.suggestedDue)}`);
   const sale = (row: BillingRow) => (canOpenSale
     ? <Link to="/comercial/contratos/$contractId" params={{ contractId: String(row.contractId) }} className="underline hover:text-foreground">{row.contractNumber}</Link>
     : <span>{row.contractNumber}</span>);
@@ -103,7 +108,7 @@ function BillingPage() {
     <>
       <div>
         <h1 className="text-xl font-bold">A faturar</h1>
-        <p className="text-sm text-muted-foreground">Parcelas das propostas aceitas. Registrar a nota fiscal cria a conta a receber; a baixa é feita em Contas a Receber.</p>
+        <p className="text-sm text-muted-foreground">Parcelas das propostas aceitas e medições das locações (cada período vencido). Registrar a nota fiscal cria a conta a receber; a baixa é feita em Contas a Receber.</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 my-4">
@@ -111,7 +116,7 @@ function BillingPage() {
           <div key={item.id} className="rounded-lg border p-3">
             <p className="text-xs text-muted-foreground flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} /> {item.name}{item.id === "recebida" && data ? ` (${data.recentDays} dias)` : ""}</p>
             <p className="font-semibold tabular-nums">{summary ? money(summary[item.id].total) : "—"}</p>
-            <p className="text-xs text-muted-foreground">{summary ? `${summary[item.id].count} parcela${summary[item.id].count === 1 ? "" : "s"}` : item.hint}</p>
+            <p className="text-xs text-muted-foreground">{summary ? `${summary[item.id].count} ${summary[item.id].count === 1 ? "item" : "itens"}` : item.hint}</p>
           </div>
         ))}
       </div>
@@ -203,8 +208,12 @@ function BillingPage() {
         </div>
       )}
 
-      {billing && (
-        <BillDialog contract={{ id: billing.contractId, number: billing.contractNumber, customer: billing.customer, customerOrder: billing.customerOrder }} installment={billing}
+      {billing && isMeasurement(billing) && billing.rental && (
+        <MeasurementBillDialog contract={{ id: billing.contractId, number: billing.contractNumber, customer: billing.customer, customerOrder: billing.customerOrder }}
+          rental={{ id: billing.rental.id, number: billing.rental.number ?? "" }} lines={billing.lines ?? []} onClose={() => setBilling(null)} onDone={refresh} />
+      )}
+      {billing && !isMeasurement(billing) && (
+        <BillDialog contract={{ id: billing.contractId, number: billing.contractNumber, customer: billing.customer, customerOrder: billing.customerOrder }} installment={{ ...billing, id: Number(billing.id) }}
           onClose={() => setBilling(null)} onDone={refresh} />
       )}
     </>

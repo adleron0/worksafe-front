@@ -140,7 +140,8 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
                 <div className="w-16">{training ? "Turmas" : "Qtd."}</div>
                 {labor && <div className="w-[104px]">Adicionais</div>}
                 {training && <div className="w-16">Alunos</div>}
-                {rent && <><div className="w-28">Período</div><div className="w-16">Períodos</div><div className="w-28">R$ por período</div></>}
+                {rent && draft.kind !== "locacao" && <><div className="w-28">Período</div><div className="w-24">Períodos</div></>}
+                {rent && <div className="w-28">R$ por {PERIOD_WORD[(draft.rental?.period ?? section.items.find((i) => i.extra?.period)?.extra?.period ?? "mes") as RentPeriod][0]}</div>}
                 {!labor && !training && !rent && <><div className="w-28">R$ unitário</div><div className="w-28">{section.kind === "material" ? "Frete" : "Taxas"}</div></>}
                 {canSeeCosts && <div className="w-24 text-right">Custo</div>}
                 <div className="w-32">Valor final</div>
@@ -305,7 +306,7 @@ function ItemRow({ item, line, draft, options, rentItems, readOnly, canSeeCosts,
                 onChange={(students) => update({ extra: { ...item.extra, students } })} onEmpty={() => update({ extra: { ...item.extra, students: null } })} />
             </Cell>
           )}
-          {rent && <>
+          {rent && draft.kind !== "locacao" && <>
             <Cell label="Período" className="@3xl:w-28">
               <Select name={`period-${item.uid}`} state={period} disabled={readOnly} modal={false} options={RENT_PERIODS}
                 onChange={(_, value) => {
@@ -328,7 +329,9 @@ function ItemRow({ item, line, draft, options, rentItems, readOnly, canSeeCosts,
                 )}
               </div>
             </Cell>
-            <Cell label="R$ por período" className="@3xl:w-28">
+          </>}
+          {rent && <>
+            <Cell label={`R$ por ${PERIOD_WORD[period][0]}`} className="@3xl:w-28">
               <NumField kind="money" value={item.extra?.rate} disabled={readOnly} ariaLabel="Valor do período (opcional)"
                 placeholder={rental && "periodValue" in rental && !item.extra?.rate ? decimal(rental.periodValue) : "pela base"}
                 onChange={(rate) => update({ extra: { ...item.extra, rate } })} onEmpty={() => update({ extra: { ...item.extra, rate: null } })} />

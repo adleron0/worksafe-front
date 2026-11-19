@@ -18,7 +18,7 @@ import {
   CONTRACTS_KEY, CONTRACT_KEY, Contract, ContractClassSlot, ContractInstallment, ContractStatus, ContractStatusBadge,
   RECORD_STATUS_LABEL, dueRuleText,
 } from "../-shared/contracts";
-import { BillDialog, CustomerOrderCard } from "../-shared/billing";
+import { BillDialog, CustomerOrderCard, MeasurementBillDialog } from "../-shared/billing";
 import { DocumentPaper } from "../-shared/document";
 import { KIND_LABEL, formatCnpj } from "../-shared/proposals";
 import { docLabel } from "@/utils/documento";
@@ -36,6 +36,7 @@ function ContractPage() {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const [billing, setBilling] = useState<ContractInstallment | null>(null);
+  const [measuring, setMeasuring] = useState<NonNullable<Contract["rentals"]>[number] | null>(null);
   const [creatingClass, setCreatingClass] = useState<ContractClassSlot | null>(null);
   const [document, setDocument] = useState<string | null>(null);
   const [statusTarget, setStatusTarget] = useState<ContractStatus | null>(null);
@@ -64,6 +65,11 @@ function ContractPage() {
   const { mutate: unbill } = useMutation({
     mutationFn: (installment: ContractInstallment) => commercialApi.post<Contract>(`contracts/${contractId}/installments/${installment.id}/unbill`),
     onSuccess: (result) => { apply(result); toast({ title: "Faturamento desfeito", description: "O título saiu do Contas a Receber.", variant: "success" }); },
+    onError: fail("Não foi possível desfazer"),
+  });
+  const { mutate: unbillMeasurement } = useMutation({
+    mutationFn: (measurementId: number) => commercialApi.post<Contract>(`contracts/${contractId}/measurements/${measurementId}/unbill`),
+    onSuccess: (result) => { apply(result); toast({ title: "Medição desfeita", description: "A conta a receber foi cancelada e os períodos voltaram a pendentes.", variant: "success" }); },
     onError: fail("Não foi possível desfazer"),
   });
   const { mutate: loadDocument, isPending: loadingDocument } = useMutation({
@@ -108,7 +114,7 @@ function ContractPage() {
       {contract.statusNote && !active && <p className="mt-3 rounded-md border px-3 py-2 text-sm text-muted-foreground">Observação: {contract.statusNote}</p>}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 my-4">
-        <Stat label="Valor da venda" value={money(contract.value)} />
+        <Stat label={contract.billingMode === "periodo" ? "Valor previsto" : "Valor da venda"} value={money(contract.value)} />
         <Stat label="Faturado (com nota)" value={money(contract.billed)} />
         <Stat label="Recebido" value={money(contract.received)} />
         <Stat label="A faturar" value={money(contract.toBill)} highlight={contract.toBill > 0.005 && active} />
@@ -116,7 +122,60 @@ function ContractPage() {
 
       <div className="grid xl:grid-cols-[minmax(0,1fr)_340px] gap-4 items-start">
         <div className="grid gap-4 min-w-0">
-          <section className="rounded-lg border p-4">
+          {contract.billingMode === "periodo" && (
+            <section className="rounded-lg border p-4">
+              <h2 className="font-semibold">Ordens de locação e medições</h2>
+              <p className="text-xs text-muted-foreground">Locação é cobrada por medição: cada período vencido, as avarias e o frete viram um boletim (BM) com a nota fiscal e a conta a receber. Prorrogar é só continuar faturando.</p>
+              {(contract.rentals ?? []).length === 0 && <p className="mt-3 text-sm text-muted-foreground">Nenhuma ordem de locação nesta venda.</p>}
+              <div className="mt-2 divide-y">
+                {(contract.rentals ?? []).map((rental) => (
+                  <div key={rental.id} className="py-3 grid gap-2 text-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p>
+                        <Link to="/suprimentos/locacoes/$rentalId" params={{ rentalId: String(rental.id) }} className="font-semibold tabular-nums underline">{rental.number}</Link>
+                        <span className="text-muted-foreground"> · {money(rental.ratePerPeriod)} por {rental.period === "mes" ? "mês" : rental.period}{rental.billing === "unico" ? " (pagamento único)" : ""} · {rental.expectedEnd ? `até ${dateBr(rental.expectedEnd)}` : "até devolver"}{rental.billedUntil ? ` · faturado até ${dateBr(rental.billedUntil)}` : ""}</span>
+                      </p>
+                      {rental.pending.length > 0 && active && canBill && (
+                        <Button type="button" size="sm" onClick={() => setMeasuring(rental)}><Icon name="receipt" className="w-4 h-4 mr-1" /> Faturar medição ({money(rental.pendingValue)})</Button>
+                      )}
+                    </div>
+                    {rental.pending.length > 0
+                      ? <ul className="rounded border divide-y">{rental.pending.map((line, index) => <li key={index} className="px-3 py-1 flex justify-between gap-3"><span>{line.description}</span><span className="tabular-nums">{money(line.value)}</span></li>)}</ul>
+                      : <p className="text-xs text-muted-foreground">Nada a faturar agora{rental.openPeriod ? `: o período em curso fecha em ${dateBr(rental.openPeriod.end)}` : rental.status === "reservada" ? ": ainda não foi entregue" : ""}.</p>}
+                  </div>
+                ))}
+              </div>
+              {(contract.measurements ?? []).length > 0 && (
+                <>
+                  <h3 className="mt-3 font-medium text-sm">Medições faturadas</h3>
+                  <div className="mt-1 divide-y">
+                    {(contract.measurements ?? []).map((m) => (
+                      <div key={m.id} className="py-2 flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-4 text-sm">
+                        <div className="lg:w-56"><p className="font-medium tabular-nums">{m.label}{m.rentalNumber ? ` · ${m.rentalNumber}` : ""}</p><p className="text-xs text-muted-foreground">{m.periodStart ? `${dateBr(m.periodStart)} a ${dateBr(m.periodEnd)}` : ""}</p></div>
+                        <div className="lg:w-32 font-semibold tabular-nums">{money(m.value)}</div>
+                        <div className="flex-1 min-w-0">
+                          {m.record ? (
+                            <p><span className={cn("rounded px-1.5 py-0.5 text-xs font-medium", m.record.paid ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200" : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200")}>{RECORD_STATUS_LABEL[m.record.status] ?? m.record.status}</span>{" "}
+                              NF {m.record.invoiceNumber} de {dateBr(m.record.invoiceIssuedAt)} · vence em {dateBr(m.record.dueDate)}{m.record.paidAt ? ` · pago em ${dateBr(m.record.paidAt)}` : ""}</p>
+                          ) : <p className="text-muted-foreground">Sem valor a cobrar (coberta pela caução)</p>}
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          {m.record && !m.record.paid && canUnbill && (
+                            <ConfirmDialog title={`Desfazer a ${m.label}?`} description="A conta a receber desta medição é cancelada e os períodos e cobranças dela voltam a ficar pendentes. Só a medição mais nova de cada OL pode ser desfeita."
+                              onConfirm={() => unbillMeasurement(m.id)}>
+                              <Button type="button" variant="ghost" size="sm">Desfazer</Button>
+                            </ConfirmDialog>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </section>
+          )}
+
+          {(contract.billingMode !== "periodo" || contract.installments.length > 0) && <section className="rounded-lg border p-4">
             <h2 className="font-semibold">Parcelas</h2>
             <p className="text-xs text-muted-foreground">Registrar a nota fiscal de uma parcela cria a conta a receber dela, com baixa manual no financeiro.</p>
             {contract.installments.length === 0 && <p className="mt-3 text-sm text-muted-foreground">A proposta foi aceita sem condições de pagamento.</p>}
@@ -159,7 +218,7 @@ function ContractPage() {
             {contract.billed > 0 && (
               <p className="mt-2 text-xs text-muted-foreground">A baixa do pagamento é feita em <Link to="/financeiro/receber" className="underline">Financeiro → Contas a Receber</Link>.</p>
             )}
-          </section>
+          </section>}
 
           {contract.classes.length > 0 && (
             <section className="rounded-lg border p-4">
@@ -264,6 +323,7 @@ function ContractPage() {
       </div>
 
       {billing && <BillDialog contract={contract} installment={billing} onClose={() => setBilling(null)} onDone={apply} />}
+      {measuring && <MeasurementBillDialog contract={contract} rental={measuring} lines={measuring.pending} onClose={() => setMeasuring(null)} onDone={apply} />}
       {creatingClass && <ClassDialog contract={contract} slot={creatingClass} onClose={() => setCreatingClass(null)} onDone={apply} />}
       {statusTarget && <StatusDialog contract={contract} target={statusTarget} onClose={() => setStatusTarget(null)} onDone={apply} />}
       <Dialog open={document !== null} onOpenChange={(open) => { if (!open) setDocument(null); }}>

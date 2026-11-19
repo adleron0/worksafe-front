@@ -29,6 +29,8 @@ export interface Activity {
   status: "pendente" | "feita" | "cancelada"; overdue: boolean; today: boolean;
   userId: number | null; user: string | null; customer: { id: number; name: string };
   proposal: { id: number; number: string; title: string; status: string } | null; createdAt: string;
+  /** lembrete automático de uma ordem de locação (fim de período, devolução) */
+  rental?: { id: number; number: string } | null; automatic?: boolean;
 }
 export interface ActivityList { rows: Activity[]; total: number; summary: { overdue: number; today: number; upcoming: number; done: number } }
 /** O que a lista de propostas traz de cada uma: o próximo retorno e o último contato. */
@@ -300,6 +302,9 @@ export function ActivityItem({ activity, canEdit, showContext, onComplete, onEdi
         {showContext && (
           <p className="text-xs text-muted-foreground truncate">
             {activity.customer.name}
+            {activity.rental && (
+              <> · <Link to="/suprimentos/locacoes/$rentalId" params={{ rentalId: String(activity.rental.id) }} className="underline hover:text-foreground">{activity.rental.number}</Link>{activity.automatic ? " (lembrete automático)" : ""}</>
+            )}
             {activity.proposal && (
               <> · <Link to="/comercial/propostas/$proposalId" params={{ proposalId: String(activity.proposal.id) }} className="underline hover:text-foreground">{activity.proposal.number}</Link> {activity.proposal.title}</>
             )}

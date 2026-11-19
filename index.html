@@ -30,6 +30,33 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+    <script>
+      // Página aberta há muito tempo pode estar com um index antigo, apontando para
+      // arquivos de um deploy que já não existe. Se um script/estilo de /assets
+      // falhar, recarrega uma vez para buscar a versão atual.
+      (function () {
+        var KEY = 'ws-asset-reload';
+        function reloadOnce() {
+          try {
+            var last = Number(sessionStorage.getItem(KEY) || 0);
+            if (Date.now() - last < 10000) return;
+            sessionStorage.setItem(KEY, String(Date.now()));
+          } catch (e) {}
+          location.reload();
+        }
+        window.__wsReloadOnce = reloadOnce;
+        window.addEventListener('error', function (e) {
+          var t = e.target;
+          if (!t || (t.tagName !== 'SCRIPT' && t.tagName !== 'LINK')) return;
+          var url = t.src || t.href || '';
+          if (url.indexOf('/assets/') !== -1) reloadOnce();
+        }, true);
+        window.addEventListener('vite:preloadError', function (e) {
+          e.preventDefault();
+          reloadOnce();
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -16,7 +16,7 @@ import { NumField, commercialApi, dateBr, errorMessage, money, todayIso } from "
 import { Contract, PAYMENT_METHOD_OPTIONS, RECORD_STATUS_LABEL } from "../-shared/contracts";
 import { RetentionFields, RetentionRates, RetentionState, retentionList, retentionState, retentionSum } from "../-shared/retentions";
 import {
-  ContractPlan, MOBILIZATION_OPTIONS, MeasurementPlanDraft, MeasurementPlanEditor, WorkLinesTable, WorkMeasurement, WorkStatusBadge, WorkSummary, defaultPlan, pctBr,
+  ContractPlan, MeasurementPlanDraft, MeasurementPlanEditor, WorkLinesTable, WorkMeasurement, WorkStatusBadge, WorkSummary, defaultPlan, pctBr,
 } from "../-shared/measurement";
 import { WorkReport, WorkReportPaper, printWorkReport } from "../-shared/measurement-report";
 
@@ -27,12 +27,13 @@ export const publicMeasurementUrl = (key: string) => `${window.location.origin}/
 /** Valores do plano no navegador (o mesmo cálculo da API), para o diálogo de passar a venda para medição. */
 export function planValues(plan: MeasurementPlanDraft, total: number): ContractPlan {
   const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
-  const mob = plan.mobilization.mode === "nenhuma" ? 0 : r2(total * plan.mobilization.rate);
-  const measurable = plan.mobilization.mode === "etapa" ? r2(total - mob) : total;
+  const mob = r2(total * plan.mobilization.rate);
+  const measurable = r2(total - mob);
   const sum = plan.fronts.reduce((s, f) => s + f.weight, 0) || 1;
   const values = plan.fronts.map((f) => r2((measurable * f.weight) / sum));
   if (values.length) values[values.length - 1] = r2(measurable - values.slice(0, -1).reduce((a, b) => a + b, 0));
-  return { fronts: plan.fronts.map((f, i) => ({ ...f, id: i + 1, value: values[i] })), mobilization: { ...plan.mobilization, value: mob }, depositRate: plan.depositRate, depositReleaseDays: plan.depositReleaseDays, total };
+  const first = mob > 0 ? [{ id: 1, step: null, title: "Mobilização (medição inicial)", weight: plan.mobilization.rate, rule: "conclusao" as const, value: mob, mobilization: true }] : [];
+  return { fronts: [...first, ...plan.fronts.map((f, i) => ({ ...f, id: first.length + i + 1, value: values[i] }))], mobilization: { rate: plan.mobilization.rate, value: mob }, depositRate: plan.depositRate, depositReleaseDays: plan.depositReleaseDays, total };
 }
 
 /**
@@ -74,7 +75,6 @@ export function WorkMeasurementsSection({ contract, canUpdate, canBill, canUnbil
   const copy = (key: string) => { navigator.clipboard?.writeText(publicMeasurementUrl(key)).then(() => toast({ title: "Link copiado", variant: "success" })).catch(() => undefined); };
   const lastAcc = new Map<number, number>();
   for (const m of works.measurements.filter((x) => x.status === "faturada")) for (const l of m.lines) if (l.kind === "frente" && l.frontId) lastAcc.set(l.frontId, l.accPercent ?? 0);
-  const mob = MOBILIZATION_OPTIONS.find((o) => o.id === plan.mobilization.mode);
   const s: WorkSummary = works.summary;
 
   return (
@@ -94,15 +94,15 @@ export function WorkMeasurementsSection({ contract, canUpdate, canBill, canUnbil
         <div className="rounded border px-3 py-2"><p className="text-xs text-muted-foreground">Saldo a medir</p><p className="font-semibold tabular-nums">{money(s.balance)}</p></div>
         <div className="rounded border px-3 py-2"><p className="text-xs text-muted-foreground">Notas emitidas</p><p className="font-semibold tabular-nums">{money(s.invoiced)}</p></div>
         <div className="rounded border px-3 py-2">
-          <p className="text-xs text-muted-foreground">{plan.mobilization.mode === "adiantamento" ? "Adiantamento abatido" : "Caução retida"}</p>
-          <p className="font-semibold tabular-nums">{plan.mobilization.mode === "adiantamento" ? `${money(s.amortized)} de ${money(plan.mobilization.value)}` : money(s.deposit)}</p>
+          <p className="text-xs text-muted-foreground">Caução retida</p>
+          <p className="font-semibold tabular-nums">{money(s.deposit)}</p>
         </div>
       </div>
 
       <details className="mt-3 rounded border text-sm">
-        <summary className="px-3 py-2 cursor-pointer font-medium">Plano: {plan.fronts.length} frente(s){mob && plan.mobilization.mode !== "nenhuma" ? ` · mobilização ${pctBr(plan.mobilization.rate * 100)} (${mob.name.replace(" (padrão)", "").toLowerCase()})` : ""}{plan.depositRate > 0 ? ` · caução ${pctBr(plan.depositRate * 100)}` : ""}</summary>
+        <summary className="px-3 py-2 cursor-pointer font-medium">Plano: {plan.fronts.length} frente(s){plan.mobilization.value > 0 ? ` · mobilização ${pctBr(plan.mobilization.rate * 100)} na medição inicial` : ""}{plan.depositRate > 0 ? ` · caução ${pctBr(plan.depositRate * 100)}` : ""}</summary>
         <div className="divide-y border-t">
-          {plan.mobilization.mode !== "nenhuma" && <div className="px-3 py-1.5 flex justify-between gap-3"><span>{plan.mobilization.mode === "etapa" ? "Mobilização (etapa própria)" : "Adiantamento de mobilização"}</span><span className="tabular-nums">{money(plan.mobilization.value)}</span></div>}
+
           {plan.fronts.map((f) => (
             <div key={f.id} className="px-3 py-1.5 flex justify-between gap-3">
               <span className="min-w-0">{f.title}<span className="text-xs text-muted-foreground"> · {f.rule === "conclusao" ? "só ao concluir" : "pelo %"} · {pctBr(lastAcc.get(f.id) ?? 0)} medido</span></span>
@@ -119,7 +119,7 @@ export function WorkMeasurementsSection({ contract, canUpdate, canBill, canUnbil
         </div>
       )}
 
-      {works.measurements.length === 0 && <p className="mt-3 text-sm text-muted-foreground">Nenhum boletim ainda. O primeiro {plan.mobilization.mode === "etapa" ? "já leva a mobilização" : plan.mobilization.mode === "adiantamento" ? "leva o adiantamento" : "mede o avanço das frentes"}.</p>}
+      {works.measurements.length === 0 && <p className="mt-3 text-sm text-muted-foreground">Nenhum boletim ainda. {plan.mobilization.value > 0 ? "O primeiro já leva a mobilização (medição inicial)." : "O primeiro mede o avanço das frentes."}</p>}
       <div className="mt-2 divide-y">
         {works.measurements.map((m) => (
           <div key={m.id} className="py-3 grid gap-2 text-sm">
@@ -241,7 +241,7 @@ function WorkDialog({ contract, measurement, onClose, onDone }: { contract: Cont
           )}
           <div><Label htmlFor="workNotes">Observações para o cliente (opcional)</Label>
             <Textarea id="workNotes" className="mt-1" rows={2} maxLength={2000} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
-          <p className="text-xs text-muted-foreground">Mobilização, adiantamento e caução entram sozinhos conforme o plano. O relatório do período sai dos RDOs fechados.</p>
+          <p className="text-xs text-muted-foreground">A mobilização (medição inicial) vem inteira no primeiro boletim e a caução entra sozinha, conforme o plano. O relatório do período sai dos RDOs fechados.</p>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>

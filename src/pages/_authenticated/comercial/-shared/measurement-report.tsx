@@ -5,7 +5,7 @@ import { WorkLine, pctBr } from "./measurement";
 export interface WorkReport {
   id?: number; label: string; status: string; periodStart: string | null; periodEnd: string | null; notes: string | null;
   contract: { number: string; title: string; value: number; customer: { name: string; corporateName?: string | null; cnpj?: string | null }; customerOrderNumber?: string | null };
-  plan: { mobilization: { mode: string; rate: number; value: number }; depositRate: number } | null;
+  plan: { mobilization: { rate: number; value: number }; depositRate: number } | null;
   lines: WorkLine[]; value: number; invoiceValue: number; depositValue: number; measuredToDate: number; balance: number;
   decision: { decision: string; manual: boolean; name: string; role?: string | null; note?: string | null; at: string } | null;
   sentAt: string | null; decidedAt: string | null; invoiceNumber: string | null;

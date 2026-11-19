@@ -9,26 +9,20 @@ import { NumField, money } from "./commercial";
 /**
  * Medição de obra (plano 08, fase 8): a venda de serviço faturada por boletim
  * de medição (BM) em vez de parcelas. A obra é dividida em frentes com peso; a
- * mobilização pode ser uma etapa própria (padrão) ou um adiantamento abatido
- * dos boletins; a caução contratual fica retida até o fim da obra.
+ * mobilização é só a medição inicial (uma frente que sai no primeiro boletim,
+ * pelo mesmo caminho de toda medição); a caução fica retida até o fim da obra.
  */
 export type FrontRule = "percentual" | "conclusao";
-export type MobilizationMode = "nenhuma" | "etapa" | "adiantamento";
 export interface PlanFront { step: number | null; title: string; weight: number; rule: FrontRule }
 export interface MeasurementPlanDraft {
-  mode: "medicao"; fronts: PlanFront[]; mobilization: { mode: MobilizationMode; rate: number }; depositRate: number; depositReleaseDays: number;
+  mode: "medicao"; fronts: PlanFront[]; mobilization: { rate: number }; depositRate: number; depositReleaseDays: number;
 }
 export interface ContractPlan {
-  fronts: Array<PlanFront & { id: number; value: number }>;
-  mobilization: { mode: MobilizationMode; rate: number; value: number };
+  fronts: Array<PlanFront & { id: number; value: number; mobilization?: boolean }>;
+  mobilization: { rate: number; value: number };
   depositRate: number; depositReleaseDays: number; total: number; problem?: string | null;
 }
 
-export const MOBILIZATION_OPTIONS: Array<{ id: MobilizationMode; name: string; hint: string }> = [
-  { id: "etapa", name: "Etapa própria (padrão)", hint: "A mobilização é faturada no primeiro boletim e as frentes dividem o resto do contrato." },
-  { id: "adiantamento", name: "Adiantamento abatido", hint: "O percentual é faturado no início e abatido proporcionalmente de cada boletim até zerar." },
-  { id: "nenhuma", name: "Sem mobilização", hint: "Os boletins medem só as frentes." },
-];
 export const RULE_OPTIONS = [{ id: "percentual", name: "Pelo % concluído" }, { id: "conclusao", name: "Só ao concluir" }];
 
 const round6 = (value: number) => Math.round(value * 1e6) / 1e6;
@@ -44,7 +38,7 @@ export function frontsFromSchedule(steps: Array<{ title: string; duration: numbe
 }
 
 export const defaultPlan = (steps: Array<{ title: string; duration: number }>): MeasurementPlanDraft => ({
-  mode: "medicao", fronts: frontsFromSchedule(steps), mobilization: { mode: "etapa", rate: 0.3 }, depositRate: 0, depositReleaseDays: 0,
+  mode: "medicao", fronts: frontsFromSchedule(steps), mobilization: { rate: 0.3 }, depositRate: 0, depositReleaseDays: 0,
 });
 
 /** Editor do plano de medição (na proposta e ao passar uma venda para medição). */
@@ -59,7 +53,6 @@ export function MeasurementPlanEditor({ plan, onChange, steps, values, readOnly 
   const off = Math.abs(sum - 1) > 0.0005;
   const setFront = (index: number, patch: Partial<PlanFront>) => onChange({ ...plan, fronts: plan.fronts.map((f, i) => (i === index ? { ...f, ...patch } : f)) });
   const stepOptions = [{ id: "", name: "Sem etapa" }, ...steps.map((s, i) => ({ id: String(i), name: s.title || `Etapa ${i + 1}` })).filter((o) => o.name.trim())];
-  const mob = MOBILIZATION_OPTIONS.find((o) => o.id === plan.mobilization.mode)!;
   const equal = () => {
     const n = plan.fronts.length;
     if (!n) return;
@@ -93,7 +86,7 @@ export function MeasurementPlanEditor({ plan, onChange, steps, values, readOnly 
                 <NumField kind="percent" className="mt-1" value={front.weight} disabled={readOnly} ariaLabel={`Peso da frente ${index + 1}`} onChange={(weight) => setFront(index, { weight })} /></div>
               <div className="sm:w-40"><Label className="text-xs">Medição</Label>
                 <div className="mt-1"><Select name={`front-rule-${index}`} state={front.rule} options={RULE_OPTIONS} disabled={readOnly} modal={false} onChange={(_, value) => setFront(index, { rule: value as FrontRule })} /></div></div>
-              <div className="sm:w-28 text-sm sm:text-right"><p className="text-xs text-muted-foreground">Valor</p><p className="font-semibold tabular-nums sm:pb-2">{money(values?.fronts[index]?.value)}</p></div>
+              <div className="sm:w-28 text-sm sm:text-right"><p className="text-xs text-muted-foreground">Valor</p><p className="font-semibold tabular-nums sm:pb-2">{money(values?.fronts.filter((f) => !f.mobilization)[index]?.value)}</p></div>
               {!readOnly && plan.fronts.length > 1 && (
                 <Button type="button" variant="ghost" size="sm" className="h-9 w-9 p-0 self-end" aria-label={`Remover a frente ${index + 1}`} onClick={() => onChange({ ...plan, fronts: plan.fronts.filter((_, i) => i !== index) })}>
                   <Icon name="trash-2" className="w-4 h-4" />
@@ -109,24 +102,20 @@ export function MeasurementPlanEditor({ plan, onChange, steps, values, readOnly 
         )}
         <p className={cn("mt-3 rounded-md border px-3 py-2 text-sm", off ? "border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200" : "text-muted-foreground")}>
           Pesos somam <b className="tabular-nums">{(Math.round(sum * 10000) / 100).toString().replace(".", ",")}%</b>{off ? ": precisam fechar 100% para enviar." : ". Fechado."}
-          {plan.mobilization.mode === "etapa" && plan.mobilization.rate > 0 ? ` As frentes dividem os ${(Math.round((1 - plan.mobilization.rate) * 10000) / 100).toString().replace(".", ",")}% que sobram da mobilização.` : ""}
+          {plan.mobilization.rate > 0 ? ` As frentes dividem os ${(Math.round((1 - plan.mobilization.rate) * 10000) / 100).toString().replace(".", ",")}% que sobram da mobilização.` : ""}
         </p>
       </section>
 
       <section className="rounded-lg border p-4 grid gap-3" aria-label="Mobilização">
         <div>
-          <h3 className="font-semibold">Mobilização</h3>
-          <p className="text-xs text-muted-foreground">{mob.hint}</p>
+          <h3 className="font-semibold">Mobilização (medição inicial)</h3>
+          <p className="text-xs text-muted-foreground">Um percentual fixo do contrato que sai no primeiro boletim, como uma medição qualquer: passa pelo A Faturar, vira nota e conta a receber, com retenções e caução. As frentes dividem o resto. Zero = sem mobilização.</p>
         </div>
-        <div className="grid sm:grid-cols-[minmax(0,16rem)_8rem_minmax(0,1fr)] gap-3 items-end">
-          <div><Label className="text-xs">Forma</Label>
-            <div className="mt-1"><Select name="mobilizationMode" state={plan.mobilization.mode} options={MOBILIZATION_OPTIONS} disabled={readOnly} modal={false}
-              onChange={(_, value) => onChange({ ...plan, mobilization: { mode: value as MobilizationMode, rate: value === "nenhuma" ? 0 : plan.mobilization.rate || 0.3 } })} /></div></div>
-          {plan.mobilization.mode !== "nenhuma" && (
-            <div><Label className="text-xs">Percentual</Label>
-              <NumField kind="percent" className="mt-1" value={plan.mobilization.rate} disabled={readOnly} ariaLabel="Percentual da mobilização" onChange={(rate) => onChange({ ...plan, mobilization: { ...plan.mobilization, rate } })} /></div>
-          )}
-          {plan.mobilization.mode !== "nenhuma" && <p className="text-sm sm:pb-2">= <b className="tabular-nums">{money(values?.mobilization.value)}</b> {plan.mobilization.mode === "etapa" ? "no primeiro boletim" : "no início, abatido depois"}</p>}
+        <div className="grid sm:grid-cols-[8rem_minmax(0,1fr)] gap-3 items-end">
+          <div><Label className="text-xs">Percentual</Label>
+            <NumField kind="percent" className="mt-1" value={plan.mobilization.rate} disabled={readOnly} ariaLabel="Percentual da mobilização"
+              onChange={(rate) => onChange({ ...plan, mobilization: { rate: Math.min(0.9, Math.max(0, rate)) } })} onEmpty={() => onChange({ ...plan, mobilization: { rate: 0 } })} /></div>
+          <p className="text-sm sm:pb-2">{plan.mobilization.rate > 0 ? <>= <b className="tabular-nums">{money(values?.mobilization.value)}</b> no primeiro boletim</> : "Sem mobilização: os boletins medem só as frentes."}</p>
         </div>
       </section>
 
@@ -150,8 +139,8 @@ export function MeasurementPlanEditor({ plan, onChange, steps, values, readOnly 
 
 /** Boletim de medição de obra, como a tela lê. */
 export interface WorkLine {
-  kind: "frente" | "mobilizacao" | "adiantamento" | "amortizacao" | "caucao"; description: string; value: number;
-  frontId?: number; base?: number; prevPercent?: number; percent?: number; accPercent?: number; reportedPercent?: number; rule?: FrontRule;
+  kind: "frente" | "caucao"; description: string; value: number;
+  frontId?: number; mobilization?: boolean; base?: number; prevPercent?: number; percent?: number; accPercent?: number; reportedPercent?: number; rule?: FrontRule;
 }
 export type WorkStatus = "rascunho" | "enviada" | "aprovada" | "contestada" | "faturada";
 export interface WorkMeasurement {
@@ -162,7 +151,7 @@ export interface WorkMeasurement {
   record: { id: number; status: string; dueDate: string | null; paidAt: string | null; invoiceNumber: string | null; invoiceIssuedAt: string | null; hasInvoiceFile: boolean; paid: boolean; netValue: number | null } | null;
 }
 export interface WorkSummary {
-  measured: number; balance: number; invoiced: number; deposit: number; advance: number; amortized: number; open: number | null;
+  measured: number; balance: number; invoiced: number; deposit: number; open: number | null;
   depositRecord: { id: number; status: string; value: number; dueDate: string | null; paid: boolean } | null;
 }
 export const WORK_STATUS: Record<WorkStatus, { label: string; className: string }> = {
@@ -178,7 +167,7 @@ export function WorkStatusBadge({ status }: { status: WorkStatus }) {
 }
 export const pctBr = (value: number | undefined | null) => `${(Math.round((value ?? 0) * 100) / 100).toString().replace(".", ",")}%`;
 
-/** Tabela do boletim: frente, % anterior, do período, acumulado e valor; mobilização, adiantamento e caução. */
+/** Tabela do boletim: frente (a mobilização é uma delas), % anterior, do período, acumulado e valor; e a caução. */
 export function WorkLinesTable({ lines, invoiceValue, depositValue, value }: { lines: WorkLine[]; invoiceValue: number; depositValue: number; value: number }) {
   return (
     <div className="rounded border overflow-x-auto">

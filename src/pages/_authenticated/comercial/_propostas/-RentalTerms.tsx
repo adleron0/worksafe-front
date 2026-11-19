@@ -59,7 +59,7 @@ export function RentalPeriodPanel({ draft, setDraft, readOnly, availability }: P
       <div className="grid sm:grid-cols-4 gap-3 items-end">
         <div><Label className="text-xs">Cobrado por</Label>
           <div className="mt-1"><Select name="rentalPeriod" state={rental.period} disabled={readOnly} modal={false} options={PERIODS} onChange={(_, value) => change({ period: (String(value || "mes")) as RentPeriod })} /></div></div>
-        <div><Label className="text-xs">{rental.untilReturn ? `Previsão (${WORD[rental.period][1]})` : `Quantos ${WORD[rental.period][1]}`}</Label>
+        <div><Label className="text-xs">{rental.untilReturn ? `Previsão (${WORD[rental.period][1]})` : `${rental.period === "semana" ? "Quantas" : "Quantos"} ${WORD[rental.period][1]}`}</Label>
           <NumField className="mt-1" digits={0} value={rental.periods} disabled={readOnly} ariaLabel="Quantidade de períodos"
             onChange={(periods) => change({ periods: Math.max(1, Math.round(periods || 1)) })} onEmpty={() => change({ periods: 1 })} /></div>
         <label className={cn("flex items-center gap-2 text-sm h-9", readOnly && "opacity-60")}>
@@ -76,7 +76,7 @@ export function RentalPeriodPanel({ draft, setDraft, readOnly, availability }: P
       <p className="text-xs text-muted-foreground">
         {rental.untilReturn
           ? `Sem data de devolução: a OL fica com o cliente até ele devolver e é cobrada período a período. Os ${rental.periods} ${rental.periods === 1 ? WORD[rental.period][0] : WORD[rental.period][1]} são só a previsão do orçamento.`
-          : `${rental.periods} ${rental.periods === 1 ? WORD[rental.period][0] : WORD[rental.period][1]} contratados. Prorrogar é só continuar faturando.`}
+          : `${rental.periods} ${rental.periods === 1 ? WORD[rental.period][0] : WORD[rental.period][1]} ${rental.period === "semana" ? (rental.periods === 1 ? "contratada" : "contratadas") : (rental.periods === 1 ? "contratado" : "contratados")}. Prorrogar é só continuar faturando.`}
       </p>
       <AvailabilityList availability={availability} />
     </section>

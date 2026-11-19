@@ -63,7 +63,7 @@ function NoNewRental() {
       <h1 className="text-xl font-bold">Nova locação</h1>
       <p className="text-sm text-muted-foreground">Toda locação nasce de uma proposta de locação aceita: ela leva o período, a caução, o frete e confere a disponibilidade. Ao ser aceita, a proposta abre a Ordem de Locação (OL) sozinha.</p>
       <div className="flex flex-wrap gap-2">
-        <Button onClick={() => navigate({ to: "/comercial/propostas/nova" })}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova proposta de locação</Button>
+        <Button onClick={() => navigate({ to: "/comercial/propostas/nova", search: { tipo: "locacao" } })}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova proposta de locação</Button>
         <Button variant="outline" onClick={() => navigate({ to: "/suprimentos/locacoes" })}>Ver as ordens de locação</Button>
       </div>
     </div>

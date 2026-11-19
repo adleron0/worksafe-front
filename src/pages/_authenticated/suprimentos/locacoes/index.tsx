@@ -72,7 +72,7 @@ function RentalsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => navigate({ to: "/suprimentos/locacoes/disponibilidade" })}><Icon name="chart-gantt" className="w-4 h-4 mr-1" /> Disponibilidade</Button>
-          {can("create_comercial") && <Button variant="outline" onClick={() => navigate({ to: "/comercial/propostas/nova" })}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova proposta de locação</Button>}
+          {can("create_comercial") && <Button variant="outline" onClick={() => navigate({ to: "/comercial/propostas/nova", search: { tipo: "locacao" } })}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova proposta de locação</Button>}
         </div>
       </div>
 

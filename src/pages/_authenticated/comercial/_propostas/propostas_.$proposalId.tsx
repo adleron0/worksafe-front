@@ -352,7 +352,7 @@ function ProposalEditorPage() {
             {proposal.decidedAt && ` Decisão em ${dateBr(proposal.decidedAt)}.`}
             {proposal.statusNote && ` Observação: ${proposal.statusNote}`}
             {proposal.contract && (
-              <> Venda fechada <Link to="/comercial/contratos/$contractId" params={{ contractId: String(proposal.contract.id) }} className="underline font-medium text-foreground">{proposal.contract.number}</Link>: parcelas, notas fiscais e turmas.</>
+              <> Venda fechada <Link to="/comercial/contratos/$contractId" params={{ contractId: String(proposal.contract.id) }} className="underline font-medium text-foreground">{proposal.contract.number}</Link>: {draft.kind === "locacao" ? "ordem de locação, medições e notas fiscais" : draft.kind === "treinamento" ? "parcelas, notas fiscais e turmas" : "parcelas, notas fiscais e ordem de serviço"}.</>
             )}
           </p>
         )}

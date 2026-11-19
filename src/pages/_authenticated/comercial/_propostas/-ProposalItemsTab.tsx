@@ -218,7 +218,9 @@ const FlagsLegend = () => (
 
 function ItemRow({ item, line, draft, options, rentItems, readOnly, canSeeCosts, update, remove }: RowProps) {
   const labor = item.type === "mao_de_obra", training = item.type === "treinamento", rent = item.type === "locacao_cliente";
-  const period: RentPeriod = item.extra?.period ?? "mes";
+  // na proposta de locação o período vem dos termos (vale para todas as linhas); a linha antiga guardava o próprio
+  const period: RentPeriod = draft.rental?.period ?? item.extra?.period ?? "mes";
+  const periods = draft.rental?.periods ?? item.extra?.periods ?? 1;
   const rentItem = rentItems.find((option) => option.id === item.stockItemId);
   const rental = line?.rental ?? null;
   /** Valor do período sugerido pelo cadastro do item. */
@@ -259,7 +261,7 @@ function ItemRow({ item, line, draft, options, rentItems, readOnly, canSeeCosts,
                 update({
                   stockItemId: picked?.id ?? null, description: picked?.label ?? (value ? item.description : ""), unit: picked?.unit ?? item.unit,
                   // o valor do período sai da base de cálculo da locação; digitar aqui é exceção
-                  extra: { ...item.extra, period: (picked?.minRentPeriod && period === "dia" ? picked.minRentPeriod : period) as RentPeriod, periods: item.extra?.periods ?? 1, rate: picked?.rentPriceMode === "manual" ? suggestedRate(picked, period) : null },
+                  extra: { ...item.extra, period: (picked?.minRentPeriod && period === "dia" ? picked.minRentPeriod : period) as RentPeriod, periods, rate: picked?.rentPriceMode === "manual" ? suggestedRate(picked, period) : null },
                 });
               }} />
           </Cell>
@@ -380,7 +382,7 @@ function ItemRow({ item, line, draft, options, rentItems, readOnly, canSeeCosts,
         {labor && item.weekend && !(item.weekendDays ?? draft.weekendDays) && <span className="text-amber-700 dark:text-amber-300"> · informe os dias de fim de semana/feriado nos ajustes da linha</span>}
         {labor && canSeeCosts && line?.hourCost ? ` · custo hora ${money(line.hourCost)}` : ""}
         {training && (!item.courseId ? "Escolha o curso para usar a tabela in-company" : line?.listPrice != null ? `Tabela in-company: ${money(line.listPrice)}` : "Curso sem tabela in-company: digite o valor final")}
-        {rent && (!item.stockItemId ? "Escolha o item alugável do estoque" : <RentNote item={item} line={line} period={period} canSeeCosts={canSeeCosts} />)}
+        {rent && (!item.stockItemId ? "Escolha o item alugável do estoque" : <RentNote item={item} line={line} period={period} periods={periods} canSeeCosts={canSeeCosts} />)}
         {!labor && !training && !rent && !typed && (line ? "Valor final: usando o sugerido" : "Descreva o item e informe o valor unitário")}
         {typed && line && <span className={cn("tabular-nums", diff !== null && diff < 0 && "text-amber-700 dark:text-amber-300")}>
           {labor || training || rent ? " · " : ""}sugerido {money(line.suggested)}{diff !== null && ` (${diff >= 0 ? "+" : "−"}${percent(Math.abs(diff), 1)})`}
@@ -422,8 +424,7 @@ function ItemRow({ item, line, draft, options, rentItems, readOnly, canSeeCosts,
 }
 
 /** Linha de contexto da locação: de onde vem o valor do período, desconto, preparação e a checagem de mercado. */
-function RentNote({ item, line, period, canSeeCosts }: { item: DraftItem; line?: CalcLine; period: RentPeriod; canSeeCosts: boolean }) {
-  const periods = item.extra?.periods ?? 1;
+function RentNote({ item, line, period, periods, canSeeCosts }: { item: DraftItem; line?: CalcLine; period: RentPeriod; periods: number; canSeeCosts: boolean }) {
   const words = `${decimal(item.quantity, 0)} × ${decimal(periods, 0)} ${PERIOD_WORD[period][periods === 1 ? 0 : 1]}`;
   const rental = line?.rental;
   if (item.extra?.rate) return <>{words} × {money(item.extra.rate)} (digitado){line?.listPrice != null ? ` = ${money(line.listPrice)}` : ""}</>;

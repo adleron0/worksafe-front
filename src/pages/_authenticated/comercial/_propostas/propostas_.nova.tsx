@@ -11,6 +11,8 @@ import CustomerStep from "./-CustomerStep";
 import WizardSteps, { STEPS } from "./-WizardSteps";
 
 export const Route = createFileRoute("/_authenticated/comercial/_propostas/propostas_/nova")({
+  validateSearch: (search: Record<string, unknown>): { tipo?: ProposalKind } =>
+    (search.tipo === "locacao" || search.tipo === "treinamento" || search.tipo === "servico" ? { tipo: search.tipo } : {}),
   component: NewProposalPage,
 });
 
@@ -22,7 +24,8 @@ function NewProposalPage() {
   const { can } = useVerify();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [kind, setKind] = useState<ProposalKind>("servico");
+  const { tipo } = Route.useSearch();
+  const [kind, setKind] = useState<ProposalKind>(tipo ?? "servico");
   const [customer, setCustomer] = useState<CustomerOption | null>(null);
 
   const { mutate: create, isPending } = useMutation({

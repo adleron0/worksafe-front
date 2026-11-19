@@ -26,6 +26,7 @@ import { ProposalInfoStep, ProposalPaymentTab } from "./-ProposalTabs";
 import { RecordFilesPanel } from "../../arquivos/-shared/record-files";
 import WizardSteps, { STEPS, StepKey, StepState } from "./-WizardSteps";
 import { RentalConditionsPanel, RentalPeriodPanel } from "./-RentalTerms";
+import { MeasurementPlanEditor, defaultPlan } from "../-shared/measurement";
 
 /** Título provisório de quem acabou de escolher o cliente e ainda não deu nome à proposta. */
 const PLACEHOLDER_TITLE = "Nova proposta";
@@ -236,6 +237,7 @@ function ProposalEditorPage() {
   const total = calc?.totals.total ?? 0;
   const paymentDiff = Math.abs(calc?.installmentsDiff ?? 0);
   const rentalKind = draft.kind === "locacao";
+  const byMeasurement = draft.kind === "servico" && draft.measurement?.mode === "medicao";
   // disponibilidade: a do cálculo ao vivo enquanto há alteração; senão a da proposta salva
   const availability = dirty ? calc?.availability ?? null : proposal.availability ?? null;
   const checks: Array<{ step: StepKey; ok: boolean; label: string; fix: string }> = [
@@ -244,7 +246,8 @@ function ProposalEditorPage() {
     { step: "itens", ok: itemCount > 0 && total > 0, label: "Itens e valores", fix: itemCount === 0 ? "Adicione ao menos um item" : "O total está zerado: informe os valores" },
     ...(rentalKind ? [
       { step: "itens" as StepKey, ok: !availability || availability.ok, label: "Disponibilidade dos equipamentos", fix: "Falta equipamento no período: confira antes de prometer ao cliente" },
-    ] : [{ step: "pagamento" as StepKey, ok: draft.installments.length > 0 && paymentDiff < 0.005, label: "Condições de pagamento",
+    ] : byMeasurement ? [{ step: "pagamento" as StepKey, ok: !calc?.measurementPlan?.problem, label: "Plano de medição", fix: calc?.measurementPlan?.problem ?? "Revise o plano de medição" }]
+      : [{ step: "pagamento" as StepKey, ok: draft.installments.length > 0 && paymentDiff < 0.005, label: "Condições de pagamento",
       fix: draft.installments.length === 0 ? "Defina as parcelas" : "As parcelas não fecham o total da proposta" }]),
   ];
   // validade e disponibilidade são recomendação; o resto impede o envio
@@ -402,7 +405,22 @@ function ProposalEditorPage() {
           {tab === "itens" && <ProposalItemsTab draft={draft} setSections={setSections} calc={calc ?? undefined} options={options} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} />}
           {tab === "pagamento" && rentalKind && <RentalConditionsPanel draft={draft} setDraft={setDraftSafe} readOnly={readOnly} total={total}
             rentTotal={(calc?.sections ?? []).reduce((sum, section, index) => sum + (draft.sections[index]?.kind === "locacao_cliente" ? section.value : 0), 0)} />}
-          {tab === "pagamento" && !rentalKind && <ProposalPaymentTab draft={draft} setDraft={setDraftSafe} calc={calc ?? undefined} readOnly={readOnly} />}
+          {tab === "pagamento" && draft.kind === "servico" && (
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Como a venda é faturada">
+              <span className="text-sm text-muted-foreground mr-1">Faturamento:</span>
+              <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
+                <Button type="button" size="sm" className="h-7" variant={byMeasurement ? "ghost" : "default"} disabled={readOnly} onClick={() => setDraftSafe((d) => ({ ...d, measurement: null }))}>Parcelas</Button>
+                <Button type="button" size="sm" className="h-7" variant={byMeasurement ? "default" : "ghost"} disabled={readOnly}
+                  onClick={() => setDraftSafe((d) => ({ ...d, measurement: d.measurement ?? defaultPlan(d.schedule?.steps ?? []), installments: [] }))}>Medição de obra</Button>
+              </div>
+              {byMeasurement && <span className="text-xs text-muted-foreground">Cada boletim de medição aprovado pelo cliente vira uma nota fiscal.</span>}
+            </div>
+          )}
+          {tab === "pagamento" && byMeasurement && draft.measurement && (
+            <MeasurementPlanEditor plan={draft.measurement} steps={draft.schedule?.steps ?? []} values={calc?.measurementPlan} readOnly={readOnly}
+              onChange={(measurement) => setDraftSafe((d) => ({ ...d, measurement }))} />
+          )}
+          {tab === "pagamento" && !rentalKind && !byMeasurement && <ProposalPaymentTab draft={draft} setDraft={setDraftSafe} calc={calc ?? undefined} readOnly={readOnly} />}
           {tab === "documento" && <ProposalDocumentTab proposal={proposal} draft={draft} setDraft={setDraftSafe} options={options} readOnly={readOnly} payload={payload} />}
           {tab === "envio" && (
             <div className="grid gap-4">

@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { CustomerOption, DueRule, ProposalKind } from "./proposals";
 import type { RetentionRates } from "./retentions";
+import type { ContractPlan, WorkMeasurement, WorkSummary } from "./measurement";
 
 /** Pedido de compra que o cliente manda para confirmar o aceite. */
 export interface CustomerOrder { number: string | null; date: string | null; fileUrl: string | null; fileName: string | null }
@@ -33,6 +34,11 @@ export interface Contract {
   billingMode?: "parcelas" | "periodo" | "medicao";
   /** alíquotas que o cliente costuma reter na nota, em % (sugestão ao faturar) */
   retentionRates?: RetentionRates;
+  /** medição de obra: o plano (frentes, mobilização, caução) e os boletins */
+  measurementPlan?: ContractPlan | null;
+  works?: { measurements: WorkMeasurement[]; summary: WorkSummary } | null;
+  /** etapas do cronograma da proposta (para montar as frentes) */
+  scheduleSteps?: Array<{ title: string; duration: number }>;
   /** locação: as ordens de locação e o que cada uma tem para faturar agora */
   rentals?: ContractRental[];
   measurements?: ContractMeasurement[];
@@ -57,7 +63,9 @@ export type BillingStage = "aguardando" | "liberada" | "faturada" | "recebida";
 export interface BillingRow extends Omit<ContractInstallment, "id"> {
   /** parcela: o id dela; medição: "ol-<OL>" (a faturar), "op-<OL>" (período em curso) ou "bm-<medição>" */
   id: number | string;
-  source?: "parcela" | "medicao";
+  source?: "parcela" | "medicao" | "obra";
+  /** medição de obra: valor da nota, caução e situação do boletim */
+  invoiceValue?: number; depositValue?: number; measurementStatus?: string;
   rental?: { id: number; number: string | null } | null; measurementId?: number;
   lines?: Array<{ kind: string; description: string; periodStart: string | null; periodEnd: string | null; value: number }>;
   stage: BillingStage; contractId: number; contractNumber: string; contractStatus: ContractStatus; kind: ProposalKind; title: string;

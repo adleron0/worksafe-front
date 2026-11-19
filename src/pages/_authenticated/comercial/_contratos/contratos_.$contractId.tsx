@@ -20,6 +20,7 @@ import {
 } from "../-shared/contracts";
 import { BillDialog, CustomerOrderCard, MeasurementBillDialog } from "../-shared/billing";
 import { RETENTION_TAXES, RetentionRates } from "../-shared/retentions";
+import { SwitchToMeasurementDialog, WorkMeasurementsSection } from "./-WorkMeasurements";
 import { NumField } from "../-shared/commercial";
 import { DocumentPaper } from "../-shared/document";
 import { KIND_LABEL, formatCnpj } from "../-shared/proposals";
@@ -42,6 +43,7 @@ function ContractPage() {
   const [creatingClass, setCreatingClass] = useState<ContractClassSlot | null>(null);
   const [document, setDocument] = useState<string | null>(null);
   const [statusTarget, setStatusTarget] = useState<ContractStatus | null>(null);
+  const [switching, setSwitching] = useState(false);
   const [dates, setDates] = useState<{ startDate: string | null; endDate: string | null; notes: string }>({ startDate: null, endDate: null, notes: "" });
 
   const { data: contract, isLoading, error } = useQuery({
@@ -119,7 +121,7 @@ function ContractPage() {
         <Stat label={contract.billingMode === "periodo" ? "Valor previsto" : "Valor da venda"} value={money(contract.value)} />
         <Stat label="Faturado (com nota)" value={money(contract.billed)} />
         <Stat label="Recebido" value={money(contract.received)} />
-        <Stat label="A faturar" value={money(contract.toBill)} highlight={contract.toBill > 0.005 && active} />
+        <Stat label={contract.billingMode === "medicao" ? "Saldo a medir" : "A faturar"} value={money(contract.toBill)} highlight={contract.toBill > 0.005 && active} />
       </div>
 
       <div className="grid xl:grid-cols-[minmax(0,1fr)_340px] gap-4 items-start">
@@ -177,9 +179,20 @@ function ContractPage() {
             </section>
           )}
 
-          {(contract.billingMode !== "periodo" || contract.installments.length > 0) && <section className="rounded-lg border p-4">
-            <h2 className="font-semibold">Parcelas</h2>
-            <p className="text-xs text-muted-foreground">Registrar a nota fiscal de uma parcela cria a conta a receber dela, com baixa manual no financeiro.</p>
+          {contract.billingMode === "medicao" && contract.measurementPlan && contract.works && (
+            <WorkMeasurementsSection contract={contract} canUpdate={canUpdate} canBill={canBill} canUnbill={canUnbill} onDone={apply} />
+          )}
+
+          {contract.billingMode !== "medicao" && (contract.billingMode !== "periodo" || contract.installments.length > 0) && <section className="rounded-lg border p-4">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+              <div>
+                <h2 className="font-semibold">Parcelas</h2>
+                <p className="text-xs text-muted-foreground">Registrar a nota fiscal de uma parcela cria a conta a receber dela, com baixa manual no financeiro. Várias parcelas podem ir na mesma nota.</p>
+              </div>
+              {contract.kind === "servico" && active && canUpdate && contract.billingMode === "parcelas" && contract.billed === 0 && (
+                <Button type="button" size="sm" variant="outline" className="shrink-0" onClick={() => setSwitching(true)}><Icon name="ruler" className="w-4 h-4 mr-1" /> Faturar por medição</Button>
+              )}
+            </div>
             {contract.installments.length === 0 && <p className="mt-3 text-sm text-muted-foreground">A proposta foi aceita sem condições de pagamento.</p>}
             <div className="mt-2 divide-y">
               {contract.installments.map((installment) => (
@@ -328,6 +341,7 @@ function ContractPage() {
 
       {billing && <BillDialog contract={contract} installment={billing} others={contract.installments.filter((i) => !i.record && i.id !== billing.id)} onClose={() => setBilling(null)} onDone={apply} />}
       {measuring && <MeasurementBillDialog contract={contract} rental={measuring} lines={measuring.pending} onClose={() => setMeasuring(null)} onDone={apply} />}
+      {switching && <SwitchToMeasurementDialog contract={contract} steps={contract.scheduleSteps ?? []} onClose={() => setSwitching(false)} onDone={apply} />}
       {creatingClass && <ClassDialog contract={contract} slot={creatingClass} onClose={() => setCreatingClass(null)} onDone={apply} />}
       {statusTarget && <StatusDialog contract={contract} target={statusTarget} onClose={() => setStatusTarget(null)} onDone={apply} />}
       <Dialog open={document !== null} onOpenChange={(open) => { if (!open) setDocument(null); }}>

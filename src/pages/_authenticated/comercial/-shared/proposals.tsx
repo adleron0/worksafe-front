@@ -1,3 +1,4 @@
+import type { ContractPlan, MeasurementPlanDraft } from "./measurement";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +53,8 @@ export interface ProposalDraft {
   schedule: Schedule;
   /** proposta de locação: período, nº de períodos ou "até devolver", cobrança, caução e entrega */
   rental?: RentalTerms | null;
+  /** serviço faturado por medição de obra (frentes, mobilização, caução); nulo = parcelas */
+  measurement?: MeasurementPlanDraft | null;
   sections: DraftSection[]; installments: DraftInstallment[];
 }
 export interface RentalTerms { period: RentPeriod; periods: number; untilReturn: boolean; billing: "periodo" | "unico"; deposit: number | null; deliveryAddress: string | null }
@@ -78,6 +81,8 @@ export interface ProposalCalc {
   };
   installments: Array<{ value: number }>;
   installmentsTotal: number; installmentsDiff: number;
+  /** medição de obra: valor de cada frente e da mobilização com o total de agora */
+  measurementPlan?: ContractPlan | null;
   /** só no cálculo ao vivo (preview) da proposta de locação */
   availability?: RentalAvailability | null;
   margin?: { realTax: number; unused: number; unusedRate: number; used: number; usedRate: number; minTotal: number; minTotalOperational: number; maxDiscountRate: number };

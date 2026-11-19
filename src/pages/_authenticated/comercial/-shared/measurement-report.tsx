@@ -44,13 +44,13 @@ export function WorkReportPaper({ report }: { report: WorkReport }) {
   const deposit = report.lines.find((l) => l.kind === "caucao");
   return (
     <div style={{ fontFamily: "inherit", color: "#111", background: "#fff", padding: 4 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start", borderBottom: `3px solid ${report.company?.color || "#149E5E"}`, paddingBottom: 10 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 16, alignItems: "flex-start", borderBottom: `3px solid ${report.company?.color || "#149E5E"}`, paddingBottom: 10 }}>
         <div>
           {report.company?.logoUrl ? <img src={report.company.logoUrl} alt={report.company.name} style={{ maxHeight: 48, maxWidth: 180 }} /> : report.company?.name ? <p style={{ fontWeight: 700, fontSize: 16, margin: 0 }}>{report.company.name}</p> : null}
           <p style={{ fontSize: 20, fontWeight: 700, margin: "6px 0 0" }}>Boletim de medição {report.label}</p>
           <p style={{ fontSize: 12, margin: "2px 0 0", color: "#444" }}>Período de {br(report.periodStart)} a {br(report.periodEnd)} · {STATUS[report.status] ?? report.status}</p>
         </div>
-        <div style={{ textAlign: "right", fontSize: 12, color: "#333" }}>
+        <div style={{ fontSize: 12, color: "#333", marginLeft: "auto" }}>
           <p style={{ margin: 0 }}><b>{report.contract.customer.corporateName || report.contract.customer.name}</b></p>
           <p style={{ margin: 0 }}>Contrato {report.contract.number}{report.order ? ` · ${report.order.number}` : ""}</p>
           <p style={{ margin: 0 }}>{report.contract.title}</p>
@@ -60,7 +60,7 @@ export function WorkReportPaper({ report }: { report: WorkReport }) {
       </div>
 
       <h2 style={H2}>Medição do período</h2>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 420 }}>
         <thead><tr><th style={TH}>Item</th><th style={{ ...TH, textAlign: "right" }}>Anterior</th><th style={{ ...TH, textAlign: "right" }}>No período</th><th style={{ ...TH, textAlign: "right" }}>Acumulado</th><th style={{ ...TH, textAlign: "right" }}>Valor</th></tr></thead>
         <tbody>
           {lines.map((line, index) => (
@@ -76,7 +76,7 @@ export function WorkReportPaper({ report }: { report: WorkReport }) {
           {report.depositValue > 0 && <tr><td style={TD} colSpan={4}>{deposit?.description ?? "Caução contratual retida"}</td><td style={NUM}>{money(-report.depositValue)}</td></tr>}
           {report.depositValue > 0 && <tr><td style={{ ...TD, fontWeight: 700 }} colSpan={4}>A pagar neste boletim (sem a caução)</td><td style={{ ...NUM, fontWeight: 700 }}>{money(report.value)}</td></tr>}
         </tbody>
-      </table>
+      </table></div>
       <p style={{ fontSize: 12, margin: "8px 0 0", color: "#333" }}>
         Contrato: {money(report.contract.value)} · medido até este boletim: {money(report.measuredToDate)} · saldo a medir: {money(report.balance)}
       </p>
@@ -92,10 +92,10 @@ export function WorkReportPaper({ report }: { report: WorkReport }) {
               <tbody>{report.rdo.roles.map((r) => <tr key={r.role}><td style={TD}>{r.role}</td><td style={NUM}>{r.people}</td><td style={NUM}>{r.hours.toLocaleString("pt-BR")}</td><td style={NUM}>{r.overtime.toLocaleString("pt-BR")}</td></tr>)}</tbody>
             </table>
           )}
-          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 10 }}>
+          <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", marginTop: 10, minWidth: 420 }}>
             <thead><tr><th style={TH}>Dia</th><th style={TH}>Clima</th><th style={{ ...TH, textAlign: "right" }}>Equipe</th><th style={TH}>Atividades</th></tr></thead>
             <tbody>{report.rdo.days.map((d, i) => <tr key={i}><td style={{ ...TD, whiteSpace: "nowrap" }}>{br(d.date)}{d.shift !== "integral" ? ` (${SHIFT[d.shift] ?? d.shift})` : ""}</td><td style={TD}>{WEATHER[d.weather] ?? d.weather}</td><td style={NUM}>{d.people} · {d.hours.toLocaleString("pt-BR")} h</td><td style={TD}>{d.activities}</td></tr>)}</tbody>
-          </table>
+          </table></div>
           {report.rdo.occurrences.length > 0 && (
             <>
               <p style={{ fontSize: 12, fontWeight: 700, margin: "10px 0 4px" }}>Ocorrências</p>

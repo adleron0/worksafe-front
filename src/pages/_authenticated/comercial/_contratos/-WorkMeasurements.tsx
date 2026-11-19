@@ -123,12 +123,12 @@ export function WorkMeasurementsSection({ contract, canUpdate, canBill, canUnbil
       <div className="mt-2 divide-y">
         {works.measurements.map((m) => (
           <div key={m.id} className="py-3 grid gap-2 text-sm">
-            <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4">
-              <div className="lg:w-56">
+            <div className="flex flex-col md:flex-row md:items-start gap-1 md:gap-4">
+              <div className="md:w-48 shrink-0">
                 <p className="font-semibold tabular-nums flex items-center gap-2">{m.label} <WorkStatusBadge status={m.status} /></p>
                 <p className="text-xs text-muted-foreground">{dateBr(m.periodStart)} a {dateBr(m.periodEnd)}</p>
               </div>
-              <div className="lg:w-40"><p className="font-semibold tabular-nums">{money(m.invoiceValue)}</p>{m.depositValue > 0 && <p className="text-xs text-muted-foreground">a receber {money(m.value)}</p>}</div>
+              <div className="md:w-36 shrink-0"><p className="font-semibold tabular-nums">{money(m.invoiceValue)}</p>{m.depositValue > 0 && <p className="text-xs text-muted-foreground">a receber {money(m.value)}</p>}</div>
               <div className="flex-1 min-w-0">
                 {m.record ? (
                   <p><span className={cn("rounded px-1.5 py-0.5 text-xs font-medium", m.record.paid ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200" : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200")}>{RECORD_STATUS_LABEL[m.record.status] ?? m.record.status}</span>{" "}
@@ -138,7 +138,8 @@ export function WorkMeasurementsSection({ contract, canUpdate, canBill, canUnbil
                   : m.status === "aprovada" ? <p className="text-muted-foreground">Aprovado por {m.decision?.name}{m.decision?.manual ? " (registrado no sistema)" : " pelo link"} em {dateBr(m.decidedAt)}.</p>
                   : <p className="text-muted-foreground">Rascunho: confira e envie ao cliente.</p>}
               </div>
-              <div className="flex flex-wrap gap-1 shrink-0">
+            </div>
+            <div className="flex flex-wrap gap-1 md:pl-[13rem]">
                 <Button type="button" variant="ghost" size="sm" onClick={() => setViewing(m)}><Icon name="file-text" className="w-4 h-4 mr-1" /> Boletim</Button>
                 {canUpdate && active && ["rascunho", "contestada"].includes(m.status) && <Button type="button" variant="outline" size="sm" onClick={() => setEditing(m)}>Editar</Button>}
                 {canUpdate && active && ["rascunho", "contestada"].includes(m.status) && <Button type="button" size="sm" onClick={() => send(m)}><Icon name="send" className="w-4 h-4 mr-1" /> Enviar ao cliente</Button>}
@@ -156,7 +157,6 @@ export function WorkMeasurementsSection({ contract, canUpdate, canBill, canUnbil
                     <Button type="button" variant="ghost" size="sm">Desfazer</Button>
                   </ConfirmDialog>
                 )}
-              </div>
             </div>
           </div>
         ))}

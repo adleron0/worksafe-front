@@ -58,7 +58,7 @@ function PublicMeasurementPage() {
           <p className="text-sm text-muted-foreground">Boletim de medição {data.label} · {data.contract.number}</p>
           <Button type="button" variant="outline" size="sm" onClick={() => printWorkReport(data)}><Icon name="printer" className="w-4 h-4 mr-1" /> Imprimir / PDF</Button>
         </div>
-        <div className="rounded-lg border bg-white text-black p-4 sm:p-6 shadow-sm"><WorkReportPaper report={data} /></div>
+        <div className="rounded-lg border bg-white text-black p-3 sm:p-6 shadow-sm overflow-hidden"><WorkReportPaper report={data} /></div>
 
         {data.canDecide && (
           <section className="rounded-lg border bg-background p-4 grid gap-3" aria-label="Aprovar o boletim">

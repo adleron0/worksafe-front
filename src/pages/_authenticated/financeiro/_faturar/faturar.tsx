@@ -209,11 +209,11 @@ function BillingPage() {
       )}
 
       {billing && isMeasurement(billing) && billing.rental && (
-        <MeasurementBillDialog contract={{ id: billing.contractId, number: billing.contractNumber, customer: billing.customer, customerOrder: billing.customerOrder }}
+        <MeasurementBillDialog contract={{ id: billing.contractId, number: billing.contractNumber, customer: billing.customer, customerOrder: billing.customerOrder, retentionRates: billing.retentionRates }}
           rental={{ id: billing.rental.id, number: billing.rental.number ?? "" }} lines={billing.lines ?? []} onClose={() => setBilling(null)} onDone={refresh} />
       )}
       {billing && !isMeasurement(billing) && (
-        <BillDialog contract={{ id: billing.contractId, number: billing.contractNumber, customer: billing.customer, customerOrder: billing.customerOrder }} installment={{ ...billing, id: Number(billing.id) }}
+        <BillDialog contract={{ id: billing.contractId, number: billing.contractNumber, customer: billing.customer, customerOrder: billing.customerOrder, retentionRates: billing.retentionRates }} installment={{ ...billing, id: Number(billing.id) }}
           onClose={() => setBilling(null)} onDone={refresh} />
       )}
     </>

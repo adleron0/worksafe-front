@@ -84,6 +84,7 @@ import { Route as AuthenticatedRhDocumentosVencimentosRouteImport } from './page
 import { Route as AuthenticatedRhDocumentosTiposDeDocumentoRouteImport } from './pages/_authenticated/rh/_documentos/tipos-de-documento'
 import { Route as AuthenticatedRhAlocacaoMapaDeAlocacaoRouteImport } from './pages/_authenticated/rh/_alocacao/mapa-de-alocacao'
 import { Route as AuthenticatedInventariosAreasAreaIdRouteImport } from './pages/_authenticated/inventarios/areas/$areaId'
+import { Route as AuthenticatedFinanceiroRetencoesRetencoesRouteImport } from './pages/_authenticated/financeiro/_retencoes/retencoes'
 import { Route as AuthenticatedFinanceiroRelatoriosRelatoriosRouteImport } from './pages/_authenticated/financeiro/_relatorios/relatorios'
 import { Route as AuthenticatedFinanceiroRecorrentesRecorrentesRouteImport } from './pages/_authenticated/financeiro/_recorrentes/recorrentes'
 import { Route as AuthenticatedFinanceiroReceberReceberRouteImport } from './pages/_authenticated/financeiro/_receber/receber'
@@ -567,6 +568,12 @@ const AuthenticatedInventariosAreasAreaIdRoute =
     path: '/inventarios/areas/$areaId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanceiroRetencoesRetencoesRoute =
+  AuthenticatedFinanceiroRetencoesRetencoesRouteImport.update({
+    id: '/financeiro/_retencoes/retencoes',
+    path: '/financeiro/retencoes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedFinanceiroRelatoriosRelatoriosRoute =
   AuthenticatedFinanceiroRelatoriosRelatoriosRouteImport.update({
     id: '/financeiro/_relatorios/relatorios',
@@ -931,6 +938,7 @@ export interface FileRoutesByFullPath {
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/financeiro/recorrentes': typeof AuthenticatedFinanceiroRecorrentesRecorrentesRoute
   '/financeiro/relatorios': typeof AuthenticatedFinanceiroRelatoriosRelatoriosRoute
+  '/financeiro/retencoes': typeof AuthenticatedFinanceiroRetencoesRetencoesRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/rh/mapa-de-alocacao': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoRoute
   '/rh/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
@@ -1055,6 +1063,7 @@ export interface FileRoutesByTo {
   '/financeiro/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/financeiro/recorrentes': typeof AuthenticatedFinanceiroRecorrentesRecorrentesRoute
   '/financeiro/relatorios': typeof AuthenticatedFinanceiroRelatoriosRelatoriosRoute
+  '/financeiro/retencoes': typeof AuthenticatedFinanceiroRetencoesRetencoesRoute
   '/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/rh/mapa-de-alocacao': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoRoute
   '/rh/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
@@ -1183,6 +1192,7 @@ export interface FileRoutesById {
   '/_authenticated/financeiro/_receber/receber': typeof AuthenticatedFinanceiroReceberReceberRoute
   '/_authenticated/financeiro/_recorrentes/recorrentes': typeof AuthenticatedFinanceiroRecorrentesRecorrentesRoute
   '/_authenticated/financeiro/_relatorios/relatorios': typeof AuthenticatedFinanceiroRelatoriosRelatoriosRoute
+  '/_authenticated/financeiro/_retencoes/retencoes': typeof AuthenticatedFinanceiroRetencoesRetencoesRoute
   '/_authenticated/inventarios/areas/$areaId': typeof AuthenticatedInventariosAreasAreaIdRoute
   '/_authenticated/rh/_alocacao/mapa-de-alocacao': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoRoute
   '/_authenticated/rh/_documentos/tipos-de-documento': typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
@@ -1310,6 +1320,7 @@ export interface FileRouteTypes {
     | '/financeiro/receber'
     | '/financeiro/recorrentes'
     | '/financeiro/relatorios'
+    | '/financeiro/retencoes'
     | '/inventarios/areas/$areaId'
     | '/rh/mapa-de-alocacao'
     | '/rh/tipos-de-documento'
@@ -1434,6 +1445,7 @@ export interface FileRouteTypes {
     | '/financeiro/receber'
     | '/financeiro/recorrentes'
     | '/financeiro/relatorios'
+    | '/financeiro/retencoes'
     | '/inventarios/areas/$areaId'
     | '/rh/mapa-de-alocacao'
     | '/rh/tipos-de-documento'
@@ -1561,6 +1573,7 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro/_receber/receber'
     | '/_authenticated/financeiro/_recorrentes/recorrentes'
     | '/_authenticated/financeiro/_relatorios/relatorios'
+    | '/_authenticated/financeiro/_retencoes/retencoes'
     | '/_authenticated/inventarios/areas/$areaId'
     | '/_authenticated/rh/_alocacao/mapa-de-alocacao'
     | '/_authenticated/rh/_documentos/tipos-de-documento'
@@ -2159,6 +2172,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventariosAreasAreaIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/financeiro/_retencoes/retencoes': {
+      id: '/_authenticated/financeiro/_retencoes/retencoes'
+      path: '/financeiro/retencoes'
+      fullPath: '/financeiro/retencoes'
+      preLoaderRoute: typeof AuthenticatedFinanceiroRetencoesRetencoesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/financeiro/_relatorios/relatorios': {
       id: '/_authenticated/financeiro/_relatorios/relatorios'
       path: '/financeiro/relatorios'
@@ -2562,6 +2582,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFinanceiroReceberReceberRoute: typeof AuthenticatedFinanceiroReceberReceberRoute
   AuthenticatedFinanceiroRecorrentesRecorrentesRoute: typeof AuthenticatedFinanceiroRecorrentesRecorrentesRoute
   AuthenticatedFinanceiroRelatoriosRelatoriosRoute: typeof AuthenticatedFinanceiroRelatoriosRelatoriosRoute
+  AuthenticatedFinanceiroRetencoesRetencoesRoute: typeof AuthenticatedFinanceiroRetencoesRetencoesRoute
   AuthenticatedInventariosAreasAreaIdRoute: typeof AuthenticatedInventariosAreasAreaIdRoute
   AuthenticatedRhAlocacaoMapaDeAlocacaoRoute: typeof AuthenticatedRhAlocacaoMapaDeAlocacaoRoute
   AuthenticatedRhDocumentosTiposDeDocumentoRoute: typeof AuthenticatedRhDocumentosTiposDeDocumentoRoute
@@ -2705,6 +2726,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedFinanceiroRecorrentesRecorrentesRoute,
   AuthenticatedFinanceiroRelatoriosRelatoriosRoute:
     AuthenticatedFinanceiroRelatoriosRelatoriosRoute,
+  AuthenticatedFinanceiroRetencoesRetencoesRoute:
+    AuthenticatedFinanceiroRetencoesRetencoesRoute,
   AuthenticatedInventariosAreasAreaIdRoute:
     AuthenticatedInventariosAreasAreaIdRoute,
   AuthenticatedRhAlocacaoMapaDeAlocacaoRoute:

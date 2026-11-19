@@ -29,6 +29,7 @@ export interface Payable {
   status: PayableStatus;
   documentNumber?: string | null;
   paymentMethod?: string | null;
+  taxKind?: string | null;
   installmentNumber?: number | null;
   installmentTotal?: number | null;
   origin: string;

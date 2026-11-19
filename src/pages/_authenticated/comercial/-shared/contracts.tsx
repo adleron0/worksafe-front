@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { CustomerOption, DueRule, ProposalKind } from "./proposals";
+import type { RetentionRates } from "./retentions";
 
 /** Pedido de compra que o cliente manda para confirmar o aceite. */
 export interface CustomerOrder { number: string | null; date: string | null; fileUrl: string | null; fileName: string | null }
@@ -14,7 +15,7 @@ export interface ContractRow {
 export interface ContractInstallment {
   id: number; number: number; total: number; description: string | null; value: number;
   dueRule: DueRule; dueDate: string | null; dueDays: number | null; suggestedDue: string;
-  record: { id: number; status: string; dueDate: string | null; paidAt: string | null; invoiceNumber: string | null; invoiceIssuedAt: string | null; hasInvoiceFile: boolean; paid: boolean } | null;
+  record: { id: number; status: string; dueDate: string | null; paidAt: string | null; invoiceNumber: string | null; invoiceIssuedAt: string | null; hasInvoiceFile: boolean; paid: boolean; netValue?: number | null } | null;
 }
 
 export interface ContractClassSlot {
@@ -29,7 +30,9 @@ export interface Contract {
   signer: { name?: string; cpf?: string; role?: string; email?: string; ip?: string; userAgent?: string; at?: string; codeVerified?: boolean; manual?: boolean; note?: string } | null;
   billed: number; received: number; toBill: number;
   /** parcelas (parcelas fixas da proposta) | periodo (locação: cobrada por medição) */
-  billingMode?: "parcelas" | "periodo";
+  billingMode?: "parcelas" | "periodo" | "medicao";
+  /** alíquotas que o cliente costuma reter na nota, em % (sugestão ao faturar) */
+  retentionRates?: RetentionRates;
   /** locação: as ordens de locação e o que cada uma tem para faturar agora */
   rentals?: ContractRental[];
   measurements?: ContractMeasurement[];
@@ -59,6 +62,7 @@ export interface BillingRow extends Omit<ContractInstallment, "id"> {
   lines?: Array<{ kind: string; description: string; periodStart: string | null; periodEnd: string | null; value: number }>;
   stage: BillingStage; contractId: number; contractNumber: string; contractStatus: ContractStatus; kind: ProposalKind; title: string;
   proposal: { id: number; number: string } | null; customer: { id: number; name: string }; waitingFor: string | null; customerOrder: CustomerOrder;
+  retentionRates?: RetentionRates;
 }
 export interface BillingQueue { rows: BillingRow[]; summary: Record<BillingStage, { count: number; total: number }>; recentDays: number }
 export const BILLING_KEY = "commercialBilling";

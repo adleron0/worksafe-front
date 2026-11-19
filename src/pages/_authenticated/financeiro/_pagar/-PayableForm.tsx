@@ -11,6 +11,12 @@ import Select from "@/components/general-components/Select";
 import CalendarPicker from "@/components/general-components/Calendar";
 import { ApiError } from "@/general-interfaces/api.interface";
 import AccountSelect from "../-shared/AccountSelect";
+
+/** Guias de imposto: cruzadas com os impostos retidos pelos clientes no mesmo mês. */
+const TAX_GUIDE_OPTIONS = [
+  { id: "das", name: "DAS (Simples Nacional)" }, { id: "iss", name: "ISS" }, { id: "inss", name: "INSS (GPS/DCTFWeb)" },
+  { id: "irpj", name: "IRPJ" }, { id: "csll", name: "CSLL" }, { id: "pis", name: "PIS" }, { id: "cofins", name: "COFINS" },
+];
 import { CHART_KEY, formatMoney, useChartAccounts, useCostCenters } from "../-shared/financial";
 import { PAYABLES_KEY, PAYABLES_SUMMARY_KEY, Payable, useSuppliers } from "../-shared/payables";
 import { paymentMethodOptions, toDateInput } from "../_receber/-components/options";
@@ -57,6 +63,7 @@ export default function PayableForm({ formData, close, duplicate = false }: { fo
     chartAccountId: formData?.chartAccountId ? String(formData.chartAccountId) : "",
     costCenterId: formData?.costCenterId ? String(formData.costCenterId) : "",
     observations: formData?.observations ?? "",
+    taxKind: formData?.taxKind ?? "",
     barcode: duplicate ? "" : formData?.barcode ?? "",
     pixCode: duplicate ? "" : formData?.pixCode ?? "",
     mode: "unica",
@@ -105,7 +112,7 @@ export default function PayableForm({ formData, close, duplicate = false }: { fo
       const base: Record<string, unknown> = {
         supplierId: state.supplierId, description: state.description.trim(), value: state.value, dueDate: state.dueDate,
         paymentMethod: state.paymentMethod, documentNumber: state.documentNumber.trim(), serviceOrderId: state.serviceOrderId,
-        chartAccountId: state.chartAccountId, costCenterId: state.costCenterId, observations: state.observations.trim(),
+        chartAccountId: state.chartAccountId, costCenterId: state.costCenterId, observations: state.observations.trim(), taxKind: state.taxKind,
       };
       if (recurring) {
         return (await api.post("financial/recurrences", {
@@ -229,6 +236,13 @@ export default function PayableForm({ formData, close, duplicate = false }: { fo
           <Label htmlFor="paymentMethod">Forma de pagamento</Label>
           <Select name="paymentMethod" options={paymentMethodOptions} state={state.paymentMethod} onChange={set} placeholder="A definir" clearable modal />
         </div>
+        {!recurring && (
+          <div className="sm:col-span-2">
+            <Label htmlFor="taxKind">É guia de imposto?</Label>
+            <Select name="taxKind" options={TAX_GUIDE_OPTIONS} state={state.taxKind} onChange={set} placeholder="Não é guia de imposto" clearable modal />
+            <p className="text-xs text-muted-foreground mt-1">Marcando a guia (DAS, ISS...), o sistema confere se algum cliente já reteve esse imposto no mês da competência e avisa antes de pagar duas vezes.</p>
+          </div>
+        )}
       </div>
 
       {!several && !recurring && (

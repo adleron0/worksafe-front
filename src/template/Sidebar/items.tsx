@@ -198,6 +198,7 @@ export const groups: SidebarGroup[] = [
           { title: "Recorrentes", icon: "repeat", path: "/financeiro/recorrentes" },
           { title: "Conciliação", icon: "file-check-2", path: "/financeiro/conciliacao" },
           { title: "Relatórios", icon: "chart-pie", path: "/financeiro/relatorios" },
+          { title: "Impostos Retidos", icon: "landmark", path: "/financeiro/retencoes" },
           { divider: "cadastros" },
           { title: "Fornecedores", icon: "truck", path: "/financeiro/fornecedores" },
           { title: "Plano de Contas", icon: "list-tree", path: "/financeiro/plano-contas" },

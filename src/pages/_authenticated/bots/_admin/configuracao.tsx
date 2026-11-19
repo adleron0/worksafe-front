@@ -95,7 +95,7 @@ const NONE = "__nenhum__";
 
 function modelOption(model: CatalogModel) {
   const tags = [model.recommended ? "recomendado" : "", model.available ? "" : "sem chave"].filter(Boolean).join(", ");
-  return { id: `${model.provider}:${model.id}`, name: `${model.label} · ~${money(model.perThousand)} por mil mensagens${tags ? ` (${tags})` : ""}` };
+  return { id: `${model.provider}:${model.id}`, name: `${model.label} · ~${money(model.perThousand)} por mil perguntas${tags ? ` (${tags})` : ""}` };
 }
 
 /**
@@ -137,7 +137,7 @@ function ModelNote({ model }: { model: CatalogModel }) {
   return (
     <p className="text-xs text-muted-foreground">
       {model.note} Preço por milhão de tokens: {money(model.price.input)} de entrada e {money(model.price.output)} de saída.
-      {model.upcoming && <> A partir de {dayBr(model.upcoming.from)}, ~{money(model.upcoming.perThousand)} por mil mensagens.</>}
+      {model.upcoming && <> A partir de {dayBr(model.upcoming.from)}, ~{money(model.upcoming.perThousand)} por mil perguntas.</>}
       {!model.available && <span className="text-amber-700 dark:text-amber-400"> O {model.providerLabel} está sem chave: cadastre em "Chaves de IA".</span>}
     </p>
   );
@@ -180,7 +180,7 @@ function ModelForAllCard({ config }: { config: BotsConfig }) {
           <Button type="button" disabled={!choice.provider || choice.model.length < 3 || apply.isPending} className="mb-[2px]">{apply.isPending ? "Trocando..." : "Usar em todos"}</Button>
         </ConfirmDialog>
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">Hoje: {today || "nenhum bot"}. Para um bot só, troque no cadastro dele abaixo. O custo por mil mensagens é estimativa com o tamanho médio das conversas dos bots.</p>
+      <p className="mt-2 text-xs text-muted-foreground">Hoje: {today || "nenhum bot"}. Para um bot só, troque no cadastro dele abaixo. O custo por mil perguntas é estimativa com o tamanho médio das conversas dos bots.</p>
     </div>
   );
 }

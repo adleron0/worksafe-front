@@ -92,7 +92,7 @@ function ReservarDialog({ contractId, slot, customerName, onClose }: { contractI
     onError: (e) => setError(errorMessage(e)),
   });
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()} showBttn={false} title="Usar vagas de turma aberta"
+    <Dialog open onOpenChange={(open) => !open && onClose()} showBttn={false} className="sm:max-w-xl" classNameContent="h-auto max-h-[70vh] pb-2" title="Usar vagas de turma aberta"
       description={`${slot.description}: ${slot.missing} de ${slot.sold} vaga(s) vendida(s) a ${customerName} ainda sem turma. Os alunos entram sem cobrança (quem cobra é a venda) e o certificado sai com a empresa.`}>
       <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); if (!form.classId) return setError("Escolha a turma"); setError(""); mutate(); }}>
         <div>

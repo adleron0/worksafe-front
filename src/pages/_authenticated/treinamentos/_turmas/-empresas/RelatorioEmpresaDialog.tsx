@@ -36,7 +36,7 @@ export default function RelatorioEmpresaDialog({ reservationId, onClose }: { res
   };
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()} showBttn={false} title="Relatório da empresa" description={r ? `${r.customer.name} · ${r.class.name}` : "Carregando..."} className="max-w-3xl">
+    <Dialog open onOpenChange={(open) => !open && onClose()} showBttn={false} title="Relatório da empresa" description={r ? `${r.customer.name} · ${r.class.name}` : "Carregando..."} className="sm:max-w-3xl" classNameContent="h-auto max-h-[75vh] pb-2">
       {isLoading || !data ? <p className="text-sm text-muted-foreground">Carregando...</p> : (
         <div className="space-y-3">
           <div className="overflow-auto rounded-md border">

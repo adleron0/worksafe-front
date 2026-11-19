@@ -223,7 +223,7 @@ function NovaReservaDialog({ classId, seats, onClose }: { classId: number; seats
     onError: (e) => setError(errorMessage(e)),
   });
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()} showBttn={false} title="Reservar vagas para empresa" description="Sem venda, a reserva fica como cortesia. Vagas vendidas por proposta: reserve pela venda (Comercial → Vendas) para ficarem ligadas a ela.">
+    <Dialog open onOpenChange={(open) => !open && onClose()} showBttn={false} className="sm:max-w-xl" classNameContent="h-auto max-h-[70vh] pb-2" title="Reservar vagas para empresa" description="Sem venda, a reserva fica como cortesia. Vagas vendidas por proposta: reserve pela venda (Comercial → Vendas) para ficarem ligadas a ela.">
       <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); if (!form.customerId) return setError("Escolha a empresa"); if (wanted < 1) return setError("Informe as vagas"); setError(""); mutate(); }}>
         <div>
           <Label>Empresa <span>*</span></Label>
@@ -268,7 +268,7 @@ export function InscreverAlunosDialog({ reservation: r, onClose }: { reservation
     onError: (e) => toast({ title: "Não deu para inscrever", description: errorMessage(e), variant: "destructive" }),
   });
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()} showBttn={false} title={`Alunos de ${r.customer.name}`} description={`Uma pessoa por linha: nome e CPF (pode colar da planilha). ${open} vaga(s) sem nome. Entram confirmados, sem cobrança.`}>
+    <Dialog open onOpenChange={(open) => !open && onClose()} showBttn={false} className="sm:max-w-2xl" classNameContent="h-auto max-h-[70vh] pb-2" title={`Alunos de ${r.customer.name}`} description={`Uma pessoa por linha: nome e CPF (pode colar da planilha). ${open} vaga(s) sem nome. Entram confirmados, sem cobrança.`}>
       <div className="grid gap-3">
         <Textarea rows={8} value={text} onChange={(e) => setText(e.target.value)} placeholder={"Maria da Silva; 529.982.247-25\nJoão Souza; 111.444.777-35"} />
         {parsed.length > 0 && <p className="text-xs text-muted-foreground">{parsed.length} pessoa{parsed.length === 1 ? "" : "s"} na lista{parsed.length > open ? ` — a reserva tem ${open} vaga(s) sem nome` : ""}.</p>}
@@ -302,7 +302,7 @@ function AlterarVagasDialog({ reservation: r, onClose }: { reservation: Reservat
     onError: (e) => setError(errorMessage(e)),
   });
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()} showBttn={false} title="Alterar vagas" description={`${r.customer.name} · ${r.used} aluno(s) já inscrito(s): não dá para ficar com menos vagas que isso.`}>
+    <Dialog open onOpenChange={(open) => !open && onClose()} showBttn={false} className="sm:max-w-xl" classNameContent="h-auto max-h-[70vh] pb-2" title="Alterar vagas" description={`${r.customer.name} · ${r.used} aluno(s) já inscrito(s): não dá para ficar com menos vagas que isso.`}>
       <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); setError(""); mutate(); }}>
         <div className="grid grid-cols-2 gap-3">
           <div><Label htmlFor="eseats">Vagas</Label><Input id="eseats" inputMode="numeric" value={form.seats} onChange={(e) => setForm({ ...form, seats: e.target.value.replace(/\D/g, "") })} /></div>
@@ -339,7 +339,7 @@ function TransferirDialog({ reservation: r, onClose }: { reservation: Reservatio
     onError: (e) => setError(errorMessage(e)),
   });
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()} showBttn={false} title="Transferir para outra turma" description={`Leva as ${r.seats} vaga(s) e os ${r.used} aluno(s) de ${r.customer.name} para outra turma aberta do mesmo curso. Quem já tem presença, prova ou certificado não se move.`}>
+    <Dialog open onOpenChange={(open) => !open && onClose()} showBttn={false} className="sm:max-w-xl" classNameContent="h-auto max-h-[70vh] pb-2" title="Transferir para outra turma" description={`Leva as ${r.seats} vaga(s) e os ${r.used} aluno(s) de ${r.customer.name} para outra turma aberta do mesmo curso. Quem já tem presença, prova ou certificado não se move.`}>
       <div className="grid gap-4">
         <Select name="target" modal searchable options={options} state={target} onChange={(_, v) => setTarget(String(v ?? ""))} placeholder={options.length ? "Escolha a turma" : "Nenhuma outra turma aberta do curso"} />
         {short && (can("update_classes")
@@ -362,7 +362,7 @@ function TrocarAlunoDialog({ reservation: r, student, onClose }: { reservation: 
     onError: (e) => setError(errorMessage(e)),
   });
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()} showBttn={false} title="Trocar aluno" description={`${student.name} sai e a pessoa nova ocupa a mesma vaga de ${r.customer.name}.`}>
+    <Dialog open onOpenChange={(open) => !open && onClose()} showBttn={false} className="sm:max-w-xl" classNameContent="h-auto max-h-[70vh] pb-2" title="Trocar aluno" description={`${student.name} sai e a pessoa nova ocupa a mesma vaga de ${r.customer.name}.`}>
       <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); setError(""); mutate(); }}>
         <div><Label htmlFor="sname">Nome</Label><Input id="sname" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
         <div><Label htmlFor="scpf">CPF</Label><Input id="scpf" inputMode="numeric" value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} /></div>

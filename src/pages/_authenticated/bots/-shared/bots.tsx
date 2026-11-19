@@ -18,7 +18,11 @@ export interface BotFull extends Bot {
 }
 export interface ProviderStatus { id: string; label: string; available: boolean }
 export interface CatalogTool { name: string; title: string; description: string; risk: BotCapability["risk"]; permissions: string[] }
-export interface BotsConfig { bots: BotFull[]; providers: ProviderStatus[]; tools: CatalogTool[]; enabled: boolean }
+export interface CatalogModel {
+  id: string; provider: string; providerLabel: string; label: string; note: string; recommended: boolean; available: boolean;
+  price: { input: number; output: number; cached: number }; perThousand: number; upcoming: { from: string; perThousand: number } | null;
+}
+export interface BotsConfig { bots: BotFull[]; providers: ProviderStatus[]; models: CatalogModel[]; tools: CatalogTool[]; enabled: boolean }
 
 export interface TeamMember extends Bot {
   status: "trabalhando" | "aguardando" | "disponivel" | "sem_chave";

@@ -16,7 +16,7 @@ import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import { AVATAR_LOOKS, BotAvatar } from "../-shared/avatar";
-import { BOTS_KEY, BotFull, BotsConfig, CatalogTool, RISK_CLASS, RISK_LABEL, STATUS_KEY, TEAM_KEY, aiApi, dateTimeBr } from "../-shared/bots";
+import { BOTS_KEY, BotFull, BotsConfig, CatalogModel, CatalogTool, RISK_CLASS, RISK_LABEL, STATUS_KEY, TEAM_KEY, aiApi, dateTimeBr } from "../-shared/bots";
 import api from "@/services/api";
 
 export const Route = createFileRoute("/_authenticated/bots/_admin/configuracao")({
@@ -44,6 +44,7 @@ function ConfigPage() {
       {data && (
         <>
           <ProvidersCard config={data} />
+          <ModelForAllCard config={data} />
           <div className="grid gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
             <div className="flex flex-col gap-1">
               {data.bots.map((item) => (
@@ -83,6 +84,103 @@ function ProvidersCard({ config }: { config: BotsConfig }) {
       </div>
       <p className="mt-2 text-xs text-muted-foreground">A chave cadastrada aqui vale antes da variável do servidor (GEMINI_API_KEY, ANTHROPIC_API_KEY...). Ela fica guardada criptografada e a tela só mostra o final. Um bot cujo fornecedor está sem chave avisa quem tenta conversar.</p>
       {keysOpen && <ProviderKeysDialog onClose={() => setKeysOpen(false)} />}
+    </div>
+  );
+}
+
+const money = (value: number) => `US$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const dayBr = (iso: string) => iso.split("-").reverse().join("/");
+const OTHER = "__outro__";
+const NONE = "__nenhum__";
+
+function modelOption(model: CatalogModel) {
+  const tags = [model.recommended ? "recomendado" : "", model.available ? "" : "sem chave"].filter(Boolean).join(", ");
+  return { id: `${model.provider}:${model.id}`, name: `${model.label} · ~${money(model.perThousand)} por mil mensagens${tags ? ` (${tags})` : ""}` };
+}
+
+/**
+ * Escolha do modelo pela lista (com preço e para que serve). "Outro modelo"
+ * abre fornecedor e nome para digitar, para um modelo que não está na lista.
+ */
+function ModelPicker({ name, config, provider, model, optional, onChange }: { name: string; config: BotsConfig; provider: string; model: string; optional?: boolean; onChange: (provider: string, model: string) => void }) {
+  const known = config.models.find((item) => item.provider === provider && item.id === model);
+  const [custom, setCustom] = useState(!known && !!model);
+  const value = !model && optional && !custom ? NONE : custom ? OTHER : `${provider}:${model}`;
+  const options = [
+    ...(optional ? [{ id: NONE, name: "Sem reserva" }] : []),
+    ...config.models.map(modelOption),
+    { id: OTHER, name: "Outro modelo (digitar o nome)" },
+  ];
+  const providers = config.providers.map((item) => ({ id: item.id, name: `${item.label}${item.available ? "" : " (sem chave)"}` }));
+  const pick = (next: string) => {
+    if (next === OTHER) { setCustom(true); return; }
+    setCustom(false);
+    if (next === NONE) { onChange("", ""); return; }
+    const [nextProvider, ...rest] = next.split(":");
+    onChange(nextProvider, rest.join(":"));
+  };
+  return (
+    <div className="mt-1 grid gap-2">
+      <Select name={name} modal options={options} state={value} onChange={(_, next) => pick(String(next))} />
+      {known && !custom && <ModelNote model={known} />}
+      {custom && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Select name={`${name}Provider`} modal options={providers} state={provider} onChange={(_, next) => onChange(String(next), model)} placeholder="Fornecedor" />
+          <Input name={`${name}Name`} value={model} maxLength={80} onValueChange={(_, next) => onChange(provider, String(next))} placeholder="Nome do modelo, ex.: gemini-3.1-pro-preview" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ModelNote({ model }: { model: CatalogModel }) {
+  return (
+    <p className="text-xs text-muted-foreground">
+      {model.note} Preço por milhão de tokens: {money(model.price.input)} de entrada e {money(model.price.output)} de saída.
+      {model.upcoming && <> A partir de {dayBr(model.upcoming.from)}, ~{money(model.upcoming.perThousand)} por mil mensagens.</>}
+      {!model.available && <span className="text-amber-700 dark:text-amber-400"> O {model.providerLabel} está sem chave: cadastre em "Chaves de IA".</span>}
+    </p>
+  );
+}
+
+/** Um modelo para todos os bots de uma vez (cada bot ganha uma versão nova, dá para voltar). */
+function ModelForAllCard({ config }: { config: BotsConfig }) {
+  const queryClient = useQueryClient();
+  const recommended = config.models.find((item) => item.recommended) ?? config.models[0];
+  const [choice, setChoice] = useState({ provider: recommended?.provider ?? "", model: recommended?.id ?? "" });
+  const counts = new Map<string, number>();
+  for (const bot of config.bots) counts.set(`${bot.provider}:${bot.model}`, (counts.get(`${bot.provider}:${bot.model}`) ?? 0) + 1);
+  const labelOf = (key: string) => {
+    const [provider, ...rest] = key.split(":");
+    return config.models.find((item) => item.provider === provider && item.id === rest.join(":"))?.label ?? rest.join(":");
+  };
+  const today = [...counts.entries()].map(([key, count]) => `${count} no ${labelOf(key)}`).join(", ");
+  const target = config.models.find((item) => item.provider === choice.provider && item.id === choice.model);
+  const apply = useMutation({
+    mutationFn: () => aiApi.put<{ changed: number; total: number }>("bots/model", choice),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: [CONFIG_KEY] });
+      queryClient.invalidateQueries({ queryKey: [BOTS_KEY] });
+      toast({ title: result.changed ? `${result.changed} bot${result.changed > 1 ? "s" : ""} trocado${result.changed > 1 ? "s" : ""}` : "Todos já usavam esse modelo", variant: "success" });
+    },
+    onError: (error) => toast({ title: "Não foi possível trocar", description: errorMessage(error), variant: "destructive" }),
+  });
+  return (
+    <div className="rounded-lg border p-4 text-sm">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="min-w-0 flex-1">
+          <Label>Modelo de todos os bots</Label>
+          <ModelPicker name="allModel" config={config} provider={choice.provider} model={choice.model} onChange={(provider, model) => setChoice({ provider, model })} />
+        </div>
+        <ConfirmDialog
+          title={`Usar ${target?.label ?? choice.model} em todos os bots?`}
+          description="Cada bot passa a responder com esse modelo na próxima mensagem e ganha uma versão nova, então dá para voltar pelo histórico. A reserva de cada bot não muda."
+          onConfirm={() => apply.mutate()}
+        >
+          <Button type="button" disabled={!choice.provider || choice.model.length < 3 || apply.isPending} className="mb-[2px]">{apply.isPending ? "Trocando..." : "Usar em todos"}</Button>
+        </ConfirmDialog>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">Hoje: {today || "nenhum bot"}. Para um bot só, troque no cadastro dele abaixo. O custo por mil mensagens é estimativa com o tamanho médio das conversas dos bots.</p>
     </div>
   );
 }
@@ -186,7 +284,6 @@ function BotEditor({ bot, config }: { bot: BotFull; config: BotsConfig }) {
     onSuccess: () => done("Bot voltou ao padrão do sistema"),
     onError: (error) => toast({ title: "Não foi possível voltar ao padrão", description: errorMessage(error), variant: "destructive" }),
   });
-  const providers = config.providers.map((provider) => ({ id: provider.id, name: `${provider.label}${provider.available ? "" : " (sem chave)"}` }));
   const byRisk = (risk: CatalogTool["risk"]) => config.tools.filter((tool) => tool.risk === risk);
 
   return (
@@ -212,10 +309,8 @@ function BotEditor({ bot, config }: { bot: BotFull; config: BotsConfig }) {
         </div>
         <div><Label htmlFor="botName">Área</Label><Input id="botName" name="botName" className="mt-1" value={draft.name} maxLength={80} onValueChange={(_, value) => set("name", String(value))} /></div>
         <div><Label htmlFor="botDescription">Descrição</Label><Input id="botDescription" name="botDescription" className="mt-1" value={draft.description} maxLength={300} onValueChange={(_, value) => set("description", String(value))} /></div>
-        <div><Label>Fornecedor de IA</Label><Select name="botProvider" modal options={providers} state={draft.provider} onChange={(_, value) => set("provider", String(value))} /></div>
-        <div><Label htmlFor="botModel">Modelo</Label><Input id="botModel" name="botModel" className="mt-1" value={draft.model} maxLength={80} onValueChange={(_, value) => set("model", String(value))} placeholder="Ex.: gemini-3.1-pro-preview" /></div>
-        <div><Label>Reserva (se o principal falhar)</Label><Select name="botFallbackProvider" modal clearable options={providers} state={draft.fallbackProvider} onChange={(_, value) => set("fallbackProvider", String(value ?? ""))} placeholder="Sem reserva" /></div>
-        <div><Label htmlFor="botFallbackModel">Modelo da reserva</Label><Input id="botFallbackModel" name="botFallbackModel" className="mt-1" value={draft.fallbackModel} maxLength={80} onValueChange={(_, value) => set("fallbackModel", String(value))} placeholder="Ex.: claude-sonnet-5-5" /></div>
+        <div className="md:col-span-2"><Label>Modelo de IA</Label><ModelPicker name="botModel" config={config} provider={draft.provider} model={draft.model} onChange={(provider, model) => setDraft((current) => ({ ...current, provider, model }))} /></div>
+        <div className="md:col-span-2"><Label>Reserva (se o principal falhar)</Label><ModelPicker name="botFallback" config={config} optional provider={draft.fallbackProvider} model={draft.fallbackModel} onChange={(provider, model) => setDraft((current) => ({ ...current, fallbackProvider: provider, fallbackModel: model }))} /></div>
       </div>
       <div>
         <div className="flex items-center justify-between">

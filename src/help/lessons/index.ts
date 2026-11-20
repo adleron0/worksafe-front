@@ -39,10 +39,10 @@ export const LESSONS: Lesson[] = [
     minutes: 3,
     requires: ["view_comercial"],
     routes: PROPOSTAS,
-    video: { src: `${BASE}/aceite.mp4`, captions: `${BASE}/aceite.vtt` },
+    video: { src: `${BASE}/aceite-v2.mp4`, captions: `${BASE}/aceite-v2.vtt` },
     chapters: [
       { title: "O link do cliente", start: 0 },
-      { title: "O que o cliente vê", start: 32.7 },
+      { title: "O que o cliente vê", start: 32.8 },
       { title: "Depois do aceite", start: 88 },
       { title: "Aceite por fora do sistema", start: 116.6 },
       { title: "Recusa", start: 150.9 },
@@ -55,7 +55,7 @@ export const LESSONS: Lesson[] = [
     minutes: 2,
     requires: ["view_comercial"],
     routes: PROPOSTAS,
-    video: { src: `${BASE}/revisao.mp4`, captions: `${BASE}/revisao.vtt` },
+    video: { src: `${BASE}/revisao-v2.mp4`, captions: `${BASE}/revisao-v2.vtt` },
     chapters: [
       { title: "Criar a revisão", start: 0 },
       { title: "Mudar o que precisa", start: 41.8 },

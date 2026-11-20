@@ -67,14 +67,15 @@ export const LESSONS: Lesson[] = [
     id: "comercial.kanban",
     title: "Kanban e retornos",
     screen: "Propostas",
-    minutes: 2,
+    minutes: 3,
     requires: ["view_comercial"],
     routes: PROPOSTAS,
-    video: { src: `${BASE}/kanban.mp4`, captions: `${BASE}/kanban.vtt` },
+    video: { src: `${BASE}/kanban-retornos.mp4`, captions: `${BASE}/kanban-retornos.vtt` },
     chapters: [
       { title: "O kanban", start: 0 },
       { title: "Cada cartão", start: 29.8 },
-      { title: "Retornos da proposta", start: 71 },
+      { title: "Retornos sem sair da lista", start: 72.3 },
+      { title: "Na proposta", start: 131.6 },
     ],
   },
   {

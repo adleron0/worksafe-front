@@ -3,15 +3,22 @@ import { Lesson } from "../types";
 /** Onde ficam os vídeos (bucket público). Em teste local dá para apontar para outra pasta. */
 const BASE = (import.meta.env.VITE_TUTORIAIS_URL as string | undefined) ?? "https://worksafe-brasil.s3.us-east-1.amazonaws.com/tutoriais";
 
-/** Todos os tutoriais. Um por tela; os capítulos saem da gravação (arquivo .chapters.json). */
+/** As telas de Propostas (lista, nova e a proposta aberta): todos os tutoriais de Propostas aparecem no menu delas. */
+const PROPOSTAS = ["/comercial/propostas", "/comercial/propostas/nova", "/comercial/propostas/:proposalId"];
+
+/**
+ * Todos os tutoriais; os capítulos saem da gravação (arquivo .chapters.json).
+ * Tela com vários caminhos (ex.: Propostas) tem um tutorial por fluxo: o "?"
+ * vira um menu, na ordem desta lista. O primeiro da tela dá o nome no menu.
+ */
 export const LESSONS: Lesson[] = [
   {
     id: "comercial.propostas",
-    title: "Propostas: do rascunho ao envio",
+    title: "Proposta de serviço: do rascunho ao envio",
     screen: "Propostas",
     minutes: 14,
     requires: ["view_comercial"],
-    routes: ["/comercial/propostas", "/comercial/propostas/nova", "/comercial/propostas/:proposalId"],
+    routes: PROPOSTAS,
     video: { src: `${BASE}/propostas.mp4`, captions: `${BASE}/propostas.vtt` },
     chapters: [
       { title: "A lista de propostas", start: 0 },
@@ -23,6 +30,41 @@ export const LESSONS: Lesson[] = [
       { title: "O documento", start: 623.4 },
       { title: "Revisão e envio", start: 693 },
       { title: "Depois do envio", start: 727.7 },
+    ],
+  },
+  {
+    id: "comercial.aceite",
+    title: "Aceite, recusa e o link do cliente",
+    screen: "Propostas",
+    minutes: 3,
+    requires: ["view_comercial"],
+    routes: PROPOSTAS,
+    video: { src: `${BASE}/aceite.mp4`, captions: `${BASE}/aceite.vtt` },
+    chapters: [
+      { title: "O link do cliente", start: 0 },
+      { title: "O que o cliente vê", start: 32.7 },
+      { title: "Depois do aceite", start: 88 },
+      { title: "Aceite por fora do sistema", start: 116.6 },
+      { title: "Recusa", start: 150.9 },
+    ],
+  },
+  {
+    id: "comercial.locacao",
+    title: "Proposta de locação até a Ordem de Locação",
+    screen: "Propostas",
+    minutes: 8,
+    requires: ["view_comercial"],
+    routes: PROPOSTAS,
+    video: { src: `${BASE}/locacoes-ol.mp4`, captions: `${BASE}/locacoes-ol.vtt` },
+    chapters: [
+      { title: "Ordens de locação", start: 0 },
+      { title: "A proposta de locação", start: 27 },
+      { title: "O aceite", start: 174.7 },
+      { title: "A OL na esteira", start: 205.1 },
+      { title: "A entrega", start: 250.9 },
+      { title: "A medição no A Faturar", start: 303.6 },
+      { title: "A devolução", start: 363.9 },
+      { title: "Disponibilidade", start: 430 },
     ],
   },
   {

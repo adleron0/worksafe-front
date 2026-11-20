@@ -16,6 +16,10 @@ interface HelpContextValue {
   states: Record<string, LessonState>;
   open: boolean;
   setOpen: (open: boolean) => void;
+  /** tutorial escolhido no menu do "?" (tela com vários); null = mostra a lista */
+  pickedId: string | null;
+  /** abre a janela já no tutorial escolhido */
+  openLesson: (id: string | null) => void;
   markDone: (id: string) => void;
   track: (event: HelpEvent) => void;
 }
@@ -39,6 +43,7 @@ export function HelpProvider({ children }: { children: ReactNode }) {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [pickedId, setPickedId] = useState<string | null>(null);
   const queue = useRef<HelpEvent[]>([]);
 
   const { data: states = {} } = useQuery({ queryKey: ["help-state"], queryFn: helpApi.state, staleTime: 5 * 60_000, retry: 1 });
@@ -71,8 +76,9 @@ export function HelpProvider({ children }: { children: ReactNode }) {
       .catch(() => undefined);
   }, [queryClient]);
 
-  const setOpenAndFlush = useCallback((value: boolean) => { setOpen(value); if (!value) flush(); }, [flush]);
+  const setOpenAndFlush = useCallback((value: boolean) => { setOpen(value); if (!value) { setPickedId(null); flush(); } }, [flush]);
+  const openLesson = useCallback((id: string | null) => { setPickedId(id); setOpen(true); }, []);
 
-  const value: HelpContextValue = { path, here, states, open, setOpen: setOpenAndFlush, markDone, track };
+  const value: HelpContextValue = { path, here, states, open, setOpen: setOpenAndFlush, pickedId, openLesson, markDone, track };
   return <HelpContext.Provider value={value}>{children}</HelpContext.Provider>;
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { CircleHelp } from "lucide-react";
 import Icon from "@/components/general-components/Icon";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -12,47 +13,79 @@ const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.fl
 
 /**
  * O único ponto de entrada: um "?" discreto no cabeçalho, que só aparece nas
- * telas que têm tutorial e diz de qual tela é.
+ * telas que têm tutorial e diz de qual tela é. Tela com um tutorial: abre
+ * direto. Tela com vários (um por fluxo): abre um menu pequeno para escolher.
  */
 export function HelpButton() {
-  const { here, setOpen, track, path } = useHelp();
+  const { here, openLesson, track, path, states } = useHelp();
   if (!here.length) return null;
-  const label = `Tutorial desta tela: ${here[0].screen}`;
+  const many = here.length > 1;
+  const label = many ? `Tutoriais desta tela: ${here[0].screen}` : `Tutorial desta tela: ${here[0].screen}`;
+  const button = (
+    <Button variant="ghost" size="icon" aria-label={label}
+      onClick={many ? undefined : () => { openLesson(here[0].id); track({ event: "help_open", route: path }); }}>
+      <CircleHelp className="w-5 h-5" />
+    </Button>
+  );
+  if (!many) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+    );
+  }
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={label}
-          onClick={() => { setOpen(true); track({ event: "help_open", route: path }); }}>
-          <CircleHelp className="w-5 h-5" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
+    <DropdownMenu onOpenChange={(value) => { if (value) track({ event: "help_open", route: path }); }}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>{button}</DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+      <DropdownMenuContent align="end" className="w-80 max-w-[calc(100vw-1rem)] max-h-[min(32rem,calc(100dvh-5rem))] overflow-y-auto">
+        <DropdownMenuLabel className="text-xs font-medium uppercase tracking-wide text-primary">Tutoriais · {here[0].screen}</DropdownMenuLabel>
+        {here.map((item) => (
+          <DropdownMenuItem key={item.id} onSelect={() => openLesson(item.id)} className="gap-2 py-2 cursor-pointer">
+            <Icon name="play" className="w-3.5 h-3.5 shrink-0 text-primary" />
+            <span className="flex-1 min-w-0">{item.title}</span>
+            {states[item.id]?.completedAt
+              ? <Icon name="check" className="w-3.5 h-3.5 shrink-0 text-green-600 dark:text-green-400" aria-label="assistido" />
+              : <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{item.minutes} min</span>}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
 /** Janela do tutorial da tela aberta: o vídeo, com legenda, e os capítulos para pular. */
 export function HelpCenter() {
-  const { here, open, setOpen } = useHelp();
-  const [pickedId, setPickedId] = useState<string | null>(null);
-  // várias aulas na mesma tela: escolhe; uma só: vai direto para o vídeo
+  const { here, open, setOpen, pickedId, openLesson } = useHelp();
+  // um só: vai direto para o vídeo; vários: o escolhido no menu (ou a lista, se nenhum)
   const lesson = here.length === 1 ? here[0] : here.find((item) => item.id === pickedId) ?? null;
 
   return (
-    <Dialog open={open && here.length > 0} onOpenChange={(value) => { setOpen(value); if (!value) setPickedId(null); }}>
+    <Dialog open={open && here.length > 0} onOpenChange={setOpen}>
       <DialogContent className="max-w-5xl w-[calc(100vw-2rem)] max-h-[calc(100dvh-2rem)] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <p className="text-xs font-medium uppercase tracking-wide text-primary">Tutorial desta tela · {here[0]?.screen}</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-primary">
+            {here.length > 1 && lesson
+              ? <button type="button" onClick={() => openLesson(null)} className="inline-flex items-center gap-1 uppercase hover:underline focus-visible:outline-none focus-visible:underline">
+                  <Icon name="chevron-left" className="w-3.5 h-3.5" /> Tutoriais desta tela · {here[0]?.screen}
+                </button>
+              : <>{here.length > 1 ? "Tutoriais desta tela" : "Tutorial desta tela"} · {here[0]?.screen}</>}
+          </p>
           <DialogTitle>{lesson ? lesson.title : "Escolha o tutorial"}</DialogTitle>
           <DialogDescription>
-            {lesson ? `${lesson.minutes} min, com legenda. Use os capítulos para ir direto ao que precisa; assista quantas vezes quiser.` : "Esta tela tem mais de um tutorial."}
+            {lesson ? `${lesson.minutes} min, com legenda. Use os capítulos para ir direto ao que precisa; assista quantas vezes quiser.` : "Esta tela tem um tutorial para cada caminho."}
           </DialogDescription>
         </DialogHeader>
         {lesson ? <Player key={lesson.id} lesson={lesson} /> : (
           <ul className="grid gap-1">
             {here.map((item) => (
               <li key={item.id}>
-                <button type="button" onClick={() => setPickedId(item.id)}
+                <button type="button" onClick={() => openLesson(item.id)}
                   className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/10 text-primary"><Icon name="play" className="w-4 h-4" /></span>
                   <span className="flex-1 text-sm font-medium">{item.title}</span>

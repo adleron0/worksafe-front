@@ -165,8 +165,8 @@ function DealPage() {
         </div>
       )}
 
-      <div className="mt-4 grid xl:grid-cols-3 gap-4 items-start">
-        <div className="xl:col-span-2 grid gap-4">
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] xl:grid-cols-3 gap-4 items-start">
+        <div className="xl:col-span-2 grid grid-cols-[minmax(0,1fr)] gap-4 min-w-0">
           <section className="rounded-lg border p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="font-semibold">Propostas</h2>
@@ -179,8 +179,8 @@ function DealPage() {
                   <thead>
                     <tr className="text-xs text-muted-foreground border-b">
                       <th className="text-left font-medium py-1.5 pr-2">Proposta</th>
-                      <th className="text-right font-medium py-1.5 px-2">Valor</th>
-                      <th className="text-right font-medium py-1.5 px-2">Desc. conjunto</th>
+                      <th className="hidden sm:table-cell text-right font-medium py-1.5 px-2">Valor</th>
+                      <th className="hidden sm:table-cell text-right font-medium py-1.5 px-2">Desc. conjunto</th>
                       <th className="text-right font-medium py-1.5 px-2">Total</th>
                       <th />
                     </tr>
@@ -191,7 +191,7 @@ function DealPage() {
                       const changing = row && (row.action === "gravar" || row.action === "revisar");
                       return (
                         <tr key={p.id} className={cn("border-b last:border-0 align-top", LOST.includes(p.status) && "opacity-60")}>
-                          <td className="py-2 pr-2 min-w-[14rem]">
+                          <td className="py-2 pr-2 sm:min-w-[14rem]">
                             <div className="flex flex-wrap items-center gap-1.5">
                               <Link to="/comercial/propostas/$proposalId" params={{ proposalId: String(p.id) }} className="font-medium tabular-nums hover:underline">{p.number}</Link>
                               <KindBadge kind={p.kind} />
@@ -200,14 +200,18 @@ function DealPage() {
                                 <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label={`Painel de ${p.number}`} onClick={() => setPanel(p.id)}><Icon name="panel-right-open" className="w-3.5 h-3.5" /></Button>
                               </Tip>
                             </div>
-                            <p className="text-xs text-muted-foreground truncate max-w-xs">{p.title}</p>
+                            <p className="text-xs text-muted-foreground break-words sm:truncate sm:max-w-xs">{p.title}</p>
                           </td>
-                          <td className="py-2 px-2 text-right tabular-nums whitespace-nowrap">{money(p.base)}{p.ownDiscount > 0 && <p className="text-xs text-muted-foreground">já com {money(p.ownDiscount)} dela</p>}</td>
-                          <td className="py-2 px-2 text-right tabular-nums whitespace-nowrap">
+                          <td className="hidden sm:table-cell py-2 px-2 text-right tabular-nums whitespace-nowrap">{money(p.base)}{p.ownDiscount > 0 && <p className="text-xs text-muted-foreground">já com {money(p.ownDiscount)} dela</p>}</td>
+                          <td className="hidden sm:table-cell py-2 px-2 text-right tabular-nums whitespace-nowrap">
                             {p.dealDiscount > 0 ? `− ${money(p.dealDiscount)}` : "—"}
                             {changing && <p className="text-xs text-amber-700 dark:text-amber-300">→ {row.planned > 0 ? `− ${money(row.planned)}` : "sem desconto"}{row.action === "revisar" ? " (revisão)" : ""}</p>}
                           </td>
-                          <td className="py-2 px-2 text-right tabular-nums font-medium whitespace-nowrap">{money(p.total)}</td>
+                          <td className="py-2 px-2 text-right tabular-nums font-medium whitespace-nowrap">
+                            {money(p.total)}
+                            {/* no celular as colunas de valor e desconto somem: o desconto conjunto vem aqui */}
+                            {p.dealDiscount > 0 && <p className="sm:hidden text-xs font-normal text-muted-foreground">desc. conjunto − {money(p.dealDiscount)}</p>}
+                          </td>
                           <td className="py-2 pl-2 text-right">
                             {canUpdate && (
                               <ConfirmDialog title={`Tirar ${p.number} da negociação?`} description="A proposta continua, sozinha. Se estiver em rascunho, o desconto conjunto sai dela." onConfirm={() => remove.mutate(p.id)}>
@@ -327,7 +331,7 @@ function DealPage() {
           </section>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-4 min-w-0">
           <section className="rounded-lg border p-4 text-sm grid gap-3">
             <h2 className="font-semibold">Resumo</h2>
             <dl className="grid gap-1">

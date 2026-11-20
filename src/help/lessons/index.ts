@@ -69,7 +69,7 @@ export const LESSONS: Lesson[] = [
     screen: "Propostas",
     minutes: 4,
     requires: ["view_comercial"],
-    routes: [...PROPOSTAS, "/comercial/acompanhamento"],
+    routes: PROPOSTAS,
     video: { src: `${BASE}/kanban-painel.mp4`, captions: `${BASE}/kanban-painel.vtt` },
     chapters: [
       { title: "O kanban", start: 0 },

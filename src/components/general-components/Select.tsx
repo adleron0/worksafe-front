@@ -208,7 +208,7 @@ const Select = ({
   
   // Renderiza o componente de seleção única (original)
   return (
-    <div className="relative w-full">
+    <div className="relative w-full min-w-0">
       <UiSelect
         value={typeof state === 'string' ? state : ''}
         onValueChange={handleValueChange}

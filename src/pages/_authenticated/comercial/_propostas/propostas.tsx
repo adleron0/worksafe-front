@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
@@ -18,7 +17,8 @@ import Select from "@/components/general-components/Select";
 import SummaryCards, { SummaryCard } from "@/components/general-components/SummaryCards";
 import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, dateBr, errorMessage, money } from "../-shared/commercial";
-import { ACTIVITY_PERMISSION, ActivityPanel, FollowUpChip } from "../-shared/activities";
+import { FollowUpChip } from "../-shared/activities";
+import { ProposalPanelSheet } from "../-shared/proposal-panel";
 import { downloadProposalPdf } from "../-shared/pdf";
 import DecisionDialog from "./-DecisionDialog";
 import {
@@ -151,7 +151,7 @@ function ProposalsPage() {
           <Icon name={row.status === "rascunho" ? "pencil" : "eye"} className="w-3 h-3" /> {row.status === "rascunho" ? "Editar" : "Abrir"}
         </DropdownMenuItem>
         <DropdownMenuItem className="gap-2" onSelect={() => window.open(`/proposta/rascunho/${row.id}`, "_blank", "noopener")}><Icon name="monitor" className="w-3 h-3" /> Ver como o cliente</DropdownMenuItem>
-        <DropdownMenuItem className="gap-2" onSelect={() => setFollowing(row)}><Icon name="message-square-text" className="w-3 h-3" /> Acompanhamento</DropdownMenuItem>
+        <DropdownMenuItem className="gap-2" onSelect={() => setFollowing(row)}><Icon name="panel-right-open" className="w-3 h-3" /> Painel da proposta</DropdownMenuItem>
         <DropdownMenuItem className="gap-2" onSelect={() => pdf(row)}><Icon name="file-down" className="w-3 h-3" /> Baixar PDF</DropdownMenuItem>
         {LINKED.includes(row.status) && <DropdownMenuItem className="gap-2" onSelect={() => copyRowLink(row)}><Icon name="link" className="w-3 h-3" /> Copiar link do cliente</DropdownMenuItem>}
         {canUpdate && row.status === "rascunho" && !row.inactiveAt && (<>
@@ -367,19 +367,7 @@ function ProposalsPage() {
         </p>
       )}
 
-      <Sheet open={!!following} onOpenChange={(value) => !value && setFollowing(null)}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          {following && (<>
-            <SheetHeader className="pr-6">
-              <SheetTitle>Acompanhamento · {following.number}</SheetTitle>
-              <SheetDescription>{following.customer.name} · {following.title}. Contatos com o cliente e próximos retornos. Uso interno: o cliente não vê.</SheetDescription>
-            </SheetHeader>
-            <div className="mt-4">
-              <ActivityPanel proposalId={following.id} canEdit={can(ACTIVITY_PERMISSION)} compact bare />
-            </div>
-          </>)}
-        </SheetContent>
-      </Sheet>
+      <ProposalPanelSheet proposalId={following?.id ?? null} createdBy={following?.createdBy} onClose={() => setFollowing(null)} />
 
       {decision && (
         <DecisionDialog decision={decision.kind} number={decision.row.number} pending={changing} onClose={() => setDecision(null)}

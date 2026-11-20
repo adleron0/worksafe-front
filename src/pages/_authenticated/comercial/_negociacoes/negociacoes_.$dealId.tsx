@@ -18,6 +18,7 @@ import {
   DEALS_KEY, DEAL_KEY, DISCOUNT_BREAKS, DISCOUNT_CONDITIONS, DISCOUNT_SPLITS, DISCOUNT_TYPES, Deal, DealDiscount, DealPlan, DealStatusBadge,
 } from "../-shared/deals";
 import { KindBadge, PROPOSAL_KEY, PROPOSALS_KEY, ProposalKind, ProposalStatus, StatusBadge } from "../-shared/proposals";
+import { ProposalPanelSheet } from "../-shared/proposal-panel";
 
 export const Route = createFileRoute("/_authenticated/comercial/_negociacoes/negociacoes_/$dealId")({
   component: DealPage,
@@ -35,6 +36,8 @@ function DealPage() {
   const queryClient = useQueryClient();
   const canUpdate = can(`update_${COMMERCIAL_ABILITY}`);
   const [adding, setAdding] = useState("");
+  // painel da proposta (ficha rápida) sem sair da negociação
+  const [panel, setPanel] = useState<number | null>(null);
   const [discount, setDiscount] = useState<DealDiscount | null>(null);
   const [askRevise, setAskRevise] = useState(false);
   const [title, setTitle] = useState("");
@@ -193,6 +196,9 @@ function DealPage() {
                               <Link to="/comercial/propostas/$proposalId" params={{ proposalId: String(p.id) }} className="font-medium tabular-nums hover:underline">{p.number}</Link>
                               <KindBadge kind={p.kind} />
                               <StatusBadge status={p.status} />
+                              <Tip text={`Painel de ${p.number}: situação, retornos e venda`}>
+                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label={`Painel de ${p.number}`} onClick={() => setPanel(p.id)}><Icon name="panel-right-open" className="w-3.5 h-3.5" /></Button>
+                              </Tip>
                             </div>
                             <p className="text-xs text-muted-foreground truncate max-w-xs">{p.title}</p>
                           </td>
@@ -361,6 +367,7 @@ function DealPage() {
       <ConfirmDialog open={askRevise} onOpenChange={setAskRevise} title="Criar revisões das propostas enviadas?"
         description="Proposta enviada não muda: o cliente leu e pode aceitar aquele documento. Com o desconto novo nasce uma revisão em rascunho de cada enviada (a anterior fica como substituída). Depois é preciso enviar as revisões ao cliente."
         onConfirm={() => applyDiscount.mutate(true)} />
+      <ProposalPanelSheet proposalId={panel} onClose={() => setPanel(null)} />
     </>
   );
 }

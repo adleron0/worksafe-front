@@ -269,8 +269,10 @@ export function useActivityUsers() {
 /** Registrar contato e agendar retorno tem permissão própria (não exige editar proposta). */
 export const ACTIVITY_PERMISSION = "update_acompanhamento";
 
-export function ActivityItem({ activity, canEdit, showContext, onComplete, onEdit }: {
+export function ActivityItem({ activity, canEdit, showContext, onComplete, onEdit, onOpenProposal }: {
   activity: Activity; canEdit: boolean; showContext?: boolean; onComplete: (activity: Activity) => void; onEdit: (activity: Activity) => void;
+  /** abre o painel da proposta (ficha rápida) sem sair da agenda */
+  onOpenProposal?: (proposalId: number) => void;
 }) {
   const queryClient = useQueryClient();
   const refresh = () => { queryClient.invalidateQueries({ queryKey: [ACTIVITIES_KEY] }); queryClient.invalidateQueries({ queryKey: [PROPOSALS_KEY] }); };
@@ -306,7 +308,15 @@ export function ActivityItem({ activity, canEdit, showContext, onComplete, onEdi
               <> · <Link to="/suprimentos/locacoes/$rentalId" params={{ rentalId: String(activity.rental.id) }} className="underline hover:text-foreground">{activity.rental.number}</Link>{activity.automatic ? " (lembrete automático)" : ""}</>
             )}
             {activity.proposal && (
-              <> · <Link to="/comercial/propostas/$proposalId" params={{ proposalId: String(activity.proposal.id) }} className="underline hover:text-foreground">{activity.proposal.number}</Link> {activity.proposal.title}</>
+              <> · <Link to="/comercial/propostas/$proposalId" params={{ proposalId: String(activity.proposal.id) }} className="underline hover:text-foreground">{activity.proposal.number}</Link> {activity.proposal.title}
+                {onOpenProposal && (
+                  <Tip text={`Painel de ${activity.proposal.number}`}>
+                    <button type="button" className="ml-1 inline-flex align-middle rounded p-0.5 hover:bg-muted hover:text-foreground" aria-label={`Painel de ${activity.proposal.number}`} onClick={() => onOpenProposal(activity.proposal!.id)}>
+                      <Icon name="panel-right-open" className="w-3.5 h-3.5" />
+                    </button>
+                  </Tip>
+                )}
+              </>
             )}
           </p>
         )}

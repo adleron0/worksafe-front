@@ -8,6 +8,7 @@ import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, errorMessage } from "../-shared/commercial";
 import { ACTIVITIES_KEY, ACTIVITY_PERMISSION, ActivityItem, ActivityList, useActivityDialogs, useActivityUsers } from "../-shared/activities";
+import { ProposalPanelSheet } from "../-shared/proposal-panel";
 
 export const Route = createFileRoute("/_authenticated/comercial/_acompanhamento/acompanhamento")({
   component: FollowUpPage,
@@ -30,6 +31,7 @@ function FollowUpPage() {
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(0);
   const { dialogs, edit, complete } = useActivityDialogs({});
+  const [panel, setPanel] = useState<number | null>(null);
 
   // sem escolha, abre no que mais importa: atrasadas, senão hoje, senão próximas
   const { data: counts } = useQuery({
@@ -78,13 +80,14 @@ function FollowUpPage() {
         {error && <p className="py-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
         {data && !data.rows.length && <p className="py-6 text-sm text-muted-foreground">{FILTERS.find((item) => item.id === active)?.empty}</p>}
         {data && data.rows.length > 0 && (
-          <ul>{data.rows.map((activity) => <ActivityItem key={activity.id} activity={activity} canEdit={canEdit} showContext onComplete={complete} onEdit={edit} />)}</ul>
+          <ul>{data.rows.map((activity) => <ActivityItem key={activity.id} activity={activity} canEdit={canEdit} showContext onComplete={complete} onEdit={edit} onOpenProposal={setPanel} />)}</ul>
         )}
       </div>
       {data && data.total > LIMIT && (
         <div className="mt-4"><Pagination totalItems={data.total} itemsPerPage={LIMIT} currentPage={page} onPageChange={setPage} maxVisiblePages={5} /></div>
       )}
       {dialogs}
+      <ProposalPanelSheet proposalId={panel} onClose={() => setPanel(null)} />
     </>
   );
 }

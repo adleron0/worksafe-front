@@ -277,6 +277,7 @@ function ProposalEditorPage() {
     if (!readOnly && dirty && !calcError) save({ openClientView: true });
     else window.open(`/proposta/rascunho/${proposalId}`, "_blank", "noopener");
   };
+  const activity = <ActivityPanel proposalId={proposal.id} canEdit={can(ACTIVITY_PERMISSION)} defaultContact={draft.contactName} compact />;
 
   return (
     <>
@@ -493,7 +494,6 @@ function ProposalEditorPage() {
                   )}
                 </section>
               )}
-              <ActivityPanel proposalId={proposal.id} canEdit={can(ACTIVITY_PERMISSION)} defaultContact={draft.contactName} />
               <ProposalHistory proposal={proposal} />
             </div>
           )}
@@ -519,9 +519,18 @@ function ProposalEditorPage() {
           </div>
         </div>
 
-        <TotalsPanel calc={calc} draft={draft} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} stale={calculating || (dirty && Boolean(calcError))}
-          customer={customer.name} wide={tab === "itens"} open={summaryOpen} onToggle={() => setSummaryOpen(!summaryOpen)}
-          onDiscount={(discount) => setDraftSafe((d) => ({ ...d, discount }))} />
+        {/* coluna lateral: resumo e acompanhamento, em qualquer passo. No celular a coluna
+            some (display: contents): o resumo sobe para o topo e o acompanhamento fica no fim. */}
+        <div className={cn("contents", tab === "itens"
+          ? "2xl:flex 2xl:flex-col 2xl:gap-4 2xl:sticky 2xl:top-4 2xl:max-h-[calc(100vh-2rem)] 2xl:overflow-y-auto"
+          : "lg:flex lg:flex-col lg:gap-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto")}>
+          {/* enviada, aceita...: o acompanhamento vem primeiro; no rascunho, o resumo */}
+          {readOnly && activity}
+          <TotalsPanel calc={calc} draft={draft} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} stale={calculating || (dirty && Boolean(calcError))}
+            customer={customer.name} wide={tab === "itens"} open={summaryOpen} onToggle={() => setSummaryOpen(!summaryOpen)}
+            onDiscount={(discount) => setDraftSafe((d) => ({ ...d, discount }))} />
+          {!readOnly && activity}
+        </div>
       </div>
 
       <RecordFilesPanel entity="proposal" entityId={proposal.id} className="mt-4" title="Arquivos da proposta" hint="Pedido do cliente, memoriais, fotos da visita e o que mais for desta proposta. Quem vê a proposta vê os arquivos." />

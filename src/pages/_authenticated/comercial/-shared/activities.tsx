@@ -354,21 +354,27 @@ export function useActivityDialogs(target: Target, defaultContact?: string | nul
 }
 
 /** Acompanhamento de uma proposta (ou de um cliente): o que está marcado e o que já foi feito. */
-export function ActivityPanel({ proposalId, customerId, canEdit, defaultContact }: { proposalId?: number; customerId?: number; canEdit: boolean; defaultContact?: string | null }) {
+/**
+ * `compact`: para colunas estreitas (coluna lateral da proposta, painel da lista):
+ * título e botões um embaixo do outro, sem borda própria quando `bare`.
+ */
+export function ActivityPanel({ proposalId, customerId, canEdit, defaultContact, compact, bare }: { proposalId?: number; customerId?: number; canEdit: boolean; defaultContact?: string | null; compact?: boolean; bare?: boolean }) {
   const params = { limit: 100, ...(proposalId ? { proposalId } : { customerId }) };
   const { data, isLoading, error } = useQuery({ queryKey: [ACTIVITIES_KEY, params], queryFn: () => commercialApi.get<ActivityList>("activities", params) });
   const { dialogs, register, schedule, edit, complete } = useActivityDialogs(proposalId ? { proposalId } : { customerId }, defaultContact);
   const pending = data?.rows.filter((row) => row.status === "pendente") ?? [];
   const done = data?.rows.filter((row) => row.status === "feita") ?? [];
   return (
-    <section className="rounded-lg border p-4" aria-label="Acompanhamento">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-        <div>
-          <h3 className="font-semibold">Acompanhamento</h3>
-          <p className="text-xs text-muted-foreground">Contatos com o cliente e retornos marcados. Uso interno: o cliente não vê.</p>
-        </div>
+    <section className={cn(!bare && "rounded-lg border p-4 bg-background")} aria-label="Acompanhamento">
+      <div className={cn("flex flex-col justify-between gap-3", !compact && "sm:flex-row sm:items-start")}>
+        {!bare && (
+          <div>
+            <h3 className="font-semibold">Acompanhamento</h3>
+            <p className="text-xs text-muted-foreground">Contatos com o cliente e retornos marcados. Uso interno: o cliente não vê.</p>
+          </div>
+        )}
         {canEdit && (
-          <div className="flex gap-2 shrink-0">
+          <div className={cn("flex gap-2 shrink-0", compact && "grid grid-cols-2")}>
             <Button type="button" size="sm" variant="outline" onClick={register}><Icon name="message-square-plus" className="w-4 h-4 mr-1" /> Registrar contato</Button>
             <Button type="button" size="sm" onClick={schedule}><Icon name="calendar-plus" className="w-4 h-4 mr-1" /> Agendar</Button>
           </div>

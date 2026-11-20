@@ -316,6 +316,7 @@ function ProposalsPage() {
         <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
           <div className="w-40">Número</div>
           <div className="flex-1">Cliente e título</div>
+          <div className="w-36">Criada</div>
           <div className="w-40">Situação</div>
           <div className="w-28">Validade</div>
           <div className="w-36 text-right">Total</div>
@@ -336,8 +337,12 @@ function ProposalsPage() {
             </div>
             <div className="flex-1 min-w-0 pr-10 lg:pr-4">
               <p className="font-medium truncate">{row.customer.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{row.title}{row.seller ? ` · ${row.seller}` : ""}</p>
+              <p className="text-xs text-muted-foreground truncate">{row.title}{row.seller ? ` · vendedor ${row.seller}` : ""}</p>
               <FollowUpChip followUp={row.followUp} className="mt-1" />
+            </div>
+            <div className="lg:w-36 min-w-0 text-xs text-muted-foreground">
+              <p><span className="lg:hidden">Criada em </span><span className="tabular-nums">{createdAt(row.createdAt)}</span></p>
+              {row.createdBy && <p className="truncate">por {row.createdBy}</p>}
             </div>
             <div className="lg:w-40 flex flex-wrap items-center gap-1"><StatusBadge status={row.status} expired={row.expired} />{row.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Arquivada</span>}</div>
             <div className="lg:w-28 text-muted-foreground"><span className="lg:hidden text-xs">Validade: </span>{dateBr(row.validUntil)}</div>
@@ -365,5 +370,11 @@ function ProposalsPage() {
     </>
   );
 }
+
+/** Data e hora da criação no fuso de quem está vendo (o createdAt vem em UTC). */
+const createdAt = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : `${date.toLocaleDateString("pt-BR")} ${date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+};
 
 /** Dados mínimos para a proposta nascer como rascunho numerado; o resto é no editor. */

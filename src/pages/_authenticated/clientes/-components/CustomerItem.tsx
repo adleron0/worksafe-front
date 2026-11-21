@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 // Serviços
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { patch } from "@/services/api";
@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { formatDocumento } from "@/utils/documento";
 import { formatPHONE } from "@/utils/phone-mask";
 import useVerify from "@/hooks/use-verify";
+import tailwindUtils from "@/utils/tailwind.utils";
 // Template Page
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -105,25 +106,31 @@ const CustomerItem = ({ item, index, entity }: ItemsProps) => {
     <>
       {/* Renderiza o Header apenas no primeiro item */}
       <HeaderRow show={index === 0}>
-        <div className="w-3/12">Cliente</div>
+        <div className="w-4/12">Cliente</div>
         <div className="w-2/12">Endereço</div>
         <div className="w-3/12">Contatos</div>
-        <div className="w-2/12">Cadastro</div>
+        <div className="w-1/12">Cadastro</div>
         <div className="w-1/12">Status</div>
         <div className="w-1/12">Ações</div>
       </HeaderRow>
 
       {/* Conteúdo do item */}
-      <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+      <div
+        role="link"
+        tabIndex={0}
+        onClick={open}
+        onKeyDown={(e) => { if (e.key === "Enter") open(); }}
+        className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-2.5 w-full ${tailwindUtils.itemClickable}`}
+      >
         {/* Avatar e Nome */}
-        <div className="w-full lg:w-3/12 flex items-center space-x-4 md:pr-2">
-          <Avatar className="border">
-            <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
-            <AvatarFallback>{item.name[0]}</AvatarFallback>
+        <div className="w-full lg:w-4/12 flex items-center gap-3 pr-10 lg:pr-2 min-w-0">
+          <Avatar className="h-9 w-9 rounded-md border bg-white">
+            <AvatarImage src={item.imageUrl || undefined} alt={item.name} className="object-contain" />
+            <AvatarFallback className="rounded-md text-sm font-medium">{item.name?.[0]}</AvatarFallback>
           </Avatar>
-          <div className="break-all">
-            <Link to="/clientes/$customerId" params={{ customerId: String(item.id) }} className="text-sm font-semibold hover:underline">{item.name}</Link>
-            <p className="text-sm text-gray-600 dark:text-gray-100">{formatDocumento(item.cnpj)}</p>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold leading-snug line-clamp-2 break-words">{item.name}</p>
+            <p className="text-[11px] leading-snug text-gray-600 dark:text-gray-300">{formatDocumento(item.cnpj)}</p>
           </div>
         </div>
 
@@ -149,7 +156,7 @@ const CustomerItem = ({ item, index, entity }: ItemsProps) => {
         </div>
 
         {/* Data de Criação */}
-        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
+        <div className="lg:w-1/12 flex items-baseline gap-2 md:pr-2">
           <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Cadastro: </p>
           <p className="text-sm text-gray-600 dark:text-gray-100">
             {new Date(item.createdAt || '2024-01-01').toLocaleDateString()}
@@ -172,7 +179,7 @@ const CustomerItem = ({ item, index, entity }: ItemsProps) => {
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-1/12">
+        <div className="absolute top-2 right-2 lg:static lg:w-1/12 z-10" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button

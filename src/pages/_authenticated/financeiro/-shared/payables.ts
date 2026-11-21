@@ -15,6 +15,13 @@ export interface Supplier {
   agency?: string | null;
   account?: string | null;
   notes?: string | null;
+  zipcode?: string | null;
+  street?: string | null;
+  number?: string | null;
+  complement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
   inactiveAt?: string | null;
   _count?: { payables: number };
 }

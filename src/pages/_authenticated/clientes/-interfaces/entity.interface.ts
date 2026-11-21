@@ -2,11 +2,11 @@ export interface IEntity {
   id?: number;
   name: string;
   corporateName: string;
-  email: string;
+  email: string | null;
   active?: boolean;
   imageUrl: string | null;
   image?: File | null;
-  phone: string;
+  phone: string | null;
   cnpj: string;
   companyId?: number;
   stateId?: number;

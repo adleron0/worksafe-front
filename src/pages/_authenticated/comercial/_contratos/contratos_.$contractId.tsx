@@ -320,7 +320,7 @@ function ContractPage() {
             <h2 className="font-semibold text-base">Cliente</h2>
             <p className="font-medium">{contract.customer.corporateName}</p>
             <p className="text-muted-foreground">{docLabel(contract.customer.cnpj)} {formatCnpj(contract.customer.cnpj)}</p>
-            <p className="text-muted-foreground">{contract.customer.email} · {contract.customer.phone}</p>
+            <p className="text-muted-foreground">{[contract.customer.email, contract.customer.phone].filter(Boolean).join(" · ")}</p>
             {contract.proposal && (
               <p className="mt-2">Proposta <Link to="/comercial/propostas/$proposalId" params={{ proposalId: String(contract.proposal.id) }} className="underline font-medium">{contract.proposal.number}</Link></p>
             )}

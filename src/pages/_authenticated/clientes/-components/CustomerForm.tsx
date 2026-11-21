@@ -57,8 +57,9 @@ const Form = ({ formData, openSheet, entity, page = false, onSaved }: FormProps)
     corporateName: tipo === "pf"
       ? z.string()
       : z.string().min(2, { message: "Razão social deve ter pelo menos 2 caracteres" }),
-    email: z.string().email({ message: "Email inválido" }),
-    phone: z.string().min(10, { message: "Telefone deve ter pelo menos 10 dígitos" }),
+    // opcionais (como no Omie): vazio passa, preenchido precisa ser válido
+    email: z.string().email({ message: "Email inválido" }).or(z.literal("")),
+    phone: z.string().min(10, { message: "Telefone deve ter pelo menos 10 dígitos" }).or(z.literal("")),
     cnpj: z.string().refine(documentoOk, { message: tipo === "pf" ? "CPF inválido" : "CNPJ inválido" }),
     stateId: z.number().min(1, { message: "Estado deve ser selecionado" }),
     cityId: z.number().min(1, { message: "Cidade deve ser selecionada" }),
@@ -423,7 +424,7 @@ const Form = ({ formData, openSheet, entity, page = false, onSaved }: FormProps)
         </div>
       )}
       <div>
-        <Label htmlFor="email">Email <span>*</span></Label>
+        <Label htmlFor="email">Email</Label>
         <Input
           id="email"
           name="email"
@@ -436,7 +437,7 @@ const Form = ({ formData, openSheet, entity, page = false, onSaved }: FormProps)
         {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
       </div>
       <div>
-        <Label htmlFor="phone">Telefone <span>*</span></Label>
+        <Label htmlFor="phone">Telefone</Label>
         <Input
           id="phone"
           name="phone"

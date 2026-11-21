@@ -10,6 +10,8 @@ export interface Supplier {
   contactName?: string | null;
   email?: string | null;
   phone?: string | null;
+  phone2?: string | null;
+  stateRegistration?: string | null;
   pixKey?: string | null;
   bankName?: string | null;
   agency?: string | null;

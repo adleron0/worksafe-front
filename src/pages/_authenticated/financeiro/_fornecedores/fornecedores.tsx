@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/financeiro/_fornecedores/f
           <p className="font-semibold">{item.name}{item.inactiveAt && <span className="ml-2 text-xs font-normal rounded bg-muted px-1.5 py-0.5">Inativo</span>}</p>
           <p className="text-xs text-muted-foreground">{[formatDocument(item.document), item.supplies, item.city && [item.city, item.state].filter(Boolean).join("/")].filter(Boolean).join(" · ") || "—"}</p>
         </div>
-        <div className="lg:w-1/4 lg:pr-2 text-xs text-muted-foreground break-words">{[item.contactName, item.phone, item.email].filter(Boolean).join(" · ") || "—"}</div>
+        <div className="lg:w-1/4 lg:pr-2 text-xs text-muted-foreground break-words">{[item.contactName, item.phone, item.phone2, item.email].filter(Boolean).join(" · ") || "—"}</div>
         <div className="lg:w-1/4 lg:pr-2 text-xs text-muted-foreground break-words">
           {item.pixKey ? `Pix: ${item.pixKey}` : [item.bankName, item.agency && `Ag. ${item.agency}`, item.account && `Conta ${item.account}`].filter(Boolean).join(" · ") || "—"}
         </div>
@@ -42,7 +42,7 @@ export const Route = createFileRoute("/_authenticated/financeiro/_fornecedores/f
   ),
 });
 
-const FIELDS = ["name", "legalName", "document", "supplies", "contactName", "phone", "email", "pixKey", "bankName", "agency", "account", "notes",
+const FIELDS = ["name", "legalName", "document", "supplies", "contactName", "phone", "phone2", "email", "stateRegistration", "pixKey", "bankName", "agency", "account", "notes",
   "zipcode", "street", "number", "complement", "neighborhood", "city", "state"] as const;
 type Field = typeof FIELDS[number];
 
@@ -97,15 +97,17 @@ export function SupplierForm({ formData, close, onSaved }: { formData?: Supplier
       {text("legalName", "Razão social", { max: 200, placeholder: "Opcional" })}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {text("document", "CNPJ ou CPF", { max: 18, placeholder: "Só números" })}
-        {text("supplies", "O que fornece", { max: 255, placeholder: "Ex.: locação de andaimes" })}
+        {text("stateRegistration", "Inscrição estadual", { max: 30, placeholder: "Opcional" })}
       </div>
+      {text("supplies", "O que fornece", { max: 255, placeholder: "Ex.: locação de andaimes" })}
       <div className="rounded border p-3 flex flex-col gap-4">
         <p className="font-medium text-sm">Contato</p>
         {text("contactName", "Pessoa de contato", { max: 120 })}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {text("phone", "Telefone", { max: 30 })}
-          {text("email", "E-mail", { max: 160 })}
+          {text("phone2", "Telefone 2", { max: 30 })}
         </div>
+        {text("email", "E-mail", { max: 160 })}
       </div>
       <div className="rounded border p-3 flex flex-col gap-4">
         <p className="font-medium text-sm">Endereço {loadingCep && <span className="text-xs font-normal text-muted-foreground">buscando o CEP…</span>}</p>

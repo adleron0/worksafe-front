@@ -13,9 +13,21 @@ import DropUpload from "@/components/general-components/DropUpload";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 import Icon from "@/components/general-components/Icon";
+import SwitchCustom from "@/components/general-components/SwitchCustom";
 import { buscarCnpj, CnpjInfo, isValidCNPJ, isValidCPF, sameName } from "@/utils/documento";
 
 type Tipo = "pj" | "pf";
+
+// Ramo de atividade do cliente (mesma lista usada na nota fiscal)
+const ATIVIDADES = [
+  "Prestação de Serviços",
+  "Industrial",
+  "Comercial (Atacadista)",
+  "Comercial (Varejista)",
+  "Construção Civil",
+  "Órgão Público",
+  "Outros",
+].map((name) => ({ id: name, name }));
 type Lookup = { status: "idle" | "loading" | "ok" | "notfound" | "error"; info?: CnpjInfo };
 
 interface FormProps {
@@ -57,6 +69,13 @@ const Form = ({ formData, openSheet, entity, page = false, onSaved }: FormProps)
     rankId: z.number().min(1, { message: "Classificação deve ser selecionada" }),
     description: z.string().optional(),
     complement: z.string().optional(),
+    stateRegistration: z.string().max(30, { message: "Máximo de 30 caracteres" }).optional(),
+    municipalRegistration: z.string().max(30, { message: "Máximo de 30 caracteres" }).optional(),
+    icmsContributor: z.boolean(),
+    activityType: z.string().optional(),
+    cnae: z.string().max(255).optional(),
+    simplesNacional: z.boolean(),
+    phone2: z.string().optional(),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
       (value) => value === null || value instanceof File,
@@ -85,6 +104,13 @@ const Form = ({ formData, openSheet, entity, page = false, onSaved }: FormProps)
     rankId: formData?.rankId || 0,
     description: formData?.description || "",
     complement: formData?.complement || "",
+    stateRegistration: formData?.stateRegistration || "",
+    municipalRegistration: formData?.municipalRegistration || "",
+    icmsContributor: !!formData?.icmsContributor,
+    activityType: formData?.activityType || "",
+    cnae: formData?.cnae || "",
+    simplesNacional: !!formData?.simplesNacional,
+    phone2: formData?.phone2 || "",
   });
   const initialFormRef = useRef(dataForm);
 
@@ -163,7 +189,7 @@ const Form = ({ formData, openSheet, entity, page = false, onSaved }: FormProps)
     },
   });
 
-  const handleChange = (name: string, value: string | number) => {
+  const handleChange = (name: string, value: string | number | boolean) => {
     setDataForm((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -423,6 +449,18 @@ const Form = ({ formData, openSheet, entity, page = false, onSaved }: FormProps)
         {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
       </div>
       <div>
+        <Label htmlFor="phone2">Telefone 2</Label>
+        <Input
+          id="phone2"
+          name="phone2"
+          placeholder="(11) 3333-4444"
+          format="phone"
+          value={dataForm.phone2}
+          onValueChange={handleChange}
+          className="mt-1"
+        />
+      </div>
+      <div>
         <Label htmlFor="rankId">Classificação <span>*</span></Label>
         <Select 
           name="rankId"
@@ -524,6 +562,76 @@ const Form = ({ formData, openSheet, entity, page = false, onSaved }: FormProps)
         />
       </div>
       
+      {tipo === "pj" && (
+        <>
+          <div>
+            <Label htmlFor="stateRegistration">Inscrição estadual</Label>
+            <Input
+              id="stateRegistration"
+              name="stateRegistration"
+              placeholder="Número ou ISENTO"
+              value={dataForm.stateRegistration}
+              onValueChange={handleChange}
+              className="mt-1"
+            />
+            {errors.stateRegistration && <p className="text-red-500 text-sm">{errors.stateRegistration}</p>}
+          </div>
+          <div>
+            <Label htmlFor="municipalRegistration">Inscrição municipal</Label>
+            <Input
+              id="municipalRegistration"
+              name="municipalRegistration"
+              placeholder="Digite a inscrição municipal"
+              value={dataForm.municipalRegistration}
+              onValueChange={handleChange}
+              className="mt-1"
+            />
+            {errors.municipalRegistration && <p className="text-red-500 text-sm">{errors.municipalRegistration}</p>}
+          </div>
+        </>
+      )}
+
+      <div>
+        <Label htmlFor="activityType">Ramo de atividade</Label>
+        <Select
+          name="activityType"
+          options={ATIVIDADES}
+          onChange={(name, value) => handleChange(name, String(value))}
+          state={dataForm.activityType || ""}
+          placeholder="Selecione o ramo"
+        />
+      </div>
+
+      {tipo === "pj" && (
+        <>
+          <div>
+            <Label htmlFor="cnae">CNAE principal</Label>
+            <Input
+              id="cnae"
+              name="cnae"
+              placeholder="Código e descrição da atividade"
+              value={dataForm.cnae}
+              onValueChange={handleChange}
+              className="mt-1"
+            />
+          </div>
+          <div className="flex flex-wrap items-end gap-6 pb-2">
+            <SwitchCustom
+              id="icmsContributor"
+              label="Contribuinte de ICMS"
+              checked={dataForm.icmsContributor}
+              onChange={(checked) => handleChange("icmsContributor", checked)}
+            />
+            <SwitchCustom
+              id="simplesNacional"
+              label="Optante do Simples"
+              checked={dataForm.simplesNacional}
+              onChange={(checked) => handleChange("simplesNacional", checked)}
+            />
+          </div>
+        </>
+      )}
+
       <div className={page ? "md:col-span-2" : ""}>
         <Label htmlFor="description">Descrição</Label>
         <Input

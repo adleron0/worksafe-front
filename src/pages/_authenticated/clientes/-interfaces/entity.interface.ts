@@ -21,6 +21,13 @@ export interface IEntity {
   description?: string;
   complement?: string;
   zipcode?: string;
+  stateRegistration?: string | null;
+  municipalRegistration?: string | null;
+  icmsContributor?: boolean;
+  activityType?: string | null;
+  cnae?: string | null;
+  simplesNacional?: boolean;
+  phone2?: string | null;
   contacts?: any[];
   state?: {
     id?: number;

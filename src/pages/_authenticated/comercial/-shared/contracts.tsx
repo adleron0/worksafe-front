@@ -16,7 +16,15 @@ export interface ContractRow {
 export interface ContractInstallment {
   id: number; number: number; total: number; description: string | null; value: number;
   dueRule: DueRule; dueDate: string | null; dueDays: number | null; suggestedDue: string;
+  /** vencimento "ao atingir % da obra": o marco, o avanço atual (RDO fechado) e a data estimada */
+  work?: WorkState;
+  /** caução contratual retida (ou a reter) na nota desta parcela */
+  depositValue?: number | null;
   record: { id: number; status: string; dueDate: string | null; paidAt: string | null; invoiceNumber: string | null; invoiceIssuedAt: string | null; hasInvoiceFile: boolean; paid: boolean; netValue?: number | null } | null;
+}
+
+export interface WorkState {
+  workPercent: number; workProgress: number | null; workProgressDate: string | null; reached: boolean; reachedAt: string | null; expectedDate: string | null;
 }
 
 export interface ContractClassSlot {
@@ -34,6 +42,10 @@ export interface Contract {
   billingMode?: "parcelas" | "periodo" | "medicao";
   /** alíquotas que o cliente costuma reter na nota, em % (sugestão ao faturar) */
   retentionRates?: RetentionRates;
+  /** serviço: avanço da obra pelos RDOs fechados da OS */
+  workProgress?: { percent: number | null; date: string | null } | null;
+  /** caução contratual das parcelas */
+  deposit?: { rate: number; releaseDays: number } | null;
   /** medição de obra: o plano (frentes, mobilização, caução) e os boletins */
   measurementPlan?: ContractPlan | null;
   works?: { measurements: WorkMeasurement[]; summary: WorkSummary } | null;
@@ -65,7 +77,7 @@ export interface BillingRow extends Omit<ContractInstallment, "id"> {
   id: number | string;
   source?: "parcela" | "medicao" | "obra";
   /** medição de obra: valor da nota, caução e situação do boletim */
-  invoiceValue?: number; depositValue?: number; measurementStatus?: string;
+  invoiceValue?: number; depositValue?: number | null; measurementStatus?: string;
   rental?: { id: number; number: string | null } | null; measurementId?: number;
   lines?: Array<{ kind: string; description: string; periodStart: string | null; periodEnd: string | null; value: number }>;
   stage: BillingStage; contractId: number; contractNumber: string; contractStatus: ContractStatus; kind: ProposalKind; title: string;
@@ -88,9 +100,19 @@ export function ContractStatusBadge({ status }: { status: ContractStatus }) {
   return <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", CLASSES[status])}>{CONTRACT_STATUS_LABEL[status]}</span>;
 }
 
+export const pctBr = (value: number) => `${String(Math.round(value * 100) / 100).replace(".", ",")}%`;
+
+/** Avanço da obra de uma parcela por % da obra, em texto curto. */
+export function workText(work: WorkState): string {
+  const now = work.workProgress === null ? "sem RDO fechado" : `obra em ${pctBr(work.workProgress)}`;
+  if (work.reached) return `pronta: ${now}${work.reachedAt ? `, chegou a ${pctBr(work.workPercent)} em ${work.reachedAt.split("-").reverse().join("/")}` : ""}`;
+  return `${now} · previsão ${work.expectedDate ? work.expectedDate.split("-").reverse().join("/") : "sem prazo da obra"}`;
+}
+
 /** Regra de vencimento combinada na proposta, em texto. */
-export function dueRuleText(installment: Pick<ContractInstallment, "dueRule" | "dueDate" | "dueDays">): string {
+export function dueRuleText(installment: Pick<ContractInstallment, "dueRule" | "dueDate" | "dueDays" | "work">): string {
   if (installment.dueRule === "data_fixa") return `em ${installment.dueDate?.split("-").reverse().join("/") ?? "data a definir"}`;
+  if (installment.dueRule === "percentual_obra") return `ao atingir ${pctBr(installment.work?.workPercent ?? 0)} da obra`;
   const days = installment.dueDays ?? 0;
   const event = installment.dueRule === "dias_apos_aceite" ? "o aceite" : installment.dueRule === "dias_apos_conclusao" ? "a conclusão" : "a nota fiscal";
   return days === 0 ? `n${event}` : `${days} dia${days === 1 ? "" : "s"} após ${event}`;

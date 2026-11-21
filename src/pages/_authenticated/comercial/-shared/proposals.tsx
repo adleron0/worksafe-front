@@ -18,7 +18,7 @@ export interface ScheduleStep { title: string; start: number; duration: number }
 export interface Schedule { unit: "dia" | "semana" | "mes"; steps: ScheduleStep[] }
 
 export type ItemsMode = "detalhado" | "por_secao" | "global";
-export type DueRule = "data_fixa" | "dias_apos_aceite" | "dias_apos_nf" | "dias_apos_conclusao";
+export type DueRule = "data_fixa" | "dias_apos_aceite" | "dias_apos_nf" | "dias_apos_conclusao" | "percentual_obra";
 
 export interface DraftItem {
   /** só na tela */
@@ -38,7 +38,7 @@ export const isBlankItem = (item: Pick<DraftItem, "type" | "professionalId" | "c
     : item.type === "locacao_cliente" ? !item.stockItemId && !item.description.trim() && (item.finalValue === null || item.finalValue === undefined)
     : !item.description.trim() && !item.courseId && !item.unitCost && !item.extraCost && (item.finalValue === null || item.finalValue === undefined);
 export interface DraftSection { uid: string; id?: number; title: string; kind: ItemType; margin?: number; showInDocument: boolean; items: DraftItem[] }
-export interface DraftInstallment { uid: string; percent: number | null; amount: number | null; dueRule: DueRule; dueDate: string | null; dueDays: number | null; description: string | null }
+export interface DraftInstallment { uid: string; percent: number | null; amount: number | null; dueRule: DueRule; dueDate: string | null; dueDays: number | null; workPercent?: number | null; description: string | null }
 
 export interface ProposalDraft {
   kind: ProposalKind; customerId: number; contactName: string | null; contactEmail: string | null; contactPhone: string | null;
@@ -55,6 +55,8 @@ export interface ProposalDraft {
   rental?: RentalTerms | null;
   /** serviço faturado por medição de obra (frentes, mobilização, caução); nulo = parcelas */
   measurement?: MeasurementPlanDraft | null;
+  /** caução contratual das parcelas (serviço): fração retida de cada nota e dias após a conclusão para liberar */
+  depositRate?: number; depositReleaseDays?: number;
   sections: DraftSection[]; installments: DraftInstallment[];
 }
 export interface RentalTerms { period: RentPeriod; periods: number; untilReturn: boolean; billing: "periodo" | "unico"; deposit: number | null; deliveryAddress: string | null }
@@ -80,7 +82,7 @@ export interface ProposalCalc {
     cost?: number; taxInside?: number; tax?: number; profit?: number; profitRate?: number; commission?: number; customerCredit?: number; customerCost?: number;
   };
   installments: Array<{ value: number }>;
-  installmentsTotal: number; installmentsDiff: number;
+  installmentsTotal: number; installmentsDiff: number; installmentsProblem?: string | null;
   /** medição de obra: valor de cada frente e da mobilização com o total de agora */
   measurementPlan?: ContractPlan | null;
   /** só no cálculo ao vivo (preview) da proposta de locação */
@@ -233,6 +235,7 @@ export const DUE_RULE_OPTIONS: Array<{ id: DueRule; name: string }> = [
   { id: "dias_apos_aceite", name: "Dias após o aceite" },
   { id: "dias_apos_conclusao", name: "Dias após a conclusão" },
   { id: "data_fixa", name: "Data fixa" },
+  { id: "percentual_obra", name: "Ao atingir % da obra" },
 ];
 
 /** CNPJ (empresa) ou CPF (cliente pessoa física), formatado. */

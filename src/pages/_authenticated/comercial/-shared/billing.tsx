@@ -15,7 +15,7 @@ import { RetentionFields, RetentionRates, RetentionState, rebase, retentionList,
 import { Contract, ContractInstallment, CustomerOrder, PAYMENT_METHOD_OPTIONS, dueRuleText } from "./contracts";
 
 type BillContract = { id: number; number: string; customer: { name: string }; customerOrder?: CustomerOrder | null; retentionRates?: RetentionRates };
-type BillInstallment = Pick<ContractInstallment, "id" | "number" | "total" | "value" | "suggestedDue" | "dueRule" | "dueDate" | "dueDays">;
+type BillInstallment = Pick<ContractInstallment, "id" | "number" | "total" | "value" | "suggestedDue" | "dueRule" | "dueDate" | "dueDays" | "work" | "depositValue">;
 const parcelLabel = (inst: Pick<ContractInstallment, "number" | "total">) => (inst.total > 1 ? `parcela ${inst.number}/${inst.total}` : "pagamento único");
 
 /**
@@ -32,6 +32,7 @@ export function BillDialog({ contract, installment, others = [], onClose, onDone
   const chosen = [installment, ...others.filter((o) => extra.includes(o.id))].sort((a, b) => a.number - b.number);
   const [dues, setDues] = useState<Record<number, string>>(() => Object.fromEntries([installment, ...others].map((i) => [i.id, i.suggestedDue])));
   const base = Math.round(chosen.reduce((sum, i) => sum + i.value, 0) * 100) / 100;
+  const deposit = Math.round(chosen.reduce((sum, i) => sum + (i.depositValue ?? 0), 0) * 100) / 100;
   const [retentions, setRetentions] = useState<RetentionState>(() => retentionState(installment.value, contract.retentionRates));
   const [error, setError] = useState("");
   const toggle = (id: number, on: boolean) => {
@@ -101,6 +102,9 @@ export function BillDialog({ contract, installment, others = [], onClose, onDone
               );
             })}
           </div>
+          {deposit > 0 && (
+            <p className="text-xs text-muted-foreground -mt-2">Caução contratual: <b className="text-foreground tabular-nums">{money(deposit)}</b> desta nota fica retida na conta da caução do contrato (paga no fim da obra). A receber agora: <b className="text-foreground tabular-nums">{money(base - deposit)}</b>.</p>
+          )}
           {others.length > 0 && <p className="text-xs text-muted-foreground -mt-2">Marque as outras parcelas que vão na mesma nota (NF global). Cada uma continua com o seu vencimento.</p>}
           <RetentionFields base={base} state={retentions} onChange={setRetentions} idPrefix="billRet" />
           {error && <p className="text-red-500 text-sm">{error}</p>}

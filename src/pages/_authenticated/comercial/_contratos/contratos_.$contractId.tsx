@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, dateBr, errorMessage, money } from "../-shared/commercial";
 import {
   CONTRACTS_KEY, CONTRACT_KEY, Contract, ContractClassSlot, ContractInstallment, ContractStatus, ContractStatusBadge,
-  RECORD_STATUS_LABEL, dueRuleText,
+  RECORD_STATUS_LABEL, dueRuleText, pctBr, workText,
 } from "../-shared/contracts";
 import { BillDialog, CustomerOrderCard, MeasurementBillDialog } from "../-shared/billing";
 import { RETENTION_TAXES, RetentionRates } from "../-shared/retentions";
@@ -189,8 +189,9 @@ function ContractPage() {
                 <h2 className="font-semibold">Parcelas</h2>
                 <p className="text-xs text-muted-foreground">Registrar a nota fiscal de uma parcela cria a conta a receber dela, com baixa manual no financeiro. Várias parcelas podem ir na mesma nota.</p>
               </div>
-              {contract.kind === "servico" && active && canUpdate && contract.billingMode === "parcelas" && contract.billed === 0 && (
-                <Button type="button" size="sm" variant="outline" className="shrink-0" onClick={() => setSwitching(true)}><Icon name="ruler" className="w-4 h-4 mr-1" /> Faturar por medição</Button>
+              {contract.workProgress && contract.installments.some((i) => i.dueRule === "percentual_obra") && (
+                <p className="shrink-0 text-sm"><span className="text-muted-foreground">Avanço da obra:</span> <b className="tabular-nums">{contract.workProgress.percent === null ? "sem RDO fechado" : pctBr(contract.workProgress.percent)}</b>
+                  {contract.workProgress.date && <span className="block text-xs text-muted-foreground sm:text-right">último RDO fechado em {dateBr(contract.workProgress.date)}</span>}</p>
               )}
             </div>
             {contract.installments.length === 0 && <p className="mt-3 text-sm text-muted-foreground">A proposta foi aceita sem condições de pagamento.</p>}
@@ -200,8 +201,12 @@ function ContractPage() {
                   <div className="lg:w-56">
                     <p className="font-medium">{installment.total > 1 ? `Parcela ${installment.number}/${installment.total}` : "Pagamento único"}{installment.description ? ` · ${installment.description}` : ""}</p>
                     <p className="text-xs text-muted-foreground">Combinado: {dueRuleText(installment)}</p>
+                    {installment.work && !installment.record && (
+                      <p className={cn("text-xs", installment.work.reached ? "text-green-700 dark:text-green-400" : "text-muted-foreground")}>{workText(installment.work)}</p>
+                    )}
                   </div>
-                  <div className="lg:w-32 font-semibold tabular-nums">{money(installment.value)}</div>
+                  <div className="lg:w-32 font-semibold tabular-nums">{money(installment.value)}
+                    {installment.depositValue ? <span className="block text-xs font-normal text-muted-foreground">caução {money(installment.depositValue)}</span> : null}</div>
                   <div className="flex-1 min-w-0">
                     {installment.record ? (
                       <p>

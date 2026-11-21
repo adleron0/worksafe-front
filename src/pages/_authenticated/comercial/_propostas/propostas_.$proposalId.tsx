@@ -249,8 +249,8 @@ function ProposalEditorPage() {
     ...(rentalKind ? [
       { step: "itens" as StepKey, ok: !availability || availability.ok, label: "Disponibilidade dos equipamentos", fix: "Falta equipamento no período: confira antes de prometer ao cliente" },
     ] : byMeasurement ? [{ step: "pagamento" as StepKey, ok: !calc?.measurementPlan?.problem, label: "Plano de medição", fix: calc?.measurementPlan?.problem ?? "Revise o plano de medição" }]
-      : [{ step: "pagamento" as StepKey, ok: draft.installments.length > 0 && paymentDiff < 0.005, label: "Condições de pagamento",
-      fix: draft.installments.length === 0 ? "Defina as parcelas" : "As parcelas não fecham o total da proposta" }]),
+      : [{ step: "pagamento" as StepKey, ok: draft.installments.length > 0 && paymentDiff < 0.005 && !calc?.installmentsProblem, label: "Condições de pagamento",
+      fix: draft.installments.length === 0 ? "Defina as parcelas" : paymentDiff >= 0.005 ? "As parcelas não fecham o total da proposta" : calc?.installmentsProblem ?? "Revise as parcelas" }]),
   ];
   // validade e disponibilidade são recomendação; o resto impede o envio
   const blocking = checks.filter((check) => !check.ok && check.label !== "Validade da proposta" && check.label !== "Disponibilidade dos equipamentos");
@@ -419,7 +419,8 @@ function ProposalEditorPage() {
           {tab === "itens" && <ProposalItemsTab draft={draft} setSections={setSections} calc={calc ?? undefined} options={options} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} />}
           {tab === "pagamento" && rentalKind && <RentalConditionsPanel draft={draft} setDraft={setDraftSafe} readOnly={readOnly} total={total}
             rentTotal={(calc?.sections ?? []).reduce((sum, section, index) => sum + (draft.sections[index]?.kind === "locacao_cliente" ? section.value : 0), 0)} />}
-          {tab === "pagamento" && draft.kind === "servico" && (
+          {/* "Medição de obra" saiu (plano 12): o editor antigo só aparece para rascunho que já era de medição */}
+          {tab === "pagamento" && byMeasurement && (
             <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Como a venda é faturada">
               <span className="text-sm text-muted-foreground mr-1">Faturamento:</span>
               <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">

@@ -9,7 +9,7 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
-import { COMMISSION_BASES, NumField, money, newUid, percent } from "../-shared/commercial";
+import { COMMISSION_BASES, NumField, Tip, money, newUid, percent } from "../-shared/commercial";
 import ProposalSchedule from "./-ProposalSchedule";
 import {
   CustomerOption, DUE_RULE_OPTIONS, DraftInstallment, DueRule, ProposalCalc, ProposalCommission, ProposalDraft, ProposalOptions,
@@ -219,12 +219,43 @@ const split = (parts: number, firstDays = 30, step = 30) => Array.from({ length:
   dueDays: firstDays + step * i, description: parts === 1 ? "Pagamento único" : `Parcela ${i + 1} de ${parts}`,
 }));
 
+const round6 = (value: number) => Math.round(value * 1e6) / 1e6;
+/** Marcos de obra a cada `step`% (o último sempre em 100%). */
+const workMarks = (step: number) => {
+  const marks: number[] = [];
+  for (let mark = step; mark < 100 - 1e-9; mark += step) marks.push(Math.round(mark * 100) / 100);
+  return [...marks, 100];
+};
+/**
+ * Atalho "Por avanço da obra": `share` do total (0–1) dividido em parcelas a
+ * cada `step`% da obra; o resto vira a mobilização (5 dias após o aceite). A
+ * última parcela da série fecha os centavos, para a soma dar 100%.
+ */
+const byWorkProgress = (share: number, step: number): DraftInstallment[] => {
+  const marks = workMarks(step);
+  // 1e-6: 0,7 / 5 dá 0,13999… em ponto flutuante e não pode virar 13,99%
+  const each = Math.floor((share * 1e4) / marks.length + 1e-6) / 1e4;
+  const series = marks.map((mark, i) => installment({
+    percent: i === marks.length - 1 ? round6(share - each * (marks.length - 1)) : each,
+    dueRule: "percentual_obra", dueDays: null, workPercent: mark, description: `Ao atingir ${String(mark).replace(".", ",")}% da obra`,
+  }));
+  return share < 1 ? [installment({ percent: round6(1 - share), dueRule: "dias_apos_aceite", dueDays: 5, description: "Mobilização" }), ...series] : series;
+};
+
 /** Passo 3: parcelas previstas. Viram contas a receber quando houver contrato. */
 export function ProposalPaymentTab({ draft, setDraft, calc, readOnly }: { draft: ProposalDraft; setDraft: SetDraft; calc?: ProposalCalc; readOnly: boolean }) {
   const setList = (updater: (list: DraftInstallment[]) => DraftInstallment[]) => setDraft((d) => ({ ...d, installments: updater(d.installments) }));
   const update = (uid: string, patch: Partial<DraftInstallment>) => setList((list) => list.map((i) => (i.uid === uid ? { ...i, ...patch } : i)));
   const diff = calc?.installmentsDiff ?? 0;
   const [nfDays, setNfDays] = useState("30");
+  // atalho por avanço da obra: quanto do total vai para a série e de quanto em quanto
+  const [workShare, setWorkShare] = useState("70");
+  const [workStep, setWorkStep] = useState("20");
+  const service = draft.kind === "servico";
+  const shareNum = Math.min(100, Math.max(1, Number(workShare) || 0));
+  const stepNum = Math.min(100, Math.max(1, Number(workStep) || 0));
+  const workPreview = workMarks(stepNum);
+  const ruleOptions = service ? DUE_RULE_OPTIONS : DUE_RULE_OPTIONS.filter((option) => option.id !== "percentual_obra");
   // atalho com parcelas já montadas: confirma antes de substituir
   const [pending, setPending] = useState<DraftInstallment[] | null>(null);
   const replace = (list: DraftInstallment[]) => { if (draft.installments.length) setPending(list); else setList(() => list); };
@@ -251,6 +282,23 @@ export function ProposalPaymentTab({ draft, setDraft, calc, readOnly }: { draft:
               <Button type="button" variant="outline" size="sm"
                 onClick={() => replace([installment({ percent: 1, dueRule: "dias_apos_conclusao", dueDays: 0, description: "Na conclusão do serviço" })])}>No fim da obra</Button>
               {/* à vista depois da nota: o operador só informa quantos dias */}
+              {service && (
+                <div className="inline-flex items-center h-8 rounded-md border bg-background shadow-xs text-xs font-medium overflow-hidden">
+                  <span className="pl-3 pr-1.5">Avanço:</span>
+                  <ShadInput value={workShare} inputMode="numeric" maxLength={3} aria-label="Percentual do total distribuído pelo avanço da obra" className="h-6 w-11 px-1 text-center text-xs"
+                    onChange={(event) => setWorkShare(event.target.value.replace(/\D/g, ""))} />
+                  <span className="px-1.5">% a cada</span>
+                  <ShadInput value={workStep} inputMode="numeric" maxLength={3} aria-label="De quanto em quanto por cento da obra" className="h-6 w-11 px-1 text-center text-xs"
+                    onChange={(event) => setWorkStep(event.target.value.replace(/\D/g, ""))} />
+                  <span className="px-1.5">% da obra</span>
+                  <Tip text={`${shareNum < 100 ? `${100 - shareNum}% de mobilização (5 dias após o aceite) + ` : ""}${workPreview.length} parcela${workPreview.length === 1 ? "" : "s"} de ${String(Math.round((shareNum / workPreview.length) * 100) / 100).replace(".", ",")}% aos ${workPreview.map((m) => `${String(m).replace(".", ",")}%`).join(", ")} da obra`}>
+                    <button type="button" className="h-full px-2.5 border-l hover:bg-accent" aria-label="Aplicar parcelas por avanço da obra"
+                      onClick={() => replace(byWorkProgress(shareNum / 100, stepNum))}>
+                      Aplicar
+                    </button>
+                  </Tip>
+                </div>
+              )}
               <div className="inline-flex items-center h-8 rounded-md border bg-background shadow-xs text-xs font-medium overflow-hidden">
                 <span className="pl-3 pr-1.5">NF +</span>
                 <ShadInput value={nfDays} inputMode="numeric" maxLength={3} aria-label="Dias após a nota fiscal" className="h-6 w-11 px-1 text-center text-xs"
@@ -288,13 +336,17 @@ export function ProposalPaymentTab({ draft, setDraft, calc, readOnly }: { draft:
                     : <NumField kind="money" value={item.amount} disabled={readOnly} ariaLabel={`Valor da parcela ${index + 1}`} onChange={(value) => update(item.uid, { amount: value })} />}
                 </F>
                 <F label="Vencimento" className="sm:w-56">
-                  <Select name={`rule-${item.uid}`} state={item.dueRule} disabled={readOnly} modal={false} options={DUE_RULE_OPTIONS}
-                    onChange={(_, value) => update(item.uid, String(value) === "data_fixa" ? { dueRule: "data_fixa", dueDays: null } : { dueRule: String(value) as DueRule, dueDate: null, dueDays: item.dueDays ?? 30 })} />
+                  <Select name={`rule-${item.uid}`} state={item.dueRule} disabled={readOnly} modal={false} options={ruleOptions}
+                    onChange={(_, value) => update(item.uid, String(value) === "data_fixa" ? { dueRule: "data_fixa", dueDays: null, workPercent: null }
+                      : String(value) === "percentual_obra" ? { dueRule: "percentual_obra", dueDate: null, dueDays: null, workPercent: item.workPercent ?? 50 }
+                        : { dueRule: String(value) as DueRule, dueDate: null, dueDays: item.dueDays ?? 30, workPercent: null })} />
                 </F>
-                <F label={item.dueRule === "data_fixa" ? "Data" : "Dias"} className="sm:w-40">
+                <F label={item.dueRule === "data_fixa" ? "Data" : item.dueRule === "percentual_obra" ? "% da obra" : "Dias"} className="sm:w-40">
                   {item.dueRule === "data_fixa"
                     ? <CalendarPicker mode="single" name={`due-${item.uid}`} className="w-full" value={item.dueDate} disabled={readOnly} fromYear={2024} toYear={2040} onValueChange={(_, value) => update(item.uid, { dueDate: value })} />
-                    : <NumField digits={0} value={item.dueDays} disabled={readOnly} ariaLabel={`Dias da parcela ${index + 1}`} onChange={(value) => update(item.uid, { dueDays: value })} />}
+                    : item.dueRule === "percentual_obra"
+                      ? <NumField digits={2} suffix="%" value={item.workPercent ?? null} disabled={readOnly} ariaLabel={`Percentual da obra da parcela ${index + 1}`} onChange={(value) => update(item.uid, { workPercent: value })} />
+                      : <NumField digits={0} value={item.dueDays} disabled={readOnly} ariaLabel={`Dias da parcela ${index + 1}`} onChange={(value) => update(item.uid, { dueDays: value })} />}
                 </F>
                 <div className="sm:w-32 sm:ml-auto text-sm sm:text-right">
                   <p className="text-xs text-muted-foreground">Valor</p>
@@ -323,6 +375,30 @@ export function ProposalPaymentTab({ draft, setDraft, calc, readOnly }: { draft:
           Parcelas somam <b className="tabular-nums">{money(calc?.installmentsTotal)}</b> de <b className="tabular-nums">{money(calc?.totals.total)}</b>.
           {Math.abs(diff) > 0.005 ? ` ${diff > 0 ? "Faltam" : "Sobram"} ${money(Math.abs(diff))}: a proposta só pode ser enviada quando as parcelas fecharem o total.` : " Fechado."}
         </p>
+      )}
+      {calc?.installmentsProblem && (
+        <p className="rounded-md border border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200 px-3 py-2 text-sm">{calc.installmentsProblem}</p>
+      )}
+      {draft.installments.some((item) => item.dueRule === "percentual_obra") && (
+        <p className="text-xs text-muted-foreground">
+          O % da obra vem dos RDOs fechados da ordem de serviço. Quando a obra chega ao marco, a parcela aparece como pronta em Financeiro → A faturar. A nota, porém, só sai quando alguém registrar, na data combinada com o cliente, e dá para adiantar se o cliente pedir.
+        </p>
+      )}
+
+      {service && (
+        <section className="rounded-lg border p-4">
+          <h3 className="font-semibold">Caução contratual</h3>
+          <p className="text-xs text-muted-foreground">Parte de cada nota fica retida pelo cliente e é paga no fim da obra. Deixe zero quando não houver.</p>
+          <div className="mt-3 flex flex-col sm:flex-row gap-3">
+            <F label="Retido de cada nota" className="sm:w-40">
+              <NumField kind="percent" value={draft.depositRate ?? 0} disabled={readOnly} ariaLabel="Percentual da caução" onChange={(value) => setDraft((d) => ({ ...d, depositRate: Math.min(0.3, Math.max(0, value)) }))} />
+            </F>
+            <F label="Liberada após a conclusão" className="sm:w-40">
+              <NumField digits={0} suffix="dias" value={draft.depositReleaseDays ?? 0} disabled={readOnly || !(draft.depositRate ?? 0)} ariaLabel="Dias após a conclusão para liberar a caução"
+                onChange={(value) => setDraft((d) => ({ ...d, depositReleaseDays: Math.max(0, Math.round(value)) }))} />
+            </F>
+          </div>
+        </section>
       )}
     </div>
   );

@@ -109,16 +109,16 @@ export function SupplierForm({ formData, close, onSaved }: { formData?: Supplier
       </div>
       <div className="rounded border p-3 flex flex-col gap-4">
         <p className="font-medium text-sm">Endereço {loadingCep && <span className="text-xs font-normal text-muted-foreground">buscando o CEP…</span>}</p>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {text("zipcode", "CEP", { max: 9, placeholder: "Só números", onChange: setCep })}
-          {text("street", "Rua", { max: 255, className: "col-span-2" })}
-        </div>
-        <div className="grid grid-cols-3 gap-4">
           {text("number", "Número", { max: 20, placeholder: "Ou S/N" })}
-          {text("complement", "Complemento", { max: 255, className: "col-span-2" })}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_5rem] gap-4">
+        {text("street", "Rua", { max: 255 })}
+        <div className="grid grid-cols-2 gap-4">
+          {text("complement", "Complemento", { max: 255 })}
           {text("neighborhood", "Bairro", { max: 120 })}
+        </div>
+        <div className="grid grid-cols-[1fr_4.5rem] gap-4">
           {text("city", "Cidade", { max: 120 })}
           {text("state", "UF", { max: 2 })}
         </div>

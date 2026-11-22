@@ -1,3 +1,4 @@
+import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -76,7 +77,7 @@ function SellersPage() {
         )}
         {data?.rows.map((row) => (
           <button key={row.id} type="button" onClick={() => open(row.id)}
-            className="w-full text-left flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+            className={`w-full text-left flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
             <div className="flex-1 min-w-0 flex items-center gap-3 lg:pr-4">
               <Avatar className="border h-9 w-9">
                 <AvatarImage src={row.imageUrl || undefined} alt={row.name} />

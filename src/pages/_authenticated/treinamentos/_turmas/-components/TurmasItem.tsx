@@ -1,4 +1,6 @@
 // Serviços
+import tailwindUtils from "@/utils/tailwind.utils";
+import { clickableRow } from "@/utils/clickable-row";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { patch } from "@/services/api";
@@ -60,6 +62,8 @@ const SiteServicesItem = ({
 }: ItemsProps) => {
   const { can } = useVerify();
   const navigate = useNavigate();
+  const canOpen = can(`update_${entity.ability}`);
+  const openClass = () => navigate({ to: "/treinamentos/turmas/$turmaId", params: { turmaId: String(item.id) } });
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
   const { theme } = useTheme();
@@ -171,7 +175,8 @@ const SiteServicesItem = ({
 
       {/* Conteúdo do item */}
       <div
-        className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}
+        {...(canOpen ? clickableRow(openClass) : {})}
+        className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full ${canOpen ? tailwindUtils.itemClickable : "border-b"}`}
       >
         {/* Badges com ScrollArea */}
         <div className="absolute -top-1 left-4 right-14 lg:right-auto lg:left-4">

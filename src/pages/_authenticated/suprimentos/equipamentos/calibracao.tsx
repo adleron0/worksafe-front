@@ -1,3 +1,5 @@
+import { clickableRow } from "@/utils/clickable-row";
+import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -68,7 +70,7 @@ function ServicesPage() {
             <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm">Fora agora ({data.open.length})</h2>
             {data.open.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhuma peça fora para serviço.</p>}
             {data.open.map((service) => (
-              <div key={service.id} className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 border-t text-sm">
+              <div key={service.id} {...clickableRow()} className={`flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 border-t text-sm hover:bg-card ${tailwindUtils.cardClickable}`}>
                 <div className="flex-1 min-w-0 lg:pr-4">
                   <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(service.unitId) }} className="font-semibold tabular-nums hover:underline">{service.tag}</Link>
                   <span className="text-muted-foreground"> · {service.item}</span>
@@ -96,7 +98,7 @@ function ServicesPage() {
             <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm">Calibração vencida ou a vencer ({data.due.length})</h2>
             {data.due.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhuma calibração vencendo nos próximos 60 dias.</p>}
             {data.due.map((unit) => (
-              <div key={unit.id} className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 border-t text-sm">
+              <div key={unit.id} {...clickableRow()} className={`flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 border-t text-sm hover:bg-card ${tailwindUtils.cardClickable}`}>
                 <div className="flex-1 min-w-0 lg:pr-4">
                   <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(unit.id) }} className="font-semibold tabular-nums hover:underline">{unit.tag}</Link>
                   <span className="text-muted-foreground"> · {unit.item}</span>
@@ -115,7 +117,7 @@ function ServicesPage() {
             <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm">Histórico</h2>
             {data.history.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nada ainda.</p>}
             {data.history.map((service) => (
-              <div key={service.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-t text-sm">
+              <div key={service.id} {...clickableRow()} className={`flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-t text-sm hover:bg-card ${tailwindUtils.cardClickable}`}>
                 <div className="lg:w-28 tabular-nums">{dateBr(service.returnedAt ?? service.sentAt)}</div>
                 <div className="flex-1 min-w-0 lg:pr-4">
                   <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(service.unitId) }} className="font-medium hover:underline">{service.tag}</Link>

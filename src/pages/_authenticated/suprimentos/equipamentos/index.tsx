@@ -1,3 +1,4 @@
+import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -98,7 +99,7 @@ function UnitsPage() {
           ))}
           {rows.map((unit) => (
             <button key={unit.id} type="button" onClick={() => navigate({ to: "/suprimentos/equipamentos/$unitId", params: { unitId: String(unit.id) } })}
-              className="w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+              className={`w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
               <div className="lg:w-40">
                 <p className="font-semibold tabular-nums">{unit.tag}</p>
                 {unit.serialNumber && <p className="text-xs text-muted-foreground">série {unit.serialNumber}</p>}

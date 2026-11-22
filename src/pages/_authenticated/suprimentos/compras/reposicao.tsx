@@ -1,3 +1,5 @@
+import { clickableRow } from "@/utils/clickable-row";
+import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -76,7 +78,7 @@ function ReorderPage() {
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
           {!isLoading && !rows.length && <p className="p-6 text-sm text-muted-foreground">Nenhum item abaixo do mínimo. Só entram aqui os itens com estoque mínimo definido na ficha.</p>}
           {rows.map((row) => (
-            <div key={row.id} className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm">
+            <div key={row.id} {...clickableRow()} className={`flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="lg:w-10 shrink-0 lg:-mr-3">
                   <Checkbox aria-label={`Comprar ${row.name}`} checked={!!chosen[row.id]} onCheckedChange={(checked) => setChosen((current) => ({ ...current, [row.id]: checked === true }))} />

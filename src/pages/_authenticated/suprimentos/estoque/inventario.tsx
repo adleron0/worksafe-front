@@ -1,3 +1,4 @@
+import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -50,7 +51,7 @@ function CountsPage() {
           {isLoading && Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
           {!isLoading && !data?.length && <p className="p-6 text-sm text-muted-foreground">Nenhuma contagem ainda.</p>}
           {data?.map((row) => (
-            <button key={row.id} type="button" onClick={() => open(row.id)} className="w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+            <button key={row.id} type="button" onClick={() => open(row.id)} className={`w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
               <div className="lg:w-20 font-semibold tabular-nums">#{row.id}</div>
               <div className="flex-1 min-w-0 flex items-center gap-2">{row.location} {row.blindCount && <Pill>Às cegas</Pill>}</div>
               <div className="lg:w-32"><Pill tone={countStatusTone(row.status)}>{row.status === "aberta" ? "Aberta" : row.status === "fechada" ? "Fechada" : "Cancelada"}</Pill></div>

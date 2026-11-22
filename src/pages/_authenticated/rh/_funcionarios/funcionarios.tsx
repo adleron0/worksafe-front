@@ -1,3 +1,4 @@
+import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -84,7 +85,7 @@ function EmployeesPage() {
           {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
           {data?.rows.map((row) => (
             <button key={row.id} type="button" onClick={() => open(row.id)}
-              className="w-full text-left flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+              className={`w-full text-left flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
               <div className="flex-1 min-w-0 xl:pr-4">
                 <p className="font-medium truncate">{row.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{[row.registration && `matrícula ${row.registration}`, row.hasUser && "tem acesso ao sistema"].filter(Boolean).join(" · ") || "—"}</p>

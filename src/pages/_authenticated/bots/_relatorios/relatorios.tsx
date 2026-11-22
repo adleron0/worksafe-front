@@ -1,3 +1,4 @@
+import tailwindUtils from "@/utils/tailwind.utils";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import useVerify from "@/hooks/use-verify";
@@ -32,7 +33,7 @@ function ReportsPage() {
       {data && data.length > 0 && (
         <div className="rounded-lg border">
           {data.map((row) => (
-            <Link key={row.id} to="/bots/relatorios/$reportId" params={{ reportId: String(row.id) }} className="flex items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 hover:bg-muted">
+            <Link key={row.id} to="/bots/relatorios/$reportId" params={{ reportId: String(row.id) }} className={`flex items-center gap-3 px-4 py-3 text-sm last:border-b-0 ${tailwindUtils.itemClickable}`}>
               <Icon name="file-chart-column" className="h-4 w-4 text-muted-foreground" />
               <span className="flex-1 font-medium">{row.title}</span>
               <span className="text-xs text-muted-foreground">{dateTimeBr(row.createdAt)}</span>

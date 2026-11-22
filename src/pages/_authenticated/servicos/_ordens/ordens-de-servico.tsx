@@ -1,3 +1,5 @@
+import { clickableRow } from "@/utils/clickable-row";
+import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -162,7 +164,7 @@ function OrdersPage() {
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
           {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
           {data?.rows.map((row) => (
-            <div key={row.id} className="relative flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+            <div key={row.id} {...clickableRow(() => open(row.id))} className={`relative flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
               <div className="lg:w-36">
                 <button type="button" className="font-semibold tabular-nums hover:underline text-left" onClick={() => open(row.id)}>{row.number}</button>
                 <p className="text-xs text-muted-foreground">{order(row)}</p>

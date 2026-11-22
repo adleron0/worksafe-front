@@ -1,3 +1,4 @@
+import tailwindUtils from "@/utils/tailwind.utils";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/services/api";
@@ -145,7 +146,7 @@ export function ReportLine({ row, orderId, context }: { row: ReportRow; orderId:
   return (
     <li>
       <Link to="/servicos/ordens-de-servico/$orderId/rdo/$reportId" params={{ orderId: String(orderId), reportId: String(row.id) }}
-        className="flex items-start gap-3 py-2.5 text-sm hover:bg-muted/40 -mx-2 px-2 rounded-md">
+        className={`flex items-start gap-3 py-2.5 text-sm -mx-2 px-2 rounded-md hover:bg-card ${tailwindUtils.cardClickable}`}>
         <Icon name={WEATHER_ICON[row.weather] ?? "sun"} className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
         <div className="min-w-0 flex-1">
           <p className="font-medium">{dateBr(row.date)}{row.shift !== "integral" ? ` · ${row.shiftLabel}` : ""} <ReportStatusBadge status={row.status} returned={!!row.returned} /></p>

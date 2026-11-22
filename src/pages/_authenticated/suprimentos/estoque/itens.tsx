@@ -1,3 +1,4 @@
+import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ImportCsvButton } from "../-shared/stock-movements";
 import { useState } from "react";
@@ -108,7 +109,7 @@ function ItemsPage() {
             </div>
           ))}
           {data?.rows.map((item) => (
-            <button key={item.id} type="button" onClick={() => open(item.id)} className="w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+            <button key={item.id} type="button" onClick={() => open(item.id)} className={`w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
               <div className="lg:w-32 font-semibold tabular-nums">{item.code}</div>
               <div className="flex-1 min-w-0 lg:pr-4">
                 <p className="font-medium truncate flex items-center gap-2">{item.name} {!item.active && <Pill>Inativo</Pill>} {item.low && <Pill tone="red">Abaixo do mínimo</Pill>}</p>

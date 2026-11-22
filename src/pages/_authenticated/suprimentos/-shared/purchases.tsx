@@ -1,3 +1,5 @@
+import { clickableRow } from "@/utils/clickable-row";
+import tailwindUtils from "@/utils/tailwind.utils";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -311,7 +313,7 @@ export function TargetPurchasesPanel({ target, canRequest }: { target: PurchaseT
           </p>
           <ul className="mt-3 divide-y">
             {data.rows.map((row) => (
-              <li key={row.id} className="py-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <li key={row.id} {...(seesPurchases ? clickableRow() : {})} className={`py-2 flex flex-wrap items-center gap-x-3 gap-y-1 ${seesPurchases ? `-mx-2 px-2 rounded-md hover:bg-card ${tailwindUtils.cardClickable}` : ""}`}>
                 {seesPurchases
                   ? <Link to="/suprimentos/pedidos-de-compra/$purchaseId" params={{ purchaseId: String(row.id) }} className="font-medium tabular-nums hover:underline">{row.number}</Link>
                   : <span className="font-medium tabular-nums">{row.number}</span>}

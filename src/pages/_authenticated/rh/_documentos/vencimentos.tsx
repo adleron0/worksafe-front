@@ -1,3 +1,5 @@
+import { clickableRow } from "@/utils/clickable-row";
+import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -85,7 +87,7 @@ function ExpiringPage() {
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
           {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
           {data?.rows.map((row) => (
-            <div key={row.key} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+            <div key={row.key} {...clickableRow()} className={`flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
               <div className="flex-1 min-w-0 lg:pr-4"><Link to="/rh/funcionarios/$employeeId" params={{ employeeId: String(row.employee.id) }} className="font-medium hover:underline">{row.employee.name}</Link></div>
               <div className="lg:w-72 lg:pr-4 truncate">{row.typeName}</div>
               <div className="lg:w-32"><DocStatusBadge status={row.status} label={row.statusLabel} /></div>

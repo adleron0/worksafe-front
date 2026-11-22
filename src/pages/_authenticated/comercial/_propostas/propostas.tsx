@@ -1,3 +1,5 @@
+import { clickableRow } from "@/utils/clickable-row";
+import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -334,7 +336,7 @@ function ProposalsPage() {
           </p>
         )}
         {data?.rows.map((row) => (
-          <div key={row.id} className={cn("relative flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40", row.inactiveAt && "opacity-60")}>
+          <div key={row.id} {...clickableRow(() => open(row.id))} className={cn("flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 last:border-b-0 text-sm", tailwindUtils.itemClickable, row.inactiveAt && "opacity-60")}>
             <div className="lg:w-40">
               <button type="button" className="font-semibold tabular-nums hover:underline text-left" onClick={() => open(row.id)}>{row.number}</button>
               <KindBadge kind={row.kind} className="mt-0.5" />

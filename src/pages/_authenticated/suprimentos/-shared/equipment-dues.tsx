@@ -1,3 +1,5 @@
+import { clickableRow } from "@/utils/clickable-row";
+import tailwindUtils from "@/utils/tailwind.utils";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -80,7 +82,7 @@ export function DuesPanel({ initialType = "" }: { initialType?: string }) {
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
           {!isLoading && !rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
           {rows.map((row, index) => (
-            <div key={`${row.type}-${row.unitId ?? row.lotId ?? row.itemId}-${index}`} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+            <div key={`${row.type}-${row.unitId ?? row.lotId ?? row.itemId}-${index}`} {...(row.unitId || row.itemId ? clickableRow() : {})} className={`flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm ${row.unitId || row.itemId ? tailwindUtils.itemClickable : "hover:bg-muted/40"}`}>
               <div className="flex-1 min-w-0 lg:pr-4 font-medium truncate">
                 {row.unitId ? <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(row.unitId) }} className="hover:underline">{row.target}</Link>
                   : row.itemId ? <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: String(row.itemId) }} className="hover:underline">{row.target}</Link> : row.target}

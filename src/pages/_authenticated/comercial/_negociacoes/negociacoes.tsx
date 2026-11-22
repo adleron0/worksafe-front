@@ -1,3 +1,4 @@
+import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -72,7 +73,7 @@ function DealsPage() {
         <ul className="grid gap-2">
           {rows.map((row) => (
             <li key={row.id}>
-              <button type="button" onClick={() => open(row.id)} className="w-full text-left rounded-lg border p-3 hover:bg-muted/50 grid gap-2 md:grid-cols-[1fr_auto] md:items-center">
+              <button type="button" onClick={() => open(row.id)} className={`w-full text-left rounded-lg border p-3 grid gap-2 md:grid-cols-[1fr_auto] md:items-center hover:bg-card ${tailwindUtils.cardClickable}`}>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold tabular-nums">{row.number}</span>

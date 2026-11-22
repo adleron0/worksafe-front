@@ -1,3 +1,5 @@
+import { clickableRow } from "@/utils/clickable-row";
+import tailwindUtils from "@/utils/tailwind.utils";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import useVerify from "@/hooks/use-verify";
@@ -37,7 +39,7 @@ function DiaryPage() {
               const draft = order.todayReports.find((report) => report.status !== "fechado");
               const closed = order.todayReports.length > 0 && !draft;
               return (
-                <div key={order.id} className="rounded-lg border p-4 grid gap-2">
+                <div key={order.id} {...clickableRow()} className={`rounded-lg border p-4 grid gap-2 hover:bg-card ${tailwindUtils.cardClickable}`}>
                   <div className="min-w-0">
                     <p className="font-medium truncate">{order.customer}</p>
                     <p className="text-sm text-muted-foreground truncate">

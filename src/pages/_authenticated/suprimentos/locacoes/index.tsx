@@ -1,3 +1,4 @@
+import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -127,7 +128,7 @@ function RentalsPage() {
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
           {!isLoading && !rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
           {rows.map((row) => (
-            <button key={row.id} type="button" onClick={() => open(row.id)} className="w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+            <button key={row.id} type="button" onClick={() => open(row.id)} className={`w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
               <div className="lg:w-36">
                 <p className="font-semibold tabular-nums">{row.number}</p>
                 <p className="text-xs text-muted-foreground tabular-nums">{row.contract ? row.contract.number : "sem venda"}</p>

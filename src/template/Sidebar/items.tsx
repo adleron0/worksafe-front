@@ -88,6 +88,30 @@ export const groups: SidebarGroup[] = [
     ],
   },
   {
+    label: "Treinamentos",
+    items: [
+      {
+        title: "Treinamentos",
+        icon: "hard-hat",
+        path: "/treinamentos",
+        isProduct: "treinamentos",
+        ability: "treinamentos",
+        subitems: [
+          { title: "Dashboard", icon: "chart-column-big", path: "/treinamentos" },
+          { title: "Turmas", icon: "clipboard-list", path: "/treinamentos/turmas" },
+          { title: "Inscrições", icon: "ticket-check", path: "/treinamentos/inscricoes" },
+          { title: "Alunos", icon: "graduation-cap", path: "/treinamentos/alunos" },
+          { title: "Certificados", icon: "file-badge", path: "/treinamentos/certificados" },
+          { title: "Divulgação", ability: "divulgacao", icon: "megaphone", path: "/treinamentos/divulgacao" },
+          { divider: "cadastros" },
+          { title: "Cursos", ability: "treinamentos", icon: "square-library", path: "/treinamentos/cursos" },
+          { title: "Instrutores", ability: "instrutores", icon: "contact", path: "/treinamentos/instrutores" },
+          { title: "Modelos de certificado", icon: "file-pen", path: "/treinamentos/certificados-modelos" },
+        ],
+      },
+    ],
+  },
+  {
     label: "Suprimentos",
     items: [
       {
@@ -155,30 +179,6 @@ export const groups: SidebarGroup[] = [
           { divider: "cadastros" },
           { title: "Locais", ability: "locais", icon: "map-pinned", path: "/rh/locais" },
           { title: "Tipos de Documento", ability: "documentos_funcionarios", icon: "folder-cog", path: "/rh/tipos-de-documento" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Treinamentos",
-    items: [
-      {
-        title: "Treinamentos",
-        icon: "hard-hat",
-        path: "/treinamentos",
-        isProduct: "treinamentos",
-        ability: "treinamentos",
-        subitems: [
-          { title: "Dashboard", icon: "chart-column-big", path: "/treinamentos" },
-          { title: "Turmas", icon: "clipboard-list", path: "/treinamentos/turmas" },
-          { title: "Inscrições", icon: "ticket-check", path: "/treinamentos/inscricoes" },
-          { title: "Alunos", icon: "graduation-cap", path: "/treinamentos/alunos" },
-          { title: "Certificados", icon: "file-badge", path: "/treinamentos/certificados" },
-          { title: "Divulgação", ability: "divulgacao", icon: "megaphone", path: "/treinamentos/divulgacao" },
-          { divider: "cadastros" },
-          { title: "Cursos", ability: "treinamentos", icon: "square-library", path: "/treinamentos/cursos" },
-          { title: "Instrutores", ability: "instrutores", icon: "contact", path: "/treinamentos/instrutores" },
-          { title: "Modelos de certificado", icon: "file-pen", path: "/treinamentos/certificados-modelos" },
         ],
       },
     ],

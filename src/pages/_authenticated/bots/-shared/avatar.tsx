@@ -130,16 +130,30 @@ const BADGE: Partial<Record<BotStatus, string>> = {
   sem_chave: bubble("#EF4444", "#fff", "!"),
 };
 
-type Mood ="idle" | "working" | "waiting" | "sleepy";
-const MOOD: Record<BotStatus, Mood> = { trabalhando: "working", aguardando: "waiting", disponivel: "idle", sem_chave: "sleepy", desligado: "sleepy" };
+type Mood = "idle" | "working" | "waiting" | "sleepy" | "off";
+const MOOD: Record<BotStatus, Mood> = { trabalhando: "working", aguardando: "waiting", disponivel: "idle", sem_chave: "sleepy", desligado: "off" };
 
-function eyesSvg(look: AvatarLook) {
+/** Olhos mudam com o estado: normais, apertados de concentração, arregalados esperando, sonolentos ou fechados. */
+function eyesSvg(look: AvatarLook, mood: Mood) {
   const [cx, cy, g] = look.eyes;
-  const eye = (x: number, side: number) =>
-    `<rect x="${x - 3.6}" y="${cy - 8}" width="7.2" height="16" rx="3.6" fill="${INK}" transform="rotate(-10 ${x} ${cy})"/>` +
-    (look.female
-      ? `<g stroke="${INK}" stroke-width="2.2" stroke-linecap="round" transform="rotate(-10 ${x} ${cy})"><path d="M${x + side * 2.6} ${cy - 5} l${side * 4.5} -3.2"/><path d="M${x + side * 3.4} ${cy - 1} l${side * 4.8} -1"/></g>`
-      : "");
+  const rot = (x: number) => `transform="rotate(-10 ${x} ${cy})"`;
+  const lashes = (x: number, side: number, y = cy) =>
+    look.female ? `<g stroke="${INK}" stroke-width="2.2" stroke-linecap="round" ${rot(x)}><path d="M${x + side * 2.6} ${y - 5} l${side * 4.5} -3.2"/><path d="M${x + side * 3.4} ${y - 1} l${side * 4.8} -1"/></g>` : "";
+  const eye = (x: number, side: number) => {
+    switch (mood) {
+      case "working": // apertados, com sobrancelha de concentração
+        return `<rect x="${x - 3.6}" y="${cy - 5}" width="7.2" height="11" rx="3.6" fill="${INK}" ${rot(x)}/>${lashes(x, side, cy + 2)}<path d="M${x + side * 5.5} ${cy - 11} Q${x} ${cy - 12.5} ${x - side * 4.5} ${cy - 10.5}" fill="none" stroke="${INK}" stroke-width="2.4" stroke-linecap="round"/>`;
+      case "waiting": // arregalados e brilhando, sobrancelha levantada
+        return `<ellipse cx="${x}" cy="${cy}" rx="5" ry="9.5" fill="${INK}" ${rot(x)}/><circle cx="${x + 1.6}" cy="${cy - 4}" r="1.9" fill="#fff"/>${lashes(x, side, cy - 2)}<path d="M${x - 5} ${cy - 15} Q${x} ${cy - 19} ${x + 5} ${cy - 15}" fill="none" stroke="${INK}" stroke-width="2.4" stroke-linecap="round"/>`;
+      case "sleepy": // pálpebra caída
+        return `<rect x="${x - 3.6}" y="${cy}" width="7.2" height="6" rx="3" fill="${INK}" ${rot(x)}/><path d="M${x - 6} ${cy - 1} L${x + 6} ${cy - 1}" stroke="${INK}" stroke-width="2.4" stroke-linecap="round" ${rot(x)}/>`;
+      case "off": // dormindo
+        return `<path d="M${x - 5.5} ${cy} Q${x} ${cy + 5.5} ${x + 5.5} ${cy}" fill="none" stroke="${INK}" stroke-width="3.2" stroke-linecap="round"/>` +
+          (look.female ? `<path d="M${x + side * 5.5} ${cy} l${side * 3} 2.6" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>` : "");
+      default:
+        return `<rect x="${x - 3.6}" y="${cy - 8}" width="7.2" height="16" rx="3.6" fill="${INK}" ${rot(x)}/>${lashes(x, side)}`;
+    }
+  };
   return `${eye(cx - g, -1)}${eye(cx + g, 1)}`;
 }
 
@@ -149,29 +163,31 @@ function cheeks(look: AvatarLook) {
   return `<ellipse cx="${cx - g - 7}" cy="${cy + 10}" rx="5" ry="3" fill="#FF6F91" opacity=".35"/><ellipse cx="${cx + g + 7}" cy="${cy + 10}" rx="5" ry="3" fill="#FF6F91" opacity=".35"/>`;
 }
 
+const ZZZ = [0, 1, 2].map((i) => `<text class="bot-z" style="animation-delay:${i}s" x="${72 + i * 4}" y="${30 - i * 3}" font-size="${10 + i * 2}" font-weight="700" font-family="system-ui, sans-serif" fill="#64748b">z</text>`).join("");
+
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
-/** Vida do rosto: piscadas, olhares e inclinações sorteadas, cada rosto no seu tempo. */
+/** Vida do rosto: piscadas, olhares e inclinações sorteadas, cada rosto no seu tempo e do jeito do estado. */
 function useAlive(mood: Mood, eyes: RefObject<SVGGElement | null>, lid: RefObject<SVGGElement | null>, tilt: RefObject<SVGGElement | null>) {
   useEffect(() => {
     if (typeof window === "undefined" || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
     const timers = new Set<ReturnType<typeof setTimeout>>();
     const later = (fn: () => void, ms: number) => { const t = setTimeout(() => { timers.delete(t); fn(); }, ms); timers.add(t); };
-    const restLid = mood === "sleepy" ? "scaleY(.5)" : "";
     const setLid = (value: string) => { if (lid.current) lid.current.style.transform = value; };
     const lookAt = (x: number, y: number) => { if (eyes.current) eyes.current.style.transform = `translate(${x}px, ${y}px)`; };
     const lean = (deg: number) => { if (tilt.current) tilt.current.style.transform = deg ? `rotate(${deg}deg)` : ""; };
-    setLid(restLid);
-    lookAt(0, mood === "sleepy" ? 3 : 0);
-    lean(0);
+    setLid("");
+    lookAt(0, 0);
+    lean(mood === "off" ? -7 : 0);
+    if (mood === "off") return () => timers.forEach(clearTimeout);
 
     const blink = () => {
       const slow = mood === "sleepy";
       setLid("scaleY(.08)");
-      later(() => setLid(restLid), slow ? 320 : 120);
-      if (!slow && Math.random() < 0.22) later(() => { setLid("scaleY(.08)"); later(() => setLid(restLid), 110); }, 260);
+      later(() => setLid(""), slow ? 420 : 120);
+      if (!slow && Math.random() < 0.22) later(() => { setLid("scaleY(.08)"); later(() => setLid(""), 110); }, 260);
     };
-    const blinkLoop = () => later(() => { blink(); blinkLoop(); }, mood === "sleepy" ? rand(2500, 5000) : rand(1800, 5500));
+    const blinkLoop = () => later(() => { blink(); blinkLoop(); }, mood === "sleepy" ? rand(2500, 5000) : mood === "working" ? rand(2500, 6500) : rand(1800, 5000));
 
     let rx = -4.5, ry = -1;
     const lookLoop = () => {
@@ -182,26 +198,28 @@ function useAlive(mood: Mood, eyes: RefObject<SVGGElement | null>, lid: RefObjec
         later(lookLoop, rand(700, 2800));
       } else if (mood === "working") {
         rx += rand(1.6, 2.6);
-        if (rx > 4.5) { rx = -4.5; ry = ry >= 2 ? -1.5 : ry + 1.2; if (Math.random() < 0.4) blink(); }
+        if (rx > 4.5) { rx = -4.5; ry = ry >= 2 ? -1.5 : ry + 1.2; if (Math.random() < 0.3) blink(); }
         lookAt(rx, ry);
-        later(lookLoop, rand(220, 420));
+        later(lookLoop, rand(200, 380));
       } else if (mood === "waiting") {
-        const up = Math.random() < 0.5;
-        lookAt(up ? rand(-1.5, 1.5) : 0, up ? -4.2 : 0);
+        const up = Math.random() < 0.4;
+        lookAt(up ? rand(-1.5, 1.5) : 0, up ? -3.5 : 0);
         later(lookLoop, rand(900, 2000));
       } else {
-        lookAt(rand(-2, 2), 3);
-        later(lookLoop, rand(2000, 4000));
+        lookAt(rand(-1.5, 1.5), 2);
+        later(lookLoop, rand(2500, 4500));
       }
     };
+    let nod = false;
     const tiltLoop = () => {
       if (mood === "waiting") { lean((Math.random() < 0.5 ? -1 : 1) * rand(5, 9)); later(tiltLoop, rand(800, 1600)); }
       else if (mood === "idle") { lean(Math.random() < 0.5 ? rand(-6, 6) : 0); later(tiltLoop, rand(1500, 4500)); }
+      else if (mood === "sleepy") { nod = !nod; lean(nod ? 8 : 0); later(tiltLoop, nod ? rand(1200, 2000) : rand(2500, 4000)); } // cochilando
     };
 
     later(blinkLoop, rand(0, 1500));
     later(lookLoop, rand(0, 1500));
-    later(tiltLoop, rand(1500, 5000));
+    later(tiltLoop, rand(1000, 4000));
     return () => timers.forEach(clearTimeout);
   }, [mood, eyes, lid, tilt]);
 }
@@ -236,10 +254,11 @@ export function BotAvatar({ look: lookKey, size = 48, status, className = "" }: 
             <ellipse cx="36" cy="40" rx="8" ry="4.5" fill="#fff" opacity="0.22" transform="rotate(-25 36 40)" />
             {look.front && <g dangerouslySetInnerHTML={{ __html: look.front }} />}
             <g dangerouslySetInnerHTML={{ __html: cheeks(look) }} />
-            <g ref={eyes} className="bot-eyes"><g ref={lid} className="bot-lid" dangerouslySetInnerHTML={{ __html: eyesSvg(look) }} /></g>
+            <g ref={eyes} className="bot-eyes"><g ref={lid} className="bot-lid" dangerouslySetInnerHTML={{ __html: eyesSvg(look, mood) }} /></g>
             {look.over && <g dangerouslySetInnerHTML={{ __html: look.over }} />}
           </g>
         </g>
+        {mood === "off" && size >= 32 && <g dangerouslySetInnerHTML={{ __html: ZZZ }} />}
         {status && size >= 40 && BADGE[status] && <g dangerouslySetInnerHTML={{ __html: BADGE[status] }} />}
       </svg>
       {status && (
@@ -259,8 +278,14 @@ export function BotAvatar({ look: lookKey, size = 48, status, className = "" }: 
         .bot-idle .bot-body { animation: botBreathe var(--d, 3.4s) ease-in-out infinite var(--dl, 0s); }
         .bot-working .bot-body { animation: botBob .9s ease-in-out infinite var(--dl, 0s); }
         .bot-working .bot-shadow { animation: botShadow .9s ease-in-out infinite var(--dl, 0s); }
-        .bot-sleepy .bot-tilt, .bot-sleepy .bot-shadow { filter: grayscale(1); opacity: .6; }
-        .bot-sleepy .bot-body { transform: scale(1.04, .95); }
+        .bot-waiting .bot-body { animation: botHey 2.4s ease-in-out infinite var(--dl, 0s); }
+        .bot-sleepy .bot-tilt, .bot-sleepy .bot-shadow, .bot-off .bot-tilt, .bot-off .bot-shadow { filter: grayscale(1); opacity: .6; }
+        .bot-sleepy .bot-body { animation: botBreathe 5s ease-in-out infinite var(--dl, 0s); }
+        .bot-off .bot-body { animation: botSnore 3s ease-in-out infinite var(--dl, 0s); }
+        .bot-av .bot-z { opacity: 0; transform-box: fill-box; animation: botZ 3s ease-out infinite; }
+        @keyframes botHey { 0%, 62%, 100% { transform: translateY(0) scale(1) } 70% { transform: scale(1.05, .93) } 80% { transform: translateY(-7px) scale(.97, 1.04) } 90% { transform: scale(1.03, .97) } }
+        @keyframes botSnore { 50% { transform: scale(1.05, .95) } }
+        @keyframes botZ { 0% { opacity: 0; transform: translate(0, 0) } 25% { opacity: 1 } 100% { opacity: 0; transform: translate(6px, -14px) } }
         @keyframes botBreathe { 50% { transform: scale(1.025, .975) } }
         @keyframes botBob { 50% { transform: translateY(-3px) } }
         @keyframes botShadow { 50% { transform: scaleX(.9) } }

@@ -36,9 +36,9 @@ function TeamPage() {
     <div className="grid gap-5">
       {/* topo */}
       <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/15 via-background to-background p-6">
-        <div className="absolute -right-6 -top-6 hidden opacity-90 sm:flex">
-          {members.slice(0, 4).map((member, index) => (
-            <BotAvatar key={member.id} look={member.avatar} size={72} className={index ? "-ml-5" : ""} />
+        <div className="absolute right-6 top-1/2 hidden -translate-y-1/2 gap-1 lg:flex">
+          {members.slice(0, 6).map((member) => (
+            <BotAvatar key={member.id} look={member.avatar} size={60} status={member.status} />
           ))}
         </div>
         <p className="text-xs font-semibold uppercase tracking-widest text-primary">Equipe de assistentes</p>

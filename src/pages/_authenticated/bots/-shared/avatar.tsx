@@ -121,7 +121,16 @@ export const STATUS_TEXT: Record<BotStatus, string> = {
   trabalhando: "Trabalhando", aguardando: "Esperando você", disponivel: "Disponível", sem_chave: "Sem chave de IA", desligado: "Desligado",
 };
 
-type Mood = "idle" | "working" | "waiting" | "sleepy";
+/** balãozinho do estado, para dar para ler mesmo parado (só nos rostos maiores; nos pequenos fica a bolinha) */
+const bubble = (fill: string, ink: string, text: string) =>
+  `<g transform="translate(76 0)"><circle cx="10" cy="10" r="10" fill="${fill}" stroke="#fff" stroke-width="2"/><text x="10" y="15" text-anchor="middle" font-size="14" font-weight="600" font-family="system-ui, sans-serif" fill="${ink}">${text}</text></g>`;
+const BADGE: Partial<Record<BotStatus, string>> = {
+  trabalhando: `<g transform="translate(68 1)"><rect width="30" height="16" rx="8" fill="#fff" stroke="#D3D1C7"/>${[8, 15, 22].map((x, i) => `<circle class="bot-dot" style="animation-delay:${i * 0.2}s" cx="${x}" cy="8" r="2.3" fill="#5F5E5A"/>`).join("")}</g>`,
+  aguardando: bubble("#F59E0B", "#412402", "?"),
+  sem_chave: bubble("#EF4444", "#fff", "!"),
+};
+
+type Mood ="idle" | "working" | "waiting" | "sleepy";
 const MOOD: Record<BotStatus, Mood> = { trabalhando: "working", aguardando: "waiting", disponivel: "idle", sem_chave: "sleepy", desligado: "sleepy" };
 
 function eyesSvg(look: AvatarLook) {
@@ -231,6 +240,7 @@ export function BotAvatar({ look: lookKey, size = 48, status, className = "" }: 
             {look.over && <g dangerouslySetInnerHTML={{ __html: look.over }} />}
           </g>
         </g>
+        {status && size >= 40 && BADGE[status] && <g dangerouslySetInnerHTML={{ __html: BADGE[status] }} />}
       </svg>
       {status && (
         <span
@@ -249,7 +259,7 @@ export function BotAvatar({ look: lookKey, size = 48, status, className = "" }: 
         .bot-idle .bot-body { animation: botBreathe var(--d, 3.4s) ease-in-out infinite var(--dl, 0s); }
         .bot-working .bot-body { animation: botBob .9s ease-in-out infinite var(--dl, 0s); }
         .bot-working .bot-shadow { animation: botShadow .9s ease-in-out infinite var(--dl, 0s); }
-        .bot-sleepy { filter: grayscale(1); opacity: .6; }
+        .bot-sleepy .bot-tilt, .bot-sleepy .bot-shadow { filter: grayscale(1); opacity: .6; }
         .bot-sleepy .bot-body { transform: scale(1.04, .95); }
         @keyframes botBreathe { 50% { transform: scale(1.025, .975) } }
         @keyframes botBob { 50% { transform: translateY(-3px) } }
@@ -257,6 +267,8 @@ export function BotAvatar({ look: lookKey, size = 48, status, className = "" }: 
         @keyframes botSwing { 0%, 100% { transform: rotate(-5deg) } 50% { transform: rotate(7deg) } }
         @keyframes botPulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,.6) } 70% { box-shadow: 0 0 0 8px rgba(34,197,94,0) } 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0) } }
         .bot-pulse { animation: botPulse 1.6s infinite; }
+        .bot-av .bot-dot { animation: botDots 1.2s infinite; }
+        @keyframes botDots { 0%, 100% { opacity: .25 } 50% { opacity: 1 } }
         @media (prefers-reduced-motion: reduce) { .bot-av *, .bot-pulse { animation: none !important; transition: none !important; } }
       `}</style>
     </span>

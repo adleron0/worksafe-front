@@ -110,6 +110,7 @@ import { Route as AuthenticatedBotsRelatoriosRelatoriosRouteImport } from './pag
 import { Route as AuthenticatedBotsBotsEquipeRouteImport } from './pages/_authenticated/bots/_bots/equipe'
 import { Route as AuthenticatedBotsBotsConversasRouteImport } from './pages/_authenticated/bots/_bots/conversas'
 import { Route as AuthenticatedBotsBotsConexoesRouteImport } from './pages/_authenticated/bots/_bots/conexoes'
+import { Route as AuthenticatedBotsBotsConectoresRouteImport } from './pages/_authenticated/bots/_bots/conectores'
 import { Route as AuthenticatedBotsBotsAgendaRouteImport } from './pages/_authenticated/bots/_bots/agenda'
 import { Route as AuthenticatedBotsBotsAcoesRouteImport } from './pages/_authenticated/bots/_bots/acoes'
 import { Route as AuthenticatedBotsAdminConfiguracaoRouteImport } from './pages/_authenticated/bots/_admin/configuracao'
@@ -726,6 +727,12 @@ const AuthenticatedBotsBotsConexoesRoute =
     path: '/bots/conexoes',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedBotsBotsConectoresRoute =
+  AuthenticatedBotsBotsConectoresRouteImport.update({
+    id: '/bots/_bots/conectores',
+    path: '/bots/conectores',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedBotsBotsAgendaRoute =
   AuthenticatedBotsBotsAgendaRouteImport.update({
     id: '/bots/_bots/agenda',
@@ -944,6 +951,7 @@ export interface FileRoutesByFullPath {
   '/bots/configuracao': typeof AuthenticatedBotsAdminConfiguracaoRoute
   '/bots/acoes': typeof AuthenticatedBotsBotsAcoesRoute
   '/bots/agenda': typeof AuthenticatedBotsBotsAgendaRoute
+  '/bots/conectores': typeof AuthenticatedBotsBotsConectoresRoute
   '/bots/conexoes': typeof AuthenticatedBotsBotsConexoesRoute
   '/bots/conversas': typeof AuthenticatedBotsBotsConversasRoute
   '/bots/equipe': typeof AuthenticatedBotsBotsEquipeRoute
@@ -1073,6 +1081,7 @@ export interface FileRoutesByTo {
   '/bots/configuracao': typeof AuthenticatedBotsAdminConfiguracaoRoute
   '/bots/acoes': typeof AuthenticatedBotsBotsAcoesRoute
   '/bots/agenda': typeof AuthenticatedBotsBotsAgendaRoute
+  '/bots/conectores': typeof AuthenticatedBotsBotsConectoresRoute
   '/bots/conexoes': typeof AuthenticatedBotsBotsConexoesRoute
   '/bots/conversas': typeof AuthenticatedBotsBotsConversasRoute
   '/bots/equipe': typeof AuthenticatedBotsBotsEquipeRoute
@@ -1206,6 +1215,7 @@ export interface FileRoutesById {
   '/_authenticated/bots/_admin/configuracao': typeof AuthenticatedBotsAdminConfiguracaoRoute
   '/_authenticated/bots/_bots/acoes': typeof AuthenticatedBotsBotsAcoesRoute
   '/_authenticated/bots/_bots/agenda': typeof AuthenticatedBotsBotsAgendaRoute
+  '/_authenticated/bots/_bots/conectores': typeof AuthenticatedBotsBotsConectoresRoute
   '/_authenticated/bots/_bots/conexoes': typeof AuthenticatedBotsBotsConexoesRoute
   '/_authenticated/bots/_bots/conversas': typeof AuthenticatedBotsBotsConversasRoute
   '/_authenticated/bots/_bots/equipe': typeof AuthenticatedBotsBotsEquipeRoute
@@ -1338,6 +1348,7 @@ export interface FileRouteTypes {
     | '/bots/configuracao'
     | '/bots/acoes'
     | '/bots/agenda'
+    | '/bots/conectores'
     | '/bots/conexoes'
     | '/bots/conversas'
     | '/bots/equipe'
@@ -1467,6 +1478,7 @@ export interface FileRouteTypes {
     | '/bots/configuracao'
     | '/bots/acoes'
     | '/bots/agenda'
+    | '/bots/conectores'
     | '/bots/conexoes'
     | '/bots/conversas'
     | '/bots/equipe'
@@ -1599,6 +1611,7 @@ export interface FileRouteTypes {
     | '/_authenticated/bots/_admin/configuracao'
     | '/_authenticated/bots/_bots/acoes'
     | '/_authenticated/bots/_bots/agenda'
+    | '/_authenticated/bots/_bots/conectores'
     | '/_authenticated/bots/_bots/conexoes'
     | '/_authenticated/bots/_bots/conversas'
     | '/_authenticated/bots/_bots/equipe'
@@ -2404,6 +2417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBotsBotsConexoesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/bots/_bots/conectores': {
+      id: '/_authenticated/bots/_bots/conectores'
+      path: '/bots/conectores'
+      fullPath: '/bots/conectores'
+      preLoaderRoute: typeof AuthenticatedBotsBotsConectoresRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/bots/_bots/agenda': {
       id: '/_authenticated/bots/_bots/agenda'
       path: '/bots/agenda'
@@ -2638,6 +2658,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBotsAdminConfiguracaoRoute: typeof AuthenticatedBotsAdminConfiguracaoRoute
   AuthenticatedBotsBotsAcoesRoute: typeof AuthenticatedBotsBotsAcoesRoute
   AuthenticatedBotsBotsAgendaRoute: typeof AuthenticatedBotsBotsAgendaRoute
+  AuthenticatedBotsBotsConectoresRoute: typeof AuthenticatedBotsBotsConectoresRoute
   AuthenticatedBotsBotsConexoesRoute: typeof AuthenticatedBotsBotsConexoesRoute
   AuthenticatedBotsBotsConversasRoute: typeof AuthenticatedBotsBotsConversasRoute
   AuthenticatedBotsBotsEquipeRoute: typeof AuthenticatedBotsBotsEquipeRoute
@@ -2765,6 +2786,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedBotsAdminConfiguracaoRoute,
   AuthenticatedBotsBotsAcoesRoute: AuthenticatedBotsBotsAcoesRoute,
   AuthenticatedBotsBotsAgendaRoute: AuthenticatedBotsBotsAgendaRoute,
+  AuthenticatedBotsBotsConectoresRoute: AuthenticatedBotsBotsConectoresRoute,
   AuthenticatedBotsBotsConexoesRoute: AuthenticatedBotsBotsConexoesRoute,
   AuthenticatedBotsBotsConversasRoute: AuthenticatedBotsBotsConversasRoute,
   AuthenticatedBotsBotsEquipeRoute: AuthenticatedBotsBotsEquipeRoute,

@@ -167,9 +167,9 @@ function ModelForAllCard({ config }: { config: BotsConfig }) {
   });
   return (
     <div className="rounded-lg border p-4 text-sm">
-      <div className="flex flex-wrap items-end gap-3">
+      <Label>Modelo de todos os bots</Label>
+      <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-1">
-          <Label>Modelo de todos os bots</Label>
           <ModelPicker name="allModel" config={config} provider={choice.provider} model={choice.model} onChange={(provider, model) => setChoice({ provider, model })} />
         </div>
         <ConfirmDialog
@@ -177,7 +177,7 @@ function ModelForAllCard({ config }: { config: BotsConfig }) {
           description="Cada bot passa a responder com esse modelo na próxima mensagem e ganha uma versão nova, então dá para voltar pelo histórico. A reserva de cada bot não muda."
           onConfirm={() => apply.mutate()}
         >
-          <Button type="button" disabled={!choice.provider || choice.model.length < 3 || apply.isPending} className="mb-[2px]">{apply.isPending ? "Trocando..." : "Usar em todos"}</Button>
+          <Button type="button" disabled={!choice.provider || choice.model.length < 3 || apply.isPending} className="mt-1">{apply.isPending ? "Trocando..." : "Usar em todos"}</Button>
         </ConfirmDialog>
       </div>
       <p className="mt-2 text-xs text-muted-foreground">Hoje: {today || "nenhum bot"}. Para um bot só, troque no cadastro dele abaixo. O custo por mil perguntas é estimativa com o tamanho médio das conversas dos bots.</p>

@@ -11,7 +11,9 @@ import CalendarPicker from "@/components/general-components/Calendar";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { IFinancialRecord } from "../-interfaces/entity.interface";
-import { paymentMethodOptions, toDateInput } from "./options";
+import { formatCurrency, paymentMethodOptions, toDateInput } from "./options";
+import Icon from "@/components/general-components/Icon";
+import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-components/FormPage";
 import AccountSelect from "../../-shared/AccountSelect";
 import { useChartAccounts, useCostCenters } from "../../-shared/financial";
 
@@ -155,145 +157,142 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
   const hint = (name: string) => errors[name] && <p className="text-red-500 text-sm mt-1">{errors[name]}</p>;
   const currentInvoice = !removeInvoice && !invoiceFile ? formData?.invoiceUrl : null;
 
+  const customerName = (customers?.rows ?? []).find((c: { id: number; name: string }) => String(c.id) === state.customerId)?.name;
+  const statusLabel = !isEdit ? "Nova" : formData?.inactiveAt ? "Inativa" : settled ? "Recebida" : "Em aberto";
+  const net = state.netValue > 0 && state.netValue !== state.value ? state.netValue : null;
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full mt-4">
-      {gatewayOwned && (
-        <p className="text-sm rounded border p-3 text-muted-foreground">
-          Cobrança gerada pelo gateway ({formData?.gateway.toUpperCase()}). Valor, vencimento e forma de pagamento
-          vêm do provedor; aqui você registra a nota fiscal e as anotações.
-        </p>
-      )}
+    <form onSubmit={handleSubmit}>
+      <FormPageGrid aside={<>
+        <section className="rounded-card border bg-card p-4 flex flex-col gap-2.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Resumo</p>
+          <SummaryRow label="Valor" strong>{formatCurrency(state.value || 0)}</SummaryRow>
+          {net !== null && <SummaryRow label="Líquido a receber">{formatCurrency(net)}</SummaryRow>}
+          <SummaryRow label="Vencimento">{state.dueDate ? state.dueDate.split("-").reverse().join("/") : "—"}</SummaryRow>
+          <SummaryRow label="Cliente">{gatewayOwned ? (formData?.customer?.name || formData?.trainee?.name || "—") : customerName ?? (formData?.trainee?.name || "—")}</SummaryRow>
+          {state.installmentNumber && state.installmentTotal && <SummaryRow label="Parcela">{state.installmentNumber} de {state.installmentTotal}</SummaryRow>}
+          <SummaryRow label="Situação">{statusLabel}</SummaryRow>
+          {isEdit && <SummaryRow label="Origem">{formData?.gateway === "manual" ? "Manual" : formData?.gateway.toUpperCase()}</SummaryRow>}
+        </section>
 
-      {!gatewayOwned && (
-        <>
-          <div>
-            <Label htmlFor="customerId">Cliente <span>*</span></Label>
-            <Select
-              name="customerId"
-              options={(customers?.rows ?? []) as never[]}
-              state={state.customerId}
-              onChange={set}
-              placeholder="Selecione o cliente"
-              isLoading={loadingCustomers}
-              modal
-            />
-            {hint("customerId")}
-          </div>
-
-          <div>
-            <Label htmlFor="description">Descrição</Label>
-            <Input id="description" name="description" value={state.description} maxLength={255}
-              placeholder="Ex.: Turma fechada NR-35 — 20 alunos" onValueChange={set} className="mt-1" />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="value">Valor <span>*</span></Label>
-              <Input id="value" name="value" format="currency" value={state.value} onValueChange={set}
-                disabled={settled} className="mt-1" />
-              {settled && <p className="text-xs text-muted-foreground mt-1">Estorne a baixa para alterar o valor.</p>}
-              {hint("value")}
-            </div>
-            <div>
-              <Label htmlFor="dueDate">Vencimento <span>*</span></Label>
-              <CalendarPicker mode="natural" name="dueDate" value={state.dueDate} onValueChange={set}
-                placeholder="dd/mm/aaaa" className="mt-1" />
-              {hint("dueDate")}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="paymentMethod">Forma de pagamento</Label>
-              <Select name="paymentMethod" options={paymentMethodOptions} state={state.paymentMethod}
-                onChange={set} placeholder="Selecione" modal />
-            </div>
-            <div>
-              <Label htmlFor="accrualDate">Competência</Label>
-              <CalendarPicker mode="month" name="accrualDate" value={state.accrualDate || null}
-                onValueChange={set} placeholder="Mês do vencimento" fromYear={2020} toYear={2035} />
-            </div>
-          </div>
-
-          <div>
-            <Label>Parcela</Label>
-            <div className="flex items-center gap-2 mt-1">
-              <Input name="installmentNumber" type="number" min={1} value={state.installmentNumber}
-                onValueChange={set} placeholder="Nº" className="w-24" />
-              <span className="text-muted-foreground">de</span>
-              <Input name="installmentTotal" type="number" min={1} value={state.installmentTotal}
-                onValueChange={set} placeholder="Total" className="w-24" />
-            </div>
-            {hint("installmentNumber")}
-          </div>
-        </>
-      )}
-
-      <div className="rounded border p-3 flex flex-col gap-4">
-        <p className="font-medium text-sm">Nota fiscal</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="invoiceNumber">Número da NF</Label>
-            <Input id="invoiceNumber" name="invoiceNumber" value={state.invoiceNumber} maxLength={60}
-              onValueChange={set} placeholder="Ex.: 2026/000123" className="mt-1" />
-            {hint("invoiceNumber")}
-          </div>
-          <div>
-            <Label htmlFor="invoiceIssuedAt">Data de emissão</Label>
-            <CalendarPicker mode="natural" name="invoiceIssuedAt" value={state.invoiceIssuedAt}
-              onValueChange={set} placeholder="dd/mm/aaaa" className="mt-1" />
-          </div>
+        <div className="flex flex-col gap-2">
+          <Button type="submit" disabled={isPending}>{isEdit ? "Salvar alterações" : "Cadastrar conta"}</Button>
+          <Button type="button" variant="outline" onClick={() => setOpenForm(false)}>Cancelar</Button>
         </div>
-        <div>
-          <Label htmlFor="netValue">Valor líquido a receber</Label>
-          <Input id="netValue" name="netValue" format="currency" value={state.netValue} onValueChange={set} className="mt-1" />
-          <p className="text-xs text-muted-foreground mt-1">
-            Preencha quando a nota tiver retenções (ISS, INSS, IR). Em branco, vale o valor cheio.
+      </>}>
+        {gatewayOwned && (
+          <p className="text-sm rounded-card border bg-card p-4 text-muted-foreground">
+            Cobrança gerada pelo gateway ({formData?.gateway.toUpperCase()}). Valor, vencimento e forma de pagamento
+            vêm do provedor; aqui você registra a nota fiscal, a classificação e as anotações.
           </p>
-          {hint("netValue")}
-        </div>
-        <div>
-          <Label htmlFor="invoiceFile">Arquivo da NF (PDF, XML ou imagem)</Label>
-          {currentInvoice ? (
-            <div className="flex items-center gap-3 mt-1 text-sm">
-              <a href={currentInvoice} target="_blank" rel="noreferrer" className="underline text-primary">Abrir arquivo atual</a>
-              <Button type="button" variant="outline" size="sm" onClick={() => setRemoveInvoice(true)}>Remover</Button>
+        )}
+
+        {!gatewayOwned && (
+          <FormSection title="Dados da conta" description="De quem, o que é, quanto e quando.">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="customerId">Cliente <span>*</span></Label>
+                <Select name="customerId" options={(customers?.rows ?? []) as never[]} state={state.customerId} onChange={set}
+                  placeholder="Selecione o cliente" isLoading={loadingCustomers} modal />
+                {hint("customerId")}
+              </div>
+              <div>
+                <Label htmlFor="description">Descrição</Label>
+                <Input id="description" name="description" value={state.description} maxLength={255}
+                  placeholder="Ex.: Turma fechada NR-35 — 20 alunos" onValueChange={set} className="mt-1" />
+              </div>
             </div>
-          ) : (
-            <div className="mt-1 flex items-center gap-3 text-sm">
-              <input id="invoiceFile" type="file" accept={INVOICE_TYPES} className="hidden"
-                onChange={(event) => setInvoiceFile(event.target.files?.[0] ?? null)} />
-              <Button type="button" variant="outline" size="sm" onClick={() => document.getElementById("invoiceFile")?.click()}>Escolher arquivo</Button>
-              <span className="min-w-0 truncate text-muted-foreground">{invoiceFile?.name ?? "Nenhum arquivo escolhido"}</span>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="value">Valor <span>*</span></Label>
+                <Input id="value" name="value" format="currency" value={state.value} onValueChange={set} disabled={settled} className="mt-1" />
+                {settled && <p className="text-xs text-muted-foreground mt-1">Estorne a baixa para alterar o valor.</p>}
+                {hint("value")}
+              </div>
+              <div>
+                <Label htmlFor="dueDate">Vencimento <span>*</span></Label>
+                <CalendarPicker mode="natural" name="dueDate" value={state.dueDate} onValueChange={set} placeholder="dd/mm/aaaa" className="mt-1" />
+                {hint("dueDate")}
+              </div>
+              <div>
+                <Label htmlFor="accrualDate">Competência</Label>
+                <CalendarPicker mode="month" name="accrualDate" value={state.accrualDate || null}
+                  onValueChange={set} placeholder="Mês do vencimento" fromYear={2020} toYear={2035} className="mt-1 bg-transparent" />
+              </div>
             </div>
-          )}
-        </div>
-      </div>
 
-      <div className="rounded border p-3 flex flex-col gap-4">
-        <p className="font-medium text-sm">Classificação</p>
-        <div>
-          <Label>Conta (plano de contas)</Label>
-          <AccountSelect accounts={accounts ?? []} value={state.chartAccountId} nature="receita" clearable
-            onChange={(value) => set("chartAccountId", value)} placeholder="Sem conta" />
-        </div>
-        <div>
-          <Label htmlFor="costCenterId">Centro de custo</Label>
-          <Select name="costCenterId" options={(costCenters?.rows ?? []) as never[]} state={state.costCenterId}
-            onChange={set} placeholder="Sem centro de custo" clearable modal />
-        </div>
-      </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="paymentMethod">Forma de pagamento</Label>
+                <Select name="paymentMethod" options={paymentMethodOptions} state={state.paymentMethod} onChange={set} placeholder="Selecione" modal />
+              </div>
+              <div>
+                <Label>Parcela</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input name="installmentNumber" type="number" min={1} value={state.installmentNumber} onValueChange={set} placeholder="Nº" className="w-24" />
+                  <span className="text-muted-foreground text-sm">de</span>
+                  <Input name="installmentTotal" type="number" min={1} value={state.installmentTotal} onValueChange={set} placeholder="Total" className="w-24" />
+                </div>
+                {hint("installmentNumber")}
+              </div>
+            </div>
+          </FormSection>
+        )}
 
-      <div>
-        <Label htmlFor="observations">Observações</Label>
-        <Input id="observations" name="observations" type="textArea" value={state.observations} maxLength={255}
-          onValueChange={set} className="mt-1" />
-      </div>
+        <FormSection title="Nota fiscal" description="Preencha o líquido quando a nota tiver retenções (ISS, INSS, IR); em branco, vale o valor cheio.">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="invoiceNumber">Número da NF</Label>
+              <Input id="invoiceNumber" name="invoiceNumber" value={state.invoiceNumber} maxLength={60} onValueChange={set} placeholder="Ex.: 2026/000123" className="mt-1" />
+              {hint("invoiceNumber")}
+            </div>
+            <div>
+              <Label htmlFor="invoiceIssuedAt">Data de emissão</Label>
+              <CalendarPicker mode="natural" name="invoiceIssuedAt" value={state.invoiceIssuedAt} onValueChange={set} placeholder="dd/mm/aaaa" className="mt-1" />
+            </div>
+            <div>
+              <Label htmlFor="netValue">Valor líquido a receber</Label>
+              <Input id="netValue" name="netValue" format="currency" value={state.netValue} onValueChange={set} className="mt-1" />
+              {hint("netValue")}
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="invoiceFile">Arquivo da NF (PDF, XML ou imagem)</Label>
+            {currentInvoice ? (
+              <div className="flex items-center gap-3 mt-1 text-sm">
+                <a href={currentInvoice} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline"><Icon name="paperclip" className="w-3.5 h-3.5" /> Abrir arquivo atual</a>
+                <Button type="button" variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setRemoveInvoice(true)}>Remover</Button>
+              </div>
+            ) : (
+              <div className="mt-1 flex items-center gap-3 text-sm min-w-0">
+                <input id="invoiceFile" type="file" accept={INVOICE_TYPES} className="hidden" onChange={(event) => setInvoiceFile(event.target.files?.[0] ?? null)} />
+                <Button type="button" variant="outline" size="sm" onClick={() => document.getElementById("invoiceFile")?.click()}><Icon name="upload" className="w-3.5 h-3.5" /> Escolher arquivo</Button>
+                <span className="min-w-0 truncate text-muted-foreground">{invoiceFile?.name ?? "Nenhum arquivo escolhido"}</span>
+              </div>
+            )}
+          </div>
+        </FormSection>
 
-      <div className="flex gap-2">
-        <Button type="submit" className="flex-1" disabled={isPending}>{isEdit ? "Atualizar" : "Cadastrar"}</Button>
-        <Button type="button" variant="outline" className="flex-1" onClick={() => setOpenForm(false)}>Cancelar</Button>
-      </div>
+        <FormSection title="Classificação" description="Para o DRE e o resultado por área.">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Conta (plano de contas)</Label>
+              <AccountSelect accounts={accounts ?? []} value={state.chartAccountId} nature="receita" clearable
+                onChange={(value) => set("chartAccountId", value)} placeholder="Sem conta" />
+            </div>
+            <div>
+              <Label htmlFor="costCenterId">Centro de custo</Label>
+              <Select name="costCenterId" options={(costCenters?.rows ?? []) as never[]} state={state.costCenterId}
+                onChange={set} placeholder="Sem centro de custo" clearable modal />
+            </div>
+          </div>
+        </FormSection>
+
+        <FormSection title="Observações">
+          <Input id="observations" name="observations" type="textArea" value={state.observations} maxLength={255} onValueChange={set} />
+        </FormSection>
+      </FormPageGrid>
     </form>
   );
 };

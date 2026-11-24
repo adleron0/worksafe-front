@@ -24,7 +24,6 @@ import {
   ActiveFilters, BulkSettleDialog, DueQuickFilter, FilterPanel, SelectionSummary, SummaryCards,
   countFilters, downloadXlsx, reportBulk, toParams, useSelection, useUrlFilters,
 } from "../-shared/ledger";
-import PayableForm from "./-PayableForm";
 import PayableSettle from "./-PayableSettle";
 import { payableColumns } from "./-payableColumns";
 
@@ -43,9 +42,6 @@ function Payables() {
   const queryClient = useQueryClient();
   const { filters, set, replace } = useUrlFilters({ view: DEFAULT_VIEW });
   const [openFilters, setOpenFilters] = useState(false);
-  const [openForm, setOpenForm] = useState(false);
-  const [formData, setFormData] = useState<Payable | null>(null);
-  const [duplicate, setDuplicate] = useState(false);
   const [settling, setSettling] = useState<Payable | null>(null);
   const [bulkSettle, setBulkSettle] = useState(false);
   const view = filters.view || DEFAULT_VIEW;
@@ -95,9 +91,9 @@ function Payables() {
     { view: "pagas", label: "Pagas", bucket: summary?.paid, tone: "text-green-600 dark:text-green-400", hint: paidHint, icon: "circle-check", color: "#16a34a" },
   ];
   const pickView = (next: string) => { selection.clear(); set({ view: next }); };
-  const openNew = () => { setFormData(null); setDuplicate(false); setOpenForm(true); };
-  const editRow = (item: Payable) => { setFormData(item); setDuplicate(false); setOpenForm(true); };
-  const duplicateRow = (item: Payable) => { setFormData(item); setDuplicate(true); setOpenForm(true); };
+  const openNew = () => navigate({ to: "/financeiro/pagar/nova", search: {} });
+  const editRow = (item: Payable) => navigate({ to: "/financeiro/pagar/$payableId", params: { payableId: String(item.id) } });
+  const duplicateRow = (item: Payable) => navigate({ to: "/financeiro/pagar/nova", search: { duplicar: String(item.id) } });
   const exportNow = (ids?: number[]) => downloadXlsx("financial/payables/export", ids ? [{ key: "ids", value: ids.join(",") }] : toParams({ ...filters, view }), "contas-a-pagar.xlsx");
   const openSelected = selectedRows.filter((r) => r.status === "aberta" && !r.inactiveAt);
   const chipView = OPEN_VIEWS.includes(view) ? "abertas" : view;
@@ -206,10 +202,6 @@ function Payables() {
 
       <SideForm openSheet={openFilters} setOpenSheet={setOpenFilters} title="Filtros" description="Combine os filtros; os cartões e a exportação seguem o mesmo recorte." side="left"
         form={<FilterPanel key={JSON.stringify(filters)} kind="payable" filters={filters} onApply={(patch) => set(patch)} onClear={() => replace({ view, ...(filters.q ? { q: filters.q } : {}) })} close={() => setOpenFilters(false)} />} />
-      <SideForm openSheet={openForm} setOpenSheet={setOpenForm}
-        title={duplicate ? "Duplicar conta a pagar" : formData ? "Editar conta a pagar" : "Nova conta a pagar"}
-        description={duplicate ? "Uma conta nova com os mesmos dados; ajuste o que mudar." : formData ? "Altere os dados da conta." : "Lance uma conta, um parcelamento ou uma despesa fixa."} side="right"
-        form={<PayableForm key={`${formData?.id ?? "new"}-${duplicate}`} formData={formData} duplicate={duplicate} close={() => setOpenForm(false)} />} />
       {settling && <PayableSettle item={settling} onClose={() => setSettling(null)} />}
       {bulkSettle && (
         <BulkSettleDialog kind="payable" ids={openSelected.map((r) => r.id)} count={openSelected.length}

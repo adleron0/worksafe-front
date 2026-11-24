@@ -11,6 +11,8 @@ import Select from "@/components/general-components/Select";
 import CalendarPicker from "@/components/general-components/Calendar";
 import { ApiError } from "@/general-interfaces/api.interface";
 import AccountSelect from "../-shared/AccountSelect";
+import Icon from "@/components/general-components/Icon";
+import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-components/FormPage";
 
 /** Guias de imposto: cruzadas com os impostos retidos pelos clientes no mesmo mês. */
 const TAX_GUIDE_OPTIONS = [
@@ -153,184 +155,202 @@ export default function PayableForm({ formData, close, duplicate = false }: { fo
   };
   const hint = (name: string) => errors[name] && <p className="text-red-500 text-sm mt-1">{errors[name]}</p>;
 
+  const supplierName = (suppliers?.rows ?? []).find((sup: { id: number; name: string }) => String(sup.id) === state.supplierId)?.name;
+  const modeName = MODES.find((m) => m.id === state.mode)?.name;
+  const submitLabel = isEdit ? "Salvar alterações" : recurring ? "Criar despesa fixa" : several ? "Lançar parcelas" : "Lançar conta";
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full mt-4">
-      <div>
-        <Label htmlFor="supplierId">Fornecedor</Label>
-        <Select name="supplierId" options={(suppliers?.rows ?? []) as never[]} state={state.supplierId} onChange={set}
-          placeholder="Sem fornecedor" isLoading={loadingSuppliers} clearable modal />
-        {!loadingSuppliers && !suppliers?.rows?.length && (
-          <p className="text-xs text-muted-foreground mt-1">Nenhum fornecedor cadastrado. Cadastre em Financeiro → Fornecedores.</p>
-        )}
-      </div>
-
-      <div>
-        <Label htmlFor="description">Descrição <span>*</span></Label>
-        <Input id="description" name="description" value={state.description} maxLength={255}
-          placeholder="Ex.: Locação de andaimes — novembro" onValueChange={set} className="mt-1" />
-        {hint("description")}
-      </div>
-
-      {!isEdit && (
-        <div>
-          <Label htmlFor="mode">Lançamento</Label>
-          <Select name="mode" options={MODES} state={state.mode} onChange={set} placeholder="Selecione" modal />
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="value">{state.mode === "dividir" && !isEdit ? "Valor total" : (state.mode === "repetir" || recurring) && !isEdit ? "Valor por mês" : "Valor"} <span>*</span></Label>
-          <Input id="value" name="value" format="currency" value={state.value} onValueChange={set} disabled={paid} className="mt-1" />
-          {paid && <p className="text-xs text-muted-foreground mt-1">Estorne a baixa para alterar o valor.</p>}
-          {hint("value")}
-        </div>
-        <div>
-          <Label htmlFor="dueDate">{several || recurring ? "Primeiro vencimento" : "Vencimento"} <span>*</span></Label>
-          <CalendarPicker mode="natural" name="dueDate" value={state.dueDate} onValueChange={set} placeholder="dd/mm/aaaa" className="mt-1" />
-          {hint("dueDate")}
-        </div>
-      </div>
-
-      {several && (
-        <div>
-          <Label htmlFor="count">{state.mode === "dividir" ? "Número de parcelas" : "Quantos meses"} <span>*</span></Label>
-          <Input id="count" name="count" type="number" min={2} max={60} value={state.count} onValueChange={set} className="mt-1 w-32" />
-          {hint("count")}
-          {count >= 2 && count <= 60 && state.value > 0 && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {state.mode === "dividir"
-                ? `${count} parcelas de cerca de ${formatMoney(state.value / count)}, uma por mês.`
-                : `${count} contas de ${formatMoney(state.value)}, uma por mês (total ${formatMoney(state.value * count)}).`}
-            </p>
+    <form onSubmit={handleSubmit}>
+      <FormPageGrid aside={<>
+        <section className="rounded-card border bg-card p-4 flex flex-col gap-2.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Resumo</p>
+          <SummaryRow label={state.mode === "dividir" && !isEdit ? "Valor total" : (state.mode === "repetir" || recurring) && !isEdit ? "Por mês" : "Valor"} strong>
+            {formatMoney(state.value || 0)}
+          </SummaryRow>
+          {several && count >= 2 && count <= 60 && state.value > 0 && (
+            <SummaryRow label={state.mode === "dividir" ? `${count} parcelas de` : `${count} meses, total`}>
+              {formatMoney(state.mode === "dividir" ? state.value / count : state.value * count)}
+            </SummaryRow>
           )}
-        </div>
-      )}
+          <SummaryRow label={several || recurring ? "1º vencimento" : "Vencimento"}>{state.dueDate ? state.dueDate.split("-").reverse().join("/") : "—"}</SummaryRow>
+          <SummaryRow label="Fornecedor">{supplierName ?? "Sem fornecedor"}</SummaryRow>
+          {!isEdit && <SummaryRow label="Lançamento">{modeName}</SummaryRow>}
+          {isEdit && <SummaryRow label="Situação">{paid ? "Paga" : formData?.inactiveAt ? "Excluída" : "Em aberto"}</SummaryRow>}
+        </section>
 
-      {recurring && (
-        <div className="rounded border p-3 flex flex-col gap-2">
-          <p className="text-sm">Todo mês, no dia do primeiro vencimento. Os próximos 12 meses ficam lançados (aparecem no fluxo de caixa) e o sistema vai lançando os seguintes sozinho.</p>
-          <div>
-            <Label htmlFor="endDate">Termina em (opcional)</Label>
-            <CalendarPicker mode="natural" name="endDate" value={state.endDate} onValueChange={set} placeholder="Sem data para acabar" className="mt-1" />
-            {hint("endDate")}
-          </div>
-          <p className="text-xs text-muted-foreground">Para mudar o valor ou encerrar depois, use Financeiro → Recorrentes.</p>
-        </div>
-      )}
-
-      {inGroup && (
-        <div className="rounded border p-3">
-          <Label htmlFor="scope">Aplicar as mudanças em</Label>
-          <Select name="scope" options={SCOPES} state={state.scope} onChange={set} modal />
-          <p className="text-xs text-muted-foreground mt-1">Descrição, valor, fornecedor, forma e classificação. Vencimento, documento e anexos mudam só nesta parcela; parcela paga não muda.</p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="documentNumber">Nº da nota ou documento</Label>
-          <Input id="documentNumber" name="documentNumber" value={state.documentNumber} maxLength={60} onValueChange={set} className="mt-1" />
-        </div>
-        <div>
-          <Label htmlFor="paymentMethod">Forma de pagamento</Label>
-          <Select name="paymentMethod" options={paymentMethodOptions} state={state.paymentMethod} onChange={set} placeholder="A definir" clearable modal />
-        </div>
-        {!recurring && (
-          <div className="sm:col-span-2">
-            <Label htmlFor="taxKind">É guia de imposto?</Label>
-            <Select name="taxKind" options={TAX_GUIDE_OPTIONS} state={state.taxKind} onChange={set} placeholder="Não é guia de imposto" clearable modal />
-            <p className="text-xs text-muted-foreground mt-1">Marcando a guia (DAS, ISS...), o sistema confere se algum cliente já reteve esse imposto no mês da competência e avisa antes de pagar duas vezes.</p>
-          </div>
+        {!several && !recurring ? (
+          <section className="rounded-card border bg-card p-4 flex flex-col gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Anexos</p>
+            {ATTACHMENTS.map(({ field, column, label }) => {
+              const current = !duplicate && !removed.includes(column) && !files[field] ? formData?.[column] : null;
+              return (
+                <div key={field} className="flex flex-col gap-1 text-sm">
+                  <span className="text-xs text-muted-foreground">{label}</span>
+                  {current ? (
+                    <div className="flex items-center gap-2">
+                      <a href={current} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline"><Icon name="paperclip" className="w-3.5 h-3.5" /> Abrir</a>
+                      <Button type="button" variant="ghost" size="sm" className="h-7 text-muted-foreground" onClick={() => setRemoved((prev) => [...prev, column])}>Remover</Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 min-w-0">
+                      <input id={field} type="file" accept={FILE_TYPES} className="hidden"
+                        onChange={(event) => { const file = event.target.files?.[0]; if (file) setFiles((prev) => ({ ...prev, [field]: file })); }} />
+                      <Button type="button" variant="outline" size="sm" className="h-7 shrink-0" onClick={() => document.getElementById(field)?.click()}><Icon name="upload" className="w-3.5 h-3.5" /> Escolher</Button>
+                      <span className="min-w-0 truncate text-xs text-muted-foreground">{files[field]?.name ?? "Nenhum"}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            <p className="text-xs text-muted-foreground">PDF, XML ou imagem.</p>
+          </section>
+        ) : (
+          <p className="text-xs text-muted-foreground px-1">Boleto, nota, linha digitável e comprovante entram depois, em cada {recurring ? "mês" : "parcela"}.</p>
         )}
-      </div>
 
-      {!several && !recurring && (
-        <div className="rounded border p-3 flex flex-col gap-3">
-          <p className="font-medium text-sm">Para pagar</p>
-          <div>
-            <Label htmlFor="barcode">Linha digitável do boleto</Label>
-            <Input id="barcode" name="barcode" value={state.barcode} maxLength={60} placeholder="Cole aqui os números do boleto" onValueChange={set} className="mt-1" />
-            {hint("barcode")}
+        <div className="flex flex-col gap-2">
+          <Button type="submit" disabled={isPending}>{submitLabel}</Button>
+          <Button type="button" variant="outline" onClick={close}>Cancelar</Button>
+        </div>
+      </>}>
+        <FormSection title="Dados da conta" description="Quem recebe, o que é, quanto e quando.">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="supplierId">Fornecedor</Label>
+              <Select name="supplierId" options={(suppliers?.rows ?? []) as never[]} state={state.supplierId} onChange={set}
+                placeholder="Sem fornecedor" isLoading={loadingSuppliers} clearable modal />
+              {!loadingSuppliers && !suppliers?.rows?.length && (
+                <p className="text-xs text-muted-foreground mt-1">Nenhum fornecedor cadastrado. Cadastre em Financeiro → Fornecedores.</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="documentNumber">Nº da nota ou documento</Label>
+              <Input id="documentNumber" name="documentNumber" value={state.documentNumber} maxLength={60} onValueChange={set} className="mt-1" />
+            </div>
           </div>
+
           <div>
-            <Label htmlFor="pixCode">PIX copia e cola</Label>
-            <Input id="pixCode" name="pixCode" type="textArea" value={state.pixCode} maxLength={600} placeholder="Cole o código PIX do fornecedor" onValueChange={set} className="mt-1" />
+            <Label htmlFor="description">Descrição <span>*</span></Label>
+            <Input id="description" name="description" value={state.description} maxLength={255}
+              placeholder="Ex.: Locação de andaimes — novembro" onValueChange={set} className="mt-1" />
+            {hint("description")}
           </div>
-          <p className="text-xs text-muted-foreground">Na lista aparece um botão para copiar e colar no banco, sem abrir o PDF.</p>
-        </div>
-      )}
 
-      {!several && !recurring && (
-        <div>
-          <Label htmlFor="accrualDate">Competência</Label>
-          <CalendarPicker mode="month" name="accrualDate" value={state.accrualDate || null} onValueChange={set}
-            placeholder="Mês do vencimento" fromYear={2020} toYear={2035} />
-        </div>
-      )}
+          {!isEdit && (
+            <div>
+              <Label htmlFor="mode">Lançamento</Label>
+              <Select name="mode" options={MODES} state={state.mode} onChange={set} placeholder="Selecione" modal />
+            </div>
+          )}
 
-      <div className="rounded border p-3 flex flex-col gap-4">
-        <p className="font-medium text-sm">Classificação</p>
-        <div>
-          <Label>Conta (plano de contas)</Label>
-          <AccountSelect accounts={accounts ?? []} value={state.chartAccountId} nature="despesa" clearable
-            onChange={(value) => set("chartAccountId", value)} placeholder="Sem conta" />
-        </div>
-        <div>
-          <Label htmlFor="costCenterId">Centro de custo</Label>
-          <Select name="costCenterId" options={(costCenters?.rows ?? []) as never[]} state={state.costCenterId}
-            onChange={set} placeholder="Sem centro de custo" clearable modal />
-        </div>
-        {(seesOrders || formData?.serviceOrder) && (
-          <div>
-            <Label htmlFor="serviceOrderId">Ordem de serviço</Label>
-            {seesOrders ? (
-              <Select name="serviceOrderId" options={orderOptions} state={state.serviceOrderId} onChange={set}
-                placeholder="Não é gasto de uma obra" clearable modal />
-            ) : <p className="text-sm mt-1">{formData?.serviceOrder?.number}</p>}
-            <p className="text-xs text-muted-foreground mt-1">Quando o gasto é de uma obra, ele entra no resultado daquela OS.</p>
-          </div>
-        )}
-      </div>
-
-      {!several && !recurring ? (
-        <div className="rounded border p-3 flex flex-col gap-3">
-          <p className="font-medium text-sm">Anexos (PDF, XML ou imagem)</p>
-          {ATTACHMENTS.map(({ field, column, label }) => {
-            const current = !duplicate && !removed.includes(column) && !files[field] ? formData?.[column] : null;
-            return (
-              <div key={field} className="flex flex-wrap items-center gap-3 text-sm">
-                <span className="w-36 text-muted-foreground">{label}</span>
-                {current ? (
-                  <>
-                    <a href={current} target="_blank" rel="noreferrer" className="underline text-primary">Abrir</a>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setRemoved((prev) => [...prev, column])}>Remover</Button>
-                  </>
-                ) : (
-                  <>
-                    <input id={field} type="file" accept={FILE_TYPES} className="hidden"
-                      onChange={(event) => { const file = event.target.files?.[0]; if (file) setFiles((prev) => ({ ...prev, [field]: file })); }} />
-                    <Button type="button" variant="outline" size="sm" onClick={() => document.getElementById(field)?.click()}>Escolher arquivo</Button>
-                    <span className="min-w-0 truncate text-muted-foreground">{files[field]?.name ?? "Nenhum"}</span>
-                  </>
-                )}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="value">{state.mode === "dividir" && !isEdit ? "Valor total" : (state.mode === "repetir" || recurring) && !isEdit ? "Valor por mês" : "Valor"} <span>*</span></Label>
+              <Input id="value" name="value" format="currency" value={state.value} onValueChange={set} disabled={paid} className="mt-1" />
+              {paid && <p className="text-xs text-muted-foreground mt-1">Estorne a baixa para alterar o valor.</p>}
+              {hint("value")}
+            </div>
+            <div>
+              <Label htmlFor="dueDate">{several || recurring ? "Primeiro vencimento" : "Vencimento"} <span>*</span></Label>
+              <CalendarPicker mode="natural" name="dueDate" value={state.dueDate} onValueChange={set} placeholder="dd/mm/aaaa" className="mt-1" />
+              {hint("dueDate")}
+            </div>
+            {!several && !recurring && (
+              <div>
+                <Label htmlFor="accrualDate">Competência</Label>
+                <CalendarPicker mode="month" name="accrualDate" value={state.accrualDate || null} onValueChange={set}
+                  placeholder="Mês do vencimento" fromYear={2020} toYear={2035} className="mt-1 bg-transparent" />
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        <p className="text-xs text-muted-foreground">Boleto, nota, linha digitável e comprovante entram depois, em cada {recurring ? "mês" : "parcela"}.</p>
-      )}
+            )}
+            {several && (
+              <div>
+                <Label htmlFor="count">{state.mode === "dividir" ? "Número de parcelas" : "Quantos meses"} <span>*</span></Label>
+                <Input id="count" name="count" type="number" min={2} max={60} value={state.count} onValueChange={set} className="mt-1" />
+                {hint("count")}
+              </div>
+            )}
+          </div>
 
-      <div>
-        <Label htmlFor="observations">Observações</Label>
-        <Input id="observations" name="observations" type="textArea" value={state.observations} maxLength={500} onValueChange={set} className="mt-1" />
-      </div>
+          {recurring && (
+            <div className="rounded-lg bg-muted/50 p-3 flex flex-col gap-3">
+              <p className="text-sm">Todo mês, no dia do primeiro vencimento. Os próximos 12 meses ficam lançados (aparecem no fluxo de caixa) e o sistema vai lançando os seguintes sozinho.</p>
+              <div className="sm:max-w-xs">
+                <Label htmlFor="endDate">Termina em (opcional)</Label>
+                <CalendarPicker mode="natural" name="endDate" value={state.endDate} onValueChange={set} placeholder="Sem data para acabar" className="mt-1" />
+                {hint("endDate")}
+              </div>
+              <p className="text-xs text-muted-foreground">Para mudar o valor ou encerrar depois, use Financeiro → Recorrentes.</p>
+            </div>
+          )}
 
-      <div className="flex gap-2">
-        <Button type="submit" className="flex-1" disabled={isPending}>{isEdit ? "Atualizar" : recurring ? "Criar despesa fixa" : several ? "Lançar parcelas" : "Lançar"}</Button>
-        <Button type="button" variant="outline" className="flex-1" onClick={close}>Cancelar</Button>
-      </div>
+          {inGroup && (
+            <div className="rounded-lg bg-muted/50 p-3">
+              <Label htmlFor="scope">Aplicar as mudanças em</Label>
+              <Select name="scope" options={SCOPES} state={state.scope} onChange={set} modal />
+              <p className="text-xs text-muted-foreground mt-1">Descrição, valor, fornecedor, forma e classificação. Vencimento, documento e anexos mudam só nesta parcela; parcela paga não muda.</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="paymentMethod">Forma de pagamento</Label>
+              <Select name="paymentMethod" options={paymentMethodOptions} state={state.paymentMethod} onChange={set} placeholder="A definir" clearable modal />
+            </div>
+            {!recurring && (
+              <div>
+                <Label htmlFor="taxKind">É guia de imposto?</Label>
+                <Select name="taxKind" options={TAX_GUIDE_OPTIONS} state={state.taxKind} onChange={set} placeholder="Não é guia de imposto" clearable modal />
+                <p className="text-xs text-muted-foreground mt-1">Marcando a guia (DAS, ISS...), o sistema confere se algum cliente já reteve esse imposto no mês e avisa antes de pagar duas vezes.</p>
+              </div>
+            )}
+          </div>
+        </FormSection>
+
+        {!several && !recurring && (
+          <FormSection title="Para pagar" description="Na lista aparece um botão para copiar e colar no banco, sem abrir o PDF.">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="barcode">Linha digitável do boleto</Label>
+                <Input id="barcode" name="barcode" value={state.barcode} maxLength={60} placeholder="Cole aqui os números do boleto" onValueChange={set} className="mt-1" />
+                {hint("barcode")}
+              </div>
+              <div>
+                <Label htmlFor="pixCode">PIX copia e cola</Label>
+                <Input id="pixCode" name="pixCode" type="textArea" value={state.pixCode} maxLength={600} placeholder="Cole o código PIX do fornecedor" onValueChange={set} className="mt-1" />
+              </div>
+            </div>
+          </FormSection>
+        )}
+
+        <FormSection title="Classificação" description="Para o DRE, o resultado por área e o resultado de cada obra.">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Conta (plano de contas)</Label>
+              <AccountSelect accounts={accounts ?? []} value={state.chartAccountId} nature="despesa" clearable
+                onChange={(value) => set("chartAccountId", value)} placeholder="Sem conta" />
+            </div>
+            <div>
+              <Label htmlFor="costCenterId">Centro de custo</Label>
+              <Select name="costCenterId" options={(costCenters?.rows ?? []) as never[]} state={state.costCenterId}
+                onChange={set} placeholder="Sem centro de custo" clearable modal />
+            </div>
+          </div>
+          {(seesOrders || formData?.serviceOrder) && (
+            <div>
+              <Label htmlFor="serviceOrderId">Ordem de serviço</Label>
+              {seesOrders ? (
+                <Select name="serviceOrderId" options={orderOptions} state={state.serviceOrderId} onChange={set}
+                  placeholder="Não é gasto de uma obra" clearable modal />
+              ) : <p className="text-sm mt-1">{formData?.serviceOrder?.number}</p>}
+              <p className="text-xs text-muted-foreground mt-1">Quando o gasto é de uma obra, ele entra no resultado daquela OS.</p>
+            </div>
+          )}
+        </FormSection>
+
+        <FormSection title="Observações">
+          <Input id="observations" name="observations" type="textArea" value={state.observations} maxLength={500} onValueChange={set} />
+        </FormSection>
+      </FormPageGrid>
     </form>
   );
 }

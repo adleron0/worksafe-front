@@ -133,6 +133,10 @@ import { Route as AuthenticatedSuprimentosEstoqueInventarioCountIdRouteImport } 
 import { Route as AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRouteImport } from './pages/_authenticated/suprimentos/_pedidos/pedidos-de-compra_.$purchaseId'
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoOrderIdRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico_.$orderId'
 import { Route as AuthenticatedRhFuncionariosFuncionariosEmployeeIdRouteImport } from './pages/_authenticated/rh/_funcionarios/funcionarios_.$employeeId'
+import { Route as AuthenticatedFinanceiroReceberReceberNovaRouteImport } from './pages/_authenticated/financeiro/_receber/receber_.nova'
+import { Route as AuthenticatedFinanceiroReceberReceberRecordIdRouteImport } from './pages/_authenticated/financeiro/_receber/receber_.$recordId'
+import { Route as AuthenticatedFinanceiroPagarPagarNovaRouteImport } from './pages/_authenticated/financeiro/_pagar/pagar_.nova'
+import { Route as AuthenticatedFinanceiroPagarPagarPayableIdRouteImport } from './pages/_authenticated/financeiro/_pagar/pagar_.$payableId'
 import { Route as AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores_.$sellerId'
 import { Route as AuthenticatedComercialPropostasPropostasNovaRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.nova'
 import { Route as AuthenticatedComercialPropostasPropostasProposalIdRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.$proposalId'
@@ -866,6 +870,30 @@ const AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute =
     path: '/rh/funcionarios/$employeeId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanceiroReceberReceberNovaRoute =
+  AuthenticatedFinanceiroReceberReceberNovaRouteImport.update({
+    id: '/financeiro/_receber/receber_/nova',
+    path: '/financeiro/receber/nova',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceiroReceberReceberRecordIdRoute =
+  AuthenticatedFinanceiroReceberReceberRecordIdRouteImport.update({
+    id: '/financeiro/_receber/receber_/$recordId',
+    path: '/financeiro/receber/$recordId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceiroPagarPagarNovaRoute =
+  AuthenticatedFinanceiroPagarPagarNovaRouteImport.update({
+    id: '/financeiro/_pagar/pagar_/nova',
+    path: '/financeiro/pagar/nova',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceiroPagarPagarPayableIdRoute =
+  AuthenticatedFinanceiroPagarPagarPayableIdRouteImport.update({
+    id: '/financeiro/_pagar/pagar_/$payableId',
+    path: '/financeiro/pagar/$payableId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComercialVendedoresVendedoresSellerIdRoute =
   AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport.update({
     id: '/comercial/_vendedores/vendedores_/$sellerId',
@@ -1038,6 +1066,10 @@ export interface FileRoutesByFullPath {
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/financeiro/pagar/$payableId': typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
+  '/financeiro/pagar/nova': typeof AuthenticatedFinanceiroPagarPagarNovaRoute
+  '/financeiro/receber/$recordId': typeof AuthenticatedFinanceiroReceberReceberRecordIdRoute
+  '/financeiro/receber/nova': typeof AuthenticatedFinanceiroReceberReceberNovaRoute
   '/rh/funcionarios/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/suprimentos/pedidos-de-compra/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
@@ -1169,6 +1201,10 @@ export interface FileRoutesByTo {
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/financeiro/pagar/$payableId': typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
+  '/financeiro/pagar/nova': typeof AuthenticatedFinanceiroPagarPagarNovaRoute
+  '/financeiro/receber/$recordId': typeof AuthenticatedFinanceiroReceberReceberRecordIdRoute
+  '/financeiro/receber/nova': typeof AuthenticatedFinanceiroReceberReceberNovaRoute
   '/rh/funcionarios/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/suprimentos/pedidos-de-compra/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
@@ -1304,6 +1340,10 @@ export interface FileRoutesById {
   '/_authenticated/comercial/_propostas/propostas_/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/_authenticated/comercial/_propostas/propostas_/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/_authenticated/comercial/_vendedores/vendedores_/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/_authenticated/financeiro/_pagar/pagar_/$payableId': typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
+  '/_authenticated/financeiro/_pagar/pagar_/nova': typeof AuthenticatedFinanceiroPagarPagarNovaRoute
+  '/_authenticated/financeiro/_receber/receber_/$recordId': typeof AuthenticatedFinanceiroReceberReceberRecordIdRoute
+  '/_authenticated/financeiro/_receber/receber_/nova': typeof AuthenticatedFinanceiroReceberReceberNovaRoute
   '/_authenticated/rh/_funcionarios/funcionarios_/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
@@ -1438,6 +1478,10 @@ export interface FileRouteTypes {
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
     | '/comercial/vendedores/$sellerId'
+    | '/financeiro/pagar/$payableId'
+    | '/financeiro/pagar/nova'
+    | '/financeiro/receber/$recordId'
+    | '/financeiro/receber/nova'
     | '/rh/funcionarios/$employeeId'
     | '/servicos/ordens-de-servico/$orderId'
     | '/suprimentos/pedidos-de-compra/$purchaseId'
@@ -1569,6 +1613,10 @@ export interface FileRouteTypes {
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
     | '/comercial/vendedores/$sellerId'
+    | '/financeiro/pagar/$payableId'
+    | '/financeiro/pagar/nova'
+    | '/financeiro/receber/$recordId'
+    | '/financeiro/receber/nova'
     | '/rh/funcionarios/$employeeId'
     | '/servicos/ordens-de-servico/$orderId'
     | '/suprimentos/pedidos-de-compra/$purchaseId'
@@ -1703,6 +1751,10 @@ export interface FileRouteTypes {
     | '/_authenticated/comercial/_propostas/propostas_/$proposalId'
     | '/_authenticated/comercial/_propostas/propostas_/nova'
     | '/_authenticated/comercial/_vendedores/vendedores_/$sellerId'
+    | '/_authenticated/financeiro/_pagar/pagar_/$payableId'
+    | '/_authenticated/financeiro/_pagar/pagar_/nova'
+    | '/_authenticated/financeiro/_receber/receber_/$recordId'
+    | '/_authenticated/financeiro/_receber/receber_/nova'
     | '/_authenticated/rh/_funcionarios/funcionarios_/$employeeId'
     | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId'
     | '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId'
@@ -2591,6 +2643,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/financeiro/_receber/receber_/nova': {
+      id: '/_authenticated/financeiro/_receber/receber_/nova'
+      path: '/financeiro/receber/nova'
+      fullPath: '/financeiro/receber/nova'
+      preLoaderRoute: typeof AuthenticatedFinanceiroReceberReceberNovaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/financeiro/_receber/receber_/$recordId': {
+      id: '/_authenticated/financeiro/_receber/receber_/$recordId'
+      path: '/financeiro/receber/$recordId'
+      fullPath: '/financeiro/receber/$recordId'
+      preLoaderRoute: typeof AuthenticatedFinanceiroReceberReceberRecordIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/financeiro/_pagar/pagar_/nova': {
+      id: '/_authenticated/financeiro/_pagar/pagar_/nova'
+      path: '/financeiro/pagar/nova'
+      fullPath: '/financeiro/pagar/nova'
+      preLoaderRoute: typeof AuthenticatedFinanceiroPagarPagarNovaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/financeiro/_pagar/pagar_/$payableId': {
+      id: '/_authenticated/financeiro/_pagar/pagar_/$payableId'
+      path: '/financeiro/pagar/$payableId'
+      fullPath: '/financeiro/pagar/$payableId'
+      preLoaderRoute: typeof AuthenticatedFinanceiroPagarPagarPayableIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_vendedores/vendedores_/$sellerId': {
       id: '/_authenticated/comercial/_vendedores/vendedores_/$sellerId'
       path: '/comercial/vendedores/$sellerId'
@@ -2755,6 +2835,10 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComercialPropostasPropostasProposalIdRoute: typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   AuthenticatedComercialPropostasPropostasNovaRoute: typeof AuthenticatedComercialPropostasPropostasNovaRoute
   AuthenticatedComercialVendedoresVendedoresSellerIdRoute: typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  AuthenticatedFinanceiroPagarPagarPayableIdRoute: typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
+  AuthenticatedFinanceiroPagarPagarNovaRoute: typeof AuthenticatedFinanceiroPagarPagarNovaRoute
+  AuthenticatedFinanceiroReceberReceberRecordIdRoute: typeof AuthenticatedFinanceiroReceberReceberRecordIdRoute
+  AuthenticatedFinanceiroReceberReceberNovaRoute: typeof AuthenticatedFinanceiroReceberReceberNovaRoute
   AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute: typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
   AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute: typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
@@ -2954,6 +3038,14 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialPropostasPropostasNovaRoute,
   AuthenticatedComercialVendedoresVendedoresSellerIdRoute:
     AuthenticatedComercialVendedoresVendedoresSellerIdRoute,
+  AuthenticatedFinanceiroPagarPagarPayableIdRoute:
+    AuthenticatedFinanceiroPagarPagarPayableIdRoute,
+  AuthenticatedFinanceiroPagarPagarNovaRoute:
+    AuthenticatedFinanceiroPagarPagarNovaRoute,
+  AuthenticatedFinanceiroReceberReceberRecordIdRoute:
+    AuthenticatedFinanceiroReceberReceberRecordIdRoute,
+  AuthenticatedFinanceiroReceberReceberNovaRoute:
+    AuthenticatedFinanceiroReceberReceberNovaRoute,
   AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute:
     AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute,
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute:

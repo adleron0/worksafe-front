@@ -16,7 +16,7 @@ import DataTable, { EmptyState } from "@/components/general-components/DataTable
 import MonthRangePicker from "@/components/general-components/MonthRangePicker";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/general-interfaces/api.interface";
-import Form from "./-components/FinancialRecordsForm";
+import { RECEIVABLE_ENTITY } from "./-components/entity";
 import ReceivableRowActions from "./-components/ReceivableRowActions";
 import { receivableColumns } from "./-components/receivableColumns";
 import { IFinancialRecord } from "./-interfaces/entity.interface";
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/financeiro/_receber/recebe
   validateSearch: (search: Record<string, unknown>) => search as Record<string, string>,
 });
 
-const entity = { name: "Conta a Receber", pluralName: "Contas a Receber", model: "financial-records", ability: "financeiro" };
+const entity = RECEIVABLE_ENTITY;
 const LIST_KEY = `list${entity.pluralName}`;
 const DEFAULT_VIEW = "todas";
 const LIMITS = [10, 30, 50, 100, 200];
@@ -46,8 +46,6 @@ function Receivables() {
   const queryClient = useQueryClient();
   const { filters, set, replace } = useUrlFilters({ view: DEFAULT_VIEW });
   const [openFilters, setOpenFilters] = useState(false);
-  const [openForm, setOpenForm] = useState(false);
-  const [formData, setFormData] = useState<IFinancialRecord | null>(null);
   const [bulkSettle, setBulkSettle] = useState(false);
   const view = filters.view || DEFAULT_VIEW;
   const page = Number(filters.page ?? 0);
@@ -99,7 +97,8 @@ function Receivables() {
     { value: "canceladas", label: "Canceladas", color: "#78716c" },
     { value: "excluidas", label: "Inativas", color: "hsl(var(--border))" },
   ].map((chip) => ({ ...chip, count: countOf(chip.value) }));
-  const openEdit = (item: IFinancialRecord) => { setFormData(item); setOpenForm(true); };
+  const openEdit = (item: IFinancialRecord) => navigate({ to: "/financeiro/receber/$recordId", params: { recordId: String(item.id) } });
+  const openNew = () => navigate({ to: "/financeiro/receber/nova" });
   const canEditRow = (item: IFinancialRecord) => canUpdate && !item.inactiveAt;
   const filtered = filterCount > 0 || !!filters.q;
 
@@ -141,7 +140,7 @@ function Receivables() {
               ],
             },
           ]} />
-          {canCreate && <Button onClick={() => { setFormData(null); setOpenForm(true); }}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Nova conta</span></Button>}
+          {canCreate && <Button onClick={openNew}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Nova conta</span></Button>}
         </ListToolbar>
 
         <div className="flex flex-col gap-2 empty:hidden">
@@ -161,7 +160,7 @@ function Receivables() {
           actions={(item) => <ReceivableRowActions item={item} entity={entity} onEdit={openEdit} />}
           empty={filtered
             ? <EmptyState icon="search-x" title="Nenhuma conta com esses filtros." action={<Button variant="outline" size="sm" onClick={() => replace({ view })}>Limpar filtros</Button>} />
-            : <EmptyState title="Nenhuma conta nesta visão." action={canCreate && <Button size="sm" onClick={() => { setFormData(null); setOpenForm(true); }}><Icon name="plus" className="w-4 h-4" /> Nova conta</Button>} />} />
+            : <EmptyState title="Nenhuma conta nesta visão." action={canCreate && <Button size="sm" onClick={openNew}><Icon name="plus" className="w-4 h-4" /> Nova conta</Button>} />} />
 
         <ListFooter total={data?.total ?? 0} page={page} limit={limit} limits={LIMITS}
           onPageChange={(next) => set({ page: String(next) }, true)} onLimitChange={(n) => set({ limit: String(n) })} />
@@ -169,10 +168,6 @@ function Receivables() {
 
       <SideForm openSheet={openFilters} setOpenSheet={setOpenFilters} title="Filtros" description="Combine os filtros; os cartões e a exportação seguem o mesmo recorte." side="left"
         form={<FilterPanel key={JSON.stringify(filters)} kind="receivable" filters={filters} onApply={(patch) => set(patch)} onClear={() => replace({ view, ...(filters.q ? { q: filters.q } : {}) })} close={() => setOpenFilters(false)} />} />
-      <SideForm openSheet={openForm} setOpenSheet={setOpenForm}
-        title={formData ? `Editar ${entity.name}` : `Cadastrar ${entity.name}`}
-        description={formData ? `Edite as informações da ${entity.name}.` : "Lance uma conta a receber avulsa. Mensalidade fixa? Use Recorrentes."} side="right"
-        form={<Form key={formData?.id ?? "new"} formData={formData} setOpenForm={setOpenForm} entity={entity} />} />
       {bulkSettle && (
         <BulkSettleDialog kind="receivable" ids={settleable.map((r) => r.id)} count={settleable.length} total={total(settleable)}
           onClose={() => setBulkSettle(false)} onDone={() => { selection.clear(); refresh(); }} />

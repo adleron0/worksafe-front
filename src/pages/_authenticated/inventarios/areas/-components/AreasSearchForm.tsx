@@ -26,10 +26,16 @@ interface AreaSearchFormProps {
   onSubmit: (data: SearchData) => void;
   onClear: () => void;
   params?: Record<string, unknown>;
+  /** uso controlado (sem o botão que abre): quem chama decide quando a gaveta aparece */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-const AreaSearchForm: React.FC<AreaSearchFormProps> = ({ onSubmit, onClear, params = {} }) => {
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+const AreaSearchForm: React.FC<AreaSearchFormProps> = ({ onSubmit, onClear, params = {}, open, onOpenChange }) => {
+  const [innerOpen, setInnerOpen] = useState(false);
+  const controlled = open !== undefined;
+  const isSheetOpen = controlled ? open : innerOpen;
+  const setIsSheetOpen = (value: boolean) => { if (controlled) onOpenChange?.(value); else setInnerOpen(value); };
   
   // Form state
   const [searchData, setSearchData] = useState<SearchData>({
@@ -118,12 +124,14 @@ const AreaSearchForm: React.FC<AreaSearchFormProps> = ({ onSubmit, onClear, para
 
   return (
     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-      <SheetTrigger asChild>
-        <Button variant="default" className="text-muted h-9 bg-primary flex items-center">
-          <SlidersHorizontal className="w-3 h-3 md:mr-2" />
-          <span className="hidden md:block">Filtro Avançado</span>
-        </Button>
-      </SheetTrigger>
+      {!controlled && (
+        <SheetTrigger asChild>
+          <Button variant="default" className="text-muted h-9 bg-primary flex items-center">
+            <SlidersHorizontal className="w-3 h-3 md:mr-2" />
+            <span className="hidden md:block">Filtro Avançado</span>
+          </Button>
+        </SheetTrigger>
+      )}
       <SheetContent side="left" className="w-11/12 md:w-[300px] p-6">
         <SheetHeader>
           <SheetTitle>Buscar Áreas</SheetTitle>

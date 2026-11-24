@@ -3,12 +3,14 @@ import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
-import Pagination from "@/components/general-components/Pagination";
 // Template Page list-form
-import HeaderLists from "@/components/general-components/HeaderLists";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
 import SideForm from "@/components/general-components/SideForm";
-import ItemSkeleton from "./skeletons/ItemSkeleton";
-import ItemList from "./components/ReviewsItem";
+import ReviewsRowActions from "./components/ReviewsRowActions";
+import { reviewsColumns } from "./components/reviewsColumns";
+import { LIMITS, countFilters } from "../../-shared/lista";
 import SearchForm from "./components/ReviewsSearch";
 // Interfaces
 import { IReview } from "./interfaces/entity.interface";
@@ -22,7 +24,7 @@ interface ListProps {
 const List = ({ courseId, courseName }: ListProps) => {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
-  const [searchParams, setSearchParams] = useState({
+  const [searchParams, setSearchParams] = useState<Record<string, any>>({
     limit: 10,
     page: 0,
     show: ['trainee', 'course', 'class'],
@@ -44,7 +46,7 @@ const List = ({ courseId, courseName }: ListProps) => {
     total: number;
   }
 
-  const { data, isLoading, isError, error } = useQuery<Response | undefined, ApiError>({
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery<Response | undefined, ApiError>({
     queryKey: [`list${entity.pluralName}`, searchParams],
     queryFn: async () => {
       const params = Object.keys(searchParams).map((key) => ({
@@ -89,93 +91,42 @@ const List = ({ courseId, courseName }: ListProps) => {
     setSearchParams(initialFormRef.current);
   };
   
-  const handleLimitChange = (name: string, value: string | number) => {
-    setSearchParams((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handlePageChange = (page: number) => {
-    setSearchParams((prev) => ({ ...prev, page }));
-  };
-
-  const totalPages = data ? Math.ceil(data.total / searchParams.limit) : 0;
-  const skeletons = Array(5).fill(null);
-
   if (!can(`view_${entity.ability}`)) return null;
 
+  const filterCount = countFilters(searchParams, initialFormRef.current);
+
   return (
-    <>
-      <div className="px-4">
-        <HeaderLists
-          entityName={entity.name}
-          ability={entity.ability}
-          limit={data?.total || 0}
-          searchParams={searchParams}
-          onlimitChange={handleLimitChange}
-          openSearch={setOpenSearch}
-          openForm={() => {}} // Não há formulário nesta feature
-          setFormData={() => {}} 
-          setFormType={() => {}}
-          iconForm="plus"
-          showCreate={false} // Esconde o botão de criar
-        />
-
-        {/* Mostrar o curso sendo visualizado */}
-        {courseName && (
-          <div className="my-4 p-3 bg-muted rounded-lg">
-            <span className="text-sm font-medium">Avaliações do curso: </span>
-            <span className="text-sm text-muted-foreground">{courseName}</span>
-          </div>
-        )}
-
-        {/* Busca avançada */}
-        <SideForm
-          openSheet={openSearch}
-          setOpenSheet={setOpenSearch}
-          title={`Buscar ${entity.pluralName}`}
-          description={`Preencha os campos abaixo para filtrar ${entity.pluralName.toLowerCase()}.`}
-          side="left"
-          form={ <SearchForm onSearch={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
-        />
-
-        {/* Listagem de items */}
-        <div className="mt-4 rounded-card border bg-card overflow-x-auto">
-          {isLoading
-            ? skeletons.map((_, i) => <ItemSkeleton key={i} index={i} />)
-            : isError
-            ? <div className="w-full flex justify-center items-center text-sm font-medium text-destructive py-10">
-                <p>Erro: {error?.response?.data?.message}</p>
-              </div>
-            : data?.rows && data.rows.length > 0 
-            ? data.rows.map((item: IReview, i: number) => (
-                <ItemList 
-                  key={item.id} 
-                  item={item} 
-                  entity={entity}
-                  index={i} 
-                />
-              ))
-            : (
-              <div className="w-full flex justify-center items-center text-sm text-muted-foreground py-10">
-                <p>Nenhuma {entity.name.toLowerCase()} encontrada!</p>
-              </div>
-            )
-          }
+    <div className="px-4 flex flex-col gap-3">
+      {/* Mostrar o curso sendo visualizado */}
+      {courseName && (
+        <div className="p-3 bg-muted rounded-lg">
+          <span className="text-sm font-medium">Avaliações do curso: </span>
+          <span className="text-sm text-muted-foreground">{courseName}</span>
         </div>
+      )}
 
-        {/* Paginação */}
-        <div className="mt-4">
-          {totalPages >= 1 && (
-            <Pagination
-              totalItems={data?.total || 0}
-              itemsPerPage={searchParams.limit}
-              currentPage={searchParams.page}
-              onPageChange={handlePageChange}
-              maxVisiblePages={5}
-            />
-          )}
-        </div>
-      </div>
-    </>
+      <ListToolbar onOpenFilters={() => setOpenSearch(true)} filterCount={filterCount} />
+
+      <DataTable rows={data?.rows} columns={reviewsColumns} getRowId={(item) => item.id} ariaLabel={entity.pluralName} minWidth={680}
+        loading={isLoading || isFetching} error={isError ? error?.response?.data?.message || "erro desconhecido" : null} onRetry={() => refetch()}
+        rowClassName={(item) => (item.inactiveAt ? "opacity-60" : undefined)}
+        actions={(item) => <ReviewsRowActions item={item} entity={entity} />}
+        empty={<EmptyState title="Nenhuma avaliação encontrada." />} />
+
+      <ListFooter total={data?.total ?? 0} page={searchParams.page} limit={searchParams.limit} limits={LIMITS}
+        onPageChange={(page) => setSearchParams((prev) => ({ ...prev, page }))}
+        onLimitChange={(limit) => setSearchParams((prev) => ({ ...prev, limit, page: 0 }))} />
+
+      {/* Busca avançada */}
+      <SideForm
+        openSheet={openSearch}
+        setOpenSheet={setOpenSearch}
+        title={`Buscar ${entity.pluralName}`}
+        description={`Preencha os campos abaixo para filtrar ${entity.pluralName.toLowerCase()}.`}
+        side="left"
+        form={ <SearchForm onSearch={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
+      />
+    </div>
   );
 };
 

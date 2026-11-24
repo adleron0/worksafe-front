@@ -3,15 +3,20 @@ import { useRef, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
-import Pagination from "@/components/general-components/Pagination";
-import HeaderLists from "@/components/general-components/HeaderLists";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
+import { Button } from "@/components/ui/button";
 import SideForm from "@/components/general-components/SideForm";
-import ItemSkeleton from "./-skeletons/ItemSkeleton";
-import ItemList from "./-components/ComentarioItem";
+import { comentarioColumns } from "./-components/comentarioColumns";
+import ComentarioRowActions from "./-components/ComentarioRowActions";
 import Form from "./-components/ComentarioForm";
 import SearchForm from "./-components/ComentarioSearch";
 import { IComentario } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
+import { countFilters } from "../-shared/countFilters";
 
 export const Route = createFileRoute('/_authenticated/blog/_comentarios/comentarios')({
   component: List,
@@ -28,6 +33,7 @@ function List() {
     'order-createdAt': string;
     status?: string;
     'in-postId'?: number | number[];
+    'like-content'?: string;
   }>({
     limit: 10,
     page: 0,
@@ -50,8 +56,10 @@ function List() {
   const {
     data,
     isLoading,
+    isFetching,
     isError,
     error,
+    refetch,
   } = useQuery<Response | undefined, ApiError>({
     queryKey: [`list${entity.pluralName}`, searchParams],
     queryFn: async () => {
@@ -80,17 +88,13 @@ function List() {
     setSearchParams(initialFormRef.current);
   };
 
-  const handleLimitChange = (name: string, value: string | number) => {
-    setSearchParams((prev) => ({ ...prev, [name]: value }));
+  const handleLimitChange = (limit: number) => {
+    setSearchParams((prev) => ({ ...prev, limit, page: 0 }));
   };
 
   const handlePageChange = (page: number) => {
     setSearchParams((prev) => ({ ...prev, page }));
   };
-
-  const totalPages = data ? Math.ceil(data.total / searchParams.limit) : 0;
-
-  const skeletons = Array(5).fill(null);
 
   const handleTextSearch = useCallback((text: string) => {
     setSearchParams(prev => ({
@@ -102,26 +106,14 @@ function List() {
 
   if (!can(`view_${entity.ability}`)) return null;
 
+  const filterCount = countFilters(searchParams, ['status', 'in-postId']);
+  const hasFilters = filterCount > 0 || !!searchParams['like-content'];
+  const columns = comentarioColumns();
+  const edit = (item: IComentario) => { setFormData(item); setOpenForm(true); };
+
   return (
     <>
-      <HeaderLists
-        titlePage={`${entity.pluralName}`}
-        descriptionPage={`Moderar ${entity.pluralName} do Blog`}
-        entityName={entity.name}
-        ability={entity.ability}
-        limit={data?.total || 0}
-        showInputSearch={true}
-        showCreate={false}
-        searchPlaceholder={`Buscar por conteúdo do ${entity.name.toLowerCase()}...`}
-        searchParams={searchParams}
-        onlimitChange={handleLimitChange}
-        openSearch={setOpenSearch}
-        openForm={setOpenForm}
-        setFormData={setFormData}
-        setFormType={() => {}}
-        iconForm="plus"
-        onTextSearch={handleTextSearch}
-      />
+      <PageHeader title={entity.pluralName} description={`Moderar ${entity.pluralName} do Blog`} />
 
       <SideForm
         openSheet={openSearch}
@@ -141,43 +133,36 @@ function List() {
         form={<Form formData={formData} openSheet={setOpenForm} entity={entity} />}
       />
 
-      <div className="mt-4 rounded-card border bg-card overflow-x-auto">
-        {isLoading
-          ? skeletons.map((_, i) => <ItemSkeleton key={i} index={i} />)
-          : isError
-            ? <div className="w-full flex justify-center items-center text-sm font-medium text-destructive py-10">
-              <p>Erro: {error?.response?.data?.message}</p>
-            </div>
-            : data?.rows && data.rows.length > 0
-              ? data.rows.map((item: IComentario, i: number) => (
-                <ItemList
-                  key={item.id}
-                  item={item}
-                  entity={entity}
-                  index={i}
-                  setFormData={setFormData}
-                  setOpenForm={setOpenForm}
-                />
-              ))
-              : (
-                <div className="w-full flex justify-center items-center text-sm text-muted-foreground py-10">
-                  <p>Nenhum {entity.name} encontrado!</p>
-                </div>
-              )
-        }
-      </div>
+      <ListCard>
+        <ListToolbar
+          search={{ value: searchParams['like-content'] ?? "", onChange: handleTextSearch, placeholder: `Buscar por conteúdo do ${entity.name.toLowerCase()}...` }}
+          onOpenFilters={() => setOpenSearch(true)}
+          filterCount={filterCount}
+        ></ListToolbar>
 
-      <div className="mt-4">
-        {totalPages >= 1 && (
-          <Pagination
-            totalItems={data?.total || 0}
-            itemsPerPage={searchParams.limit}
-            currentPage={searchParams.page}
-            onPageChange={handlePageChange}
-            maxVisiblePages={5}
-          />
-        )}
-      </div>
+        <DataTable
+          rows={data?.rows}
+          columns={columns}
+          getRowId={(item) => item.id ?? 0}
+          ariaLabel={entity.pluralName}
+          minWidth={960}
+          loading={isLoading || isFetching}
+          error={isError ? error?.response?.data?.message || "erro desconhecido" : null}
+          onRetry={() => refetch()}
+          actions={(item) => <ComentarioRowActions item={item} entity={entity} onView={edit} />}
+          empty={hasFilters
+            ? <EmptyState icon="search-x" title="Nenhum comentário encontrado com esses filtros." action={<Button variant="outline" size="sm" onClick={handleClear}>Limpar filtros</Button>} />
+            : <EmptyState title="Nenhum comentário recebido." />}
+        />
+
+        <ListFooter
+          total={data?.total ?? 0}
+          page={searchParams.page}
+          limit={searchParams.limit}
+          onPageChange={handlePageChange}
+          onLimitChange={handleLimitChange}
+        />
+      </ListCard>
     </>
   );
 }

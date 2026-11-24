@@ -4,14 +4,19 @@ import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useWindowSize from "@/hooks/use-windowSize";
 import useVerify from "@/hooks/use-verify";
-import Pagination from "@/components/general-components/Pagination";
 // Template Page
-import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
-import ItemSkeleton from "../-skeletons/ItemSkeleton";
-import ItemList from "./UserItem";
+import Icon from "@/components/general-components/Icon";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
+import { Button } from "@/components/ui/button";
 import Form from "./UserForm";
 import SearchForm from "./UserSearch";
+import UserRowActions from "./UserRowActions";
+import { userColumns } from "./userColumns";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
@@ -25,6 +30,10 @@ interface UsersListProps {
   queryKey?: string;
   defaultIsSeller?: boolean;
 }
+
+const LIMITS = [10, 30, 50, 100, 200];
+// filtros do painel lateral (contam no botão "Filtros")
+const FILTER_KEYS = ["active", "cpf", "in-profileId", "createdAt"];
 
 function UsersList({
   title = "Usuários do Sistema",
@@ -40,7 +49,7 @@ function UsersList({
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
   const [formType, setFormType] = useState("both");
-  const [searchParams, setSearchParams] = useState({
+  const [searchParams, setSearchParams] = useState<Record<string, any>>({
     limit: 10,
     page: 0,
     show: ['profile', 'permissions'],
@@ -63,64 +72,58 @@ function UsersList({
     total: number;
   }
 
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-  } = useQuery<Response | undefined, ApiError>({
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery<Response | undefined, ApiError>({
     queryKey: [queryKey, searchParams],
     queryFn: async () => {
       const params = Object.keys(searchParams).map((key) => ({
         key,
-        value: searchParams[key as keyof typeof searchParams]
+        value: searchParams[key]
       }));
       return get(entity.model, '', params);
     },
   });
 
   const handleSearch = async (params: any) => {
-    setSearchParams((prev) => ({
-      ...prev,
-      ...params,
-    }));
+    setSearchParams((prev) => ({ ...prev, ...params }));
   };
 
   const handleClear = () => {
     setSearchParams(initialFormRef.current);
   };
 
-  const handleLimitChange = (name: string, value: string | number) => {
-    setSearchParams((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handlePageChange = (page: number) => {
-    setSearchParams((prev) => ({ ...prev, page }));
-  };
-
-  const totalPages = data ? Math.ceil(data.total / searchParams.limit) : 0;
-
-  const skeletons = Array(5).fill(null);
   const { width } = useWindowSize();
 
   if (!can(`view_${entity.ability}`)) return null;
 
+  const canCreate = showCreateButton && can(`create_${entity.ability}`);
+  const openNew = () => { setFormData(undefined); setFormType("both"); setOpenForm(true); };
+  const openEdit = (user: IEntity) => { setFormData(user); setFormType(""); setOpenForm(true); };
+  const openPassword = (user: IEntity) => { setFormData(user); setFormType("only"); setOpenForm(true); };
+  const isSet = (value: unknown) => value !== undefined && value !== null && value !== "" && !(Array.isArray(value) && value.every((v) => v === undefined || v === null));
+  const filterCount = FILTER_KEYS.filter((key) => isSet(searchParams[key])).length;
+  const filtered = filterCount > 0 || !!searchParams['like-name'];
+
   return (
     <>
-      <HeaderLists
-        titlePage={title}
-        descriptionPage={description}
-        entityName={entity.name}
-        ability={showCreateButton ? entity.ability : undefined}
-        limit={data?.total || 0}
-        searchParams={searchParams}
-        onlimitChange={handleLimitChange}
-        openSearch={setOpenSearch}
-        openForm={showCreateButton ? setOpenForm : undefined}
-        setFormData={showCreateButton ? setFormData : undefined}
-        setFormType={showCreateButton ? setFormType : undefined}
-        iconForm="user-plus"
-      />
+      <PageHeader title={title} description={description} />
+
+      <ListCard>
+        <ListToolbar search={{ value: searchParams['like-name'] ?? "", onChange: (text) => setSearchParams((prev) => ({ ...prev, 'like-name': text, page: 0 })), placeholder: "Buscar pelo nome" }}
+          onOpenFilters={() => setOpenSearch(true)} filterCount={filterCount}>
+          {canCreate && <Button onClick={openNew}><Icon name="user-plus" className="w-4 h-4" /> <span className="hidden sm:inline">Novo {entity.name}</span></Button>}
+        </ListToolbar>
+
+        <DataTable rows={data?.rows} columns={userColumns} getRowId={(user) => user.id ?? user.email} ariaLabel={entity.pluralName}
+          loading={isLoading || isFetching} error={isError ? error?.response?.data?.message || "erro desconhecido" : null} onRetry={() => refetch()}
+          rowClassName={(user) => (user.active ? undefined : "opacity-60")}
+          actions={(user) => <UserRowActions user={user} onEdit={openEdit} onPassword={openPassword} />}
+          empty={filtered
+            ? <EmptyState icon="search-x" title={`Nenhum ${entity.name.toLowerCase()} com esses filtros.`} action={<Button variant="outline" size="sm" onClick={handleClear}>Limpar filtros</Button>} />
+            : <EmptyState title={`Nenhum ${entity.name.toLowerCase()} encontrado!`} action={canCreate && <Button size="sm" onClick={openNew}><Icon name="user-plus" className="w-4 h-4" /> Novo {entity.name}</Button>} />} />
+
+        <ListFooter total={data?.total ?? 0} page={searchParams.page} limit={searchParams.limit} limits={LIMITS}
+          onPageChange={(page) => setSearchParams((prev) => ({ ...prev, page }))} onLimitChange={(limit) => setSearchParams((prev) => ({ ...prev, limit }))} />
+      </ListCard>
 
       {/* Busca avançada */}
       <SideForm
@@ -151,46 +154,6 @@ function UsersList({
           form={ <Form openSheet={setOpenForm} formData={formData} onlyPassword={formType} defaultIsSeller={defaultIsSeller}/> }
         />
       )}
-
-      {/* Listagem de items */}
-      <div className="mt-4 rounded-card border bg-card overflow-x-auto">
-        {isLoading
-          ? skeletons.map((_, i) => <ItemSkeleton key={i} index={i} />)
-          : isError
-          ? <div className="w-full flex justify-center items-center text-sm font-medium text-destructive py-10">
-              <p>Erro: {error?.response?.data?.message}</p>
-            </div>
-          : data?.rows && data.rows.length > 0
-          ? data.rows.map((user: IEntity, i: number) => (
-              <ItemList
-                key={user.id}
-                user={user}
-                index={i}
-                setFormData={setFormData}
-                setFormType={setFormType}
-                setOpenForm={setOpenForm}
-              />
-            ))
-          : (
-            <div className="w-full flex justify-center items-center text-sm text-muted-foreground py-10">
-              <p>Nenhum {entity.name.toLowerCase()} encontrado!</p>
-            </div>
-          )
-        }
-      </div>
-
-      {/* Paginação */}
-      <div className="mt-4">
-        {totalPages >= 1 && (
-            <Pagination
-              totalItems={data?.total || 0}
-              itemsPerPage={searchParams.limit}
-              currentPage={searchParams.page}
-              onPageChange={handlePageChange}
-              maxVisiblePages={5}
-            />
-          )}
-      </div>
     </>
   );
 }

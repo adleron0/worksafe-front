@@ -21,7 +21,8 @@ import { Area } from "../-interfaces/area.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import DropUpload from "@/components/general-components/DropUpload";
 
-const AreaForm = ({ areaToEdit }: { areaToEdit?: Area }) => {
+/** Gaveta de cadastro/edição de área. Com `open`/`onOpenChange` é controlada de fora e não desenha o botão que abre. */
+const AreaForm = ({ areaToEdit, open, onOpenChange }: { areaToEdit?: Area; open?: boolean; onOpenChange?: (open: boolean) => void }) => {
   const queryClient = useQueryClient();
   const { user } = useAuth(); 
   const companyId = user?.companyId || 1;
@@ -44,7 +45,10 @@ const AreaForm = ({ areaToEdit }: { areaToEdit?: Area }) => {
   type AreaFormData = z.infer<typeof areaSchema>;
 
   // Controle de abertura do Sheet
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [innerOpen, setInnerOpen] = useState(false);
+  const controlled = open !== undefined;
+  const isSheetOpen = controlled ? open : innerOpen;
+  const setIsSheetOpen = (value: boolean) => { if (controlled) onOpenChange?.(value); else setInnerOpen(value); };
   const [formData, setFormData] = useState<AreaFormData>({
     name: "",
     companyId,
@@ -185,7 +189,7 @@ const AreaForm = ({ areaToEdit }: { areaToEdit?: Area }) => {
 
   return (
     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-      <SheetTrigger asChild>
+      {!controlled && <SheetTrigger asChild>
         {
           areaToEdit ? (
             <Button variant="default" className={`flex p-2 items-center w-1/2 h-7`}>
@@ -198,8 +202,7 @@ const AreaForm = ({ areaToEdit }: { areaToEdit?: Area }) => {
             </Button>
           )
         }
-        
-      </SheetTrigger>
+      </SheetTrigger>}
       <SheetContent side="right" className="w-11/12 md:w-[400px] overflow-y-auto">
         <SheetHeader>
           <SheetTitle>{areaToEdit ? `Editar Área ${areaToEdit.name}` : "Nova Área"}</SheetTitle>

@@ -4,14 +4,20 @@ import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
-import Pagination from "@/components/general-components/Pagination";
 import Dialog from "@/components/general-components/Dialog";
 import QuickFilter from "@/components/general-components/QuickFilter";
 // Template Page list-form
-import HeaderLists from "@/components/general-components/HeaderLists";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
 import SideForm from "@/components/general-components/SideForm";
-import ItemSkeleton from "./-skeletons/ItemSkeleton";
-import ItemList from "./-components/TurmasItem";
+import Icon from "@/components/general-components/Icon";
+import { Button } from "@/components/ui/button";
+import TurmasRowActions from "./-components/TurmasRowActions";
+import { turmasColumns } from "./-components/turmasColumns";
+import { LIMITS, countFilters } from "../-shared/lista";
 import SearchForm from "./-components/TurmasSearch";
 import TurmasInstrutoresList from "@/pages/_authenticated/treinamentos/_instrutores/-turmas-instrutores/TurmasInstrutoresList";
 import Subscriptions from "@/pages/_authenticated/treinamentos/_inscricoes/inscricoes";
@@ -110,12 +116,7 @@ function List() {
     total: number;
   }
 
-  const { 
-    data, 
-    isLoading, 
-    isError, 
-    error, 
-  } = useQuery<Response | undefined, ApiError>({
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery<Response | undefined, ApiError>({
     queryKey: [`list${entity.pluralName}`, searchParams, status, period],
     queryFn: async () => {
       // campo vazio da busca avançada não pode apagar o recorte dos filtros rápidos
@@ -149,38 +150,47 @@ function List() {
     setSearchParams((prev) => ({ ...prev, page: 0 }));
   };
   
-  const handleLimitChange = (name: string, value: string | number) => {
-    setSearchParams((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handlePageChange = (page: number) => {
-    setSearchParams((prev) => ({ ...prev, page }));
-  };
-
-  const totalPages = data ? Math.ceil(data.total / searchParams.limit) : 0;
-
-  const skeletons = Array(5).fill(null);
-
   if (!can(`view_${entity.ability}`)) return null;
+
+  const canCreate = can(`create_${entity.ability}`);
+  const canOpen = can(`update_${entity.ability}`);
+  const openNew = () => navigate({ to: "/treinamentos/turmas/nova" });
+  const openClass = (item: IEntity) => navigate({ to: "/treinamentos/turmas/$turmaId", params: { turmaId: String(item.id) } });
+  const filterCount = countFilters(searchParams, initialFormRef.current);
+  const filtered = filterCount > 0 || status !== 'ativas' || period !== 'atuais';
 
   return (
     <>
-      <HeaderLists
-        titlePage={`${entity.pluralName}`}
-        descriptionPage={`Administrar nossos ${entity.pluralName}`}
-        entityName={entity.name}
-        ability={entity.ability}
-        limit={data?.total || 0}
-        searchParams={searchParams}
-        onlimitChange={handleLimitChange}
-        openSearch={setOpenSearch}
-        openForm={() => {
-          navigate({ to: "/treinamentos/turmas/nova" });
-        }}
-        setFormData={setFormData}
-        setFormType={() => {}}
-        iconForm="plus"
-      />
+      <PageHeader title={entity.pluralName} description={`Administrar nossos ${entity.pluralName}`} />
+
+      <ListCard>
+        {/* Filtros rápidos */}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <QuickFilter label="Status" options={STATUS_OPTIONS} value={status} onChange={changeStatus} />
+          <QuickFilter label="Período" options={PERIOD_OPTIONS} value={period} onChange={changePeriod} />
+        </div>
+
+        <ListToolbar onOpenFilters={() => setOpenSearch(true)} filterCount={filterCount}>
+          {canCreate && <Button onClick={openNew}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Nova {entity.name}</span></Button>}
+        </ListToolbar>
+
+        <DataTable rows={data?.rows} columns={turmasColumns} getRowId={(item) => item.id ?? item.name} ariaLabel={entity.pluralName} minWidth={880}
+          loading={isLoading || isFetching} error={isError ? error?.response?.data?.message || "erro desconhecido" : null} onRetry={() => refetch()}
+          onRowClick={canOpen ? openClass : undefined}
+          rowClassName={(item) => (!item.active ? "opacity-60" : undefined)}
+          actions={(item) => (
+            <TurmasRowActions item={item} entity={entity}
+              onInstructors={(row) => { setFormData(row); setOpenInstrutoresModal(true); }}
+              onSubscriptions={(row) => { setFormData(row); setOpenSubscriptionsModal(true); }} />
+          )}
+          empty={filtered
+            ? <EmptyState icon="search-x" title="Nenhuma turma com esses filtros." action={<Button variant="outline" size="sm" onClick={handleClear}>Limpar filtros</Button>} />
+            : <EmptyState title="Nenhuma turma encontrada." action={canCreate && <Button size="sm" onClick={openNew}><Icon name="plus" className="w-4 h-4" /> Nova {entity.name}</Button>} />} />
+
+        <ListFooter total={data?.total ?? 0} page={searchParams.page} limit={searchParams.limit} limits={LIMITS}
+          onPageChange={(page) => setSearchParams((prev) => ({ ...prev, page }))}
+          onLimitChange={(limit) => setSearchParams((prev) => ({ ...prev, limit, page: 0 }))} />
+      </ListCard>
 
       {/* Busca avançada */}
       <SideForm
@@ -191,40 +201,6 @@ function List() {
         side="left"
         form={ <SearchForm onSubmit={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
       />
-
-      {/* Filtros rápidos */}
-      <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
-        <QuickFilter label="Status" options={STATUS_OPTIONS} value={status} onChange={changeStatus} />
-        <QuickFilter label="Período" options={PERIOD_OPTIONS} value={period} onChange={changePeriod} />
-      </div>
-
-      {/* Listagem de items */}
-      <div className="mt-4 rounded-card border bg-card overflow-x-auto">
-        {isLoading
-          ? skeletons.map((_, i) => <ItemSkeleton key={i} index={i} />)
-          : isError
-          ? <div className="w-full flex justify-center items-center text-sm font-medium text-destructive py-10">
-              <p>Erro: {error?.response?.data?.message}</p>
-            </div>
-          : data?.rows && data.rows.length > 0 
-          ? data.rows.map((item: IEntity, i: number) => (
-              <ItemList
-                key={item.id}
-                item={item}
-                entity={entity}
-                index={i}
-                setFormData={setFormData}
-                openInstructorsModal={setOpenInstrutoresModal}
-                openSubscriptionsModal={setOpenSubscriptionsModal}
-              />
-            ))
-          : (
-            <div className="w-full flex justify-center items-center text-sm text-muted-foreground py-10">
-              <p>Nenhum {entity.name} encontrado!</p>
-            </div>
-          )
-        }
-      </div>
 
       {/* Modal de instrutores */}
       <Dialog 
@@ -250,18 +226,6 @@ function List() {
         <Subscriptions classId={formData?.id || 0} modalPopover={true} />
       </Dialog>
 
-      {/* Paginação */}
-      <div className="mt-4">
-        {totalPages >= 1 && (
-            <Pagination
-              totalItems={data?.total || 0}
-              itemsPerPage={searchParams.limit}
-              currentPage={searchParams.page}
-              onPageChange={handlePageChange}
-              maxVisiblePages={5}
-            />
-          )}
-      </div>
     </>
   );
 };

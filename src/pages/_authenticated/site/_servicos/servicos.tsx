@@ -1,15 +1,21 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 // Serviços
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
-import Pagination from "@/components/general-components/Pagination";
 // Template Page list-form
-import HeaderLists from "@/components/general-components/HeaderLists";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
+import Icon from "@/components/general-components/Icon";
+import { Button } from "@/components/ui/button";
 import SideForm from "@/components/general-components/SideForm";
-import ItemSkeleton from "./-skeletons/ItemSkeleton";
-import ItemList from "./-components/SiteServicesItem";
+import { siteServicesColumns } from "./-components/siteServicesColumns";
+import SiteItemRowActions from "../-shared/SiteItemRowActions";
+import { countFilters } from "../-shared/countFilters";
 import Form from "./-components/SiteServicesForm";
 import SearchForm from "./-components/SiteServicesSeach";
 // Interfaces
@@ -25,7 +31,12 @@ function List() {
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
-  const [searchParams, setSearchParams] = useState({
+  const [searchParams, setSearchParams] = useState<{
+    limit: number;
+    page: number;
+    'order-name': string;
+    'like-name'?: string;
+  }>({
     limit: 10,
     page: 0,
     'order-name': 'asc',
@@ -45,11 +56,13 @@ function List() {
     total: number;
   }
 
-  const { 
-    data, 
-    isLoading, 
-    isError, 
-    error, 
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch,
   } = useQuery<Response | undefined, ApiError>({
     queryKey: [`list${entity.pluralName}`, searchParams],
     queryFn: async () => {
@@ -72,36 +85,29 @@ function List() {
     setSearchParams(initialFormRef.current);
   };
   
-  const handleLimitChange = (name: string, value: string | number) => {
-    setSearchParams((prev) => ({ ...prev, [name]: value }));
+  const handleLimitChange = (limit: number) => {
+    setSearchParams((prev) => ({ ...prev, limit, page: 0 }));
   };
 
   const handlePageChange = (page: number) => {
     setSearchParams((prev) => ({ ...prev, page }));
   };
 
-  const totalPages = data ? Math.ceil(data.total / searchParams.limit) : 0;
-
-  const skeletons = Array(5).fill(null);
+  const handleTextSearch = useCallback((text: string) => {
+    setSearchParams((prev) => ({ ...prev, 'like-name': text || undefined, page: 0 }));
+  }, []);
 
   if (!can(`view_${entity.ability}`)) return null;
 
+  const filterCount = countFilters(searchParams, ['active', 'createdAt']);
+  const hasFilters = filterCount > 0 || !!searchParams['like-name'];
+  const columns = siteServicesColumns();
+  const openNew = () => { setFormData(undefined); setOpenForm(true); };
+  const edit = (item: IEntity) => { setFormData(item); setOpenForm(true); };
+
   return (
     <>
-      <HeaderLists
-        titlePage={`${entity.pluralName}`}
-        descriptionPage={`Administrar nossos ${entity.pluralName}`}
-        entityName={entity.name}
-        ability={entity.ability}
-        limit={data?.total || 0}
-        searchParams={searchParams}
-        onlimitChange={handleLimitChange}
-        openSearch={setOpenSearch}
-        openForm={setOpenForm}
-        setFormData={setFormData} 
-        setFormType={() => {}}
-        iconForm="plus"
-      />
+      <PageHeader title={entity.pluralName} description={`Administrar nossos ${entity.pluralName}`} />
 
       {/* Busca avançada */}
       <SideForm
@@ -128,44 +134,40 @@ function List() {
       />
 
       {/* Listagem de items */}
-      <div className="mt-4 rounded-card border bg-card overflow-x-auto">
-        {isLoading
-          ? skeletons.map((_, i) => <ItemSkeleton key={i} index={i} />)
-          : isError
-          ? <div className="w-full flex justify-center items-center text-sm font-medium text-destructive py-10">
-              <p>Erro: {error?.response?.data?.message}</p>
-            </div>
-          : data?.rows && data.rows.length > 0 
-          ? data.rows.map((item: IEntity, i: number) => (
-              <ItemList 
-                key={item.id} 
-                item={item} 
-                entity={entity}
-                index={i} 
-                setFormData={setFormData} 
-                setOpenForm={setOpenForm}
-              />
-            ))
-          : (
-            <div className="w-full flex justify-center items-center text-sm text-muted-foreground py-10">
-              <p>Nenhum {entity.name} encontrado!</p>
-            </div>
-          )
-        }
-      </div>
-
-      {/* Paginação */}
-      <div className="mt-4">
-        {totalPages >= 1 && (
-            <Pagination
-              totalItems={data?.total || 0}
-              itemsPerPage={searchParams.limit}
-              currentPage={searchParams.page}
-              onPageChange={handlePageChange}
-              maxVisiblePages={5}
-            />
+      <ListCard>
+        <ListToolbar
+          search={{ value: searchParams['like-name'] ?? "", onChange: handleTextSearch, placeholder: "Buscar pelo nome..." }}
+          onOpenFilters={() => setOpenSearch(true)}
+          filterCount={filterCount}
+        >
+          {can(`create_${entity.ability}`) && (
+            <Button onClick={openNew}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Novo serviço</span></Button>
           )}
-      </div>
+        </ListToolbar>
+
+        <DataTable
+          rows={data?.rows}
+          columns={columns}
+          getRowId={(item) => item.id ?? item.name}
+          ariaLabel={entity.pluralName}
+          minWidth={800}
+          loading={isLoading || isFetching}
+          error={isError ? error?.response?.data?.message || "erro desconhecido" : null}
+          onRetry={() => refetch()}
+          actions={(item) => <SiteItemRowActions item={item} entity={entity} onEdit={edit} />}
+          empty={hasFilters
+            ? <EmptyState icon="search-x" title="Nenhum serviço encontrado com esses filtros." action={<Button variant="outline" size="sm" onClick={handleClear}>Limpar filtros</Button>} />
+            : <EmptyState title="Nenhum serviço cadastrado." action={can(`create_${entity.ability}`) && <Button size="sm" onClick={openNew}><Icon name="plus" className="w-4 h-4" /> Novo serviço</Button>} />}
+        />
+
+        <ListFooter
+          total={data?.total ?? 0}
+          page={searchParams.page}
+          limit={searchParams.limit}
+          onPageChange={handlePageChange}
+          onLimitChange={handleLimitChange}
+        />
+      </ListCard>
     </>
   );
 };

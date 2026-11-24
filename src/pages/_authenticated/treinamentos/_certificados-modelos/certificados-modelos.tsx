@@ -3,14 +3,20 @@ import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
-import Pagination from "@/components/general-components/Pagination";
-import HeaderLists from "@/components/general-components/HeaderLists";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
+import Icon from "@/components/general-components/Icon";
+import { Button } from "@/components/ui/button";
 import SideForm from "@/components/general-components/SideForm";
 import Dialog from '@/components/general-components/Dialog';
 import ConfirmDialog from '@/components/general-components/ConfirmDialog';
 import GeradorCertificados from '@/components/general-components/geradorCertificados/gerador';
-import ItemSkeleton from "./-skeletons/ItemSkeleton";
-import CertificateItem from "./-components/CertificateItem";
+import CertificateRowActions from "./-components/CertificateRowActions";
+import { certificateColumns } from "./-components/certificateColumns";
+import { LIMITS, countFilters } from "../-shared/lista";
 import CertificateSearch from "./-components/CertificateSearch";
 import { ICertificate } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
@@ -34,7 +40,7 @@ function CertificadosPage() {
     setOpenEditor(false);
     setEditingCertificate(undefined);
   };
-  const [searchParams, setSearchParams] = useState({
+  const [searchParams, setSearchParams] = useState<Record<string, any>>({
     limit: 10,
     page: 0,
     'order-name': 'asc',
@@ -56,10 +62,7 @@ function CertificadosPage() {
     total: number;
   }
 
-  const { 
-    data, 
-    isLoading,
-  } = useQuery<Response | undefined, ApiError>({
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery<Response | undefined, ApiError>({
     queryKey: [`list_${entity.pluralName}`, searchParams],
     queryFn: async () => {
       const params = Object.keys(searchParams).map((key) => ({
@@ -90,77 +93,39 @@ function CertificadosPage() {
     setSearchParams(initialFormRef.current);
   };
   
-  const handleLimitChange = (name: string, value: string | number) => {
-    setSearchParams((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handlePageChange = (page: number) => {
-    setSearchParams((prev) => ({ ...prev, page }));
-  };
-
-
-  const skeletons = Array(5).fill(null);
-
   const { width } = useWindowSize();
   const isDesktop = width ? width > 768 : true;
 
   if (!can(`view_${entity.ability}`)) return null;
 
+  const canCreate = can(`create_${entity.ability}`) && isDesktop;
+  const canEdit = can(`update_${entity.ability}`) && isDesktop;
+  const openNew = () => { setEditingCertificate(undefined); setOpenEditor(true); };
+  const openEdit = (item: ICertificate) => { setEditingCertificate(item); setOpenEditor(true); };
+  const filterCount = countFilters(searchParams, initialFormRef.current);
+
   return (
     <>
-      <HeaderLists
-        titlePage={`${entity.pluralName}`}
-        descriptionPage={`Gerencie os modelos de certificados dos cursos`}
-        entityName={entity.name}
-        ability={entity.ability}
-        limit={data?.total || 0}
-        searchParams={searchParams}
-        onlimitChange={handleLimitChange}
-        openSearch={setOpenSearch}
-        openForm={() => {
-          setEditingCertificate(undefined);
-          setOpenEditor(true);
-        }}
-        setFormData={setEditingCertificate}
-        setFormType={() => {}}
-        showCreate={isDesktop}
-        addButtonName="Criar Template"
-      />
+      <PageHeader title={entity.pluralName} description="Gerencie os modelos de certificados dos cursos" />
 
-      {/* Lista de certificados */}
-      <div className="mt-4 rounded-card border bg-card overflow-x-auto">
-        {isLoading ? (
-          skeletons.map((_, i) => <ItemSkeleton key={i} index={i} />)
-        ) : data?.rows && data.rows.length > 0 ? (
-          data.rows.map((item: ICertificate, i: number) => (
-            <CertificateItem
-              key={item.id}
-              item={item}
-              index={i}
-              entity={entity}
-              setFormData={setEditingCertificate}
-              setOpenForm={setOpenEditor}
-              isDesktop={isDesktop}
-            />
-          ))
-        ) : (
-          <div className="w-full flex justify-center items-center text-sm text-muted-foreground py-10">
-            <p>Nenhum {entity.name} encontrado!</p>
-          </div>
-        )}
-      </div>
+      <ListCard>
+        <ListToolbar onOpenFilters={() => setOpenSearch(true)} filterCount={filterCount}>
+          {canCreate && <Button onClick={openNew}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Criar Template</span></Button>}
+        </ListToolbar>
 
-      {/* Paginação */}
-      {data && data.total > searchParams.limit && (
-        <div className="mt-6">
-          <Pagination
-            currentPage={searchParams.page}
-            totalItems={data.total}
-            itemsPerPage={searchParams.limit}
-            onPageChange={handlePageChange}
-          />
-        </div>
-      )}
+        <DataTable rows={data?.rows} columns={certificateColumns} getRowId={(item) => item.id} ariaLabel="Modelos de certificado"
+          loading={isLoading || isFetching} error={isError ? error?.response?.data?.message || "erro desconhecido" : null} onRetry={() => refetch()}
+          onRowClick={canEdit ? openEdit : undefined}
+          rowClassName={(item) => (!item.active ? "opacity-60" : undefined)}
+          actions={(item) => <CertificateRowActions item={item} entity={entity} onEdit={openEdit} isDesktop={isDesktop} />}
+          empty={filterCount > 0
+            ? <EmptyState icon="search-x" title="Nenhum modelo com esses filtros." action={<Button variant="outline" size="sm" onClick={handleClear}>Limpar filtros</Button>} />
+            : <EmptyState title="Nenhum modelo de certificado encontrado." action={canCreate && <Button size="sm" onClick={openNew}><Icon name="plus" className="w-4 h-4" /> Criar Template</Button>} />} />
+
+        <ListFooter total={data?.total ?? 0} page={searchParams.page} limit={searchParams.limit} limits={LIMITS}
+          onPageChange={(page) => setSearchParams((prev) => ({ ...prev, page }))}
+          onLimitChange={(limit) => setSearchParams((prev) => ({ ...prev, limit, page: 0 }))} />
+      </ListCard>
 
       {/* Modal de busca */}
       <SideForm

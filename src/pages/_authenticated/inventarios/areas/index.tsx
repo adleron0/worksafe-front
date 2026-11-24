@@ -1,30 +1,36 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import useVerify from "@/hooks/use-verify";
 import { useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import Pagination from "@/components/general-components/Pagination";
 import { listAreasCompany } from "@/services/specific/areaService";
 import { useQuery } from "@tanstack/react-query";
-import AreaItemSkeleton from "./-skeletons/areaItemSkeleton";
+import Icon from "@/components/general-components/Icon";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
+import { Button } from "@/components/ui/button";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { Area } from "./-interfaces/area.interface";
-import AreaItem from "./-components/AreaItem";
 import AreaForm from "./-components/AreaForm";
 import AreasSearchForm from "./-components/AreasSearchForm";
+import AreaRowActions from "./-components/AreaRowActions";
+import { areaColumns } from "./-components/areaColumns";
 
 export const Route = createFileRoute('/_authenticated/inventarios/areas/')({
   component: Areas,
 })
 
+const LIMITS = [10, 30, 50, 100, 200];
+const INITIAL = { limit: 10, pagination: 0, active: true };
+
 function Areas() {
   const { can, has } = useVerify();
-  const [searchParams, setSearchParams] = useState({
-    limit: 10,
-    pagination: 0,
-    active: true,
-  });
-
+  const navigate = useNavigate();
+  const [openSearch, setOpenSearch] = useState(false);
+  // undefined = gaveta fechada; null = nova área; Area = edição
+  const [formArea, setFormArea] = useState<Area | null | undefined>(undefined);
+  const [searchParams, setSearchParams] = useState<Record<string, any>>(INITIAL);
 
   const handleSearch = async (params: any) => {
     setSearchParams((prev) => ({
@@ -35,11 +41,7 @@ function Areas() {
   };
 
   const handleClear = () => {
-    setSearchParams({
-      limit: 10,
-      pagination: 0,
-      active: true,
-    });
+    setSearchParams(INITIAL);
   };
 
   interface AreasResponse {
@@ -47,83 +49,42 @@ function Areas() {
     total: number;
   }
 
-  const { data: areasData, isLoading, isError, error } = useQuery<AreasResponse, ApiError>({
+  const { data: areasData, isLoading, isFetching, isError, error, refetch } = useQuery<AreasResponse, ApiError>({
     queryKey: ['listAreasCompany', searchParams],
     queryFn: () => listAreasCompany(searchParams),
   });
 
-  const handleLimitChange = (name: string, value: string | number) => {
-    setSearchParams((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handlePageChange = (page: number) => {
-    setSearchParams((prev) => ({ ...prev, pagination: page }));
-  };
-
-  const totalPages = areasData ? Math.ceil(areasData.total / searchParams.limit) : 0;
-
-  const skeletons = Array(3).fill(null);
-    
   if (!can('view_inventarios') || !has('Confinus')) return null;
+
+  const open = (area: Area) => navigate({ to: `/inventarios/areas/${area.id}` });
+  const filterCount = (searchParams.name ? 1 : 0)
+    + (Array.isArray(searchParams.createdAt) && searchParams.createdAt.some(Boolean) ? 1 : 0)
+    + (searchParams.active !== undefined && searchParams.active !== true ? 1 : 0);
 
   return (
     <>
-      <div className="flex flex-col md:flex-row mb-4 items-start justify-between md:items-center">
-        <div>
-          <h1 className="text-xl font-bold">Mapa de Área</h1>
-          <span className="text-gray-600 dark:text-gray-100">Mapa de Áreas de Espaços Confinados</span>
-        </div>
-      </div>
+      <PageHeader title="Mapa de Área" description="Mapa de Áreas de Espaços Confinados" />
 
-      <div className="flex justify-between items-center my-4">
-      <div className="flex justify-start items-center gap-2">
-          <div className="flex items-baseline gap-2">
-            <Label htmlFor="limit">Itens</Label>
-            <Select
-              onValueChange={(value) => handleLimitChange("limit", Number(value))}
-              value={searchParams.limit.toString()}
-              
-            >
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="30">30</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-                <SelectItem value="100">100</SelectItem>
-                <SelectItem value={`${areasData?.total || 0}`}>{areasData?.total || 0}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <AreasSearchForm onSubmit={handleSearch} onClear={handleClear} params={searchParams} />
-        </div>
-        
-        <AreaForm />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-        {isLoading
-          ? skeletons.map((_, i) => <AreaItemSkeleton key={i} />)
-          : isError
-          ? <p className="px-2 py-4 border border-destructive rounded-md">Erro: {error?.response?.data?.message}</p>
-          : areasData?.areas && areasData.areas.length > 0 
-          ? areasData.areas.map((area: Area) => (
-              <AreaItem key={`${area.id}-${area.name}`} area={area} />
-            ))
-          : <p className="px-2 py-4 border border-primary/30 text-primary rounded-md">Nenhuma área ativa encontrada!</p>
-        }
-      </div>
-      <div className="mt-4">
-        {totalPages >= 1 && (
-            <Pagination
-              totalItems={areasData?.total || 0}
-              itemsPerPage={searchParams.limit}
-              currentPage={searchParams.pagination}
-              onPageChange={handlePageChange}
-              maxVisiblePages={5}
-            />
-          )}
-      </div>
+      <ListCard>
+        <ListToolbar onOpenFilters={() => setOpenSearch(true)} filterCount={filterCount}>
+          <Button onClick={() => setFormArea(null)}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Nova Área</span></Button>
+        </ListToolbar>
+
+        <DataTable rows={areasData?.areas} columns={areaColumns} getRowId={(area) => `${area.id}-${area.name}`} ariaLabel="Áreas" minWidth={560}
+          loading={isLoading || isFetching} error={isError ? error?.response?.data?.message || "erro desconhecido" : null} onRetry={() => refetch()}
+          onRowClick={open}
+          rowClassName={(area) => (area.inactiveAt ? "opacity-60" : undefined)}
+          actions={(area) => <AreaRowActions area={area} onOpen={open} onEdit={setFormArea} />}
+          empty={filterCount > 0
+            ? <EmptyState icon="search-x" title="Nenhuma área com esses filtros." action={<Button variant="outline" size="sm" onClick={handleClear}>Limpar filtros</Button>} />
+            : <EmptyState title="Nenhuma área ativa encontrada!" action={<Button size="sm" onClick={() => setFormArea(null)}><Icon name="plus" className="w-4 h-4" /> Nova Área</Button>} />} />
+
+        <ListFooter total={areasData?.total ?? 0} page={searchParams.pagination} limit={searchParams.limit} limits={LIMITS}
+          onPageChange={(page) => setSearchParams((prev) => ({ ...prev, pagination: page }))} onLimitChange={(limit) => setSearchParams((prev) => ({ ...prev, limit }))} />
+      </ListCard>
+
+      <AreasSearchForm onSubmit={handleSearch} onClear={handleClear} params={searchParams} open={openSearch} onOpenChange={setOpenSearch} />
+      <AreaForm key={formArea?.id ?? "new"} areaToEdit={formArea ?? undefined} open={formArea !== undefined} onOpenChange={(next) => { if (!next) setFormArea(undefined); }} />
     </>
   );
-};
+}

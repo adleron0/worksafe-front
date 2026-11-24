@@ -4,14 +4,19 @@ import { useRef, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
-import Pagination from "@/components/general-components/Pagination";
 import Select from "@/components/general-components/Select";
 import Calendar from "@/components/general-components/Calendar";
 // Template Page list-form
-import HeaderLists from "@/components/general-components/HeaderLists";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
 import SideForm from "@/components/general-components/SideForm";
-import ItemSkeleton from "./-skeletons/ItemSkeleton";
-import ItemList from "./-components/CertificadosItem";
+import { Button } from "@/components/ui/button";
+import CertificadosRowActions from "./-components/CertificadosRowActions";
+import { certificadosColumns } from "./-components/certificadosColumns";
+import { LIMITS, countFilters } from "../-shared/lista";
 import Form from "./-components/CertificadosForm";
 import EditForm from "./-components/CertificadosEditForm";
 import SearchForm from "./-components/CertificadosSearch";
@@ -67,12 +72,7 @@ function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: 
     total: number;
   }
 
-  const { 
-    data, 
-    isLoading, 
-    isError, 
-    error, 
-  } = useQuery<Response | undefined, ApiError>({
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery<Response | undefined, ApiError>({
     queryKey: [`listCertificados`, searchParams],
     queryFn: async () => {
       const params = Object.keys(searchParams).map((key) => ({
@@ -94,14 +94,6 @@ function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: 
     setSearchParams(initialFormRef.current);
   };
   
-  const handleLimitChange = (name: string, value: string | number) => {
-    setSearchParams((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handlePageChange = (page: number) => {
-    setSearchParams((prev) => ({ ...prev, page }));
-  };
-
   // Filtros de busca
    // Interface para um único item da classe
     interface ClassItem {
@@ -178,8 +170,6 @@ function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: 
       },
     });
 
-  const skeletons = Array(5).fill(null);
-
   const handleTextSearch = useCallback((text: string) => {
     setSearchParams(prev => ({
       ...prev,
@@ -213,30 +203,19 @@ function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: 
 
   if (!can(`view_${entity.ability}`)) return null;
 
+  const filterCount = countFilters(searchParams, initialFormRef.current, ['like-trainee.name', 'classId', 'courseId', 'gte-expirationDate', 'lte-expirationDate']);
+  const filtered = filterCount > 0 || !!searchParams['like-trainee.name'] || !!searchParams.classId || !!searchParams.courseId || !!searchParams['gte-expirationDate'];
+  const openView = (item: ICertificate) => { setFormData(item); setOpenForm(true); };
+  const openEdit = (item: ICertificate) => { setEditData(item); setOpenEditForm(true); };
+
   return (
     <>
-      <div className="space-y-4">
-        <HeaderLists
-          titlePage={`${entity.pluralName}`}
-          descriptionPage={`Administrar nossos ${entity.pluralName}`}
-          entityName={entity.name}
-          ability={entity.ability}
-          limit={data?.total || 0}
-          showCreate={false}
-          showInputSearch={true}
-          searchPlaceholder="Buscar por nome do aluno..."
-          searchParams={searchParams}
-          onlimitChange={handleLimitChange}
-          openSearch={setOpenSearch}
-          openForm={setOpenForm}
-          setFormData={setFormData} 
-          setFormType={() => {}}
-          iconForm="award"
-          onTextSearch={handleTextSearch}
-        />
-        <div className="flex justify-start items-center px-2 gap-2 flex-wrap">
+      <PageHeader title={entity.pluralName} description={`Administrar nossos ${entity.pluralName}`} />
+
+      <ListCard>
+        <div className="flex justify-start items-center gap-2 flex-wrap">
           {/* Select de turmas */}
-          <div className="w-[250px]">
+          <div className="w-full sm:w-[250px]">
             <Select
               name="classId"
               options={classesData}
@@ -251,9 +230,9 @@ function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: 
               disabled={classesData?.length === 0}
             />
           </div>
-          
+
           {/* Select de cursos */}
-          <div className="w-[250px]">
+          <div className="w-full sm:w-[250px]">
             <Select
               name="courseId"
               options={coursesData}
@@ -268,9 +247,9 @@ function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: 
               disabled={coursesData?.length === 0}
             />
           </div>
-          
+
           {/* Filtro de período de vencimento */}
-          <div className="w-[280px]">
+          <div className="w-full sm:w-[280px]">
             <Calendar
               mode="range"
               name="expirationDateRange"
@@ -288,7 +267,23 @@ function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: 
             />
           </div>
         </div>
-      </div>
+
+        <ListToolbar search={{ value: searchParams['like-trainee.name'] ?? "", onChange: handleTextSearch, placeholder: "Buscar por nome do aluno..." }}
+          onOpenFilters={() => setOpenSearch(true)} filterCount={filterCount} />
+
+        <DataTable rows={data?.rows} columns={certificadosColumns} getRowId={(item) => item.id ?? String(item.key)} ariaLabel={entity.pluralName}
+          loading={isLoading || isFetching} error={isError ? error?.response?.data?.message || "erro desconhecido" : null} onRetry={() => refetch()}
+          onRowClick={can(`view_${entity.ability}`) ? openView : undefined}
+          rowClassName={(item) => (item.inactiveAt ? "opacity-60" : undefined)}
+          actions={(item) => <CertificadosRowActions item={item} entity={entity} onView={openView} onEdit={openEdit} modalPopover={modalPopover} />}
+          empty={filtered
+            ? <EmptyState icon="search-x" title="Nenhum certificado com esses filtros." action={<Button variant="outline" size="sm" onClick={handleClear}>Limpar filtros</Button>} />
+            : <EmptyState title="Nenhum certificado encontrado." />} />
+
+        <ListFooter total={data?.total ?? 0} page={searchParams.page} limit={searchParams.limit} limits={LIMITS}
+          onPageChange={(page) => setSearchParams((prev) => ({ ...prev, page }))}
+          onLimitChange={(limit) => setSearchParams((prev) => ({ ...prev, limit, page: 0 }))} />
+      </ListCard>
 
       {/* Busca avançada */}
       <SideForm
@@ -322,45 +317,6 @@ function List({ traineeId, modalPopover }: { traineeId?: number, modalPopover?: 
         form={ <EditForm formData={editData} openSheet={setOpenEditForm} entity={entity} /> }
       />
 
-      {/* Listagem de items */}
-      <div className="mt-4 rounded-card border bg-card overflow-x-auto">
-        {isLoading
-          ? skeletons.map((_, i) => <ItemSkeleton key={i} index={i} />)
-          : isError
-          ? <div className="w-full flex justify-center items-center text-sm font-medium text-destructive py-10">
-              <p>Erro: {error?.response?.data?.message}</p>
-            </div>
-          : data?.rows && data.rows.length > 0 
-          ? data.rows.map((item: ICertificate, i: number) => (
-              <ItemList 
-                key={item.id} 
-                item={item} 
-                entity={entity}
-                index={i} 
-                setFormData={setFormData} 
-                setOpenForm={setOpenForm}
-                setEditData={setEditData}
-                setOpenEditForm={setOpenEditForm}
-                modalPopover={modalPopover}
-              />
-            ))
-          : (
-            <div className="w-full flex justify-center items-center text-sm text-muted-foreground py-10">
-              <p>Nenhum {entity.name} encontrado!</p>
-            </div>
-          )
-        }
-      </div>
-
-      {/* Paginação */}
-      {data && data.total > searchParams.limit && (
-        <Pagination
-          currentPage={searchParams.page}
-          totalItems={data.total}
-          itemsPerPage={searchParams.limit}
-          onPageChange={handlePageChange}
-        />
-      )}
     </>
   );
 };

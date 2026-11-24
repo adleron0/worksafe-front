@@ -4,14 +4,19 @@ import { useRef, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
-import Pagination from "@/components/general-components/Pagination";
 // Template Page list-form
-import HeaderLists from "@/components/general-components/HeaderLists";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
 import SideForm from "@/components/general-components/SideForm";
-import ItemSkeleton from "./-skeletons/ItemSkeleton";
-import ItemList from "./-components/AlunosItem";
+import { Button } from "@/components/ui/button";
 import Form from "./-components/AlunosForm";
 import SearchForm from "./-components/AlunosSearch";
+import AlunosRowActions from "./-components/AlunosRowActions";
+import { alunosColumns } from "./-components/alunosColumns";
+import { LIMITS, countFilters } from "../-shared/lista";
 // Interfaces
 import { IEntity } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
@@ -24,7 +29,7 @@ function List() {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
-  const [formData, setFormData] = useState<IEntity>();
+  const [formData] = useState<IEntity>();
   const [searchParams, setSearchParams] = useState<{
     limit: number;
     page: number;
@@ -50,12 +55,7 @@ function List() {
     total: number;
   }
 
-  const { 
-    data, 
-    isLoading, 
-    isError, 
-    error, 
-  } = useQuery<Response | undefined, ApiError>({
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery<Response | undefined, ApiError>({
     queryKey: [`list${entity.pluralName}`, searchParams],
     queryFn: async () => {
       const params = Object.keys(searchParams).map((key) => ({
@@ -85,18 +85,6 @@ function List() {
   const handleClear = () => {
     setSearchParams(initialFormRef.current);
   };
-  
-  const handleLimitChange = (name: string, value: string | number) => {
-    setSearchParams((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handlePageChange = (page: number) => {
-    setSearchParams((prev) => ({ ...prev, page }));
-  };
-
-  const totalPages = data ? Math.ceil(data.total / searchParams.limit) : 0;
-
-  const skeletons = Array(5).fill(null);
 
   const handleTextSearch = useCallback((text: string) => {
     setSearchParams(prev => ({
@@ -108,26 +96,29 @@ function List() {
 
   if (!can(`view_${entity.ability}`)) return null;
 
+  const filterCount = countFilters(searchParams, initialFormRef.current, ['like-name']);
+  const filtered = filterCount > 0 || !!searchParams['like-name'];
+
   return (
     <>
-      <HeaderLists
-        titlePage={`${entity.pluralName}`}
-        descriptionPage={`Administrar nossos ${entity.pluralName}`}
-        entityName={entity.name}
-        ability={entity.ability}
-        limit={data?.total || 0}
-        showInputSearch={true}
-        showCreate={false}
-        searchPlaceholder="Buscar por nome do aluno..."
-        searchParams={searchParams}
-        onlimitChange={handleLimitChange}
-        openSearch={setOpenSearch}
-        openForm={setOpenForm}
-        setFormData={setFormData} 
-        setFormType={() => {}}
-        iconForm="plus"
-        onTextSearch={handleTextSearch}
-      />
+      <PageHeader title={entity.pluralName} description={`Administrar nossos ${entity.pluralName}`} />
+
+      <ListCard>
+        <ListToolbar search={{ value: searchParams['like-name'] ?? "", onChange: handleTextSearch, placeholder: "Buscar por nome do aluno..." }}
+          onOpenFilters={() => setOpenSearch(true)} filterCount={filterCount} />
+
+        <DataTable rows={data?.rows} columns={alunosColumns} getRowId={(item) => item.id ?? item.cpf} ariaLabel={entity.pluralName}
+          loading={isLoading || isFetching} error={isError ? error?.response?.data?.message || "erro desconhecido" : null} onRetry={() => refetch()}
+          rowClassName={(item) => (item.inactiveAt ? "opacity-60" : undefined)}
+          actions={(item) => <AlunosRowActions item={item} entity={entity} />}
+          empty={filtered
+            ? <EmptyState icon="search-x" title="Nenhum aluno com esses filtros." action={<Button variant="outline" size="sm" onClick={handleClear}>Limpar filtros</Button>} />
+            : <EmptyState title="Nenhum aluno encontrado." />} />
+
+        <ListFooter total={data?.total ?? 0} page={searchParams.page} limit={searchParams.limit} limits={LIMITS}
+          onPageChange={(page) => setSearchParams((prev) => ({ ...prev, page }))}
+          onLimitChange={(limit) => setSearchParams((prev) => ({ ...prev, limit, page: 0 }))} />
+      </ListCard>
 
       {/* Busca avançada */}
       <SideForm
@@ -152,46 +143,6 @@ function List() {
         side="right"
         form={<Form formData={formData} openSheet={setOpenForm} entity={entity} />}
       />
-
-      {/* Listagem de items */}
-      <div className="mt-4 rounded-card border bg-card overflow-x-auto">
-        {isLoading
-          ? skeletons.map((_, i) => <ItemSkeleton key={i} index={i} />)
-          : isError
-          ? <div className="w-full flex justify-center items-center text-sm font-medium text-destructive py-10">
-              <p>Erro: {error?.response?.data?.message}</p>
-            </div>
-          : data?.rows && data.rows.length > 0 
-          ? data.rows.map((item: IEntity, i: number) => (
-              <ItemList 
-                key={item.id} 
-                item={item} 
-                entity={entity}
-                index={i} 
-                setFormData={setFormData} 
-                setOpenForm={setOpenForm}
-              />
-            ))
-          : (
-            <div className="w-full flex justify-center items-center text-sm text-muted-foreground py-10">
-              <p>Nenhum {entity.name} encontrado!</p>
-            </div>
-          )
-        }
-      </div>
-
-      {/* Paginação */}
-      <div className="mt-4">
-        {totalPages >= 1 && (
-            <Pagination
-              totalItems={data?.total || 0}
-              itemsPerPage={searchParams.limit}
-              currentPage={searchParams.page}
-              onPageChange={handlePageChange}
-              maxVisiblePages={5}
-            />
-          )}
-      </div>
     </>
   );
 };

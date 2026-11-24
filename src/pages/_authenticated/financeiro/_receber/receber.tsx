@@ -155,6 +155,7 @@ function Receivables() {
           loading={isLoading || isFetching} error={isError ? error?.response?.data?.message || "erro desconhecido" : null} onRetry={() => refetch()}
           order={filters.order} onSort={(order) => set({ order })}
           selection={{ isSelected: (item) => selection.selected.has(item.id), toggle: selection.toggle, pageState: selection.pageState, togglePage: selection.togglePage }}
+          isRowClickable={canEditRow}
           onRowClick={(item) => { if (canEditRow(item)) openEdit(item); }}
           rowClassName={(item) => (item.inactiveAt ? "opacity-60" : undefined)}
           actions={(item) => <ReceivableRowActions item={item} entity={entity} onEdit={openEdit} />}

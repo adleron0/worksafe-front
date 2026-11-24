@@ -117,6 +117,7 @@ export default function SimpleCrud<T extends Row>({ entity, columns, renderForm,
 
         <DataTable rows={data?.rows} columns={columns} getRowId={(item) => item.id} ariaLabel={entity.pluralName} minWidth={560}
           loading={isLoading || isFetching} error={isError ? error?.response?.data?.message || "erro desconhecido" : null} onRetry={() => refetch()}
+          isRowClickable={(item) => canUpdate && !item.inactiveAt}
           onRowClick={(item) => { if (canUpdate && !item.inactiveAt) edit(item); }}
           rowClassName={(item) => (item.inactiveAt ? "opacity-60" : undefined)}
           actions={rowActions}

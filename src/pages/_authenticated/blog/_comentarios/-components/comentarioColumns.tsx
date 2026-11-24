@@ -1,10 +1,10 @@
+import InfoHint from "@/components/general-components/InfoHint";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Icon from "@/components/general-components/Icon";
 import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { IComentario } from "../-interfaces/entity.interface";
 
 const STATUS: Record<string, { label: string; tone: StatusTone }> = {
@@ -21,12 +21,10 @@ export function comentarioColumns(): DataColumn<IComentario>[] {
       id: "content", header: "Comentário", className: "min-w-[260px]",
       cell: (item) => (
         <div className="min-w-0 max-w-[24rem]">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <p className="truncate">{item.content}</p>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-sm whitespace-pre-line">{item.content}</TooltipContent>
-          </Tooltip>
+          <div className="flex items-start gap-1 min-w-0">
+            <p className="truncate">{item.content}</p>
+            <InfoHint label="Ver comentário inteiro" className="mt-0.5"><p className="whitespace-pre-line">{item.content}</p></InfoHint>
+          </div>
           <p className="text-xs text-muted-foreground tabular-nums">{formatDate(item.createdAt)}</p>
         </div>
       ),

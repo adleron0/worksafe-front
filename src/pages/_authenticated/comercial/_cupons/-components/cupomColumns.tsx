@@ -1,9 +1,9 @@
+import InfoHint from "@/components/general-components/InfoHint";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Icon from "@/components/general-components/Icon";
 import StatusBadge from "@/components/general-components/StatusBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ICupom } from "../-interfaces/entity.interface";
 
 const muted = "text-xs text-muted-foreground";
@@ -50,16 +50,10 @@ export const cupomColumns: DataColumn<ICupom>[] = [
           <Icon name="ticket" className="w-3.5 h-3.5 text-primary shrink-0" />
           <span className="font-semibold text-primary truncate">{item.code}</span>
           {item.course && (
-            <Tooltip>
-              <TooltipTrigger asChild><span className={`${tag}`}><Icon name="square-library" className="w-3 h-3" />curso</span></TooltipTrigger>
-              <TooltipContent>Vinculado ao curso {item.course.name}</TooltipContent>
-            </Tooltip>
+            <span className="inline-flex items-center gap-0.5"><span className={`${tag}`}><Icon name="square-library" className="w-3 h-3" />curso</span><InfoHint lines={[`Vinculado ao curso ${item.course.name}`]} /></span>
           )}
           {item.class && (
-            <Tooltip>
-              <TooltipTrigger asChild><span className={`${tag}`}><Icon name="clipboard-list" className="w-3 h-3" />turma</span></TooltipTrigger>
-              <TooltipContent>Vinculado à turma {item.class.name}</TooltipContent>
-            </Tooltip>
+            <span className="inline-flex items-center gap-0.5"><span className={`${tag}`}><Icon name="clipboard-list" className="w-3 h-3" />turma</span><InfoHint lines={[`Vinculado à turma ${item.class.name}`]} /></span>
           )}
         </p>
         {item.description && <p className={`${muted} truncate`}>{item.description}</p>}

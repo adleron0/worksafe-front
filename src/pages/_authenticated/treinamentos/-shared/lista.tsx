@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import InfoHint from "@/components/general-components/InfoHint";
 import { cn } from "@/lib/utils";
 
 /** Opções de "por página" das listas de treinamentos (as mesmas do antigo seletor "Itens"). */
@@ -33,10 +33,10 @@ export function More({ children, lines }: { children: React.ReactNode; lines: Ar
   const extra = lines.filter((line): line is string => typeof line === "string" && line !== "");
   if (!extra.length) return <>{children}</>;
   return (
-    <Tooltip>
-      <TooltipTrigger asChild><span className="min-w-0">{children}</span></TooltipTrigger>
-      <TooltipContent className="max-w-xs space-y-0.5">{extra.map((line) => <p key={line}>{line}</p>)}</TooltipContent>
-    </Tooltip>
+    <div className="flex items-start gap-1 min-w-0">
+      <div className="min-w-0">{children}</div>
+      <InfoHint lines={extra} className="mt-0.5" />
+    </div>
   );
 }
 

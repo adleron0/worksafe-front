@@ -1,8 +1,8 @@
+import InfoHint from "@/components/general-components/InfoHint";
 import Icon from "@/components/general-components/Icon";
 import StatusBadge from "@/components/general-components/StatusBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SiteStockBadge } from "@/pages/_authenticated/suprimentos/-shared/inventory";
 import { IEntity } from "../-interfaces/entity.interface";
 import FeaturesCell from "../../-shared/FeaturesCell";
@@ -40,12 +40,10 @@ export function siteProductsColumns(): DataColumn<IEntity>[] {
     {
       id: "description", header: "Descrição",
       cell: (item) => item.description ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <p className="truncate max-w-[16rem] text-muted-foreground">{item.description}</p>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-sm">{item.description}</TooltipContent>
-        </Tooltip>
+        <div className="flex items-start gap-1 min-w-0">
+          <p className="truncate max-w-[16rem] text-muted-foreground">{item.description}</p>
+          <InfoHint label="Ver descrição inteira" lines={[item.description]} className="mt-0.5" />
+        </div>
       ) : <span className="text-muted-foreground">-</span>,
     },
     {

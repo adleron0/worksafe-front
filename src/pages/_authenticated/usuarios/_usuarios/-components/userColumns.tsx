@@ -1,5 +1,5 @@
+import InfoHint from "@/components/general-components/InfoHint";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import Icon from "@/components/general-components/Icon";
 import StatusBadge from "@/components/general-components/StatusBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
@@ -26,12 +26,7 @@ function SellerTag({ user }: { user: IEntity }) {
     </span>
   );
   if (!status) return chip;
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild><span>{chip}</span></TooltipTrigger>
-      <TooltipContent>{status.label}</TooltipContent>
-    </Tooltip>
-  );
+  return <span className="inline-flex items-center gap-1">{chip}<InfoHint lines={[status.label]} label="Situação do vendedor" /></span>;
 }
 
 export const userColumns: DataColumn<IEntity>[] = [

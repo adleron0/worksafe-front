@@ -46,7 +46,7 @@ const alignClass = (align?: DataColumn<unknown>["align"]) => (align === "right" 
  * o componente só avisa (`onSort`). No celular é a mesma tabela, rolando de lado dentro do cartão.
  */
 export default function DataTable<T>({
-  rows, columns, getRowId, loading, error, onRetry, empty, order, onSort, selection, onRowClick, rowClassName, actions, skeletonRows = 8, minWidth = 720, ariaLabel,
+  rows, columns, getRowId, loading, error, onRetry, empty, order, onSort, selection, onRowClick, isRowClickable, rowClassName, actions, skeletonRows = 8, minWidth = 720, ariaLabel,
 }: {
   rows: T[] | undefined;
   columns: DataColumn<T>[];
@@ -60,6 +60,8 @@ export default function DataTable<T>({
   onSort?: (order: string) => void;
   selection?: DataTableSelection<T>;
   onRowClick?: (row: T) => void;
+  /** quais linhas abrem algo ao clicar (padrão: todas, quando há onRowClick); as outras ficam com o cursor normal */
+  isRowClickable?: (row: T) => boolean;
   rowClassName?: (row: T) => string | undefined;
   /** menu ⋯ da linha (última coluna, também no celular) */
   actions?: (row: T) => React.ReactNode;
@@ -69,10 +71,11 @@ export default function DataTable<T>({
   ariaLabel?: string;
 }) {
   const colCount = columns.length + (selection ? 1 : 0) + (actions ? 1 : 0);
-  const rowProps = (row: T) => onRowClick ? {
+  const clickable = (row: T) => !!onRowClick && (isRowClickable ? isRowClickable(row) : true);
+  const rowProps = (row: T) => clickable(row) ? {
     tabIndex: 0,
-    onClick: (event: MouseEvent<HTMLElement>) => { if (fromInside(event) && !window.getSelection()?.toString()) onRowClick(row); },
-    onKeyDown: (event: KeyboardEvent<HTMLElement>) => { if (event.key === "Enter" && fromInside(event)) onRowClick(row); },
+    onClick: (event: MouseEvent<HTMLElement>) => { if (fromInside(event) && !window.getSelection()?.toString()) onRowClick!(row); },
+    onKeyDown: (event: KeyboardEvent<HTMLElement>) => { if (event.key === "Enter" && fromInside(event)) onRowClick!(row); },
   } : {};
   const header = (col: DataColumn<T>) => (col.sortField && onSort
     ? <SortButton label={String(col.header)} field={col.sortField} order={order} onSort={onSort} />
@@ -122,7 +125,7 @@ export default function DataTable<T>({
                 <tr key={getRowId(row)} data-state={selected ? "selected" : undefined} {...rowProps(row)}
                   className={cn("group/row [&>td]:border-b [&>td]:border-border/70 last:[&>td]:border-b-0 [&>td]:transition-colors",
                     selected ? "[&>td]:bg-primary-soft" : "hover:[&>td]:bg-muted/60",
-                    onRowClick && "cursor-pointer focus-visible:outline-none focus-visible:[&>td]:bg-muted", rowClassName?.(row))}>
+                    clickable(row) && "cursor-alias focus-visible:outline-none focus-visible:[&>td]:bg-muted", rowClassName?.(row))}>
                   {selection && (
                     <td className="py-2 pr-2 align-middle">
                       <Checkbox checked={selected} onCheckedChange={(v) => selection.toggle(row, v === true)} aria-label="Selecionar linha" />

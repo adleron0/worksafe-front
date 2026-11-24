@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import Icon from "@/components/general-components/Icon";
+import InfoHint from "@/components/general-components/InfoHint";
 import { SortButton } from "@/components/general-components/SortButton";
 import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { IFinancialRecord } from "../-interfaces/entity.interface";
 import { OPEN_STATUSES, formatCurrency, formatDate, paymentMethodLabel, todayInput } from "./options";
 
@@ -29,15 +29,15 @@ const person = (item: IFinancialRecord) => item.customer?.name || item.trainee?.
 const muted = "text-xs text-muted-foreground";
 const tag = "inline-flex items-center gap-1 rounded-chip border bg-muted/50 px-1.5 py-px text-[11px] font-medium text-muted-foreground whitespace-nowrap";
 
-/** Texto com o resto num balão (a linha fica em uma linha só). */
+/** Dado com detalhes: o conteúdo e, ao lado, o ⓘ que mostra o resto (InfoHint). */
 function More({ children, lines }: { children: React.ReactNode; lines: Array<string | number | false | null | undefined> }) {
   const extra = lines.filter((line): line is string => typeof line === "string" && line !== "");
   if (!extra.length) return <>{children}</>;
   return (
-    <Tooltip>
-      <TooltipTrigger asChild><span>{children}</span></TooltipTrigger>
-      <TooltipContent className="max-w-xs space-y-0.5">{extra.map((line) => <p key={line}>{line}</p>)}</TooltipContent>
-    </Tooltip>
+    <div className="flex items-start gap-1 min-w-0">
+      <div className="min-w-0">{children}</div>
+      <InfoHint lines={extra} className="mt-0.5" />
+    </div>
   );
 }
 

@@ -1,10 +1,10 @@
+import InfoHint from "@/components/general-components/InfoHint";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Icon from "@/components/general-components/Icon";
 import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { IPost } from "../-interfaces/entity.interface";
 
 const POST_STATUS: Record<string, { label: string; tone: StatusTone }> = {
@@ -41,12 +41,10 @@ export function postColumns(): DataColumn<IPost>[] {
           <div className="min-w-0">
             <p className="font-medium truncate">{item.title}</p>
             {item.tags && item.tags.length > 0 ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <p className={`${muted} truncate`}>{item.slug}</p>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">{item.tags.map((t) => t.tag.name).join(", ")}</TooltipContent>
-              </Tooltip>
+              <div className="flex items-center gap-1 min-w-0">
+                <p className={`${muted} truncate`}>{item.slug}</p>
+                <InfoHint label="Ver tags" lines={[`Tags: ${item.tags.map((t) => t.tag.name).join(", ")}`]} />
+              </div>
             ) : (
               <p className={`${muted} truncate`}>{item.slug}</p>
             )}

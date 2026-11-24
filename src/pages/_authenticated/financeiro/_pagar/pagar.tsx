@@ -192,6 +192,7 @@ function Payables() {
           loading={isLoading || isFetching} error={isError ? error?.response?.data?.message || "erro desconhecido" : null} onRetry={() => refetch()}
           order={filters.order} onSort={(order) => set({ order })}
           selection={{ isSelected: (item) => selection.selected.has(item.id), toggle: selection.toggle, pageState: selection.pageState, togglePage: selection.togglePage }}
+          isRowClickable={(item) => canUpdate && !item.inactiveAt}
           onRowClick={(item) => { if (canUpdate && !item.inactiveAt) editRow(item); }}
           rowClassName={(item) => (item.inactiveAt ? "opacity-60" : undefined)}
           actions={rowActions}

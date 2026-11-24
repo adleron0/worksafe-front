@@ -1,6 +1,6 @@
+import InfoHint from "@/components/general-components/InfoHint";
 import Icon from "@/components/general-components/Icon";
 import type { DataColumn } from "@/components/general-components/DataTable";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { dateBr } from "../../../comercial/-shared/commercial";
 import { RecentReports, ReportStatusBadge, WEATHER_OPTIONS, hoursText } from "../../-shared/reports";
 
@@ -56,10 +56,10 @@ export const recentReportColumns: DataColumn<RecentReport>[] = [
         <div className="min-w-0 max-w-[16rem]">
           {row.activities
             ? (
-              <Tooltip>
-                <TooltipTrigger asChild><p className="truncate text-muted-foreground">{text}</p></TooltipTrigger>
-                <TooltipContent className="max-w-sm whitespace-pre-line">{row.activities}</TooltipContent>
-              </Tooltip>
+              <div className="flex items-start gap-1 min-w-0">
+                <p className="truncate text-muted-foreground">{text}</p>
+                <InfoHint label="Ver atividades" className="mt-0.5"><p className="whitespace-pre-line">{row.activities}</p></InfoHint>
+              </div>
             )
             : <p className="truncate text-muted-foreground">{text}</p>}
           {row.createdBy && <p className={`${muted} truncate`}>{row.createdBy}</p>}
@@ -71,10 +71,7 @@ export const recentReportColumns: DataColumn<RecentReport>[] = [
     id: "status", header: "Situação",
     cell: (row) => (row.returned?.note
       ? (
-        <Tooltip>
-          <TooltipTrigger asChild><span><ReportStatusBadge status={row.status} returned={!!row.returned} /></span></TooltipTrigger>
-          <TooltipContent className="max-w-sm">Corrigir: {row.returned.note}</TooltipContent>
-        </Tooltip>
+        <span className="inline-flex items-center gap-1"><ReportStatusBadge status={row.status} returned={!!row.returned} /><InfoHint label="Ver motivo da devolução" lines={[`Corrigir: ${row.returned.note}`]} /></span>
       )
       : <ReportStatusBadge status={row.status} returned={!!row.returned} />),
   },

@@ -96,12 +96,12 @@ export function ProposalInfoStep({ draft, setDraft, options, readOnly, canSeeCos
               const active = Math.abs(l.rate - draft.contingencyRate) < 1e-9;
               return (
                 <button key={l.label} type="button" role="radio" aria-checked={active} disabled={readOnly} onClick={() => set("contingencyRate", l.rate)}
-                  className={cn("px-3 py-2 text-sm border-l first:border-l-0 disabled:cursor-not-allowed", active ? "bg-primary text-inverse-foreground" : "hover:bg-muted")}>
+                  className={cn("px-3 py-2 text-sm border-l first:border-l-0 disabled:cursor-not-allowed", active ? "bg-primary-soft text-primary-soft-foreground font-medium" : "hover:bg-muted")}>
                   {l.label} <span className="opacity-70 tabular-nums">{percent(l.rate, 0)}</span>
                 </button>
               );
             })}
-            {custom && <span className="px-3 py-2 text-sm border-l bg-primary text-inverse-foreground">Outra <span className="opacity-80 tabular-nums">{percent(draft.contingencyRate)}</span></span>}
+            {custom && <span className="px-3 py-2 text-sm border-l bg-primary-soft text-primary-soft-foreground font-medium">Outra <span className="opacity-80 tabular-nums">{percent(draft.contingencyRate)}</span></span>}
           </div>
         </F>
       </div>

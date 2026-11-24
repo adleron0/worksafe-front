@@ -50,7 +50,7 @@ function ContractsPage() {
           {FILTERS.map((filter) => (
             <button key={filter.value || "all"} type="button" role="tab" aria-selected={status === filter.value}
               onClick={() => { setStatus(filter.value); setPage(0); }}
-              className={cn("px-3 py-1.5 text-sm", status === filter.value ? "bg-primary text-inverse-foreground" : "hover:bg-muted")}>
+              className={cn("px-3 py-1.5 text-sm", status === filter.value ? "bg-primary-soft text-primary-soft-foreground font-medium" : "hover:bg-muted")}>
               {filter.label} <span className="opacity-70 tabular-nums">{filter.value ? summary[filter.value]?.count ?? 0 : all}</span>
             </button>
           ))}

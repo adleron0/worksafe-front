@@ -202,7 +202,7 @@ function SellerWalletPage() {
           <div className="flex flex-wrap rounded-md border overflow-hidden w-fit" role="tablist" aria-label="Tipo de lançamento">
             {TYPE_FILTERS.map((filter) => (
               <button key={filter.value || "all"} type="button" role="tab" aria-selected={type === filter.value} onClick={() => { setType(filter.value); setPage(0); }}
-                className={cn("px-3 py-1.5 text-sm", type === filter.value ? "bg-primary text-inverse-foreground" : "hover:bg-muted")}>
+                className={cn("px-3 py-1.5 text-sm", type === filter.value ? "bg-primary-soft text-primary-soft-foreground font-medium" : "hover:bg-muted")}>
                 {filter.label}
               </button>
             ))}

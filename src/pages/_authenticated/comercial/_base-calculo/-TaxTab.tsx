@@ -76,7 +76,7 @@ export default function TaxTab({ canCreate, canUpdate, canInactivate, canActivat
             {(["tradicional", "hibrido"] as const).map((value) => (
               <button key={value} type="button" role="radio" aria-checked={regime === value} disabled={!canUpdate || switching}
                 onClick={() => switchTo(value)}
-                className={cn("px-4 py-2 text-sm font-medium disabled:cursor-not-allowed", regime === value ? "bg-primary text-inverse-foreground" : "hover:bg-muted")}>
+                className={cn("px-4 py-2 text-sm font-medium disabled:cursor-not-allowed", regime === value ? "bg-primary-soft text-primary-soft-foreground font-medium" : "hover:bg-muted")}>
                 {REGIME_LABEL[value]}
               </button>
             ))}

@@ -117,7 +117,7 @@ const SiteProductsItem = ({ item, index, entity, setFormData, setOpenForm, openI
         {/* Badges */}
         <div className="absolute -top-1 left-4 flex items-center gap-2">
           {item.featured && 
-          <Badge variant="outline" className="text-2xs h-4 rounded-sm font-normal text-inverse-foreground bg-primary">
+          <Badge variant="outline" className="text-2xs h-4 rounded-chip border-0 font-normal text-primary-soft-foreground bg-primary-soft">
             <Icon name="star" className="w-2 h-2 mr-0.5" />
             {item.featured ? "destaque" : ""}
           </Badge>}

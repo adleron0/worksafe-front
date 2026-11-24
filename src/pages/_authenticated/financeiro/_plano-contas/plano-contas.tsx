@@ -120,7 +120,7 @@ function ChartOfAccounts() {
         <div className="flex rounded-md border overflow-hidden w-fit" role="tablist" aria-label="Natureza">
           {([["todas", "Todas"], ["receita", "Receitas"], ["despesa", "Despesas"]] as const).map(([value, label]) => (
             <button key={value} type="button" role="tab" aria-selected={nature === value} onClick={() => setNature(value)}
-              className={cn("px-3 py-1.5 text-sm", nature === value ? "bg-primary text-inverse-foreground" : "hover:bg-muted")}>
+              className={cn("px-3 py-1.5 text-sm", nature === value ? "bg-primary-soft text-primary-soft-foreground font-medium" : "hover:bg-muted")}>
               {label}
             </button>
           ))}

@@ -60,7 +60,7 @@ function FollowUpPage() {
         <div className="flex flex-wrap gap-1 p-1 bg-muted rounded-lg w-fit">
           {FILTERS.map((item) => (
             <button key={item.id} type="button" onClick={() => { setFilter(item.id); setPage(0); }}
-              className={cn("rounded-md px-3 h-8 text-sm font-medium", active === item.id ? "bg-primary text-inverse-foreground" : "hover:bg-background")}>
+              className={cn("rounded-md px-3 h-8 text-sm font-medium", active === item.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
               {item.name}
               <span className={cn("ml-1.5 tabular-nums", active !== item.id && item.id === "atrasadas" && (summary?.overdue ?? 0) > 0 ? "text-red-600 dark:text-red-400 font-semibold" : "opacity-70")}>
                 {summary?.[item.key] ?? 0}

@@ -30,7 +30,7 @@ function DivulgacaoPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
+        <h1 className="text-xl font-bold flex items-center gap-2">
           <Icon name="megaphone" className="w-6 h-6 text-primary" /> Divulgação
         </h1>
         <p className="text-sm text-muted-foreground">

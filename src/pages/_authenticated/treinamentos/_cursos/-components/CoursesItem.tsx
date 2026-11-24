@@ -119,7 +119,7 @@ const CoursesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsPro
         {/* Badges */}
         <div className="absolute -top-1 left-4 flex items-center gap-2">
           {item.flags?.split('#').map((flag: string, index: number) => (
-            <Badge key={index} variant="outline" className="text-2xs h-4 rounded-sm font-medium text-inverse-foreground bg-primary">
+            <Badge key={index} variant="outline" className="text-2xs h-4 rounded-chip border-0 font-medium text-primary-soft-foreground bg-primary-soft">
               <Icon name="flag" className="w-3 h-3" />
               {flag}
             </Badge>

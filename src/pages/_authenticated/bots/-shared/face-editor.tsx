@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { ACCESSORIES, BotAvatar, BotStatus, COLORS, EYES, PRESETS, SHAPES, STATUS_TEXT, encodeFace, parseFace, type Face } from "./avatar";
+import { ACCESSORIES, ACC_COLORS, BotAvatar, BotStatus, COLORS, EYES, PRESETS, SHAPES, STATUS_TEXT, encodeFace, parseFace, type Face } from "./avatar";
 
 /**
  * Mini-editor do rosto, do tamanho da antiga fileira de rostos: abas (modelo,
@@ -41,7 +41,7 @@ export function FaceEditor({ value, onChange }: { value: string; onChange: (valu
     modelo: presetKey ? PRESETS[presetKey].label : "Montado",
     forma: SHAPES[face.shape].label,
     cor: COLORS[face.color].label,
-    acessorio: ACCESSORIES[face.accessory].label,
+    acessorio: `${ACCESSORIES[face.accessory].label}${face.accColor && face.accColor !== "padrao" ? ` · ${ACC_COLORS[face.accColor].label.toLowerCase()}` : ""}`,
     olhos: EYES[face.eyes].label,
   };
   const thumb = (part: Partial<Face>) => <BotAvatar look={look(part)} size={30} still />;
@@ -87,6 +87,23 @@ export function FaceEditor({ value, onChange }: { value: string; onChange: (valu
             <Small key={key} selected={face.eyes === key} label={`Olhos ${eyes.label}`} onClick={() => set({ eyes: key })}>{thumb({ eyes: key, accessory: "nenhum" })}</Small>
           ))}
         </div>
+        {tab === "acessorio" && ACCESSORIES[face.accessory].tint && (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1" aria-label="Cor do acessório">
+            <span className="mr-1 text-[11px] text-muted-foreground">Cor do acessório</span>
+            {[["padrao", "Original", ACCESSORIES[face.accessory].tint!.m, ACCESSORIES[face.accessory].tint!.m] as const, ...Object.entries(ACC_COLORS).map(([key, color]) => [key, color.label, color.colors[0], color.colors[1]] as const)].map(([key, label, light, dark]) => {
+              const selected = (face.accColor ?? "padrao") === key;
+              return (
+                <button
+                  key={key} type="button" onClick={() => set({ accColor: key })} aria-label={`Cor do acessório: ${label}`} aria-pressed={selected}
+                  className={`relative h-5 w-5 cursor-pointer rounded-full border ${selected ? "ring-2 ring-primary ring-offset-1" : "hover:scale-110"} transition-transform`}
+                  style={{ background: key === "padrao" ? dark : `radial-gradient(circle at 30% 25%, ${light}, ${dark} 80%)` }}
+                >
+                  {key === "padrao" && <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white mix-blend-difference">↺</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

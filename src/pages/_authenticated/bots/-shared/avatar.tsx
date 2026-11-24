@@ -60,7 +60,7 @@ function squircle(cx: number, cy: number, a: number, b: number, n: number) {
 }
 
 const bow = (x: number, y: number, scale: number) =>
-  `<g transform="translate(${x} ${y}) scale(${scale})"><path d="M0 0 C-5 -8 -14 -7 -13 0 C-14 7 -5 8 0 0Z M0 0 C5 -8 14 -7 13 0 C14 7 5 8 0 0Z" fill="#FF7AA8"/><path d="M-9 -2 C-7 -4 -5 -4 -4 -2" stroke="#fff" stroke-width="1.4" fill="none" opacity=".5" stroke-linecap="round"/><circle r="3.4" fill="#E0457F"/></g>`;
+  `<g transform="translate(${x} ${y}) scale(${scale})"><path d="M0 0 C-5 -8 -14 -7 -13 0 C-14 7 -5 8 0 0Z M0 0 C5 -8 14 -7 13 0 C14 7 5 8 0 0Z" fill="{m}"/><path d="M-9 -2 C-7 -4 -5 -4 -4 -2" stroke="#fff" stroke-width="1.4" fill="none" opacity=".5" stroke-linecap="round"/><circle r="3.4" fill="{d}"/></g>`;
 
 // ------------------------------------------------------------------ partes
 
@@ -99,50 +99,71 @@ export const COLORS: Record<string, { label: string; colors: [string, string] }>
   grafite: { label: "Grafite", colors: ["#AEB6C1", "#3E4652"] },
 };
 
+/** Cores do acessório: as da paleta e mais preto e branco ("padrao" = a cor original de cada um). */
+export const ACC_COLORS: Record<string, { label: string; colors: [string, string] }> = {
+  ...COLORS,
+  preto: { label: "Preto", colors: ["#6B6B6B", "#262626"] },
+  branco: { label: "Branco", colors: ["#FFFFFF", "#E4E4E4"] },
+};
+
+/** escurece uma cor #rrggbb (para a sombra do acessório) */
+function shade(hex: string, amount = 0.28) {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = (shift: number) => Math.round(((n >> shift) & 255) * (1 - amount)).toString(16).padStart(2, "0");
+  return `#${ch(16)}${ch(8)}${ch(0)}`;
+}
+
 /**
  * Acessórios. Cada um foi desenhado sobre uma forma (ref) e se encaixa nas outras
  * pelo ponto de apoio: o alto da cabeça, os olhos ou a base.
  */
 interface AccessoryPart {
   label: string; ref: string; anchor: "top" | "eyes" | "bottom"; back?: string; front?: string; over?: string;
+  /** cores originais da parte que dá para trocar: {m} principal, {d} sombra, {l} brilho */
+  tint?: { m: string; d: string; l?: string };
   /** quanto desce a mais fora da forma original (o boné da Lia flutuava nas cabeças redondas) */
   sink?: number;
 }
 const HELENA_BUN = `<circle cx="50" cy="17" r="11" fill="${HAIR_DARK}"/><path d="M44 12 Q48 9 52 10" stroke="#fff" stroke-width="1.6" opacity=".25" fill="none" stroke-linecap="round"/>`;
 const PONYTAIL = `<g class="bot-pony"><path d="M44 26 C30 20 16 30 18 50 C21 42 27 36 36 34 C26 44 26 54 30 60 C32 46 38 38 46 34Z" fill="${HAIR_WARM}"/></g>`;
-const CAP = `<path d="M33 38 C33 22 41 15 50 15 C59 15 67 22 67 38Z" fill="#fff"/><path d="M40 20 Q46 16 52 16" stroke="#2DB560" stroke-width="2" fill="none" opacity=".5"/><path d="M33 37 H67 Q82 36 86 42 Q74 44 64 42 H33Z" fill="#0F6E56"/><circle cx="50" cy="16" r="2.4" fill="#0F6E56"/><path d="M41 27 H59" stroke="#2DB560" stroke-width="3" stroke-linecap="round"/>`;
+/** coque e rabo sozinhos: a cor troca o cabelo */
+const BUN_T = HELENA_BUN.replace(HAIR_DARK, "{m}");
+const PONY_T = PONYTAIL.replace(HAIR_WARM, "{m}");
+const CAP = `<path d="M33 38 C33 22 41 15 50 15 C59 15 67 22 67 38Z" fill="#fff"/><path d="M40 20 Q46 16 52 16" stroke="{m}" stroke-width="2" fill="none" opacity=".5"/><path d="M33 37 H67 Q82 36 86 42 Q74 44 64 42 H33Z" fill="{d}"/><circle cx="50" cy="16" r="2.4" fill="{d}"/><path d="M41 27 H59" stroke="{m}" stroke-width="3" stroke-linecap="round"/>`;
+const BOW_TINT = { m: "#FF7AA8", d: "#E0457F" };
+const CAP_TINT = { m: "#2DB560", d: "#0F6E56" };
 export const ACCESSORIES: Record<string, AccessoryPart> = {
   nenhum: { label: "Nenhum", ref: "bola", anchor: "top" },
-  coque_laco: { label: "Coque e laço", ref: "hexa", anchor: "top", back: HELENA_BUN, front: bow(50, 27, 0.85) },
-  coque: { label: "Coque", ref: "hexa", anchor: "top", back: HELENA_BUN },
-  laco: { label: "Laço", ref: "hexa", anchor: "top", front: bow(50, 27, 0.85) },
-  bone_rabo: { label: "Boné e rabo", ref: "tri", anchor: "top", sink: 5, back: PONYTAIL, front: CAP },
-  bone: { label: "Boné", ref: "tri", anchor: "top", sink: 5, front: CAP },
-  rabo: { label: "Rabo de cavalo", ref: "tri", anchor: "top", sink: 5, back: PONYTAIL },
+  coque_laco: { label: "Coque e laço", ref: "hexa", anchor: "top", tint: BOW_TINT, back: HELENA_BUN, front: bow(50, 27, 0.85) },
+  coque: { label: "Coque", ref: "hexa", anchor: "top", tint: { m: HAIR_DARK, d: HAIR_DARK }, back: BUN_T },
+  laco: { label: "Laço", ref: "hexa", anchor: "top", tint: BOW_TINT, front: bow(50, 27, 0.85) },
+  bone_rabo: { label: "Boné e rabo", ref: "tri", anchor: "top", sink: 5, tint: CAP_TINT, back: PONYTAIL, front: CAP },
+  bone: { label: "Boné", ref: "tri", anchor: "top", sink: 5, tint: CAP_TINT, front: CAP },
+  rabo: { label: "Rabo de cavalo", ref: "tri", anchor: "top", sink: 5, tint: { m: HAIR_WARM, d: HAIR_WARM }, back: PONY_T },
   capacete: {
-    label: "Capacete", ref: "quadro", anchor: "top",
-    front: `<path d="M21 36 C21 14 34 7 50 7 C66 7 79 14 79 36Z" fill="#FFE27A"/><path d="M28 30 C28 18 36 12 46 11" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".6"/><rect x="44" y="8" width="12" height="27" rx="6" fill="#FFEFA8"/><rect x="13" y="33" width="74" height="8" rx="4" fill="#F2B90F"/>`,
+    label: "Capacete", ref: "quadro", anchor: "top", tint: { m: "#FFE27A", d: "#F2B90F", l: "#FFEFA8" },
+    front: `<path d="M21 36 C21 14 34 7 50 7 C66 7 79 14 79 36Z" fill="{m}"/><path d="M28 30 C28 18 36 12 46 11" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".6"/><rect x="44" y="8" width="12" height="27" rx="6" fill="{l}"/><rect x="13" y="33" width="74" height="8" rx="4" fill="{d}"/>`,
   },
   boina: {
-    label: "Boina", ref: "flor", anchor: "top",
-    front: `<g transform="rotate(-16 44 30)"><ellipse cx="44" cy="31" rx="25" ry="9" fill="#2E2A72"/><ellipse cx="38" cy="28" rx="10" ry="3" fill="#fff" opacity=".18"/><circle cx="44" cy="21" r="3.4" fill="#2E2A72"/></g>`,
+    label: "Boina", ref: "flor", anchor: "top", tint: { m: "#2E2A72", d: "#2E2A72" },
+    front: `<g transform="rotate(-16 44 30)"><ellipse cx="44" cy="31" rx="25" ry="9" fill="{m}"/><ellipse cx="38" cy="28" rx="10" ry="3" fill="#fff" opacity=".18"/><circle cx="44" cy="21" r="3.4" fill="{d}"/></g>`,
   },
   gravata: {
-    label: "Gravata borboleta", ref: "bola", anchor: "bottom",
-    front: `<g transform="translate(50 88)"><path d="M-3 0 C-8 -6 -15 -6 -15 0 C-15 6 -8 6 -3 0Z M3 0 C8 -6 15 -6 15 0 C15 6 8 6 3 0Z" fill="#FF7A59"/><rect x="-4" y="-3.6" width="8" height="7.2" rx="3" fill="#E0532F"/></g>`,
+    label: "Gravata borboleta", ref: "bola", anchor: "bottom", tint: { m: "#FF7A59", d: "#E0532F" },
+    front: `<g transform="translate(50 88)"><path d="M-3 0 C-8 -6 -15 -6 -15 0 C-15 6 -8 6 -3 0Z M3 0 C8 -6 15 -6 15 0 C15 6 8 6 3 0Z" fill="{m}"/><rect x="-4" y="-3.6" width="8" height="7.2" rx="3" fill="{d}"/></g>`,
   },
   viseira: {
-    label: "Viseira", ref: "largo", anchor: "eyes",
-    over: `<path d="M12 52 C24 40 76 40 88 52" fill="none" stroke="#0E6B3A" stroke-width="4" stroke-linecap="round"/><path d="M22 50 C34 40 66 40 78 50 C70 57 30 57 22 50Z" fill="#22A05A" opacity=".72"/><path d="M30 48 C40 44 52 43 60 44" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".4" fill="none"/>`,
+    label: "Viseira", ref: "largo", anchor: "eyes", tint: { m: "#22A05A", d: "#0E6B3A" },
+    over: `<path d="M12 52 C24 40 76 40 88 52" fill="none" stroke="{d}" stroke-width="4" stroke-linecap="round"/><path d="M22 50 C34 40 66 40 78 50 C70 57 30 57 22 50Z" fill="{m}" opacity=".72"/><path d="M30 48 C40 44 52 43 60 44" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".4" fill="none"/>`,
   },
   fone: {
-    label: "Fone", ref: "ovo", anchor: "eyes",
-    back: `<path d="M19 64 C19 22 81 22 81 64" fill="none" stroke="${INK}" stroke-width="5.5" stroke-linecap="round"/>`,
-    front: `<rect x="13" y="54" width="12" height="20" rx="6" fill="${INK}"/><rect x="75" y="54" width="12" height="20" rx="6" fill="${INK}"/><path d="M19 73 C20 86 30 90 39 88" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/><rect x="38" y="85" width="8" height="6" rx="3" fill="${INK}"/>`,
+    label: "Fone", ref: "ovo", anchor: "eyes", tint: { m: INK, d: INK },
+    back: `<path d="M19 64 C19 22 81 22 81 64" fill="none" stroke="{d}" stroke-width="5.5" stroke-linecap="round"/>`,
+    front: `<rect x="13" y="54" width="12" height="20" rx="6" fill="{d}"/><rect x="75" y="54" width="12" height="20" rx="6" fill="{d}"/><path d="M19 73 C20 86 30 90 39 88" fill="none" stroke="{d}" stroke-width="3" stroke-linecap="round"/><rect x="38" y="85" width="8" height="6" rx="3" fill="{d}"/>`,
   },
   oculos: {
-    label: "Óculos", ref: "nuvem", anchor: "eyes",
-    over: `<g fill="rgba(255,255,255,.22)" stroke="${INK}" stroke-width="3.6" stroke-linejoin="round"><rect x="28" y="49" width="20" height="17" rx="5"/><rect x="56" y="49" width="20" height="17" rx="5"/></g><path d="M48 55 H56" stroke="${INK}" stroke-width="3.6"/>`,
+    label: "Óculos", ref: "nuvem", anchor: "eyes", tint: { m: INK, d: INK },
+    over: `<g fill="rgba(255,255,255,.22)" stroke="{d}" stroke-width="3.6" stroke-linejoin="round"><rect x="28" y="49" width="20" height="17" rx="5"/><rect x="56" y="49" width="20" height="17" rx="5"/></g><path d="M48 55 H56" stroke="{d}" stroke-width="3.6"/>`,
   },
 };
 
@@ -194,7 +215,11 @@ function motionOf(traits: Traits): Personality {
   };
 }
 
-export interface Face { shape: string; color: string; accessory: string; eyes: string; mood: string }
+export interface Face {
+  shape: string; color: string; accessory: string; eyes: string; mood: string;
+  /** cor do acessório (id de ACC_COLORS ou "padrao") */
+  accColor?: string;
+}
 
 /** Os rostos de antes viraram modelos prontos (e continuam valendo pela chave). */
 export const PRESETS: Record<string, Face & { label: string }> = {
@@ -215,16 +240,18 @@ export function parseFace(value?: string | null): Face {
   const preset = PRESETS[value ?? ""];
   if (preset) { const { label: _label, ...face } = preset; return face; }
   if (value?.startsWith("r:")) {
-    const [shape, color, accessory, eyes, mood] = value.slice(2).split(".");
-    return { shape: pick(SHAPES, shape, "bola"), color: pick(COLORS, color, "cinza"), accessory: pick(ACCESSORIES, accessory, "nenhum"), eyes: pick(EYES, eyes, "n"), mood: mood && (PERSONALITY_TRAITS[mood] || /^t[1-5]{5}$/.test(mood)) ? mood : LEGACY_MOODS[mood ?? ""] ?? "equilibrado" };
+    const [shape, color, accessory, eyes, mood, accColor] = value.slice(2).split(".");
+    return { accColor: pick(ACC_COLORS, accColor, "padrao"), shape: pick(SHAPES, shape, "bola"), color: pick(COLORS, color, "cinza"), accessory: pick(ACCESSORIES, accessory, "nenhum"), eyes: pick(EYES, eyes, "n"), mood: mood && (PERSONALITY_TRAITS[mood] || /^t[1-5]{5}$/.test(mood)) ? mood : LEGACY_MOODS[mood ?? ""] ?? "equilibrado" };
   }
   return parseFace("dados");
 }
 
 /** Partes -> texto guardado no bot. Se for igual a um modelo, guarda a chave dele. */
 export function encodeFace(face: Face): string {
-  const same = Object.entries(PRESETS).find(([, p]) => p.shape === face.shape && p.color === face.color && p.accessory === face.accessory && p.eyes === face.eyes && p.mood === face.mood);
-  return same ? same[0] : `r:${face.shape}.${face.color}.${face.accessory}.${face.eyes}.${face.mood}`;
+  const accColor = face.accColor && ACC_COLORS[face.accColor] ? face.accColor : "padrao";
+  const same = accColor === "padrao" && Object.entries(PRESETS).find(([, p]) => p.shape === face.shape && p.color === face.color && p.accessory === face.accessory && p.eyes === face.eyes && p.mood === face.mood);
+  // a cor do acessório só entra quando não é a original: os rostos que já existem não mudam
+  return same ? same[0] : `r:${face.shape}.${face.color}.${face.accessory}.${face.eyes}.${face.mood}${accColor === "padrao" ? "" : `.${accColor}`}`;
 }
 
 function buildLook(face: Face): AvatarLook {
@@ -233,7 +260,10 @@ function buildLook(face: Face): AvatarLook {
   const ref = SHAPES[acc.ref];
   const dx = shape.eyes[0] - ref.eyes[0];
   const dy = (acc.anchor === "top" ? shape.top - ref.top : acc.anchor === "bottom" ? shape.bottom - ref.bottom : shape.eyes[1] - ref.eyes[1]) + (face.shape === acc.ref ? 0 : acc.sink ?? 0);
-  const place = (svg?: string) => (!svg ? undefined : dx || dy ? `<g transform="translate(${dx} ${dy})">${svg}</g>` : svg);
+  const pair = face.accColor ? ACC_COLORS[face.accColor]?.colors : undefined;
+  const tint = pair ? { m: pair[1], d: shade(pair[1]), l: pair[0] } : acc.tint;
+  const paint = (svg: string) => (tint ? svg.split("{m}").join(tint.m).split("{d}").join(tint.d).split("{l}").join(tint.l ?? tint.m) : svg);
+  const place = (svg?: string) => (!svg ? undefined : dx || dy ? `<g transform="translate(${dx} ${dy})">${paint(svg)}</g>` : paint(svg));
   const eyes = EYES[face.eyes];
   return {
     colors: COLORS[face.color].colors, shape: shape.path, eyes: shape.eyes, lashes: eyes.lashes, cheeks: eyes.cheeks,

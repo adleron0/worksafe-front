@@ -27,7 +27,7 @@ Toda lista nova segue o padrão abaixo (referência: `src/pages/_authenticated/f
 - Célula em uma linha (no máximo uma segunda linha cinza 12px); o resto vai para um `Tooltip` ou para a ficha do item.
 - Ordenação sempre no título da coluna (`sortField` ou `SortButton`). Selo de situação: `StatusBadge tone="primary|neutral|success|warning|danger|info"`.
 - Cor da empresa só no botão primário, chip ativo e linha selecionada (`bg-primary-soft` / `text-primary-soft-foreground`). Raios: `rounded-card` (16) para cartões, `rounded-lg` (10) para botões e campos, `rounded-chip` (6) para chips e selos.
-- Telas antigas com `HeaderLists` + `XxxItem` + `HeaderRow` continuam funcionando com o visual novo; ao mexer numa delas, prefira migrar para o `DataTable`.
+- `HeaderLists`, `HeaderRow` e as linhas `XxxItem` foram removidos (25/11/2026): toda lista usa o `DataTable`. As seções abaixo que ainda citam esses componentes são históricas.
 - Checagem: `npm run check:listagens` acusa faixa verde nova.
 
 > As seções abaixo descrevem o padrão antigo (estrutura de pastas, formulários, hooks) e continuam valendo, exceto o visual da lista.

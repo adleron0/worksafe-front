@@ -2,6 +2,36 @@
 
 Este documento descreve os padrões estabelecidos para criação de features no projeto WorkSafe Frontend.
 
+## 📋 Listagens — padrão atual (Unyo, desde 24/11/2026)
+
+Toda lista nova segue o padrão abaixo (referência: `src/pages/_authenticated/financeiro/_receber/receber.tsx` e `_pagar/pagar.tsx`).
+**Não** use mais a faixa verde no cabeçalho (`bg-primary … text-inverse-foreground`), linhas em cartão com sombra nem o cabeçalho desenhado pelo primeiro item.
+
+```tsx
+<PageHeader title="Contas a receber" description="Texto curto." />
+<SummaryCards cards={cards} active={view} onPick={pick} />          {/* opcional: KPI com ícone */}
+<ListCard>                                                           {/* cartão único, raio 16 */}
+  <StatusChips options={chips} value={view} onChange={pick} />     {/* chips com quadradinho e contador */}
+  <ListToolbar search={{ value, onChange, placeholder }} onOpenFilters={…} filterCount={n}>
+    <ActionsMenu groups={[{ label: "Selecionadas", items: [...] }, { label: "Dados", items: [...] }]} />
+    <Button><Icon name="plus" /> Novo</Button>                       {/* só o primário fica fora do menu */}
+  </ListToolbar>
+  <SelectionSummary … />                                             {/* "56 contas · 3 selecionadas · Limpar" */}
+  <DataTable rows columns getRowId order onSort selection onRowClick actions empty={<EmptyState …/>} />
+  <ListFooter total page limit onPageChange onLimitChange />         {/* "Mostrando 1–10 de N · 10 por página" */}
+</ListCard>
+```
+
+- Componentes em `src/components/general-components/`: `PageHeader`, `ListCard`, `ListToolbar` (+ `SearchInput`), `StatusChips`, `ActionsMenu`, `DataTable` (+ `EmptyState`, `RowActionsTrigger`), `ListFooter`, `StatusBadge`, `MonthRangePicker` (competência).
+- Coluna do `DataTable`: `{ id, header, sortField?, cell, align?, className?, mobile?: "title" | "subtitle" | "meta" | "end" | "badge" | "hidden" }`. No celular a tabela vira lista compacta pelo `mobile`.
+- Célula em uma linha (no máximo uma segunda linha cinza 12px); o resto vai para um `Tooltip` ou para a ficha do item.
+- Ordenação sempre no título da coluna (`sortField` ou `SortButton`). Selo de situação: `StatusBadge tone="primary|neutral|success|warning|danger|info"`.
+- Cor da empresa só no botão primário, chip ativo e linha selecionada (`bg-primary-soft` / `text-primary-soft-foreground`). Raios: `rounded-card` (16) para cartões, `rounded-lg` (10) para botões e campos, `rounded-chip` (6) para chips e selos.
+- Telas antigas com `HeaderLists` + `XxxItem` + `HeaderRow` continuam funcionando com o visual novo; ao mexer numa delas, prefira migrar para o `DataTable`.
+- Checagem: `npm run check:listagens` acusa faixa verde nova.
+
+> As seções abaixo descrevem o padrão antigo (estrutura de pastas, formulários, hooks) e continuam valendo, exceto o visual da lista.
+
 ## 📁 Estrutura de Diretórios
 
 ### Feature com Rota Própria
@@ -326,13 +356,13 @@ const Item = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) => 
     <>
       {/* Header apenas no primeiro item */}
       {index === 0 && (
-        <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
+        <HeaderRow>  {/* legado: em lista nova use o DataTable */}
           {/* Colunas do header */}
         </div>
       )}
 
       {/* Conteúdo do item */}
-      <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+      <div className="bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full">
         {/* Campos do item */}
         
         {/* Status - Usar componente Status do Kibo UI */}
@@ -411,12 +441,7 @@ const ParentItem = ({ item }) => {
 ```typescript
 <DropdownMenu modal={false}>  {/* modal={false} é obrigatório */}
   <DropdownMenuTrigger asChild>
-    <Button
-      className="h-8 w-8 rounded-full p-0 text-gray-700 cursor-pointer"  {/* botão redondo com cursor */}
-      variant="outline"
-      size="sm">
-      <Icon name="ellipsis-vertical" className="text-foreground dark:text-primary w-3 h-3" />
-    </Button>
+    <RowActionsTrigger label="Ações de …" />  {/* botão ⋯ discreto (DataTable) */}
   </DropdownMenuTrigger>
   <DropdownMenuContent align="end">
     {/* Items do menu */}

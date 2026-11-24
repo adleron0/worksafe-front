@@ -8,7 +8,8 @@
     "build": "NODE_OPTIONS='--max-old-space-size=8192' tsc -b && NODE_OPTIONS='--max-old-space-size=8192' vite build",
     "build:prod": "NODE_OPTIONS='--max-old-space-size=8192' tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:listagens": "node scripts/check-listagens.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

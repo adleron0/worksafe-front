@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { CHART_KEY, FINANCIAL_ABILITY, formatMoney } from "../-shared/financial";
 import { DUE_LABEL, PAYABLES_KEY, PAYABLES_SUMMARY_KEY, Payable, PayableList, dueState } from "../-shared/payables";
 import {
-  ActiveFilters, BulkSettleDialog, CopyButton, FilterPanel, SearchBox, SelectBox, SelectionBar, SortButton, SummaryCards,
+  ActiveFilters, BulkSettleDialog, CopyButton, DueQuickFilter, FilterPanel, SearchBox, SelectBox, SelectionBar, SortButton, SummaryCards,
   countFilters, downloadXlsx, reportBulk, toParams, useSelection, useUrlFilters,
 } from "../-shared/ledger";
 import { formatDate, paymentMethodLabel } from "../_receber/-components/options";
@@ -29,24 +29,25 @@ export const Route = createFileRoute("/_authenticated/financeiro/_pagar/pagar")(
 });
 
 const VIEWS = [
+  { id: "todas", label: "Todas" },
   { id: "abertas", label: "Em aberto" },
   { id: "pagas", label: "Pagas" },
-  { id: "todas", label: "Todas" },
   { id: "excluidas", label: "Excluídas" },
 ];
+const DEFAULT_VIEW = "todas";
 const LIMITS = [30, 50, 100, 200];
 
 function Payables() {
   const { can } = useVerify();
   const queryClient = useQueryClient();
-  const { filters, set, replace } = useUrlFilters({ view: "abertas" });
+  const { filters, set, replace } = useUrlFilters({ view: DEFAULT_VIEW });
   const [openFilters, setOpenFilters] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<Payable | null>(null);
   const [duplicate, setDuplicate] = useState(false);
   const [settling, setSettling] = useState<Payable | null>(null);
   const [bulkSettle, setBulkSettle] = useState(false);
-  const view = filters.view || "abertas";
+  const view = filters.view || DEFAULT_VIEW;
   const page = Number(filters.page ?? 0);
   const limit = Number(filters.limit ?? 30);
 
@@ -90,7 +91,7 @@ function Payables() {
     { view: "abertas", label: "Total em aberto", bucket: summary?.open },
     { view: "pagas", label: "Pagas", bucket: summary?.paid, tone: "text-green-600 dark:text-green-400", hint: paidHint },
   ];
-  const pickCard = (next: string) => { selection.clear(); set({ view: next === view && next !== "abertas" ? "abertas" : next }); };
+  const pickCard = (next: string) => { selection.clear(); set({ view: next === view ? DEFAULT_VIEW : next }); };
   const openNew = () => { setFormData(null); setDuplicate(false); setOpenForm(true); };
   const editRow = (item: Payable) => { setFormData(item); setDuplicate(false); setOpenForm(true); };
   const duplicateRow = (item: Payable) => { setFormData(item); setDuplicate(true); setOpenForm(true); };
@@ -125,6 +126,10 @@ function Payables() {
               className="h-7" onClick={() => { selection.clear(); set({ view: option.id }); }}>{option.label}</Button>
           ))}
         </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-3">
+        <DueQuickFilter filters={filters} onChange={(patch) => { selection.clear(); set(patch); }} />
       </div>
 
       <ActiveFilters kind="payable" filters={filters} onRemove={(keys) => set(Object.fromEntries(keys.map((k) => [k, ""])))} onClear={() => replace({ view })} />
@@ -163,7 +168,7 @@ function Payables() {
           <div className="w-2/12"><SortButton label="Valor" field="value" order={filters.order} onSort={(order) => set({ order })} /></div>
           <div className="w-2/12">
             <SortButton label="Vencimento" field="dueDate" order={filters.order} onSort={(order) => set({ order })} />
-            {view === "pagas" && <> · <SortButton label="Pagamento" field="paidAt" order={filters.order} onSort={(order) => set({ order })} /></>}
+            {(view === "pagas" || view === "todas") && <> · <SortButton label="Pagamento" field="paidAt" order={filters.order} onSort={(order) => set({ order })} /></>}
           </div>
           <div className="w-2/12">Documentos</div>
           <div className="w-1/12">Situação</div>

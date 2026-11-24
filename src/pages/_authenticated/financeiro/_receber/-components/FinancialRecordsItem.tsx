@@ -16,7 +16,7 @@ import { IFinancialRecord } from "../-interfaces/entity.interface";
 import SettleDialog from "./SettleDialog";
 import RetentionDialog from "../../-shared/RetentionDialog";
 import { OPEN_STATUSES, formatCurrency, formatDate, paymentMethodLabel, todayInput } from "./options";
-import { SelectBox } from "../../-shared/ledger";
+import { SelectBox, SortButton } from "../../-shared/ledger";
 
 interface ItemsProps {
   item: IFinancialRecord;
@@ -30,12 +30,15 @@ interface ItemsProps {
   headerSelect?: React.ReactNode;
   /** dia de hoje dado pela API (fuso de Brasília) */
   today?: string;
+  /** ordenação clicando no nome da coluna ("campo:asc" | "campo:desc" | "") */
+  order?: string;
+  onSort?: (order: string) => void;
 }
 
 type StatusName = "processing" | "waiting" | "received" | "declined" | "chargeback" | "cancelled" | "overdue";
 const KNOWN_STATUS: StatusName[] = ["processing", "waiting", "received", "declined", "chargeback", "cancelled", "overdue"];
 
-const Item = ({ item, index, entity, setFormData, setOpenForm, selected, onSelect, headerSelect, today }: ItemsProps) => {
+const Item = ({ item, index, entity, setFormData, setOpenForm, selected, onSelect, headerSelect, today, order, onSort }: ItemsProps) => {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const [openSettle, setOpenSettle] = useState(false);
@@ -77,8 +80,12 @@ const Item = ({ item, index, entity, setFormData, setOpenForm, selected, onSelec
       {index === 0 && (
         <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
           <div className="lg:w-3/12 flex items-center gap-2">{headerSelect}Cliente/Aluno</div>
-          <div className="lg:w-2/12">Valor</div>
-          <div className="lg:w-2/12">Datas</div>
+          <div className="lg:w-2/12">{onSort ? <SortButton label="Valor" field="value" order={order} onSort={onSort} /> : "Valor"}</div>
+          <div className="lg:w-2/12">
+            {onSort ? <>
+              <SortButton label="Vencimento" field="dueDate" order={order} onSort={onSort} /> · <SortButton label="Recebimento" field="paidAt" order={order} onSort={onSort} />
+            </> : "Datas"}
+          </div>
           <div className="lg:w-2/12">Nota fiscal</div>
           <div className="lg:w-2/12">Status</div>
           <div className="lg:w-1/12">Ações</div>

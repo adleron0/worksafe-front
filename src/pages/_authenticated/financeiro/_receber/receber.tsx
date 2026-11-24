@@ -18,7 +18,7 @@ import { IFinancialRecord } from "./-interfaces/entity.interface";
 import { OPEN_STATUSES } from "./-components/options";
 import { CHART_KEY, FINANCIAL_ABILITY } from "../-shared/financial";
 import {
-  ActiveFilters, Bucket, BulkSettleDialog, FilterPanel, SearchBox, SelectBox, SelectionBar, SortButton, SummaryCards,
+  ActiveFilters, Bucket, BulkSettleDialog, DueQuickFilter, FilterPanel, SearchBox, SelectBox, SelectionBar, SummaryCards,
   countFilters, downloadXlsx, reportBulk, toParams, useSelection, useUrlFilters,
 } from "../-shared/ledger";
 
@@ -30,12 +30,13 @@ export const Route = createFileRoute("/_authenticated/financeiro/_receber/recebe
 const entity = { name: "Conta a Receber", pluralName: "Contas a Receber", model: "financial-records", ability: "financeiro" };
 const LIST_KEY = `list${entity.pluralName}`;
 const VIEWS = [
+  { id: "todas", label: "Todas" },
   { id: "abertas", label: "Em aberto" },
   { id: "recebidas", label: "Recebidas" },
   { id: "canceladas", label: "Canceladas" },
-  { id: "todas", label: "Todas" },
   { id: "excluidas", label: "Inativas" },
 ];
+const DEFAULT_VIEW = "todas";
 const LIMITS = [30, 50, 100, 200];
 
 interface Summary { overdue: Bucket; dueToday: Bucket; dueWeek: Bucket; later: Bucket; received: Bucket; lost: Bucket; open: Bucket; paidPeriod: string }
@@ -44,12 +45,12 @@ interface Response { today: string; view: string; rows: IFinancialRecord[]; tota
 function Receivables() {
   const { can } = useVerify();
   const queryClient = useQueryClient();
-  const { filters, set, replace } = useUrlFilters({ view: "abertas" });
+  const { filters, set, replace } = useUrlFilters({ view: DEFAULT_VIEW });
   const [openFilters, setOpenFilters] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<IFinancialRecord | null>(null);
   const [bulkSettle, setBulkSettle] = useState(false);
-  const view = filters.view || "abertas";
+  const view = filters.view || DEFAULT_VIEW;
   const page = Number(filters.page ?? 0);
   const limit = Number(filters.limit ?? 30);
 
@@ -93,7 +94,7 @@ function Receivables() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Contas a Receber</h1>
-          <p className="text-sm text-muted-foreground">Inscrições, contratos e lançamentos manuais. Por padrão, o que está em aberto, ordenado pelo vencimento.</p>
+          <p className="text-sm text-muted-foreground">Inscrições, contratos e lançamentos manuais. Clique no nome da coluna para ordenar.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" asChild><Link to="/financeiro/recorrentes" search={{ tipo: "receivable" } as never}><Icon name="repeat" className="w-4 h-4" /> Recorrentes</Link></Button>
@@ -102,7 +103,7 @@ function Receivables() {
         </div>
       </div>
 
-      <SummaryCards cards={cards} active={view} onPick={(next) => { selection.clear(); set({ view: next === view && next !== "abertas" ? "abertas" : next }); }} />
+      <SummaryCards cards={cards} active={view} onPick={(next) => { selection.clear(); set({ view: next === view ? DEFAULT_VIEW : next }); }} />
 
       <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-3">
         <SearchBox value={filters.q ?? ""} onChange={(q) => set({ q })} placeholder="Cliente, aluno, CNPJ/CPF, descrição, NF, código ou valor" />
@@ -118,12 +119,9 @@ function Receivables() {
         </div>
       </div>
 
-        <div className="flex items-center gap-3 text-xs mb-3 -mt-1">
-          <span className="text-muted-foreground">Ordenar por:</span>
-          <SortButton label="Vencimento" field="dueDate" order={filters.order} onSort={(order) => set({ order })} />
-          <SortButton label="Valor" field="value" order={filters.order} onSort={(order) => set({ order })} />
-          <SortButton label="Recebimento" field="paidAt" order={filters.order} onSort={(order) => set({ order })} />
-        </div>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-3">
+        <DueQuickFilter filters={filters} onChange={(patch) => { selection.clear(); set(patch); }} />
+      </div>
       <ActiveFilters kind="receivable" filters={filters} onRemove={(keys) => set(Object.fromEntries(keys.map((k) => [k, ""])))} onClear={() => replace({ view })} />
 
       <SelectionBar count={selection.selected.size} total={total(selectedRows)} onClear={selection.clear}>
@@ -153,7 +151,7 @@ function Receivables() {
           : isError ? <div className="w-full flex justify-center items-center font-medium text-destructive py-4 rounded border border-destructive"><p>Erro: {error?.response?.data?.message}</p></div>
           : data?.rows?.length ? data.rows.map((item, i) => (
             <ItemList key={item.id} item={item} entity={entity} index={i} setFormData={setFormData} setOpenForm={setOpenForm} today={data.today}
-              selected={selection.selected.has(item.id)} onSelect={(on) => selection.toggle(item, on)}
+              selected={selection.selected.has(item.id)} onSelect={(on) => selection.toggle(item, on)} order={filters.order} onSort={(order) => set({ order })}
               headerSelect={<SelectBox checked={selection.allOnPage} onChange={selection.togglePage} label="Selecionar todas desta página" inverse />} />
           ))
           : <p className="p-6 text-sm text-muted-foreground text-center rounded border">{filterCount || filters.q ? "Nenhuma conta com esses filtros." : "Nenhuma conta nesta visão."}</p>}

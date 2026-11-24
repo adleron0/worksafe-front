@@ -12,6 +12,7 @@ import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import CalendarPicker from "@/components/general-components/Calendar";
 import Icon from "@/components/general-components/Icon";
+import QuickFilter from "@/components/general-components/QuickFilter";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { cn } from "@/lib/utils";
 import AccountSelect from "./AccountSelect";
@@ -73,6 +74,32 @@ export const QUICK_RANGES: Array<{ id: string; label: string; range: () => [stri
   { id: "passado", label: "Mês passado", range: () => monthBounds(-1) as [string, string] },
   { id: "proximo", label: "Próximo mês", range: () => monthBounds(1) as [string, string] },
 ];
+
+/**
+ * Filtro rápido de vencimento (no padrão do QuickFilter das Turmas): os recortes
+ * mais usados num clique, sem abrir o painel. Um período escolhido no painel
+ * que não é nenhum destes aparece como "Personalizado".
+ */
+const PERIOD_IDS = ["passado", "mes", "proximo", "30dias"];
+export function DueQuickFilter({ filters, onChange }: { filters: Filters; onChange: (patch: Partial<Filters>) => void }) {
+  const quick = PERIOD_IDS.map((id) => QUICK_RANGES.find((q) => q.id === id)!);
+  const match = quick.find((q) => { const [a, b] = q.range(); return filters.dueFrom === a && filters.dueTo === b; });
+  const custom = !match && !!(filters.dueFrom || filters.dueTo);
+  const options = [
+    { value: "todos", label: "Todos" },
+    ...quick.map((q) => ({ value: q.id, label: q.label })),
+    ...(custom ? [{ value: "outro", label: "Personalizado" }] : []),
+  ];
+  return (
+    <QuickFilter label="Vencimento" options={options} value={match?.id ?? (custom ? "outro" : "todos")}
+      onChange={(id) => {
+        if (id === "outro") return;
+        if (id === "todos") return onChange({ dueFrom: "", dueTo: "" });
+        const [a, b] = QUICK_RANGES.find((q) => q.id === id)!.range();
+        onChange({ dueFrom: a, dueTo: b });
+      }} />
+  );
+}
 
 function RangeField({ label, from, to, onChange, quick }: { label: string; from?: string; to?: string; onChange: (from: string, to: string) => void; quick: string[] }) {
   const value = from || to ? `${from ?? ""}|${to ?? ""}` : null;

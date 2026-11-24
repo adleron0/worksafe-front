@@ -67,7 +67,9 @@ const Item = ({ item, index, entity, setFormData, setOpenForm, selected, onSelec
     },
   });
 
-  const name = item.customer?.name || item.trainee?.name || item.subscription?.name || "-";
+  const person = item.customer?.name || item.trainee?.name || item.subscription?.name || "";
+  // sem cliente (ex.: rendimento ou entrada lançada pela conciliação): a descrição vira o título
+  const name = person || item.description || "Sem cliente";
   // cliente com contato financeiro padrão: a cobrança vai para ele
   const billingContact = item.customer?.contacts?.find((c) => c.defaultFinancial);
   const fiscalContact = item.customer?.contacts?.find((c) => c.defaultFiscal);
@@ -125,9 +127,10 @@ const Item = ({ item, index, entity, setFormData, setOpenForm, selected, onSelec
           {onSelect && <div className="pt-0.5"><SelectBox checked={Boolean(selected)} onChange={onSelect} label={`Selecionar ${name}`} /></div>}
           <div className="flex flex-col min-w-0">
           <p className="text-xs text-muted-foreground lg:hidden">Cliente/Aluno</p>
-          <p className="font-medium">{name} <span className="text-xs text-muted-foreground font-normal">#{item.id}</span></p>
+          <p className="font-medium break-words">{name} <span className="text-xs text-muted-foreground font-normal">#{item.id}</span></p>
+          {!person && <p><span className="inline-flex rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">sem cliente</span></p>}
           {contact && <p className="text-xs text-muted-foreground break-all">{contact}</p>}
-          {item.description && <p className="text-xs text-muted-foreground break-words">{item.description}</p>}
+          {person && item.description && <p className="text-xs text-muted-foreground break-words">{item.description}</p>}
           {(item.chartAccount || item.costCenter) && (
             <p className="text-xs text-muted-foreground break-words">
               {[item.chartAccount && `${item.chartAccount.code} ${item.chartAccount.name}`, item.costCenter?.name].filter(Boolean).join(" · ")}

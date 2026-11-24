@@ -13,7 +13,8 @@ import { ApiError } from "@/general-interfaces/api.interface";
 import { cn } from "@/lib/utils";
 import AccountSelect from "../-shared/AccountSelect";
 import { FINANCIAL_ABILITY, formatMoney, useBankAccounts, useChartAccounts } from "../-shared/financial";
-import { PAYABLES_KEY } from "../-shared/payables";
+import { PAYABLES_KEY, useSuppliers } from "../-shared/payables";
+import { useCustomerOptions } from "../-shared/ledger";
 import { formatDate } from "../_receber/-components/options";
 
 export const Route = createFileRoute("/_authenticated/financeiro/_conciliacao/conciliacao")({
@@ -59,6 +60,8 @@ function Reconciliation() {
   const queryClient = useQueryClient();
   const { data: banks } = useBankAccounts();
   const { data: accounts } = useChartAccounts();
+  const { data: customers } = useCustomerOptions();
+  const { data: suppliers } = useSuppliers();
   const [bankAccountId, setBankAccountId] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -270,6 +273,13 @@ function Reconciliation() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <Input name="description" value={choice.description ?? ""} placeholder="Descrição" maxLength={255} onValueChange={(_, v) => setChoice(line.fitId, { description: String(v) })} />
                           <AccountSelect accounts={accounts ?? []} value={choice.chartAccountId ?? ""} nature={line.amount < 0 ? "despesa" : "receita"} clearable onChange={(v) => setChoice(line.fitId, { chartAccountId: v })} placeholder="Conta do plano (opcional)" />
+                          {line.amount > 0 ? (
+                            <Select name={`customer-${line.fitId}`} options={(customers?.rows ?? []) as never[]} state={choice.customerId ? String(choice.customerId) : ""}
+                              onChange={(_, v) => setChoice(line.fitId, { customerId: v ? Number(Array.isArray(v) ? v[0] : v) : undefined })} placeholder="Cliente (opcional: rendimento não tem)" clearable />
+                          ) : (
+                            <Select name={`supplier-${line.fitId}`} options={(suppliers?.rows ?? []) as never[]} state={choice.supplierId ? String(choice.supplierId) : ""}
+                              onChange={(_, v) => setChoice(line.fitId, { supplierId: v ? Number(Array.isArray(v) ? v[0] : v) : undefined })} placeholder="Fornecedor (opcional)" clearable />
+                          )}
                         </div>
                       )}
                       {choice.action === "transferir" && (

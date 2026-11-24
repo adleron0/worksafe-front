@@ -289,7 +289,7 @@ const TOOL_AREAS = [
   { id: "rh", label: "RH e Departamento Pessoal", test: (name: string, perms: string) => /funcionarios|hr_activities/.test(perms) || /funcionario|documento|ausencia|mapa_alocacao|tipos_de_documento/.test(name) },
   { id: "obras", label: "Obras e serviços", test: (name: string, perms: string) => /ordens_de_servico|view_alocacao/.test(perms) || /(^|_)(os|rdos?|obras?)(_|$)/.test(name) },
   { id: "marketing", label: "Marketing", test: (name: string, perms: string) => /blog|instagram/.test(perms) || /imagem|imagens|blog|instagram/.test(name) },
-  { id: "treinamentos", label: "Treinamentos", test: (name: string, perms: string) => /_classes\b/.test(perms) || /turma|aluno|inscri/.test(name) },
+  { id: "treinamentos", label: "Treinamentos", test: (name: string, perms: string) => /_classes\b|list_treinamentos|instrutores/.test(perms) || /turma|aluno|inscri|curso|instrutor|certificad|presenca|prova/.test(name) },
   { id: "compras", label: "Suprimentos (compras e estoque)", test: (name: string, perms: string) => /pedidos_de_compra|estoque|entregas_epi|equipamentos|locacoes/.test(perms) || /compra|estoque|epi|equipamento|locac|inspec/.test(name) },
 ] as const;
 const GENERAL = { id: "geral", label: "Gerais (agenda, colegas, memória)" };

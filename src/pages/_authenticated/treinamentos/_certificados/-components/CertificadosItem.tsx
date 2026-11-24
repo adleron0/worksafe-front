@@ -319,10 +319,10 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
       </HeaderRow>
 
       {/* Conteúdo do item */}
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
 
         {/* Aluno com Preview */}
-        <div className="w-full lg:w-4/12 flex items-center space-x-4 md:pr-2">
+        <div className="w-4/12 flex items-center space-x-4 md:pr-2">
           {/* Thumbnail do Certificado */}
           {item.fabricJsonFront && item.variableToReplace ? (
             <div className="w-30 rounded-md overflow-hidden border bg-background flex-shrink-0">
@@ -353,7 +353,7 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
 
           {/* Informações do Aluno */}
           <div className="break-words flex-1">
-            <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Aluno: </p>
+            <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Aluno: </p>
             <p className="text-sm font-medium">{item.trainee?.name || "Não informado"}</p>
             <p className="text-xs text-muted-foreground">{item.course?.name || "Não informado"}</p>
             {highlightTheme && highlight && (
@@ -369,8 +369,8 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
         </div>
 
         {/* Turma */}
-        <div className="w-full lg:w-2/12 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Turma: </p>
+        <div className="w-2/12 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Turma: </p>
           <p className="text-sm text-muted-foreground">
             {item.class?.name || "Não informado"}
             {item.class?.classCode && (
@@ -380,8 +380,8 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
         </div>
 
         {/* Datas (Emissão e Validade) */}
-        <div className="w-full lg:w-3/12 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Datas: </p>
+        <div className="w-3/12 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Datas: </p>
           <div className="flex flex-col gap-1">
             <div>
               <p className="text-xs text-muted-foreground/70">Emissão:</p>
@@ -399,8 +399,8 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
         </div>
 
         {/* Status */}
-        <div className="flex flex-col lg:w-2/12">
-          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+        <div className="flex flex-col w-2/12">
+          <p className="text-xs text-muted-foreground hidden">Status</p>
           <Status status={getStatusBadge() ? "online" : "offline"} className="w-fit">
             <StatusIndicator />
             <StatusLabel>
@@ -410,7 +410,7 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-1/12">
+        <div className="top-2 right-2 static w-1/12">
           <DropdownMenu modal={modalPopover}>
             <DropdownMenuTrigger asChild>
               <Button

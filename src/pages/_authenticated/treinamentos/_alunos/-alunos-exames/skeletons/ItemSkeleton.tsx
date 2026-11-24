@@ -15,40 +15,40 @@ const ItemSkeleton = ({ index }: { index: number }) => {
         <div className="w-1/12">Ações</div>
       </HeaderRow>
 
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
         
         {/* Curso */}
-        <div className="w-full lg:w-2/12 md:pr-2">
+        <div className="w-2/12 md:pr-2">
           <Skeleton className="h-5 w-32" />
         </div>
 
         {/* Turma */}
-        <div className="w-full lg:w-2/12 md:pr-2">
+        <div className="w-2/12 md:pr-2">
           <Skeleton className="h-5 w-28" />
         </div>
 
         {/* Data */}
-        <div className="w-full lg:w-2/12 md:pr-2">
+        <div className="w-2/12 md:pr-2">
           <Skeleton className="h-5 w-36" />
         </div>
 
         {/* Nota */}
-        <div className="w-full lg:w-2/12 md:pr-2">
+        <div className="w-2/12 md:pr-2">
           <Skeleton className="h-6 w-12" />
         </div>
 
         {/* Acertos */}
-        <div className="w-full lg:w-2/12 md:pr-2">
+        <div className="w-2/12 md:pr-2">
           <Skeleton className="h-5 w-16" />
         </div>
 
         {/* Resultado */}
-        <div className="lg:w-1/12 md:pr-2">
+        <div className="w-1/12 md:pr-2">
           <Skeleton className="h-6 w-20 rounded-full" />
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-1/12">
+        <div className="top-2 right-2 static w-1/12">
           <Skeleton className="h-8 w-8 rounded-full" />
         </div>
       </div>

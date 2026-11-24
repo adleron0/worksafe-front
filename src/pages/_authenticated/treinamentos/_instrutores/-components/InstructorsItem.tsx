@@ -113,7 +113,7 @@ const InstructorsItem = ({ item, index, entity, setFormData, setOpenForm, setOpe
       </HeaderRow>
 
       {/* Conteúdo do item */}
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
         {/* Badges */}
         <div className="absolute -top-1 left-4 flex items-center gap-2">
           {item.highlight && 
@@ -124,7 +124,7 @@ const InstructorsItem = ({ item, index, entity, setFormData, setOpenForm, setOpe
         </div>
 
         {/* Avatar e Nome */}
-        <div className="w-full lg:w-3/12 flex items-center space-x-4 md:pr-2">
+        <div className="w-3/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border rounded-md">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
             <AvatarFallback className="rounded-md">{item.name[0]}</AvatarFallback>
@@ -138,8 +138,8 @@ const InstructorsItem = ({ item, index, entity, setFormData, setOpenForm, setOpe
         </div>
 
         {/* Curriculo */}
-        <div className="lg:w-3/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Currículo: </p>
+        <div className="w-3/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Currículo: </p>
           <div className="flex flex-wrap gap-0.5">
             {
               item.curriculum?.split('#').map((curriculo: string, index: number) => (
@@ -155,22 +155,22 @@ const InstructorsItem = ({ item, index, entity, setFormData, setOpenForm, setOpe
         </div>
 
         {/* Informações de Formação */}
-        <div className="lg:w-3/12 flex flex-col md:pr-2">
+        <div className="w-3/12 flex flex-col md:pr-2">
           <div className="flex items-baseline gap-2">
-            <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Formação: </p>
+            <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Formação: </p>
             <p className="text-xs text-muted-foreground dark:text-gray-100">{item.formation}</p>
           </div>
           {item.formationCode && (
             <div className="flex items-baseline gap-2">
-              <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Código: </p>
+              <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Código: </p>
               <p className="text-xs text-muted-foreground dark:text-gray-100">{item.formationCode}</p>
             </div>
           )}
         </div>
 
         {/* Status */}
-        <div className="flex flex-col lg:w-2/12">
-          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+        <div className="flex flex-col w-2/12">
+          <p className="text-xs text-muted-foreground hidden">Status</p>
           <Status status={item.active ? "online" : "offline"} className="w-fit">
             <StatusIndicator />
             <StatusLabel>
@@ -180,7 +180,7 @@ const InstructorsItem = ({ item, index, entity, setFormData, setOpenForm, setOpe
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-1/12">
+        <div className="top-2 right-2 static w-1/12">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button

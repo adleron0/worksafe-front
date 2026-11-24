@@ -72,8 +72,8 @@ function EmployeesPage() {
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
 
       {!error && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          <div className="hidden xl:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+        <div className="rounded-card border bg-card overflow-x-auto">
+          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="flex-1">Funcionário</div>
             <div className="w-64">Função</div>
             <div className="w-56">Situação</div>
@@ -85,19 +85,19 @@ function EmployeesPage() {
           {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
           {data?.rows.map((row) => (
             <button key={row.id} type="button" onClick={() => open(row.id)}
-              className={`w-full text-left flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-              <div className="flex-1 min-w-0 xl:pr-4">
+              className={`min-w-[880px] w-full text-left flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
+              <div className="flex-1 min-w-0 pr-4">
                 <p className="font-medium truncate">{row.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{[row.registration && `matrícula ${row.registration}`, row.hasUser && "tem acesso ao sistema"].filter(Boolean).join(" · ") || "—"}</p>
               </div>
-              <div className="xl:w-64 min-w-0 xl:pr-4">
+              <div className="w-64 min-w-0 pr-4">
                 <p className="truncate">{row.primaryRole ?? <span className="text-muted-foreground">Sem função</span>}</p>
                 {row.roles.length > 1 && <p className="text-xs text-muted-foreground truncate">também {row.roles.filter((role) => !role.isPrimary).map((role) => role.name).join(", ")}</p>}
               </div>
-              <div className="xl:w-56"><EmployeeStatusBadge status={row.status} label={row.statusLabel} until={row.statusUntil} /></div>
-              <div className="xl:w-32">{row.documents && row.documents !== "vazia" && row.documents !== "sem_validade" ? <DocStatusBadge status={row.documents} label={DOC_SIGNAL[row.documents]} /> : <span className="text-muted-foreground">—</span>}</div>
-              <div className="xl:w-40 text-muted-foreground tabular-nums">{row.phone ? formatPHONE(row.phone) : "—"}</div>
-              <div className="xl:w-28 text-muted-foreground tabular-nums">{dateBr(row.admissionDate)}</div>
+              <div className="w-56"><EmployeeStatusBadge status={row.status} label={row.statusLabel} until={row.statusUntil} /></div>
+              <div className="w-32">{row.documents && row.documents !== "vazia" && row.documents !== "sem_validade" ? <DocStatusBadge status={row.documents} label={DOC_SIGNAL[row.documents]} /> : <span className="text-muted-foreground">—</span>}</div>
+              <div className="w-40 text-muted-foreground tabular-nums">{row.phone ? formatPHONE(row.phone) : "—"}</div>
+              <div className="w-28 text-muted-foreground tabular-nums">{dateBr(row.admissionDate)}</div>
             </button>
           ))}
         </div>

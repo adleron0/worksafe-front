@@ -144,8 +144,8 @@ function ChartOfAccounts() {
         </Button>
       </div>
 
-      <div className="rounded-card border bg-card overflow-hidden" role="treegrid" aria-label="Plano de contas">
-        <div className="hidden md:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground" role="row">
+      <div className="rounded-card border bg-card overflow-x-auto" role="treegrid" aria-label="Plano de contas">
+        <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground" role="row">
           <div className="flex-1">Conta</div>
           <div className="w-28 text-right">Lançamentos</div>
           <div className="w-40 text-right">{month ? "Valor no mês" : "Valor total"}</div>
@@ -184,14 +184,14 @@ function ChartOfAccounts() {
                 {isParent && isCollapsed && <span className="ml-2 text-xs text-muted-foreground shrink-0">{account.children} conta(s)</span>}
               </div>
               {/* no celular: lançamentos, valor e ações numa linha só; no desktop viram colunas */}
-              <div className="flex items-center gap-3 pl-8 md:pl-0 md:contents">
-                <div className="md:w-28 md:text-right tabular-nums text-muted-foreground">
-                  {account.entries > 0 ? <><span className="md:hidden text-xs">{account.entries} lanç. · </span><span className="hidden md:inline">{account.entries}</span></> : <span className="hidden md:inline">—</span>}
+              <div className="contents">
+                <div className="w-28 text-right tabular-nums text-muted-foreground">
+                  {account.entries > 0 ? <><span className="hidden text-xs">{account.entries} lanç. · </span><span className="inline">{account.entries}</span></> : <span className="inline">—</span>}
                 </div>
-                <div className={cn("md:w-40 md:text-right tabular-nums", isParent || account.level === 1 ? "font-semibold" : "")}>
-                  {account.entries > 0 ? formatMoney(account.total) : <span className="hidden md:inline">—</span>}
+                <div className={cn("w-40 text-right tabular-nums", isParent || account.level === 1 ? "font-semibold" : "")}>
+                  {account.entries > 0 ? formatMoney(account.total) : <span className="inline">—</span>}
                 </div>
-                <div className="md:w-24 flex md:justify-end items-center gap-1 ml-auto md:ml-0">
+                <div className="w-24 flex justify-end items-center gap-1 ml-auto ml-0">
                   {canCreate && account.level < 3 && !inactive && (
                     <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" title={`Nova conta em ${account.name}`}
                       aria-label={`Nova conta em ${account.name}`} onClick={() => setForm({ parentId: account.id })}>

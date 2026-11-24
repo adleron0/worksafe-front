@@ -66,10 +66,10 @@ const VisitanteItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsP
         <div className="w-2/12 text-right">Ações</div>
       </HeaderRow>
 
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
 
         {/* Avatar e Nome */}
-        <div className="w-full lg:w-3/12 flex items-center space-x-4 md:pr-2">
+        <div className="w-3/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="h-12 w-12 border rounded-full">
             <AvatarImage src={item.avatarUrl || undefined} alt={item.name} />
             <AvatarFallback className="rounded-full uppercase">
@@ -82,8 +82,8 @@ const VisitanteItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsP
         </div>
 
         {/* Email */}
-        <div className="lg:w-3/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium">Email: </p>
+        <div className="w-3/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium">Email: </p>
           <div className="flex items-center gap-2">
             <Icon name="mail" className="w-3 h-3 text-muted-foreground" />
             <p className="text-sm text-muted-foreground truncate">{item.email}</p>
@@ -91,14 +91,14 @@ const VisitanteItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsP
         </div>
 
         {/* Comentários */}
-        <div className="lg:w-2/12 flex items-baseline gap-2">
-          <p className="lg:hidden text-sm font-medium">Comentários: </p>
+        <div className="w-2/12 flex items-baseline gap-2">
+          <p className="hidden text-sm font-medium">Comentários: </p>
           <Badge variant="secondary">{item._count?.comments || 0}</Badge>
         </div>
 
         {/* Status */}
-        <div className="flex flex-col lg:w-2/12">
-          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+        <div className="flex flex-col w-2/12">
+          <p className="text-xs text-muted-foreground hidden">Status</p>
           {item.blocked ? (
             <Status status="offline" className="w-fit">
               <StatusIndicator />
@@ -113,7 +113,7 @@ const VisitanteItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsP
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-2/12 flex justify-end">
+        <div className="top-2 right-2 static w-2/12 flex justify-end">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button

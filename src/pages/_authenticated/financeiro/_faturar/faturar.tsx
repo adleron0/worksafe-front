@@ -174,8 +174,8 @@ function BillingPage() {
       )}
 
       {view === "lista" && !error && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+        <div className="rounded-card border bg-card overflow-x-auto">
+          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-56">Cliente e venda</div>
             <div className="flex-1">Parcela</div>
             <div className="w-28">Etapa</div>
@@ -187,24 +187,24 @@ function BillingPage() {
           {listed.map((row) => {
             const current = STAGES.find((item) => item.id === row.stage)!;
             return (
-              <div key={row.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
-                <div className="lg:w-56 min-w-0 lg:pr-3">
+              <div key={row.id} className="min-w-[880px] flex flex-row items-center gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
+                <div className="w-56 min-w-0 pr-3">
                   <p className="font-medium truncate">{row.customer.name}</p>
                   <p className="text-xs text-muted-foreground truncate">{sale(row)} · {row.title}</p>
                   <KindBadge kind={row.kind} className="mt-0.5" />
                 </div>
-                <div className="flex-1 min-w-0 lg:pr-3">
+                <div className="flex-1 min-w-0 pr-3">
                   <p className="font-medium">{installmentLabel(row)}</p>
                   <p className="text-xs text-muted-foreground">{detail(row)}</p>
                   <p className="text-xs text-muted-foreground">{order(row)}</p>
                 </div>
-                <div className="lg:w-28">
+                <div className="w-28">
                   <span className={cn("inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 text-xs font-medium bg-muted")}>
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: current.color }} /> {current.name}
                   </span>
                 </div>
-                <div className="lg:w-32 lg:text-right font-semibold tabular-nums">{money(row.value)}</div>
-                <div className="lg:w-44 flex lg:justify-end gap-1">{actions(row)}</div>
+                <div className="w-32 text-right font-semibold tabular-nums">{money(row.value)}</div>
+                <div className="w-44 flex justify-end gap-1">{actions(row)}</div>
               </div>
             );
           })}

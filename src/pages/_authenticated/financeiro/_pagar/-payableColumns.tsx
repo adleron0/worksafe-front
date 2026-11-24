@@ -37,8 +37,8 @@ export function payableColumns(today: string, sort?: { order?: string; onSort: (
       cell: (item) => {
         const plan = [item.chartAccount && `${item.chartAccount.code} ${item.chartAccount.name}`, item.costCenter?.name].filter(Boolean).join(" · ");
         return (
-          <div className="min-w-0 sm:max-w-[20rem]">
-            <p className="sm:truncate">
+          <div className="min-w-0 max-w-[20rem]">
+            <p className="truncate">
               <span className="font-medium">{item.description}</span>
               {item.installmentNumber && item.installmentTotal && <span className={`${tag} ml-1.5`}>{item.installmentNumber}/{item.installmentTotal}</span>}
               {item.recurrenceId && <span className={`${tag} ml-1.5`}><Icon name="repeat" className="w-3 h-3" />mensal</span>}
@@ -75,7 +75,7 @@ export function payableColumns(today: string, sort?: { order?: string; onSort: (
       header: sort ? <><SortButton label="Vencimento" field="dueDate" order={sort.order} onSort={sort.onSort} /> · <SortButton label="Pagamento" field="paidAt" order={sort.order} onSort={sort.onSort} /></> : "Vencimento",
       cell: (item) => (
         <div>
-          <p className="tabular-nums"><span className="text-muted-foreground text-xs sm:hidden">Venc. </span>{formatDate(item.dueDate)}</p>
+          <p className="tabular-nums">{formatDate(item.dueDate)}</p>
           {item.paidAt && (
             <More lines={[[item.paymentMethod && paymentMethodLabel(item.paymentMethod), item.bankAccount?.name].filter(Boolean).join(" · "), item.statementRef && "Conciliada com o extrato"]}>
               <p className="tabular-nums text-xs text-green-700 dark:text-green-400 flex items-center gap-1">
@@ -93,9 +93,9 @@ export function payableColumns(today: string, sort?: { order?: string; onSort: (
         const isOpen = item.status === "aberta" && !item.inactiveAt;
         const files = [["Boleto", item.billUrl, "receipt-text"], ["Nota", item.invoiceUrl, "file-text"], ["Comprovante", item.receiptUrl, "paperclip"]].filter(([, url]) => url) as Array<[string, string, string]>;
         const copy = isOpen && (item.barcode || item.pixCode || item.supplier?.pixKey);
-        if (!item.documentNumber && !files.length && !copy) return <span className="text-muted-foreground hidden sm:inline">—</span>;
+        if (!item.documentNumber && !files.length && !copy) return <span className="text-muted-foreground">—</span>;
         return (
-          <div className="flex flex-wrap items-center gap-1 sm:max-w-[13rem]">
+          <div className="flex flex-wrap items-center gap-1 max-w-[13rem]">
             {item.documentNumber && <span className="text-xs mr-0.5">Nº {item.documentNumber}</span>}
             {files.map(([label, url, icon]) => (
               <Tooltip key={label}>

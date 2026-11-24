@@ -63,10 +63,10 @@ const AlunosItem = ({ item, index, entity }: ItemsProps) => {
       </HeaderRow>
 
       {/* Conteúdo do item */}
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
         
         {/* Avatar e Nome com CPF */}
-        <div className="w-full lg:w-3/12 flex items-center space-x-4 md:pr-2">
+        <div className="w-3/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border rounded-full">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
             <AvatarFallback className="rounded-full uppercase">{item.name?.[0] || "?"}</AvatarFallback>
@@ -80,7 +80,7 @@ const AlunosItem = ({ item, index, entity }: ItemsProps) => {
         </div>
 
         {/* Contatos (Telefone e E-mail) */}
-        <div className="w-full lg:w-3/12 flex flex-col gap-1 md:pr-2">
+        <div className="w-3/12 flex flex-col gap-1 md:pr-2">
           {item.phone && (
             <div className="flex items-center gap-2">
               <Icon name="phone" className="w-3 h-3 text-muted-foreground" />
@@ -103,16 +103,16 @@ const AlunosItem = ({ item, index, entity }: ItemsProps) => {
         </div>
 
         {/* Empresa */}
-        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Empresa: </p>
+        <div className="w-2/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Empresa: </p>
           <p className="text-sm text-muted-foreground">
             {item.customer?.name || "Não informado"}
           </p>
         </div>
 
         {/* Data de Nascimento e Idade */}
-        <div className="lg:w-2/12 flex flex-col gap-0 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Nascimento: </p>
+        <div className="w-2/12 flex flex-col gap-0 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Nascimento: </p>
           <p className="text-sm text-muted-foreground">
             {formatDate(item.birthDate)}
           </p>
@@ -124,8 +124,8 @@ const AlunosItem = ({ item, index, entity }: ItemsProps) => {
         </div>
 
         {/* Status */}
-        <div className="flex flex-col lg:w-1/12">
-          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+        <div className="flex flex-col w-1/12">
+          <p className="text-xs text-muted-foreground hidden">Status</p>
           <Status status={!item.inactiveAt ? "online" : "offline"} className="w-fit">
             <StatusIndicator />
             <StatusLabel>
@@ -135,7 +135,7 @@ const AlunosItem = ({ item, index, entity }: ItemsProps) => {
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-1/12">
+        <div className="top-2 right-2 static w-1/12">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button

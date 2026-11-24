@@ -120,9 +120,9 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
       </HeaderRow>
 
       {/* Conteúdo do item */}
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
         {/* Badges com ScrollArea */}
-        <div className="absolute -top-1 left-4 right-14 lg:right-auto lg:left-4 flex gap-1">
+        <div className="absolute -top-1 right-auto left-4 flex gap-1">
           { user.isSeller && (
               <ResponsiveBadge
                 icon="user-round-check"
@@ -143,7 +143,7 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
         </div>
         
         {/* Avatar e Nome */}
-        <div className="w-full lg:w-3/12 flex items-center space-x-4">
+        <div className="w-3/12 flex items-center space-x-4">
           <Avatar className="border">
             <AvatarImage src={user.imageUrl || undefined} alt={user.name} />
             <AvatarFallback>{user.name[0]}</AvatarFallback>
@@ -155,8 +155,8 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
         </div>
 
         {/* Cargo */}
-        <div className="lg:w-2/12 flex items-baseline gap-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Perfil: </p>
+        <div className="w-2/12 flex items-baseline gap-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Perfil: </p>
           <Badge
             variant="outline"
             className="rounded dark:border-primary"
@@ -166,28 +166,28 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
         </div>
 
         {/* Contatos */}
-        <div className="lg:w-3/12 flex flex-col">
+        <div className="w-3/12 flex flex-col">
           <div className="flex gap-2">
-            <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Telefone: </p>
+            <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Telefone: </p>
             <p className="text-sm text-gray-600 dark:text-gray-100">{user.phone}</p>
           </div>
           <div className="flex gap-2 break-all">
-            <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Email: </p>
+            <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Email: </p>
             <p className="text-xs text-gray-600 dark:text-gray-100">{user.email}</p>
           </div>
         </div>
 
         {/* Data de Criação */}
-        <div className="lg:w-2/12 flex items-baseline gap-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Cadastro: </p>
+        <div className="w-2/12 flex items-baseline gap-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Cadastro: </p>
           <p className="text-sm text-gray-600 dark:text-gray-100">
             {new Date(user.createdAt || '2024-01-01').toLocaleDateString()}
           </p>
         </div>
 
         {/* Status */}
-        <div className="lg:w-1/12 flex items-baseline gap-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
+        <div className="w-1/12 flex items-baseline gap-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
           <Badge
             variant="outline"
             className={`${
@@ -201,7 +201,7 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-1/12">
+        <div className="top-2 right-2 static w-1/12">
         {
           canEdit && (
             <DropdownMenu modal={false}>

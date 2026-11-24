@@ -52,8 +52,8 @@ export function receivableColumns(today?: string, sort?: { order?: string; onSor
         const plan = [item.chartAccount && `${item.chartAccount.code} ${item.chartAccount.name}`, item.costCenter?.name].filter(Boolean).join(" · ");
         const second = (who && item.description) || contact || plan;
         return (
-          <div className="min-w-0 sm:max-w-[20rem]">
-            <p className="sm:truncate">
+          <div className="min-w-0 max-w-[20rem]">
+            <p className="truncate">
               <span className="font-medium">{who || item.description || "Sem cliente"}</span>
               <span className="text-xs text-muted-foreground"> #{item.id}</span>
               {!who && <span className={`${tag} ml-1.5`}>sem cliente</span>}
@@ -91,7 +91,7 @@ export function receivableColumns(today?: string, sort?: { order?: string; onSor
       header: sort ? <><SortButton label="Vencimento" field="dueDate" order={sort.order} onSort={sort.onSort} /> · <SortButton label="Recebimento" field="paidAt" order={sort.order} onSort={sort.onSort} /></> : "Vencimento",
       cell: (item) => (
         <div>
-          <p className="tabular-nums"><span className="text-muted-foreground text-xs sm:hidden">Venc. </span>{formatDate(item.dueDate)}</p>
+          <p className="tabular-nums">{formatDate(item.dueDate)}</p>
           {item.paidAt && (
             <More lines={[[paymentMethodLabel(item.paymentMethod), item.bankAccount?.name].filter(Boolean).join(" · "), item.statementRef && "Conciliada com o extrato"]}>
               <p className="tabular-nums text-xs text-green-700 dark:text-green-400 flex items-center gap-1">
@@ -107,7 +107,7 @@ export function receivableColumns(today?: string, sort?: { order?: string; onSor
     {
       id: "origin", header: "Origem", mobile: "meta",
       cell: (item) => (
-        <div className="flex flex-wrap items-center gap-1 sm:max-w-[10.5rem]">
+        <div className="flex flex-wrap items-center gap-1 max-w-[10.5rem]">
           <span className={tag}><Icon name={item.gateway === "manual" ? "hand-coins" : "credit-card"} className="w-3 h-3" />{GATEWAY[item.gateway] ?? item.gateway}</span>
           {item.installmentNumber && item.installmentTotal && <span className={tag}>{item.installmentNumber}/{item.installmentTotal}</span>}
           {item.recurrenceId && <span className={tag}><Icon name="repeat" className="w-3 h-3" />mensal</span>}

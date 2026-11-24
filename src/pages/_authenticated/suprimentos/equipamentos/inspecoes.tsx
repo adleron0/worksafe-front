@@ -130,22 +130,22 @@ function DoneList() {
       </div>
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+        <div className="rounded-card border bg-card overflow-x-auto">
+          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-28">Data</div><div className="flex-1">Peça ou lote</div><div className="w-36">Tipo</div><div className="w-48">Resultado</div><div className="w-48">Inspetor</div>
           </div>
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
           {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">Nenhuma inspeção registrada.</p>}
           {data?.rows.map((row) => (
-            <div key={row.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
-              <div className="lg:w-28 tabular-nums">{dateBr(row.date)}</div>
-              <div className="flex-1 min-w-0 lg:pr-4">
+            <div key={row.id} className="min-w-[880px] flex flex-row items-center gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
+              <div className="w-28 tabular-nums">{dateBr(row.date)}</div>
+              <div className="flex-1 min-w-0 pr-4">
                 {row.unitId ? <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(row.unitId) }} className="hover:underline">{row.target}</Link> : row.target}
                 {row.notes && <p className="text-xs text-muted-foreground truncate">{row.notes}</p>}
               </div>
-              <div className="lg:w-36">{row.kindLabel}</div>
-              <div className={cn("lg:w-48 font-medium", row.result === "reprovado" ? "text-red-600 dark:text-red-400" : row.result === "aprovado" ? "text-green-700 dark:text-green-400" : "text-amber-600 dark:text-amber-400")}>{row.resultLabel}</div>
-              <div className="lg:w-48 text-muted-foreground truncate">{row.inspector ?? "—"}</div>
+              <div className="w-36">{row.kindLabel}</div>
+              <div className={cn("w-48 font-medium", row.result === "reprovado" ? "text-red-600 dark:text-red-400" : row.result === "aprovado" ? "text-green-700 dark:text-green-400" : "text-amber-600 dark:text-amber-400")}>{row.resultLabel}</div>
+              <div className="w-48 text-muted-foreground truncate">{row.inspector ?? "—"}</div>
             </div>
           ))}
         </div>

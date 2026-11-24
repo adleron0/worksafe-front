@@ -152,8 +152,8 @@ function OrdersPage() {
       )}
 
       {!kanban && !error && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+        <div className="rounded-card border bg-card overflow-x-auto">
+          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-36">Número</div>
             <div className="flex-1">Cliente e serviço</div>
             <div className="w-44">Etapa</div>
@@ -164,19 +164,19 @@ function OrdersPage() {
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
           {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
           {data?.rows.map((row) => (
-            <div key={row.id} {...clickableRow(() => open(row.id))} className={`relative flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-              <div className="lg:w-36">
+            <div key={row.id} {...clickableRow(() => open(row.id))} className={`min-w-[880px] relative flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
+              <div className="w-36">
                 <button type="button" className="font-semibold tabular-nums hover:underline text-left" onClick={() => open(row.id)}>{row.number}</button>
                 <p className="text-xs text-muted-foreground">{order(row)}</p>
               </div>
-              <div className="flex-1 min-w-0 pr-10 lg:pr-4">
+              <div className="flex-1 min-w-0 pr-4">
                 <p className="font-medium truncate">{row.customer.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{row.title}{row.responsible ? ` · ${row.responsible}` : ""}</p>
               </div>
-              <div className="lg:w-44"><OrderStageBadge status={row.status} late={row.late} /></div>
-              <div className="lg:w-64 text-muted-foreground text-xs">{periodText(row)}</div>
-              <div className="lg:w-24 text-muted-foreground tabular-nums"><span className="lg:hidden text-xs">Mobilização: </span>{row.checklist.done}/{row.checklist.total}</div>
-              <div className="absolute top-2 right-2 lg:static lg:w-16 flex justify-end">{rowMenu(row)}</div>
+              <div className="w-44"><OrderStageBadge status={row.status} late={row.late} /></div>
+              <div className="w-64 text-muted-foreground text-xs">{periodText(row)}</div>
+              <div className="w-24 text-muted-foreground tabular-nums"><span className="hidden text-xs">Mobilização: </span>{row.checklist.done}/{row.checklist.total}</div>
+              <div className="top-2 right-2 static w-16 flex justify-end">{rowMenu(row)}</div>
             </div>
           ))}
         </div>

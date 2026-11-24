@@ -60,8 +60,8 @@ function SellersPage() {
         <Input name="search" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar por nome ou e-mail..." icon="search" />
       </div>
 
-      <div className="rounded-card border bg-card overflow-hidden">
-        <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+      <div className="rounded-card border bg-card overflow-x-auto">
+        <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
           <div className="flex-1">Vendedor</div>
           <div className="w-36 text-right">A pagar</div>
           <div className="w-36 text-right">A liberar</div>
@@ -77,8 +77,8 @@ function SellersPage() {
         )}
         {data?.rows.map((row) => (
           <button key={row.id} type="button" onClick={() => open(row.id)}
-            className={`w-full text-left flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-            <div className="flex-1 min-w-0 flex items-center gap-3 lg:pr-4">
+            className={`min-w-[880px] w-full text-left flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
+            <div className="flex-1 min-w-0 flex items-center gap-3 pr-4">
               <Avatar className="border h-9 w-9">
                 <AvatarImage src={row.imageUrl || undefined} alt={row.name} />
                 <AvatarFallback className="text-xs">{initials(row.name)}</AvatarFallback>
@@ -88,12 +88,12 @@ function SellersPage() {
                 <p className="text-xs text-muted-foreground truncate">{row.email}</p>
               </div>
             </div>
-            <div className={cn("lg:w-36 lg:text-right font-semibold tabular-nums", row.wallet.balance > 0.005 && "text-primary", row.wallet.balance < -0.005 && "text-destructive")}>
-              <span className="lg:hidden text-xs font-normal text-muted-foreground">A pagar: </span>{money(row.wallet.balance)}
+            <div className={cn("w-36 text-right font-semibold tabular-nums", row.wallet.balance > 0.005 && "text-primary", row.wallet.balance < -0.005 && "text-destructive")}>
+              <span className="hidden text-xs font-normal text-muted-foreground">A pagar: </span>{money(row.wallet.balance)}
             </div>
-            <div className="lg:w-36 lg:text-right tabular-nums text-muted-foreground"><span className="lg:hidden text-xs">A liberar: </span>{money(row.wallet.pending)}</div>
-            <div className="lg:w-36 lg:text-right tabular-nums text-muted-foreground"><span className="lg:hidden text-xs">Já pago: </span>{money(row.wallet.paid)}</div>
-            <div className="lg:w-44 lg:text-right text-muted-foreground"><span className="lg:hidden text-xs">Última movimentação: </span>{dateBr(row.wallet.lastMovementAt)}</div>
+            <div className="w-36 text-right tabular-nums text-muted-foreground"><span className="hidden text-xs">A liberar: </span>{money(row.wallet.pending)}</div>
+            <div className="w-36 text-right tabular-nums text-muted-foreground"><span className="hidden text-xs">Já pago: </span>{money(row.wallet.paid)}</div>
+            <div className="w-44 text-right text-muted-foreground"><span className="hidden text-xs">Última movimentação: </span>{dateBr(row.wallet.lastMovementAt)}</div>
           </button>
         ))}
       </div>

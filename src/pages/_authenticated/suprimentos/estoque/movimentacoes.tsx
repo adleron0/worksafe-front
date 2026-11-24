@@ -76,8 +76,8 @@ function MovementsPage() {
 
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+        <div className="rounded-card border bg-card overflow-x-auto">
+          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-28">Data</div>
             <div className="w-32">Número</div>
             <div className="w-48">Tipo</div>
@@ -88,16 +88,16 @@ function MovementsPage() {
           {isLoading && Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
           {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">{type || search || from || to ? "Nenhuma movimentação com esses filtros." : "Nenhuma movimentação ainda."}</p>}
           {data?.rows.map((row) => (
-            <button key={row.id} type="button" onClick={() => setOpened(row.id)} className="w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
-              <div className="lg:w-28 tabular-nums">{dateBr(row.date)}</div>
-              <div className="lg:w-32 tabular-nums font-semibold">{row.number}</div>
-              <div className="lg:w-48 flex flex-wrap items-center gap-1">{row.typeLabel} {row.reversed && <Pill tone="red">Estornada</Pill>}</div>
-              <div className="flex-1 min-w-0 lg:pr-4">
+            <button key={row.id} type="button" onClick={() => setOpened(row.id)} className="min-w-[880px] w-full text-left flex flex-row items-center gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
+              <div className="w-28 tabular-nums">{dateBr(row.date)}</div>
+              <div className="w-32 tabular-nums font-semibold">{row.number}</div>
+              <div className="w-48 flex flex-wrap items-center gap-1">{row.typeLabel} {row.reversed && <Pill tone="red">Estornada</Pill>}</div>
+              <div className="flex-1 min-w-0 pr-4">
                 <p className="truncate">{row.summary}</p>
                 <p className="text-xs text-muted-foreground truncate">{[row.user, row.note].filter(Boolean).join(" · ") || " "}</p>
               </div>
-              <div className="lg:w-64 text-xs text-muted-foreground truncate">{row.from ?? "fora"} → {row.to ?? "fora"}</div>
-              {seesCost && <div className="lg:w-28 lg:text-right tabular-nums">{row.total !== null ? money(row.total) : "—"}</div>}
+              <div className="w-64 text-xs text-muted-foreground truncate">{row.from ?? "fora"} → {row.to ?? "fora"}</div>
+              {seesCost && <div className="w-28 text-right tabular-nums">{row.total !== null ? money(row.total) : "—"}</div>}
             </button>
           ))}
         </div>

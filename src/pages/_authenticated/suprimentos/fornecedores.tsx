@@ -50,19 +50,19 @@ function SupplierList() {
       </div>
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+        <div className="rounded-card border bg-card overflow-x-auto">
+          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="flex-1">Fornecedor</div><div className="w-1/3">Contato</div>
           </div>
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
           {!isLoading && !rows.length && <p className="p-6 text-sm text-muted-foreground">Nenhum fornecedor encontrado.</p>}
           {rows.map((supplier) => (
-            <div key={supplier.id} className="flex flex-col lg:flex-row lg:items-center gap-1 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
+            <div key={supplier.id} className="min-w-[880px] flex flex-row items-center gap-1 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
               <div className="flex-1 min-w-0">
                 <p className="font-medium">{supplier.name}</p>
                 <p className="text-xs text-muted-foreground">{[supplier.document && formatDocument(supplier.document), supplier.supplies].filter(Boolean).join(" · ") || "—"}</p>
               </div>
-              <div className="lg:w-1/3 text-xs text-muted-foreground break-words">{[supplier.contactName, supplier.phone, supplier.email].filter(Boolean).join(" · ") || "—"}</div>
+              <div className="w-1/3 text-xs text-muted-foreground break-words">{[supplier.contactName, supplier.phone, supplier.email].filter(Boolean).join(" · ") || "—"}</div>
             </div>
           ))}
         </div>

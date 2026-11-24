@@ -6,10 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/**
- * Onde a coluna aparece no celular (< 640px), onde a tabela vira lista:
- * título e subtítulo à esquerda, `end` (valor) e `badge` à direita, `meta` em cinza embaixo.
- */
+/** Mantido por compatibilidade: a tabela é a mesma no celular (rola de lado), então não tem efeito. */
 export type MobileSlot = "title" | "subtitle" | "meta" | "end" | "badge" | "hidden";
 
 export interface DataColumn<T> {
@@ -21,7 +18,7 @@ export interface DataColumn<T> {
   /** classes da célula e do cabeçalho (largura, alinhamento) */
   className?: string;
   align?: "left" | "right" | "center";
-  /** padrão: "meta"; a coluna de ações use "hidden" (ela vai pelo `actions`) */
+  /** sem efeito (antigo modo lista do celular) */
   mobile?: MobileSlot;
 }
 
@@ -46,7 +43,7 @@ const alignClass = (align?: DataColumn<unknown>["align"]) => (align === "right" 
  * Tabela das listagens (padrão Unyo): `<table>` de verdade, linhas de ~40px com divisória fina,
  * cabeçalho cinza discreto com a ordenação no título, seleção com "parcial", linha clicável,
  * skeleton, vazio e erro dentro da própria tabela. Ordenação e paginação são do servidor:
- * o componente só avisa (`onSort`). No celular vira uma lista compacta (ver `MobileSlot`).
+ * o componente só avisa (`onSort`). No celular é a mesma tabela, rolando de lado dentro do cartão.
  */
 export default function DataTable<T>({
   rows, columns, getRowId, loading, error, onRetry, empty, order, onSort, selection, onRowClick, rowClassName, actions, skeletonRows = 8, minWidth = 720, ariaLabel,
@@ -90,12 +87,10 @@ export default function DataTable<T>({
     )
     : (empty ?? <EmptyState title="Nenhum registro encontrado." />);
 
-  const slot = (name: MobileSlot, row: T) => columns.filter((c) => (c.mobile ?? "meta") === name).map((c) => <div key={c.id} className="min-w-0">{c.cell(row)}</div>);
-
   return (
     <div className={cn("relative min-w-0", loading && rows?.length && "opacity-70 transition-opacity")} aria-busy={loading}>
-      {/* computador e tablet */}
-      <div className="hidden sm:block overflow-x-auto -mx-1 px-1">
+      {/* tabela sempre, também no celular: rola de lado dentro do cartão (como no Unyo) */}
+      <div className="overflow-x-auto -mx-1 px-1 [-webkit-overflow-scrolling:touch]">
         <table className="w-full border-separate border-spacing-0 text-[13px]" style={{ minWidth }} aria-label={ariaLabel}>
           <thead>
             <tr>
@@ -144,38 +139,6 @@ export default function DataTable<T>({
         </table>
       </div>
 
-      {/* celular: lista compacta */}
-      <div className="sm:hidden">
-        {selection && state === "rows" && (
-          <label className="flex items-center gap-2 pb-2 text-xs text-muted-foreground border-b">
-            <Checkbox checked={selection.pageState} onCheckedChange={(v) => selection.togglePage(v === true)} aria-label="Selecionar todas desta página" />
-            Selecionar todas desta página
-          </label>
-        )}
-        {state === "loading" && Array.from({ length: 5 }, (_, i) => (
-          <div key={i} className="flex gap-3 py-3 border-b last:border-b-0"><div className="flex-1 space-y-2"><Skeleton className="h-4 w-2/3" /><Skeleton className="h-3 w-1/2" /></div><Skeleton className="h-4 w-16" /></div>
-        ))}
-        {(state === "empty" || state === "error") && message}
-        {state === "rows" && rows!.map((row) => {
-          const selected = selection?.isSelected(row);
-          return (
-            <div key={getRowId(row)} {...rowProps(row)}
-              className={cn("flex gap-3 py-3 border-b last:border-b-0 text-[13px]", selected && "bg-primary-soft -mx-3 px-3", onRowClick && "cursor-pointer", rowClassName?.(row))}>
-              {selection && <div className="pt-0.5"><Checkbox checked={selected} onCheckedChange={(v) => selection.toggle(row, v === true)} aria-label="Selecionar" /></div>}
-              <div className="flex-1 min-w-0 space-y-0.5">
-                <div className="font-medium">{slot("title", row)}</div>
-                <div className="text-xs text-muted-foreground">{slot("subtitle", row)}</div>
-                <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5">{slot("meta", row)}</div>
-              </div>
-              <div className="flex flex-col items-end gap-1 shrink-0 text-right">
-                {slot("end", row)}
-                {slot("badge", row)}
-              </div>
-              {actions && <div className="-mr-1">{actions(row)}</div>}
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }

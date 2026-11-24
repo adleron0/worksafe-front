@@ -88,8 +88,8 @@ function ItemsPage() {
 
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+        <div className="rounded-card border bg-card overflow-x-auto">
+          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-32">Código</div>
             <div className="flex-1">Item</div>
             <div className="w-32 text-right">Em estoque</div>
@@ -109,17 +109,17 @@ function ItemsPage() {
             </div>
           ))}
           {data?.rows.map((item) => (
-            <button key={item.id} type="button" onClick={() => open(item.id)} className={`w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-              <div className="lg:w-32 font-semibold tabular-nums">{item.code}</div>
-              <div className="flex-1 min-w-0 lg:pr-4">
+            <button key={item.id} type="button" onClick={() => open(item.id)} className={`min-w-[880px] w-full text-left flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
+              <div className="w-32 font-semibold tabular-nums">{item.code}</div>
+              <div className="flex-1 min-w-0 pr-4">
                 <p className="font-medium truncate flex items-center gap-2">{item.name} {!item.active && <Pill>Inativo</Pill>} {item.low && <Pill tone="red">Abaixo do mínimo</Pill>}</p>
                 <p className="text-xs text-muted-foreground truncate">{[item.category ?? "Sem categoria", TRACKING_LABEL[item.tracking], item.isPpe && "EPI", item.requiresInspection && "inspeção", item.requiresCalibration && "calibração", item.rentable && "alugável"].filter(Boolean).join(" · ")}</p>
               </div>
-              <div className="lg:w-32 lg:text-right tabular-nums"><span className="lg:hidden text-xs text-muted-foreground">Em estoque: </span>{qty(item.inStock)} {item.unit}</div>
-              <div className="lg:w-32 lg:text-right tabular-nums"><span className="lg:hidden text-xs text-muted-foreground">Disponível: </span>{qty(item.available)} {item.unit}</div>
-              <div className="lg:w-28 lg:text-right tabular-nums text-muted-foreground"><span className="lg:hidden text-xs">Fora: </span>{item.out ? qty(item.out) : "—"}</div>
-              <div className="lg:w-24 lg:text-right tabular-nums text-muted-foreground"><span className="lg:hidden text-xs">Mínimo: </span>{item.minQuantity !== null ? qty(item.minQuantity) : "—"}</div>
-              {seesCost && <div className="lg:w-32 lg:text-right tabular-nums"><span className="lg:hidden text-xs text-muted-foreground">Custo médio: </span>{item.averageCost !== null ? money(item.averageCost) : "—"}</div>}
+              <div className="w-32 text-right tabular-nums"><span className="hidden text-xs text-muted-foreground">Em estoque: </span>{qty(item.inStock)} {item.unit}</div>
+              <div className="w-32 text-right tabular-nums"><span className="hidden text-xs text-muted-foreground">Disponível: </span>{qty(item.available)} {item.unit}</div>
+              <div className="w-28 text-right tabular-nums text-muted-foreground"><span className="hidden text-xs">Fora: </span>{item.out ? qty(item.out) : "—"}</div>
+              <div className="w-24 text-right tabular-nums text-muted-foreground"><span className="hidden text-xs">Mínimo: </span>{item.minQuantity !== null ? qty(item.minQuantity) : "—"}</div>
+              {seesCost && <div className="w-32 text-right tabular-nums"><span className="hidden text-xs text-muted-foreground">Custo médio: </span>{item.averageCost !== null ? money(item.averageCost) : "—"}</div>}
             </button>
           ))}
         </div>

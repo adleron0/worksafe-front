@@ -78,8 +78,8 @@ function BalancesPage() {
 
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+        <div className="rounded-card border bg-card overflow-x-auto">
+          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-32">Código</div>
             <div className="flex-1">Item</div>
             <div className="w-64">Onde</div>
@@ -90,15 +90,15 @@ function BalancesPage() {
           {isLoading && Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
           {!isLoading && !rows.length && <p className="p-6 text-sm text-muted-foreground">Nenhum saldo com esses filtros.</p>}
           {rows.map((row, index) => (
-            <div key={`${row.itemId}-${row.lotId}-${row.holderType}-${row.holderId}-${index}`} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b last:border-b-0 text-sm">
-              <div className="lg:w-32 tabular-nums font-medium">{row.code}</div>
-              <div className="flex-1 min-w-0 lg:pr-4 truncate">
+            <div key={`${row.itemId}-${row.lotId}-${row.holderType}-${row.holderId}-${index}`} className="min-w-[880px] flex flex-row items-center gap-0 px-4 py-2.5 border-b last:border-b-0 text-sm">
+              <div className="w-32 tabular-nums font-medium">{row.code}</div>
+              <div className="flex-1 min-w-0 pr-4 truncate">
                 <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: String(row.itemId) }} className="hover:underline">{row.item}</Link>
               </div>
-              <div className="lg:w-64 min-w-0 truncate">{row.holder} {row.holderType !== "local" && <span className="text-xs text-muted-foreground">({HOLDER_LABEL[row.holderType]})</span>}</div>
-              <div className="lg:w-40 text-xs text-muted-foreground">{row.lot ? `${row.lot}${row.expiresAt ? ` · vence ${dateBr(row.expiresAt)}` : ""}` : "—"}</div>
-              <div className="lg:w-32 lg:text-right tabular-nums font-medium">{qty(row.quantity)} {row.unit}</div>
-              {seesCost && <div className="lg:w-32 lg:text-right tabular-nums">{money(row.value)}</div>}
+              <div className="w-64 min-w-0 truncate">{row.holder} {row.holderType !== "local" && <span className="text-xs text-muted-foreground">({HOLDER_LABEL[row.holderType]})</span>}</div>
+              <div className="w-40 text-xs text-muted-foreground">{row.lot ? `${row.lot}${row.expiresAt ? ` · vence ${dateBr(row.expiresAt)}` : ""}` : "—"}</div>
+              <div className="w-32 text-right tabular-nums font-medium">{qty(row.quantity)} {row.unit}</div>
+              {seesCost && <div className="w-32 text-right tabular-nums">{money(row.value)}</div>}
             </div>
           ))}
         </div>

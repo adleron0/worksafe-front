@@ -120,10 +120,10 @@ const CustomerItem = ({ item, index, entity }: ItemsProps) => {
         tabIndex={0}
         onClick={open}
         onKeyDown={(e) => { if (e.key === "Enter") open(); }}
-        className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-2.5 w-full ${tailwindUtils.itemClickable}`}
+        className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-2.5 w-full min-w-[880px] ${tailwindUtils.itemClickable}`}
       >
         {/* Avatar e Nome */}
-        <div className="w-full lg:w-4/12 flex items-center gap-3 pr-10 lg:pr-2 min-w-0">
+        <div className="w-4/12 flex items-center gap-3 pr-2 min-w-0">
           <Avatar className="h-9 w-9 rounded-md border bg-white">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} className="object-contain" />
             <AvatarFallback className="rounded-md text-sm font-medium">{item.name?.[0]}</AvatarFallback>
@@ -135,8 +135,8 @@ const CustomerItem = ({ item, index, entity }: ItemsProps) => {
         </div>
 
         {/* Endereço */}
-        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Endereço: </p>
+        <div className="w-2/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Endereço: </p>
           <div className="break-all">
             <h2 className="text-sm font-semibold">{item?.state?.name}</h2>
             <p className="text-sm text-gray-600 dark:text-gray-100">{item?.city?.name}</p>
@@ -144,28 +144,28 @@ const CustomerItem = ({ item, index, entity }: ItemsProps) => {
         </div>
 
         {/* Contatos */}
-        <div className="lg:w-3/12 flex flex-col md:pr-2">
+        <div className="w-3/12 flex flex-col md:pr-2">
           <div className="flex gap-2">
-            <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Telefone: </p>
+            <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Telefone: </p>
             <p className="text-sm text-gray-600 dark:text-gray-100">{formatPHONE(item.phone ?? undefined)}</p>
           </div>
           <div className="flex gap-2 break-all">
-            <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Email: </p>
+            <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Email: </p>
             <p className="text-xs text-gray-600 dark:text-gray-100">{item.email}</p>
           </div>
         </div>
 
         {/* Data de Criação */}
-        <div className="lg:w-1/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Cadastro: </p>
+        <div className="w-1/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Cadastro: </p>
           <p className="text-sm text-gray-600 dark:text-gray-100">
             {new Date(item.createdAt || '2024-01-01').toLocaleDateString()}
           </p>
         </div>
 
         {/* Status */}
-        <div className="lg:w-1/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
+        <div className="w-1/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
           <Badge
             variant="outline"
             className={`${
@@ -179,7 +179,7 @@ const CustomerItem = ({ item, index, entity }: ItemsProps) => {
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-1/12 z-10" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+        <div className="top-2 right-2 static w-1/12 z-10" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button

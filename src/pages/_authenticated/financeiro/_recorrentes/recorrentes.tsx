@@ -86,8 +86,8 @@ function Recurrences() {
         description={editing ? "A mudança vale para os lançamentos em aberto de hoje em diante. Os já vencidos e os pagos não mudam." : "Lance uma vez; o sistema cria um lançamento por mês."}
         form={<RecurrenceForm key={`${editing?.id ?? "new"}-${kind}`} kind={editing?.kind ?? kind} item={editing} close={() => setOpenForm(false)} />} />
 
-      <div className="rounded-card border bg-card overflow-hidden">
-        <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+      <div className="rounded-card border bg-card overflow-x-auto">
+        <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
           <div className="w-4/12">Descrição</div>
           <div className="w-2/12">Valor por mês</div>
           <div className="w-2/12">Todo dia</div>
@@ -97,22 +97,22 @@ function Recurrences() {
         {isLoading && Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
         {!isLoading && !active.length && <p className="p-6 text-sm text-muted-foreground text-center">Nenhum recorrente {kind === "payable" ? "a pagar" : "a receber"} ativo.</p>}
         {[...active, ...(showEnded ? ended : [])].map((item) => (
-          <div key={item.id} className={cn("relative flex flex-col lg:flex-row lg:items-center gap-1 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm", item.inactiveAt && "opacity-60")}>
-            <div className="lg:w-4/12 pr-10 min-w-0">
+          <div key={item.id} className={cn("relative flex flex-row items-center gap-1 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm", item.inactiveAt && "opacity-60")}>
+            <div className="w-4/12 pr-10 min-w-0">
               <p className="font-semibold break-words">{item.description}</p>
               <p className="text-xs text-muted-foreground break-words">
                 {[item.supplier?.name ?? item.customer?.name, item.chartAccount && `${item.chartAccount.code} ${item.chartAccount.name}`, item.costCenter?.name].filter(Boolean).join(" · ") || "Sem classificação"}
               </p>
             </div>
-            <div className="lg:w-2/12 tabular-nums">
+            <div className="w-2/12 tabular-nums">
               <p className="font-medium">{formatMoney(item.value)}</p>
               <p className="text-xs text-muted-foreground">{item.paymentMethod ? paymentMethodLabel(item.paymentMethod) : "Forma a definir"}</p>
             </div>
-            <div className="lg:w-2/12">
+            <div className="w-2/12">
               <p>Dia {item.dayOfMonth}</p>
               <p className="text-xs text-muted-foreground">desde {formatDate(item.startDate)}{item.endDate ? ` até ${formatDate(item.endDate)}` : ""}</p>
             </div>
-            <div className="lg:w-2/12">
+            <div className="w-2/12">
               {item.inactiveAt ? <span className="text-xs rounded bg-muted px-1.5 py-0.5">Encerrado</span> : (
                 <>
                   <p>{item.nextDue ? formatDate(item.nextDue) : "—"}</p>
@@ -120,7 +120,7 @@ function Recurrences() {
                 </>
               )}
             </div>
-            <div className="absolute top-2 right-2 lg:static lg:w-2/12 flex justify-end gap-1">
+            <div className="top-2 right-2 static w-2/12 flex justify-end gap-1">
               <Button size="sm" variant="outline" className="h-8" asChild>
                 <Link to={listPath} search={{ view: "todas", recurrenceId: String(item.id), order: "dueDate:asc" } as never}>Ver meses</Link>
               </Button>

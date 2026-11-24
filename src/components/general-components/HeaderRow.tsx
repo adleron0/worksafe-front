@@ -68,7 +68,7 @@ const HeaderRow: React.FC<HeaderRowProps> = ({
     return (
       <div
         className={cn(
-          "hidden lg:flex items-center justify-between py-2.5 px-4 w-full bg-card border-b gap-3",
+          "flex items-center justify-between py-2.5 px-4 w-full min-w-[880px] bg-card border-b gap-3",
           className
         )}
       >
@@ -109,7 +109,7 @@ const HeaderRow: React.FC<HeaderRowProps> = ({
   return (
     <div
       className={cn(
-        "hidden lg:flex items-center justify-between py-2.5 px-4 w-full bg-card border-b font-semibold text-[12.5px] text-muted-foreground",
+        "flex items-center justify-between py-2.5 px-4 w-full min-w-[880px] bg-card border-b font-semibold text-[12.5px] text-muted-foreground",
         className
       )}
     >

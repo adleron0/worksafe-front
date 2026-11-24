@@ -63,22 +63,22 @@ const TagItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) 
         <div className="w-2/12 text-right">Ações</div>
       </HeaderRow>
 
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
 
         {/* Nome */}
-        <div className="w-full lg:w-5/12 flex flex-col md:pr-2">
+        <div className="w-5/12 flex flex-col md:pr-2">
           <h2 className="text-sm font-semibold">{item.name}</h2>
         </div>
 
         {/* Slug */}
-        <div className="lg:w-3/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium">Slug: </p>
+        <div className="w-3/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium">Slug: </p>
           <p className="text-sm text-muted-foreground">{item.slug}</p>
         </div>
 
         {/* Status */}
-        <div className="flex flex-col lg:w-2/12">
-          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+        <div className="flex flex-col w-2/12">
+          <p className="text-xs text-muted-foreground hidden">Status</p>
           <Status status={!item.inactiveAt ? "online" : "offline"} className="w-fit">
             <StatusIndicator />
             <StatusLabel>
@@ -88,7 +88,7 @@ const TagItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps) 
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-2/12 flex justify-end">
+        <div className="top-2 right-2 static w-2/12 flex justify-end">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button

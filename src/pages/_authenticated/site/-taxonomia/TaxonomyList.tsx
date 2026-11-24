@@ -69,7 +69,7 @@ export default function TaxonomyList({ entity }: { entity: TaxonomyEntity }) {
         form={<TaxonomyForm key={formData?.id ?? "new"} formData={formData} openSheet={setOpenForm} entity={entity} />}
       />
 
-      <div className="mt-4 rounded-card border bg-card overflow-hidden">
+      <div className="mt-4 rounded-card border bg-card overflow-x-auto">
         {isLoading ? (
           Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full" />)
         ) : isError ? (

@@ -112,10 +112,10 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm, order = "", o
         <div className="w-2/12 text-right">Ações</div>
       </HeaderRow>
 
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
 
         {/* Imagem e Título */}
-        <div className="w-full lg:w-3/12 flex items-center space-x-4 md:pr-2">
+        <div className="w-3/12 flex items-center space-x-4 md:pr-2">
           {item.coverImage ? (
             <img
               src={item.coverImage}
@@ -134,7 +134,7 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm, order = "", o
         </div>
 
         {/* Autor */}
-        <div className="lg:w-2/12 flex items-center space-x-2 md:pr-2">
+        <div className="w-2/12 flex items-center space-x-2 md:pr-2">
           <Avatar className="h-8 w-8 border rounded-full">
             <AvatarImage src={item.author?.imageUrl || undefined} alt={item.author?.name} />
             <AvatarFallback className="rounded-full uppercase text-xs">
@@ -147,8 +147,8 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm, order = "", o
         </div>
 
         {/* Categoria */}
-        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium">Categoria: </p>
+        <div className="w-2/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium">Categoria: </p>
           {item.category ? (
             <Badge variant="outline">{item.category.name}</Badge>
           ) : (
@@ -157,8 +157,8 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm, order = "", o
         </div>
 
         {/* Destaque */}
-        <div className="lg:w-1/12 flex items-baseline gap-2">
-          <p className="lg:hidden text-sm font-medium">Destaque: </p>
+        <div className="w-1/12 flex items-baseline gap-2">
+          <p className="hidden text-sm font-medium">Destaque: </p>
           {item.featured ? (
             <Icon name="star" className="w-5 h-5 text-yellow-500 fill-yellow-500" />
           ) : (
@@ -167,8 +167,8 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm, order = "", o
         </div>
 
         {/* Views */}
-        <div className="lg:w-1/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium">Views: </p>
+        <div className="w-1/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium">Views: </p>
           <div className="flex items-center gap-1">
             <Icon name="eye" className="w-4 h-4 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">{item.viewCount || 0}</p>
@@ -176,13 +176,13 @@ const PostItem = ({ item, index, entity, setFormData, setOpenForm, order = "", o
         </div>
 
         {/* Status */}
-        <div className="flex flex-col lg:w-1/12">
-          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+        <div className="flex flex-col w-1/12">
+          <p className="text-xs text-muted-foreground hidden">Status</p>
           {getStatusBadge()}
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-2/12 flex justify-end">
+        <div className="top-2 right-2 static w-2/12 flex justify-end">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button

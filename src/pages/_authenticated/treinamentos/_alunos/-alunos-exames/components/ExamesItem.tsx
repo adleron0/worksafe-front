@@ -135,22 +135,22 @@ const ExamesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
       </HeaderRow>
 
       {/* Conteúdo do item */}
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
         
         {/* Curso com Data */}
-        <div className="w-full lg:w-3/12 md:pr-2">
+        <div className="w-3/12 md:pr-2">
           <p className="text-[10px] text-muted-foreground mb-1">
             {formatDate(item.createdAt)}
           </p>
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Curso: </p>
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Curso: </p>
           <p className="text-sm font-medium">
             {item.course?.name || "Não informado"}
           </p>
         </div>
 
         {/* Turma com ID */}
-        <div className="w-full lg:w-3/12 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Turma: </p>
+        <div className="w-3/12 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Turma: </p>
           <p className="text-sm text-muted-foreground">
             {item.class?.name || "Não informado"}
             {item.classId && (
@@ -162,8 +162,8 @@ const ExamesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
         </div>
 
         {/* Nota e Acertos juntos */}
-        <div className="w-full lg:w-3/12 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Nota / Acertos: </p>
+        <div className="w-3/12 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Nota / Acertos: </p>
           <div className="flex items-center gap-3">
             <p className={`text-lg font-bold ${
               examData && examData.score >= 6 ? 'text-green-600' : 'text-red-600'
@@ -177,15 +177,15 @@ const ExamesItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProp
         </div>
 
         {/* Resultado */}
-        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Resultado: </p>
+        <div className="w-2/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Resultado: </p>
           <Badge variant={item.result ? "success" : "destructive"}>
             {item.result ? "Aprovado" : "Reprovado"}
           </Badge>
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-1/12">
+        <div className="top-2 right-2 static w-1/12">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

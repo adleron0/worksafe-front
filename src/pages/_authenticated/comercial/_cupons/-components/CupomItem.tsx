@@ -159,18 +159,18 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
     <>
       {/* Renderiza o Header apenas no primeiro item */}
       <HeaderRow show={index === 0}>
-        <p className="lg:w-3/12">Cupom</p>
-        <p className="lg:w-2/12">Desconto</p>
-        <p className="lg:w-3/12">Vendedor</p>
-        <p className="lg:w-1/12">Uso</p>
-        <p className="lg:w-2/12">Validade</p>
-        <p className="lg:w-1/12">Status</p>
-        <p className="lg:w-1/12 text-center">Ações</p>
+        <p className="w-3/12">Cupom</p>
+        <p className="w-2/12">Desconto</p>
+        <p className="w-3/12">Vendedor</p>
+        <p className="w-1/12">Uso</p>
+        <p className="w-2/12">Validade</p>
+        <p className="w-1/12">Status</p>
+        <p className="w-1/12 text-center">Ações</p>
       </HeaderRow>
 
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
         {/* Badges com ScrollArea */}
-        <div className="absolute -top-1 left-4 right-14 lg:right-auto lg:left-4 flex gap-1">
+        <div className="absolute -top-1 right-auto left-4 flex gap-1">
           { item.course && (
               <ResponsiveBadge
                 icon="square-library"
@@ -191,8 +191,8 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
         </div>
 
         {/* Nome do Cupom */}
-        <div className="flex flex-col lg:w-3/12 mt-1">
-          <p className="text-xs text-muted-foreground lg:hidden">Cupom</p>
+        <div className="flex flex-col w-3/12 mt-1">
+          <p className="text-xs text-muted-foreground hidden">Cupom</p>
           <div className="border text-sm border-primary rounded flex items-center w-fit gap-2 py-0.5 px-2">
             <Icon name="ticket" className="w-4 h-4 text-primary" />
             <p className="font-semibold text-primary">{item.code}</p>
@@ -207,8 +207,8 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
           )} */}
         </div>
 
-        <div className="flex flex-col lg:w-2/12">
-          <p className="text-xs text-muted-foreground lg:hidden">Desconto</p>
+        <div className="flex flex-col w-2/12">
+          <p className="text-xs text-muted-foreground hidden">Desconto</p>
           <p className="font-medium">{formatDiscount()}</p>
           {item.minPurchaseValue && (
             <p className="text-xs text-muted-foreground">
@@ -217,8 +217,8 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
           )}
         </div>
 
-        <div className="flex flex-col lg:w-3/12">
-          <p className="text-xs text-muted-foreground lg:hidden">Vendedor</p>
+        <div className="flex flex-col w-3/12">
+          <p className="text-xs text-muted-foreground hidden">Vendedor</p>
           {item.seller ? (
             <div>
               <p className="text-sm font-medium">{item.seller.name}</p>
@@ -233,20 +233,20 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
           )}
         </div>
 
-        <div className="flex flex-col lg:w-1/12">
-          <p className="text-xs text-muted-foreground lg:hidden">Uso</p>
+        <div className="flex flex-col w-1/12">
+          <p className="text-xs text-muted-foreground hidden">Uso</p>
           <p className="text-sm">{formatUsage()}</p>
         </div>
 
-        <div className="flex flex-col lg:w-2/12">
-          <p className="text-xs text-muted-foreground lg:hidden">Validade</p>
+        <div className="flex flex-col w-2/12">
+          <p className="text-xs text-muted-foreground hidden">Validade</p>
           <p className={`text-sm ${isExpired() ? 'text-destructive' : ''}`}>
             {formatDate(item.validUntil)}
           </p>
         </div>
 
-        <div className="flex flex-col lg:w-1/12">
-          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+        <div className="flex flex-col w-1/12">
+          <p className="text-xs text-muted-foreground hidden">Status</p>
           <Status status={item.active ? "online" : "offline"} className="w-fit">
             <StatusIndicator />
             <StatusLabel>
@@ -255,7 +255,7 @@ const CupomItem = ({ item, index, entity, setFormData, setOpenForm }: ItemsProps
           </Status>
         </div>
 
-        <div className="absolute flex justify-center top-2 right-2 lg:static lg:w-1/12">
+        <div className="flex justify-center top-2 right-2 static w-1/12">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button

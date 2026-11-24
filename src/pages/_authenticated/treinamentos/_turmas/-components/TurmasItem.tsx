@@ -176,10 +176,10 @@ const SiteServicesItem = ({
       {/* Conteúdo do item */}
       <div
         {...(canOpen ? clickableRow(openClass) : {})}
-        className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full ${canOpen ? tailwindUtils.itemClickable : "border-b"}`}
+        className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] ${canOpen ? tailwindUtils.itemClickable : "border-b"}`}
       >
         {/* Badges com ScrollArea */}
-        <div className="absolute -top-1 left-4 right-14 lg:right-auto lg:left-4">
+        <div className="absolute -top-1 right-auto left-4">
           <ScrollArea className="w-full whitespace-nowrap">
             <div className="flex items-center gap-2">
               {/* Badge Turma Aberta/InCompany */}
@@ -242,7 +242,7 @@ const SiteServicesItem = ({
         </div>
 
         {/* Avatar e Nome */}
-        <div className="w-full lg:w-3/12 flex items-center space-x-4 md:pr-2">
+        <div className="w-3/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border rounded-md">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
             <AvatarFallback className="rounded-md">
@@ -264,8 +264,8 @@ const SiteServicesItem = ({
         </div>
 
         {/* Detalhes */}
-        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">
+        <div className="w-2/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">
             Detalhes:{" "}
           </p>
           <div className="flex flex-col items-start gap-0.5">
@@ -281,8 +281,8 @@ const SiteServicesItem = ({
         </div>
 
         {/* Período */}
-        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">
+        <div className="w-2/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">
             Período:{" "}
           </p>
           <div>
@@ -309,8 +309,8 @@ const SiteServicesItem = ({
         </div>
 
         {/* Período de Inscrições */}
-        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">
+        <div className="w-2/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">
             Inscrições:{" "}
           </p>
           <div>
@@ -346,8 +346,8 @@ const SiteServicesItem = ({
         </div>
 
         {/* Status */}
-        <div className="flex flex-col lg:w-2/12">
-          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+        <div className="flex flex-col w-2/12">
+          <p className="text-xs text-muted-foreground hidden">Status</p>
           <Status status={item.active ? "online" : "offline"} className="w-fit">
             <StatusIndicator />
             <StatusLabel>{item.active ? "Ativo" : "Inativo"}</StatusLabel>
@@ -355,7 +355,7 @@ const SiteServicesItem = ({
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-1/12">
+        <div className="top-2 right-2 static w-1/12">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button

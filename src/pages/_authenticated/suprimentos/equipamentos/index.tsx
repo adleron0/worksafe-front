@@ -77,8 +77,8 @@ function UnitsPage() {
 
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+        <div className="rounded-card border bg-card overflow-x-auto">
+          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-40">Etiqueta</div>
             <div className="flex-1">Item</div>
             <div className="w-44">Situação</div>
@@ -99,15 +99,15 @@ function UnitsPage() {
           ))}
           {rows.map((unit) => (
             <button key={unit.id} type="button" onClick={() => navigate({ to: "/suprimentos/equipamentos/$unitId", params: { unitId: String(unit.id) } })}
-              className={`w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-              <div className="lg:w-40">
+              className={`min-w-[880px] w-full text-left flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
+              <div className="w-40">
                 <p className="font-semibold tabular-nums">{unit.tag}</p>
                 {unit.serialNumber && <p className="text-xs text-muted-foreground">série {unit.serialNumber}</p>}
               </div>
-              <div className="flex-1 min-w-0 lg:pr-4 truncate">{unit.item}{unit.length !== null ? <span className="text-xs text-muted-foreground"> · {unit.length} m</span> : null}</div>
-              <div className="lg:w-44"><UnitStatusBadge status={unit.status} needsInspection={unit.needsInspection} /></div>
-              <div className="lg:w-56 text-muted-foreground truncate">{unit.holder}</div>
-              <div className="lg:w-64 flex flex-wrap gap-1 items-center text-xs">
+              <div className="flex-1 min-w-0 pr-4 truncate">{unit.item}{unit.length !== null ? <span className="text-xs text-muted-foreground"> · {unit.length} m</span> : null}</div>
+              <div className="w-44"><UnitStatusBadge status={unit.status} needsInspection={unit.needsInspection} /></div>
+              <div className="w-56 text-muted-foreground truncate">{unit.holder}</div>
+              <div className="w-64 flex flex-wrap gap-1 items-center text-xs">
                 {unit.dues.inspection && <DueStateBadge state={unit.dues.inspection} label="Inspeção" />}
                 {unit.dues.calibration && <DueStateBadge state={unit.dues.calibration} label="Calibração" />}
                 {unit.dues.life && <DueStateBadge state={unit.dues.life} label="Vida útil" />}

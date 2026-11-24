@@ -82,7 +82,7 @@ const SubscriptionItem = ({
       </HeaderRow>
 
       {/* Conteúdo do item */}
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
         {/* Checkbox de seleção (opcional) */}
         {selectable && onToggleSelection && item.id && (
           <Selectable
@@ -94,7 +94,7 @@ const SubscriptionItem = ({
         )}
 
         {/* Avatar e Nome com CPF */}
-        <div className="w-full lg:w-3/12 flex items-center space-x-4 md:pr-2">
+        <div className="w-3/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border rounded-full">
             <AvatarImage src={undefined} alt={item.name} />
             <AvatarFallback className="rounded-full">{item.name?.[0] || "?"}</AvatarFallback>
@@ -111,7 +111,7 @@ const SubscriptionItem = ({
         </div>
 
         {/* Contato (Telefone e E-mail) */}
-        <div className="w-full lg:w-3/12 flex flex-col gap-1 md:pr-2">
+        <div className="w-3/12 flex flex-col gap-1 md:pr-2">
           <div className="flex items-center gap-2">
             <Icon name="phone" className="w-3 h-3 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
@@ -127,7 +127,7 @@ const SubscriptionItem = ({
         </div>
 
         {/* Data de Inscrição */}
-        <div className="w-full lg:w-2/12 flex flex-col gap-1 md:pr-2">
+        <div className="w-2/12 flex flex-col gap-1 md:pr-2">
           <div className="flex items-center gap-2">
             <Icon name="calendar" className="w-3 h-3 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
@@ -145,21 +145,21 @@ const SubscriptionItem = ({
         </div>
 
         {/* Status */}
-        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
-          <div className="flex flex-col lg:flex-row lg:items-center gap-2 w-full">
-            <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
+        <div className="w-2/12 flex items-baseline gap-2 md:pr-2">
+          <div className="flex flex-row items-center gap-2 w-full">
+            <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
             <OptionSelector
               currentValue={item.subscribeStatus || "pending"}
               onChange={handleStatusChange}
               options={status}
               disabled={!can(`update_${entity.ability}`)}
-              className="w-full lg:w-auto"
+              className="w-auto"
             />
           </div>
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-1/12">
+        <div className="top-2 right-2 static w-1/12">
           <DropdownMenu modal={modalPopover}>
             <DropdownMenuTrigger asChild>
               <Button

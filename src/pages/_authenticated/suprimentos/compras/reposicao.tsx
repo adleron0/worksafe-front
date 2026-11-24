@@ -63,10 +63,10 @@ function ReorderPage() {
 
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="mt-4 rounded-card border bg-card overflow-hidden">
-          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+        <div className="mt-4 rounded-card border bg-card overflow-x-auto">
+          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-10">
-              <Checkbox aria-label="Marcar todos" checked={allChosen} className="border-inverse-foreground" onCheckedChange={(checked) => setChosen(Object.fromEntries(rows.map((row) => [row.id, checked === true])))} />
+              <Checkbox aria-label="Marcar todos" checked={allChosen} className="min-w-[880px] border-inverse-foreground" onCheckedChange={(checked) => setChosen(Object.fromEntries(rows.map((row) => [row.id, checked === true])))} />
             </div>
             <div className="flex-1">Item</div>
             <div className="w-32 text-right">Disponível</div>
@@ -78,9 +78,9 @@ function ReorderPage() {
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
           {!isLoading && !rows.length && <p className="p-6 text-sm text-muted-foreground">Nenhum item abaixo do mínimo. Só entram aqui os itens com estoque mínimo definido na ficha.</p>}
           {rows.map((row) => (
-            <div key={row.id} {...clickableRow()} className={`flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
+            <div key={row.id} {...clickableRow()} className={`flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="lg:w-10 shrink-0 lg:-mr-3">
+                <div className="w-10 shrink-0 -mr-3">
                   <Checkbox aria-label={`Comprar ${row.name}`} checked={!!chosen[row.id]} onCheckedChange={(checked) => setChosen((current) => ({ ...current, [row.id]: checked === true }))} />
                 </div>
                 <div className="min-w-0">
@@ -88,13 +88,13 @@ function ReorderPage() {
                   <p className="text-xs text-muted-foreground tabular-nums">{row.code}</p>
                 </div>
               </div>
-              <div className="lg:w-32 lg:text-right tabular-nums text-red-600 dark:text-red-400"><span className="lg:hidden text-xs text-muted-foreground">Disponível: </span>{qty(row.available)} {row.unit}</div>
-              <div className="lg:w-28 lg:text-right tabular-nums text-muted-foreground"><span className="lg:hidden text-xs">Mínimo: </span>{qty(row.min)}</div>
-              <div className="lg:w-40 lg:pl-4">
+              <div className="w-32 text-right tabular-nums text-red-600 dark:text-red-400"><span className="hidden text-xs text-muted-foreground">Disponível: </span>{qty(row.available)} {row.unit}</div>
+              <div className="w-28 text-right tabular-nums text-muted-foreground"><span className="hidden text-xs">Mínimo: </span>{qty(row.min)}</div>
+              <div className="w-40 pl-4">
                 <NumField value={amounts[row.id] ?? row.suggested} digits={3} suffix={row.unit} ariaLabel={`Quantidade a comprar de ${row.name}`} onChange={(value) => setAmounts((current) => ({ ...current, [row.id]: value }))} />
               </div>
-              <div className="lg:w-32 lg:text-right tabular-nums"><span className="lg:hidden text-xs text-muted-foreground">Último preço: </span>{row.lastCost !== null ? money(row.lastCost) : "—"}</div>
-              <div className="lg:w-48 lg:pl-4 text-xs text-muted-foreground truncate">{row.lastSupplier ?? "—"}</div>
+              <div className="w-32 text-right tabular-nums"><span className="hidden text-xs text-muted-foreground">Último preço: </span>{row.lastCost !== null ? money(row.lastCost) : "—"}</div>
+              <div className="w-48 pl-4 text-xs text-muted-foreground truncate">{row.lastSupplier ?? "—"}</div>
             </div>
           ))}
           {picked.length > 0 && total > 0 && (

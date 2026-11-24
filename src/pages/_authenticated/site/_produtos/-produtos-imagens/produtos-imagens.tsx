@@ -127,7 +127,7 @@ const List = ({ productId }: { productId: number }) => {
       />
 
       {/* Listagem de items */}
-      <div className="mt-4 rounded-card border bg-card overflow-hidden">
+      <div className="mt-4 rounded-card border bg-card overflow-x-auto">
         {isLoading
           ? skeletons.map((_, i) => <ItemSkeleton key={i} index={i} />)
           : isError

@@ -113,7 +113,7 @@ const SiteProductsItem = ({ item, index, entity, setFormData, setOpenForm, openI
       </HeaderRow>
 
       {/* Conteúdo do item */}
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
         {/* Badges */}
         <div className="absolute -top-1 left-4 flex items-center gap-2">
           {item.featured && 
@@ -124,7 +124,7 @@ const SiteProductsItem = ({ item, index, entity, setFormData, setOpenForm, openI
         </div>
         
         {/* Avatar e Nome */}
-        <div className="w-full lg:w-3/12 flex items-center space-x-4 md:pr-2">
+        <div className="w-3/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border rounded-md">
             <AvatarImage src={item.imageUrl || undefined} alt={item.name} />
             <AvatarFallback className="rounded-md">{item.name[0]}</AvatarFallback>
@@ -141,8 +141,8 @@ const SiteProductsItem = ({ item, index, entity, setFormData, setOpenForm, openI
         </div>
 
         {/* Características */}
-        <div className="lg:w-3/12 flex items-baseline gap-2 md:pr-2">
-          {/* <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Características: </p> */}
+        <div className="w-3/12 flex items-baseline gap-2 md:pr-2">
+          {/* <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Características: </p> */}
           <div className="flex flex-wrap gap-0.5">
             {
               item.features?.split('#').map((feature: string, index: number) => (
@@ -158,16 +158,16 @@ const SiteProductsItem = ({ item, index, entity, setFormData, setOpenForm, openI
         </div>
 
         {/* Descrição */}
-        <div className="lg:w-3/12 flex items-baseline gap-2 break-words md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Descrição: </p>
+        <div className="w-3/12 flex items-baseline gap-2 break-words md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Descrição: </p>
           <div className="flex flex-wrap gap-0.5 text-xs">
             <p>{item.description}</p>
           </div>
         </div>
 
         {/* Preços */}
-        <div className="lg:w-1/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Preços: </p>
+        <div className="w-1/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Preços: </p>
           <div className="flex flex-col items-start gap-0.5">
             <p className="text-xs text-muted-foreground dark:text-gray-100">
               {item.price ? `atual: R$ ${item.price}` : 'Não informado'}
@@ -179,8 +179,8 @@ const SiteProductsItem = ({ item, index, entity, setFormData, setOpenForm, openI
         </div>
 
         {/* Status */}
-        <div className="lg:w-1/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
+        <div className="w-1/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
           <Badge
             variant="outline"
             className={`${
@@ -194,7 +194,7 @@ const SiteProductsItem = ({ item, index, entity, setFormData, setOpenForm, openI
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-1/12">
+        <div className="top-2 right-2 static w-1/12">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button

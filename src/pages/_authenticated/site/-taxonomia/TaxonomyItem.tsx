@@ -55,25 +55,25 @@ const TaxonomyItem = ({ item, index, entity, setFormData, setOpenForm }: ItemPro
         <div className="w-1/12 text-right">Ações</div>
       </HeaderRow>
 
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
-        <div className="w-full lg:w-6/12 pr-10 lg:pr-2">
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
+        <div className="w-6/12 pr-2">
           <h2 className="text-sm font-semibold">{item.name}</h2>
         </div>
 
-        <div className="lg:w-3/12 flex items-baseline gap-2">
-          <p className="lg:hidden text-sm font-medium">Produtos: </p>
+        <div className="w-3/12 flex items-baseline gap-2">
+          <p className="hidden text-sm font-medium">Produtos: </p>
           <Badge variant="secondary">{products}</Badge>
         </div>
 
-        <div className="flex flex-col lg:w-2/12">
-          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+        <div className="flex flex-col w-2/12">
+          <p className="text-xs text-muted-foreground hidden">Status</p>
           <Status status={!item.inactiveAt ? "online" : "offline"} className="w-fit">
             <StatusIndicator />
             <StatusLabel>{!item.inactiveAt ? "Ativ" + done : "Inativ" + done}</StatusLabel>
           </Status>
         </div>
 
-        <div className="absolute top-2 right-2 lg:static lg:w-1/12 flex justify-end">
+        <div className="top-2 right-2 static w-1/12 flex justify-end">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button className="h-8 w-8 rounded-lg p-0 border-transparent bg-transparent shadow-none text-muted-foreground hover:bg-muted text-gray-700 cursor-pointer" variant="outline" size="sm">

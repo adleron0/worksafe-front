@@ -75,22 +75,22 @@ export function DuesPanel({ initialType = "" }: { initialType?: string }) {
       </div>
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+        <div className="rounded-card border bg-card overflow-x-auto">
+          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="flex-1">Peça, lote ou item</div><div className="w-44">Vencimento</div><div className="w-28">Situação</div><div className="w-72">Quando</div><div className="w-48">Onde</div>
           </div>
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
           {!isLoading && !rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
           {rows.map((row, index) => (
-            <div key={`${row.type}-${row.unitId ?? row.lotId ?? row.itemId}-${index}`} {...(row.unitId || row.itemId ? clickableRow() : {})} className={`flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm ${row.unitId || row.itemId ? tailwindUtils.itemClickable : "hover:bg-muted/40"}`}>
-              <div className="flex-1 min-w-0 lg:pr-4 font-medium truncate">
+            <div key={`${row.type}-${row.unitId ?? row.lotId ?? row.itemId}-${index}`} {...(row.unitId || row.itemId ? clickableRow() : {})} className={`min-w-[880px] flex flex-row items-center gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm ${row.unitId || row.itemId ? tailwindUtils.itemClickable : "hover:bg-muted/40"}`}>
+              <div className="flex-1 min-w-0 pr-4 font-medium truncate">
                 {row.unitId ? <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(row.unitId) }} className="hover:underline">{row.target}</Link>
                   : row.itemId ? <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: String(row.itemId) }} className="hover:underline">{row.target}</Link> : row.target}
               </div>
-              <div className="lg:w-44">{row.label}</div>
-              <div className="lg:w-28"><DocStatusBadge status={row.state} label={row.state === "vencido" ? "Vencido" : "A vencer"} /></div>
-              <div className="lg:w-72 text-muted-foreground">{whenText(row)}</div>
-              <div className="lg:w-48 text-muted-foreground truncate">{row.where || "—"}</div>
+              <div className="w-44">{row.label}</div>
+              <div className="w-28"><DocStatusBadge status={row.state} label={row.state === "vencido" ? "Vencido" : "A vencer"} /></div>
+              <div className="w-72 text-muted-foreground">{whenText(row)}</div>
+              <div className="w-48 text-muted-foreground truncate">{row.where || "—"}</div>
             </div>
           ))}
         </div>

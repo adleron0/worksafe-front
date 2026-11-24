@@ -44,20 +44,20 @@ function CountsPage() {
       </div>
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="mt-4 rounded-card border bg-card overflow-hidden">
-          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+        <div className="mt-4 rounded-card border bg-card overflow-x-auto">
+          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-20">Nº</div><div className="flex-1">Local</div><div className="w-32">Situação</div><div className="w-40">Aberta em</div><div className="w-40 text-right">Contados</div><div className="w-32 text-right">Diferenças</div>
           </div>
           {isLoading && Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
           {!isLoading && !data?.length && <p className="p-6 text-sm text-muted-foreground">Nenhuma contagem ainda.</p>}
           {data?.map((row) => (
-            <button key={row.id} type="button" onClick={() => open(row.id)} className={`w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-              <div className="lg:w-20 font-semibold tabular-nums">#{row.id}</div>
+            <button key={row.id} type="button" onClick={() => open(row.id)} className={`min-w-[880px] w-full text-left flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
+              <div className="w-20 font-semibold tabular-nums">#{row.id}</div>
               <div className="flex-1 min-w-0 flex items-center gap-2">{row.location} {row.blindCount && <Pill>Às cegas</Pill>}</div>
-              <div className="lg:w-32"><Pill tone={countStatusTone(row.status)}>{row.status === "aberta" ? "Aberta" : row.status === "fechada" ? "Fechada" : "Cancelada"}</Pill></div>
-              <div className="lg:w-40 text-muted-foreground">{new Date(row.openedAt).toLocaleDateString("pt-BR")}</div>
-              <div className="lg:w-40 lg:text-right tabular-nums">{row.counted} de {row.lines}</div>
-              <div className="lg:w-32 lg:text-right tabular-nums">{row.status === "aberta" && row.blindCount ? "—" : row.differences}</div>
+              <div className="w-32"><Pill tone={countStatusTone(row.status)}>{row.status === "aberta" ? "Aberta" : row.status === "fechada" ? "Fechada" : "Cancelada"}</Pill></div>
+              <div className="w-40 text-muted-foreground">{new Date(row.openedAt).toLocaleDateString("pt-BR")}</div>
+              <div className="w-40 text-right tabular-nums">{row.counted} de {row.lines}</div>
+              <div className="w-32 text-right tabular-nums">{row.status === "aberta" && row.blindCount ? "—" : row.differences}</div>
             </button>
           ))}
         </div>

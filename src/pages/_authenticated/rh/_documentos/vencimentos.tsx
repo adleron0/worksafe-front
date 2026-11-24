@@ -76,8 +76,8 @@ function ExpiringPage() {
 
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+        <div className="rounded-card border bg-card overflow-x-auto">
+          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="flex-1">Funcionário</div>
             <div className="w-72">Documento</div>
             <div className="w-32">Situação</div>
@@ -87,12 +87,12 @@ function ExpiringPage() {
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
           {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
           {data?.rows.map((row) => (
-            <div key={row.key} {...clickableRow()} className={`flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-              <div className="flex-1 min-w-0 lg:pr-4"><Link to="/rh/funcionarios/$employeeId" params={{ employeeId: String(row.employee.id) }} className="font-medium hover:underline">{row.employee.name}</Link></div>
-              <div className="lg:w-72 lg:pr-4 truncate">{row.typeName}</div>
-              <div className="lg:w-32"><DocStatusBadge status={row.status} label={row.statusLabel} /></div>
-              <div className="lg:w-64 text-muted-foreground">{whenText(row)}</div>
-              <div className="lg:w-24 flex lg:justify-end gap-1">
+            <div key={row.key} {...clickableRow()} className={`min-w-[880px] flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
+              <div className="flex-1 min-w-0 pr-4"><Link to="/rh/funcionarios/$employeeId" params={{ employeeId: String(row.employee.id) }} className="font-medium hover:underline">{row.employee.name}</Link></div>
+              <div className="w-72 pr-4 truncate">{row.typeName}</div>
+              <div className="w-32"><DocStatusBadge status={row.status} label={row.statusLabel} /></div>
+              <div className="w-64 text-muted-foreground">{whenText(row)}</div>
+              <div className="w-24 flex justify-end gap-1">
                 {row.documentId && <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => openDocument({ id: row.documentId as number, fileName: row.typeName })}><Icon name="eye" className="w-4 h-4 mr-1" /> Ver</Button>}
               </div>
             </div>

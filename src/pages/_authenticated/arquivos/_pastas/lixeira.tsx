@@ -63,7 +63,7 @@ function TrashPage() {
       {empty && <p className="mt-4 p-6 rounded-lg border text-sm text-muted-foreground">A lixeira está vazia.</p>}
 
       {data && !empty && (
-        <div className="mt-4 rounded-card border bg-card overflow-hidden">
+        <div className="mt-4 rounded-card border bg-card overflow-x-auto">
           {data.folders.map((folder) => (
             <div key={`p${folder.id}`} className="flex flex-col lg:flex-row lg:items-center gap-2 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
               <div className="flex flex-1 min-w-0 items-start gap-3">

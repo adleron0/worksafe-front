@@ -318,8 +318,8 @@ function ProposalsPage() {
         <p className="mt-3 text-xs text-muted-foreground">O kanban mostra as {KANBAN_LIMIT} propostas mais recentes de {data.total}. Use a busca, o tipo ou a visão em lista para chegar às demais.</p>
       )}
 
-      {!kanban && <div className="rounded-card border bg-card overflow-hidden">
-        <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+      {!kanban && <div className="rounded-card border bg-card overflow-x-auto">
+        <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
           <div className="w-40">Número</div>
           <div className="flex-1">Cliente e título</div>
           <div className="w-36">Criada</div>
@@ -336,24 +336,24 @@ function ProposalsPage() {
           </p>
         )}
         {data?.rows.map((row) => (
-          <div key={row.id} {...clickableRow(() => open(row.id))} className={cn("flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 last:border-b-0 text-sm", tailwindUtils.itemClickable, row.inactiveAt && "opacity-60")}>
-            <div className="lg:w-40">
+          <div key={row.id} {...clickableRow(() => open(row.id))} className={cn("flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm", tailwindUtils.itemClickable, row.inactiveAt && "opacity-60")}>
+            <div className="w-40">
               <button type="button" className="font-semibold tabular-nums hover:underline text-left" onClick={() => open(row.id)}>{row.number}</button>
               <KindBadge kind={row.kind} className="mt-0.5" />
             </div>
-            <div className="flex-1 min-w-0 pr-10 lg:pr-4">
+            <div className="flex-1 min-w-0 pr-4">
               <p className="font-medium truncate">{row.customer.name}</p>
               <p className="text-xs text-muted-foreground truncate">{row.title}{row.seller ? ` · vendedor ${row.seller}` : ""}</p>
               <FollowUpChip followUp={row.followUp} className="mt-1" />
             </div>
-            <div className="lg:w-36 min-w-0 text-xs text-muted-foreground">
-              <p><span className="lg:hidden">Criada em </span><span className="tabular-nums">{createdAt(row.createdAt)}</span></p>
+            <div className="w-36 min-w-0 text-xs text-muted-foreground">
+              <p><span className="hidden">Criada em </span><span className="tabular-nums">{createdAt(row.createdAt)}</span></p>
               {row.createdBy && <p className="truncate">por {row.createdBy}</p>}
             </div>
-            <div className="lg:w-40 flex flex-wrap items-center gap-1"><StatusBadge status={row.status} expired={row.expired} />{row.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Arquivada</span>}</div>
-            <div className="lg:w-28 text-muted-foreground"><span className="lg:hidden text-xs">Validade: </span>{dateBr(row.validUntil)}</div>
-            <div className="lg:w-36 lg:text-right font-semibold tabular-nums">{money(row.total)}</div>
-            <div className="absolute top-2 right-2 lg:static lg:w-16 flex justify-end">
+            <div className="w-40 flex flex-wrap items-center gap-1"><StatusBadge status={row.status} expired={row.expired} />{row.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Arquivada</span>}</div>
+            <div className="w-28 text-muted-foreground"><span className="hidden text-xs">Validade: </span>{dateBr(row.validUntil)}</div>
+            <div className="w-36 text-right font-semibold tabular-nums">{money(row.total)}</div>
+            <div className="top-2 right-2 static w-16 flex justify-end">
               {rowMenu(row)}
             </div>
           </div>

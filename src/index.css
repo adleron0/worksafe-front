@@ -233,20 +233,23 @@
     animation: var(--animate-marquee-reverse);
   }
 
-  /* width */
+  /* barras de rolagem finas em todo o sistema (vertical e horizontal), sem trilho */
   ::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
   }
 
-  /* Track */
   ::-webkit-scrollbar-track {
-    background: hsl(var(--primary-foreground));
+    background: transparent;
   }
 
-  /* Handle */
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
   ::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 5px;
+    background: hsl(var(--muted-foreground) / 0.35);
+    border-radius: 9999px;
   }
 
   /* Handle on hover */
@@ -255,6 +258,14 @@
   }
 
   /* rolagem discreta (chat dos bots): fina, sem trilho, mais visível só ao passar o mouse */
+  /* Firefox: mesma barra fina (só nele: no Chrome isso desligaria o ::-webkit-scrollbar acima) */
+  @supports (-moz-appearance: none) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+    }
+  }
+
   .scroll-fino::-webkit-scrollbar {
     width: 4px;
     height: 4px;

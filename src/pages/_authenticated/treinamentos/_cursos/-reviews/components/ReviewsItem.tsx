@@ -124,7 +124,7 @@ const Item = ({ item, index, entity }: ItemsProps) => {
     <>
       {/* Header apenas no primeiro item */}
       {index === 0 && (
-        <div className="hidden lg:flex items-center justify-between py-2.5 border-b px-4 w-full font-semibold text-[12.5px] text-muted-foreground">
+        <div className="flex items-center justify-between py-2.5 border-b px-4 w-full font-semibold text-[12.5px] text-muted-foreground">
           <div className="w-4/12">Aluno</div>
           <div className="w-4/12">Avaliação</div>
           <div className="w-3/12">Exposição/status</div>
@@ -133,9 +133,9 @@ const Item = ({ item, index, entity }: ItemsProps) => {
       )}
 
       {/* Conteúdo do item */}
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
         {/* Avatar e Nome */}
-        <div className="w-full lg:w-4/12 flex items-center space-x-4 md:pr-2">
+        <div className="w-4/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border rounded-md">
             <AvatarImage src={item?.trainee?.imageUrl || undefined} alt={item?.trainee?.name} />
             <AvatarFallback className="rounded-md">{item?.trainee?.name[0]}</AvatarFallback>
@@ -149,8 +149,8 @@ const Item = ({ item, index, entity }: ItemsProps) => {
         </div>
         
         {/* Detalhes */}
-        <div className="lg:w-4/12 flex items-baseline gap-2 md:pr-2 break-all">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Avaliação: </p>
+        <div className="w-4/12 flex items-baseline gap-2 md:pr-2 break-all">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Avaliação: </p>
           <div className="flex flex-col items-start gap-0.5">
             <div>{renderStars(item.generalRating)}</div>
             <span className="text-xs text-muted-foreground">{formatDate(item.createdAt)}</span>
@@ -161,8 +161,8 @@ const Item = ({ item, index, entity }: ItemsProps) => {
         </div>
 
          {/* Exposição/Status */}
-        <div className="lg:w-3/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
+        <div className="w-3/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium text-gray-800 dark:text-gray-300">Status: </p>
           <Badge variant="outline">
             {item.authorizationExposeReview ? "Exposto na LP" : "Oculto na LP"}
           </Badge>

@@ -17,40 +17,40 @@ const ItemSkeleton = ({ index }: ItemSkeletonProps) => {
         <div className="w-1/12">Ações</div>
       </HeaderRow>
 
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b animate-pulse`}>
-        <div className="flex flex-col lg:w-3/12">
-          <p className="text-xs text-muted-foreground lg:hidden mb-1">Cupom</p>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b animate-pulse`}>
+        <div className="flex flex-col w-3/12">
+          <p className="text-xs text-muted-foreground hidden mb-1">Cupom</p>
           <Skeleton className="h-5 w-24" />
           <Skeleton className="h-3 w-36 mt-1" />
         </div>
 
-        <div className="flex flex-col lg:w-2/12">
-          <p className="text-xs text-muted-foreground lg:hidden mb-1">Desconto</p>
+        <div className="flex flex-col w-2/12">
+          <p className="text-xs text-muted-foreground hidden mb-1">Desconto</p>
           <Skeleton className="h-5 w-16" />
         </div>
 
-        <div className="flex flex-col lg:w-3/12">
-          <p className="text-xs text-muted-foreground lg:hidden mb-1">Vendedor</p>
+        <div className="flex flex-col w-3/12">
+          <p className="text-xs text-muted-foreground hidden mb-1">Vendedor</p>
           <Skeleton className="h-4 w-28" />
           <Skeleton className="h-3 w-20 mt-1" />
         </div>
 
-        <div className="flex flex-col lg:w-1/12">
-          <p className="text-xs text-muted-foreground lg:hidden mb-1">Uso</p>
+        <div className="flex flex-col w-1/12">
+          <p className="text-xs text-muted-foreground hidden mb-1">Uso</p>
           <Skeleton className="h-4 w-12" />
         </div>
 
-        <div className="flex flex-col lg:w-2/12">
-          <p className="text-xs text-muted-foreground lg:hidden mb-1">Validade</p>
+        <div className="flex flex-col w-2/12">
+          <p className="text-xs text-muted-foreground hidden mb-1">Validade</p>
           <Skeleton className="h-4 w-24" />
         </div>
 
-        <div className="flex flex-col lg:w-1/12">
-          <p className="text-xs text-muted-foreground lg:hidden mb-1">Status</p>
+        <div className="flex flex-col w-1/12">
+          <p className="text-xs text-muted-foreground hidden mb-1">Status</p>
           <Skeleton className="h-6 w-16 rounded-full" />
         </div>
 
-        <div className="absolute top-2 right-2 lg:static lg:w-1/12">
+        <div className="top-2 right-2 static w-1/12">
           <Skeleton className="h-8 w-8 rounded-full" />
         </div>
       </div>

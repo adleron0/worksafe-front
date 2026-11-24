@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/financeiro/_centros-custo/
             {item.description && <p className="text-xs text-muted-foreground truncate max-w-md">{item.description}</p>}
           </div>
         ) },
-        { id: "code", header: "Código", cell: (item) => <span className="text-muted-foreground"><span className="sm:hidden">Código </span>{item.code || "—"}</span> },
+        { id: "code", header: "Código", cell: (item) => <span className="text-muted-foreground">{item.code || "—"}</span> },
         { id: "count", header: "Lançamentos", align: "right", mobile: "end", cell: (item) => <span className="tabular-nums">{(item._count?.financialRecords ?? 0) + (item._count?.payables ?? 0)}</span> },
       ]}
       renderForm={(props) => <CostCenterForm {...props} />}

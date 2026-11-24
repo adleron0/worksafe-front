@@ -164,8 +164,8 @@ function PurchasesPage() {
       )}
 
       {!kanban && !error && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+        <div className="rounded-card border bg-card overflow-x-auto">
+          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-36">Número</div>
             <div className="flex-1">Pedido</div>
             <div className="w-40">Etapa</div>
@@ -176,19 +176,19 @@ function PurchasesPage() {
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
           {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
           {data?.rows.map((row) => (
-            <div key={row.id} {...clickableRow(() => open(row.id))} className={`relative flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-              <div className="lg:w-36">
+            <div key={row.id} {...clickableRow(() => open(row.id))} className={`min-w-[880px] relative flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
+              <div className="w-36">
                 <button type="button" className="font-semibold tabular-nums hover:underline text-left" onClick={() => open(row.id)}>{row.number}</button>
                 <p className="text-xs text-muted-foreground">{GROUP_LABEL[row.group] ?? row.group}</p>
               </div>
-              <div className="flex-1 min-w-0 pr-10 lg:pr-4">
+              <div className="flex-1 min-w-0 pr-4">
                 <p className="font-medium truncate">{row.title}</p>
                 <p className="text-xs text-muted-foreground truncate">{[row.supplier?.name ?? "Sem fornecedor", targetOf(row), row.requestedBy && `pedido por ${row.requestedBy}`].filter(Boolean).join(" · ")}</p>
               </div>
-              <div className="lg:w-40"><PurchaseStageBadge status={row.status} late={row.late} /></div>
-              <div className="lg:w-48 text-muted-foreground text-xs">{purchaseWhen(row)}</div>
-              <div className="lg:w-32 lg:text-right lg:pr-4 tabular-nums font-medium">{money(row.total)}</div>
-              <div className="absolute top-2 right-2 lg:static lg:w-16 flex justify-end">{rowMenu(row)}</div>
+              <div className="w-40"><PurchaseStageBadge status={row.status} late={row.late} /></div>
+              <div className="w-48 text-muted-foreground text-xs">{purchaseWhen(row)}</div>
+              <div className="w-32 text-right pr-4 tabular-nums font-medium">{money(row.total)}</div>
+              <div className="top-2 right-2 static w-16 flex justify-end">{rowMenu(row)}</div>
             </div>
           ))}
         </div>

@@ -138,14 +138,14 @@ function Setup() {
                 Nenhuma conta ativa. <Link to="/financeiro/contas-bancarias" className="underline">Cadastre as contas bancárias e o caixa</Link> e volte aqui.
               </p>
             ) : (
-              <div className="rounded-card border bg-card overflow-hidden mt-3">
-                <div className="hidden md:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
+              <div className="rounded-card border bg-card overflow-x-auto mt-3">
+                <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
                   <div className="flex-1">Conta</div>
                   <div className="w-56">Saldo inicial</div>
                   <div className="w-40 text-right">Saldo hoje</div>
                 </div>
                 {data.accounts.map((account) => (
-                  <div key={account.id} className="flex flex-col md:flex-row md:items-center gap-2 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
+                  <div key={account.id} className="min-w-[880px] flex flex-row items-center gap-2 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold">{account.name}{account.isDefault && <span className="ml-2 text-xs font-normal rounded-chip bg-primary-soft text-primary-soft-foreground px-1.5 py-0.5 font-medium">Padrão</span>}</p>
                       <p className="text-xs text-muted-foreground">
@@ -155,12 +155,12 @@ function Setup() {
                         <p className="text-xs text-amber-700 dark:text-amber-300">Tinha data própria ({formatDate(account.openingBalanceDate)}); ao salvar, passa a usar a data inicial.</p>
                       )}
                     </div>
-                    <div className="md:w-56">
+                    <div className="w-56">
                       <Input name={`balance-${account.id}`} format="currency" value={balances[account.id] ?? 0} disabled={!canEdit}
                         onValueChange={(_, v) => setBalances((prev) => ({ ...prev, [account.id]: Number(v ?? 0) }))} />
                     </div>
-                    <div className="md:w-40 md:text-right tabular-nums">
-                      <span className="md:hidden text-xs text-muted-foreground">Saldo hoje: </span>
+                    <div className="w-40 text-right tabular-nums">
+                      <span className="hidden text-xs text-muted-foreground">Saldo hoje: </span>
                       <span className={cn("font-semibold", account.balance < 0 && "text-red-600 dark:text-red-400")}>{formatMoney(account.balance)}</span>
                     </div>
                   </div>

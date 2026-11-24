@@ -123,10 +123,10 @@ const ComentarioItem = ({ item, index, entity, setFormData, setOpenForm }: Items
         <div className="w-2/12 text-right">Ações</div>
       </HeaderRow>
 
-      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b`}>
 
         {/* Data Badge Flutuante */}
-        <div className="absolute -top-1 left-4 right-14 lg:right-auto lg:left-4 flex gap-1">
+        <div className="absolute -top-1 right-auto left-4 flex gap-1">
           <ResponsiveBadge
             icon="clock"
             text={formatDate(item.createdAt)}
@@ -135,12 +135,12 @@ const ComentarioItem = ({ item, index, entity, setFormData, setOpenForm }: Items
         </div>
 
         {/* Conteúdo */}
-        <div className="w-full lg:w-3/12 flex flex-col md:pr-2">
+        <div className="w-3/12 flex flex-col md:pr-2">
           <p className="text-sm max-h-16 overflow-y-auto">{item.content}</p>
         </div>
 
         {/* Visitante */}
-        <div className="lg:w-2/12 flex items-center space-x-2 md:pr-2">
+        <div className="w-2/12 flex items-center space-x-2 md:pr-2">
           <Avatar className="h-8 w-8 border rounded-full">
             <AvatarImage src={item.visitor?.avatarUrl || undefined} alt={item.visitor?.name} />
             <AvatarFallback className="rounded-full uppercase text-xs">
@@ -153,27 +153,27 @@ const ComentarioItem = ({ item, index, entity, setFormData, setOpenForm }: Items
         </div>
 
         {/* Post */}
-        <div className="lg:w-2/12 flex items-baseline gap-2 md:pr-2">
-          <p className="lg:hidden text-sm font-medium">Post: </p>
+        <div className="w-2/12 flex items-baseline gap-2 md:pr-2">
+          <p className="hidden text-sm font-medium">Post: </p>
           <p className="text-sm text-muted-foreground truncate">
             {item.post?.title || "Post não encontrado"}
           </p>
         </div>
 
         {/* Rating */}
-        <div className="lg:w-1/12 flex items-baseline gap-2">
-          <p className="lg:hidden text-sm font-medium">Rating: </p>
+        <div className="w-1/12 flex items-baseline gap-2">
+          <p className="hidden text-sm font-medium">Rating: </p>
           {renderRating()}
         </div>
 
         {/* Status */}
-        <div className="flex flex-col lg:w-2/12">
-          <p className="text-xs text-muted-foreground lg:hidden">Status</p>
+        <div className="flex flex-col w-2/12">
+          <p className="text-xs text-muted-foreground hidden">Status</p>
           {getStatusComponent()}
         </div>
 
         {/* Ações */}
-        <div className="absolute top-2 right-2 lg:static lg:w-2/12 flex justify-end">
+        <div className="top-2 right-2 static w-2/12 flex justify-end">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button

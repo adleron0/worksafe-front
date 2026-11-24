@@ -8,7 +8,7 @@ const ItemSkeleton = ({ index }: Props) => {
   return (
     <>
       {index === 0 && (
-        <div className="hidden lg:flex items-center justify-between py-2.5 border-b px-4 w-full font-semibold text-[12.5px] text-muted-foreground">
+        <div className="flex items-center justify-between py-2.5 border-b px-4 w-full font-semibold text-[12.5px] text-muted-foreground">
           <div className="w-3/12">
             <Skeleton className="h-4 w-20 bg-primary-foreground/20" />
           </div>
@@ -32,9 +32,9 @@ const ItemSkeleton = ({ index }: Props) => {
 
       <div className={`${
         index % 2 === 0 ? "bg-background" : "bg-background/50"
-      } relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b animate-pulse`}>
+      } relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-0 flex flex-row items-center justify-between px-4 py-3 w-full min-w-[880px] border-b animate-pulse`}>
         {/* Mobile/Tablet: Labels e valores empilhados */}
-        <div className="flex flex-col gap-2 lg:hidden w-full">
+        <div className="flex-col gap-2 hidden w-full">
           <div className="flex justify-between items-center">
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-4 w-32" />
@@ -58,7 +58,7 @@ const ItemSkeleton = ({ index }: Props) => {
         </div>
 
         {/* Desktop: Colunas lado a lado */}
-        <div className="hidden lg:flex lg:items-center lg:justify-between lg:w-full">
+        <div className="flex items-center justify-between w-full">
           <div className="w-3/12">
             <Skeleton className="h-4 w-32" />
           </div>
@@ -80,7 +80,7 @@ const ItemSkeleton = ({ index }: Props) => {
         </div>
 
         {/* Botão de ações - Mobile */}
-        <div className="absolute top-2 right-2 lg:hidden">
+        <div className="absolute top-2 right-2 hidden">
           <Skeleton className="h-8 w-8 rounded-full" />
         </div>
       </div>

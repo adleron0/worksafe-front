@@ -41,8 +41,12 @@ export const IssuedCertificateView: React.FC<{
   reservedHeight?: number;
   /** Selo `u` da API: sem ele os CPFs aparecem mascarados. */
   unlock?: string | null;
+  /** Ações extras à esquerda do "Baixar" (ex.: pílula "CPF oculto"). */
+  extraActions?: React.ReactNode;
+  /** CPFs mascarados: o menu Baixar oferece "Baixar com CPF completo". */
+  onRequestUnlock?: () => void;
   onError: () => void;
-}> = ({ certificate, name, fileNameParts, reservedHeight, unlock, onError }) => {
+}> = ({ certificate, name, fileNameParts, reservedHeight, unlock, extraActions, onRequestUnlock, onError }) => {
   const highlight = resolveHighlight(certificate);
   const version = renderVersion(certificate);
   const hasBack = hasBackSide(certificate.fabricJsonBack);
@@ -63,10 +67,13 @@ export const IssuedCertificateView: React.FC<{
       reservedHeight={reservedHeight}
       onError={onError}
       actions={
+        <div className="flex items-center gap-2">
+        {extraActions}
         <CertificateDownloadMenu
           size="sm"
           variant="subtle"
           hasBack={hasBack}
+          onRequestUnlock={onRequestUnlock}
           onDownload={(format) =>
             downloadIssuedCertificate(certificate.key, format, {
               version,
@@ -75,6 +82,7 @@ export const IssuedCertificateView: React.FC<{
             })
           }
         />
+        </div>
       }
     />
   );

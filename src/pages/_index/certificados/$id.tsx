@@ -285,6 +285,7 @@ function CertificadoPublico() {
   // Selo que libera os CPFs (LGPD). Vem do QR Code (?u=) ou do CPF digitado;
   // fica no estado/sessionStorage, nunca é escrito na barra de endereço.
   const [unlock, setUnlock] = useState<string | undefined>(() => readInitialUnlock(id));
+  const [unlockOpen, setUnlockOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleWhatsApp = (message?: string) => {
@@ -671,9 +672,17 @@ function CertificadoPublico() {
   const highlightTheme = themeInfo(highlight?.theme);
   // CPFs mascarados (sem selo, ou selo inválido): oferece o desbloqueio
   const cpfMasked = hasMaskedCpf(variables);
-  const unlockBox = cpfMasked && certificate?.key ? (
-    <DesbloquearCpf certificateKey={certificate.key} onUnlock={setUnlock} />
-  ) : null;
+  const canUnlock = cpfMasked && !!certificate?.key;
+  const unlockPill = (align: 'start' | 'end') =>
+    canUnlock ? (
+      <DesbloquearCpf
+        certificateKey={certificate.key}
+        onUnlock={setUnlock}
+        open={unlockOpen}
+        onOpenChange={setUnlockOpen}
+        align={align}
+      />
+    ) : null;
 
   return (
     <>
@@ -689,9 +698,10 @@ function CertificadoPublico() {
                 name={variables.curso_nome?.value || 'Certificado'}
                 fileNameParts={[variables.aluno_nome?.value, variables.curso_nome?.value]}
                 unlock={unlock}
+                extraActions={unlockPill('end')}
+                onRequestUnlock={canUnlock ? () => setUnlockOpen(true) : undefined}
                 onError={() => setStageFailed(true)}
               />
-              {unlockBox && <div className="mx-auto mt-3 max-w-2xl">{unlockBox}</div>}
             </div>
           )}
           {certificate?.variableToReplace && certificate?.fabricJsonFront &&
@@ -780,7 +790,9 @@ function CertificadoPublico() {
                       hasBack={certificateHasBack}
                       onDownload={handleDownload}
                       disabled={!certificate?.fabricJsonFront}
+                      onRequestUnlock={canUnlock ? () => setUnlockOpen(true) : undefined}
                     />
+                    {unlockPill('start')}
                     {/* <Button
                       variant="outline"
                       size="sm"
@@ -799,7 +811,6 @@ function CertificadoPublico() {
                     </Button> */}
                   </div>
                   )}
-                  {(!isIssuedCertificateKey(certificate.key) || stageFailed) && unlockBox}
 
                   {/* Nome do Aluno e Link de Credenciais */}
                   <div className="space-y-2">

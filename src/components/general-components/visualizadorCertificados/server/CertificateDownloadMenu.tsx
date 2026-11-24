@@ -24,6 +24,8 @@ interface CertificateDownloadMenuProps {
   /** Alinhamento do menu em relação ao botão. */
   align?: 'start' | 'end';
   className?: string;
+  /** CPFs mascarados: oferece "Baixar com CPF completo" (abre a confirmação do CPF). */
+  onRequestUnlock?: () => void;
 }
 
 /** Botão "Baixar certificado" que abre as opções PDF / PNG. */
@@ -35,6 +37,7 @@ export const CertificateDownloadMenu: React.FC<CertificateDownloadMenuProps> = (
   variant = 'solid',
   align = 'end',
   className = '',
+  onRequestUnlock,
 }) => {
   const [busy, setBusy] = useState<DownloadFormat | null>(null);
 
@@ -101,6 +104,22 @@ export const CertificateDownloadMenu: React.FC<CertificateDownloadMenuProps> = (
               <span className="text-xs text-muted-foreground">Alta resolução</span>
             </div>
           </DropdownMenuItem>
+        )}
+        {onRequestUnlock && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              // espera o menu fechar antes de abrir o popover (foco)
+              onSelect={() => setTimeout(onRequestUnlock, 0)}
+              className="cursor-pointer gap-3 py-2"
+            >
+              <Icon name="lock" className="h-4 w-4 text-muted-foreground" />
+              <div className="flex flex-col">
+                <span className="text-sm">Baixar com CPF completo</span>
+                <span className="text-xs text-muted-foreground">Confirme seu CPF antes</span>
+              </div>
+            </DropdownMenuItem>
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

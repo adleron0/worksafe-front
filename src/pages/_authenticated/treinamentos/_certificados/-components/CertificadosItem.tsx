@@ -1,5 +1,5 @@
 // Serviços
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { patch, post } from "@/services/api";
 import { useLoader } from "@/context/GeneralContext";
 import { toast } from "@/hooks/use-toast";
@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import CertificatePDFService from "@/components/general-components/visualizadorCertificados/services/CertificatePDFService";
-import { certificateImageUrl, certificatePdfUrl, isIssuedCertificateKey } from '@/components/general-components/visualizadorCertificados/server/certificateRenderUrls';
+import { certificateImageUrl, certificatePdfUrl, fetchCertificateUnlock, isIssuedCertificateKey, openAfter } from '@/components/general-components/visualizadorCertificados/server/certificateRenderUrls';
 
 // Template Page
 import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
@@ -52,6 +52,16 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
   const [stageFailed, setStageFailed] = useState(false);
   // emitido → mesmo visualizador da página pública (palco + brilho + Baixar)
   const issuedView = isIssuedCertificateKey(item.key?.toString()) && !stageFailed;
+  // Selo que libera os CPFs (LGPD) no visualizador: só quando ele abre.
+  // Sem permissão ou com erro, o certificado aparece mascarado mesmo.
+  const issuedKey = isIssuedCertificateKey(item.key?.toString()) ? String(item.key) : null;
+  const { data: viewerUnlock, isSuccess: unlockSettled } = useQuery({
+    queryKey: ['certificate-unlock', issuedKey],
+    queryFn: async () => (await fetchCertificateUnlock(issuedKey!)) ?? null,
+    enabled: showViewer && !!issuedKey,
+    staleTime: Infinity,
+    retry: false,
+  });
   const [openDestaque, setOpenDestaque] = useState(false);
   const [openCancel, setOpenCancel] = useState(false);
 
@@ -138,7 +148,9 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
     // Certificado emitido: PDF pronto da API (renderizado no servidor)
     const key = item.key?.toString();
     if (isIssuedCertificateKey(key)) {
-      window.open(certificatePdfUrl(key, { download: false, version: item.updatedAt }), '_blank');
+      await openAfter(async () =>
+        certificatePdfUrl(key, { download: false, version: item.updatedAt, unlock: await fetchCertificateUnlock(key) }),
+      );
       return;
     }
 
@@ -492,7 +504,11 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
                   <Button 
                     variant="ghost" 
                     className="flex justify-start gap-2 p-0 items-baseline w-full h-fit"
-                    onClick={() => window.open(certificateImageUrl(String(item.key), 'front', renderVersion(item)), '_blank')}
+                    onClick={() =>
+                      openAfter(async () =>
+                        certificateImageUrl(String(item.key), 'front', renderVersion(item), undefined, await fetchCertificateUnlock(String(item.key))),
+                      )
+                    }
                   >
                     <Icon name="image" className="w-3 h-3" /> 
                     <p>Imagem Preview</p>
@@ -553,13 +569,19 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
         className={issuedView ? "w-[min(94vw,1100px)] sm:max-w-[94vw]" : "md:w-fit"}
         classNameContent={issuedView ? "h-auto max-h-[75vh] pb-2" : "h-fit md:h-[80vh]"}
       >
-        {issuedView ? (
+        {issuedView && !unlockSettled ? (
+          // espera o selo para não baixar a imagem duas vezes (mascarada e completa)
+          <div className="flex h-60 w-full items-center justify-center">
+            <Icon name="loader-2" className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : issuedView ? (
           <div className="w-full">
             <IssuedCertificateView
               reservedHeight={typeof window !== 'undefined' ? Math.round(window.innerHeight * 0.25) + 110 : 300}
               certificate={{ ...item, key: String(item.key) }}
               name={item.course?.name || 'Certificado'}
               fileNameParts={[item.trainee?.name, item.course?.name]}
+              unlock={viewerUnlock}
               onError={() => setStageFailed(true)}
             />
           </div>
@@ -577,6 +599,7 @@ const CertificadosItem = ({ item, index, entity, setFormData, setOpenForm, setEd
               updatedAt: renderVersion(item) ?? undefined
             }}
             variableToReplace={item.variableToReplace || {}}
+            unlock={viewerUnlock}
             zoom={50}
           />
         </div>

@@ -44,6 +44,8 @@ interface ServerViewerProps {
   canvasWidth?: number;
   canvasHeight?: number;
   version?: string | number | Date | null;
+  /** Selo `u` da API: sem ele os CPFs aparecem mascarados. */
+  unlock?: string | null;
   className?: string;
   onError: () => void;
 }
@@ -56,6 +58,7 @@ export const ServerCertificateViewer: React.FC<ServerViewerProps> = ({
   canvasWidth,
   canvasHeight,
   version,
+  unlock,
   className = '',
   onError,
 }) => {
@@ -82,7 +85,7 @@ export const ServerCertificateViewer: React.FC<ServerViewerProps> = ({
           {sides.map((side) => (
             <div key={side} className={`rounded-lg bg-muted p-2 shadow-lg ${sizing}`}>
               <ServerCertificateImage
-                src={certificateImageUrl(certificateKey, side, version)}
+                src={certificateImageUrl(certificateKey, side, version, undefined, unlock)}
                 alt={`${name} — ${side === 'front' ? 'frente' : 'verso'}`}
                 orientation={orientation}
                 className="w-full"

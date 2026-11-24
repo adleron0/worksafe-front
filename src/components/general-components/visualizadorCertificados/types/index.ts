@@ -38,6 +38,8 @@ export interface CertificateViewerProps {
   onDownloadPDF?: () => void;
   className?: string;
   zoom?: number;
+  /** Selo `u` da API (certificado emitido): sem ele os CPFs aparecem mascarados. */
+  unlock?: string | null;
   // Mantém compatibilidade (deprecated - use variableToReplace)
   studentData?: StudentData;
 }

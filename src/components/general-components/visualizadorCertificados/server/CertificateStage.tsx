@@ -63,6 +63,8 @@ interface CertificateStageProps {
   canvasWidth?: number;
   canvasHeight?: number;
   version?: string | number | Date | null;
+  /** Selo `u` da API: sem ele os CPFs aparecem mascarados. */
+  unlock?: string | null;
   /** Conteúdo extra no canto superior direito (ex.: botão Baixar). */
   actions?: React.ReactNode;
   /** Tema de destaque (turma especial / aluno destaque): liga o brilho. */
@@ -82,10 +84,11 @@ const Face: React.FC<{
   certificateKey: string;
   side: Side;
   version?: string | number | Date | null;
+  unlock?: string | null;
   alt: string;
   hiRes: boolean;
   onError: () => void;
-}> = ({ certificateKey, side, version, alt, hiRes, onError }) => {
+}> = ({ certificateKey, side, version, unlock, alt, hiRes, onError }) => {
   const [loaded, setLoaded] = useState(false);
   const [hiLoaded, setHiLoaded] = useState(false);
   const [wantHi, setWantHi] = useState(false);
@@ -97,7 +100,7 @@ const Face: React.FC<{
     <>
       {!loaded && <div className="absolute inset-0 animate-pulse bg-muted" />}
       <img
-        src={certificateImageUrl(certificateKey, side, version)}
+        src={certificateImageUrl(certificateKey, side, version, undefined, unlock)}
         alt={alt}
         draggable={false}
         onLoad={() => setLoaded(true)}
@@ -108,7 +111,7 @@ const Face: React.FC<{
       />
       {wantHi && (
         <img
-          src={certificateImageUrl(certificateKey, side, version, 4)}
+          src={certificateImageUrl(certificateKey, side, version, 4, unlock)}
           alt=""
           aria-hidden
           draggable={false}
@@ -179,6 +182,7 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
   canvasWidth,
   canvasHeight,
   version,
+  unlock,
   actions,
   reservedHeight = 140,
   highlightTheme,
@@ -719,13 +723,14 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
                       certificateKey={certificateKey}
                       side="front"
                       version={version}
+                      unlock={unlock}
                       alt={`${name} — frente`}
                       hiRes={hiRes && side === "front"}
                       onError={onError}
                     />
                     {effect && (
                       <FoilShaderLayer
-                        src={certificateImageUrl(certificateKey, "front", version)}
+                        src={certificateImageUrl(certificateKey, "front", version, undefined, unlock)}
                         settings={effect}
                         active={!zoomed && side === "front"}
                       />
@@ -744,13 +749,14 @@ export const CertificateStage: React.FC<CertificateStageProps> = ({
                         certificateKey={certificateKey}
                         side="back"
                         version={version}
+                        unlock={unlock}
                         alt={`${name} — verso`}
                         hiRes={hiRes && side === "back"}
                         onError={onError}
                       />
                       {effect && (
                         <FoilShaderLayer
-                          src={certificateImageUrl(certificateKey, "back", version)}
+                          src={certificateImageUrl(certificateKey, "back", version, undefined, unlock)}
                           settings={effect}
                           active={!zoomed && side === "back"}
                         />

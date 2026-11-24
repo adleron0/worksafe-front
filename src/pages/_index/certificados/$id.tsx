@@ -1,6 +1,6 @@
 import CourseMark from "@/components/general-components/CourseMark";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import Icon from "@/components/general-components/Icon";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +21,7 @@ import CertificateDownloadMenu, { type DownloadFormat } from '@/components/gener
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { renderVersion, resolveHighlight, themeInfo } from '@/components/general-components/visualizadorCertificados/highlight';
+import DesbloquearCpf, { hasMaskedCpf, readInitialUnlock } from "./-components/DesbloquearCpf";
 
 export const Route = createFileRoute("/_index/certificados/$id")({
   component: CertificadoPublico,
@@ -30,9 +31,13 @@ export const Route = createFileRoute("/_index/certificados/$id")({
   // (Antes chamava get-trainee-certificate/:id, que não existe na API → 404.)
   loader: async ({ params }) => {
     try {
+      // Selo `u` (QR Code ou CPF já confirmado nesta aba): sem ele os CPFs vêm
+      // mascarados. A imagem do preview (head) segue sempre mascarada.
+      const unlock = readInitialUnlock(params.id);
       const response = await get('trainee-certificate', 'public', [
         { key: 'key', value: params.id },
         { key: 'show', value: ['company'] },
+        ...(unlock ? [{ key: 'u', value: unlock }] : []),
       ]) as { rows?: any[] };
       return response?.rows?.[0] || null;
     } catch (error) {
@@ -277,6 +282,9 @@ function CertificadoPublico() {
   const [isGeneratingPNG, setIsGeneratingPNG] = useState(false);
   // se a imagem da API falhar, volta para o desenho local (canvas)
   const [stageFailed, setStageFailed] = useState(false);
+  // Selo que libera os CPFs (LGPD). Vem do QR Code (?u=) ou do CPF digitado;
+  // fica no estado/sessionStorage, nunca é escrito na barra de endereço.
+  const [unlock, setUnlock] = useState<string | undefined>(() => readInitialUnlock(id));
   const navigate = useNavigate();
 
   const handleWhatsApp = (message?: string) => {
@@ -291,7 +299,7 @@ function CertificadoPublico() {
 
     // Certificado emitido: PDF pronto da API (renderizado no servidor)
     if (isIssuedCertificateKey(certificate.key)) {
-      window.open(certificatePdfUrl(certificate.key, { download: false, version: renderVersion(certificate) }), '_blank');
+      window.open(certificatePdfUrl(certificate.key, { download: false, version: renderVersion(certificate), unlock }), '_blank');
       return;
     }
 
@@ -352,7 +360,7 @@ function CertificadoPublico() {
 
     // Certificado emitido: PNG pronto da API, em resolução de impressão
     if (isIssuedCertificateKey(certificate.key)) {
-      window.open(certificateImageUrl(certificate.key, 'front', renderVersion(certificate), 4), '_blank');
+      window.open(certificateImageUrl(certificate.key, 'front', renderVersion(certificate), 4, unlock), '_blank');
       return;
     }
 
@@ -420,6 +428,7 @@ function CertificadoPublico() {
     }
     await downloadIssuedCertificate(certificate.key, format, {
       version: renderVersion(certificate),
+      unlock,
       fileName: certificateFileName(variables.aluno_nome?.value, variables.curso_nome?.value),
     });
   };
@@ -430,19 +439,23 @@ function CertificadoPublico() {
     isError,
     error
   } = useQuery<ICertificateResponse | undefined>({
-    queryKey: [`certificate-${id}`],
+    queryKey: [`certificate-${id}`, unlock ?? null],
     queryFn: async () => {
       if (!id) throw new Error("ID do certificado não fornecido");
       
       // Fazendo a requisição para buscar o certificado pelo ID com query params
       const params = [
         { key: 'key', value: id },
-        { key: 'show', value: ['class', 'trainee', 'company', 'course'] }
+        { key: 'show', value: ['class', 'trainee', 'company', 'course'] },
+        // selo `u`: variáveis completas; sem ele (ou inválido), CPFs mascarados
+        ...(unlock ? [{ key: 'u', value: unlock }] : []),
       ];
       
       const response = await get('trainee-certificate', 'public', params);
       return response as ICertificateResponse;
     },
+    // ao desbloquear, mantém a página na tela enquanto busca a versão completa
+    placeholderData: keepPreviousData,
     enabled: !!id,
     retry: 1
   });
@@ -656,6 +669,11 @@ function CertificadoPublico() {
   // Destaque (turma especial ou aluno destaque) — ver visualizadorCertificados/highlight.ts
   const highlight = resolveHighlight(certificate);
   const highlightTheme = themeInfo(highlight?.theme);
+  // CPFs mascarados (sem selo, ou selo inválido): oferece o desbloqueio
+  const cpfMasked = hasMaskedCpf(variables);
+  const unlockBox = cpfMasked && certificate?.key ? (
+    <DesbloquearCpf certificateKey={certificate.key} onUnlock={setUnlock} />
+  ) : null;
 
   return (
     <>
@@ -670,8 +688,10 @@ function CertificadoPublico() {
                 certificate={{ ...certificate, key: certificate.key }}
                 name={variables.curso_nome?.value || 'Certificado'}
                 fileNameParts={[variables.aluno_nome?.value, variables.curso_nome?.value]}
+                unlock={unlock}
                 onError={() => setStageFailed(true)}
               />
+              {unlockBox && <div className="mx-auto mt-3 max-w-2xl">{unlockBox}</div>}
             </div>
           )}
           {certificate?.variableToReplace && certificate?.fabricJsonFront &&
@@ -690,6 +710,7 @@ function CertificadoPublico() {
                     updatedAt: certificate.updatedAt
                   }}
                   variableToReplace={variables}
+                  unlock={unlock}
                   zoom={50}
                 />
               </div>
@@ -778,6 +799,7 @@ function CertificadoPublico() {
                     </Button> */}
                   </div>
                   )}
+                  {(!isIssuedCertificateKey(certificate.key) || stageFailed) && unlockBox}
 
                   {/* Nome do Aluno e Link de Credenciais */}
                   <div className="space-y-2">

@@ -466,6 +466,7 @@ const VisualizadorCertificados: React.FC<CertificateViewerProps> = (props) => {
         canvasWidth={certificateData.canvasWidth}
         canvasHeight={certificateData.canvasHeight}
         version={certificateData.updatedAt}
+        unlock={props.unlock}
         className={props.className}
         onError={() => setServerFailed(true)}
       />

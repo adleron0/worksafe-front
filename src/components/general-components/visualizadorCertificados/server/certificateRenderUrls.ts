@@ -5,6 +5,8 @@
 // um dia sem servir versão velha depois de uma edição.
 // ============================================================================
 
+import { get } from '@/services/api';
+
 const API_URL = (import.meta.env.VITE_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -24,6 +26,12 @@ const withQuery = (base: string, ...params: string[]) => {
   return query ? `${base}?${query}` : base;
 };
 
+/**
+ * Selo de desbloqueio (`u`, 22 caracteres) devolvido pela API: sem ele os CPFs
+ * do certificado saem mascarados (LGPD). Nunca vai na URL da barra do navegador.
+ */
+const unlockParam = (unlock?: string | null) => (unlock ? `u=${encodeURIComponent(unlock)}` : '');
+
 const root = (key: string) => `${API_URL}/trainee-certificate/public/${key}`;
 
 export function certificateImageUrl(
@@ -32,12 +40,15 @@ export function certificateImageUrl(
   version?: string | number | Date | null,
   /** Multiplicador do A4 (2 = 1684 px de largura; 4 para impressão). */
   scale?: 2 | 3 | 4,
+  /** Selo `u` — sem ele os CPFs vêm mascarados. */
+  unlock?: string | null,
 ) {
   return withQuery(
     `${root(key)}/image.png`,
     side === 'back' ? 'side=back' : '',
     scale && scale !== 2 ? `scale=${scale}` : '',
     versionParam(version),
+    unlockParam(unlock),
   );
 }
 
@@ -47,13 +58,42 @@ export function certificateThumbUrl(key: string, version?: string | number | Dat
 
 export function certificatePdfUrl(
   key: string,
-  options: { download?: boolean; version?: string | number | Date | null } = {},
+  options: { download?: boolean; version?: string | number | Date | null; unlock?: string | null } = {},
 ) {
   return withQuery(
     `${root(key)}/certificate.pdf`,
     options.download === false ? 'download=0' : '',
     versionParam(options.version),
+    unlockParam(options.unlock),
   );
+}
+
+/**
+ * Área logada (permissão list_classes): busca o selo que libera os CPFs da
+ * imagem/PDF. Se falhar, devolve `undefined` e o certificado abre mascarado.
+ */
+export async function fetchCertificateUnlock(key: string): Promise<string | undefined> {
+  try {
+    const res = await get<{ u?: string }>('trainee-certificate', `unlock/${key}`);
+    return res?.u || undefined;
+  } catch (error) {
+    console.warn('Selo do certificado indisponível, abrindo mascarado:', error);
+    return undefined;
+  }
+}
+
+/**
+ * Abre uma URL que depende de uma busca assíncrona (o selo) sem cair no
+ * bloqueador de pop-up: abre a aba já no clique e só depois define o endereço.
+ */
+export async function openAfter(buildUrl: () => Promise<string>) {
+  const win = window.open('', '_blank');
+  const url = await buildUrl();
+  if (win && !win.closed) {
+    win.location.href = url;
+  } else {
+    window.open(url, '_blank');
+  }
 }
 
 /** Tem verso desenhado? (mesma regra da API) */
@@ -129,15 +169,18 @@ export function certificateFileName(...parts: (string | undefined | null)[]) {
 export async function downloadIssuedCertificate(
   key: string,
   format: 'pdf' | 'png-front' | 'png-back',
-  options: { version?: string | number | Date | null; fileName: string },
+  options: { version?: string | number | Date | null; fileName: string; unlock?: string | null },
 ) {
   if (format === 'pdf') {
-    await downloadFromApi(certificatePdfUrl(key, { version: options.version }), `${options.fileName}.pdf`);
+    await downloadFromApi(
+      certificatePdfUrl(key, { version: options.version, unlock: options.unlock }),
+      `${options.fileName}.pdf`,
+    );
     return;
   }
   const side = format === 'png-back' ? 'back' : 'front';
   await downloadFromApi(
-    certificateImageUrl(key, side, options.version, 4),
+    certificateImageUrl(key, side, options.version, 4, options.unlock),
     `${options.fileName}${side === 'back' ? '-verso' : ''}.png`,
   );
 }

@@ -39,8 +39,10 @@ export const IssuedCertificateView: React.FC<{
   fileNameParts: (string | null | undefined)[];
   /** Repassado ao palco (dentro de diálogo, reserve mais altura). */
   reservedHeight?: number;
+  /** Selo `u` da API: sem ele os CPFs aparecem mascarados. */
+  unlock?: string | null;
   onError: () => void;
-}> = ({ certificate, name, fileNameParts, reservedHeight, onError }) => {
+}> = ({ certificate, name, fileNameParts, reservedHeight, unlock, onError }) => {
   const highlight = resolveHighlight(certificate);
   const version = renderVersion(certificate);
   const hasBack = hasBackSide(certificate.fabricJsonBack);
@@ -53,6 +55,7 @@ export const IssuedCertificateView: React.FC<{
       canvasWidth={certificate.canvasWidth}
       canvasHeight={certificate.canvasHeight}
       version={version}
+      unlock={unlock}
       highlightTheme={highlight?.theme ?? null}
       highlightPattern={highlight?.pattern ?? null}
       highlightBorder={highlight?.border ?? null}
@@ -67,6 +70,7 @@ export const IssuedCertificateView: React.FC<{
           onDownload={(format) =>
             downloadIssuedCertificate(certificate.key, format, {
               version,
+              unlock,
               fileName: certificateFileName(...fileNameParts),
             })
           }

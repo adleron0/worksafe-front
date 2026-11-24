@@ -30,7 +30,7 @@ interface SidebarItemProps {
 const linkBase =
   "flex items-center rounded-s gap-4 text-muted-foreground ease-in-out duration-100";
 const linkState = (active: boolean) =>
-  active ? "bg-primary text-inverse-foreground!" : "hover:text-inverse-foreground hover:bg-primary";
+  active ? "bg-primary text-primary-foreground!" : "hover:text-foreground hover:bg-white/8";
 /** Botão quadrado do modo recolhido. */
 const iconOnly = "flex items-center justify-center rounded-md h-9 w-9 my-1 mx-auto text-muted-foreground ease-in-out duration-100";
 
@@ -98,7 +98,7 @@ const CollapsedItem = ({ title, icon, path, subitems, activePath, onNavigate }: 
               aria-label={title}
               className={`${iconOnly} cursor-pointer ${
                 containsActive ? "bg-primary/15 text-primary" : ""
-              } hover:text-inverse-foreground hover:bg-primary`}
+              } hover:text-foreground hover:bg-white/8`}
             >
               <Icon name={icon} className="h-4 w-4" />
             </button>
@@ -163,7 +163,7 @@ const SidebarItem = (props: SidebarItemProps) => {
       <button
         type="button"
         aria-expanded={isOpen}
-        className={`${linkBase} w-full cursor-pointer text-base my-1 px-2.5 py-2 hover:text-inverse-foreground hover:bg-primary ${
+        className={`${linkBase} w-full cursor-pointer text-base my-1 px-2.5 py-2 hover:text-foreground hover:bg-white/8 ${
           containsActive && !isOpen ? "text-primary" : ""
         }`}
         onClick={() => setIsOpen((open) => !open)}

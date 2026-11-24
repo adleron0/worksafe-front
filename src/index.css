@@ -476,3 +476,36 @@
   background: linear-gradient(100deg, #e52127 0 40%, transparent 40% 40.5%, #f0c419 40.5% 60%,
     transparent 60% 60.5%, #149e5e 60.5% 82%, transparent 82% 82.5%, #3e6f98 82.5% 100%);
 }
+
+/* Tema escuro em um pedaço da tela (ex.: barra lateral sempre escura). O Tailwind resolve
+   os --color-* no :root; dentro de um elemento com a classe "dark" eles precisam ser
+   declarados de novo para usar os valores escuros. Em html.dark não muda nada. */
+.dark {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-inverse-foreground: hsl(var(--inverse-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-soft: hsl(var(--primary-soft));
+  --color-primary-soft-foreground: hsl(var(--primary-soft-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  color-scheme: dark;
+}
+
+/* Barra lateral sempre escura: no tema claro, chumbo; no escuro, um tom abaixo da página. */
+.sidebar-escura { background-color: hsl(30 5% 9%); border-right-color: transparent; }
+html.dark .sidebar-escura { background-color: hsl(30 6% 6%); border-right-color: hsl(var(--border)); }

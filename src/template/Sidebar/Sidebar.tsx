@@ -165,9 +165,10 @@ const Sidebar = () => {
           : "fixed left-0 top-0 z-50 -translate-x-full"}
           transition-[translate,width,min-width] duration-300 ease-in-out
           md:translate-x-0 md:static w-3/4 ${collapsed ? "md:w-16 md:min-w-16" : "md:w-64 md:min-w-64"}
-          h-full bg-background flex flex-col border-r`}>
-          <div className={`relative flex items-center w-full max-h-16 min-h-16 border-b ${
-            collapsed ? "justify-center px-2" : "px-4 md:justify-between"
+          h-full dark sidebar-escura text-foreground flex flex-col border-r`}>
+          {/* sempre escura (classe "dark" só aqui), como no Unyo: contraste com a área clara */}
+          <div className={`relative flex items-center w-full ${
+            collapsed ? "flex-col justify-center gap-3 px-2 py-4" : "max-h-16 min-h-16 px-4 md:justify-between"
           }`}>
             <Button
               size="icon"
@@ -177,53 +178,29 @@ const Sidebar = () => {
             >
               <X className="h-4 w-4 text-primary" />
             </Button>
-            {collapsed ? (
-              <CompactLogo />
-            ) : (
-              <>
-                <div className="flex gap-1 items-center min-w-0">
-                  <DynamicLogo width={150} height={50} />
-                </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="ml-auto h-8 w-8 rounded hidden md:flex text-muted-foreground"
-                      aria-label="Recolher menu"
-                      onClick={toggleCollapsed}
-                    >
-                      <PanelLeftClose className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={8}>Recolher menu</TooltipContent>
-                </Tooltip>
-              </>
+            {collapsed ? <CompactLogo /> : (
+              <div className="flex gap-1 items-center min-w-0">
+                <DynamicLogo width={150} height={50} forceWhite />
+              </div>
             )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className={`${collapsed ? "" : "ml-auto"} hidden md:grid place-items-center h-8 w-8 shrink-0 rounded-lg border border-white/15 text-foreground/80 transition-colors hover:bg-white/10 hover:text-foreground cursor-pointer`}
+                  aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+                  onClick={toggleCollapsed}
+                >
+                  {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>{collapsed ? "Expandir menu" : "Recolher menu"}</TooltipContent>
+            </Tooltip>
           </div>
           <nav className={`flex flex-col h-full gap-2 text-lg font-medium pt-2 pb-2 justify-between overflow-y-auto overflow-x-hidden scrollbar-thin ${
             collapsed ? "px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" : "pl-4"
           }`}>
             <div>
-              {collapsed && (
-                // Recolhida: expandir é o primeiro item, logo abaixo do logo.
-                <>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        aria-label="Expandir menu"
-                        className="flex items-center justify-center rounded-md h-9 w-9 my-1 mx-auto cursor-pointer text-muted-foreground ease-in-out duration-100 hover:text-inverse-foreground hover:bg-primary"
-                        onClick={toggleCollapsed}
-                      >
-                        <PanelLeftOpen className="h-4 w-4" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" sideOffset={8}>Expandir menu</TooltipContent>
-                  </Tooltip>
-                  <div className="mx-3 my-2 border-t" />
-                </>
-              )}
               {visibleGroups.map(renderGroup)}
             </div>
             {visibleFooter.items.length > 0 && (

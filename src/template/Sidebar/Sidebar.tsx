@@ -78,10 +78,11 @@ const CompactLogo = () => {
   const { theme } = useTheme();
   const [error, setError] = useState(false);
   if (theme.faviconUrl && !error) {
-    return <img src={theme.faviconUrl} alt="Logo" className="h-8 w-8 object-contain" onError={() => setError(true)} />;
+    // sobre a barra escura: o preto do ícone vira branco e a cor (o corte verde) se mantém
+    return <img src={theme.faviconUrl} alt="Logo" className="h-8 w-8 object-contain [filter:invert(1)_hue-rotate(180deg)]" onError={() => setError(true)} />;
   }
   return (
-    <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
+    <span className="flex h-8 w-8 items-center justify-center rounded-md border border-white/30 text-sm font-bold text-white">
       {(theme.companyData?.comercial_name || "W").charAt(0).toUpperCase()}
     </span>
   );
@@ -168,7 +169,7 @@ const Sidebar = () => {
           h-full dark sidebar-escura text-foreground flex flex-col border-r`}>
           {/* sempre escura (classe "dark" só aqui), como no Unyo: contraste com a área clara */}
           <div className={`relative flex items-center w-full ${
-            collapsed ? "flex-col justify-center gap-3 px-2 py-4" : "max-h-16 min-h-16 px-4 md:justify-between"
+            collapsed ? "max-h-16 min-h-16 justify-center px-2" : "max-h-16 min-h-16 px-4 md:justify-between"
           }`}>
             <Button
               size="icon"
@@ -187,7 +188,10 @@ const Sidebar = () => {
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  className={`${collapsed ? "" : "ml-auto"} hidden md:grid place-items-center h-8 w-8 shrink-0 rounded-lg border border-white/15 text-foreground/80 transition-colors hover:bg-white/10 hover:text-foreground cursor-pointer`}
+                  className={`${collapsed
+                    // recolhida: ao lado do logo, em cima da borda da barra, meio para fora (como no Unyo)
+                    ? "absolute -right-3.5 top-1/2 -translate-y-1/2 z-[60] h-7 w-7 bg-[hsl(30_5%_9%)] border-white/20 shadow-sm"
+                    : "ml-auto h-8 w-8 border-white/15"} hidden md:grid place-items-center shrink-0 rounded-lg border text-foreground/80 transition-colors hover:bg-[hsl(30_5%_16%)] hover:text-foreground cursor-pointer`}
                   aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
                   onClick={toggleCollapsed}
                 >

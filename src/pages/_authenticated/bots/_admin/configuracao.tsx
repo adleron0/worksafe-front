@@ -286,11 +286,11 @@ function newBot(config: BotsConfig): BotFull {
 const TOOL_AREAS = [
   { id: "financeiro", label: "Financeiro", test: (name: string, perms: string) => name.startsWith("fin_") || name.startsWith("contas_") || /_financeiro\b/.test(perms) },
   { id: "comercial", label: "Comercial", test: (name: string, perms: string) => /_comercial\b|update_acompanhamento/.test(perms) || /proposta|cliente|acompanhamento/.test(name) },
+  { id: "rh", label: "RH e Departamento Pessoal", test: (name: string, perms: string) => /funcionarios|hr_activities/.test(perms) || /funcionario|documento|ausencia|mapa_alocacao|tipos_de_documento/.test(name) },
   { id: "obras", label: "Obras e serviços", test: (name: string, perms: string) => /ordens_de_servico|view_alocacao/.test(perms) || /(^|_)(os|rdos?|obras?)(_|$)/.test(name) },
-  { id: "rh", label: "Equipe (RH)", test: (name: string, perms: string) => /funcionarios/.test(perms) || name === "documentos_vencendo" },
   { id: "marketing", label: "Marketing", test: (name: string, perms: string) => /blog|instagram/.test(perms) || /imagem|imagens|blog|instagram/.test(name) },
   { id: "treinamentos", label: "Treinamentos", test: (name: string, perms: string) => /_classes\b/.test(perms) || /turma|aluno|inscri/.test(name) },
-  { id: "compras", label: "Compras e estoque", test: (name: string, perms: string) => /pedidos_de_compra|estoque/.test(perms) || /compra|estoque/.test(name) },
+  { id: "compras", label: "Suprimentos (compras e estoque)", test: (name: string, perms: string) => /pedidos_de_compra|estoque|entregas_epi|equipamentos|locacoes/.test(perms) || /compra|estoque|epi|equipamento|locac|inspec/.test(name) },
 ] as const;
 const GENERAL = { id: "geral", label: "Gerais (agenda, colegas, memória)" };
 const toolArea = (tool: CatalogTool) => {

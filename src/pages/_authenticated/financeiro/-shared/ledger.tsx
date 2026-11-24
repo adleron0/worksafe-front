@@ -1,11 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import api, { get } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Input from "@/components/general-components/Input";
@@ -323,28 +322,6 @@ export function ActiveFilters({ kind, filters, onRemove, onClear }: { kind: Ledg
   );
 }
 
-/* ------------------------------------------------------------------ barra de busca */
-
-/** Busca única: descrição, fornecedor/cliente, documento, código ou valor. */
-export function SearchBox({ value, onChange, placeholder }: { value: string; onChange: (value: string) => void; placeholder: string }) {
-  const [text, setText] = useState(value);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
-  useEffect(() => setText(value), [value]);
-  return (
-    <div className="relative w-full sm:w-96">
-      <Icon name="search" className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-      <input value={text} placeholder={placeholder} aria-label="Buscar"
-        onChange={(event) => { const next = event.target.value; setText(next); clearTimeout(timer.current); timer.current = setTimeout(() => onChange(next.trim()), 400); }}
-        className="w-full h-9 rounded-md border bg-background pl-8 pr-8 text-sm outline-none focus:ring-1 focus:ring-primary" />
-      {text && (
-        <button type="button" aria-label="Limpar busca" className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted" onClick={() => { setText(""); onChange(""); }}>
-          <Icon name="x" className="w-3.5 h-3.5" />
-        </button>
-      )}
-    </div>
-  );
-}
-
 /* ------------------------------------------------------------------ cartões */
 
 /** Os cartões de resumo viraram componente geral (também usados em Propostas). */
@@ -358,11 +335,6 @@ export { SortButton } from "@/components/general-components/SortButton";
 
 /* ------------------------------------------------------------------ seleção e lote */
 
-export function SelectBox({ checked, onChange, label, inverse }: { checked: boolean | "indeterminate"; onChange: (checked: boolean) => void; label: string; inverse?: boolean }) {
-  return <Checkbox checked={checked} onCheckedChange={(value) => onChange(value === true)} aria-label={label}
-    className={cn(inverse ? "border-inverse-foreground data-[state=checked]:bg-inverse-foreground data-[state=checked]:text-primary" : "border-muted-foreground/60")} />;
-}
-
 export function useSelection<T extends { id: number }>(rows: T[] | undefined) {
   const [selected, setSelected] = useState<Map<number, T>>(new Map());
   const toggle = (row: T, on: boolean) => setSelected((prev) => { const next = new Map(prev); if (on) next.set(row.id, row); else next.delete(row.id); return next; });
@@ -373,17 +345,26 @@ export function useSelection<T extends { id: number }>(rows: T[] | undefined) {
   return { selected, toggle, togglePage, allOnPage, pageState: (allOnPage ? true : someOnPage ? "indeterminate" : false) as boolean | "indeterminate", clear: () => setSelected(new Map()) };
 }
 
-/** Barra que aparece com itens marcados: quantos, quanto somam e o que dá para fazer com eles. */
-export function SelectionBar({ count, total, onClear, children }: { count: number; total: number; onClear: () => void; children: React.ReactNode }) {
-  if (!count) return null;
+/**
+ * Linha de contagem acima da tabela (padrão Unyo): "56 contas" e, com itens marcados,
+ * "· 3 selecionadas · R$ 1.200,00 · Limpar seleção". As ações ficam no menu Ações.
+ */
+export function SelectionSummary({ total, noun, selected, selectedTotal, onClear }: {
+  total?: number; noun: [string, string]; selected: number; selectedTotal?: number; onClear: () => void;
+}) {
+  if (total === undefined) return null;
   return (
-    <div className="sticky top-2 z-20 mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-primary bg-background/95 backdrop-blur px-4 py-2 shadow-md">
-      <span className="text-sm font-medium">{count} {count === 1 ? "selecionada" : "selecionadas"} · <span className="tabular-nums">{formatMoney(total)}</span></span>
-      <div className="flex flex-wrap items-center gap-2 ml-auto">
-        {children}
-        <Button size="sm" variant="ghost" onClick={onClear}>Desmarcar</Button>
-      </div>
-    </div>
+    <p className="text-[13px] text-muted-foreground tabular-nums flex flex-wrap items-center gap-x-1.5" aria-live="polite">
+      <span>{total.toLocaleString("pt-BR")} {total === 1 ? noun[0] : noun[1]}</span>
+      {selected > 0 && (
+        <>
+          <span aria-hidden>·</span>
+          <span className="font-medium text-foreground">{selected} {selected === 1 ? "selecionada" : "selecionadas"}</span>
+          {selectedTotal !== undefined && <><span aria-hidden>·</span><span className="text-foreground">{formatMoney(selectedTotal)}</span></>}
+          <button type="button" onClick={onClear} className="ml-1 rounded-md px-1 text-primary-soft-foreground underline-offset-2 hover:underline">Limpar seleção</button>
+        </>
+      )}
+    </p>
   );
 }
 

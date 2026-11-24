@@ -1,24 +1,29 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { get } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
-import Pagination from "@/components/general-components/Pagination";
 import SideForm from "@/components/general-components/SideForm";
-import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import StatusChips from "@/components/general-components/StatusChips";
+import ActionsMenu from "@/components/general-components/ActionsMenu";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
+import MonthRangePicker from "@/components/general-components/MonthRangePicker";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/general-interfaces/api.interface";
-import { cn } from "@/lib/utils";
-import ItemSkeleton from "./-skeletons/ItemSkeleton";
-import ItemList from "./-components/FinancialRecordsItem";
 import Form from "./-components/FinancialRecordsForm";
+import ReceivableRowActions from "./-components/ReceivableRowActions";
+import { receivableColumns } from "./-components/receivableColumns";
 import { IFinancialRecord } from "./-interfaces/entity.interface";
 import { OPEN_STATUSES } from "./-components/options";
 import { CHART_KEY, FINANCIAL_ABILITY } from "../-shared/financial";
 import {
-  ActiveFilters, Bucket, BulkSettleDialog, DueQuickFilter, FilterPanel, SearchBox, SelectBox, SelectionBar, SummaryCards,
+  ActiveFilters, Bucket, BulkSettleDialog, DueQuickFilter, FilterPanel, SelectionSummary, SummaryCards,
   countFilters, downloadXlsx, reportBulk, toParams, useSelection, useUrlFilters,
 } from "../-shared/ledger";
 
@@ -29,15 +34,9 @@ export const Route = createFileRoute("/_authenticated/financeiro/_receber/recebe
 
 const entity = { name: "Conta a Receber", pluralName: "Contas a Receber", model: "financial-records", ability: "financeiro" };
 const LIST_KEY = `list${entity.pluralName}`;
-const VIEWS = [
-  { id: "todas", label: "Todas" },
-  { id: "abertas", label: "Em aberto" },
-  { id: "recebidas", label: "Recebidas" },
-  { id: "canceladas", label: "Canceladas" },
-  { id: "excluidas", label: "Inativas" },
-];
 const DEFAULT_VIEW = "todas";
-const LIMITS = [30, 50, 100, 200];
+const LIMITS = [10, 30, 50, 100, 200];
+const OPEN_VIEWS = ["abertas", "atrasadas", "hoje", "semana", "depois"];
 
 interface Summary { overdue: Bucket; dueToday: Bucket; dueWeek: Bucket; later: Bucket; received: Bucket; lost: Bucket; open: Bucket; paidPeriod: string }
 interface Response { today: string; view: string; rows: IFinancialRecord[]; total: number; summary: Summary }
@@ -55,7 +54,8 @@ function Receivables() {
   const limit = Number(filters.limit ?? 30);
 
   const params = toParams({ ...filters, view, page: String(page), limit: String(limit) });
-  const { data, isLoading, isError, error } = useQuery<Response | undefined, ApiError>({
+  const navigate = useNavigate();
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery<Response | undefined, ApiError>({
     queryKey: [LIST_KEY, "ledger", params],
     queryFn: () => get("financial", "receivables", params),
     placeholderData: (previous) => previous,
@@ -80,60 +80,91 @@ function Receivables() {
   const filterCount = countFilters(filters);
   const periodHint = summary?.paidPeriod && summary.paidPeriod !== "filtro" ? `${summary.paidPeriod.slice(5, 7)}/${summary.paidPeriod.slice(0, 4)}` : "no período";
   const cards = [
-    { view: "atrasadas", label: "Vencidas", bucket: summary?.overdue, tone: "text-red-600 dark:text-red-400" },
-    { view: "hoje", label: "Vencem hoje", bucket: summary?.dueToday, tone: "text-amber-600 dark:text-amber-400" },
-    { view: "semana", label: "Próximos 7 dias", bucket: summary?.dueWeek },
-    { view: "depois", label: "Depois", bucket: summary?.later },
-    { view: "abertas", label: "Total em aberto", bucket: summary?.open },
-    { view: "recebidas", label: "Recebidas", bucket: summary?.received, tone: "text-green-600 dark:text-green-400", hint: periodHint },
+    { view: "atrasadas", label: "Vencidas", bucket: summary?.overdue, tone: "text-red-600 dark:text-red-400", icon: "triangle-alert", color: "#dc2626" },
+    { view: "hoje", label: "Vencem hoje", bucket: summary?.dueToday, tone: "text-amber-600 dark:text-amber-400", icon: "clock", color: "#d97706" },
+    { view: "semana", label: "Próximos 7 dias", bucket: summary?.dueWeek, icon: "calendar-days", color: "#3e6f98" },
+    { view: "depois", label: "Depois", bucket: summary?.later, icon: "calendar-clock", color: "#78716c" },
+    { view: "abertas", label: "Total em aberto", bucket: summary?.open, icon: "wallet" },
+    { view: "recebidas", label: "Recebidas", bucket: summary?.received, tone: "text-green-600 dark:text-green-400", hint: periodHint, icon: "circle-check", color: "#16a34a" },
   ];
   const exportNow = (ids?: number[]) => downloadXlsx("financial/receivables/export", ids ? [{ key: "ids", value: ids.join(",") }] : toParams({ ...filters, view }), "contas-a-receber.xlsx");
+  const pickView = (next: string) => { selection.clear(); set({ view: next }); };
+  const chipView = OPEN_VIEWS.includes(view) ? "abertas" : view;
+  // contagem só onde ela bate com a lista: a visão aberta (total da busca) e "Em aberto" (resumo)
+  const countOf = (id: string) => (id === chipView && data ? data.total : id === "abertas" ? summary?.open?.count : undefined);
+  const chips = [
+    { value: "todas", label: "Todas", color: "hsl(var(--primary))" },
+    { value: "abertas", label: "Em aberto", color: "#d97706" },
+    { value: "recebidas", label: "Recebidas", color: "#16a34a" },
+    { value: "canceladas", label: "Canceladas", color: "#78716c" },
+    { value: "excluidas", label: "Inativas", color: "hsl(var(--border))" },
+  ].map((chip) => ({ ...chip, count: countOf(chip.value) }));
+  const openEdit = (item: IFinancialRecord) => { setFormData(item); setOpenForm(true); };
+  const canEditRow = (item: IFinancialRecord) => canUpdate && !item.inactiveAt;
+  const filtered = filterCount > 0 || !!filters.q;
 
   return (
     <>
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Contas a Receber</h1>
-          <p className="text-sm text-muted-foreground">Inscrições, contratos e lançamentos manuais. Clique no nome da coluna para ordenar.</p>
+      <PageHeader title="Contas a receber" description="Inscrições, contratos e lançamentos manuais." className="mb-0" />
+
+      <SummaryCards cards={cards} active={view} onPick={(next) => pickView(next === view ? DEFAULT_VIEW : next)} />
+
+      <ListCard>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <StatusChips options={chips} value={chipView} onChange={pickView} className="flex-1" />
+          <MonthRangePicker className="sm:w-auto sm:min-w-44" align="end" placeholder="Competência"
+            from={filters.accrualFrom || undefined} to={filters.accrualTo || undefined}
+            onChange={(accrualFrom, accrualTo) => { selection.clear(); set({ accrualFrom, accrualTo }); }} />
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" asChild><Link to="/financeiro/recorrentes" search={{ tipo: "receivable" } as never}><Icon name="repeat" className="w-4 h-4" /> Recorrentes</Link></Button>
-          <Button variant="outline" size="sm" onClick={() => exportNow()}><Icon name="file-spreadsheet" className="w-4 h-4" /> Exportar</Button>
-          {canCreate && <Button size="sm" onClick={() => { setFormData(null); setOpenForm(true); }}><Icon name="plus" className="w-4 h-4" /> Nova conta</Button>}
+
+        <ListToolbar search={{ value: filters.q ?? "", onChange: (q) => set({ q }), placeholder: "Buscar cliente, aluno, CNPJ/CPF, NF, código ou valor" }}
+          onOpenFilters={() => setOpenFilters(true)} filterCount={filterCount}>
+          <ActionsMenu groups={[
+            {
+              label: "Selecionadas",
+              items: [
+                { id: "settle", label: "Receber selecionadas", icon: "circle-check", count: settleable.length, hidden: !canUpdate,
+                  disabledReason: settleable.length ? undefined : "Marque contas manuais em aberto na lista", onSelect: () => setBulkSettle(true) },
+                { id: "export-sel", label: "Exportar selecionadas", icon: "file-spreadsheet", count: selection.selected.size,
+                  disabledReason: selection.selected.size ? undefined : "Marque contas na lista", onSelect: () => exportNow([...selection.selected.keys()]) },
+                { id: "archive", label: "Inativar", icon: "power-off", count: archivable.length, hidden: !can(`inactive_${FINANCIAL_ABILITY}`),
+                  disabledReason: archivable.length ? undefined : "Marque contas manuais não recebidas",
+                  confirm: { title: `Inativar ${archivable.length} conta(s)?`, description: "Só lançamentos manuais não recebidos são inativados; cobranças do gateway se cancelam no provedor." },
+                  onSelect: () => archiveMany(archivable.map((r) => r.id)) },
+              ],
+            },
+            {
+              label: "Dados",
+              items: [
+                { id: "export", label: "Exportar planilha", icon: "file-down", onSelect: () => exportNow() },
+                { id: "recurring", label: "Recorrentes", icon: "repeat", onSelect: () => navigate({ to: "/financeiro/recorrentes", search: { tipo: "receivable" } as never }) },
+              ],
+            },
+          ]} />
+          {canCreate && <Button onClick={() => { setFormData(null); setOpenForm(true); }}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Nova conta</span></Button>}
+        </ListToolbar>
+
+        <div className="flex flex-col gap-2 empty:hidden">
+          <DueQuickFilter filters={filters} onChange={(patch) => { selection.clear(); set(patch); }} />
+          <ActiveFilters kind="receivable" filters={filters} onRemove={(keys) => set(Object.fromEntries(keys.map((k) => [k, ""])))} onClear={() => replace({ view })} />
         </div>
-      </div>
 
-      <SummaryCards cards={cards} active={view} onPick={(next) => { selection.clear(); set({ view: next === view ? DEFAULT_VIEW : next }); }} />
+        <SelectionSummary total={data?.total} noun={["conta", "contas"]} selected={selection.selected.size} selectedTotal={total(selectedRows)} onClear={selection.clear} />
 
-      <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-3">
-        <SearchBox value={filters.q ?? ""} onChange={(q) => set({ q })} placeholder="Cliente, aluno, CNPJ/CPF, descrição, NF, código ou valor" />
-        <Button variant="outline" size="sm" className="h-9 w-fit" onClick={() => setOpenFilters(true)}>
-          <Icon name="sliders-horizontal" className="w-4 h-4" /> Filtros
-          {filterCount > 0 && <span className="ml-1 rounded-full bg-primary text-primary-foreground text-[10px] px-1.5">{filterCount}</span>}
-        </Button>
-        <div className="flex flex-wrap gap-1 p-1 bg-muted rounded-lg w-fit lg:ml-auto">
-          {VIEWS.map((option) => (
-            <Button key={option.id} size="sm" variant={view === option.id || (option.id === "abertas" && ["atrasadas", "hoje", "semana", "depois"].includes(view)) ? "default" : "ghost"}
-              className="h-7" onClick={() => { selection.clear(); set({ view: option.id }); }}>{option.label}</Button>
-          ))}
-        </div>
-      </div>
+        <DataTable rows={data?.rows} columns={receivableColumns(data?.today, { order: filters.order, onSort: (order) => set({ order }) })} getRowId={(item) => item.id} ariaLabel="Contas a receber"
+          loading={isLoading || isFetching} error={isError ? error?.response?.data?.message || "erro desconhecido" : null} onRetry={() => refetch()}
+          order={filters.order} onSort={(order) => set({ order })}
+          selection={{ isSelected: (item) => selection.selected.has(item.id), toggle: selection.toggle, pageState: selection.pageState, togglePage: selection.togglePage }}
+          onRowClick={(item) => { if (canEditRow(item)) openEdit(item); }}
+          rowClassName={(item) => (item.inactiveAt ? "opacity-60" : undefined)}
+          actions={(item) => <ReceivableRowActions item={item} entity={entity} onEdit={openEdit} />}
+          empty={filtered
+            ? <EmptyState icon="search-x" title="Nenhuma conta com esses filtros." action={<Button variant="outline" size="sm" onClick={() => replace({ view })}>Limpar filtros</Button>} />
+            : <EmptyState title="Nenhuma conta nesta visão." action={canCreate && <Button size="sm" onClick={() => { setFormData(null); setOpenForm(true); }}><Icon name="plus" className="w-4 h-4" /> Nova conta</Button>} />} />
 
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-3">
-        <DueQuickFilter filters={filters} onChange={(patch) => { selection.clear(); set(patch); }} />
-      </div>
-      <ActiveFilters kind="receivable" filters={filters} onRemove={(keys) => set(Object.fromEntries(keys.map((k) => [k, ""])))} onClear={() => replace({ view })} />
-
-      <SelectionBar count={selection.selected.size} total={total(selectedRows)} onClear={selection.clear}>
-        {canUpdate && settleable.length > 0 && <Button size="sm" onClick={() => setBulkSettle(true)}><Icon name="circle-check" className="w-4 h-4" /> Receber selecionadas</Button>}
-        <Button size="sm" variant="outline" onClick={() => exportNow([...selection.selected.keys()])}><Icon name="file-spreadsheet" className="w-4 h-4" /> Exportar</Button>
-        {can(`inactive_${FINANCIAL_ABILITY}`) && archivable.length > 0 && (
-          <ConfirmDialog title={`Inativar ${archivable.length} conta(s)?`} description="Só lançamentos manuais não recebidos são inativados; cobranças do gateway se cancelam no provedor."
-            onConfirm={() => archiveMany(archivable.map((r) => r.id))}>
-            <Button size="sm" variant="outline"><Icon name="power-off" className="w-4 h-4" /> Inativar</Button>
-          </ConfirmDialog>
-        )}
-      </SelectionBar>
+        <ListFooter total={data?.total ?? 0} page={page} limit={limit} limits={LIMITS}
+          onPageChange={(next) => set({ page: String(next) }, true)} onLimitChange={(n) => set({ limit: String(n) })} />
+      </ListCard>
 
       <SideForm openSheet={openFilters} setOpenSheet={setOpenFilters} title="Filtros" description="Combine os filtros; os cartões e a exportação seguem o mesmo recorte." side="left"
         form={<FilterPanel key={JSON.stringify(filters)} kind="receivable" filters={filters} onApply={(patch) => set(patch)} onClear={() => replace({ view, ...(filters.q ? { q: filters.q } : {}) })} close={() => setOpenFilters(false)} />} />
@@ -144,29 +175,6 @@ function Receivables() {
       {bulkSettle && (
         <BulkSettleDialog kind="receivable" ids={settleable.map((r) => r.id)} count={settleable.length} total={total(settleable)}
           onClose={() => setBulkSettle(false)} onDone={() => { selection.clear(); refresh(); }} />
-      )}
-
-      <div className="space-y-2 mt-2">
-        {isLoading ? Array.from({ length: 5 }, (_, i) => <ItemSkeleton key={i} index={i} />)
-          : isError ? <div className="w-full flex justify-center items-center font-medium text-destructive py-4 rounded border border-destructive"><p>Erro: {error?.response?.data?.message}</p></div>
-          : data?.rows?.length ? data.rows.map((item, i) => (
-            <ItemList key={item.id} item={item} entity={entity} index={i} setFormData={setFormData} setOpenForm={setOpenForm} today={data.today}
-              selected={selection.selected.has(item.id)} onSelect={(on) => selection.toggle(item, on)} order={filters.order} onSort={(order) => set({ order })}
-              headerSelect={<SelectBox checked={selection.allOnPage} onChange={selection.togglePage} label="Selecionar todas desta página" inverse />} />
-          ))
-          : <p className="p-6 text-sm text-muted-foreground text-center rounded border">{filterCount || filters.q ? "Nenhuma conta com esses filtros." : "Nenhuma conta nesta visão."}</p>}
-      </div>
-
-      {data && data.total > 0 && (
-        <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>{data.total} {data.total === 1 ? "conta" : "contas"} · mostrar</span>
-            {LIMITS.map((n) => (
-              <button key={n} type="button" onClick={() => set({ limit: String(n) })} className={cn("rounded px-1.5 py-0.5", limit === n ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>{n}</button>
-            ))}
-          </div>
-          {data.total > limit && <Pagination totalItems={data.total} itemsPerPage={limit} currentPage={page} onPageChange={(next) => set({ page: String(next) }, true)} maxVisiblePages={5} />}
-        </div>
       )}
     </>
   );

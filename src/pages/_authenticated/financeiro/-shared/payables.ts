@@ -85,13 +85,6 @@ export function dueState(item: Pick<Payable, "status" | "dueDate">, today: strin
   return due < today ? "atrasada" : due === today ? "hoje" : "aberta";
 }
 
-export const DUE_LABEL: Record<DueState, { text: string; className: string }> = {
-  atrasada: { text: "Atrasada", className: "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300" },
-  hoje: { text: "Vence hoje", className: "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300" },
-  aberta: { text: "A vencer", className: "bg-muted text-foreground" },
-  paga: { text: "Paga", className: "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300" },
-};
-
 /** Soma dias a uma data AAAA-MM-DD. */
 export function plusDays(day: string, days: number): string {
   const date = new Date(`${day}T12:00:00Z`);

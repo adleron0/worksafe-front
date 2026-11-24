@@ -5,25 +5,25 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium [&>svg]:shrink-0 [&>svg:not(.ml-auto)]:mx-0 transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium [&>svg]:shrink-0 [&>svg:not(.ml-auto)]:mx-0 transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 cursor-pointer",
+          "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-xs hover:bg-destructive/90 cursor-pointer",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer",
         outline:
-          "border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground cursor-pointer",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer",
         secondary:
-          "bg-muted text-muted-foreground shadow-xs hover:bg-muted/80 cursor-pointer",
+          "bg-muted text-muted-foreground hover:bg-muted/80 cursor-pointer",
         ghost: "hover:bg-accent hover:text-accent-foreground cursor-pointer",
         link: "text-primary underline-offset-4 hover:underline cursor-pointer",
       },
       size: {
         default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-10 rounded-lg px-8",
         icon: "h-9 w-9",
         mini: "h-6 w-6",
       },

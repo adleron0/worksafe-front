@@ -37,10 +37,24 @@ function hexToHsl(hex: string) {
   };
 }
 
+/** Texto que lê bem sobre a cor (branco ou quase preto), pela luminância relativa (WCAG). */
+function readableForeground(hex: string) {
+  const clean = hex.replace('#', '');
+  const channel = (i: number) => {
+    const c = parseInt(clean.substr(i, 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  const luminance = 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4);
+  // a marca prefere texto branco (verde #149E5E dá 3,4:1); só cores claras de verdade
+  // (amarelo, ciano, rosa-claro), em que o branco fica abaixo de 3:1, passam a texto escuro
+  return 1.05 / (luminance + 0.05) >= 3 ? '0 0% 100%' : '24 10% 10%';
+}
+
 export function generateTheme(primaryColorHex: string, secondaryColorHex?: string) {
   // Converte a cor primária para HSL
   const primaryColorHSL = hexToHsl(primaryColorHex);
   const { h, s, l } = primaryColorHSL;
+  const primaryForeground = readableForeground(primaryColorHex);
   
   // Se uma cor secundária foi fornecida, converte para HSL
   // Senão, cria uma secundária complementar baseada na primária
@@ -73,7 +87,10 @@ export function generateTheme(primaryColorHex: string, secondaryColorHex?: strin
       --card: 40 33% 98%;
       --card-foreground: 24 10% 10%;
       --primary: ${h} ${s}% ${l}%;
-      --primary-foreground: 0 0% 100%;
+      --primary-foreground: ${primaryForeground};
+      /* versão suave (luminosidade fixa, vale para qualquer cor de empresa) */
+      --primary-soft: ${h} ${Math.min(s, 70)}% 94%;
+      --primary-soft-foreground: ${h} ${Math.min(s, 80)}% 24%;
       --primary-dark: ${h} ${s}% ${Math.max(l - 30, 10)}%;
       --secondary: ${secondaryHSL.h} ${secondaryHSL.s}% ${secondaryHSL.l}%;
       --secondary-foreground: ${secondaryHSL.h} ${Math.min(secondaryHSL.s + 20, 80)}% ${Math.max(secondaryHSL.l - 40, 10)}%;
@@ -99,7 +116,9 @@ export function generateTheme(primaryColorHex: string, secondaryColorHex?: strin
       /* a mesma cor da empresa (só um pouco mais clara para contrastar no escuro),
          com texto branco — antes virava um verde neon com texto escuro */
       --primary: ${h} ${s}% ${Math.min(l + 4, 48)}% !important;
-      --primary-foreground: 0 0% 100% !important;
+      --primary-foreground: ${primaryForeground} !important;
+      --primary-soft: ${h} ${Math.round(Math.min(s, 70) * 0.55)}% 16% !important;
+      --primary-soft-foreground: ${h} 55% 76% !important;
       --primary-dark: ${h} ${s}% ${Math.max(l - 40, 5)}% !important;
       --secondary: ${secondaryHSL.h} ${Math.min(secondaryHSL.s + 10, 60)}% ${Math.max(secondaryHSL.l - 20, 15)}% !important;
       --secondary-foreground: ${secondaryHSL.h} 40% 95% !important;

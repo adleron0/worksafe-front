@@ -29,10 +29,12 @@ export const monthRangeText = (from?: string, to?: string) => {
  * Um clique escolhe um mês; o segundo clique fecha o período (em qualquer
  * ordem, inclusive em outro ano). Valores no formato AAAA-MM.
  */
-export default function MonthRangePicker({ from, to, onChange, placeholder = "Qualquer mês", className, clearable = true }: {
+export default function MonthRangePicker({ from, to, onChange, placeholder = "Qualquer mês", className, clearable = true, align = "start" }: {
   from?: string; to?: string; onChange: (from: string, to: string) => void; placeholder?: string; className?: string;
   /** false quando o período é obrigatório (sem o "x" de limpar) */
   clearable?: boolean;
+  /** lado do popover em relação ao botão (use "end" quando o botão fica à direita) */
+  align?: "start" | "end";
 }) {
   const [open, setOpen] = useState(false);
   const [year, setYear] = useState(() => Number((from || thisMonth()).slice(0, 4)));
@@ -71,13 +73,13 @@ export default function MonthRangePicker({ from, to, onChange, placeholder = "Qu
           </button>
         )}
       </div>
-      <PopoverContent className="w-72 p-3" align="start">
+      <PopoverContent className="w-72 p-3 rounded-card" align={align}>
         <div className="flex items-center justify-between mb-3">
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setYear(year - 1)} aria-label="Ano anterior"><ChevronLeft className="h-4 w-4" /></Button>
           <div className="font-semibold text-sm tabular-nums">{year}</div>
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setYear(year + 1)} aria-label="Próximo ano"><ChevronRight className="h-4 w-4" /></Button>
         </div>
-        <div className="grid grid-cols-3 gap-1.5" onMouseLeave={() => setHover(null)}>
+        <div className="grid grid-cols-4 gap-1.5" onMouseLeave={() => setHover(null)}>
           {MONTHS.map((name, index) => {
             const ym = ymOf(year, index);
             const edge = ym === lo || ym === hi;
@@ -86,7 +88,7 @@ export default function MonthRangePicker({ from, to, onChange, placeholder = "Qu
               <button key={ym} type="button" onClick={() => pick(ym)} onMouseEnter={() => setHover(ym)}
                 aria-label={`${FULL[index]} de ${year}`} aria-pressed={edge || inside}
                 className={cn(
-                  "h-9 rounded-md text-sm transition-colors",
+                  "h-8 rounded-lg text-[13px] transition-colors",
                   edge ? "bg-primary text-primary-foreground font-medium"
                     : inside ? "bg-primary/15 text-foreground"
                       : "hover:bg-muted",
@@ -108,7 +110,7 @@ export default function MonthRangePicker({ from, to, onChange, placeholder = "Qu
             { text: "Este ano", a: yearStart, b: `${yearStart.slice(0, 4)}-12` },
           ].map((p) => (
             <button key={p.text} type="button" onClick={() => preset(p.a, p.b)}
-              className={cn("rounded-full border px-2 py-0.5 text-xs transition-colors", from === p.a && to === p.b ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted")}>
+              className={cn("rounded-chip border px-2 py-0.5 text-[11px] font-medium transition-colors", from === p.a && to === p.b ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted")}>
               {p.text}
             </button>
           ))}

@@ -281,6 +281,22 @@ function newBot(config: BotsConfig): BotFull {
   };
 }
 
+/** Área de cada ferramenta, pela permissão que ela exige e pelo nome (o catálogo não guarda isso). */
+const TOOL_AREAS = [
+  { id: "financeiro", label: "Financeiro", test: (name: string, perms: string) => name.startsWith("fin_") || name.startsWith("contas_") || /_financeiro\b/.test(perms) },
+  { id: "comercial", label: "Comercial", test: (name: string, perms: string) => /_comercial\b|update_acompanhamento/.test(perms) || /proposta|cliente|acompanhamento/.test(name) },
+  { id: "obras", label: "Obras e serviços", test: (name: string, perms: string) => /ordens_de_servico|view_alocacao/.test(perms) || /(^|_)(os|rdos?|obras?)(_|$)/.test(name) },
+  { id: "rh", label: "Equipe (RH)", test: (name: string, perms: string) => /funcionarios/.test(perms) || name === "documentos_vencendo" },
+  { id: "marketing", label: "Marketing", test: (name: string, perms: string) => /blog|instagram/.test(perms) || /imagem|imagens|blog|instagram/.test(name) },
+  { id: "treinamentos", label: "Treinamentos", test: (name: string, perms: string) => /_classes\b/.test(perms) || /turma|aluno|inscri/.test(name) },
+  { id: "compras", label: "Compras e estoque", test: (name: string, perms: string) => /pedidos_de_compra|estoque/.test(perms) || /compra|estoque/.test(name) },
+] as const;
+const GENERAL = { id: "geral", label: "Gerais (agenda, colegas, memória)" };
+const toolArea = (tool: CatalogTool) => {
+  const perms = tool.permissions.join(" ");
+  return TOOL_AREAS.find((area) => area.test(tool.name, perms))?.id ?? GENERAL.id;
+};
+
 function BotEditor({ bot, config, isNew, onCreated, onCancel, onArchived }: { bot: BotFull; config: BotsConfig; isNew?: boolean; onCreated?: (id: number) => void; onCancel?: () => void; onArchived?: () => void }) {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(() => ({
@@ -327,7 +343,13 @@ function BotEditor({ bot, config, isNew, onCreated, onCancel, onArchived }: { bo
     onSuccess: () => done("Bot voltou ao padrão do sistema"),
     onError: (error) => toast({ title: "Não foi possível voltar ao padrão", description: errorMessage(error), variant: "destructive" }),
   });
-  const byRisk = (risk: CatalogTool["risk"]) => config.tools.filter((tool) => tool.risk === risk);
+  const [area, setArea] = useState("todas");
+  const [onlyChecked, setOnlyChecked] = useState(false);
+  const areas = [...TOOL_AREAS, GENERAL].map((item) => {
+    const tools = config.tools.filter((tool) => toolArea(tool) === item.id);
+    return { id: item.id, label: item.label, total: tools.length, checked: tools.filter((tool) => draft.tools.includes(tool.name)).length };
+  }).filter((item) => item.total > 0);
+  const byRisk = (risk: CatalogTool["risk"]) => config.tools.filter((tool) => tool.risk === risk && (area === "todas" || toolArea(tool) === area) && (!onlyChecked || draft.tools.includes(tool.name)));
 
   return (
     <div className="grid min-w-0 gap-4 rounded-lg border p-4">
@@ -360,11 +382,34 @@ function BotEditor({ bot, config, isNew, onCreated, onCancel, onArchived }: { bo
         <p className="mt-1 text-xs text-muted-foreground">As regras de segurança (permissões, confirmação, dados não são instruções) valem para todos os bots e não ficam aqui.</p>
       </div>
       <div>
-        <Label>Ferramentas</Label>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Label>Ferramentas <span className="font-normal text-muted-foreground">· {draft.tools.length} marcadas</span></Label>
+          <label className="flex items-center gap-2 text-xs"><Switch checked={onlyChecked} onCheckedChange={setOnlyChecked} /> Só as marcadas</label>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {[{ id: "todas", label: "Todas", total: config.tools.length, checked: draft.tools.length }, ...areas].map((item) => (
+            <button
+              key={item.id} type="button" onClick={() => setArea(item.id)} aria-pressed={area === item.id}
+              className={`cursor-pointer rounded-full border px-3 py-1 text-xs ${area === item.id ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+            >
+              {item.label} <span className={area === item.id ? "opacity-80" : "text-muted-foreground"}>{item.checked}/{item.total}</span>
+            </button>
+          ))}
+          {area !== "todas" && (() => {
+            const names = config.tools.filter((tool) => toolArea(tool) === area).map((tool) => tool.name);
+            const all = names.every((name) => draft.tools.includes(name));
+            return (
+              <Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => set("tools", all ? draft.tools.filter((name) => !names.includes(name)) : [...new Set([...draft.tools, ...names])])}>
+                {all ? "Desmarcar todas desta área" : "Marcar todas desta área"}
+              </Button>
+            );
+          })()}
+        </div>
         <div className="mt-2 grid gap-3 md:grid-cols-3 [&>*]:min-w-0">
           {(["read", "draft", "sensitive"] as const).map((risk) => (
             <div key={risk} className="rounded-md border p-2">
               <p className={`mb-2 w-fit rounded-full px-2 py-0.5 text-[11px] font-medium ${RISK_CLASS[risk]}`}>{RISK_LABEL[risk]}</p>
+              {byRisk(risk).length === 0 && <p className="py-1 text-xs text-muted-foreground">Nenhuma aqui.</p>}
               {byRisk(risk).map((tool) => (
                 <label key={tool.name} className="flex cursor-pointer items-start gap-2 py-1 text-xs">
                   <Checkbox checked={draft.tools.includes(tool.name)} onCheckedChange={(checked) => set("tools", checked ? [...draft.tools, tool.name] : draft.tools.filter((name) => name !== tool.name))} className="mt-0.5" />

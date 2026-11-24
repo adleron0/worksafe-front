@@ -349,7 +349,7 @@ export default function KanbanView<T extends Record<string, any>>({
                           id={item.id}
                           key={item.id}
                           name={item.name}
-                          className="bg-card border rounded-lg hover:shadow-md transition-shadow w-full"
+                          className="bg-card border rounded-xl hover:border-primary/40 transition-colors w-full"
                         >
                           {children(originalData, originalColumn)}
                         </KanbanCard>

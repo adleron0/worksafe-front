@@ -44,7 +44,7 @@ export function Panel({
   children: ReactNode;
 }) {
   return (
-    <section className={cn("rounded-xl border bg-card p-4 flex flex-col min-w-0", className)}>
+    <section className={cn("rounded-card border bg-card p-4 flex flex-col min-w-0", className)}>
       <header className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
         <Icon name={icon} className="w-4 h-4 shrink-0" />
         <h3 className="font-medium text-foreground/80 truncate">{title}</h3>
@@ -126,7 +126,7 @@ export function Kpi({ label, value, hint, hintTone, trend, trendColor, link }: {
   link: AppLink;
 }) {
   return (
-    <Link {...linkTo(link)} className="rounded-xl border bg-card p-4 hover:border-foreground/20 transition-colors min-w-0">
+    <Link {...linkTo(link)} className="rounded-card border bg-card p-4 hover:border-foreground/20 transition-colors min-w-0">
       <p className="text-xs text-muted-foreground truncate">{label}</p>
       <div className="mt-1 flex items-end justify-between gap-2">
         <div className="min-w-0">

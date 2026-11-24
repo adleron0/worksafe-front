@@ -22,7 +22,7 @@ export function ActionsCard() {
     staleTime: 60 * 1000,
     queryFn: async () => (await api.get<{ blocks: PipelineBlock[] }>("my-pipeline")).data,
   });
-  if (isLoading) return <div className="rounded-xl border bg-card p-4 h-full animate-pulse" />;
+  if (isLoading) return <div className="rounded-card border bg-card p-4 h-full animate-pulse" />;
   // quem não atua em nenhuma área da esteira não vê o cartão
   if (!data || data.blocks.length === 0) return null;
   const waiting = data.blocks.filter((block) => block.count > 0);

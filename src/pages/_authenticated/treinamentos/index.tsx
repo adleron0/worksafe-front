@@ -359,7 +359,7 @@ function TrendPanel({ trend }: { trend: TrainingPanel["trend"] }) {
 }
 
 function PanelSkeleton() {
-  const box = "rounded-xl border bg-card animate-pulse";
+  const box = "rounded-card border bg-card animate-pulse";
   return (
     <div className="space-y-4">
       <div className="h-6 w-56 rounded bg-muted animate-pulse" />

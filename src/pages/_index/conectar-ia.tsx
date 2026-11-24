@@ -58,7 +58,7 @@ function ConnectAiPage() {
             <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
               <li className="flex gap-2"><Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> Ele vê e faz só o que as suas permissões deixam.</li>
               <li className="flex gap-2"><Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> Enviar, publicar ou mudar etapa espera a sua confirmação no sistema.</li>
-              <li className="flex gap-2"><Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> Você revoga quando quiser em Bots → Conectar apps de IA.</li>
+              <li className="flex gap-2"><Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> Você revoga quando quiser em Bots → Conexões MCP.</li>
             </ul>
             <p className="mt-3 text-xs text-muted-foreground">Depois de permitir, você volta para {data.redirectHost}.</p>
             {decide.error && <p className="mt-3 text-sm text-destructive">{errorMessage(decide.error)}</p>}

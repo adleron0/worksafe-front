@@ -259,7 +259,7 @@ export const groups: SidebarGroup[] = [
           { title: "Relatórios", permissions: ["usar_bots"], icon: "file-chart-column", path: "/bots/relatorios" },
           { divider: "configuração" },
           { title: "Conectores", permissions: ["conectores_bots", "instagram_bots"], icon: "cable", path: "/bots/conectores" },
-          { title: "Conectar apps de IA", permissions: ["usar_mcp", "update_bots"], icon: "plug", path: "/bots/conexoes" },
+          { title: "Conexões MCP", permissions: ["usar_mcp", "update_bots"], icon: "plug", path: "/bots/conexoes" },
           { title: "Configurar bots", permissions: ["update_bots"], icon: "sliders-horizontal", path: "/bots/configuracao" },
           { title: "Auditoria e gasto", permissions: ["view_auditoria_bots"], icon: "scroll-text", path: "/bots/auditoria" },
         ],

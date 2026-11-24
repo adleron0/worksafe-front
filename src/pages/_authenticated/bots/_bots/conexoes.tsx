@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/bots/_bots/conexoes")({
   component: ConnectionsPage,
 });
 
-/** Conectar apps de IA (Claude, ChatGPT…) ao sistema pelo MCP, e ver/revogar as conexões. */
+/** Conexões MCP (Claude, ChatGPT…) ao sistema pelo MCP, e ver/revogar as conexões. */
 function ConnectionsPage() {
   const { can } = useVerify();
   const queryClient = useQueryClient();
@@ -41,7 +41,7 @@ function ConnectionsPage() {
   return (
     <div className="grid gap-4">
       <div>
-        <h1 className="text-xl font-bold">Conectar apps de IA</h1>
+        <h1 className="text-xl font-bold">Conexões MCP</h1>
         <p className="text-sm text-muted-foreground">Use o sistema de dentro do Claude, do ChatGPT ou de outro app compatível com MCP, com a assinatura que você já tem. O app usa as mesmas ferramentas dos bots, com as suas permissões. O que sai para fora espera a sua confirmação em Bots → Ações pendentes.</p>
       </div>
       {can("usar_mcp") && info.data && (

@@ -6,6 +6,7 @@ import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
 import Select from "@/components/general-components/Select";
 import CalendarPicker from "@/components/general-components/Calendar";
+import MonthRangePicker from "@/components/general-components/MonthRangePicker";
 import Icon from "@/components/general-components/Icon";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -228,8 +229,7 @@ function Dre() {
   return (
     <div className="mt-4 flex flex-col gap-4">
       <div className="flex flex-col md:flex-row md:items-end gap-3 rounded-lg border p-3">
-        <div className="w-40"><Label>De</Label><CalendarPicker mode="month" name="dreFrom" value={from} onValueChange={(_, v) => v && setFrom(v)} fromYear={2020} toYear={2035} /></div>
-        <div className="w-40"><Label>Até</Label><CalendarPicker mode="month" name="dreTo" value={to} onValueChange={(_, v) => v && setTo(v)} fromYear={2020} toYear={2035} /></div>
+        <div className="w-64"><Label>Meses</Label><MonthRangePicker className="mt-1" clearable={false} from={from} to={to} onChange={(a, b) => { if (a && b) { setFrom(a); setTo(b); } }} /></div>
         <div className="w-56"><Label>Regime</Label><Select name="basis" options={[{ id: "competencia", name: "Competência (mês da conta)" }, { id: "caixa", name: "Caixa (mês do pagamento)" }]} state={basis} onChange={(_, v) => setBasis(String(v))} /></div>
         <div className="flex gap-1 flex-wrap">
           {[["3", 2], ["6", 5], ["12", 11]].map(([labelText, n]) => (

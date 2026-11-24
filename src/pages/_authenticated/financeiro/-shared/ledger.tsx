@@ -13,6 +13,7 @@ import Select from "@/components/general-components/Select";
 import CalendarPicker from "@/components/general-components/Calendar";
 import Icon from "@/components/general-components/Icon";
 import QuickFilter from "@/components/general-components/QuickFilter";
+import MonthRangePicker, { monthRangeText } from "@/components/general-components/MonthRangePicker";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { cn } from "@/lib/utils";
 import AccountSelect from "./AccountSelect";
@@ -185,15 +186,9 @@ export function FilterPanel({ kind, filters, onApply, onClear, close }: {
     <form onSubmit={apply} className="flex flex-col gap-4 mt-4">
       <RangeField label="Vencimento" from={draft.dueFrom} to={draft.dueTo} onChange={setPair("dueFrom", "dueTo")} quick={["hoje", "7dias", "30dias", "mes", "proximo"]} />
       <RangeField label={paidLabel} from={draft.paidFrom} to={draft.paidTo} onChange={setPair("paidFrom", "paidTo")} quick={["hoje", "mes", "passado"]} />
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label>Competência de</Label>
-          <CalendarPicker mode="month" name="accrualFrom" value={draft.accrualFrom || null} onValueChange={(_, v) => set("accrualFrom", v)} placeholder="Início" fromYear={2020} toYear={2035} />
-        </div>
-        <div>
-          <Label>até</Label>
-          <CalendarPicker mode="month" name="accrualTo" value={draft.accrualTo || null} onValueChange={(_, v) => set("accrualTo", v)} placeholder="Fim" fromYear={2020} toYear={2035} />
-        </div>
+      <div>
+        <Label>Competência</Label>
+        <MonthRangePicker className="mt-1" from={draft.accrualFrom || undefined} to={draft.accrualTo || undefined} onChange={setPair("accrualFrom", "accrualTo")} />
       </div>
 
       {kind === "payable" ? (
@@ -288,12 +283,11 @@ export function ActiveFilters({ kind, filters, onRemove, onClear }: { kind: Ledg
   const { data: customers } = useCustomerOptions(kind === "receivable");
   const names = (list: Array<{ id: number | string; name: string }> | undefined, value: string) => csv(value).map((id) => list?.find((o) => String(o.id) === id)?.name ?? id).join(", ");
   const period = (a?: string, b?: string) => (a && b ? (a === b ? formatDate(a) : `${formatDate(a)} a ${formatDate(b)}`) : a ? `a partir de ${formatDate(a)}` : `até ${formatDate(b)}`);
-  const monthText = (m?: string) => (m ? `${m.slice(5, 7)}/${m.slice(0, 4)}` : "");
   const chips: Array<{ keys: string[]; label: string }> = [];
   if (filters.q) chips.push({ keys: ["q"], label: `Busca: “${filters.q}”` });
   if (filters.dueFrom || filters.dueTo) chips.push({ keys: ["dueFrom", "dueTo"], label: `Vencimento ${period(filters.dueFrom, filters.dueTo)}` });
   if (filters.paidFrom || filters.paidTo) chips.push({ keys: ["paidFrom", "paidTo"], label: `${kind === "payable" ? "Pagas" : "Recebidas"} ${period(filters.paidFrom, filters.paidTo)}` });
-  if (filters.accrualFrom || filters.accrualTo) chips.push({ keys: ["accrualFrom", "accrualTo"], label: `Competência ${filters.accrualFrom === filters.accrualTo ? monthText(filters.accrualFrom) : [monthText(filters.accrualFrom) || "…", monthText(filters.accrualTo) || "…"].join(" a ")}` });
+  if (filters.accrualFrom || filters.accrualTo) chips.push({ keys: ["accrualFrom", "accrualTo"], label: `Competência ${monthRangeText(filters.accrualFrom, filters.accrualTo)}` });
   if (filters.supplierId) chips.push({ keys: ["supplierId"], label: `Fornecedor: ${names(suppliers?.rows, filters.supplierId)}` });
   if (filters.customerId) chips.push({ keys: ["customerId"], label: `Cliente: ${names(customers?.rows, filters.customerId)}` });
   if (filters.chartAccountId) {

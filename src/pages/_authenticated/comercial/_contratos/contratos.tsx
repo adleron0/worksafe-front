@@ -45,7 +45,7 @@ function ContractsPage() {
         <p className="text-sm text-muted-foreground">Propostas aceitas. Daqui saem as contas a receber: cada parcela vira um título quando a nota fiscal dela é registrada.</p>
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-card border bg-card">
         <div className="flex flex-wrap rounded-md border overflow-hidden w-fit" role="tablist" aria-label="Situação">
           {FILTERS.map((filter) => (
             <button key={filter.value || "all"} type="button" role="tab" aria-selected={status === filter.value}
@@ -61,8 +61,8 @@ function ContractsPage() {
         {summary.vigente && <p className="xl:ml-auto text-sm text-muted-foreground">Vigentes: <b className="text-foreground tabular-nums">{money(summary.vigente.total)}</b></p>}
       </div>
 
-      <div className="rounded-lg border overflow-hidden">
-        <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+      <div className="rounded-card border bg-card overflow-hidden">
+        <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
           <div className="w-36">Número</div>
           <div className="flex-1">Cliente e título</div>
           <div className="w-28">Situação</div>

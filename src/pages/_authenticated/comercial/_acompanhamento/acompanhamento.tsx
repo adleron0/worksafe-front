@@ -56,7 +56,7 @@ function FollowUpPage() {
         <p className="text-sm text-muted-foreground">Retornos, reuniões e tarefas marcados com os clientes. Para registrar um contato ou agendar, abra a proposta.</p>
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-card border bg-card">
         <div className="flex flex-wrap gap-1 p-1 bg-muted rounded-lg w-fit">
           {FILTERS.map((item) => (
             <button key={item.id} type="button" onClick={() => { setFilter(item.id); setPage(0); }}

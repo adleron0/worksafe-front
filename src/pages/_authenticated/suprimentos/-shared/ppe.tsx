@@ -175,7 +175,7 @@ export function EmployeePpePanel({ employeeId, readOnly = false, onDeliver, onRe
   const canMove = !readOnly && can(`create_${PPE_ABILITY}`);
   return (
     <div className="grid lg:grid-cols-2 gap-4 items-start">
-      <section className="rounded-lg border p-4">
+      <section className="rounded-card border bg-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-semibold">Com o funcionário agora</h2>
           <div className="flex flex-wrap gap-2">
@@ -202,7 +202,7 @@ export function EmployeePpePanel({ employeeId, readOnly = false, onDeliver, onRe
           </ul>
         )}
       </section>
-      <section className="rounded-lg border p-4">
+      <section className="rounded-card border bg-card p-4">
         <h2 className="font-semibold">Histórico</h2>
         {data.history.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">Nenhuma entrega ou devolução.</p> : (
           <ul className="mt-2 divide-y text-sm max-h-[480px] overflow-y-auto">
@@ -451,7 +451,7 @@ export function PpeDeliverDialog({ employee, exchange = false, holding = [], onC
             <Icon name={more ? "chevron-up" : "chevron-down"} className="w-4 h-4" /> Mais opções (obra, centro de custo, observação)
           </button>
           {more && (
-            <div className="grid gap-3 rounded-lg border p-3">
+            <div className="grid gap-3 rounded-card border bg-card p-3">
               <div className="grid sm:grid-cols-2 gap-3">
                 {orders && (
                   <div><Label>Para a obra</Label>
@@ -465,7 +465,7 @@ export function PpeDeliverDialog({ employee, exchange = false, holding = [], onC
                 <Textarea id="ppeNote" className="mt-1" rows={2} maxLength={1000} value={note} onChange={(event) => setNote(event.target.value)} /></div>
             </div>
           )}
-          <section className="grid gap-2 rounded-lg border p-3">
+          <section className="grid gap-2 rounded-card border bg-card p-3">
             <div className="flex items-center gap-2">
               <Checkbox id="paperSign" checked={paperSign} onCheckedChange={(checked) => setPaperSign(checked === true)} />
               <Label htmlFor="paperSign">Assina na ficha impressa</Label>

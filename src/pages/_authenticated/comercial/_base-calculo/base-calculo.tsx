@@ -182,7 +182,7 @@ function CostBasePage() {
         </div>
       </div>
 
-      <section className="my-4 p-4 rounded-lg border grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+      <section className="my-4 p-4 rounded-card border bg-card grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
         <div className="grid sm:grid-cols-3 gap-3">
           <div>
             <Label className="text-xs">Versão</Label>

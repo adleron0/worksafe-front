@@ -110,7 +110,7 @@ function AllocationPage() {
       </div>
       {mode === "mapa" && <div className="mt-4"><AllocationMapView /></div>}
       {mode === "tempo" && (<>
-      <div className="my-4 grid gap-3 rounded-lg border p-4 lg:grid-cols-[auto_auto_1fr_auto] lg:items-end">
+      <div className="my-4 grid gap-3 rounded-card border bg-card p-4 lg:grid-cols-[auto_auto_1fr_auto] lg:items-end">
         <div>
           <Label className="text-xs">A partir de</Label>
           <div className="mt-1 flex items-center gap-1">

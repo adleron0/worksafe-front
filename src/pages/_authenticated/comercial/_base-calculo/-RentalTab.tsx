@@ -20,7 +20,7 @@ const RENTAL_FALLBACK: RentalDefaults = {
 };
 
 const Card = ({ title, description, children, className }: { title: string; description?: string; children: React.ReactNode; className?: string }) => (
-  <section className={cn("rounded-lg border p-4", className)}>
+  <section className={cn("rounded-card border bg-card p-4", className)}>
     <h3 className="font-semibold">{title}</h3>
     {description && <p className="text-xs text-muted-foreground mb-2">{description}</p>}
     <div className="mt-2">{children}</div>

@@ -81,10 +81,10 @@ const HeaderLists = ({
   
   return (
     <>
-      <div className="flex flex-col md:flex-row mb-4 items-start justify-between md:items-center">
+      <div className="flex flex-col md:flex-row mb-4 items-start justify-between md:items-end">
         <div>
-          <h1 className={`${!titlePage && "hidden"} text-xl font-bold`}>{titlePage}</h1>
-          <span className={`${!descriptionPage && "hidden"} text-gray-600 dark:text-gray-100`}>{descriptionPage}</span>
+          <h1 className={`${!titlePage && "hidden"} text-xl font-bold leading-tight`}>{titlePage}</h1>
+          <p className={`${!descriptionPage && "hidden"} text-[13px] text-muted-foreground mt-0.5`}>{descriptionPage}</p>
         </div>
       </div>
       <div className="flex flex-col gap-3">
@@ -93,13 +93,13 @@ const HeaderLists = ({
           <div className="flex flex-wrap justify-start items-center gap-2">
             <Show when={searchParams?.limit !== 'all'}>
               <div className="flex items-baseline gap-2">
-                <Label htmlFor="limit">Itens</Label>
+                <Label htmlFor="limit" className="text-xs text-muted-foreground">Itens</Label>
                 <Select
                   onValueChange={(value) => onlimitChange("limit", Number(value))}
                   value={searchParams.limit.toString()}
 
                 >
-                  <SelectTrigger className="h-9 w-[70px]">
+                  <SelectTrigger className="h-9 w-[70px] rounded-lg">
                     <SelectValue placeholder="" />
                   </SelectTrigger>
                   <SelectContent>
@@ -114,9 +114,9 @@ const HeaderLists = ({
             </Show>
 
             {showSearch && (
-              <Button onClick={() => openSearch(true)} variant="default" className="text-muted h-9 bg-primary flex items-center">
-                <Icon name="sliders-horizontal" className="w-3 h-3 md:mr-2" />
-                <span className="hidden md:block">Filtro Avançado</span>
+              <Button onClick={() => openSearch(true)} variant="outline" aria-label="Filtros">
+                <Icon name="sliders-horizontal" className="w-4 h-4" />
+                <span className="hidden md:block">Filtros</span>
               </Button>
             )}
 
@@ -132,15 +132,15 @@ const HeaderLists = ({
                   placeholder={searchPlaceholder}
                   value={searchText}
                   onChange={handleSearchInputChange}
-                  className="h-9 pl-9 pr-3 w-[250px]"
+                  className="h-9 pl-9 pr-3 w-80 rounded-lg"
                 />
               </div>
             )}
           </div>
           
           {can(`create_${ability}`) && showCreate && (
-            <Button onClick={() =>{ openForm?.(true); setFormData?.(null); setFormType?.("both")}} variant="outline" className="flex gap-2 items-center">
-              <Icon name={iconForm || "plus"} className="w-3 h-3" />
+            <Button onClick={() =>{ openForm?.(true); setFormData?.(null); setFormType?.("both")}} aria-label={`${addButtonName} ${entityName}`}>
+              <Icon name={iconForm || "plus"} className="w-4 h-4" />
               <span className="hidden md:block">{addButtonName} {entityName}</span>
             </Button>
           )}
@@ -158,7 +158,7 @@ const HeaderLists = ({
               placeholder={searchPlaceholder}
               value={searchText}
               onChange={handleSearchInputChange}
-              className="h-9 pl-9 pr-3 w-full"
+              className="h-9 pl-9 pr-3 w-full rounded-lg"
             />
           </div>
         )}

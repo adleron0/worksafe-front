@@ -158,7 +158,7 @@ function OrderPage() {
 
       <div className="grid xl:grid-cols-[minmax(0,1fr)_360px] gap-4 items-start">
         <div className="grid gap-4 min-w-0">
-          <section className="rounded-lg border p-4">
+          <section className="rounded-card border bg-card p-4">
             <h2 className="font-semibold">O que foi vendido</h2>
             <p className="text-xs text-muted-foreground">O escopo veio da proposta aceita. Valores não aparecem aqui.</p>
             {order.description && <p className="mt-2 text-sm whitespace-pre-wrap">{order.description}</p>}
@@ -192,7 +192,7 @@ function OrderPage() {
           {order.canSeeCosts && <ResultPanel orderId={order.id} />}
 
           {order.schedule && order.schedule.steps.length > 0 && (
-            <section className="rounded-lg border p-4">
+            <section className="rounded-card border bg-card p-4">
               <h2 className="font-semibold">Cronograma planejado</h2>
               <p className="text-xs text-muted-foreground">Como foi combinado na proposta, contado a partir do início da obra.</p>
               <ul className="mt-2 divide-y text-sm">
@@ -208,7 +208,7 @@ function OrderPage() {
             </section>
           )}
 
-          <section className="rounded-lg border p-4">
+          <section className="rounded-card border bg-card p-4">
             <div className="flex items-baseline justify-between gap-3">
               <h2 className="font-semibold">Mobilização</h2>
               <span className="text-xs text-muted-foreground tabular-nums">{done} de {order.checklist.length} conferidos</span>
@@ -242,7 +242,7 @@ function OrderPage() {
 
           {order.proposal && can("list_comercial") && <ActivityPanel proposalId={order.proposal.id} canEdit={can(ACTIVITY_PERMISSION)} defaultContact={order.contactName} />}
 
-          <section className="rounded-lg border p-4">
+          <section className="rounded-card border bg-card p-4">
             <h2 className="font-semibold">Histórico</h2>
             <ul className="mt-2 grid gap-2 text-sm">
               {order.events.map((event) => (
@@ -257,7 +257,7 @@ function OrderPage() {
         </div>
 
         <aside className="grid gap-4">
-          <section className="rounded-lg border p-4 grid gap-3">
+          <section className="rounded-card border bg-card p-4 grid gap-3">
             <div>
               <h2 className="font-semibold">Agenda e equipe</h2>
               {(order.startedAt || order.finishedAt) && (
@@ -299,7 +299,7 @@ function OrderPage() {
             {editable && <Button type="button" disabled={!dirty || saving} onClick={() => saveAgenda(agenda)}>{saving ? "Salvando..." : "Salvar"}</Button>}
           </section>
 
-          <section className="rounded-lg border p-4 text-sm grid gap-1">
+          <section className="rounded-card border bg-card p-4 text-sm grid gap-1">
             <h2 className="font-semibold text-base">Pedido do cliente</h2>
             {order.customerOrder?.number || order.customerOrder?.fileUrl ? (
               <>
@@ -309,7 +309,7 @@ function OrderPage() {
             ) : <p className="text-amber-700 dark:text-amber-400">Ainda não chegou. Quem informa é o Comercial, na proposta aceita.</p>}
           </section>
 
-          <section className="rounded-lg border p-4 text-sm grid gap-1">
+          <section className="rounded-card border bg-card p-4 text-sm grid gap-1">
             <h2 className="font-semibold text-base">Cliente</h2>
             <p className="font-medium">{order.customer?.corporateName}</p>
             {order.customer?.cnpj && <p className="text-muted-foreground">{docLabel(order.customer.cnpj)} {formatCnpj(order.customer.cnpj)}</p>}

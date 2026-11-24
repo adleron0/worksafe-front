@@ -29,7 +29,7 @@ function StockOverviewPage() {
     { icon: "list-restart", label: "Reposição", hint: "Itens abaixo do mínimo e pedido de compra", to: "/suprimentos/compras/reposicao" },
   ];
 
-  const box = "flex flex-col gap-1 rounded-lg border p-4 h-full transition-colors";
+  const box = "flex flex-col gap-1 rounded-card border bg-card p-4 h-full transition-colors";
   const cards: Array<Card & { to?: string; search?: Record<string, string> }> = data ? [
     { icon: "triangle-alert", label: "Abaixo do mínimo", value: String(data.low), hint: "Itens com saldo disponível menor que o mínimo", alert: data.low > 0, to: "/suprimentos/estoque/itens", search: { low: "1" } },
     { icon: "hard-hat", label: "Obras com material", value: String(data.atOrders), hint: "OS com material ou equipamento na obra agora", to: "/suprimentos/estoque/saldos", search: { holderType: "os" } },

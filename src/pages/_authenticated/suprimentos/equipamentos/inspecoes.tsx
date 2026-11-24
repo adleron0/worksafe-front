@@ -74,7 +74,7 @@ function TodoList({ onInspect }: { onInspect: (target: InspectionTarget) => void
   const units = data?.units ?? [], lots = data?.lots ?? [];
   return (
     <div className="mt-4 grid gap-4">
-      <section className="rounded-lg border overflow-hidden">
+      <section className="rounded-card border bg-card overflow-hidden">
         <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm">Peças ({units.length})</h2>
         {units.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhuma peça para inspecionar.</p>}
         {units.map((unit) => (
@@ -96,7 +96,7 @@ function TodoList({ onInspect }: { onInspect: (target: InspectionTarget) => void
         ))}
       </section>
       {lots.length > 0 && (
-        <section className="rounded-lg border overflow-hidden">
+        <section className="rounded-card border bg-card overflow-hidden">
           <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm">Lotes ({lots.length})</h2>
           {lots.map((lot) => (
             <div key={lot.id} className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 border-t text-sm">
@@ -125,19 +125,19 @@ function DoneList() {
   });
   return (
     <>
-      <div className="flex flex-col xl:flex-row gap-3 my-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row gap-3 my-4 p-4 rounded-card border bg-card">
         <div className="w-full xl:w-60"><Select name="result" options={INSPECTION_RESULTS} state={result} clearable modal={false} placeholder="Qualquer resultado" onChange={(_, value) => { setResult(String(value ?? "")); setPage(0); }} /></div>
       </div>
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-lg border overflow-hidden">
-          <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+        <div className="rounded-card border bg-card overflow-hidden">
+          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-28">Data</div><div className="flex-1">Peça ou lote</div><div className="w-36">Tipo</div><div className="w-48">Resultado</div><div className="w-48">Inspetor</div>
           </div>
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
           {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">Nenhuma inspeção registrada.</p>}
           {data?.rows.map((row) => (
-            <div key={row.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm">
+            <div key={row.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
               <div className="lg:w-28 tabular-nums">{dateBr(row.date)}</div>
               <div className="flex-1 min-w-0 lg:pr-4">
                 {row.unitId ? <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(row.unitId) }} className="hover:underline">{row.target}</Link> : row.target}

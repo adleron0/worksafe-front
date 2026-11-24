@@ -38,7 +38,7 @@ function ReportsPage() {
   };
 
   const block = (title: string, hint: string, children: React.ReactNode) => (
-    <section className="rounded-lg border p-4">
+    <section className="rounded-card border bg-card p-4">
       <h2 className="font-semibold">{title}</h2>
       <p className="text-xs text-muted-foreground">{hint}</p>
       <div className="mt-2">{children}</div>
@@ -57,7 +57,7 @@ function ReportsPage() {
         </div>
         <Button type="button" variant="outline" disabled={!data} onClick={exportCsv}><Icon name="download" className="w-4 h-4 mr-1" /> Exportar planilha</Button>
       </div>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 my-4 p-4 rounded-lg border">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 my-4 p-4 rounded-card border bg-card">
         <div className="w-full sm:w-44"><CalendarPicker mode="single" name="from" className="w-full" value={from} placeholder="De" fromYear={2020} toYear={2040} onValueChange={(_, v) => setFrom(String(v ?? ""))} /></div>
         <div className="w-full sm:w-44"><CalendarPicker mode="single" name="to" className="w-full" value={to} placeholder="Até" fromYear={2020} toYear={2040} onValueChange={(_, v) => setTo(String(v ?? ""))} /></div>
         {(from || to) && <Button type="button" variant="ghost" size="sm" onClick={() => { setFrom(""); setTo(""); }}>Últimos 30 dias</Button>}

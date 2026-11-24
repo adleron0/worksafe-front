@@ -408,7 +408,7 @@ function ThemesCard({ form, set, company, canEdit }: CardProps & { company: Mark
       <CardContent className="space-y-5">
         <div className="space-y-3">
           {temas.map((t) => (
-            <div key={t.id} className="rounded-lg border p-3 space-y-3">
+            <div key={t.id} className="rounded-card border bg-card p-3 space-y-3">
               <div className="flex items-center gap-2">
                 <Swatch name={t.name} bg={t.bg} accent={t.accent} />
                 <Input value={t.name} maxLength={40} disabled={!canEdit} onChange={(e) => update(t.id, { name: e.target.value })} className="h-8" />
@@ -477,7 +477,7 @@ function ImageList({ items, onChange, canEdit, dark }: { items: MarketingImage[]
   return (
     <div className="grid gap-2 grid-cols-2 sm:grid-cols-4">
       {items.map((item, i) => (
-        <div key={item.url} className="rounded-lg border overflow-hidden">
+        <div key={item.url} className="rounded-card border bg-card overflow-hidden">
           <div className={cn("h-20 flex items-center justify-center", dark ? "bg-neutral-900 p-2" : "bg-muted")}>
             <img src={item.url} alt="" className={cn("max-h-full max-w-full", dark ? "object-contain" : "h-full w-full object-cover")} />
           </div>
@@ -542,7 +542,7 @@ function PhotosCard({ form, set, canEdit }: CardProps) {
       <CardContent className="space-y-4">
         <ImageList items={own} onChange={(v) => set("fotos", v)} canEdit={canEdit} />
         {canEdit && <UploadButton label="Enviar fotos" multiple disabled={own.length >= 30} onDone={(files) => set("fotos", [...own, ...files].slice(0, 30))} />}
-        <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
+        <div className="flex items-center justify-between gap-3 rounded-card border bg-card p-3">
           <div>
             <p className="text-sm font-medium">Usar também as fotos que vêm com o sistema</p>
             <p className="text-xs text-muted-foreground">{PHOTO_BANK.length} fotos de treinamentos em altura e resgate.</p>

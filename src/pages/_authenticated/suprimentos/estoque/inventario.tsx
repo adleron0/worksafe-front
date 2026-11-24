@@ -44,8 +44,8 @@ function CountsPage() {
       </div>
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="mt-4 rounded-lg border overflow-hidden">
-          <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+        <div className="mt-4 rounded-card border bg-card overflow-hidden">
+          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-20">Nº</div><div className="flex-1">Local</div><div className="w-32">Situação</div><div className="w-40">Aberta em</div><div className="w-40 text-right">Contados</div><div className="w-32 text-right">Diferenças</div>
           </div>
           {isLoading && Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}

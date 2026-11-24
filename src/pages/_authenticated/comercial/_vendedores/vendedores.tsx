@@ -60,8 +60,8 @@ function SellersPage() {
         <Input name="search" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar por nome ou e-mail..." icon="search" />
       </div>
 
-      <div className="rounded-lg border overflow-hidden">
-        <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+      <div className="rounded-card border bg-card overflow-hidden">
+        <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
           <div className="flex-1">Vendedor</div>
           <div className="w-36 text-right">A pagar</div>
           <div className="w-36 text-right">A liberar</div>
@@ -104,7 +104,7 @@ function SellersPage() {
 }
 
 const Total = ({ label, value, hint, highlight }: { label: string; value?: number; hint: string; highlight?: boolean }) => (
-  <div className={cn("rounded-lg border p-4", highlight && "border-primary/50 bg-primary/5")}>
+  <div className={cn("rounded-card border bg-card p-4", highlight && "border-primary/50 bg-primary/5")}>
     <p className="text-xs text-muted-foreground">{label}</p>
     <p className={cn("text-2xl font-bold tabular-nums leading-tight mt-0.5", highlight && "text-primary")}>{value === undefined ? "—" : money(value)}</p>
     <p className="text-xs text-muted-foreground mt-1">{hint}</p>

@@ -72,7 +72,7 @@ export function AllocationMapView() {
 
   return (
     <>
-      <div className="mb-4 grid gap-3 rounded-lg border p-4 lg:grid-cols-[auto_1fr_auto] lg:items-end">
+      <div className="mb-4 grid gap-3 rounded-card border bg-card p-4 lg:grid-cols-[auto_1fr_auto] lg:items-end">
         <div>
           <Label className="text-xs">Dia</Label>
           <div className="mt-1 flex items-center gap-1">

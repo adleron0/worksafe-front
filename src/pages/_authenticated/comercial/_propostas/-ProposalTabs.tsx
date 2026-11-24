@@ -18,7 +18,7 @@ import {
 type SetDraft = (updater: (draft: ProposalDraft) => ProposalDraft) => void;
 
 const Card = ({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) => (
-  <section className="rounded-lg border p-4">
+  <section className="rounded-card border bg-card p-4">
     <h3 className="font-semibold">{title}</h3>
     {description && <p className="text-xs text-muted-foreground">{description}</p>}
     <div className="mt-3 grid gap-3">{children}</div>
@@ -265,7 +265,7 @@ export function ProposalPaymentTab({ draft, setDraft, calc, readOnly }: { draft:
       <ConfirmDialog open={Boolean(pending)} onOpenChange={(open) => { if (!open) setPending(null); }}
         title="Substituir as parcelas atuais?" description="As parcelas já montadas são trocadas pelas do atalho escolhido."
         onConfirm={() => { if (pending) setList(() => pending); setPending(null); }} />
-      <section className="rounded-lg border p-4">
+      <section className="rounded-card border bg-card p-4">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
           <div>
             <h3 className="font-semibold">Condições de pagamento</h3>
@@ -386,7 +386,7 @@ export function ProposalPaymentTab({ draft, setDraft, calc, readOnly }: { draft:
       )}
 
       {service && (
-        <section className="rounded-lg border p-4">
+        <section className="rounded-card border bg-card p-4">
           <h3 className="font-semibold">Caução contratual</h3>
           <p className="text-xs text-muted-foreground">Parte de cada nota fica retida pelo cliente e é paga no fim da obra. Deixe zero quando não houver.</p>
           <div className="mt-3 flex flex-col sm:flex-row gap-3">

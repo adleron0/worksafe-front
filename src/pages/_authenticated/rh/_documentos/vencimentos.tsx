@@ -57,7 +57,7 @@ function ExpiringPage() {
       <div className="my-4 grid sm:grid-cols-3 gap-3">
         {CARDS.map((card) => (
           <button key={card.id} type="button" aria-pressed={status === card.id} onClick={() => setStatus(status === card.id ? "" : card.id)}
-            className={cn("rounded-lg border p-4 text-left transition-colors hover:bg-muted/40", status === card.id && "border-primary bg-primary/5")}>
+            className={cn("rounded-card border bg-card p-4 text-left transition-colors hover:bg-muted/40", status === card.id && "border-primary bg-primary/5")}>
             <p className="flex items-center gap-2 text-sm text-muted-foreground"><Icon name={card.icon} className="w-4 h-4" /> {card.title}</p>
             <p className="mt-1 text-2xl font-bold tabular-nums">{data?.summary[card.id] ?? "—"}</p>
             <p className="text-xs text-muted-foreground">{card.hint}</p>
@@ -65,7 +65,7 @@ function ExpiringPage() {
         ))}
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 mb-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row xl:items-center gap-3 mb-4 p-4 rounded-card border bg-card">
         <div className="w-full xl:w-72">
           <Select name="typeId" state={typeId} clearable placeholder="Todos os tipos de documento" modal={false} options={data?.types ?? []} onChange={(_, value) => setTypeId(String(value ?? ""))} />
         </div>
@@ -76,8 +76,8 @@ function ExpiringPage() {
 
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-lg border overflow-hidden">
-          <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+        <div className="rounded-card border bg-card overflow-hidden">
+          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="flex-1">Funcionário</div>
             <div className="w-72">Documento</div>
             <div className="w-32">Situação</div>

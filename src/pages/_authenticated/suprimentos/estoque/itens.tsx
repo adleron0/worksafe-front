@@ -73,7 +73,7 @@ function ItemsPage() {
         </div>
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:flex-wrap xl:items-center gap-3 my-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row xl:flex-wrap xl:items-center gap-3 my-4 p-4 rounded-card border bg-card">
         <div className="w-full xl:w-72"><Input name="search" value={search} onValueChange={(_, value) => reset(setSearch)(String(value))} placeholder="Buscar por nome, código ou fabricante..." icon="search" /></div>
         <div className="w-full xl:w-56"><Select name="categoryId" searchable options={toOptions(options?.categories)} state={categoryId} clearable modal={false} placeholder="Todas as categorias" onChange={(_, value) => reset(setCategoryId)(String(value ?? ""))} /></div>
         <div className="w-full xl:w-44"><Select name="tracking" options={TRACKING_OPTIONS} state={tracking} clearable modal={false} placeholder="Qualquer forma de contar" onChange={(_, value) => reset(setTracking)(String(value ?? ""))} /></div>
@@ -88,8 +88,8 @@ function ItemsPage() {
 
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-lg border overflow-hidden">
-          <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+        <div className="rounded-card border bg-card overflow-hidden">
+          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-32">Código</div>
             <div className="flex-1">Item</div>
             <div className="w-32 text-right">Em estoque</div>

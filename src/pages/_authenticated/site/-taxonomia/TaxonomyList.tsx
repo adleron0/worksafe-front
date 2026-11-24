@@ -69,11 +69,11 @@ export default function TaxonomyList({ entity }: { entity: TaxonomyEntity }) {
         form={<TaxonomyForm key={formData?.id ?? "new"} formData={formData} openSheet={setOpenForm} entity={entity} />}
       />
 
-      <div className="space-y-2 mt-4">
+      <div className="mt-4 rounded-card border bg-card overflow-hidden">
         {isLoading ? (
           Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full" />)
         ) : isError ? (
-          <div className="w-full flex justify-center items-center font-medium text-destructive py-4 rounded border border-destructive">
+          <div className="w-full flex justify-center items-center text-sm font-medium text-destructive py-10">
             <p>Erro: {error?.response?.data?.message}</p>
           </div>
         ) : data?.rows?.length ? (
@@ -81,7 +81,7 @@ export default function TaxonomyList({ entity }: { entity: TaxonomyEntity }) {
             <TaxonomyItem key={item.id} item={item} index={i} entity={entity} setFormData={setFormData} setOpenForm={setOpenForm} />
           ))
         ) : (
-          <div className="w-full flex justify-center items-center font-medium text-primary py-4 rounded border border-primary">
+          <div className="w-full flex justify-center items-center text-sm text-muted-foreground py-10">
             <p>Nenhum{entity.article === "a" ? "a" : ""} {entity.name.toLowerCase()} cadastrad{entity.article}.</p>
           </div>
         )}

@@ -55,7 +55,7 @@ const TaxonomyItem = ({ item, index, entity, setFormData, setOpenForm }: ItemPro
         <div className="w-1/12 text-right">Ações</div>
       </HeaderRow>
 
-      <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
         <div className="w-full lg:w-6/12 pr-10 lg:pr-2">
           <h2 className="text-sm font-semibold">{item.name}</h2>
         </div>
@@ -76,7 +76,7 @@ const TaxonomyItem = ({ item, index, entity, setFormData, setOpenForm }: ItemPro
         <div className="absolute top-2 right-2 lg:static lg:w-1/12 flex justify-end">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button className="h-8 w-8 rounded-full p-0 text-gray-700 cursor-pointer" variant="outline" size="sm">
+              <Button className="h-8 w-8 rounded-lg p-0 border-transparent bg-transparent shadow-none text-muted-foreground hover:bg-muted text-gray-700 cursor-pointer" variant="outline" size="sm">
                 <Icon name="ellipsis-vertical" className="text-foreground dark:text-primary w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>

@@ -176,7 +176,7 @@ const SiteServicesItem = ({
       {/* Conteúdo do item */}
       <div
         {...(canOpen ? clickableRow(openClass) : {})}
-        className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full ${canOpen ? tailwindUtils.itemClickable : "border-b"}`}
+        className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full ${canOpen ? tailwindUtils.itemClickable : "border-b"}`}
       >
         {/* Badges com ScrollArea */}
         <div className="absolute -top-1 left-4 right-14 lg:right-auto lg:left-4">
@@ -186,7 +186,7 @@ const SiteServicesItem = ({
               <ResponsiveBadge
                 icon="asterisk"
                 text={item.openClass ? "Turma aberta" : "InCompany"}
-                colorClass="text-inverse-foreground bg-primary"
+                colorClass="text-primary-soft-foreground bg-primary-soft"
                 iconClassName="w-4 h-4"
               />
 
@@ -205,7 +205,7 @@ const SiteServicesItem = ({
                   icon="arrow-big-down-dash"
                   text={`Mínimo: ${item.minimumQuorum} alunos`}
                   shortText={item.minimumQuorum.toString()}
-                  colorClass="text-inverse-foreground bg-primary"
+                  colorClass="text-primary-soft-foreground bg-primary-soft"
                 />
               ): null}
 
@@ -223,7 +223,7 @@ const SiteServicesItem = ({
                     icon="arrow-big-up-dash"
                     text={`Máximo: ${item.maxSubscriptions} alunos`}
                     shortText={item.maxSubscriptions.toString()}
-                    colorClass="text-inverse-foreground bg-primary"
+                    colorClass="text-primary-soft-foreground bg-primary-soft"
                   />
                 )
               )}
@@ -233,7 +233,7 @@ const SiteServicesItem = ({
                 <ResponsiveBadge
                   icon="youtube"
                   text={`Curso online`}
-                  colorClass="text-inverse-foreground bg-primary"
+                  colorClass="text-primary-soft-foreground bg-primary-soft"
                 />
               )}
             </div>
@@ -359,7 +359,7 @@ const SiteServicesItem = ({
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
-                className="h-8 w-8 rounded-full p-0 text-gray-700"
+                className="h-8 w-8 rounded-lg p-0 border-transparent bg-transparent shadow-none text-muted-foreground hover:bg-muted text-gray-700"
                 variant="outline"
                 size="sm"
               >

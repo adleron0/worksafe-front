@@ -129,7 +129,7 @@ function SellerWalletPage() {
         <Figure label="Total gerado" value={money(wallet.generated)} hint={wallet.sales ? `${wallet.sales} venda(s) · média de ${money(wallet.averageCommission)}.` : "Nenhuma comissão liberada ainda."} />
       </div>
 
-      <section className="rounded-lg border p-4 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <section className="rounded-card border bg-card p-4 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <h2 className="text-sm font-semibold">Comissão nas propostas</h2>
           <p className="text-sm">
@@ -147,7 +147,7 @@ function SellerWalletPage() {
       </section>
 
       <div className="grid lg:grid-cols-2 gap-3 mb-4">
-        <section className="rounded-lg border p-4">
+        <section className="rounded-card border bg-card p-4">
           <h2 className="text-sm font-semibold">De onde veio</h2>
           <p className="text-xs text-muted-foreground">Comissões liberadas, por origem.</p>
           {split > 0 ? (
@@ -169,7 +169,7 @@ function SellerWalletPage() {
           ) : <p className="mt-3 text-sm text-muted-foreground">Ainda não há comissão liberada.</p>}
         </section>
 
-        <section className="rounded-lg border p-4">
+        <section className="rounded-card border bg-card p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold">Últimos 12 meses</h2>
@@ -196,7 +196,7 @@ function SellerWalletPage() {
         </section>
       </div>
 
-      <section className="rounded-lg border overflow-hidden">
+      <section className="rounded-card border bg-card overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center gap-3 p-4 border-b">
           <h2 className="font-semibold lg:mr-auto">Histórico</h2>
           <div className="flex flex-wrap rounded-md border overflow-hidden w-fit" role="tablist" aria-label="Tipo de lançamento">
@@ -231,7 +231,7 @@ function SellerWalletPage() {
         {entries?.rows.map((entry) => {
           const gone = entry.status === "cancelada" || entry.status === "estornado";
           return (
-            <div key={entry.id} className={cn("flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm", gone && "text-muted-foreground")}>
+            <div key={entry.id} className={cn("flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm", gone && "text-muted-foreground")}>
               <div className="lg:w-24 tabular-nums">{dateBr(entry.occurredAt)}</div>
               <div className="lg:w-28">
                 <p className="font-medium">{TYPE_LABEL[entry.type]}</p>
@@ -277,7 +277,7 @@ function SellerWalletPage() {
 }
 
 const Figure = ({ label, value, hint, highlight, negative }: { label: string; value: string; hint: string; highlight?: boolean; negative?: boolean }) => (
-  <div className={cn("rounded-lg border p-4", highlight && !negative && "border-primary/50 bg-primary/5")}>
+  <div className={cn("rounded-card border bg-card p-4", highlight && !negative && "border-primary/50 bg-primary/5")}>
     <p className="text-xs text-muted-foreground">{label}</p>
     <p className={cn("text-2xl font-bold tabular-nums leading-tight mt-0.5", highlight && !negative && "text-primary", negative && "text-destructive")}>{value}</p>
     <p className="text-xs text-muted-foreground mt-1">{hint}</p>

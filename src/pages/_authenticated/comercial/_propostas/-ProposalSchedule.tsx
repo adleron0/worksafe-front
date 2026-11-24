@@ -50,7 +50,7 @@ export default function ProposalSchedule({ schedule, onChange, kind, workDays, r
   }
 
   return (
-    <section className="@container rounded-lg border p-4 grid gap-3">
+    <section className="@container rounded-card border bg-card p-4 grid gap-3">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold">Cronograma</h3>

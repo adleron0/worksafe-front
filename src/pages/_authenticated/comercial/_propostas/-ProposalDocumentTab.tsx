@@ -108,7 +108,7 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
       <ConfirmDialog open={Boolean(pendingTemplate)} onOpenChange={(open) => { if (!open) setPendingTemplate(null); }}
         title={`Usar o modelo "${pendingTemplate?.name ?? ""}"?`} description="O texto próprio desta proposta é descartado e ela passa a acompanhar o modelo."
         onConfirm={() => { if (pendingTemplate) follow(pendingTemplate); setPendingTemplate(null); }} />
-      <section className="rounded-lg border p-4 grid gap-3">
+      <section className="rounded-card border bg-card p-4 grid gap-3">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div>
             <h3 className="font-semibold">Documento</h3>
@@ -212,7 +212,7 @@ export default function ProposalDocumentTab({ proposal, draft, setDraft, options
 export function ProposalHistory({ proposal }: { proposal: Proposal }) {
   if (!proposal.events.length) return null;
   return (
-        <section className="rounded-lg border p-4">
+        <section className="rounded-card border bg-card p-4">
         <h3 className="font-semibold">Histórico</h3>
         <ol className="mt-2 grid gap-2">
           {proposal.events.map((event) => (
@@ -246,7 +246,7 @@ export function LinkPanel({ proposal }: { proposal: Proposal }) {
   };
   const open = proposal.status === "enviada" || proposal.status === "visualizada";
   return (
-    <section className="rounded-lg border p-4 grid gap-2">
+    <section className="rounded-card border bg-card p-4 grid gap-2">
       <h3 className="font-semibold">Link do cliente</h3>
       <p className="text-xs text-muted-foreground">
         {open ? "Por este link o cliente lê a proposta, imprime e registra o aceite ou a recusa. " : "A proposta não está mais aberta para decisão; o link só mostra a situação. "}

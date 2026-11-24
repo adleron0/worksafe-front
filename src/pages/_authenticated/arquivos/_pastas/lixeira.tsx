@@ -57,15 +57,15 @@ function TrashPage() {
         <p className="text-sm text-muted-foreground">O que foi apagado dos Arquivos fica aqui por {days} dias e pode ser restaurado. Depois disso some de verdade.</p>
       </div>
 
-      {!canWrite && <p className="mt-4 p-4 rounded-lg border text-sm text-muted-foreground">Seu perfil só pode ver os arquivos; a lixeira é de quem pode enviar e apagar.</p>}
+      {!canWrite && <p className="mt-4 p-4 rounded-card border bg-card text-sm text-muted-foreground">Seu perfil só pode ver os arquivos; a lixeira é de quem pode enviar e apagar.</p>}
       {error && <p className="mt-4 p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {canWrite && isLoading && <Skeleton className="mt-4 h-32 w-full" />}
       {empty && <p className="mt-4 p-6 rounded-lg border text-sm text-muted-foreground">A lixeira está vazia.</p>}
 
       {data && !empty && (
-        <div className="mt-4 rounded-lg border overflow-hidden">
+        <div className="mt-4 rounded-card border bg-card overflow-hidden">
           {data.folders.map((folder) => (
-            <div key={`p${folder.id}`} className="flex flex-col lg:flex-row lg:items-center gap-2 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+            <div key={`p${folder.id}`} className="flex flex-col lg:flex-row lg:items-center gap-2 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
               <div className="flex flex-1 min-w-0 items-start gap-3">
                 <Icon name="folder" className="w-5 h-5 mt-0.5 shrink-0 text-muted-foreground" />
                 <div className="min-w-0">
@@ -78,7 +78,7 @@ function TrashPage() {
             </div>
           ))}
           {data.files.map((file) => (
-            <div key={file.id} className="flex flex-col lg:flex-row lg:items-center gap-2 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+            <div key={file.id} className="flex flex-col lg:flex-row lg:items-center gap-2 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
               <div className="flex flex-1 min-w-0 items-start gap-3">
                 <Icon name={fileIcon(file)} className="w-5 h-5 mt-0.5 shrink-0 text-muted-foreground" />
                 <div className="min-w-0">

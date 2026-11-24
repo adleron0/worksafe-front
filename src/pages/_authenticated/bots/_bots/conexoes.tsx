@@ -45,7 +45,7 @@ function ConnectionsPage() {
         <p className="text-sm text-muted-foreground">Use o sistema de dentro do Claude, do ChatGPT ou de outro app compatível com MCP, com a assinatura que você já tem. O app usa as mesmas ferramentas dos bots, com as suas permissões. O que sai para fora espera a sua confirmação em Bots → Ações pendentes.</p>
       </div>
       {can("usar_mcp") && info.data && (
-        <div className="rounded-lg border p-4 text-sm">
+        <div className="rounded-card border bg-card p-4 text-sm">
           {!info.data.enabled && <p className="mb-2 font-medium text-destructive">A conexão de apps de IA está desligada no servidor (MCP_ENABLED).</p>}
           <p className="font-medium">Endereço do conector</p>
           <div className="mt-1 flex items-center gap-2">

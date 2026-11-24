@@ -144,7 +144,7 @@ function ProposalsPage() {
   const rowMenu = (row: ProposalRow, onCard = false) => (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button className={onCard ? "h-6 w-6 p-0 shrink-0" : "h-8 w-8 rounded-full p-0"} variant={onCard ? "ghost" : "outline"} size="sm" aria-label={`Ações de ${row.number}`}>
+        <Button className={onCard ? "h-6 w-6 p-0 shrink-0" : "h-8 w-8 rounded-lg p-0 border-transparent bg-transparent shadow-none text-muted-foreground hover:bg-muted"} variant={onCard ? "ghost" : "outline"} size="sm" aria-label={`Ações de ${row.number}`}>
           <Icon name="ellipsis-vertical" className="w-3 h-3" />
         </Button>
       </DropdownMenuTrigger>
@@ -244,7 +244,7 @@ function ProposalsPage() {
         {kanban && <p className="mt-2 text-xs text-muted-foreground">No kanban cada situação é uma coluna. Para filtrar pelos cartões, use a visão em lista.</p>}
       </section>
 
-      <div role="search" aria-label="Filtros" className="flex flex-col lg:flex-row lg:items-center gap-3 my-4 p-3 rounded-lg border bg-muted/30">
+      <div role="search" aria-label="Filtros" className="flex flex-col lg:flex-row lg:items-center gap-3 my-4 p-3 rounded-card border bg-card bg-muted/30">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground shrink-0">
           <Icon name="sliders-horizontal" className="w-4 h-4" /> Filtros
         </div>
@@ -318,8 +318,8 @@ function ProposalsPage() {
         <p className="mt-3 text-xs text-muted-foreground">O kanban mostra as {KANBAN_LIMIT} propostas mais recentes de {data.total}. Use a busca, o tipo ou a visão em lista para chegar às demais.</p>
       )}
 
-      {!kanban && <div className="rounded-lg border overflow-hidden">
-        <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+      {!kanban && <div className="rounded-card border bg-card overflow-hidden">
+        <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
           <div className="w-40">Número</div>
           <div className="flex-1">Cliente e título</div>
           <div className="w-36">Criada</div>

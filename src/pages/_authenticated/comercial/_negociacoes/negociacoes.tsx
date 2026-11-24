@@ -51,7 +51,7 @@ function DealsPage() {
         {can(`create_${COMMERCIAL_ABILITY}`) && <Button type="button" onClick={() => setCreating(true)}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova negociação</Button>}
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-card border bg-card">
         <div className="flex flex-wrap rounded-md border overflow-hidden w-fit" role="tablist" aria-label="Situação">
           {FILTERS.map((filter) => (
             <button key={filter.value || "all"} type="button" role="tab" aria-selected={status === filter.value} onClick={() => setStatus(filter.value)}
@@ -73,7 +73,7 @@ function DealsPage() {
         <ul className="grid gap-2">
           {rows.map((row) => (
             <li key={row.id}>
-              <button type="button" onClick={() => open(row.id)} className={`w-full text-left rounded-lg border p-3 grid gap-2 md:grid-cols-[1fr_auto] md:items-center hover:bg-card ${tailwindUtils.cardClickable}`}>
+              <button type="button" onClick={() => open(row.id)} className={`w-full text-left rounded-card border bg-card p-3 grid gap-2 md:grid-cols-[1fr_auto] md:items-center hover:bg-card ${tailwindUtils.cardClickable}`}>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold tabular-nums">{row.number}</span>

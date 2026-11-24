@@ -4,7 +4,7 @@ const AreaItemSkeleton = () => {
   return (
     <>
       {/* Estrutura do Skeleton */}
-      <div className="shadow-sm rounded relative flex flex-col w-full border-b">
+      <div className="relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors flex flex-col w-full border-b">
         {/* imagem da área */}
         <div className="w-full flex items-center space-x-4">
           <Skeleton className="h-40 w-full" />

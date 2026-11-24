@@ -56,7 +56,7 @@ function AvailabilityPage() {
           <p className="text-sm text-muted-foreground">Cada peça alugável e onde ela estará nos próximos 60 dias. Clique numa locação para abrir.</p>
         </div>
       </div>
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-card border bg-card">
         <div className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">A partir de</span>
           <CalendarPicker mode="single" name="from" className="w-40" value={from} fromYear={2024} toYear={2040} onValueChange={(_, value) => { if (value) setFrom(String(value)); }} />

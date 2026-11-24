@@ -499,7 +499,7 @@ function CaptionPanel({ captions, values, situation }: { captions: { id: number;
           </Button>
         )}
       </div>
-      <div className="rounded-lg border p-3 space-y-2">
+      <div className="rounded-card border bg-card p-3 space-y-2">
         <p className="text-sm font-medium flex items-center gap-1.5">
           <Icon name="sparkles" className="w-4 h-4 text-primary" /> Reescrever com IA
         </p>

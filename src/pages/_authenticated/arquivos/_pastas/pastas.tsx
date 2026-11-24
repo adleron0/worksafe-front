@@ -52,7 +52,7 @@ function FileRow({ file, where, canWrite, canManage, onModal, onTrash, onPurgeVe
   const action = "h-8 w-8 p-0";
   const versions = file.versions ?? [];
   return (
-    <div className="px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+    <div className="px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
     <div className="flex flex-col lg:flex-row lg:items-center gap-2">
       <div className="flex flex-1 min-w-0 items-start gap-3">
         <Icon name={fileIcon(file)} className="w-5 h-5 mt-0.5 shrink-0 text-muted-foreground" />
@@ -238,7 +238,7 @@ function FoldersPage() {
       {error && <p className="mt-4 p-4 text-destructive font-medium">Erro: {errorMessage(error)} {pasta ? <Link to="/arquivos/pastas" search={{}} className="underline">Voltar para o início</Link> : null}</p>}
 
       {searching && (
-        <section className="mt-4 rounded-lg border overflow-hidden">
+        <section className="mt-4 rounded-card border bg-card overflow-hidden">
           <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
             <h2 className="font-semibold">Resultado da busca por "{term}"</h2>
             <Button type="button" variant="outline" size="sm" onClick={() => setTyped("")}><Icon name="x" className="w-3 h-3 mr-1" /> Limpar</Button>
@@ -260,7 +260,7 @@ function FoldersPage() {
       {!searching && !error && (isLoading || !data) && <div className="mt-4 grid gap-3"><Skeleton className="h-40 w-full" /><Skeleton className="h-32 w-full" /></div>}
 
       {!searching && data && atRoot && (
-        <section className="mt-4 rounded-lg border p-4">
+        <section className="mt-4 rounded-card border bg-card p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="font-semibold">Pastas</h2>
@@ -279,12 +279,12 @@ function FoldersPage() {
       )}
 
       {!searching && atRoot && !!byCustomer.data?.rows.length && (
-        <section className="mt-4 rounded-lg border p-4">
+        <section className="mt-4 rounded-card border bg-card p-4">
           <h2 className="font-semibold">Por cliente</h2>
           <p className="text-xs text-muted-foreground">Arquivos guardados no cliente, nas propostas e nas ordens de serviço. Eles abrem no próprio registro; aqui aparece só o que você pode ver.</p>
-          <div className="mt-3 rounded-lg border overflow-hidden">
+          <div className="mt-3 rounded-card border bg-card overflow-hidden">
             {byCustomer.data.rows.map((customer) => (
-              <div key={customer.id} className="px-4 py-3 border-b last:border-b-0 text-sm">
+              <div key={customer.id} className="px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
                 <p className="flex flex-wrap items-center gap-2 font-medium">
                   <Icon name="heart-handshake" className="w-4 h-4 text-muted-foreground" /> {customer.name}
                   {customer.files > 0 && <span className="text-xs font-normal text-muted-foreground">{filesText(customer.files)} no cadastro do cliente</span>}
@@ -310,7 +310,7 @@ function FoldersPage() {
 
       {!searching && data && folder && (
         <>
-          <section className="mt-4 rounded-lg border p-4">
+          <section className="mt-4 rounded-card border bg-card p-4">
             <Crumbs path={data.path} />
             <div className="mt-2 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
               <div className="min-w-0">
@@ -365,10 +365,10 @@ function FoldersPage() {
             </section>
           )}
 
-          <section className="mt-4 rounded-lg border overflow-hidden">
+          <section className="mt-4 rounded-card border bg-card overflow-hidden">
             {!data.folders.length && !data.files.length && <p className="p-6 text-sm text-muted-foreground">Pasta vazia.{canWrite ? " Arraste arquivos para cá ou crie uma pasta dentro dela." : ""}</p>}
             {data.folders.map((item) => (
-              <Link key={item.id} to="/arquivos/pastas" search={{ pasta: item.id }} className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+              <Link key={item.id} to="/arquivos/pastas" search={{ pasta: item.id }} className="flex items-center gap-3 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
                 <Icon name="folder" className="w-5 h-5 shrink-0 text-muted-foreground" />
                 <span className="flex-1 min-w-0 truncate font-medium">{item.name}</span>
                 {(item.status === "vencido" || item.status === "a_vencer") && <DocStatusBadge status={item.status} label={item.statusLabel} />}

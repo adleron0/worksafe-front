@@ -193,7 +193,7 @@ function ItemPage() {
     </div>
   );
   const flag = (key: "requiresInspection" | "hasLife" | "requiresCalibration" | "isPpe" | "rentable", label: string, hint: string, body: React.ReactNode) => (
-    <div className="rounded-lg border p-3 grid gap-3">
+    <div className="rounded-card border bg-card p-3 grid gap-3">
       <div className="flex items-start gap-2">
         <Checkbox id={key} className="mt-0.5" checked={draft[key]} disabled={!editable} onCheckedChange={(checked) => set(key, checked === true)} />
         <div><Label htmlFor={key}>{label}</Label><p className="text-xs text-muted-foreground">{hint}</p></div>
@@ -277,7 +277,7 @@ function ItemPage() {
                 </div>
               </section>
             )}
-            <section className="rounded-lg border p-4 grid gap-4">
+            <section className="rounded-card border bg-card p-4 grid gap-4">
               {!isNew && <p className="text-xs text-muted-foreground">Tipo: <span className="font-medium text-foreground">{ITEM_KINDS.find((option) => option.id === currentKind)?.name}</span> · {TRACKING_LABEL[draft.tracking]}</p>}
               <div className="grid sm:grid-cols-2 gap-4">
                 <div><Label htmlFor="name">Nome <span>*</span></Label>
@@ -314,7 +314,7 @@ function ItemPage() {
 
             {more && (
               <>
-                <section className="rounded-lg border p-4 grid gap-4">
+                <section className="rounded-card border bg-card p-4 grid gap-4">
                   <h2 className="font-semibold">Identificação</h2>
                   <div className="grid sm:grid-cols-3 gap-4">
                     <div><Label htmlFor="code">Código</Label>
@@ -328,7 +328,7 @@ function ItemPage() {
                     <Textarea id="description" className="mt-1" rows={2} maxLength={2000} disabled={!editable} value={draft.description} onChange={(event) => set("description", event.target.value)} /></div>
                 </section>
 
-                <section className="rounded-lg border p-4 grid gap-4">
+                <section className="rounded-card border bg-card p-4 grid gap-4">
                   <h2 className="font-semibold">Como contar e repor</h2>
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div><Label>Como contar</Label>
@@ -386,7 +386,7 @@ function ItemPage() {
                   ))}
                 </section>
 
-                <section className="rounded-lg border p-4">
+                <section className="rounded-card border bg-card p-4">
                   <Label htmlFor="notes">Observações</Label>
                   <Textarea id="notes" className="mt-1" rows={2} maxLength={1000} disabled={!editable} value={draft.notes} onChange={(event) => set("notes", event.target.value)} />
                 </section>
@@ -427,17 +427,17 @@ function ItemBalances({ item }: { item: ItemDetail }) {
   );
   return (
     <div className="grid lg:grid-cols-2 gap-4 items-start">
-      <section className="rounded-lg border p-4">
+      <section className="rounded-card border bg-card p-4">
         <h2 className="font-semibold">No estoque</h2>
         {list(inside, "Nenhum saldo nos locais de estoque.")}
       </section>
-      <section className="rounded-lg border p-4">
+      <section className="rounded-card border bg-card p-4">
         <h2 className="font-semibold">Fora do estoque</h2>
         <p className="text-xs text-muted-foreground">Em obras, com funcionários, em locação ou no fornecedor.</p>
         {list(outside, "Nada fora do estoque.")}
       </section>
       {item.lots.length > 0 && (
-        <section className="rounded-lg border p-4 lg:col-span-2">
+        <section className="rounded-card border bg-card p-4 lg:col-span-2">
           <h2 className="font-semibold">Lotes</h2>
           <ul className="mt-2 divide-y text-sm">
             {item.lots.map((lot) => (
@@ -464,7 +464,7 @@ function ItemKardex({ itemId, unit }: { itemId: number; unit: string }) {
   const rows = data?.rows ?? [];
   const seesCost = rows.some((row) => row.unitCost !== null);
   return (
-    <div className="rounded-lg border overflow-hidden">
+    <div className="rounded-card border bg-card overflow-hidden">
       <div className="hidden lg:flex items-center py-2 px-4 bg-muted/50 font-semibold text-xs">
         <div className="w-24">Data</div><div className="w-28">Número</div><div className="w-40">Tipo</div><div className="flex-1">De → para</div>
         <div className="w-28 text-right">Qtd.</div>{seesCost && <div className="w-28 text-right">Custo</div>}<div className="w-32 text-right">Saldo depois</div>
@@ -499,7 +499,7 @@ function ItemPurchases({ itemId }: { itemId: number }) {
   const rows = data ?? [];
   const seesPurchases = can("view_pedidos_de_compra");
   return (
-    <section className="rounded-lg border p-4">
+    <section className="rounded-card border bg-card p-4">
       <h2 className="font-semibold">Compras deste item</h2>
       <p className="text-xs text-muted-foreground">Pedidos de compra em que a linha foi ligada a este item: o histórico de preço.</p>
       {rows.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">Nenhum pedido de compra com este item.</p> : (
@@ -530,7 +530,7 @@ function ItemUnits({ itemId, onEnter }: { itemId: number; onEnter?: () => void }
   if (isLoading) return <Skeleton className="h-40 w-full" />;
   const rows = data?.rows ?? [];
   return (
-    <section className="rounded-lg border overflow-hidden">
+    <section className="rounded-card border bg-card overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 bg-muted/50">
         <h2 className="font-semibold text-sm">Peças ({data?.total ?? 0})</h2>
         <div className="flex gap-2">

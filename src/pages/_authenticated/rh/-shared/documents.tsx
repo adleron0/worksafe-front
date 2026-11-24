@@ -202,7 +202,7 @@ export function EmployeeDocuments({ employeeId }: { employeeId: number }) {
 
   return (
     <div className="grid gap-4">
-      <section className="rounded-lg border p-4">
+      <section className="rounded-card border bg-card p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="font-semibold">Pastas</h2>

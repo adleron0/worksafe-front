@@ -241,7 +241,7 @@ function PurchasePage() {
 
       <div className="grid xl:grid-cols-3 gap-4 items-start">
         <form onSubmit={submit} className="xl:col-span-2 grid gap-4">
-          <section className="rounded-lg border p-4 grid gap-4">
+          <section className="rounded-card border bg-card p-4 grid gap-4">
             <div>
               <Label htmlFor="title">O que será comprado <span>*</span></Label>
               <Input id="title" name="title" value={draft.title} maxLength={200} disabled={!editable} onValueChange={(_, value) => set("title", String(value))} className="mt-1" placeholder="Ex.: Cabo de aço e grampos para a linha de vida" />
@@ -296,7 +296,7 @@ function PurchasePage() {
             </div>
           </section>
 
-          <section className="rounded-lg border p-4">
+          <section className="rounded-card border bg-card p-4">
             <h2 className="font-semibold">Itens</h2>
             {hasStockLines && status === "comprado" && <p className="text-xs text-muted-foreground">As linhas ligadas a um item do estoque entram nele pelo "Receber itens".</p>}
             <div className="mt-3 grid gap-3">
@@ -346,7 +346,7 @@ function PurchasePage() {
             </div>
           </section>
 
-          <section className="rounded-lg border p-4">
+          <section className="rounded-card border bg-card p-4">
             <Label htmlFor="justification">Para que é (justificativa)</Label>
             <Textarea id="justification" className="mt-1" rows={3} maxLength={2000} disabled={!editable} value={draft.justification} onChange={(event) => set("justification", event.target.value)}
               placeholder="Ajuda quem vai aprovar a decidir" />
@@ -367,7 +367,7 @@ function PurchasePage() {
             {purchase.budget && <BudgetBox budget={purchase.budget} className="rounded-lg p-4" />}
 
             {(purchase.approvedBy || purchase.purchasedAt || purchase.receivedAt) && (
-              <section className="rounded-lg border p-4 text-sm grid gap-1">
+              <section className="rounded-card border bg-card p-4 text-sm grid gap-1">
                 <h2 className="font-semibold">Andamento</h2>
                 {purchase.approvedBy && <p><span className="text-muted-foreground">Aprovado por</span> {purchase.approvedBy}{purchase.approvedAt ? ` em ${new Date(purchase.approvedAt).toLocaleDateString("pt-BR")}` : ""}</p>}
                 {purchase.purchasedAt && <p><span className="text-muted-foreground">Comprado em</span> {dateBr(purchase.purchasedAt)}{purchase.paymentTerms ? ` · ${purchase.paymentTerms.count}x${purchase.paymentTerms.method ? ` · ${paymentMethodLabel(purchase.paymentTerms.method)}` : ""}` : ""}</p>}
@@ -378,7 +378,7 @@ function PurchasePage() {
             )}
 
             {purchase.payables.length > 0 && (
-              <section className="rounded-lg border p-4 text-sm">
+              <section className="rounded-card border bg-card p-4 text-sm">
                 <h2 className="font-semibold">Contas a pagar geradas</h2>
                 <ul className="mt-2 divide-y">
                   {purchase.payables.map((payable) => (
@@ -395,7 +395,7 @@ function PurchasePage() {
               </section>
             )}
 
-            <section className="rounded-lg border p-4 text-sm">
+            <section className="rounded-card border bg-card p-4 text-sm">
               <h2 className="font-semibold">Anexos</h2>
               {purchase.attachments.length === 0 && <p className="mt-1 text-muted-foreground">Nenhum anexo. Guarde aqui as cotações e, depois, a nota do fornecedor.</p>}
               <ul className="mt-2 grid gap-1">
@@ -418,7 +418,7 @@ function PurchasePage() {
               )}
             </section>
 
-            <section className="rounded-lg border p-4 text-sm">
+            <section className="rounded-card border bg-card p-4 text-sm">
               <h2 className="font-semibold">Histórico</h2>
               <ul className="mt-2 grid gap-2">
                 {purchase.events.map((event) => (

@@ -40,7 +40,7 @@ function AuditPage() {
         <p className="text-sm text-muted-foreground">Cada consulta e cada ação feita por um bot, por um app de IA conectado ou por um agendamento, com quem pediu. E quanto a IA custou neste mês.</p>
       </div>
       {usage.data && (
-        <div className="rounded-lg border p-4">
+        <div className="rounded-card border bg-card p-4">
           <div className="flex flex-wrap items-end gap-4">
             <div>
               <p className="text-xs text-muted-foreground">Gasto em {usage.data.month}</p>

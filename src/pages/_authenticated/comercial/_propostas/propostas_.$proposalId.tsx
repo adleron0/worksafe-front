@@ -441,7 +441,7 @@ function ProposalEditorPage() {
             <div className="grid gap-4">
               {proposal.publicKey && <LinkPanel proposal={proposal} />}
               {proposal.status === "rascunho" && (
-                <section className="rounded-lg border p-4 grid gap-3">
+                <section className="rounded-card border bg-card p-4 grid gap-3">
                   <h3 className="font-semibold">Antes de enviar</h3>
                   <ul className="grid gap-2">
                     {checks.map((check) => (

@@ -41,7 +41,7 @@ export function OrderStockPanel({ orderId }: { orderId: number }) {
   const consumables = data.atOrder.filter((row) => !row.returnable);
   const hasAnything = data.atOrder.length > 0 || data.units.length > 0;
   return (
-    <section className="rounded-lg border p-4">
+    <section className="rounded-card border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-semibold">Materiais e equipamentos</h2>
         {data.canMove && (

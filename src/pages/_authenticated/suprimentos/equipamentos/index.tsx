@@ -64,7 +64,7 @@ function UnitsPage() {
         <Button type="button" variant="outline" disabled={!rows.length} onClick={() => setPrinting(true)}><Icon name="qr-code" className="w-4 h-4 mr-1" /> {rows.length && data && data.total > rows.length ? `Imprimir etiquetas desta página (${rows.length})` : `Imprimir etiquetas${rows.length ? ` (${rows.length})` : ""}`}</Button>
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:flex-wrap xl:items-center gap-3 my-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row xl:flex-wrap xl:items-center gap-3 my-4 p-4 rounded-card border bg-card">
         <div className="w-full xl:w-72"><Input name="search" value={search} onValueChange={(_, value) => reset(setSearch)(String(value))} placeholder="Buscar por etiqueta, série ou item..." icon="search" /></div>
         <div className="w-full xl:w-52"><Select name="status" options={UNIT_STATUS_OPTIONS} state={status} clearable modal={false} placeholder="Todas (menos baixadas)" onChange={(_, value) => reset(setStatus)(String(value ?? ""))} /></div>
         <div className="w-full xl:w-52"><Select name="holderType" options={HOLDER_OPTIONS} state={holderType} clearable modal={false} placeholder="Em qualquer lugar" onChange={(_, value) => reset(setHolderType)(String(value ?? ""))} /></div>
@@ -77,8 +77,8 @@ function UnitsPage() {
 
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-lg border overflow-hidden">
-          <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+        <div className="rounded-card border bg-card overflow-hidden">
+          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-40">Etiqueta</div>
             <div className="flex-1">Item</div>
             <div className="w-44">Situação</div>

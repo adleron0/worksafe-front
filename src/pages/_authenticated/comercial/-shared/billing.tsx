@@ -159,7 +159,7 @@ export function CustomerOrderCard({ contractId, order, canEdit, onSaved }: { con
   const filled = Boolean(order?.number || order?.date || order?.fileUrl);
 
   return (
-    <section className="rounded-lg border p-4 text-sm" aria-label="Pedido do cliente">
+    <section className="rounded-card border bg-card p-4 text-sm" aria-label="Pedido do cliente">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="font-semibold text-base">Pedido do cliente</h2>

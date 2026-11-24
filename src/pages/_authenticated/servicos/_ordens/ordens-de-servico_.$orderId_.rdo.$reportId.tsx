@@ -60,7 +60,7 @@ function HoursInput({ value, onValue, ...props }: Omit<React.ComponentProps<type
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border p-4">
+    <section className="rounded-card border bg-card p-4">
       <h2 className="font-semibold">{title}</h2>
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
       <div className="mt-3 grid gap-3">{children}</div>

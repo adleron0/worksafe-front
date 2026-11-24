@@ -45,7 +45,7 @@ export function ActionCard({ action, onDone }: { action: PendingAction; onDone?:
   const pending = action.status === "pendente";
 
   return (
-    <div className={`rounded-lg border p-3 text-sm ${style.className}`}>
+    <div className={`rounded-card border bg-card p-3 text-sm ${style.className}`}>
       <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
         <Icon name={style.icon} className="h-4 w-4" />
         <span>{style.label}</span>

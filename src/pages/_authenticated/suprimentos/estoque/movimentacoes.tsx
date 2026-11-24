@@ -66,7 +66,7 @@ function MovementsPage() {
         </div>
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:flex-wrap xl:items-center gap-3 my-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row xl:flex-wrap xl:items-center gap-3 my-4 p-4 rounded-card border bg-card">
         <div className="w-full xl:w-56"><Select name="type" options={options?.movementTypes ?? []} state={type} clearable modal={false} placeholder="Todos os tipos" onChange={(_, value) => reset(setType)(String(value ?? ""))} /></div>
         <div className="w-full xl:w-72"><Input name="search" value={search} onValueChange={(_, value) => reset(setSearch)(String(value))} placeholder="Buscar por número, item ou observação..." icon="search" /></div>
         <div className="w-full xl:w-44"><CalendarPicker mode="single" name="from" className="w-full" value={from} placeholder="De" fromYear={2020} toYear={2040} onValueChange={(_, value) => reset(setFrom)(String(value ?? ""))} /></div>
@@ -76,8 +76,8 @@ function MovementsPage() {
 
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-lg border overflow-hidden">
-          <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+        <div className="rounded-card border bg-card overflow-hidden">
+          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-28">Data</div>
             <div className="w-32">Número</div>
             <div className="w-48">Tipo</div>
@@ -88,7 +88,7 @@ function MovementsPage() {
           {isLoading && Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
           {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">{type || search || from || to ? "Nenhuma movimentação com esses filtros." : "Nenhuma movimentação ainda."}</p>}
           {data?.rows.map((row) => (
-            <button key={row.id} type="button" onClick={() => setOpened(row.id)} className="w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+            <button key={row.id} type="button" onClick={() => setOpened(row.id)} className="w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
               <div className="lg:w-28 tabular-nums">{dateBr(row.date)}</div>
               <div className="lg:w-32 tabular-nums font-semibold">{row.number}</div>
               <div className="lg:w-48 flex flex-wrap items-center gap-1">{row.typeLabel} {row.reversed && <Pill tone="red">Estornada</Pill>}</div>

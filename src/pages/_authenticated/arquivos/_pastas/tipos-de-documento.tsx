@@ -56,9 +56,9 @@ function FileTypesPage() {
       {data && !data.rows.length && <p className="mt-4 p-6 rounded-lg border text-sm text-muted-foreground">Nenhum tipo de documento.</p>}
 
       {!!data?.rows.length && (
-        <section className="mt-4 rounded-lg border overflow-hidden">
+        <section className="mt-4 rounded-card border bg-card overflow-hidden">
           {data.rows.map((type) => (
-            <div key={type.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm">
+            <div key={type.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
               <div className="flex-1 min-w-0 font-medium">{type.name}</div>
               <div className="lg:w-72 text-muted-foreground">{type.expires ? `Vence${type.validityMonths ? ` em ${type.validityMonths} ${type.validityMonths === 1 ? "mês" : "meses"}` : ""} · aviso ${type.warnDays} dias antes` : "Não vence"}</div>
               <div className="lg:w-40">{type.required && <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">Obrigatório</span>}</div>
@@ -112,7 +112,7 @@ function TypeDialog({ type, onClose, onSaved }: { type?: FileType; onClose: () =
             <Input id="typeName" name="typeName" value={draft.name} maxLength={120} onValueChange={(_, value) => set("name", String(value))} className="mt-1" placeholder="Ex.: Licença ambiental" />
           </div>
 
-          <div className="grid gap-3 rounded-lg border p-3">
+          <div className="grid gap-3 rounded-card border bg-card p-3">
             <div className="flex items-center gap-2">
               <Checkbox id="expires" checked={draft.expires} onCheckedChange={(checked) => set("expires", checked === true)} />
               <Label htmlFor="expires">Tem data de vencimento</Label>
@@ -131,7 +131,7 @@ function TypeDialog({ type, onClose, onSaved }: { type?: FileType; onClose: () =
             )}
           </div>
 
-          <div className="flex items-start gap-2 rounded-lg border p-3">
+          <div className="flex items-start gap-2 rounded-card border bg-card p-3">
             <Checkbox id="required" className="mt-0.5" checked={draft.required} onCheckedChange={(checked) => set("required", checked === true)} />
             <Label htmlFor="required" className="leading-snug">Obrigatório: a empresa precisa ter um arquivo vigente deste tipo (aparece como "faltando" enquanto não tiver)</Label>
           </div>

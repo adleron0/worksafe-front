@@ -55,7 +55,7 @@ export default function ProposalImages({ images, setImages, readOnly }: Props) {
   });
 
   return (
-    <section className="rounded-lg border p-4 grid gap-3">
+    <section className="rounded-card border bg-card p-4 grid gap-3">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div>
           <h3 className="font-semibold">Imagens</h3>

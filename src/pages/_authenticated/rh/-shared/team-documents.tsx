@@ -44,7 +44,7 @@ export function TeamDocumentsPanel({ orderId, orderNumber }: { orderId: number; 
   const problems = data ? data.summary.vencido + data.summary.faltando + data.summary.vence_antes : 0;
 
   return (
-    <section className="min-w-0 rounded-lg border p-4">
+    <section className="min-w-0 rounded-card border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 className="font-semibold">Documentos da equipe</h2>

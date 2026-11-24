@@ -157,7 +157,7 @@ function ProposalPanel({ proposalId, createdBy }: { proposalId: number; createdB
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-[13rem_minmax(0,1fr)] items-start">
-        <aside className="grid gap-3 text-sm rounded-lg border p-3 md:sticky md:top-0" aria-label="Resumo da proposta">
+        <aside className="grid gap-3 text-sm rounded-card border bg-card p-3 md:sticky md:top-0" aria-label="Resumo da proposta">
           <Fact label="Contato">
             <p className="font-medium">{contactName ?? "—"}</p>
             {proposal.draft.contactEmail && <a href={`mailto:${proposal.draft.contactEmail}`} className="block truncate text-muted-foreground hover:underline">{proposal.draft.contactEmail}</a>}

@@ -85,7 +85,7 @@ export function CustomerContactsPanel({ customerId }: { customerId: number }) {
   });
 
   return (
-    <section className="rounded-lg border p-4">
+    <section className="rounded-card border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 className="font-semibold">Contatos</h2>

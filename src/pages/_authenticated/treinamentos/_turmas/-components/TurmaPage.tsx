@@ -725,7 +725,7 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
     ),
     pagina: (
       <div className="space-y-8">
-        <section className="rounded-lg border p-4 space-y-4">
+        <section className="rounded-card border bg-card p-4 space-y-4">
           <div>
             <h3 className="font-semibold">Foto e vídeo da turma</h3>
             <p className="text-xs text-muted-foreground">A foto aparece na lista de turmas e no topo da página. O vídeo é opcional.</p>

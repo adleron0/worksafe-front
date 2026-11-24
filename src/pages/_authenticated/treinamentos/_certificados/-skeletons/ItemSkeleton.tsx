@@ -14,7 +14,7 @@ const ItemSkeleton = ({ index }: { index: number }) => {
         <div className="w-1/12">Ações</div>
       </HeaderRow>
 
-      <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
         
         {/* Curso */}
         <div className="w-full lg:w-3/12 md:pr-2">

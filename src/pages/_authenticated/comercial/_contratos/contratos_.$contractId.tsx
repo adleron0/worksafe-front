@@ -127,7 +127,7 @@ function ContractPage() {
       <div className="grid xl:grid-cols-[minmax(0,1fr)_340px] gap-4 items-start">
         <div className="grid gap-4 min-w-0">
           {contract.billingMode === "periodo" && (
-            <section className="rounded-lg border p-4">
+            <section className="rounded-card border bg-card p-4">
               <h2 className="font-semibold">Ordens de locação e medições</h2>
               <p className="text-xs text-muted-foreground">Locação é cobrada por medição: cada período vencido, as avarias e o frete viram um boletim (BM) com a nota fiscal e a conta a receber. Prorrogar é só continuar faturando.</p>
               {(contract.rentals ?? []).length === 0 && <p className="mt-3 text-sm text-muted-foreground">Nenhuma ordem de locação nesta venda.</p>}
@@ -183,7 +183,7 @@ function ContractPage() {
             <WorkMeasurementsSection contract={contract} canUpdate={canUpdate} canBill={canBill} canUnbill={canUnbill} onDone={apply} />
           )}
 
-          {contract.billingMode !== "medicao" && (contract.billingMode !== "periodo" || contract.installments.length > 0) && <section className="rounded-lg border p-4">
+          {contract.billingMode !== "medicao" && (contract.billingMode !== "periodo" || contract.installments.length > 0) && <section className="rounded-card border bg-card p-4">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
               <div>
                 <h2 className="font-semibold">Parcelas</h2>
@@ -242,7 +242,7 @@ function ContractPage() {
           </section>}
 
           {contract.classes.length > 0 && (
-            <section className="rounded-lg border p-4">
+            <section className="rounded-card border bg-card p-4">
               <h2 className="font-semibold">Treinamentos do contrato</h2>
               <p className="text-xs text-muted-foreground">Cada item pode virar uma turma fechada (só do cliente) ou usar vagas de turmas abertas que já estão no site. Nos dois casos os alunos não pagam nada: quem cobra é esta venda, e o certificado sai com a empresa.</p>
               <div className="mt-2 divide-y">
@@ -281,7 +281,7 @@ function ContractPage() {
           )}
 
           {(contract.otherClasses?.length ?? 0) > 0 && (
-            <section className="rounded-lg border p-4">
+            <section className="rounded-card border bg-card p-4">
               <h2 className="font-semibold">Turmas ligadas a esta venda</h2>
               <p className="text-xs text-muted-foreground">Ligadas pela própria turma (venda rápida ou "ligar a uma venda"), fora dos itens acima.</p>
               <div className="mt-2 grid gap-1 text-sm">
@@ -296,7 +296,7 @@ function ContractPage() {
             </section>
           )}
 
-          <section className="rounded-lg border p-4 grid gap-3">
+          <section className="rounded-card border bg-card p-4 grid gap-3">
             <h2 className="font-semibold">Execução</h2>
             <div className="grid sm:grid-cols-2 gap-3">
               <div><Label className="text-xs">Início</Label>
@@ -316,7 +316,7 @@ function ContractPage() {
         <aside className="grid gap-4">
           <CustomerOrderCard contractId={contract.id} order={contract.customerOrder} canEdit={canUpdate} onSaved={apply} />
           <RetentionRatesCard contract={contract} canEdit={canUpdate} onSaved={apply} />
-          <section className="rounded-lg border p-4 text-sm grid gap-1">
+          <section className="rounded-card border bg-card p-4 text-sm grid gap-1">
             <h2 className="font-semibold text-base">Cliente</h2>
             <p className="font-medium">{contract.customer.corporateName}</p>
             <p className="text-muted-foreground">{docLabel(contract.customer.cnpj)} {formatCnpj(contract.customer.cnpj)}</p>
@@ -325,7 +325,7 @@ function ContractPage() {
               <p className="mt-2">Proposta <Link to="/comercial/propostas/$proposalId" params={{ proposalId: String(contract.proposal.id) }} className="underline font-medium">{contract.proposal.number}</Link></p>
             )}
           </section>
-          <section className="rounded-lg border p-4 text-sm grid gap-1">
+          <section className="rounded-card border bg-card p-4 text-sm grid gap-1">
             <h2 className="font-semibold text-base">Aceite</h2>
             <p>Em {dateTime(contract.acceptedAt)}</p>
             {signer?.manual ? (
@@ -452,7 +452,7 @@ function RetentionRatesCard({ contract, canEdit, onSaved }: { contract: Contract
     onError: (err) => toast({ title: "Não foi possível salvar", description: errorMessage(err), variant: "destructive" }),
   });
   return (
-    <section className="rounded-lg border p-4 text-sm" aria-label="Retenções do cliente">
+    <section className="rounded-card border bg-card p-4 text-sm" aria-label="Retenções do cliente">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="font-semibold text-base">Retenções do cliente</h2>

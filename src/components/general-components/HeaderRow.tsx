@@ -68,7 +68,7 @@ const HeaderRow: React.FC<HeaderRowProps> = ({
     return (
       <div
         className={cn(
-          "hidden lg:flex items-center justify-between py-2 px-4 w-full bg-inverse-foreground/50 rounded-t-lg border gap-3",
+          "hidden lg:flex items-center justify-between py-2.5 px-4 w-full bg-card border-b gap-3",
           className
         )}
       >
@@ -109,7 +109,7 @@ const HeaderRow: React.FC<HeaderRowProps> = ({
   return (
     <div
       className={cn(
-        "hidden lg:flex items-center justify-between py-2 px-4 w-full bg-inverse-foreground/50 rounded-t-lg font-semibold text-sm text-foreground/70 border",
+        "hidden lg:flex items-center justify-between py-2.5 px-4 w-full bg-card border-b font-semibold text-[12.5px] text-muted-foreground",
         className
       )}
     >
@@ -119,7 +119,7 @@ const HeaderRow: React.FC<HeaderRowProps> = ({
             checked={isIndeterminate ? "indeterminate" : allSelected}
             onCheckedChange={onSelectAll}
             aria-label="Selecionar todos os itens"
-            className="cursor-pointer data-[state=indeterminate]:bg-primary"
+            className="cursor-pointer"
           />
         </div>
       )}

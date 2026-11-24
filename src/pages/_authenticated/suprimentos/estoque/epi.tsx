@@ -100,11 +100,11 @@ function PpePage() {
 
         <TabsContent value="pendencias" className="mt-4">
           <p className="text-sm text-muted-foreground mb-3">Troca periódica vencida ou próxima, CA vencido nas mãos de alguém e desligados que ainda têm EPI ou equipamento.</p>
-          <div className="rounded-lg border overflow-hidden">
+          <div className="rounded-card border bg-card overflow-hidden">
             {pendingLoading && <Skeleton className="h-24 w-full" />}
             {!pendingLoading && !pendingCount && <p className="p-6 text-sm text-muted-foreground">Nenhuma pendência.</p>}
             {pending?.map((row, index) => (
-              <button key={index} type="button" onClick={() => { choose(row.employeeId); setTab("funcionarios"); }} className="w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-3 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+              <button key={index} type="button" onClick={() => { choose(row.employeeId); setTab("funcionarios"); }} className="w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-3 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
                 <div className="lg:w-40"><Pill tone={PENDING_TONE[row.kind]}>{row.label}</Pill></div>
                 <div className="lg:w-56 font-medium truncate">{row.employee}</div>
                 <div className="flex-1 min-w-0 truncate">{qty(row.quantity)} · {row.item}{row.tag ? ` (peça ${row.tag})` : ""}</div>

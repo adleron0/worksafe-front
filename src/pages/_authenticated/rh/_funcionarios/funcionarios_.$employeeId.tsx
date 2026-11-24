@@ -156,7 +156,7 @@ function EmployeePage() {
         <TabsContent value="dados" className="mt-4">
       <div className="grid xl:grid-cols-3 gap-4 items-start">
         <form onSubmit={submit} className="xl:col-span-2 grid gap-4">
-          <section className="rounded-lg border p-4 grid gap-4">
+          <section className="rounded-card border bg-card p-4 grid gap-4">
             <h2 className="font-semibold">Dados do funcionário</h2>
             <div className="grid sm:grid-cols-3 gap-4">
               <div className="sm:col-span-2">
@@ -185,7 +185,7 @@ function EmployeePage() {
             </div>
           </section>
 
-          <section className="rounded-lg border p-4 grid gap-4">
+          <section className="rounded-card border bg-card p-4 grid gap-4">
             <div>
               <h2 className="font-semibold">Funções</h2>
               <p className="text-xs text-muted-foreground">São as mesmas funções da base de cálculo do Comercial: é por elas que o custo de mão de obra da obra é calculado.</p>
@@ -204,7 +204,7 @@ function EmployeePage() {
             </div>
           </section>
 
-          <section className="rounded-lg border p-4 grid gap-4">
+          <section className="rounded-card border bg-card p-4 grid gap-4">
             <h2 className="font-semibold">Dados pessoais</h2>
             {!seesPersonal && <p className="text-sm text-muted-foreground">CPF, RG, nascimento, e-mail e contato de emergência só aparecem para quem tem a permissão de ver dados pessoais.</p>}
             {seesPersonal && (
@@ -242,7 +242,7 @@ function EmployeePage() {
             )}
           </section>
 
-          <section className="rounded-lg border p-4 grid gap-4">
+          <section className="rounded-card border bg-card p-4 grid gap-4">
             <div>
               <Label>Usuário do sistema</Label>
               <Select name="userId" options={users} state={draft.userId} disabled={!editable} clearable onChange={(_, value) => set("userId", String(value ?? ""))} placeholder="Não tem acesso ao sistema" />
@@ -264,9 +264,9 @@ function EmployeePage() {
         </form>
 
         <aside className="grid gap-4">
-          {isNew && <p className="rounded-lg border p-4 text-sm text-muted-foreground">Depois de cadastrar, o histórico (férias, afastamentos, advertências e desligamento) fica nesta coluna.</p>}
+          {isNew && <p className="rounded-card border bg-card p-4 text-sm text-muted-foreground">Depois de cadastrar, o histórico (férias, afastamentos, advertências e desligamento) fica nesta coluna.</p>}
           {employee && (
-            <section className="rounded-lg border p-4">
+            <section className="rounded-card border bg-card p-4">
               <div className="flex items-center justify-between gap-2">
                 <h2 className="font-semibold">Histórico</h2>
                 {employee.canWriteOccurrences && employee.status !== "desligado" && (

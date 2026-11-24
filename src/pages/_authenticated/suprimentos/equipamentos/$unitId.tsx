@@ -131,7 +131,7 @@ function UnitPage() {
               <TabsTrigger value="arquivos">Arquivos</TabsTrigger>
             </TabsList>
             <TabsContent value="dados" className="mt-4">
-              <form onSubmit={submit} className="rounded-lg border p-4 grid gap-4">
+              <form onSubmit={submit} className="rounded-card border bg-card p-4 grid gap-4">
                 <div className="grid sm:grid-cols-3 gap-4">
                   <div><Label htmlFor="tag">Etiqueta <span>*</span></Label>
                     <Input id="tag" name="tag" value={draft.tag} maxLength={40} disabled={!canUpdate} onValueChange={(_, value) => set("tag", String(value).toUpperCase())} className="mt-1" /></div>
@@ -160,7 +160,7 @@ function UnitPage() {
               </form>
             </TabsContent>
             <TabsContent value="historico" className="mt-4">
-              <section className="rounded-lg border p-4">
+              <section className="rounded-card border bg-card p-4">
                 {unit.timeline.length === 0 ? <p className="text-sm text-muted-foreground">Nada registrado ainda.</p> : (
                   <ol className="grid gap-3">
                     {unit.timeline.map((entry) => (
@@ -181,7 +181,7 @@ function UnitPage() {
               </section>
             </TabsContent>
             <TabsContent value="inspecoes" className="mt-4">
-              <section className="rounded-lg border p-4">
+              <section className="rounded-card border bg-card p-4">
                 {unit.inspections.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma inspeção registrada.</p> : (
                   <ul className="divide-y text-sm">
                     {unit.inspections.map((inspection) => (
@@ -202,7 +202,7 @@ function UnitPage() {
               </section>
             </TabsContent>
             <TabsContent value="servicos" className="mt-4">
-              <section className="rounded-lg border p-4">
+              <section className="rounded-card border bg-card p-4">
                 {unit.services.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma calibração ou manutenção registrada.</p> : (
                   <ul className="divide-y text-sm">
                     {unit.services.map((service) => (
@@ -223,7 +223,7 @@ function UnitPage() {
         </div>
 
         <div className="grid gap-4 order-first xl:order-none">
-          <section className="rounded-lg border p-4 text-sm grid gap-2">
+          <section className="rounded-card border bg-card p-4 text-sm grid gap-2">
             <h2 className="font-semibold">Situação</h2>
             <div className={cn("rounded-lg px-3 py-2.5 flex items-start gap-2 text-base font-semibold",
               exit.ok ? "bg-green-100 text-green-800 dark:bg-green-950/50 dark:text-green-300" : exit.out ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300" : "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300")}>
@@ -241,7 +241,7 @@ function UnitPage() {
           </section>
         </div>
         <div className="grid gap-4">
-          <section className="rounded-lg border p-4 text-sm grid gap-1">
+          <section className="rounded-card border bg-card p-4 text-sm grid gap-1">
             <h2 className="font-semibold">Origem</h2>
             <p><span className="text-muted-foreground">Adquirida em</span> {dateBr(unit.acquiredAt)}{unit.acquisitionCost !== null ? ` · ${money(unit.acquisitionCost)}` : ""}</p>
             {unit.lot && <p><span className="text-muted-foreground">Lote</span> {unit.lot.number}</p>}

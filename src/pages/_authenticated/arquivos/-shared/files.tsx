@@ -331,7 +331,7 @@ export function DetailsDialog({ file, types, onClose }: { file: FileInfo; types:
         <form onSubmit={submit} className="grid gap-4">
           {expiry.fields}
           {expiry.values.expiryDate && (
-            <div className="grid gap-2 rounded-lg border p-3">
+            <div className="grid gap-2 rounded-card border bg-card p-3">
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <Checkbox aria-label="Aviso próprio para este arquivo" checked={ownWarn} onCheckedChange={(checked) => setOwnWarn(checked === true)} />
                 <span>Aviso próprio para este arquivo (o padrão é o do tipo, ou 30 dias)</span>

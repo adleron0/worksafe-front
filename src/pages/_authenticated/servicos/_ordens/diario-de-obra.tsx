@@ -33,13 +33,13 @@ function DiaryPage() {
       {data && (
         <>
           <h2 className="mt-5 mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Obras em andamento</h2>
-          {data.running.length === 0 && <p className="rounded-lg border p-4 text-sm text-muted-foreground">Nenhuma obra em execução. O RDO é liberado quando a execução da ordem de serviço é iniciada.</p>}
+          {data.running.length === 0 && <p className="rounded-card border bg-card p-4 text-sm text-muted-foreground">Nenhuma obra em execução. O RDO é liberado quando a execução da ordem de serviço é iniciada.</p>}
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {data.running.map((order) => {
               const draft = order.todayReports.find((report) => report.status !== "fechado");
               const closed = order.todayReports.length > 0 && !draft;
               return (
-                <div key={order.id} {...clickableRow()} className={`rounded-lg border p-4 grid gap-2 hover:bg-card ${tailwindUtils.cardClickable}`}>
+                <div key={order.id} {...clickableRow()} className={`rounded-card border bg-card p-4 grid gap-2 hover:bg-card ${tailwindUtils.cardClickable}`}>
                   <div className="min-w-0">
                     <p className="font-medium truncate">{order.customer}</p>
                     <p className="text-sm text-muted-foreground truncate">

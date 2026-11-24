@@ -86,10 +86,10 @@ function VendaBox({ classId }: { classId: number }) {
     onError: fail,
   });
 
-  if (!can("list_comercial")) return <p className="rounded-lg border p-4 text-sm text-muted-foreground">Ver a venda da turma pede acesso ao Comercial.</p>;
+  if (!can("list_comercial")) return <p className="rounded-card border bg-card p-4 text-sm text-muted-foreground">Ver a venda da turma pede acesso ao Comercial.</p>;
   if (isLoading) return <Skeleton className="h-40 w-full" />;
-  if (error || !data) return <p className="rounded-lg border p-4 text-sm text-destructive">Não foi possível carregar: {errorMessage(error)}</p>;
-  if (!data.closed) return <p className="rounded-lg border p-4 text-sm text-muted-foreground">Turma aberta: o dinheiro vem das inscrições. Para vender a turma a um cliente, escolha o cliente no passo "Turma".</p>;
+  if (error || !data) return <p className="rounded-card border bg-card p-4 text-sm text-destructive">Não foi possível carregar: {errorMessage(error)}</p>;
+  if (!data.closed) return <p className="rounded-card border bg-card p-4 text-sm text-muted-foreground">Turma aberta: o dinheiro vem das inscrições. Para vender a turma a um cliente, escolha o cliente no passo "Turma".</p>;
 
   const billing = data.billing;
   const showForm = canEdit && (editing || !billing);
@@ -112,7 +112,7 @@ function VendaBox({ classId }: { classId: number }) {
         </section>
       )}
       {billing?.mode === "sem_cobranca" && (
-        <section className="rounded-lg border p-4">
+        <section className="rounded-card border bg-card p-4">
           <p className="text-sm font-medium flex items-center gap-1.5"><Icon name="gift" className="w-4 h-4" /> Sem cobrança</p>
           <p className="mt-1 text-sm">{billing.reason}</p>
           <p className="mt-1 text-xs text-muted-foreground">{[billing.user?.name, dateBr(billing.at)].filter(Boolean).join(" · ")}</p>
@@ -137,11 +137,11 @@ function VendaBox({ classId }: { classId: number }) {
         onConfirm={() => { setUnlinking(false); link.mutate({ mode: "nenhum" }, { onSuccess: () => done("Desfeito") }); }} />
 
       {showForm && (
-        <section className="rounded-lg border p-4 grid gap-4">
+        <section className="rounded-card border bg-card p-4 grid gap-4">
           <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="De onde vem o dinheiro">
             {choices.map((option) => (
               <button key={option.id} type="button" role="radio" aria-checked={choice === option.id} disabled={option.disabled} onClick={() => setChoice(option.id)}
-                className={cn("rounded-lg border p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                className={cn("rounded-card border bg-card p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50",
                   choice === option.id ? "border-primary bg-primary/5" : "hover:bg-muted")}>
                 <span className="flex items-center gap-1.5 text-sm font-medium"><Icon name={option.icon} className="w-4 h-4" /> {option.title}</span>
                 <span className="mt-0.5 block text-xs text-muted-foreground">{option.hint}</span>

@@ -39,29 +39,29 @@ function ResultsPage() {
       </div>
 
       <div className="my-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-lg border p-4">
+        <div className="rounded-card border bg-card p-4">
           <p className="text-xs text-muted-foreground">Receita das obras</p>
           <p className="text-xl font-semibold tabular-nums">{totals ? money(totals.budget.revenue) : "—"}</p>
           <p className="text-xs text-muted-foreground tabular-nums">{totals ? `${totals.orders} obra${totals.orders === 1 ? "" : "s"} · faturado ${money(totals.realized.revenue)}` : ""}</p>
         </div>
-        <div className="rounded-lg border p-4">
+        <div className="rounded-card border bg-card p-4">
           <p className="text-xs text-muted-foreground">Lucro orçado</p>
           <p className="text-xl font-semibold tabular-nums">{totals ? money(totals.budget.profit) : "—"}</p>
           <p className="text-xs">{totals && <MarginTag margin={totals.budget.margin} />}</p>
         </div>
-        <div className="rounded-lg border p-4">
+        <div className="rounded-card border bg-card p-4">
           <p className="text-xs text-muted-foreground">Lucro projetado</p>
           <p className={cn("text-xl font-semibold tabular-nums", totals && totals.projected.profit < 0 && "text-red-600 dark:text-red-400")}>{totals ? money(totals.projected.profit) : "—"}</p>
           <p className="text-xs">{totals && <MarginTag margin={totals.projected.margin} />}</p>
         </div>
-        <div className="rounded-lg border p-4">
+        <div className="rounded-card border bg-card p-4">
           <p className="text-xs text-muted-foreground">Abaixo do orçado</p>
           <p className={cn("text-xl font-semibold tabular-nums", totals && totals.below > 0 && "text-red-600 dark:text-red-400")}>{totals ? totals.below : "—"}</p>
           <p className="text-xs text-muted-foreground">{totals ? (totals.below === 1 ? "obra caminha para lucrar menos que o previsto" : "obras caminham para lucrar menos que o previsto") : ""}</p>
         </div>
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 mb-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row xl:items-center gap-3 mb-4 p-4 rounded-card border bg-card">
         <div className="w-full xl:w-64">
           <Select name="view" state={view} clearable placeholder="Todas as obras" modal={false} options={VIEWS} onChange={(_, value) => setView(String(value ?? ""))} />
         </div>
@@ -72,8 +72,8 @@ function ResultsPage() {
 
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-lg border overflow-hidden">
-          <div className="hidden lg:flex items-center gap-3 py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+        <div className="rounded-card border bg-card overflow-hidden">
+          <div className="hidden lg:flex items-center gap-3 py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="flex-[2]">Obra</div>
             <div className="flex-1">Etapa</div>
             <div className="flex-1 text-right">Receita</div>
@@ -83,7 +83,7 @@ function ResultsPage() {
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
           {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">Nenhuma obra aqui. As ordens de serviço nascem das propostas de serviço aceitas.</p>}
           {data?.rows.map((row) => (
-            <div key={row.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-3 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+            <div key={row.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-3 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
               <div className="lg:flex-[2] min-w-0">
                 <p className="font-medium truncate">{row.customer}</p>
                 <p className="text-xs text-muted-foreground truncate">

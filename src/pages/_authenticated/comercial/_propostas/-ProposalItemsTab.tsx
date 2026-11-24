@@ -87,12 +87,12 @@ export default function ProposalItemsTab({ draft, setSections, calc, options, re
       <ConfirmDialog open={Boolean(removing)} onOpenChange={(open) => { if (!open) setRemoving(null); }}
         title={`Remover a seção "${removing?.title ?? ""}"?`} description={`Os ${removing?.items.length ?? 0} item(ns) dela saem da proposta junto.`}
         onConfirm={() => { if (removing) removeSection(removing.uid); setRemoving(null); }} />
-      {draft.sections.length === 0 && <p className="rounded-lg border p-4 text-sm text-muted-foreground">Nenhuma seção. Adicione uma abaixo para começar a incluir itens.</p>}
+      {draft.sections.length === 0 && <p className="rounded-card border bg-card p-4 text-sm text-muted-foreground">Nenhuma seção. Adicione uma abaixo para começar a incluir itens.</p>}
       {draft.sections.map((section, s) => {
         const sectionCalc = calc?.sections[s];
         const labor = section.kind === "mao_de_obra", training = section.kind === "treinamento", rent = section.kind === "locacao_cliente";
         return (
-          <section key={section.uid} className="rounded-lg border overflow-hidden">
+          <section key={section.uid} className="rounded-card border bg-card overflow-hidden">
             <header className="flex flex-wrap items-center gap-x-3 gap-y-2 pl-3 pr-2 py-2 border-b bg-muted/50">
               <ShadInput value={section.title} maxLength={120} disabled={readOnly} aria-label="Título da seção"
                 className="flex-1 min-w-[140px] h-8 border-transparent bg-transparent shadow-none font-semibold px-1 hover:border-input focus-visible:bg-background disabled:opacity-100"

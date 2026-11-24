@@ -62,7 +62,7 @@ export default function SimulatorTab({ professionals, versions, defaults, headco
           Há alterações não salvas na base. O simulador usa a base salva: salve antes para simular com os valores novos.
         </p>
       )}
-      <section className="rounded-lg border p-4">
+      <section className="rounded-card border bg-card p-4">
         <h3 className="font-semibold">Serviço de exemplo</h3>
         <div className="mt-2 grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <div className="lg:col-span-2"><Label className="text-xs">Profissional</Label>
@@ -78,7 +78,7 @@ export default function SimulatorTab({ professionals, versions, defaults, headco
         </div>
       </section>
 
-      <section className="rounded-lg border p-4">
+      <section className="rounded-card border bg-card p-4">
         <h3 className="font-semibold">Cenário a comparar</h3>
         <p className="text-xs text-muted-foreground">Deixe em branco o que não quiser mudar.</p>
         <div className="mt-2 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -97,7 +97,7 @@ export default function SimulatorTab({ professionals, versions, defaults, headco
         </div>
       </section>
 
-      <section className="rounded-lg border p-4">
+      <section className="rounded-card border bg-card p-4">
         {(current.error || simulated.error) && <p className="text-sm text-destructive mb-2">{errorMessage(current.error ?? simulated.error)}</p>}
         {a && b ? (
           <div className={cn("overflow-x-auto", (current.isFetching || simulated.isFetching) && "opacity-60")}>

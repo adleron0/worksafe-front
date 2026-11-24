@@ -124,7 +124,7 @@ const Item = ({ item, index, entity }: ItemsProps) => {
     <>
       {/* Header apenas no primeiro item */}
       {index === 0 && (
-        <div className="hidden lg:flex items-center justify-between py-2 px-4 w-full bg-primary rounded-t-lg font-semibold text-sm text-inverse-foreground">
+        <div className="hidden lg:flex items-center justify-between py-2.5 border-b px-4 w-full font-semibold text-[12.5px] text-muted-foreground">
           <div className="w-4/12">Aluno</div>
           <div className="w-4/12">Avaliação</div>
           <div className="w-3/12">Exposição/status</div>
@@ -133,7 +133,7 @@ const Item = ({ item, index, entity }: ItemsProps) => {
       )}
 
       {/* Conteúdo do item */}
-      <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
         {/* Avatar e Nome */}
         <div className="w-full lg:w-4/12 flex items-center space-x-4 md:pr-2">
           <Avatar className="border rounded-md">
@@ -182,7 +182,7 @@ const Item = ({ item, index, entity }: ItemsProps) => {
             <DropdownMenu modal={true}>
               <DropdownMenuTrigger asChild>
                 <Button
-                  className="h-8 w-8 rounded-full p-0 text-gray-700 cursor-pointer"
+                  className="h-8 w-8 rounded-lg p-0 border-transparent bg-transparent shadow-none text-muted-foreground hover:bg-muted text-gray-700 cursor-pointer"
                   variant="outline"
                   size="sm">
                   <Icon name="ellipsis-vertical" className="text-foreground dark:text-primary w-3 h-3" />

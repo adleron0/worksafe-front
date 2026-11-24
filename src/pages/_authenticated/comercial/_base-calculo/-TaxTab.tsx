@@ -68,7 +68,7 @@ export default function TaxTab({ canCreate, canUpdate, canInactivate, canActivat
 
   return (
     <div className="grid gap-4">
-      <section className="rounded-lg border p-4">
+      <section className="rounded-card border bg-card p-4">
         <h3 className="font-semibold">Regime usado nos cálculos</h3>
         <p className="text-xs text-muted-foreground">Define o padrão para propostas novas. Trocar não altera o que já foi enviado.</p>
         <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-3">
@@ -87,7 +87,7 @@ export default function TaxTab({ canCreate, canUpdate, canInactivate, canActivat
         </div>
       </section>
 
-      <section className="rounded-lg border p-4">
+      <section className="rounded-card border bg-card p-4">
         <h3 className="font-semibold">Comparação lado a lado</h3>
         <p className="text-xs text-muted-foreground">O mesmo custo e a mesma margem nos dois regimes. A conversa com o comprador é sobre a última linha.</p>
         <div className="mt-3 flex flex-wrap items-end gap-3">
@@ -133,7 +133,7 @@ export default function TaxTab({ canCreate, canUpdate, canInactivate, canActivat
         </p>
       </section>
 
-      <section className="rounded-lg border p-4">
+      <section className="rounded-card border bg-card p-4">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
           <div>
             <h3 className="font-semibold">Perfis tributários</h3>
@@ -150,7 +150,7 @@ export default function TaxTab({ canCreate, canUpdate, canInactivate, canActivat
                   <p className="text-xs text-muted-foreground">{REGIME_LABEL[profile.regime]} · a partir de {dateBr(profile.effectiveFrom)}</p>
                 </div>
                 <div className="flex gap-1 flex-wrap justify-end">
-                  {profile.current && <span className="text-xs rounded bg-primary text-inverse-foreground px-1.5 py-0.5">Em uso</span>}
+                  {profile.current && <span className="text-xs rounded-chip bg-primary-soft text-primary-soft-foreground px-1.5 py-0.5 font-medium">Em uso</span>}
                   {profile.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Inativo</span>}
                 </div>
               </div>

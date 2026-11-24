@@ -100,7 +100,7 @@ function CountPage() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 my-4 p-4 rounded-lg border">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 my-4 p-4 rounded-card border bg-card">
         {open && (
           <form className="flex gap-2 w-full sm:w-80" onSubmit={(event) => { event.preventDefault(); if (tag.trim()) save({ tag: tag.trim() }); }}>
             <ShadInput ref={tagRef} autoFocus name="tag" value={tag} onChange={(event) => setTag(event.target.value)} placeholder="Digite ou bipe a etiqueta" aria-label="Etiqueta da peça" />

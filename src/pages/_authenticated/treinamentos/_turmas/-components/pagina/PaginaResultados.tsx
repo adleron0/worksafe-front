@@ -81,7 +81,7 @@ export default function PaginaResultados({ classId }: { classId: number }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+      <section className="rounded-card border bg-card p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div className="min-w-0">
           <p className="text-sm font-medium">
             {data.config.abTest
@@ -100,7 +100,7 @@ export default function PaginaResultados({ classId }: { classId: number }) {
       ) : (
         <>
           {rows.length > 1 && leader && (
-            <section className={cn("rounded-lg border p-4", enough ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30" : "border-amber-300 bg-amber-50 dark:bg-amber-950/30")}>
+            <section className={cn("rounded-card border bg-card p-4", enough ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30" : "border-amber-300 bg-amber-50 dark:bg-amber-950/30")}>
               <p className="text-sm font-medium">
                 {enough
                   ? `${layoutName(leader.layout)} tem ${pct(leader.chanceToBeBest, 0)} de chance de ser o melhor layout.`
@@ -114,7 +114,7 @@ export default function PaginaResultados({ classId }: { classId: number }) {
             </section>
           )}
 
-          <section className="rounded-lg border overflow-x-auto">
+          <section className="rounded-card border bg-card overflow-x-auto">
             <table className="w-full text-sm min-w-[760px]">
               <thead className="bg-muted/50 text-xs text-muted-foreground">
                 <tr>
@@ -158,7 +158,7 @@ export default function PaginaResultados({ classId }: { classId: number }) {
           </section>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <section className="rounded-lg border p-4">
+            <section className="rounded-card border bg-card p-4">
               <h3 className="text-sm font-medium mb-1">Até onde as pessoas chegam</h3>
               <p className="text-xs text-muted-foreground mb-3">Parte dos visitantes que viu cada bloco da página.</p>
               <div className="space-y-4">
@@ -180,7 +180,7 @@ export default function PaginaResultados({ classId }: { classId: number }) {
               </div>
             </section>
 
-            <section className="rounded-lg border p-4">
+            <section className="rounded-card border bg-card p-4">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <h3 className="text-sm font-medium">{segment === "source" ? "Por origem" : "Por aparelho"}</h3>
                 <div className="flex rounded-md bg-muted p-0.5 text-xs">

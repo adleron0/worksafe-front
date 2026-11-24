@@ -66,7 +66,7 @@ function ServicesPage() {
       {isLoading && <div className="mt-4 grid gap-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>}
       {data && (
         <div className="mt-4 grid gap-4">
-          <section className="rounded-lg border overflow-hidden">
+          <section className="rounded-card border bg-card overflow-hidden">
             <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm">Fora agora ({data.open.length})</h2>
             {data.open.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhuma peça fora para serviço.</p>}
             {data.open.map((service) => (
@@ -94,7 +94,7 @@ function ServicesPage() {
             ))}
           </section>
 
-          <section className="rounded-lg border overflow-hidden">
+          <section className="rounded-card border bg-card overflow-hidden">
             <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm">Calibração vencida ou a vencer ({data.due.length})</h2>
             {data.due.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhuma calibração vencendo nos próximos 60 dias.</p>}
             {data.due.map((unit) => (
@@ -113,7 +113,7 @@ function ServicesPage() {
             ))}
           </section>
 
-          <section className="rounded-lg border overflow-hidden">
+          <section className="rounded-card border bg-card overflow-hidden">
             <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm">Histórico</h2>
             {data.history.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nada ainda.</p>}
             {data.history.map((service) => (

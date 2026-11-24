@@ -57,7 +57,7 @@ export default function ClassPicker() {
           ))}
         </div>
       ) : !data?.length ? (
-        <div className="w-full flex justify-center items-center font-medium text-primary py-4 rounded border border-primary">
+        <div className="w-full flex justify-center items-center text-sm text-muted-foreground py-10">
           <p>Nenhuma turma encontrada.</p>
         </div>
       ) : (

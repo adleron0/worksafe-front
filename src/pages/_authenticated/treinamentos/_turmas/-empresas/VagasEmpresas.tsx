@@ -54,7 +54,7 @@ export default function VagasEmpresas({ classId, isClosed = false }: { classId: 
 
   if (isClosed) {
     return (
-      <div className="rounded-lg border p-4 text-sm text-muted-foreground">
+      <div className="rounded-card border bg-card p-4 text-sm text-muted-foreground">
         Turma fechada de um cliente: os alunos são todos dele e o certificado já sai com a empresa da turma. Vagas avulsas para empresas existem só em turma aberta.
       </div>
     );
@@ -63,7 +63,7 @@ export default function VagasEmpresas({ classId, isClosed = false }: { classId: 
   const seats = availability?.seats;
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border bg-card p-3">
         <div className="text-sm">
           <p className="font-medium">{seatsLabel(seats)}</p>
           {seats && (

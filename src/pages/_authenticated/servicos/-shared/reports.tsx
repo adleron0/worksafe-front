@@ -172,7 +172,7 @@ export function DiaryPanel({ orderId, canEdit }: { orderId: number; canEdit: boo
   const { data, isLoading, error } = useQuery({ queryKey: [DIARY_KEY, String(orderId)], queryFn: () => reportsApi.get<Diary>(`service-orders/${orderId}/reports`) });
   const summary = data?.summary;
   return (
-    <section className="rounded-lg border p-4" aria-label="Diário de obra">
+    <section className="rounded-card border bg-card p-4" aria-label="Diário de obra">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div>
           <h2 className="font-semibold">Diário de obra (RDO)</h2>

@@ -167,7 +167,7 @@ function DealPage() {
 
       <div className="mt-4 grid grid-cols-[minmax(0,1fr)] xl:grid-cols-3 gap-4 items-start">
         <div className="xl:col-span-2 grid grid-cols-[minmax(0,1fr)] gap-4 min-w-0">
-          <section className="rounded-lg border p-4">
+          <section className="rounded-card border bg-card p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="font-semibold">Propostas</h2>
               <p className="text-sm">Total: <span className="text-lg font-bold tabular-nums">{money(deal.total)}</span>{deal.won > 0 && <span className="text-muted-foreground"> · ganho {money(deal.won)}</span>}</p>
@@ -240,7 +240,7 @@ function DealPage() {
             )}
           </section>
 
-          <section className="rounded-lg border p-4 grid gap-4">
+          <section className="rounded-card border bg-card p-4 grid gap-4">
             <div>
               <h2 className="font-semibold">Desconto pelo fechamento conjunto</h2>
               <p className="text-xs text-muted-foreground">Opcional. O desconto é rateado entre as propostas e gravado em cada uma: o contrato e a nota já nascem com o valor certo. O desconto de cada proposta sozinha continua na própria proposta.</p>
@@ -332,7 +332,7 @@ function DealPage() {
         </div>
 
         <div className="grid grid-cols-[minmax(0,1fr)] gap-4 min-w-0">
-          <section className="rounded-lg border p-4 text-sm grid gap-3">
+          <section className="rounded-card border bg-card p-4 text-sm grid gap-3">
             <h2 className="font-semibold">Resumo</h2>
             <dl className="grid gap-1">
               <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Em aberto e ganhas</dt><dd className="tabular-nums">{live.length} de {deal.proposals.length}</dd></div>
@@ -349,7 +349,7 @@ function DealPage() {
             )}
           </section>
 
-          <section className="rounded-lg border p-4 text-sm">
+          <section className="rounded-card border bg-card p-4 text-sm">
             <div className="flex items-center justify-between gap-2">
               <h2 className="font-semibold">Acompanhamento</h2>
               <Link to="/comercial/acompanhamento" className="text-xs underline text-primary">Abrir</Link>

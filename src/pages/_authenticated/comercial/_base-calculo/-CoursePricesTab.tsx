@@ -12,7 +12,7 @@ const KEY = "commercialCoursePrices";
 export default function CoursePricesTab({ canUpdate }: { canUpdate: boolean }) {
   const { data, isLoading, error } = useQuery({ queryKey: [KEY], queryFn: () => commercialApi.get<CoursePrice[]>("course-prices") });
   return (
-    <section className="rounded-lg border p-4">
+    <section className="rounded-card border bg-card p-4">
       <h3 className="font-semibold">Preço de treinamento in company</h3>
       <p className="text-xs text-muted-foreground max-w-3xl">
         Valor sugerido nas propostas de treinamento. Com preço de turma: turmas × preço da turma + alunos além dos incluídos × preço por aluno.

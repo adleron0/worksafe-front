@@ -61,7 +61,7 @@ export function MeasurementPlanEditor({ plan, onChange, steps, values, readOnly 
   };
   return (
     <div className="grid gap-4">
-      <section className="rounded-lg border p-4" aria-label="Frentes da obra">
+      <section className="rounded-card border bg-card p-4" aria-label="Frentes da obra">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
           <div>
             <h3 className="font-semibold">Frentes da obra</h3>
@@ -106,7 +106,7 @@ export function MeasurementPlanEditor({ plan, onChange, steps, values, readOnly 
         </p>
       </section>
 
-      <section className="rounded-lg border p-4 grid gap-3" aria-label="Mobilização">
+      <section className="rounded-card border bg-card p-4 grid gap-3" aria-label="Mobilização">
         <div>
           <h3 className="font-semibold">Mobilização (medição inicial)</h3>
           <p className="text-xs text-muted-foreground">Um percentual fixo do contrato que sai no primeiro boletim, como uma medição qualquer: passa pelo A Faturar, vira nota e conta a receber, com retenções e caução. As frentes dividem o resto. Zero = sem mobilização.</p>
@@ -119,7 +119,7 @@ export function MeasurementPlanEditor({ plan, onChange, steps, values, readOnly 
         </div>
       </section>
 
-      <section className="rounded-lg border p-4 grid gap-3" aria-label="Caução contratual">
+      <section className="rounded-card border bg-card p-4 grid gap-3" aria-label="Caução contratual">
         <div>
           <h3 className="font-semibold">Caução contratual</h3>
           <p className="text-xs text-muted-foreground">Percentual que o cliente retém de cada boletim até o fim da obra. A caução acumulada vira uma conta a receber própria, para não sumir.</p>

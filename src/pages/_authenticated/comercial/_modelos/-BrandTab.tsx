@@ -23,7 +23,7 @@ interface Brand {
 const KEY = "commercialBrand";
 
 const Card = ({ title, description, children }: { title: string; description: string; children: React.ReactNode }) => (
-  <section className="rounded-lg border p-4">
+  <section className="rounded-card border bg-card p-4">
     <h3 className="font-semibold">{title}</h3>
     <p className="text-xs text-muted-foreground">{description}</p>
     <div className="mt-3 grid gap-3">{children}</div>

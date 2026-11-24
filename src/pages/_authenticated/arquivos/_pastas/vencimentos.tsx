@@ -59,7 +59,7 @@ function ExpiringPage() {
       <div className="my-4 grid sm:grid-cols-3 gap-3">
         {CARDS.map((card) => (
           <button key={card.id} type="button" aria-pressed={status === card.id} onClick={() => setStatus(status === card.id ? "" : card.id)}
-            className={cn("rounded-lg border p-4 text-left transition-colors hover:bg-muted/40", status === card.id && "border-primary bg-primary/5")}>
+            className={cn("rounded-card border bg-card p-4 text-left transition-colors hover:bg-muted/40", status === card.id && "border-primary bg-primary/5")}>
             <p className="flex items-center gap-2 text-sm text-muted-foreground"><Icon name={card.icon} className="w-4 h-4" /> {card.title}</p>
             <p className="mt-1 text-2xl font-bold tabular-nums">{data?.summary[card.id] ?? "—"}</p>
             <p className="text-xs text-muted-foreground">{card.hint}</p>
@@ -67,7 +67,7 @@ function ExpiringPage() {
         ))}
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 mb-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row xl:items-center gap-3 mb-4 p-4 rounded-card border bg-card">
         <div className="w-full xl:w-72">
           <Select name="typeId" state={typeId} clearable placeholder="Todos os tipos de documento" modal={false} options={(data?.types ?? []).map((type) => ({ id: type.id, name: type.name }))} onChange={(_, value) => setTypeId(String(value ?? ""))} />
         </div>
@@ -78,8 +78,8 @@ function ExpiringPage() {
 
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-lg border overflow-hidden">
-          <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+        <div className="rounded-card border bg-card overflow-hidden">
+          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="flex-1">Documento</div>
             <div className="w-72">Pasta</div>
             <div className="w-32">Situação</div>
@@ -89,7 +89,7 @@ function ExpiringPage() {
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
           {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
           {data?.rows.map((row) => (
-            <div key={row.key} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+            <div key={row.key} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
               <div className="flex-1 min-w-0 lg:pr-4">
                 <p className="font-medium truncate">{row.typeName ?? row.name}</p>
                 {row.typeName && row.fileId && <p className="text-xs text-muted-foreground truncate">{row.name}</p>}

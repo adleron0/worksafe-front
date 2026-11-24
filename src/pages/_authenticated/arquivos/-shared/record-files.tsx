@@ -88,7 +88,7 @@ export function RecordFilesPanel({ entity, entityId, title = "Arquivos", hint, c
   const action = "h-8 w-8 p-0";
   return (
     <section
-      className={cn("rounded-lg border p-4", dragging && "outline outline-2 outline-dashed outline-primary", className)}
+      className={cn("rounded-card border bg-card p-4", dragging && "outline outline-2 outline-dashed outline-primary", className)}
       onDragOver={(event) => { if (canWrite && event.dataTransfer.types.includes("Files")) { event.preventDefault(); setDragging(true); } }}
       onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false); }}
       onDrop={(event) => { if (!canWrite) return; event.preventDefault(); setDragging(false); send(Array.from(event.dataTransfer.files)); }}
@@ -123,7 +123,7 @@ export function RecordFilesPanel({ entity, entityId, title = "Arquivos", hint, c
       )}
 
       {!!data?.files.length && (
-        <div className="mt-3 rounded-lg border overflow-hidden">
+        <div className="mt-3 rounded-card border bg-card overflow-hidden">
           {data.files.map((file) => {
             const versions = file.versions ?? [];
             return (

@@ -295,7 +295,7 @@ export function TargetPurchasesPanel({ target, canRequest }: { target: PurchaseT
   });
   if (!data || (!data.rows.length && !(seesPurchases && canRequest))) return null;
   return (
-    <section className="rounded-lg border p-4 text-sm">
+    <section className="rounded-card border bg-card p-4 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-semibold">{text.title}</h2>
         {seesPurchases && canRequest && can(`create_${PURCHASES_ABILITY}`) && (
@@ -356,11 +356,11 @@ export function SaleResultPanel({ target }: { target: { kind: "ol" | "turma"; id
     enabled: can("view_custos_comercial"), retry: false,
   });
   if (!can("view_custos_comercial")) return null;
-  if (error) return <section className="rounded-lg border p-4 text-sm"><h2 className="font-semibold">Resultado</h2><p className="mt-2 text-destructive">{errorMessage(error)}</p></section>;
+  if (error) return <section className="rounded-card border bg-card p-4 text-sm"><h2 className="font-semibold">Resultado</h2><p className="mt-2 text-destructive">{errorMessage(error)}</p></section>;
   if (!data) return null;
   const { revenue, totals } = data;
   return (
-    <section className="rounded-lg border p-4 text-sm">
+    <section className="rounded-card border bg-card p-4 text-sm">
       <h2 className="font-semibold">Resultado</h2>
       <p className="text-xs text-muted-foreground">Uso interno. Receita = o que foi faturado{data.kind === "turma" ? " (inscrições pagas e a parte desta turma nas vendas ligadas)" : ""}; custo = pedidos de compra comprados, impostos e comissão.</p>
       <div className="mt-3 grid gap-2 grid-cols-2">

@@ -58,9 +58,9 @@ function LocationsPage() {
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {isLoading && <div className="grid gap-2">{Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>}
       {!isLoading && !error && (
-        <div className="rounded-lg border overflow-hidden">
+        <div className="rounded-card border bg-card overflow-hidden">
           {rows.map((row) => (
-            <div key={row.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm">
+            <div key={row.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
               <div className="flex-1 min-w-0">
                 <p className="font-medium flex items-center gap-2">{row.name} {!row.active && <Pill>Inativo</Pill>}</p>
                 {row.notes && <p className="text-xs text-muted-foreground truncate">{row.notes}</p>}

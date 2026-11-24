@@ -29,7 +29,7 @@ export default function ProfessionalsTab({ professionals, canCreate, canUpdate, 
   });
 
   return (
-    <section className="rounded-lg border p-4">
+    <section className="rounded-card border bg-card p-4">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
         <div>
           <h3 className="font-semibold">Profissionais</h3>

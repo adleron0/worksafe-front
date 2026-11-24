@@ -116,7 +116,7 @@ function TemplatesPage() {
           {templates.error && <p className="text-destructive text-sm">{errorMessage(templates.error)}</p>}
           <div className="grid lg:grid-cols-2 gap-3">
             {templates.data?.map((row) => (
-              <article key={row.id} className={cn("rounded-lg border p-4 grid gap-2", row.inactiveAt && "opacity-60")}>
+              <article key={row.id} className={cn("rounded-card border bg-card p-4 grid gap-2", row.inactiveAt && "opacity-60")}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-semibold">{row.name}</p>
@@ -125,7 +125,7 @@ function TemplatesPage() {
                     </p>
                   </div>
                   <div className="flex gap-1 flex-wrap justify-end">
-                    {row.isDefault && <span className="text-xs rounded bg-primary text-inverse-foreground px-1.5 py-0.5">Padrão</span>}
+                    {row.isDefault && <span className="text-xs rounded-chip bg-primary-soft text-primary-soft-foreground px-1.5 py-0.5 font-medium">Padrão</span>}
                     {row.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Inativo</span>}
                   </div>
                 </div>
@@ -148,7 +148,7 @@ function TemplatesPage() {
           {terms.isLoading && <Skeleton className="h-32 w-full" />}
           <div className="grid gap-3">
             {terms.data?.map((row) => (
-              <article key={row.id} className={cn("rounded-lg border p-4 grid gap-2", row.inactiveAt && "opacity-60")}>
+              <article key={row.id} className={cn("rounded-card border bg-card p-4 grid gap-2", row.inactiveAt && "opacity-60")}>
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-semibold">{row.title}{row.inactiveAt && <span className="ml-2 text-xs font-normal rounded bg-muted px-1.5 py-0.5">Inativo</span>}</p>
                   <span className="text-xs text-muted-foreground">{TERM_KINDS.find((k) => k.id === row.kind)?.name ?? row.kind}</span>

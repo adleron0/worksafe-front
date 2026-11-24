@@ -45,19 +45,19 @@ function SupplierList() {
         <h1 className="text-xl font-bold">Fornecedores</h1>
         <p className="text-sm text-muted-foreground">De quem a empresa compra. O cadastro rápido fica no pedido de compra; o completo, com dados bancários, em Financeiro → Fornecedores.</p>
       </div>
-      <div className="my-4 p-4 rounded-lg border">
+      <div className="my-4 p-4 rounded-card border bg-card">
         <div className="w-full xl:w-80"><Input name="search" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar por nome ou o que fornece..." icon="search" /></div>
       </div>
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="rounded-lg border overflow-hidden">
-          <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+        <div className="rounded-card border bg-card overflow-hidden">
+          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="flex-1">Fornecedor</div><div className="w-1/3">Contato</div>
           </div>
           {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
           {!isLoading && !rows.length && <p className="p-6 text-sm text-muted-foreground">Nenhum fornecedor encontrado.</p>}
           {rows.map((supplier) => (
-            <div key={supplier.id} className="flex flex-col lg:flex-row lg:items-center gap-1 px-4 py-3 border-b last:border-b-0 text-sm">
+            <div key={supplier.id} className="flex flex-col lg:flex-row lg:items-center gap-1 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
               <div className="flex-1 min-w-0">
                 <p className="font-medium">{supplier.name}</p>
                 <p className="text-xs text-muted-foreground">{[supplier.document && formatDocument(supplier.document), supplier.supplies].filter(Boolean).join(" · ") || "—"}</p>

@@ -51,7 +51,7 @@ export function RentalPeriodPanel({ draft, setDraft, readOnly, availability }: P
     ...d, sections: d.sections.map((section) => ({ ...section, items: section.items.map((item) => (item.type === "locacao_cliente" ? { ...item, extra: { ...item.extra, closed: value } } : item)) })),
   }));
   return (
-    <section className="rounded-lg border p-4 grid gap-3" aria-label="Período da locação">
+    <section className="rounded-card border bg-card p-4 grid gap-3" aria-label="Período da locação">
       <div>
         <h3 className="font-semibold">Período da locação</h3>
         <p className="text-xs text-muted-foreground">Vale para todos os equipamentos desta proposta. O período conta da entrega.</p>

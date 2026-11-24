@@ -54,7 +54,7 @@ function EmployeesPage() {
         {can(`create_${EMPLOYEES_ABILITY}`) && <Button onClick={() => open("novo")}><Icon name="plus" className="w-4 h-4 mr-1" /> Novo funcionário</Button>}
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-card border bg-card">
         <div className="w-full xl:w-60">
           <Select name="status" state={status} clearable placeholder={`Todos em atividade (${working})`} modal={false}
             options={(options?.statuses ?? []).map(({ id, name }) => ({ id, name: `${name} (${summary[id] ?? 0})` }))}
@@ -72,8 +72,8 @@ function EmployeesPage() {
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
 
       {!error && (
-        <div className="rounded-lg border overflow-hidden">
-          <div className="hidden xl:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+        <div className="rounded-card border bg-card overflow-hidden">
+          <div className="hidden xl:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="flex-1">Funcionário</div>
             <div className="w-64">Função</div>
             <div className="w-56">Situação</div>

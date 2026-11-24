@@ -315,7 +315,7 @@ const ListaPresenca = ({ classId, className, daysDuration = 1 }: ListaPresencaPr
 
   if (!can('view_classes')) {
     return (
-      <div className="w-full flex justify-center items-center font-medium text-destructive py-4 rounded border border-destructive">
+      <div className="w-full flex justify-center items-center text-sm font-medium text-destructive py-10">
         <p>Sem permissão para visualizar lista de presença</p>
       </div>
     );
@@ -327,7 +327,7 @@ const ListaPresenca = ({ classId, className, daysDuration = 1 }: ListaPresencaPr
 
   if (isErrorSubscriptions) {
     return (
-      <div className="w-full flex justify-center items-center font-medium text-destructive py-4 rounded border border-destructive">
+      <div className="w-full flex justify-center items-center text-sm font-medium text-destructive py-10">
         <p>Erro: {errorSubscriptions?.response?.data?.message || "Erro ao carregar inscrições"}</p>
       </div>
     );

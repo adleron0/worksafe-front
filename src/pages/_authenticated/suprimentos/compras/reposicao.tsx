@@ -63,8 +63,8 @@ function ReorderPage() {
 
       {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {!error && (
-        <div className="mt-4 rounded-lg border overflow-hidden">
-          <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+        <div className="mt-4 rounded-card border bg-card overflow-hidden">
+          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-10">
               <Checkbox aria-label="Marcar todos" checked={allChosen} className="border-inverse-foreground" onCheckedChange={(checked) => setChosen(Object.fromEntries(rows.map((row) => [row.id, checked === true])))} />
             </div>

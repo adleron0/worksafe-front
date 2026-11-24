@@ -88,7 +88,7 @@ function PurchasesPage() {
     return (
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
-          <Button className={onCard ? "h-6 w-6 p-0 shrink-0" : "h-8 w-8 rounded-full p-0"} variant={onCard ? "ghost" : "outline"} size="sm" aria-label={`Ações de ${row.number}`}>
+          <Button className={onCard ? "h-6 w-6 p-0 shrink-0" : "h-8 w-8 rounded-lg p-0 border-transparent bg-transparent shadow-none text-muted-foreground hover:bg-muted"} variant={onCard ? "ghost" : "outline"} size="sm" aria-label={`Ações de ${row.number}`}>
             <Icon name="ellipsis-vertical" className="w-3 h-3" />
           </Button>
         </DropdownMenuTrigger>
@@ -116,7 +116,7 @@ function PurchasesPage() {
         {can(`create_${PURCHASES_ABILITY}`) && <Button onClick={() => open("novo")}><Icon name="plus" className="w-4 h-4 mr-1" /> Novo pedido</Button>}
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-card border bg-card">
         <ViewToggle view={view} onChange={(next) => { changeView(next); setPage(0); }} />
         {!kanban && (
           <div className="w-full xl:w-60">
@@ -164,8 +164,8 @@ function PurchasesPage() {
       )}
 
       {!kanban && !error && (
-        <div className="rounded-lg border overflow-hidden">
-          <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+        <div className="rounded-card border bg-card overflow-hidden">
+          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-36">Número</div>
             <div className="flex-1">Pedido</div>
             <div className="w-40">Etapa</div>

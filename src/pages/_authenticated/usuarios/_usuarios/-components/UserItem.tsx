@@ -120,14 +120,14 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
       </HeaderRow>
 
       {/* Conteúdo do item */}
-      <div className={`${index % 2 === 0 ? "bg-background" : "bg-background/50"} shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b`}>
+      <div className={`bg-card relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b`}>
         {/* Badges com ScrollArea */}
         <div className="absolute -top-1 left-4 right-14 lg:right-auto lg:left-4 flex gap-1">
           { user.isSeller && (
               <ResponsiveBadge
                 icon="user-round-check"
                 text="Vendedor"
-                colorClass="text-inverse-foreground bg-primary"
+                colorClass="text-primary-soft-foreground bg-primary-soft"
               />
             )
           }
@@ -207,7 +207,7 @@ const UserItem = ({ user, index, setFormData, setFormType, setOpenForm }: UserIt
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button
-                  className="h-8 w-8 rounded-full p-0 text-gray-700"
+                  className="h-8 w-8 rounded-lg p-0 border-transparent bg-transparent shadow-none text-muted-foreground hover:bg-muted text-gray-700"
                   variant="outline"
                   size="sm">
                     <Icon name="ellipsis-vertical" className="text-foreground dark:text-primary w-3 h-3" />

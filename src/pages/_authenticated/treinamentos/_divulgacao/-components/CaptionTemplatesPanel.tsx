@@ -121,7 +121,7 @@ export default function CaptionTemplatesPanel({ canEdit }: { canEdit: boolean })
               type="button"
               onClick={() => select(t)}
               className={cn(
-                "w-full text-left rounded-lg border p-3 transition-colors",
+                "w-full text-left rounded-card border bg-card p-3 transition-colors",
                 selectedId === t.id ? "border-primary bg-primary/5" : "hover:bg-muted",
               )}
             >

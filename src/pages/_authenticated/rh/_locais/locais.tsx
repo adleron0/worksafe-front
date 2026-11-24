@@ -254,7 +254,7 @@ function CustomerPlaces({ canWrite }: { canWrite: boolean }) {
 
   return (
     <div className="grid gap-4">
-      <div className="flex flex-col gap-3 rounded-lg border p-4 xl:flex-row xl:items-center">
+      <div className="flex flex-col gap-3 rounded-card border bg-card p-4 xl:flex-row xl:items-center">
         <div className="w-full xl:w-80"><Input name="customerSearch" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar cliente..." icon="search" /></div>
         <div className="flex items-center gap-2">
           <Checkbox id="customerMissing" checked={missing} onCheckedChange={(checked) => setMissing(checked === true)} />

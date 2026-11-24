@@ -108,7 +108,7 @@ function CustomerPage() {
       </div>
 
       <div className="mt-4 grid gap-4">
-        <section className="rounded-lg border p-4">
+        <section className="rounded-card border bg-card p-4">
           <h2 className="font-semibold">Dados do cliente</h2>
           <p className="text-xs text-muted-foreground mb-3">
             {isNew ? "Comece pelo CNPJ: os dados da empresa vêm sozinhos. Depois de cadastrar, aparecem os contatos e os arquivos." : "Cadastro, endereço e classificação."}
@@ -131,7 +131,7 @@ function CustomerPage() {
         {!isNew && (
           <>
             <CustomerContactsPanel customerId={id} />
-            <section className="rounded-lg border p-4">
+            <section className="rounded-card border bg-card p-4">
               <RecordFilesPanel
                 entity="customer"
                 entityId={id}

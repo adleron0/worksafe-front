@@ -62,7 +62,7 @@ const Step8Page = ({ dataForm, setDataForm, classId }: StepProps) => {
   return (
     <div className="space-y-8">
       {/* ── Layout e teste A/B ─────────────────────────────────────────── */}
-      <section className="rounded-lg border p-4 space-y-4">
+      <section className="rounded-card border bg-card p-4 space-y-4">
         <div>
           <h3 className="font-semibold">Layout da página</h3>
           <p className="text-xs text-muted-foreground">
@@ -122,7 +122,7 @@ const Step8Page = ({ dataForm, setDataForm, classId }: StepProps) => {
       </section>
 
       {/* ── Chamada principal ──────────────────────────────────────────── */}
-      <section className="rounded-lg border p-4 space-y-3">
+      <section className="rounded-card border bg-card p-4 space-y-3">
         <h3 className="font-semibold">Chamada principal</h3>
         <p className="text-xs text-muted-foreground -mt-2">Sem título, a página usa o nome da turma. Sem subtítulo, usa a descrição.</p>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -140,7 +140,7 @@ const Step8Page = ({ dataForm, setDataForm, classId }: StepProps) => {
       />
 
       {/* ── Destaques ──────────────────────────────────────────────────── */}
-      <section className="rounded-lg border p-4 space-y-3">
+      <section className="rounded-card border bg-card p-4 space-y-3">
         <div>
           <h3 className="font-semibold">Destaques</h3>
           <p className="text-xs text-muted-foreground">Cartões com foto, título e texto. Ex.: onde a pessoa pode trabalhar, o que ela leva do curso.</p>
@@ -171,7 +171,7 @@ const Step8Page = ({ dataForm, setDataForm, classId }: StepProps) => {
       </section>
 
       {/* ── Formulário e confiança ─────────────────────────────────────── */}
-      <section className="rounded-lg border p-4 space-y-4">
+      <section className="rounded-card border bg-card p-4 space-y-4">
         <h3 className="font-semibold">Formulário e confiança</h3>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Pergunta no formulário (opcional)" placeholder="Seu nível" value={content.options?.label} onChange={(v) => setContent({ options: { items: content.options?.items ?? [], label: v } })} />
@@ -200,7 +200,7 @@ const Step8Page = ({ dataForm, setDataForm, classId }: StepProps) => {
       </section>
 
       {/* ── História ───────────────────────────────────────────────────── */}
-      <section className="rounded-lg border p-4 space-y-3">
+      <section className="rounded-card border bg-card p-4 space-y-3">
         <div>
           <h3 className="font-semibold">História</h3>
           <p className="text-xs text-muted-foreground">Um bloco de prova: quem vocês são, desde quando, por que confiar. Aparece no Impacto e na Narrativa.</p>
@@ -300,7 +300,7 @@ function Gallery({ images, onChange }: { images: { url: string; caption?: string
     onChange(next);
   };
   return (
-    <section className="rounded-lg border p-4 space-y-3">
+    <section className="rounded-card border bg-card p-4 space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div>
           <h3 className="font-semibold">Galeria</h3>

@@ -145,11 +145,11 @@ function List() {
         form={<Form formData={formData} openSheet={setOpenForm} entity={entity} />}
       />
 
-      <div className="space-y-2 mt-4">
+      <div className="mt-4 rounded-card border bg-card overflow-hidden">
         {isLoading
           ? skeletons.map((_, i) => <ItemSkeleton key={i} index={i} />)
           : isError
-            ? <div className="w-full flex justify-center items-center font-medium text-destructive py-4 rounded border border-destructive">
+            ? <div className="w-full flex justify-center items-center text-sm font-medium text-destructive py-10">
               <p>Erro: {error?.response?.data?.message}</p>
             </div>
             : data?.rows && data.rows.length > 0
@@ -164,7 +164,7 @@ function List() {
                 />
               ))
               : (
-                <div className="w-full flex justify-center items-center font-medium text-primary py-4 rounded border border-primary">
+                <div className="w-full flex justify-center items-center text-sm text-muted-foreground py-10">
                   <p>Nenhuma {entity.name} encontrada!</p>
                 </div>
               )

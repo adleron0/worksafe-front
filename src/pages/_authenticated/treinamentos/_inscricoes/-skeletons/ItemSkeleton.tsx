@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const ItemSkeleton = () => {
   return (
-    <div className="flex items-center justify-between p-4 w-full border-b bg-background/50">
+    <div className="flex items-center justify-between px-4 py-3 w-full border-b bg-background/50">
       <div className="flex items-center space-x-4 w-full">
         {/* Avatar Skeleton */}
         <Skeleton className="h-10 w-10 rounded-full" />

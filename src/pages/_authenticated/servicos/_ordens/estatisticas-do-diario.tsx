@@ -36,7 +36,7 @@ const OCCURRENCE_NAME = Object.fromEntries(OCCURRENCE_OPTIONS.map((option) => [o
 
 function Card({ title, value, detail, alert }: { title: string; value: string; detail?: string; alert?: boolean }) {
   return (
-    <div className="rounded-lg border p-4">
+    <div className="rounded-card border bg-card p-4">
       <p className="text-xs text-muted-foreground">{title}</p>
       <p className={cn("text-xl font-semibold tabular-nums", alert && "text-red-600 dark:text-red-400")}>{value}</p>
       {detail && <p className="text-xs text-muted-foreground tabular-nums">{detail}</p>}
@@ -45,7 +45,7 @@ function Card({ title, value, detail, alert }: { title: string; value: string; d
 }
 function Block({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border p-4">
+    <section className="rounded-card border bg-card p-4">
       <h2 className="font-semibold">{title}</h2>
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
       <div className="mt-3">{children}</div>
@@ -99,7 +99,7 @@ function DiaryStatsPage() {
         <p className="text-sm text-muted-foreground">O que os RDOs do período dizem: jornada, presenças e horas, saídas antecipadas, clima, condição da frente de trabalho e paradas.</p>
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:items-end gap-3 my-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row xl:items-end gap-3 my-4 p-4 rounded-card border bg-card">
         <div className="w-full xl:w-44"><p className="text-xs text-muted-foreground mb-1">De</p>
           <CalendarPicker mode="single" name="statsFrom" className="w-full" value={from} fromYear={2024} toYear={2040} onValueChange={(_, value) => setFrom(String(value ?? "") || from)} /></div>
         <div className="w-full xl:w-44"><p className="text-xs text-muted-foreground mb-1">Até</p>

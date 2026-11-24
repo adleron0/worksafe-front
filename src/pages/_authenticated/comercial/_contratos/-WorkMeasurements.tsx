@@ -78,7 +78,7 @@ export function WorkMeasurementsSection({ contract, canUpdate, canBill, canUnbil
   const s: WorkSummary = works.summary;
 
   return (
-    <section className="rounded-lg border p-4" aria-label="Medição de obra">
+    <section className="rounded-card border bg-card p-4" aria-label="Medição de obra">
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
         <div>
           <h2 className="font-semibold">Medição de obra</h2>

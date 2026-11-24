@@ -74,7 +74,7 @@ function ProvidersCard({ config }: { config: BotsConfig }) {
   const { can } = useVerify();
   const [keysOpen, setKeysOpen] = useState(false);
   return (
-    <div className="rounded-lg border p-4 text-sm">
+    <div className="rounded-card border bg-card p-4 text-sm">
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-medium">Fornecedores de IA:</span>
         {config.providers.map((provider) => (
@@ -173,7 +173,7 @@ function ModelForAllCard({ config }: { config: BotsConfig }) {
     onError: (error) => toast({ title: "Não foi possível trocar", description: errorMessage(error), variant: "destructive" }),
   });
   return (
-    <div className="rounded-lg border p-4 text-sm">
+    <div className="rounded-card border bg-card p-4 text-sm">
       <Label>Modelo de todos os bots</Label>
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-1">
@@ -353,7 +353,7 @@ function BotEditor({ bot, config, isNew, onCreated, onCancel, onArchived }: { bo
   const byRisk = (risk: CatalogTool["risk"]) => config.tools.filter((tool) => tool.risk === risk && (area === "todas" || toolArea(tool) === area) && (!onlyChecked || draft.tools.includes(tool.name)));
 
   return (
-    <div className="grid min-w-0 gap-4 rounded-lg border p-4">
+    <div className="grid min-w-0 gap-4 rounded-card border bg-card p-4">
       <div className="flex flex-wrap items-center gap-3">
         <BotAvatar look={draft.avatar} size={44} />
         <h2 className="flex-1 font-semibold">

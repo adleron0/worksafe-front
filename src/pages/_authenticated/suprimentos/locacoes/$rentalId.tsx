@@ -222,7 +222,7 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
 
       <div className="grid xl:grid-cols-3 gap-4 items-start">
         <form onSubmit={submit} className="xl:col-span-2 grid gap-4">
-          <section className="rounded-lg border p-4 grid gap-4">
+          <section className="rounded-card border bg-card p-4 grid gap-4">
             <div className="grid gap-4">
               <div><Label>Cliente <span>*</span></Label>
                 <Select name="customerId" searchable options={options?.customers ?? []} state={draft.customerId} disabled={!editable || !reserved || !!rental?.fromContract} onChange={(_, value) => set("customerId", String(value ?? ""))} placeholder="Escolha o cliente" /></div>
@@ -246,7 +246,7 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
             </div>
           </section>
 
-          <section className="rounded-lg border p-4">
+          <section className="rounded-card border bg-card p-4">
             <h2 className="font-semibold">O que vai</h2>
             {rental && !reserved ? (
               <ul className="mt-2 divide-y text-sm">
@@ -308,7 +308,7 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
             {reserved && <p className="mt-1 text-xs text-muted-foreground">Peça rastreada vai uma por linha. A peça pode ser escolhida agora (reserva) ou na entrega.</p>}
           </section>
 
-          <section className="rounded-lg border p-4 grid gap-4">
+          <section className="rounded-card border bg-card p-4 grid gap-4">
             <button type="button" className="w-fit text-sm font-semibold inline-flex items-center gap-1 text-left" aria-expanded={details} onClick={() => setDetails((value) => !value)}>
               <Icon name={details ? "chevron-up" : "chevron-down"} className="w-4 h-4 shrink-0" /> Mais detalhes
               <span className="font-normal text-muted-foreground">(endereço, caução, responsável, condições, observações)</span>
@@ -341,7 +341,7 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
 
         {rental && (
           <div className="grid gap-4">
-            <section className="rounded-lg border p-4 text-sm grid gap-1">
+            <section className="rounded-card border bg-card p-4 text-sm grid gap-1">
               <h2 className="font-semibold">Andamento</h2>
               {rental.deliveredAt && <p><span className="text-muted-foreground">Entregue em</span> {dateBr(rental.deliveredAt)}</p>}
               {rental.returnedAt && <p><span className="text-muted-foreground">Devolvida em</span> {dateBr(rental.returnedAt)}</p>}
@@ -354,7 +354,7 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
             </section>
 
             {rental.fromContract && (
-              <section className="rounded-lg border p-4 text-sm">
+              <section className="rounded-card border bg-card p-4 text-sm">
                 <div className="flex items-center justify-between gap-2">
                   <h2 className="font-semibold">A faturar</h2>
                   {rental.pending.length > 0 && <span className="font-semibold tabular-nums">{money(rental.pendingValue)}</span>}
@@ -389,7 +389,7 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
             )}
 
             {rental.depositState && (
-              <section className="rounded-lg border p-4 text-sm grid gap-1">
+              <section className="rounded-card border bg-card p-4 text-sm grid gap-1">
                 <h2 className="font-semibold">Caução</h2>
                 <p><span className="text-muted-foreground">Valor</span> <span className="tabular-nums">{money(rental.depositState.value)}</span> · {rental.depositState.received ? "recebida" : "aguardando o pagamento (Contas a Receber)"}</p>
                 {rental.depositState.abated > 0 && <p><span className="text-muted-foreground">Abatida</span> <span className="tabular-nums">{money(rental.depositState.abated)}</span></p>}
@@ -399,7 +399,7 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
             )}
 
             {rental.reminders.length > 0 && (
-              <section className="rounded-lg border p-4 text-sm">
+              <section className="rounded-card border bg-card p-4 text-sm">
                 <h2 className="font-semibold">Lembretes no acompanhamento</h2>
                 <ul className="mt-2 grid gap-1.5">
                   {rental.reminders.map((reminder) => (
@@ -409,7 +409,7 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
               </section>
             )}
 
-            <section className="rounded-lg border p-4 text-sm">
+            <section className="rounded-card border bg-card p-4 text-sm">
               <h2 className="font-semibold">Cobranças</h2>
               {rental.charges.length === 0 ? <p className="mt-1 text-muted-foreground">Nenhuma cobrança ainda.</p> : (
                 <ul className="mt-2 divide-y">
@@ -433,7 +433,7 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
             </section>
 
             {rental.movements.length > 0 && (
-              <section className="rounded-lg border p-4 text-sm">
+              <section className="rounded-card border bg-card p-4 text-sm">
                 <h2 className="font-semibold">Movimentações do estoque</h2>
                 <ul className="mt-2 divide-y">
                   {rental.movements.map((movement) => (
@@ -454,7 +454,7 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
             <TargetPurchasesPanel target={{ kind: "ol", id: rental.id }} canRequest={rental.status !== "cancelada" && rental.status !== "encerrada"} />
             <SaleResultPanel target={{ kind: "ol", id: rental.id }} />
 
-            <section className="rounded-lg border p-4 text-sm">
+            <section className="rounded-card border bg-card p-4 text-sm">
               <h2 className="font-semibold">Histórico</h2>
               <ul className="mt-2 grid gap-2">
                 {rental.events.map((event) => (

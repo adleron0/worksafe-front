@@ -14,7 +14,7 @@ const ItemSkeleton = ({ index }: { index: number }) => {
       </HeaderRow>
 
       {/* Estrutura do Skeleton */}
-      <div className="shadow-sm rounded relative gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between p-4 w-full border-b space-y-4 lg:space-y-0">
+      <div className="relative border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors gap-2 lg:gap-0 flex flex-col lg:flex-row lg:items-center justify-between px-4 py-3 w-full border-b space-y-4 lg:space-y-0">
         {/* Avatar e Nome */}
         <div className="w-full lg:w-4/12 flex items-center space-x-4">
           <Skeleton className="h-12 w-12 rounded-md" />

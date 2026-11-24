@@ -63,7 +63,7 @@ function DocumentTypesPage() {
         const rows = data.rows.filter((type) => type.folder === folder.id);
         if (!rows.length) return null;
         return (
-          <section key={folder.id} className="mt-4 rounded-lg border overflow-hidden">
+          <section key={folder.id} className="mt-4 rounded-card border bg-card overflow-hidden">
             <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm flex items-center gap-2"><Icon name="folder" className="w-4 h-4" /> {folder.name}</h2>
             {rows.map((type) => (
               <div key={type.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-t text-sm">
@@ -133,7 +133,7 @@ function TypeDialog({ type, options, onClose, onSaved }: { type?: DocType; optio
             </div>
           </div>
 
-          <div className="grid gap-3 rounded-lg border p-3">
+          <div className="grid gap-3 rounded-card border bg-card p-3">
             <div className="flex items-center gap-2">
               <Checkbox id="expires" checked={draft.expires} onCheckedChange={(checked) => set("expires", checked === true)} />
               <Label htmlFor="expires">Tem data de vencimento</Label>
@@ -152,7 +152,7 @@ function TypeDialog({ type, options, onClose, onSaved }: { type?: DocType; optio
             )}
           </div>
 
-          <div className="grid gap-3 rounded-lg border p-3">
+          <div className="grid gap-3 rounded-card border bg-card p-3">
             <div className="flex items-center gap-2">
               <Checkbox id="required" checked={draft.required} onCheckedChange={(checked) => set("required", checked === true)} />
               <Label htmlFor="required">Obrigatório (aparece como "faltando" enquanto não for enviado)</Label>

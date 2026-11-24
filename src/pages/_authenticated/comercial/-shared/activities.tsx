@@ -375,7 +375,7 @@ export function ActivityPanel({ proposalId, customerId, canEdit, defaultContact,
   const pending = data?.rows.filter((row) => row.status === "pendente") ?? [];
   const done = data?.rows.filter((row) => row.status === "feita") ?? [];
   return (
-    <section className={cn(!bare && "rounded-lg border p-4 bg-background")} aria-label="Acompanhamento">
+    <section className={cn(!bare && "rounded-card border bg-card p-4 bg-background")} aria-label="Acompanhamento">
       <div className={cn("flex flex-col justify-between gap-3", !compact && "sm:flex-row sm:items-start")}>
         {!bare && (
           <div>

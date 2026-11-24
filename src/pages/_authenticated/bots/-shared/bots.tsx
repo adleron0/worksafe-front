@@ -24,7 +24,9 @@ export interface CatalogModel {
   id: string; provider: string; providerLabel: string; label: string; note: string; recommended: boolean; available: boolean;
   price: { input: number; output: number; cached: number }; perThousand: number; upcoming: { from: string; perThousand: number } | null;
 }
-export interface BotsConfig { bots: BotFull[]; providers: ProviderStatus[]; models: CatalogModel[]; tools: CatalogTool[]; enabled: boolean }
+export interface PersonalityProfile { id: string; label: string; fit: string; why: string }
+export interface PersonalityTrait { key: string; label: string; low: string; high: string; text: Record<string, string> }
+export interface BotsConfig { bots: BotFull[]; providers: ProviderStatus[]; models: CatalogModel[]; tools: CatalogTool[]; enabled: boolean; personalities?: { profiles: PersonalityProfile[]; traits: PersonalityTrait[] } }
 
 export interface TeamMember extends Bot {
   status: "trabalhando" | "aguardando" | "disponivel" | "sem_chave";

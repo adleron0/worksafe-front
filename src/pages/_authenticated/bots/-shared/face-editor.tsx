@@ -1,9 +1,9 @@
 import { useState, type ReactNode } from "react";
-import { ACCESSORIES, BotAvatar, BotStatus, COLORS, EYES, MOODS, PRESETS, SHAPES, STATUS_TEXT, encodeFace, parseFace, type Face } from "./avatar";
+import { ACCESSORIES, BotAvatar, BotStatus, COLORS, EYES, PRESETS, SHAPES, STATUS_TEXT, encodeFace, parseFace, type Face } from "./avatar";
 
 /**
  * Mini-editor do rosto, do tamanho da antiga fileira de rostos: abas (modelo,
- * forma, cor, acessório, olhos, jeito) com botões pequenos e a prévia animada ao
+ * forma, cor, acessório, olhos) com botões pequenos e a prévia animada ao
  * lado. Clicar na prévia troca o estado (disponível, trabalhando...). Guarda a
  * chave do modelo, se a combinação for igual a um, ou "r:forma.cor.acessorio.olhos.jeito".
  */
@@ -15,7 +15,6 @@ const TABS = [
   { id: "cor", label: "Cor" },
   { id: "acessorio", label: "Acessório" },
   { id: "olhos", label: "Olhos" },
-  { id: "jeito", label: "Jeito" },
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
 
@@ -36,14 +35,14 @@ export function FaceEditor({ value, onChange }: { value: string; onChange: (valu
   const [status, setStatus] = useState<BotStatus>("disponivel");
   const set = (part: Partial<Face>) => onChange(encodeFace({ ...face, ...part }));
   const look = (part: Partial<Face>) => encodeFace({ ...face, ...part });
-  const presetKey = Object.keys(PRESETS).find((key) => key === value);
+  // o modelo pronto vale pelo desenho; a personalidade é escolhida à parte
+  const presetKey = Object.keys(PRESETS).find((key) => { const p = PRESETS[key]; return p.shape === face.shape && p.color === face.color && p.accessory === face.accessory && p.eyes === face.eyes; });
   const current: Record<Tab, string> = {
     modelo: presetKey ? PRESETS[presetKey].label : "Montado",
     forma: SHAPES[face.shape].label,
     cor: COLORS[face.color].label,
     acessorio: ACCESSORIES[face.accessory].label,
     olhos: EYES[face.eyes].label,
-    jeito: `${MOODS[face.mood].label}: ${MOODS[face.mood].hint.toLowerCase()}`,
   };
   const thumb = (part: Partial<Face>) => <BotAvatar look={look(part)} size={30} still />;
 
@@ -71,7 +70,7 @@ export function FaceEditor({ value, onChange }: { value: string; onChange: (valu
         </div>
         <div className="mt-2 flex flex-wrap gap-1">
           {tab === "modelo" && Object.entries(PRESETS).map(([key, preset]) => (
-            <Small key={key} selected={presetKey === key} label={`Modelo ${preset.label}`} onClick={() => onChange(key)}><BotAvatar look={key} size={30} still /></Small>
+            <Small key={key} selected={presetKey === key} label={`Modelo ${preset.label}`} onClick={() => onChange(encodeFace({ ...parseFace(key), mood: face.mood }))}><BotAvatar look={key} size={30} still /></Small>
           ))}
           {tab === "forma" && Object.entries(SHAPES).map(([key, shape]) => (
             <Small key={key} selected={face.shape === key} label={`Forma ${shape.label}`} onClick={() => set({ shape: key })}>{thumb({ shape: key, accessory: "nenhum" })}</Small>
@@ -86,9 +85,6 @@ export function FaceEditor({ value, onChange }: { value: string; onChange: (valu
           ))}
           {tab === "olhos" && Object.entries(EYES).map(([key, eyes]) => (
             <Small key={key} selected={face.eyes === key} label={`Olhos ${eyes.label}`} onClick={() => set({ eyes: key })}>{thumb({ eyes: key, accessory: "nenhum" })}</Small>
-          ))}
-          {tab === "jeito" && Object.entries(MOODS).map(([key, mood]) => (
-            <Small key={key} selected={face.mood === key} label={`Jeito ${mood.label}`} onClick={() => set({ mood: key })}><span className="px-2">{mood.label}</span></Small>
           ))}
         </div>
       </div>

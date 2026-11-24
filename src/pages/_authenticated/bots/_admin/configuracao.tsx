@@ -17,6 +17,7 @@ import Select from "@/components/general-components/Select";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import { BotAvatar } from "../-shared/avatar";
 import { FaceEditor } from "../-shared/face-editor";
+import { PersonalityPicker } from "../-shared/personality-picker";
 import { BOTS_KEY, BotFull, BotsConfig, CatalogModel, CatalogTool, RISK_CLASS, RISK_LABEL, STATUS_KEY, TEAM_KEY, aiApi, dateTimeBr } from "../-shared/bots";
 import api from "@/services/api";
 
@@ -367,6 +368,11 @@ function BotEditor({ bot, config, isNew, onCreated, onCancel, onArchived }: { bo
         <div className="md:col-span-2">
           <Label>Rosto</Label>
           <div className="mt-1"><FaceEditor value={draft.avatar} onChange={(value) => set("avatar", value)} /></div>
+        </div>
+        <div className="md:col-span-2">
+          <Label>Personalidade de trabalho</Label>
+          <p className="mb-2 text-xs text-muted-foreground">Baseada nos Cinco Grandes Fatores (Big Five), o modelo de personalidade mais estudado. Muda o tom e o capricho das respostas e o jeito de o rosto se mexer; nunca as regras nem as permissões.</p>
+          <PersonalityPicker value={draft.avatar} config={config} onChange={(value) => set("avatar", value)} />
         </div>
         <div><Label htmlFor="botName">Área</Label><Input id="botName" name="botName" className="mt-1" value={draft.name} maxLength={80} onValueChange={(_, value) => set("name", String(value))} placeholder="Ex.: Compras" /></div>
         <div><Label htmlFor="botDescription">Descrição</Label><Input id="botDescription" name="botDescription" className="mt-1" value={draft.description} maxLength={300} onValueChange={(_, value) => set("description", String(value))} placeholder="O que ele faz, em uma linha (os colegas leem isto)" /></div>

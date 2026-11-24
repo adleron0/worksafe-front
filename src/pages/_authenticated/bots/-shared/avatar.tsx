@@ -154,28 +154,58 @@ export const EYES: Record<string, { label: string; lashes: boolean; cheeks: bool
   cb: { label: "Cílios e bochechas", lashes: true, cheeks: true },
 };
 
-/** Jeito de se mexer: velocidade, tamanho dos olhares e das inclinações. */
+/** Jeito de se mexer, que sai da personalidade de trabalho (Big Five). */
 export type Personality = { speed: number; look: number; tilt: number; bounce: number; down: number };
-export const MOODS: Record<string, Personality & { label: string; hint: string }> = {
-  calma: { label: "Calma", hint: "Respira devagar, olha pouco em volta", speed: 1.6, look: 0.6, tilt: 0.5, bounce: 0.6, down: 0 },
-  normal: { label: "Equilibrada", hint: "O jeito dos bots da casa", speed: 1, look: 1, tilt: 1, bounce: 1, down: 0 },
-  agitada: { label: "Agitada", hint: "Rápida, pula mais, não para quieta", speed: 0.55, look: 1.15, tilt: 1.3, bounce: 1.6, down: 0 },
-  curiosa: { label: "Curiosa", hint: "Olha tudo e inclina muito a cabeça", speed: 0.85, look: 1.35, tilt: 1.7, bounce: 1, down: 0 },
-  timida: { label: "Tímida", hint: "Olha mais para baixo e se mexe pouco", speed: 1.25, look: 0.55, tilt: 0.45, bounce: 0.7, down: 2 },
+export type Traits = [abertura: number, conscienciosidade: number, extroversao: number, amabilidade: number, estabilidade: number];
+
+/**
+ * Perfis prontos de personalidade de trabalho (os textos e o porquê vêm da API).
+ * O id fica no último pedaço do rosto; traços sob medida viram "t" + 5 níveis.
+ */
+export const PERSONALITY_TRAITS: Record<string, Traits> = {
+  equilibrado: [3, 4, 3, 3, 4],
+  analitico: [3, 5, 2, 3, 5],
+  criativo: [5, 3, 4, 3, 4],
+  comunicativo: [3, 4, 5, 4, 4],
+  executor: [2, 5, 3, 2, 5],
+  acolhedor: [4, 4, 3, 5, 4],
+  estrategico: [4, 5, 4, 3, 5],
 };
+/** jeitos antigos, só de animação */
+const LEGACY_MOODS: Record<string, string> = { normal: "equilibrado", calma: "analitico", agitada: "comunicativo", curiosa: "criativo", timida: "acolhedor" };
+
+export function traitsOf(mood: string): Traits {
+  const custom = /^t([1-5])([1-5])([1-5])([1-5])([1-5])$/.exec(mood);
+  if (custom) return custom.slice(1).map(Number) as Traits;
+  return PERSONALITY_TRAITS[mood] ?? PERSONALITY_TRAITS[LEGACY_MOODS[mood]] ?? PERSONALITY_TRAITS.equilibrado;
+}
+/** id do perfil pronto com esses traços, ou "t" + níveis */
+export const moodOf = (traits: Traits) => Object.entries(PERSONALITY_TRAITS).find(([, item]) => item.every((value, i) => value === traits[i]))?.[0] ?? `t${traits.join("")}`;
+
+/** Extroversão dá a velocidade e o pulo; abertura e amabilidade, os olhares e as inclinações. No meio (3), é o jeito de sempre. */
+function motionOf(traits: Traits): Personality {
+  const [o, , e, a] = traits;
+  return {
+    speed: [1.5, 1.2, 1, 0.8, 0.6][e - 1],
+    bounce: [0.6, 0.8, 1, 1.3, 1.6][e - 1],
+    look: [0.6, 0.8, 1, 1.15, 1.35][o - 1],
+    tilt: [0.5, 0.75, 1, 1.3, 1.6][Math.round((o + a) / 2) - 1],
+    down: e <= 1 ? 2 : 0,
+  };
+}
 
 export interface Face { shape: string; color: string; accessory: string; eyes: string; mood: string }
 
 /** Os rostos de antes viraram modelos prontos (e continuam valendo pela chave). */
 export const PRESETS: Record<string, Face & { label: string }> = {
-  gestao: { label: "Gestora", shape: "hexa", color: "roxo", accessory: "coque_laco", eyes: "cb", mood: "normal" },
-  comercial: { label: "Comercial", shape: "bola", color: "menta", accessory: "gravata", eyes: "n", mood: "normal" },
-  operacao: { label: "Campo", shape: "quadro", color: "laranja", accessory: "capacete", eyes: "n", mood: "normal" },
-  treinamentos: { label: "Instrutora", shape: "tri", color: "verde", accessory: "bone_rabo", eyes: "cb", mood: "normal" },
-  marketing: { label: "Criativa", shape: "flor", color: "rosa", accessory: "boina", eyes: "cb", mood: "normal" },
-  financeiro: { label: "Financeiro", shape: "largo", color: "azul", accessory: "viseira", eyes: "n", mood: "normal" },
-  suporte: { label: "Suporte", shape: "ovo", color: "vermelho", accessory: "fone", eyes: "n", mood: "normal" },
-  dados: { label: "Dados", shape: "nuvem", color: "cinza", accessory: "oculos", eyes: "n", mood: "normal" },
+  gestao: { label: "Gestora", shape: "hexa", color: "roxo", accessory: "coque_laco", eyes: "cb", mood: "equilibrado" },
+  comercial: { label: "Comercial", shape: "bola", color: "menta", accessory: "gravata", eyes: "n", mood: "equilibrado" },
+  operacao: { label: "Campo", shape: "quadro", color: "laranja", accessory: "capacete", eyes: "n", mood: "equilibrado" },
+  treinamentos: { label: "Instrutora", shape: "tri", color: "verde", accessory: "bone_rabo", eyes: "cb", mood: "equilibrado" },
+  marketing: { label: "Criativa", shape: "flor", color: "rosa", accessory: "boina", eyes: "cb", mood: "equilibrado" },
+  financeiro: { label: "Financeiro", shape: "largo", color: "azul", accessory: "viseira", eyes: "n", mood: "equilibrado" },
+  suporte: { label: "Suporte", shape: "ovo", color: "vermelho", accessory: "fone", eyes: "n", mood: "equilibrado" },
+  dados: { label: "Dados", shape: "nuvem", color: "cinza", accessory: "oculos", eyes: "n", mood: "equilibrado" },
 };
 
 const pick = <T,>(table: Record<string, T>, id: string | undefined, fallback: string) => (id && table[id] ? id : fallback);
@@ -186,7 +216,7 @@ export function parseFace(value?: string | null): Face {
   if (preset) { const { label: _label, ...face } = preset; return face; }
   if (value?.startsWith("r:")) {
     const [shape, color, accessory, eyes, mood] = value.slice(2).split(".");
-    return { shape: pick(SHAPES, shape, "bola"), color: pick(COLORS, color, "cinza"), accessory: pick(ACCESSORIES, accessory, "nenhum"), eyes: pick(EYES, eyes, "n"), mood: pick(MOODS, mood, "normal") };
+    return { shape: pick(SHAPES, shape, "bola"), color: pick(COLORS, color, "cinza"), accessory: pick(ACCESSORIES, accessory, "nenhum"), eyes: pick(EYES, eyes, "n"), mood: mood && (PERSONALITY_TRAITS[mood] || /^t[1-5]{5}$/.test(mood)) ? mood : LEGACY_MOODS[mood ?? ""] ?? "equilibrado" };
   }
   return parseFace("dados");
 }
@@ -207,7 +237,7 @@ function buildLook(face: Face): AvatarLook {
   const eyes = EYES[face.eyes];
   return {
     colors: COLORS[face.color].colors, shape: shape.path, eyes: shape.eyes, lashes: eyes.lashes, cheeks: eyes.cheeks,
-    back: place(acc.back), front: place(acc.front), over: place(acc.over), mood: MOODS[face.mood],
+    back: place(acc.back), front: place(acc.front), over: place(acc.over), mood: motionOf(traitsOf(face.mood)),
   };
 }
 

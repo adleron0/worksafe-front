@@ -42,7 +42,7 @@ export function siteProductsColumns(): DataColumn<IEntity>[] {
       cell: (item) => item.description ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <p className="truncate max-w-[16rem] text-muted-foreground cursor-help">{item.description}</p>
+            <p className="truncate max-w-[16rem] text-muted-foreground">{item.description}</p>
           </TooltipTrigger>
           <TooltipContent className="max-w-sm">{item.description}</TooltipContent>
         </Tooltip>

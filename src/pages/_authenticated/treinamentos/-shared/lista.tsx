@@ -34,7 +34,7 @@ export function More({ children, lines }: { children: React.ReactNode; lines: Ar
   if (!extra.length) return <>{children}</>;
   return (
     <Tooltip>
-      <TooltipTrigger asChild><span className="cursor-help min-w-0">{children}</span></TooltipTrigger>
+      <TooltipTrigger asChild><span className="min-w-0">{children}</span></TooltipTrigger>
       <TooltipContent className="max-w-xs space-y-0.5">{extra.map((line) => <p key={line}>{line}</p>)}</TooltipContent>
     </Tooltip>
   );

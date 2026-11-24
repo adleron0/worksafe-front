@@ -28,7 +28,7 @@ function SellerTag({ user }: { user: IEntity }) {
   if (!status) return chip;
   return (
     <Tooltip>
-      <TooltipTrigger asChild><span className="cursor-help">{chip}</span></TooltipTrigger>
+      <TooltipTrigger asChild><span>{chip}</span></TooltipTrigger>
       <TooltipContent>{status.label}</TooltipContent>
     </Tooltip>
   );

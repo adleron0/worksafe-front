@@ -9,7 +9,7 @@ export default function FeaturesCell({ features }: { features?: string | null })
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
+        <div className="flex items-center gap-1 whitespace-nowrap">
           {shown.map((feature, index) => <span key={`${feature}-${index}`} className={tag}>{feature}</span>)}
           {list.length > shown.length && <span className="text-xs text-muted-foreground">+{list.length - shown.length}</span>}
         </div>

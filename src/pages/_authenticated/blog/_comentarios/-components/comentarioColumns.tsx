@@ -23,7 +23,7 @@ export function comentarioColumns(): DataColumn<IComentario>[] {
         <div className="min-w-0 max-w-[24rem]">
           <Tooltip>
             <TooltipTrigger asChild>
-              <p className="truncate cursor-help">{item.content}</p>
+              <p className="truncate">{item.content}</p>
             </TooltipTrigger>
             <TooltipContent className="max-w-sm whitespace-pre-line">{item.content}</TooltipContent>
           </Tooltip>

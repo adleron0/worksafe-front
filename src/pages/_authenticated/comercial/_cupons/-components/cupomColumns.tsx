@@ -51,13 +51,13 @@ export const cupomColumns: DataColumn<ICupom>[] = [
           <span className="font-semibold text-primary truncate">{item.code}</span>
           {item.course && (
             <Tooltip>
-              <TooltipTrigger asChild><span className={`${tag} cursor-help`}><Icon name="square-library" className="w-3 h-3" />curso</span></TooltipTrigger>
+              <TooltipTrigger asChild><span className={`${tag}`}><Icon name="square-library" className="w-3 h-3" />curso</span></TooltipTrigger>
               <TooltipContent>Vinculado ao curso {item.course.name}</TooltipContent>
             </Tooltip>
           )}
           {item.class && (
             <Tooltip>
-              <TooltipTrigger asChild><span className={`${tag} cursor-help`}><Icon name="clipboard-list" className="w-3 h-3" />turma</span></TooltipTrigger>
+              <TooltipTrigger asChild><span className={`${tag}`}><Icon name="clipboard-list" className="w-3 h-3" />turma</span></TooltipTrigger>
               <TooltipContent>Vinculado à turma {item.class.name}</TooltipContent>
             </Tooltip>
           )}

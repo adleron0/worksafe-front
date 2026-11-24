@@ -24,7 +24,7 @@ function More({ children, lines }: { children: React.ReactNode; lines: Array<str
   if (!extra.length) return <>{children}</>;
   return (
     <Tooltip>
-      <TooltipTrigger asChild><span className="cursor-help">{children}</span></TooltipTrigger>
+      <TooltipTrigger asChild><span>{children}</span></TooltipTrigger>
       <TooltipContent className="max-w-xs space-y-0.5">{extra.map((line) => <p key={line}>{line}</p>)}</TooltipContent>
     </Tooltip>
   );

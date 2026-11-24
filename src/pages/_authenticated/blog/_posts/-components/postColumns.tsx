@@ -43,7 +43,7 @@ export function postColumns(): DataColumn<IPost>[] {
             {item.tags && item.tags.length > 0 ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <p className={`${muted} truncate cursor-help`}>{item.slug}</p>
+                  <p className={`${muted} truncate`}>{item.slug}</p>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">{item.tags.map((t) => t.tag.name).join(", ")}</TooltipContent>
               </Tooltip>

@@ -15,6 +15,8 @@ export interface Bot {
 export interface BotFull extends Bot {
   instructions: string; tools: string[]; permissionKey: string; version: number;
   fallbackProvider: string | null; fallbackModel: string | null; updatedAt: string;
+  /** criado na tela: pode ser excluído e não tem "Voltar ao padrão" */
+  custom?: boolean;
 }
 export interface ProviderStatus { id: string; label: string; available: boolean }
 export interface CatalogTool { name: string; title: string; description: string; risk: BotCapability["risk"]; permissions: string[] }

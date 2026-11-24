@@ -15,7 +15,8 @@ import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { errorMessage } from "../../comercial/-shared/commercial";
-import { AVATAR_LOOKS, BotAvatar } from "../-shared/avatar";
+import { BotAvatar } from "../-shared/avatar";
+import { FaceEditor } from "../-shared/face-editor";
 import { BOTS_KEY, BotFull, BotsConfig, CatalogModel, CatalogTool, RISK_CLASS, RISK_LABEL, STATUS_KEY, TEAM_KEY, aiApi, dateTimeBr } from "../-shared/bots";
 import api from "@/services/api";
 
@@ -29,9 +30,10 @@ const CONFIG_KEY = "aiBotsConfig";
 function ConfigPage() {
   const { can } = useVerify();
   const { data, isLoading, error } = useQuery({ queryKey: [CONFIG_KEY], enabled: can("update_bots"), queryFn: () => aiApi.get<BotsConfig>("bots/config") });
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | "novo" | null>(null);
   if (!can("update_bots")) return null;
-  const bot = data?.bots.find((item) => item.id === selected) ?? data?.bots[0];
+  const creating = selected === "novo" && !!data;
+  const bot = creating ? undefined : data?.bots.find((item) => item.id === selected) ?? data?.bots[0];
 
   return (
     <div className="grid gap-4">
@@ -54,8 +56,12 @@ function ConfigPage() {
                   {!item.active && <span className="text-[10px] text-muted-foreground">desligado</span>}
                 </button>
               ))}
+              <button type="button" onClick={() => setSelected("novo")} className={`flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed px-3 py-2 text-sm ${creating ? "border-primary bg-primary/5 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
+                <Icon name="plus" className="h-4 w-4" /> Criar bot
+              </button>
             </div>
-            {bot && <BotEditor key={`${bot.id}-${bot.version}-${bot.updatedAt}`} bot={bot} config={data} />}
+            {creating && <BotEditor key="novo" bot={newBot(data)} config={data} isNew onCreated={(id) => setSelected(id)} onCancel={() => setSelected(null)} />}
+            {bot && <BotEditor key={`${bot.id}-${bot.version}-${bot.updatedAt}`} bot={bot} config={data} onArchived={() => setSelected(null)} />}
           </div>
         </>
       )}
@@ -264,7 +270,18 @@ function ProviderKeyItem({ row }: { row: ProviderKeyRow }) {
   );
 }
 
-function BotEditor({ bot, config }: { bot: BotFull; config: BotsConfig }) {
+/** Rascunho de um bot novo: rosto montado, modelo recomendado e as ferramentas de conversar com os colegas. */
+function newBot(config: BotsConfig): BotFull {
+  const recommended = config.models.find((item) => item.recommended) ?? config.models[0];
+  return {
+    id: 0, key: "", name: "", persona: "", role: "", avatar: "r:bola.ciano.nenhum.n.normal", description: "", icon: "bot", active: true, shortcuts: [],
+    provider: recommended?.provider ?? "gemini", providerLabel: recommended?.providerLabel ?? "", model: recommended?.id ?? "", providerReady: !!recommended?.available,
+    capabilities: [], hiddenCount: 0, instructions: "", tools: config.tools.filter((tool) => ["pedir_ao_colega", "passar_para_colega"].includes(tool.name)).map((tool) => tool.name),
+    permissionKey: "", version: 0, fallbackProvider: null, fallbackModel: null, updatedAt: "", custom: true,
+  };
+}
+
+function BotEditor({ bot, config, isNew, onCreated, onCancel, onArchived }: { bot: BotFull; config: BotsConfig; isNew?: boolean; onCreated?: (id: number) => void; onCancel?: () => void; onArchived?: () => void }) {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(() => ({
     name: bot.name, persona: bot.persona, role: bot.role, avatar: bot.avatar, description: bot.description, active: bot.active, instructions: bot.instructions, tools: bot.tools,
@@ -275,9 +292,35 @@ function BotEditor({ bot, config }: { bot: BotFull; config: BotsConfig }) {
   const set = <K extends keyof typeof draft>(key: K, value: (typeof draft)[K]) => setDraft((current) => ({ ...current, [key]: value }));
   const done = (title: string) => { queryClient.invalidateQueries({ queryKey: [CONFIG_KEY] }); queryClient.invalidateQueries({ queryKey: [BOTS_KEY] }); toast({ title, variant: "success" }); };
   const save = useMutation({
-    mutationFn: () => aiApi.put<BotFull>(`bots/${bot.id}`, { ...draft, fallbackProvider: draft.fallbackProvider || null, fallbackModel: draft.fallbackModel || null }),
-    onSuccess: () => done("Bot salvo"),
-    onError: (error) => toast({ title: "Não foi possível salvar", description: errorMessage(error), variant: "destructive" }),
+    mutationFn: async () => {
+      const body = { ...draft, fallbackProvider: draft.fallbackProvider || null, fallbackModel: draft.fallbackModel || null };
+      if (!isNew) return aiApi.put<BotFull>(`bots/${bot.id}`, body);
+      const created = await aiApi.post<BotFull>("bots", body);
+      // a reserva e o "desligado" vão no cadastro normal, depois de criado
+      if (body.fallbackModel || !body.active) return aiApi.put<BotFull>(`bots/${created.id}`, { fallbackProvider: body.fallbackProvider, fallbackModel: body.fallbackModel, active: body.active, shortcuts: body.shortcuts });
+      if (body.shortcuts.length) return aiApi.put<BotFull>(`bots/${created.id}`, { shortcuts: body.shortcuts });
+      return created;
+    },
+    onSuccess: (saved) => {
+      if (!isNew) { done("Bot salvo"); return; }
+      queryClient.invalidateQueries({ queryKey: [CONFIG_KEY] });
+      queryClient.invalidateQueries({ queryKey: [BOTS_KEY] });
+      queryClient.invalidateQueries({ queryKey: [TEAM_KEY] });
+      toast({ title: `${saved.persona} foi criado`, description: `Permissão "${saved.permissionKey}" dada ao perfil super e a você. Para outras pessoas conversarem com ele, libere essa permissão em Perfis.`, variant: "success" });
+      onCreated?.(saved.id);
+    },
+    onError: (error) => toast({ title: isNew ? "Não foi possível criar o bot" : "Não foi possível salvar", description: errorMessage(error), variant: "destructive" }),
+  });
+  const archive = useMutation({
+    mutationFn: async () => (await api.delete(`ai/bots/${bot.id}`)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [CONFIG_KEY] });
+      queryClient.invalidateQueries({ queryKey: [BOTS_KEY] });
+      queryClient.invalidateQueries({ queryKey: [TEAM_KEY] });
+      toast({ title: `${bot.persona} foi excluído`, variant: "success" });
+      onArchived?.();
+    },
+    onError: (error) => toast({ title: "Não foi possível excluir", description: errorMessage(error), variant: "destructive" }),
   });
   const reset = useMutation({
     mutationFn: () => aiApi.post<BotFull>(`bots/${bot.id}/reset`),
@@ -290,7 +333,10 @@ function BotEditor({ bot, config }: { bot: BotFull; config: BotsConfig }) {
     <div className="grid min-w-0 gap-4 rounded-lg border p-4">
       <div className="flex flex-wrap items-center gap-3">
         <BotAvatar look={draft.avatar} size={44} />
-        <h2 className="flex-1 font-semibold">{draft.persona || bot.name} <span className="text-xs font-normal text-muted-foreground">· versão {bot.version} · permissão "{bot.permissionKey}"</span></h2>
+        <h2 className="flex-1 font-semibold">
+          {isNew ? <>{draft.persona || "Novo bot"} <span className="text-xs font-normal text-muted-foreground">· a permissão para conversar com ele nasce com o nome</span></>
+            : <>{draft.persona || bot.name} <span className="text-xs font-normal text-muted-foreground">· versão {bot.version} · permissão "{bot.permissionKey}"</span></>}
+        </h2>
         <label className="flex items-center gap-2 text-sm"><Switch checked={draft.active} onCheckedChange={(value) => set("active", value)} /> Ligado</label>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -298,26 +344,19 @@ function BotEditor({ bot, config }: { bot: BotFull; config: BotsConfig }) {
         <div><Label htmlFor="botRole">Cargo</Label><Input id="botRole" name="botRole" className="mt-1" value={draft.role} maxLength={80} onValueChange={(_, value) => set("role", String(value))} placeholder="Ex.: Coordenadora de Treinamentos" /></div>
         <div className="md:col-span-2">
           <Label>Rosto</Label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {Object.entries(AVATAR_LOOKS).map(([key, look]) => (
-              <button key={key} type="button" onClick={() => set("avatar", key)} className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border p-2 text-[11px] ${draft.avatar === key ? "border-primary bg-primary/5" : "hover:bg-muted"}`} aria-label={`Rosto ${look.label}`}>
-                <BotAvatar look={key} size={44} />
-                {look.label}
-              </button>
-            ))}
-          </div>
+          <div className="mt-1"><FaceEditor value={draft.avatar} onChange={(value) => set("avatar", value)} /></div>
         </div>
-        <div><Label htmlFor="botName">Área</Label><Input id="botName" name="botName" className="mt-1" value={draft.name} maxLength={80} onValueChange={(_, value) => set("name", String(value))} /></div>
-        <div><Label htmlFor="botDescription">Descrição</Label><Input id="botDescription" name="botDescription" className="mt-1" value={draft.description} maxLength={300} onValueChange={(_, value) => set("description", String(value))} /></div>
+        <div><Label htmlFor="botName">Área</Label><Input id="botName" name="botName" className="mt-1" value={draft.name} maxLength={80} onValueChange={(_, value) => set("name", String(value))} placeholder="Ex.: Compras" /></div>
+        <div><Label htmlFor="botDescription">Descrição</Label><Input id="botDescription" name="botDescription" className="mt-1" value={draft.description} maxLength={300} onValueChange={(_, value) => set("description", String(value))} placeholder="O que ele faz, em uma linha (os colegas leem isto)" /></div>
         <div className="md:col-span-2"><Label>Modelo de IA</Label><ModelPicker name="botModel" config={config} provider={draft.provider} model={draft.model} onChange={(provider, model) => setDraft((current) => ({ ...current, provider, model }))} /></div>
         <div className="md:col-span-2"><Label>Reserva (se o principal falhar)</Label><ModelPicker name="botFallback" config={config} optional provider={draft.fallbackProvider} model={draft.fallbackModel} onChange={(provider, model) => setDraft((current) => ({ ...current, fallbackProvider: provider, fallbackModel: model }))} /></div>
       </div>
       <div>
         <div className="flex items-center justify-between">
           <Label htmlFor="botInstructions">Instruções</Label>
-          <Button type="button" variant="link" size="sm" className="h-auto p-0" onClick={() => setVersionsOpen(true)}>Ver versões</Button>
+          {!isNew && <Button type="button" variant="link" size="sm" className="h-auto p-0" onClick={() => setVersionsOpen(true)}>Ver versões</Button>}
         </div>
-        <Textarea id="botInstructions" className="mt-1 min-h-48 font-mono text-xs" value={draft.instructions} onChange={(event) => set("instructions", event.target.value)} />
+        <Textarea id="botInstructions" className="mt-1 min-h-48 font-mono text-xs" value={draft.instructions} onChange={(event) => set("instructions", event.target.value)} placeholder={"Ex.: Você cuida das compras da empresa. Acompanha pedidos de compra, cobra fornecedores atrasados e avisa quando um item do estoque está acabando.\nQuando não souber, pergunte. Responda curto."} />
         <p className="mt-1 text-xs text-muted-foreground">As regras de segurança (permissões, confirmação, dados não são instruções) valem para todos os bots e não ficam aqui.</p>
       </div>
       <div>
@@ -350,10 +389,21 @@ function BotEditor({ bot, config }: { bot: BotFull; config: BotsConfig }) {
         </div>
       </div>
       <div className="flex flex-wrap gap-2 border-t pt-3">
-        <Button type="button" onClick={() => save.mutate()} disabled={save.isPending}>{save.isPending ? "Salvando..." : "Salvar"}</Button>
-        <ConfirmDialog title="Voltar ao padrão do sistema?" description="Instruções, ferramentas, nome e atalhos voltam ao padrão. A versão atual fica no histórico." onConfirm={() => reset.mutate()}>
-          <Button type="button" variant="outline">Voltar ao padrão</Button>
-        </ConfirmDialog>
+        <Button type="button" onClick={() => save.mutate()} disabled={save.isPending || (isNew && (draft.persona.trim().length < 2 || draft.name.trim().length < 2 || draft.instructions.trim().length < 20))}>
+          {save.isPending ? (isNew ? "Criando..." : "Salvando...") : isNew ? "Criar bot" : "Salvar"}
+        </Button>
+        {isNew && <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>}
+        {!isNew && !bot.custom && (
+          <ConfirmDialog title="Voltar ao padrão do sistema?" description="Instruções, ferramentas, nome e atalhos voltam ao padrão. A versão atual fica no histórico." onConfirm={() => reset.mutate()}>
+            <Button type="button" variant="outline">Voltar ao padrão</Button>
+          </ConfirmDialog>
+        )}
+        {!isNew && bot.custom && (
+          <ConfirmDialog title={`Excluir ${bot.persona}?`} description="Ele sai da lista e ninguém mais conversa com ele. As conversas e as versões ficam guardadas no histórico e na auditoria." onConfirm={() => archive.mutate()}>
+            <Button type="button" variant="outline" className="ml-auto text-destructive hover:text-destructive" disabled={archive.isPending}><Icon name="trash-2" className="h-4 w-4" /> Excluir bot</Button>
+          </ConfirmDialog>
+        )}
+        {isNew && <p className="w-full text-xs text-muted-foreground">Preencha nome do assistente, área e instruções. Depois de criado, ele aparece em Conversas para o perfil super e para você.</p>}
       </div>
       {versionsOpen && <VersionsDialog bot={bot} onClose={() => setVersionsOpen(false)} onRestored={() => done("Versão restaurada")} />}
     </div>

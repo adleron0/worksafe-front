@@ -24,14 +24,15 @@ export const Route = createFileRoute('/_authenticated')({
 })
 
 /**
- * Telas "de aplicativo" (hoje só a conversa com os bots): no celular e tablet
+ * Telas "de aplicativo" (conversa com os bots e caixa do Instagram): no celular e tablet
  * elas ocupam a tela toda, sem breadcrumb nem rodapé; com a conversa aberta,
  * nem o cabeçalho do sistema (a própria conversa tem botão de voltar).
  */
 function AuthenticatedLayout() {
   const location = useRouterState({ select: (state) => state.location });
-  const appScreen = location.pathname === '/bots/conversas';
-  const chatOpen = appScreen && !!(location.search as { bot?: number }).bot;
+  const appScreen = location.pathname === '/bots/conversas' || location.pathname === '/bots/instagram';
+  const search = location.search as { bot?: number; conversa?: string; aba?: string };
+  const chatOpen = location.pathname === '/bots/conversas' ? !!search.bot : appScreen && !!search.conversa && search.aba !== 'comentarios';
   return (
     <HelpProvider>
     <div className='flex h-dvh w-screen overflow-x-hidden'>

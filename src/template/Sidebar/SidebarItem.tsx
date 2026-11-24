@@ -4,7 +4,16 @@ import { ChevronRight } from "lucide-react";
 import Icon from "@/components/general-components/Icon";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { isDivider, type SidebarSubitem } from "./items";
+import { isDivider, type SidebarLink, type SidebarSubitem } from "./items";
+import { useInstagramUnread } from "@/pages/_authenticated/bots/-shared/instagram";
+
+/** Contador do item (só busca quando o item está visível, ou seja, com a permissão). */
+const InstagramUnread = () => {
+  const count = useInstagramUnread(true);
+  if (!count) return null;
+  return <span className="ml-auto grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground ring-1 ring-background">{count > 99 ? "99+" : count}</span>;
+};
+const Badge = ({ kind }: { kind?: SidebarLink["badge"] }) => (kind === "instagramUnread" ? <InstagramUnread /> : null);
 
 interface SidebarItemProps {
   title: string;
@@ -48,6 +57,7 @@ const Subitems = ({
         >
           <Icon name={item.icon} className="h-4 w-4" />
           {item.title}
+          <Badge kind={item.badge} />
         </Link>
       ),
     )}

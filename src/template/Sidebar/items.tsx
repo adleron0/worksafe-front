@@ -15,6 +15,8 @@ export interface SidebarLink extends SidebarAccess {
   title: string;
   icon: string;
   path: string;
+  /** Contador ao lado do nome (ex.: conversas não lidas do Instagram). */
+  badge?: "instagramUnread";
 }
 
 /** Rótulo pequeno que separa partes de um submenu (ex.: "cadastros"). */
@@ -250,11 +252,12 @@ export const groups: SidebarGroup[] = [
         title: "Bots",
         icon: "bot",
         path: "/bots",
-        permissions: ["usar_bots", "usar_mcp", "update_bots", "view_auditoria_bots", "conectores_bots", "instagram_bots"],
+        permissions: ["usar_bots", "usar_mcp", "update_bots", "view_auditoria_bots", "conectores_bots", "instagram_bots", "instagram_mensagens_bots"],
         subitems: [
           { title: "Equipe", permissions: ["usar_bots"], icon: "users-round", path: "/bots/equipe" },
           { title: "Conversar", permissions: ["usar_bots"], icon: "messages-square", path: "/bots/conversas" },
           { title: "Agenda", permissions: ["usar_bots"], icon: "calendar-clock", path: "/bots/agenda" },
+          { title: "Instagram", permissions: ["instagram_mensagens_bots"], icon: "instagram", path: "/bots/instagram", badge: "instagramUnread" },
           { title: "Ações pendentes", permissions: ["usar_bots", "usar_mcp"], icon: "shield-alert", path: "/bots/acoes" },
           { title: "Relatórios", permissions: ["usar_bots"], icon: "file-chart-column", path: "/bots/relatorios" },
           { divider: "configuração" },

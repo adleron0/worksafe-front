@@ -107,6 +107,7 @@ import { Route as AuthenticatedComercialContratosContratosRouteImport } from './
 import { Route as AuthenticatedComercialBaseCalculoBaseCalculoRouteImport } from './pages/_authenticated/comercial/_base-calculo/base-calculo'
 import { Route as AuthenticatedComercialAcompanhamentoAcompanhamentoRouteImport } from './pages/_authenticated/comercial/_acompanhamento/acompanhamento'
 import { Route as AuthenticatedBotsRelatoriosRelatoriosRouteImport } from './pages/_authenticated/bots/_relatorios/relatorios'
+import { Route as AuthenticatedBotsBotsInstagramRouteImport } from './pages/_authenticated/bots/_bots/instagram'
 import { Route as AuthenticatedBotsBotsEquipeRouteImport } from './pages/_authenticated/bots/_bots/equipe'
 import { Route as AuthenticatedBotsBotsConversasRouteImport } from './pages/_authenticated/bots/_bots/conversas'
 import { Route as AuthenticatedBotsBotsConexoesRouteImport } from './pages/_authenticated/bots/_bots/conexoes'
@@ -709,6 +710,12 @@ const AuthenticatedBotsRelatoriosRelatoriosRoute =
     path: '/bots/relatorios',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedBotsBotsInstagramRoute =
+  AuthenticatedBotsBotsInstagramRouteImport.update({
+    id: '/bots/_bots/instagram',
+    path: '/bots/instagram',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedBotsBotsEquipeRoute =
   AuthenticatedBotsBotsEquipeRouteImport.update({
     id: '/bots/_bots/equipe',
@@ -955,6 +962,7 @@ export interface FileRoutesByFullPath {
   '/bots/conexoes': typeof AuthenticatedBotsBotsConexoesRoute
   '/bots/conversas': typeof AuthenticatedBotsBotsConversasRoute
   '/bots/equipe': typeof AuthenticatedBotsBotsEquipeRoute
+  '/bots/instagram': typeof AuthenticatedBotsBotsInstagramRoute
   '/bots/relatorios': typeof AuthenticatedBotsRelatoriosRelatoriosRoute
   '/comercial/acompanhamento': typeof AuthenticatedComercialAcompanhamentoAcompanhamentoRoute
   '/comercial/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
@@ -1085,6 +1093,7 @@ export interface FileRoutesByTo {
   '/bots/conexoes': typeof AuthenticatedBotsBotsConexoesRoute
   '/bots/conversas': typeof AuthenticatedBotsBotsConversasRoute
   '/bots/equipe': typeof AuthenticatedBotsBotsEquipeRoute
+  '/bots/instagram': typeof AuthenticatedBotsBotsInstagramRoute
   '/bots/relatorios': typeof AuthenticatedBotsRelatoriosRelatoriosRoute
   '/comercial/acompanhamento': typeof AuthenticatedComercialAcompanhamentoAcompanhamentoRoute
   '/comercial/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
@@ -1219,6 +1228,7 @@ export interface FileRoutesById {
   '/_authenticated/bots/_bots/conexoes': typeof AuthenticatedBotsBotsConexoesRoute
   '/_authenticated/bots/_bots/conversas': typeof AuthenticatedBotsBotsConversasRoute
   '/_authenticated/bots/_bots/equipe': typeof AuthenticatedBotsBotsEquipeRoute
+  '/_authenticated/bots/_bots/instagram': typeof AuthenticatedBotsBotsInstagramRoute
   '/_authenticated/bots/_relatorios/relatorios': typeof AuthenticatedBotsRelatoriosRelatoriosRoute
   '/_authenticated/comercial/_acompanhamento/acompanhamento': typeof AuthenticatedComercialAcompanhamentoAcompanhamentoRoute
   '/_authenticated/comercial/_base-calculo/base-calculo': typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
@@ -1352,6 +1362,7 @@ export interface FileRouteTypes {
     | '/bots/conexoes'
     | '/bots/conversas'
     | '/bots/equipe'
+    | '/bots/instagram'
     | '/bots/relatorios'
     | '/comercial/acompanhamento'
     | '/comercial/base-calculo'
@@ -1482,6 +1493,7 @@ export interface FileRouteTypes {
     | '/bots/conexoes'
     | '/bots/conversas'
     | '/bots/equipe'
+    | '/bots/instagram'
     | '/bots/relatorios'
     | '/comercial/acompanhamento'
     | '/comercial/base-calculo'
@@ -1615,6 +1627,7 @@ export interface FileRouteTypes {
     | '/_authenticated/bots/_bots/conexoes'
     | '/_authenticated/bots/_bots/conversas'
     | '/_authenticated/bots/_bots/equipe'
+    | '/_authenticated/bots/_bots/instagram'
     | '/_authenticated/bots/_relatorios/relatorios'
     | '/_authenticated/comercial/_acompanhamento/acompanhamento'
     | '/_authenticated/comercial/_base-calculo/base-calculo'
@@ -2396,6 +2409,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBotsRelatoriosRelatoriosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/bots/_bots/instagram': {
+      id: '/_authenticated/bots/_bots/instagram'
+      path: '/bots/instagram'
+      fullPath: '/bots/instagram'
+      preLoaderRoute: typeof AuthenticatedBotsBotsInstagramRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/bots/_bots/equipe': {
       id: '/_authenticated/bots/_bots/equipe'
       path: '/bots/equipe'
@@ -2662,6 +2682,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBotsBotsConexoesRoute: typeof AuthenticatedBotsBotsConexoesRoute
   AuthenticatedBotsBotsConversasRoute: typeof AuthenticatedBotsBotsConversasRoute
   AuthenticatedBotsBotsEquipeRoute: typeof AuthenticatedBotsBotsEquipeRoute
+  AuthenticatedBotsBotsInstagramRoute: typeof AuthenticatedBotsBotsInstagramRoute
   AuthenticatedBotsRelatoriosRelatoriosRoute: typeof AuthenticatedBotsRelatoriosRelatoriosRoute
   AuthenticatedComercialAcompanhamentoAcompanhamentoRoute: typeof AuthenticatedComercialAcompanhamentoAcompanhamentoRoute
   AuthenticatedComercialBaseCalculoBaseCalculoRoute: typeof AuthenticatedComercialBaseCalculoBaseCalculoRoute
@@ -2790,6 +2811,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBotsBotsConexoesRoute: AuthenticatedBotsBotsConexoesRoute,
   AuthenticatedBotsBotsConversasRoute: AuthenticatedBotsBotsConversasRoute,
   AuthenticatedBotsBotsEquipeRoute: AuthenticatedBotsBotsEquipeRoute,
+  AuthenticatedBotsBotsInstagramRoute: AuthenticatedBotsBotsInstagramRoute,
   AuthenticatedBotsRelatoriosRelatoriosRoute:
     AuthenticatedBotsRelatoriosRelatoriosRoute,
   AuthenticatedComercialAcompanhamentoAcompanhamentoRoute:

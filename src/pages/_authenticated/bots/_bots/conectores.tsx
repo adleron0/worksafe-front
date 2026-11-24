@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
@@ -14,6 +14,7 @@ import Select from "@/components/general-components/Select";
 import CalendarPicker from "@/components/general-components/Calendar";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import { aiApi, dateTimeBr } from "../-shared/bots";
+import { InstagramLogo, InstagramRules } from "../-shared/instagram";
 
 interface InstagramAccount {
   username: string | null; name: string | null; pictureUrl: string | null; accountType: string | null;
@@ -77,14 +78,6 @@ function ConnectorsPage() {
   );
 }
 
-function InstagramLogo({ className = "h-10 w-10" }: { className?: string }) {
-  return (
-    <span className={`flex shrink-0 items-center justify-center rounded-xl text-white ${className}`} style={{ background: "linear-gradient(45deg,#f9ce34,#ee2a7b 50%,#6228d7)" }}>
-      <Icon name="camera" className="h-1/2 w-1/2" />
-    </span>
-  );
-}
-
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <li className="flex gap-3">
@@ -121,7 +114,7 @@ function InstagramCard({ info }: { info: Connectors["instagram"] }) {
         <InstagramLogo />
         <div className="min-w-0 flex-1">
           <p className="font-semibold">Instagram</p>
-          <p className="text-sm text-muted-foreground">A Nina cria e agenda posts, carrosséis e stories na conta da empresa. Cada publicação passa pela sua confirmação.</p>
+          <p className="text-sm text-muted-foreground">A Nina cria e agenda posts, carrosséis e stories na conta da empresa, lê e responde o Direct e os comentários. Você escolhe abaixo o que pede confirmação e o que sai sozinho.</p>
         </div>
         {!account && manage && (
           <Button type="button" onClick={() => setGuide(true)}><Icon name="plug" className="mr-1 h-4 w-4" /> Conectar</Button>
@@ -145,6 +138,14 @@ function InstagramCard({ info }: { info: Connectors["instagram"] }) {
           )}
         </div>
       )}
+
+      {account && account.status === "connected" && can("instagram_mensagens_bots") && (
+        <Link to="/bots/instagram" className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-2 hover:underline">
+          <Icon name="inbox" className="h-4 w-4" /> Abrir a caixa de mensagens e comentários
+        </Link>
+      )}
+
+      {account && manage && <InstagramRules />}
 
       {!account && !manage && <p className="mt-3 text-sm text-muted-foreground">O Instagram ainda não foi conectado. Peça para quem administra os bots conectar.</p>}
 
@@ -352,7 +353,7 @@ function NewPostDialog({ onClose, onDone }: { onClose: () => void; onDone: () =>
             {when === "later" && (
               <div className="grid grid-cols-[1fr_120px] gap-2">
                 <CalendarPicker mode="single" name="postDate" className="w-full" value={date} fromYear={new Date().getFullYear()} toYear={new Date().getFullYear() + 1} onValueChange={(_, value) => setDate(String(value ?? todayIso()).slice(0, 10))} />
-                <Select name="postTime" modal options={TIMES} state={time} onChange={(_, value) => setTime(String(value))} />
+                <Select name="postTime" modal options={TIMES} label="label" value="value" state={time} onChange={(_, value) => setTime(String(value))} />
               </div>
             )}
           </div>

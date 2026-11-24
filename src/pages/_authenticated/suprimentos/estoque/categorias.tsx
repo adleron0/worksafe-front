@@ -7,13 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
-import { NumField, Tip, errorMessage } from "../../comercial/-shared/commercial";
-import { Category, Pill, STOCK_ABILITY, STOCK_KEYS, stockApi } from "../-shared/stock";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
+import StatusBadge from "@/components/general-components/StatusBadge";
+import { NumField, errorMessage } from "../../comercial/-shared/commercial";
+import RowActions from "../-shared/row-actions";
+import { Category, STOCK_ABILITY, STOCK_KEYS, stockApi } from "../-shared/stock";
 
 export const Route = createFileRoute("/_authenticated/suprimentos/estoque/categorias")({
   component: CategoriesPage,
@@ -25,7 +29,7 @@ function CategoriesPage() {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Category | "novo" | null>(null);
   const [showInactive, setShowInactive] = useState(false);
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: [STOCK_KEYS.categories, showInactive],
     queryFn: () => stockApi.get<Category[]>("categories", showInactive ? { all: "1" } : undefined),
   });
@@ -41,47 +45,42 @@ function CategoriesPage() {
   // pai e, logo abaixo, as filhas
   const ordered = rows.filter((row) => !row.parentId || !rows.some((p) => p.id === row.parentId)).flatMap((parent) => [parent, ...rows.filter((child) => child.parentId === parent.id)]);
 
+  const columns: DataColumn<Category>[] = [
+    {
+      id: "name", header: "Categoria", cell: (row) => (
+        <span className={`font-medium flex items-center gap-2 ${row.parentId ? "pl-6" : ""}`}>
+          {row.parentId && <Icon name="corner-down-right" className="w-3 h-3 text-muted-foreground" />} {row.name} {!row.active && <StatusBadge tone="neutral">Inativa</StatusBadge>}
+        </span>
+      ),
+    },
+    { id: "prefix", header: "Prefixo", className: "w-32 text-muted-foreground", cell: (row) => row.prefix ?? "IT" },
+    { id: "items", header: "Itens", className: "w-32", cell: (row) => <Link to="/suprimentos/estoque/itens" search={{ categoryId: row.id }} className="text-primary hover:underline">{row.items} item(ns)</Link> },
+  ];
+  const actions = (row: Category) => (
+    <RowActions label={`Ações da categoria ${row.name}`} actions={[
+      { id: "edit", label: "Editar", icon: "pencil", hidden: !can(`update_${STOCK_ABILITY}`), onSelect: () => setEditing(row) },
+      { id: "inactive", label: "Inativar", icon: "archive", hidden: !(row.active && can(`inactive_${STOCK_ABILITY}`)), separator: true, onSelect: () => toggle({ id: row.id, active: false }),
+        confirm: { title: `Inativar "${row.name}"?`, description: "A categoria deixa de aparecer para novos itens. Os itens que já estão nela continuam." } },
+      { id: "active", label: "Reativar", icon: "archive-restore", hidden: !(!row.active && can(`activate_${STOCK_ABILITY}`)), separator: true, onSelect: () => toggle({ id: row.id, active: true }) },
+    ]} />
+  );
+
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Categorias</h1>
-          <p className="text-sm text-muted-foreground">Agrupam os itens (com uma subcategoria, se precisar). O prefixo forma o código do item: CRD-0001.</p>
-        </div>
-        {can(`create_${STOCK_ABILITY}`) && <Button onClick={() => setEditing("novo")}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova categoria</Button>}
-      </div>
-      <div className="flex items-center gap-2 my-4">
-        <Checkbox id="showInactive" checked={showInactive} onCheckedChange={(checked) => setShowInactive(checked === true)} />
-        <Label htmlFor="showInactive">Mostrar inativas</Label>
-      </div>
-
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {isLoading && <div className="grid gap-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>}
-      {!isLoading && !error && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          {ordered.length === 0 && <p className="p-6 text-sm text-muted-foreground">Nenhuma categoria ainda.</p>}
-          {ordered.map((row) => (
-            <div key={row.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
-              <div className={`flex-1 min-w-0 font-medium flex items-center gap-2 ${row.parentId ? "lg:pl-6" : ""}`}>
-                {row.parentId && <Icon name="corner-down-right" className="w-3 h-3 text-muted-foreground" />} {row.name} {!row.active && <Pill>Inativa</Pill>}
-              </div>
-              <div className="lg:w-32 text-muted-foreground">{row.prefix ? `Prefixo ${row.prefix}` : "Prefixo IT"}</div>
-              <div className="lg:w-32">
-                <Link to="/suprimentos/estoque/itens" search={{ categoryId: row.id }} className="text-primary hover:underline">{row.items} item(ns)</Link>
-              </div>
-              <div className="lg:w-24 flex lg:justify-end gap-1">
-                {can(`update_${STOCK_ABILITY}`) && <Tip text="Editar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Editar ${row.name}`} onClick={() => setEditing(row)}><Icon name="pencil" className="w-4 h-4" /></Button></Tip>}
-                {row.active && can(`inactive_${STOCK_ABILITY}`) && (
-                  <ConfirmDialog title={`Inativar "${row.name}"?`} description="A categoria deixa de aparecer para novos itens. Os itens que já estão nela continuam." onConfirm={() => toggle({ id: row.id, active: false })}>
-                    <span><Tip text="Inativar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Inativar ${row.name}`}><Icon name="archive" className="w-4 h-4" /></Button></Tip></span>
-                  </ConfirmDialog>
-                )}
-                {!row.active && can(`activate_${STOCK_ABILITY}`) && <Tip text="Reativar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Reativar ${row.name}`} onClick={() => toggle({ id: row.id, active: true })}><Icon name="archive-restore" className="w-4 h-4" /></Button></Tip>}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <PageHeader title="Categorias" description="Agrupam os itens (com uma subcategoria, se precisar). O prefixo forma o código do item: CRD-0001." />
+      <ListCard>
+        <ListToolbar>
+          <div className="flex items-center gap-2 mr-auto">
+            <Checkbox id="showInactive" checked={showInactive} onCheckedChange={(checked) => setShowInactive(checked === true)} />
+            <Label htmlFor="showInactive">Mostrar inativas</Label>
+          </div>
+          {can(`create_${STOCK_ABILITY}`) && <Button onClick={() => setEditing("novo")}><Icon name="plus" className="w-4 h-4" /> Nova categoria</Button>}
+        </ListToolbar>
+        <DataTable rows={ordered} columns={columns} getRowId={(row) => row.id} ariaLabel="Categorias" skeletonRows={4} minWidth={560}
+          loading={isLoading} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+          rowClassName={(row) => (row.active ? undefined : "opacity-60")} actions={actions}
+          empty={<EmptyState title="Nenhuma categoria ainda." />} />
+      </ListCard>
 
       {editing && <CategoryDialog category={editing === "novo" ? undefined : editing} parents={rows.filter((row) => !row.parentId && row.active && (editing === "novo" || row.id !== editing.id))} onClose={() => setEditing(null)} onSaved={refresh} />}
     </>

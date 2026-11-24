@@ -9,6 +9,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
+import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
 import { cn } from "@/lib/utils";
 import { dateBr, errorMessage } from "../../comercial/-shared/commercial";
 import { Pill, qty, stockApi } from "../-shared/stock";
@@ -19,7 +23,14 @@ export const Route = createFileRoute("/_authenticated/suprimentos/estoque/epi")(
   validateSearch: (search: Record<string, unknown>): { employeeId?: number } => (Number(search.employeeId) > 0 ? { employeeId: Number(search.employeeId) } : {}),
 });
 
-const PENDING_TONE: Record<PpePendingRow["kind"], "red" | "amber"> = { desligado: "red", ca: "red", troca: "amber" };
+const PENDING_TONE: Record<PpePendingRow["kind"], StatusTone> = { desligado: "danger", ca: "danger", troca: "warning" };
+type PendingLine = PpePendingRow & { key: number };
+const PENDING_COLUMNS: DataColumn<PendingLine>[] = [
+  { id: "kind", header: "Pendência", className: "w-40", cell: (row) => <StatusBadge tone={PENDING_TONE[row.kind]}>{row.label}</StatusBadge> },
+  { id: "employee", header: "Funcionário", cell: (row) => <span className="font-medium truncate block max-w-[14rem]">{row.employee}</span> },
+  { id: "item", header: "Item", cell: (row) => <span className="truncate block max-w-md">{qty(row.quantity)} · {row.item}{row.tag ? ` (peça ${row.tag})` : ""}</span> },
+  { id: "date", header: "Data", className: "w-28 text-xs text-muted-foreground tabular-nums", cell: (row) => (row.date ? dateBr(row.date) : "") },
+];
 
 /** Entregas de EPI: escolhe o funcionário, vê o que está com ele, entrega, troca e recolhe. */
 function PpePage() {
@@ -45,12 +56,9 @@ function PpePage() {
 
   return (
     <>
-      <div>
-        <h1 className="text-xl font-bold">Entregas de EPI</h1>
-        <p className="text-sm text-muted-foreground">Escolha o funcionário para ver o que está com ele, entregar com a assinatura na tela, trocar ou recolher.</p>
-      </div>
+      <PageHeader title="Entregas de EPI" description="Escolha o funcionário para ver o que está com ele, entregar com a assinatura na tela, trocar ou recolher." />
 
-      <Tabs value={tab} onValueChange={setTab} className="mt-4">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="funcionarios">Funcionários</TabsTrigger>
           <TabsTrigger value="pendencias">Pendências{pendingCount ? ` (${pendingCount})` : ""}</TabsTrigger>
@@ -100,18 +108,12 @@ function PpePage() {
 
         <TabsContent value="pendencias" className="mt-4">
           <p className="text-sm text-muted-foreground mb-3">Troca periódica vencida ou próxima, CA vencido nas mãos de alguém e desligados que ainda têm EPI ou equipamento.</p>
-          <div className="rounded-card border bg-card overflow-hidden">
-            {pendingLoading && <Skeleton className="h-24 w-full" />}
-            {!pendingLoading && !pendingCount && <p className="p-6 text-sm text-muted-foreground">Nenhuma pendência.</p>}
-            {pending?.map((row, index) => (
-              <button key={index} type="button" onClick={() => { choose(row.employeeId); setTab("funcionarios"); }} className="w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-3 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
-                <div className="lg:w-40"><Pill tone={PENDING_TONE[row.kind]}>{row.label}</Pill></div>
-                <div className="lg:w-56 font-medium truncate">{row.employee}</div>
-                <div className="flex-1 min-w-0 truncate">{qty(row.quantity)} · {row.item}{row.tag ? ` (peça ${row.tag})` : ""}</div>
-                <div className="lg:w-32 text-xs text-muted-foreground">{row.date ? dateBr(row.date) : ""}</div>
-              </button>
-            ))}
-          </div>
+          <ListCard>
+            <DataTable rows={pending?.map((row, key) => ({ ...row, key }))} columns={PENDING_COLUMNS} getRowId={(row) => row.key} ariaLabel="Pendências de EPI"
+              loading={pendingLoading} skeletonRows={3} minWidth={640}
+              onRowClick={(row) => { choose(row.employeeId); setTab("funcionarios"); }}
+              empty={<EmptyState icon="circle-check" title="Nenhuma pendência." />} />
+          </ListCard>
         </TabsContent>
       </Tabs>
 

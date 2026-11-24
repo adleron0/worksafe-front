@@ -1,5 +1,3 @@
-import { clickableRow } from "@/utils/clickable-row";
-import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,15 +5,17 @@ import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
+import RowActions from "../-shared/row-actions";
 import { NumField, dateBr, errorMessage, money, todayIso } from "../../comercial/-shared/commercial";
 import { PURCHASES_ABILITY } from "../-shared/purchases";
 import { stockApi } from "../-shared/stock";
@@ -40,7 +40,7 @@ function ServicesPage() {
   const [returning, setReturning] = useState<ServiceRow | null>(null);
   const [cancelling, setCancelling] = useState<ServiceRow | null>(null);
   const [sending, setSending] = useState<UnitRow | null>(null);
-  const { data, isLoading, error } = useQuery({ queryKey: [EQUIP_KEYS.services], queryFn: () => stockApi.get<Services>("services") });
+  const { data, isLoading, error, refetch } = useQuery({ queryKey: [EQUIP_KEYS.services], queryFn: () => stockApi.get<Services>("services") });
   const { mutate: cancel } = useMutation({
     mutationFn: (id: number) => stockApi.post<ServiceRow>(`services/${id}/cancel`),
     onSuccess: (row) => { refresh(); toast({ title: `Envio de ${row.tag ?? "a peça"} cancelado`, variant: "success" }); },
@@ -55,82 +55,74 @@ function ServicesPage() {
     navigate({ to: "/suprimentos/pedidos-de-compra/$purchaseId", params: { purchaseId: "novo" }, search: { servico: "1" } });
   };
 
+  const openUnit = (unitId: number) => navigate({ to: "/suprimentos/equipamentos/$unitId", params: { unitId: String(unitId) } });
+  const openColumns: DataColumn<ServiceRow>[] = [
+    {
+      id: "unit", header: "Peça", cell: (service) => (
+        <div className="min-w-0 max-w-md">
+          <p className="truncate"><Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(service.unitId) }} className="font-semibold tabular-nums hover:underline">{service.tag}</Link><span className="text-muted-foreground"> · {service.item}</span></p>
+          <p className="text-xs text-muted-foreground truncate">{service.kindLabel} · {service.supplier ?? "—"}</p>
+        </div>
+      ),
+    },
+    { id: "sent", header: "Enviada", className: "text-xs text-muted-foreground whitespace-nowrap", cell: (service) => `${dateBr(service.sentAt)} · há ${service.daysOut ?? 0} dia(s)` },
+    { id: "order", header: "Pedido de compra", className: "text-xs whitespace-nowrap", cell: (service) => (service.purchaseOrderId ? <Link to="/suprimentos/pedidos-de-compra/$purchaseId" params={{ purchaseId: String(service.purchaseOrderId) }} className="text-primary underline">ver o pedido de compra</Link> : <span className="text-muted-foreground">sem pedido de compra</span>) },
+    ...(canUpdate ? [{ id: "return", header: "", align: "right" as const, className: "w-44", cell: (service: ServiceRow) => <Button type="button" size="sm" onClick={() => setReturning(service)}><Icon name="package-check" className="w-3 h-3" /> Receber de volta</Button> }] : []),
+  ];
+  const dueColumns: DataColumn<UnitRow>[] = [
+    {
+      id: "unit", header: "Peça", cell: (unit) => (
+        <div className="min-w-0 max-w-md">
+          <p className="truncate"><Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(unit.id) }} className="font-semibold tabular-nums hover:underline">{unit.tag}</Link><span className="text-muted-foreground"> · {unit.item}</span></p>
+          <p className="text-xs text-muted-foreground truncate">{unit.holder}</p>
+        </div>
+      ),
+    },
+    { id: "status", header: "Situação", className: "w-44", cell: (unit) => <UnitStatusBadge status={unit.status} /> },
+    { id: "due", header: "Calibração", className: "whitespace-nowrap", cell: (unit) => <span className="inline-flex items-center gap-2"><DueStateBadge state={unit.dues.calibration} /> <span className="text-xs text-muted-foreground">{unit.nextCalibrationAt ? dateBr(unit.nextCalibrationAt) : "sem registro"}</span></span> },
+    ...(canUpdate ? [{ id: "send", header: "", align: "right" as const, className: "w-28", cell: (unit: UnitRow) => (unit.holderType === "local" ? <Button type="button" size="sm" variant="outline" onClick={() => setSending(unit)}><Icon name="send" className="w-3 h-3" /> Enviar</Button> : null) }] : []),
+  ];
+  const historyColumns: DataColumn<ServiceRow>[] = [
+    { id: "date", header: "Data", className: "w-24 tabular-nums", cell: (service) => dateBr(service.returnedAt ?? service.sentAt) },
+    { id: "unit", header: "Peça", cell: (service) => <span className="truncate block max-w-md"><Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(service.unitId) }} className="font-medium hover:underline">{service.tag}</Link><span className="text-muted-foreground"> · {service.item} · {service.kindLabel}</span></span> },
+    { id: "supplier", header: "Fornecedor", className: "text-muted-foreground", cell: (service) => <span className="truncate block max-w-[12rem]">{service.supplier ?? "—"}</span> },
+    { id: "result", header: "Resultado", className: "text-xs whitespace-nowrap", cell: (service) => (service.status === "cancelado" ? "Envio cancelado" : [SERVICE_RESULTS.find((r) => r.id === service.result)?.name, service.certificateNumber && `cert. ${service.certificateNumber}`].filter(Boolean).join(" · ")) },
+    { id: "cost", header: "Custo", align: "right", className: "w-28 tabular-nums", cell: (service) => (service.cost !== null ? money(service.cost) : "—") },
+  ];
+  const tableState = { loading: isLoading, error: error ? errorMessage(error) : null, onRetry: () => { refetch(); } };
+
   return (
     <>
-      <div>
-        <Link to="/suprimentos/equipamentos/inspecoes" className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1"><Icon name="arrow-left" className="w-3 h-3" /> Inspeções e calibrações</Link>
-        <h1 className="text-xl font-bold mt-1">Calibração e manutenção</h1>
-        <p className="text-sm text-muted-foreground">Peças no laboratório ou na assistência, as calibrações que vencem e o histórico.</p>
+      <Link to="/suprimentos/equipamentos/inspecoes" className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1"><Icon name="arrow-left" className="w-3 h-3" /> Inspeções e calibrações</Link>
+      <PageHeader className="mt-1" title="Calibração e manutenção" description="Peças no laboratório ou na assistência, as calibrações que vencem e o histórico." />
+      <div className="grid gap-4">
+        <ListCard>
+          <h2 className="font-semibold text-sm">Fora agora ({data?.open.length ?? 0})</h2>
+          <DataTable rows={data?.open} columns={openColumns} getRowId={(service) => service.id} ariaLabel="Peças fora para serviço" skeletonRows={3} {...tableState}
+            onRowClick={(service) => openUnit(service.unitId)}
+            actions={(service) => (
+              <RowActions label={`Mais ações de ${service.tag}`} actions={[
+                { id: "order", label: "Pedir compra do serviço", icon: "shopping-cart", hidden: !(canOrder && !service.purchaseOrderId), onSelect: () => orderService(service) },
+                { id: "cancel", label: "Cancelar envio", icon: "undo-2", hidden: !canUpdate, onSelect: () => setCancelling(service) },
+              ]} />
+            )}
+            empty={<EmptyState title="Nenhuma peça fora para serviço." />} />
+        </ListCard>
+
+        <ListCard>
+          <h2 className="font-semibold text-sm">Calibração vencida ou a vencer ({data?.due.length ?? 0})</h2>
+          <DataTable rows={data?.due} columns={dueColumns} getRowId={(unit) => unit.id} ariaLabel="Calibrações vencidas ou a vencer" skeletonRows={3} {...tableState}
+            onRowClick={(unit) => openUnit(unit.id)}
+            empty={<EmptyState icon="circle-check" title="Nenhuma calibração vencendo nos próximos 60 dias." />} />
+        </ListCard>
+
+        <ListCard>
+          <h2 className="font-semibold text-sm">Histórico</h2>
+          <DataTable rows={data?.history} columns={historyColumns} getRowId={(service) => service.id} ariaLabel="Histórico de serviços" skeletonRows={3} {...tableState}
+            onRowClick={(service) => openUnit(service.unitId)}
+            empty={<EmptyState title="Nada ainda." />} />
+        </ListCard>
       </div>
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {isLoading && <div className="mt-4 grid gap-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>}
-      {data && (
-        <div className="mt-4 grid gap-4">
-          <section className="rounded-card border bg-card overflow-hidden">
-            <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm">Fora agora ({data.open.length})</h2>
-            {data.open.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhuma peça fora para serviço.</p>}
-            {data.open.map((service) => (
-              <div key={service.id} {...clickableRow()} className={`flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 border-t text-sm hover:bg-card ${tailwindUtils.cardClickable}`}>
-                <div className="flex-1 min-w-0 lg:pr-4">
-                  <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(service.unitId) }} className="font-semibold tabular-nums hover:underline">{service.tag}</Link>
-                  <span className="text-muted-foreground"> · {service.item}</span>
-                  <p className="text-xs text-muted-foreground">{service.kindLabel} · {service.supplier ?? "—"}</p>
-                </div>
-                <div className="lg:w-56 text-xs text-muted-foreground">enviada {dateBr(service.sentAt)} · há {service.daysOut ?? 0} dia(s)</div>
-                <div className="lg:w-40 text-xs">{service.purchaseOrderId ? <Link to="/suprimentos/pedidos-de-compra/$purchaseId" params={{ purchaseId: String(service.purchaseOrderId) }} className="text-primary underline">ver o pedido de compra</Link> : <span className="text-muted-foreground">sem pedido de compra</span>}</div>
-                <div className="lg:w-56 flex lg:justify-end gap-2">
-                  {canUpdate && <Button type="button" size="sm" onClick={() => setReturning(service)}><Icon name="package-check" className="w-3 h-3 mr-1" /> Receber de volta</Button>}
-                  {(canUpdate || (canOrder && !service.purchaseOrderId)) && (
-                    <DropdownMenu modal={false}>
-                      <DropdownMenuTrigger asChild><Button type="button" size="sm" variant="outline" className="h-8 w-8 p-0" aria-label={`Mais ações de ${service.tag}`}><Icon name="ellipsis-vertical" className="w-3 h-3" /></Button></DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {canOrder && !service.purchaseOrderId && <DropdownMenuItem className="gap-2" onSelect={() => orderService(service)}><Icon name="shopping-cart" className="w-3 h-3" /> Pedir compra do serviço</DropdownMenuItem>}
-                        {canUpdate && <DropdownMenuItem className="gap-2" onSelect={() => setCancelling(service)}><Icon name="undo-2" className="w-3 h-3" /> Cancelar envio</DropdownMenuItem>}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
-              </div>
-            ))}
-          </section>
-
-          <section className="rounded-card border bg-card overflow-hidden">
-            <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm">Calibração vencida ou a vencer ({data.due.length})</h2>
-            {data.due.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhuma calibração vencendo nos próximos 60 dias.</p>}
-            {data.due.map((unit) => (
-              <div key={unit.id} {...clickableRow()} className={`flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 border-t text-sm hover:bg-card ${tailwindUtils.cardClickable}`}>
-                <div className="flex-1 min-w-0 lg:pr-4">
-                  <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(unit.id) }} className="font-semibold tabular-nums hover:underline">{unit.tag}</Link>
-                  <span className="text-muted-foreground"> · {unit.item}</span>
-                  <p className="text-xs text-muted-foreground">{unit.holder}</p>
-                </div>
-                <div className="lg:w-44"><UnitStatusBadge status={unit.status} /></div>
-                <div className="lg:w-56 flex items-center gap-2"><DueStateBadge state={unit.dues.calibration} /> <span className="text-xs text-muted-foreground">{unit.nextCalibrationAt ? dateBr(unit.nextCalibrationAt) : "sem registro"}</span></div>
-                <div className="lg:w-40 flex lg:justify-end">
-                  {canUpdate && unit.holderType === "local" && <Button type="button" size="sm" variant="outline" onClick={() => setSending(unit)}><Icon name="send" className="w-3 h-3 mr-1" /> Enviar</Button>}
-                </div>
-              </div>
-            ))}
-          </section>
-
-          <section className="rounded-card border bg-card overflow-hidden">
-            <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm">Histórico</h2>
-            {data.history.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nada ainda.</p>}
-            {data.history.map((service) => (
-              <div key={service.id} {...clickableRow()} className={`flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-t text-sm hover:bg-card ${tailwindUtils.cardClickable}`}>
-                <div className="lg:w-28 tabular-nums">{dateBr(service.returnedAt ?? service.sentAt)}</div>
-                <div className="flex-1 min-w-0 lg:pr-4">
-                  <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(service.unitId) }} className="font-medium hover:underline">{service.tag}</Link>
-                  <span className="text-muted-foreground"> · {service.item} · {service.kindLabel}</span>
-                </div>
-                <div className="lg:w-48 text-muted-foreground truncate">{service.supplier ?? "—"}</div>
-                <div className="lg:w-56 text-xs">{service.status === "cancelado" ? "Envio cancelado" : [SERVICE_RESULTS.find((r) => r.id === service.result)?.name, service.certificateNumber && `cert. ${service.certificateNumber}`].filter(Boolean).join(" · ")}</div>
-                <div className="lg:w-28 lg:text-right tabular-nums">{service.cost !== null ? money(service.cost) : "—"}</div>
-              </div>
-            ))}
-          </section>
-        </div>
-      )}
 
       {returning && <ReturnDialog service={returning} onClose={() => setReturning(null)} onDone={refresh} />}
       {sending && <ServiceSendDialog unit={sending} onClose={() => setSending(null)} />}

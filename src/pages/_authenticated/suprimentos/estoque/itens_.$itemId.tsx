@@ -14,6 +14,8 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
+import ListCard from "@/components/general-components/ListCard";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import { cn } from "@/lib/utils";
 import { NumField, dateBr, errorMessage, money } from "../../comercial/-shared/commercial";
 import { PURCHASE_STATUS_LABEL, PurchaseStatus } from "../-shared/purchases";
@@ -458,36 +460,33 @@ function ItemBalances({ item }: { item: ItemDetail }) {
 
 function ItemKardex({ itemId, unit }: { itemId: number; unit: string }) {
   const [opened, setOpened] = useState<number | null>(null);
-  const { data, isLoading, error } = useQuery({ queryKey: [STOCK_KEYS.kardex, itemId], queryFn: () => stockApi.get<{ rows: KardexRow[]; total: number }>(`items/${itemId}/movements`) });
-  if (error) return <p className="text-destructive text-sm">Erro: {errorMessage(error)}</p>;
-  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  const { data, isLoading, error, refetch } = useQuery({ queryKey: [STOCK_KEYS.kardex, itemId], queryFn: () => stockApi.get<{ rows: KardexRow[]; total: number }>(`items/${itemId}/movements`) });
   const rows = data?.rows ?? [];
   const seesCost = rows.some((row) => row.unitCost !== null);
-  return (
-    <div className="rounded-card border bg-card overflow-hidden">
-      <div className="hidden lg:flex items-center py-2 px-4 bg-muted/50 font-semibold text-xs">
-        <div className="w-24">Data</div><div className="w-28">Número</div><div className="w-40">Tipo</div><div className="flex-1">De → para</div>
-        <div className="w-28 text-right">Qtd.</div>{seesCost && <div className="w-28 text-right">Custo</div>}<div className="w-32 text-right">Saldo depois</div>
-      </div>
-      {rows.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhuma movimentação deste item.</p>}
-      {rows.map((row) => {
+  const columns: DataColumn<KardexRow>[] = [
+    { id: "date", header: "Data", className: "w-24 tabular-nums", cell: (row) => dateBr(row.date) },
+    { id: "number", header: "Número", className: "w-28 tabular-nums font-medium", cell: (row) => row.number },
+    { id: "type", header: "Tipo", className: "whitespace-nowrap", cell: (row) => row.typeLabel },
+    { id: "route", header: "De → para", className: "text-xs text-muted-foreground", cell: (row) => <span className="truncate block max-w-xs">{row.from} → {row.to}{row.unit ? ` · peça ${row.unit}` : ""}</span> },
+    {
+      id: "quantity", header: "Qtd.", align: "right", className: "w-28 tabular-nums whitespace-nowrap", cell: (row) => {
         const entering = row.toType === "local" && row.fromType !== "local";
         const leaving = row.fromType === "local" && row.toType !== "local";
-        return (
-          <button key={row.id} type="button" onClick={() => setOpened(row.movementId)} className="w-full text-left flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2 border-t text-sm hover:bg-muted/40">
-            <div className="lg:w-24 tabular-nums">{dateBr(row.date)}</div>
-            <div className="lg:w-28 tabular-nums font-medium">{row.number}</div>
-            <div className="lg:w-40">{row.typeLabel}</div>
-            <div className="flex-1 min-w-0 text-xs text-muted-foreground truncate">{row.from} → {row.to}{row.unit ? ` · peça ${row.unit}` : ""}</div>
-            <div className={`lg:w-28 lg:text-right tabular-nums ${entering ? "text-green-700 dark:text-green-400" : leaving ? "text-red-600 dark:text-red-400" : ""}`}>{entering ? "+" : leaving ? "−" : ""}{qty(row.quantity)} {unit}</div>
-            {seesCost && <div className="lg:w-28 lg:text-right tabular-nums">{money(row.totalCost)}</div>}
-            <div className="lg:w-32 lg:text-right tabular-nums"><span className="lg:hidden text-xs text-muted-foreground">Saldo depois: </span>{qty(row.inStockAfter)}</div>
-          </button>
-        );
-      })}
-      {data && data.total > rows.length && <p className="px-4 py-2 border-t text-xs text-muted-foreground">Mostrando as {rows.length} mais recentes de {data.total}.</p>}
+        return <span className={entering ? "text-green-700 dark:text-green-400" : leaving ? "text-red-600 dark:text-red-400" : ""}>{entering ? "+" : leaving ? "−" : ""}{qty(row.quantity)} {unit}</span>;
+      },
+    },
+    ...(seesCost ? [{ id: "cost", header: "Custo", align: "right" as const, className: "w-28 tabular-nums", cell: (row: KardexRow) => money(row.totalCost) }] : []),
+    { id: "after", header: "Saldo depois", align: "right", className: "w-28 tabular-nums", cell: (row) => qty(row.inStockAfter) },
+  ];
+  return (
+    <ListCard>
+      <DataTable rows={rows} columns={columns} getRowId={(row) => row.id} ariaLabel="Movimentações do item" skeletonRows={4}
+        loading={isLoading} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+        onRowClick={(row) => setOpened(row.movementId)}
+        empty={<EmptyState title="Nenhuma movimentação deste item." />} />
+      {data && data.total > rows.length && <p className="text-xs text-muted-foreground">Mostrando as {rows.length} mais recentes de {data.total}.</p>}
       {opened && <MovementDetailDialog id={opened} onClose={() => setOpened(null)} />}
-    </div>
+    </ListCard>
   );
 }
 
@@ -523,42 +522,42 @@ function ItemPurchases({ itemId }: { itemId: number }) {
 
 /** Peças do item (controle por unidade), com a impressão das etiquetas. */
 function ItemUnits({ itemId, onEnter }: { itemId: number; onEnter?: () => void }) {
+  const navigate = useNavigate();
   const [printing, setPrinting] = useState(false);
   const params = { itemId, limit: 500 };
-  const { data, isLoading, error } = useQuery({ queryKey: [EQUIP_KEYS.units, params], queryFn: () => stockApi.get<{ rows: UnitRow[]; total: number }>("units", params) });
-  if (error) return <p className="text-destructive text-sm">Erro: {errorMessage(error)}</p>;
-  if (isLoading) return <Skeleton className="h-40 w-full" />;
+  const { data, isLoading, error, refetch } = useQuery({ queryKey: [EQUIP_KEYS.units, params], queryFn: () => stockApi.get<{ rows: UnitRow[]; total: number }>("units", params) });
   const rows = data?.rows ?? [];
+  const columns: DataColumn<UnitRow>[] = [
+    { id: "tag", header: "Etiqueta", className: "w-36 font-semibold tabular-nums", cell: (unit) => unit.tag },
+    { id: "serial", header: "Série", className: "text-muted-foreground", cell: (unit) => <span className="truncate block max-w-[12rem]">{unit.serialNumber ?? ""}</span> },
+    { id: "status", header: "Situação", className: "w-44", cell: (unit) => <UnitStatusBadge status={unit.status} needsInspection={unit.needsInspection} /> },
+    { id: "holder", header: "Onde está", className: "text-muted-foreground", cell: (unit) => <span className="truncate block max-w-[13rem]">{unit.holder}</span> },
+    {
+      id: "dues", header: "Vencimentos", cell: (unit) => (
+        <div className="flex flex-nowrap gap-1 whitespace-nowrap">
+          {unit.dues.inspection && <DueStateBadge state={unit.dues.inspection} label="Inspeção" />}
+          {unit.dues.calibration && <DueStateBadge state={unit.dues.calibration} label="Calibração" />}
+          {unit.dues.life && <DueStateBadge state={unit.dues.life} label="Vida útil" />}
+        </div>
+      ),
+    },
+  ];
   return (
-    <section className="rounded-card border bg-card overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 bg-muted/50">
+    <ListCard>
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-semibold text-sm">Peças ({data?.total ?? 0})</h2>
         <div className="flex gap-2">
           <Button type="button" size="sm" variant="outline" disabled={!rows.length} onClick={() => setPrinting(true)}><Icon name="qr-code" className="w-3 h-3 mr-1" /> Imprimir etiquetas</Button>
           <Button asChild size="sm" variant="outline"><Link to="/suprimentos/equipamentos" search={{ itemId }}>Ver em Equipamentos</Link></Button>
         </div>
       </div>
-      {rows.length === 0 && (
-        <div className="p-4 grid gap-2 justify-items-start">
-          <p className="text-sm text-muted-foreground">Nenhuma peça ainda. Cada peça ganha a sua etiqueta quando entra no estoque (pela compra ou dando entrada).</p>
-          {onEnter && <Button type="button" size="sm" onClick={onEnter}><Icon name="package-plus" className="w-4 h-4 mr-1" /> Dar entrada</Button>}
-        </div>
-      )}
-      {rows.map((unit) => (
-        <Link key={unit.id} to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(unit.id) }} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-t text-sm hover:bg-muted/40">
-          <div className="lg:w-40 font-semibold tabular-nums">{unit.tag}</div>
-          <div className="flex-1 min-w-0 text-muted-foreground truncate">{unit.serialNumber ? `série ${unit.serialNumber}` : ""}</div>
-          <div className="lg:w-44"><UnitStatusBadge status={unit.status} needsInspection={unit.needsInspection} /></div>
-          <div className="lg:w-56 text-muted-foreground truncate">{unit.holder}</div>
-          <div className="lg:w-56 flex flex-wrap gap-1">
-            {unit.dues.inspection && <DueStateBadge state={unit.dues.inspection} label="Inspeção" />}
-            {unit.dues.calibration && <DueStateBadge state={unit.dues.calibration} label="Calibração" />}
-            {unit.dues.life && <DueStateBadge state={unit.dues.life} label="Vida útil" />}
-          </div>
-        </Link>
-      ))}
+      <DataTable rows={rows} columns={columns} getRowId={(unit) => unit.id} ariaLabel="Peças do item" skeletonRows={4}
+        loading={isLoading} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+        onRowClick={(unit) => navigate({ to: "/suprimentos/equipamentos/$unitId", params: { unitId: String(unit.id) } })}
+        empty={<EmptyState title="Nenhuma peça ainda." description="Cada peça ganha a sua etiqueta quando entra no estoque (pela compra ou dando entrada)."
+          action={onEnter && <Button type="button" size="sm" onClick={onEnter}><Icon name="package-plus" className="w-4 h-4" /> Dar entrada</Button>} />} />
       {printing && <PrintLabelsDialog units={rows.map((unit) => ({ tag: unit.tag, item: unit.item }))} onClose={() => setPrinting(false)} />}
-    </section>
+    </ListCard>
   );
 }
 

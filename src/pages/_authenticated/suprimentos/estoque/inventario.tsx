@@ -1,4 +1,3 @@
-import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,12 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
+import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
 import { errorMessage } from "../../comercial/-shared/commercial";
-import { PERM_ADJUST, Pill, toOptions, useStockOptions } from "../-shared/stock";
+import { PERM_ADJUST, toOptions, useStockOptions } from "../-shared/stock";
 import { LocationField, useLocationValue } from "../-shared/stock-pickers";
 import { COUNTS_KEY, Count, CountRow, countStatusTone, countsApi } from "../-shared/inventory";
 
@@ -23,45 +26,41 @@ export const Route = createFileRoute("/_authenticated/suprimentos/estoque/invent
   validateSearch: (search: Record<string, unknown>): { novo?: "1" } => (search.novo === "1" || search.novo === 1 ? { novo: "1" as const } : {}),
 });
 
+const COUNT_TONE: Record<ReturnType<typeof countStatusTone>, StatusTone> = { amber: "warning", green: "success", muted: "neutral" };
+
 /** Inventário: contagens por local; cada uma fecha num ajuste único com as diferenças. */
 function CountsPage() {
   const { can } = useVerify();
   const navigate = useNavigate();
   const { novo } = Route.useSearch();
   const [opening, setOpening] = useState(novo === "1");
-  const { data, isLoading, error } = useQuery({ queryKey: [COUNTS_KEY], queryFn: () => countsApi.get<CountRow[]>("") });
+  const { data, isLoading, error, refetch } = useQuery({ queryKey: [COUNTS_KEY], queryFn: () => countsApi.get<CountRow[]>("") });
   if (!can(`view_${PERM_ADJUST}`)) return null;
   const open = (id: number) => navigate({ to: "/suprimentos/estoque/inventario/$countId", params: { countId: String(id) } });
 
+  const columns: DataColumn<CountRow>[] = [
+    { id: "id", header: "Nº", className: "w-16 font-semibold tabular-nums", cell: (row) => `#${row.id}` },
+    { id: "location", header: "Local", cell: (row) => <span className="inline-flex items-center gap-2">{row.location} {row.blindCount && <StatusBadge tone="neutral">Às cegas</StatusBadge>}</span> },
+    { id: "status", header: "Situação", className: "w-28", cell: (row) => <StatusBadge tone={COUNT_TONE[countStatusTone(row.status)]}>{row.status === "aberta" ? "Aberta" : row.status === "fechada" ? "Fechada" : "Cancelada"}</StatusBadge> },
+    { id: "openedAt", header: "Aberta em", className: "w-28 text-muted-foreground tabular-nums", cell: (row) => new Date(row.openedAt).toLocaleDateString("pt-BR") },
+    { id: "counted", header: "Contados", align: "right", className: "w-28 tabular-nums", cell: (row) => `${row.counted} de ${row.lines}` },
+    { id: "differences", header: "Diferenças", align: "right", className: "w-24 tabular-nums", cell: (row) => (row.status === "aberta" && row.blindCount ? "—" : row.differences) },
+  ];
+
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Inventário</h1>
-          <p className="text-sm text-muted-foreground">Conte o que há em cada local. Ao fechar, as diferenças viram um ajuste; peça não achada fica bloqueada como "não localizada".</p>
-        </div>
-        {can(PERM_ADJUST) && <Button onClick={() => setOpening(true)}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova contagem</Button>}
-      </div>
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {!error && (
-        <div className="mt-4 rounded-card border bg-card overflow-x-auto">
-          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
-            <div className="w-20">Nº</div><div className="flex-1">Local</div><div className="w-32">Situação</div><div className="w-40">Aberta em</div><div className="w-40 text-right">Contados</div><div className="w-32 text-right">Diferenças</div>
-          </div>
-          {isLoading && Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
-          {!isLoading && !data?.length && <p className="p-6 text-sm text-muted-foreground">Nenhuma contagem ainda.</p>}
-          {data?.map((row) => (
-            <button key={row.id} type="button" onClick={() => open(row.id)} className={`min-w-[880px] w-full text-left flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-              <div className="w-20 font-semibold tabular-nums">#{row.id}</div>
-              <div className="flex-1 min-w-0 flex items-center gap-2">{row.location} {row.blindCount && <Pill>Às cegas</Pill>}</div>
-              <div className="w-32"><Pill tone={countStatusTone(row.status)}>{row.status === "aberta" ? "Aberta" : row.status === "fechada" ? "Fechada" : "Cancelada"}</Pill></div>
-              <div className="w-40 text-muted-foreground">{new Date(row.openedAt).toLocaleDateString("pt-BR")}</div>
-              <div className="w-40 text-right tabular-nums">{row.counted} de {row.lines}</div>
-              <div className="w-32 text-right tabular-nums">{row.status === "aberta" && row.blindCount ? "—" : row.differences}</div>
-            </button>
-          ))}
-        </div>
-      )}
+      <PageHeader title="Inventário" description={'Conte o que há em cada local. Ao fechar, as diferenças viram um ajuste; peça não achada fica bloqueada como "não localizada".'} />
+      <ListCard>
+        {can(PERM_ADJUST) && (
+          <ListToolbar>
+            <Button onClick={() => setOpening(true)}><Icon name="plus" className="w-4 h-4" /> Nova contagem</Button>
+          </ListToolbar>
+        )}
+        <DataTable rows={data} columns={columns} getRowId={(row) => row.id} ariaLabel="Contagens" skeletonRows={3}
+          loading={isLoading} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+          onRowClick={(row) => open(row.id)}
+          empty={<EmptyState title="Nenhuma contagem ainda." action={can(PERM_ADJUST) && <Button size="sm" onClick={() => setOpening(true)}><Icon name="plus" className="w-4 h-4" /> Nova contagem</Button>} />} />
+      </ListCard>
       {opening && <OpenCountDialog onClose={() => setOpening(false)} onOpened={(count) => open(count.id)} />}
     </>
   );

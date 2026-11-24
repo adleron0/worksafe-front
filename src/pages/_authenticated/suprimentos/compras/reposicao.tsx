@@ -1,14 +1,14 @@
-import { clickableRow } from "@/utils/clickable-row";
-import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import { NumField, errorMessage, money } from "../../comercial/-shared/commercial";
 import { PURCHASES_ABILITY } from "../-shared/purchases";
 import { REORDER_STORAGE_KEY, ReorderDraft, ReorderRow, STOCK_ABILITY, STOCK_KEYS, qty, stockApi } from "../-shared/stock";
@@ -23,7 +23,7 @@ function ReorderPage() {
   const navigate = useNavigate();
   const [chosen, setChosen] = useState<Record<number, boolean>>({});
   const [amounts, setAmounts] = useState<Record<number, number>>({});
-  const { data, isLoading, error } = useQuery({ queryKey: [STOCK_KEYS.reorder], queryFn: () => stockApi.get<ReorderRow[]>("reorder") });
+  const { data, isLoading, error, refetch } = useQuery({ queryKey: [STOCK_KEYS.reorder], queryFn: () => stockApi.get<ReorderRow[]>("reorder") });
   // começa com tudo marcado e a quantidade sugerida
   useEffect(() => {
     if (!data) return;
@@ -49,60 +49,55 @@ function ReorderPage() {
     navigate({ to: "/suprimentos/pedidos-de-compra/$purchaseId", params: { purchaseId: "novo" }, search: { reposicao: "1" } });
   };
 
+  const someChosen = rows.some((row) => chosen[row.id]);
+  const columns: DataColumn<ReorderRow>[] = [
+    {
+      id: "item", header: "Item", cell: (row) => (
+        <div className="min-w-0 max-w-sm">
+          <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: String(row.id) }} className="font-medium hover:underline truncate block">{row.name}</Link>
+          <p className="text-xs text-muted-foreground tabular-nums">{row.code}</p>
+        </div>
+      ),
+    },
+    { id: "available", header: "Disponível", align: "right", className: "w-28 whitespace-nowrap tabular-nums text-red-600 dark:text-red-400", cell: (row) => `${qty(row.available)} ${row.unit}` },
+    { id: "min", header: "Mínimo", align: "right", className: "w-24 tabular-nums text-muted-foreground", cell: (row) => qty(row.min) },
+    {
+      id: "amount", header: "Comprar", className: "w-40", cell: (row) => (
+        <div data-row-ignore>
+          <NumField value={amounts[row.id] ?? row.suggested} digits={3} suffix={row.unit} ariaLabel={`Quantidade a comprar de ${row.name}`} onChange={(value) => setAmounts((current) => ({ ...current, [row.id]: value }))} />
+        </div>
+      ),
+    },
+    { id: "lastCost", header: "Último preço", align: "right", className: "w-28 tabular-nums", cell: (row) => (row.lastCost !== null ? money(row.lastCost) : "—") },
+    { id: "supplier", header: "Último fornecedor", className: "text-xs text-muted-foreground", cell: (row) => <span className="truncate block max-w-[12rem]">{row.lastSupplier ?? "—"}</span> },
+  ];
+
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Reposição</h1>
-          <p className="text-sm text-muted-foreground">Itens com o disponível abaixo do mínimo. Ajuste as quantidades e gere o pedido de compra.</p>
-        </div>
-        {canOrder && rows.length > 0 && (
-          <Button type="button" disabled={!picked.length} onClick={createOrder}><Icon name="shopping-cart" className="w-4 h-4 mr-1" /> Criar pedido de compra{picked.length ? ` (${picked.length})` : ""}</Button>
-        )}
-      </div>
+      <PageHeader title="Reposição" description="Itens com o disponível abaixo do mínimo. Ajuste as quantidades e gere o pedido de compra." />
 
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {!error && (
-        <div className="mt-4 rounded-card border bg-card overflow-x-auto">
-          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
-            <div className="w-10">
-              <Checkbox aria-label="Marcar todos" checked={allChosen} className="min-w-[880px] border-inverse-foreground" onCheckedChange={(checked) => setChosen(Object.fromEntries(rows.map((row) => [row.id, checked === true])))} />
-            </div>
-            <div className="flex-1">Item</div>
-            <div className="w-32 text-right">Disponível</div>
-            <div className="w-28 text-right">Mínimo</div>
-            <div className="w-40 text-right">Comprar</div>
-            <div className="w-32 text-right">Último preço</div>
-            <div className="w-48 pl-4">Último fornecedor</div>
-          </div>
-          {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
-          {!isLoading && !rows.length && <p className="p-6 text-sm text-muted-foreground">Nenhum item abaixo do mínimo. Só entram aqui os itens com estoque mínimo definido na ficha.</p>}
-          {rows.map((row) => (
-            <div key={row.id} {...clickableRow()} className={`flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="w-10 shrink-0 -mr-3">
-                  <Checkbox aria-label={`Comprar ${row.name}`} checked={!!chosen[row.id]} onCheckedChange={(checked) => setChosen((current) => ({ ...current, [row.id]: checked === true }))} />
-                </div>
-                <div className="min-w-0">
-                  <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: String(row.id) }} className="font-medium hover:underline truncate block">{row.name}</Link>
-                  <p className="text-xs text-muted-foreground tabular-nums">{row.code}</p>
-                </div>
-              </div>
-              <div className="w-32 text-right tabular-nums text-red-600 dark:text-red-400"><span className="hidden text-xs text-muted-foreground">Disponível: </span>{qty(row.available)} {row.unit}</div>
-              <div className="w-28 text-right tabular-nums text-muted-foreground"><span className="hidden text-xs">Mínimo: </span>{qty(row.min)}</div>
-              <div className="w-40 pl-4">
-                <NumField value={amounts[row.id] ?? row.suggested} digits={3} suffix={row.unit} ariaLabel={`Quantidade a comprar de ${row.name}`} onChange={(value) => setAmounts((current) => ({ ...current, [row.id]: value }))} />
-              </div>
-              <div className="w-32 text-right tabular-nums"><span className="hidden text-xs text-muted-foreground">Último preço: </span>{row.lastCost !== null ? money(row.lastCost) : "—"}</div>
-              <div className="w-48 pl-4 text-xs text-muted-foreground truncate">{row.lastSupplier ?? "—"}</div>
-            </div>
-          ))}
-          {picked.length > 0 && total > 0 && (
-            <p className="px-4 py-2 border-t text-right text-sm">Estimativa pelo último preço: <span className="font-semibold tabular-nums">{money(total)}</span></p>
-          )}
-        </div>
-      )}
-      {!canOrder && rows.length > 0 && <p className="mt-3 text-xs text-muted-foreground">Para gerar o pedido de compra é preciso a permissão de criar pedidos de compra.</p>}
+      <ListCard>
+        {canOrder && rows.length > 0 && (
+          <ListToolbar>
+            <Button type="button" disabled={!picked.length} onClick={createOrder}><Icon name="shopping-cart" className="w-4 h-4" /> Criar pedido de compra{picked.length ? ` (${picked.length})` : ""}</Button>
+          </ListToolbar>
+        )}
+
+        <DataTable rows={data} columns={columns} getRowId={(row) => row.id} ariaLabel="Reposição" skeletonRows={4}
+          loading={isLoading} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+          selection={{
+            isSelected: (row) => !!chosen[row.id],
+            toggle: (row, on) => setChosen((current) => ({ ...current, [row.id]: on })),
+            pageState: allChosen ? true : someChosen ? "indeterminate" : false,
+            togglePage: (on) => setChosen(Object.fromEntries(rows.map((row) => [row.id, on]))),
+          }}
+          empty={<EmptyState icon="circle-check" title="Nenhum item abaixo do mínimo." description="Só entram aqui os itens com estoque mínimo definido na ficha." />} />
+
+        {picked.length > 0 && total > 0 && (
+          <p className="text-right text-sm">Estimativa pelo último preço: <span className="font-semibold tabular-nums">{money(total)}</span></p>
+        )}
+        {!canOrder && rows.length > 0 && <p className="text-xs text-muted-foreground">Para gerar o pedido de compra é preciso a permissão de criar pedidos de compra.</p>}
+      </ListCard>
     </>
   );
 }

@@ -1,4 +1,3 @@
-import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,16 +6,44 @@ import useVerify from "@/hooks/use-verify";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, dateBr, errorMessage, money } from "../-shared/commercial";
-import { SELLERS_KEY, SellerCandidate, SellersResponse, WalletDetail, initials } from "../-shared/sellers";
+import { SELLERS_KEY, SellerCandidate, SellerRow, SellersResponse, WalletDetail, initials } from "../-shared/sellers";
 
 export const Route = createFileRoute("/_authenticated/comercial/_vendedores/vendedores")({
   component: SellersPage,
 });
+
+const columns: DataColumn<SellerRow>[] = [
+  {
+    id: "name", header: "Vendedor",
+    cell: (row) => (
+      <div className="min-w-0 flex items-center gap-3">
+        <Avatar className="border h-8 w-8">
+          <AvatarImage src={row.imageUrl || undefined} alt={row.name} />
+          <AvatarFallback className="text-xs">{initials(row.name)}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          <p className="font-medium truncate">{row.name}{row.inactiveAt && <span className="ml-2 text-xs rounded bg-muted px-1.5 py-0.5 font-normal">Inativo</span>}</p>
+          <p className="text-xs text-muted-foreground truncate">{row.email}</p>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "balance", header: "A pagar", align: "right", className: "w-36 font-semibold tabular-nums",
+    cell: (row) => <span className={cn(row.wallet.balance > 0.005 && "text-primary", row.wallet.balance < -0.005 && "text-destructive")}>{money(row.wallet.balance)}</span>,
+  },
+  { id: "pending", header: "A liberar", align: "right", className: "w-36 tabular-nums text-muted-foreground", cell: (row) => money(row.wallet.pending) },
+  { id: "paid", header: "Já pago", align: "right", className: "w-36 tabular-nums text-muted-foreground", cell: (row) => money(row.wallet.paid) },
+  { id: "last", header: "Última movimentação", align: "right", className: "w-44 text-muted-foreground", cell: (row) => dateBr(row.wallet.lastMovementAt) },
+];
 
 /**
  * Vendedores: quem vende e quanto cada um tem a receber de comissão.
@@ -28,7 +55,7 @@ function SellersPage() {
   const [search, setSearch] = useState("");
   const [adding, setAdding] = useState(false);
   const params = search.trim() ? { search: search.trim() } : undefined;
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: [SELLERS_KEY, params],
     queryFn: () => commercialApi.get<SellersResponse>("sellers", params),
     placeholderData: (previous) => previous,
@@ -40,63 +67,27 @@ function SellersPage() {
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Vendedores</h1>
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            Cada vendedor tem uma carteira com as comissões de treinamentos e de serviços. A comissão entra no saldo quando o cliente paga; o pagamento ao vendedor é lançado na carteira.
-          </p>
-        </div>
-        {canUpdate && <Button type="button" className="shrink-0" onClick={() => setAdding(true)}><Icon name="plus" className="w-4 h-4 mr-1" /> Novo vendedor</Button>}
-      </div>
+      <PageHeader title="Vendedores"
+        description="Cada vendedor tem uma carteira com as comissões de treinamentos e de serviços. A comissão entra no saldo quando o cliente paga; o pagamento ao vendedor é lançado na carteira." />
 
-      <div className="grid sm:grid-cols-3 gap-3 my-4">
+      <div className="grid sm:grid-cols-3 gap-3 mb-4">
         <Total label="A pagar agora" value={summary?.balance} highlight hint="Comissões liberadas e ainda não pagas, somando todos os vendedores." />
         <Total label="A liberar" value={summary?.pending} hint="Vendas feitas cujo cliente ainda não pagou." />
         <Total label="Já pago" value={summary?.paid} hint="Soma dos pagamentos lançados nas carteiras." />
       </div>
 
-      <div className="mb-3 w-full sm:w-80">
-        <Input name="search" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar por nome ou e-mail..." icon="search" />
-      </div>
-
-      <div className="rounded-card border bg-card overflow-x-auto">
-        <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
-          <div className="flex-1">Vendedor</div>
-          <div className="w-36 text-right">A pagar</div>
-          <div className="w-36 text-right">A liberar</div>
-          <div className="w-36 text-right">Já pago</div>
-          <div className="w-44 text-right">Última movimentação</div>
-        </div>
-        {isLoading && Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
-        {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-        {!isLoading && !error && !data?.rows.length && (
-          <p className="p-6 text-sm text-muted-foreground">
-            {search ? "Nenhum vendedor para essa busca." : "Nenhum vendedor ainda. Use “Novo vendedor” para marcar um usuário do sistema como vendedor."}
-          </p>
-        )}
-        {data?.rows.map((row) => (
-          <button key={row.id} type="button" onClick={() => open(row.id)}
-            className={`min-w-[880px] w-full text-left flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-            <div className="flex-1 min-w-0 flex items-center gap-3 pr-4">
-              <Avatar className="border h-9 w-9">
-                <AvatarImage src={row.imageUrl || undefined} alt={row.name} />
-                <AvatarFallback className="text-xs">{initials(row.name)}</AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <p className="font-medium truncate">{row.name}{row.inactiveAt && <span className="ml-2 text-xs rounded bg-muted px-1.5 py-0.5 font-normal">Inativo</span>}</p>
-                <p className="text-xs text-muted-foreground truncate">{row.email}</p>
-              </div>
-            </div>
-            <div className={cn("w-36 text-right font-semibold tabular-nums", row.wallet.balance > 0.005 && "text-primary", row.wallet.balance < -0.005 && "text-destructive")}>
-              <span className="hidden text-xs font-normal text-muted-foreground">A pagar: </span>{money(row.wallet.balance)}
-            </div>
-            <div className="w-36 text-right tabular-nums text-muted-foreground"><span className="hidden text-xs">A liberar: </span>{money(row.wallet.pending)}</div>
-            <div className="w-36 text-right tabular-nums text-muted-foreground"><span className="hidden text-xs">Já pago: </span>{money(row.wallet.paid)}</div>
-            <div className="w-44 text-right text-muted-foreground"><span className="hidden text-xs">Última movimentação: </span>{dateBr(row.wallet.lastMovementAt)}</div>
-          </button>
-        ))}
-      </div>
+      <ListCard>
+        <ListToolbar search={{ value: search, onChange: setSearch, placeholder: "Buscar por nome ou e-mail..." }}>
+          {canUpdate && <Button type="button" onClick={() => setAdding(true)}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Novo vendedor</span></Button>}
+        </ListToolbar>
+        <DataTable rows={data?.rows} columns={columns} getRowId={(row) => row.id} ariaLabel="Vendedores" minWidth={820}
+          loading={isLoading || isFetching} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+          onRowClick={(row) => open(row.id)}
+          empty={search
+            ? <EmptyState icon="search-x" title="Nenhum vendedor para essa busca." />
+            : <EmptyState title="Nenhum vendedor ainda." description="Use “Novo vendedor” para marcar um usuário do sistema como vendedor."
+                action={canUpdate && <Button size="sm" onClick={() => setAdding(true)}><Icon name="plus" className="w-4 h-4" /> Novo vendedor</Button>} />} />
+      </ListCard>
 
       {adding && <NewSellerDialog onClose={() => setAdding(false)} onCreated={(id) => { setAdding(false); open(id); }} />}
     </>

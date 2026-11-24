@@ -7,13 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
-import { NumField, Tip, errorMessage } from "../../comercial/-shared/commercial";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
+import { NumField, errorMessage } from "../../comercial/-shared/commercial";
 import { DOCS_ABILITY, DOCS_EXPIRING_KEY, DOCS_KEY, DOC_TYPES_KEY, DocType, DocTypes, documentsApi } from "../-shared/documents";
+import DocumentTypeRowActions from "./-components/DocumentTypeRowActions";
 
 export const Route = createFileRoute("/_authenticated/rh/_documentos/tipos-de-documento")({
   component: DocumentTypesPage,
@@ -24,6 +27,30 @@ const draftOf = (type?: DocType): Draft => ({
   name: type?.name ?? "", folder: type?.folder ?? "treinamentos", expires: type?.expires ?? false, validityMonths: type?.validityMonths ?? 12, warnDays: type?.warnDays ?? 30,
   required: type?.required ?? false, requiredProfessionalIds: (type?.requiredProfessionalIds ?? []).map(String), inIntegration: type?.inIntegration ?? false,
 });
+
+const tag = "rounded bg-muted px-1.5 py-0.5 text-xs font-medium whitespace-nowrap";
+const columnsOf = (folders: DocTypes["folders"]): DataColumn<DocType>[] => [
+  { id: "name", header: "Tipo", className: "min-w-[200px]", cell: (type) => <p className="font-medium truncate max-w-[18rem]">{type.name}</p> },
+  {
+    id: "folder", header: "Pasta",
+    cell: (type) => <span className="inline-flex items-center gap-1.5 text-muted-foreground whitespace-nowrap"><Icon name="folder" className="w-3.5 h-3.5" /> {folders.find((folder) => folder.id === type.folder)?.name ?? type.folder}</span>,
+  },
+  {
+    id: "validity", header: "Validade",
+    cell: (type) => <span className="text-muted-foreground whitespace-nowrap">{type.expires ? `Vence${type.validityMonths ? ` em ${type.validityMonths} ${type.validityMonths === 1 ? "mês" : "meses"}` : ""} · aviso ${type.warnDays} dias antes` : "Não vence"}</span>,
+  },
+  {
+    id: "rules", header: "Regras",
+    cell: (type) => (type.required || type.inIntegration
+      ? (
+        <div className="flex gap-1">
+          {type.required && <span className={tag}>{type.requiredProfessionalIds.length ? `Obrigatório para ${type.requiredProfessionalIds.length} ${type.requiredProfessionalIds.length === 1 ? "função" : "funções"}` : "Obrigatório para todos"}</span>}
+          {type.inIntegration && <span className={tag}>Entra na integração</span>}
+        </div>
+      )
+      : <span className="text-muted-foreground">—</span>),
+  },
+];
 
 /** Tipos de documento: em que pasta fica, se vence, quando avisar, se é obrigatório e se entra na integração de obra. */
 function DocumentTypesPage() {
@@ -46,46 +73,23 @@ function DocumentTypesPage() {
 
   if (!can(`view_${DOCS_ABILITY}`)) return null;
 
+  // na ordem das pastas, como antes (uma pasta depois da outra)
+  const rows = data ? data.folders.flatMap((folder) => data.rows.filter((type) => type.folder === folder.id)) : undefined;
+
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Tipos de documento</h1>
-          <p className="text-sm text-muted-foreground">O que cada funcionário pode ter na pasta: se vence, com quanta antecedência avisar e o que é obrigatório.</p>
-        </div>
-        {canWrite && <Button onClick={() => setEditing("novo")}><Icon name="plus" className="w-4 h-4 mr-1" /> Novo tipo</Button>}
-      </div>
+      <PageHeader title="Tipos de documento" description="O que cada funcionário pode ter na pasta: se vence, com quanta antecedência avisar e o que é obrigatório." />
 
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {isLoading && <div className="mt-4 grid gap-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>}
-
-      {data?.folders.map((folder) => {
-        const rows = data.rows.filter((type) => type.folder === folder.id);
-        if (!rows.length) return null;
-        return (
-          <section key={folder.id} className="mt-4 rounded-card border bg-card overflow-hidden">
-            <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm flex items-center gap-2"><Icon name="folder" className="w-4 h-4" /> {folder.name}</h2>
-            {rows.map((type) => (
-              <div key={type.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-t text-sm">
-                <div className="flex-1 min-w-0 font-medium">{type.name}</div>
-                <div className="lg:w-56 text-muted-foreground">{type.expires ? `Vence${type.validityMonths ? ` em ${type.validityMonths} ${type.validityMonths === 1 ? "mês" : "meses"}` : ""} · aviso ${type.warnDays} dias antes` : "Não vence"}</div>
-                <div className="lg:w-72 flex flex-wrap gap-1">
-                  {type.required && <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">{type.requiredProfessionalIds.length ? `Obrigatório para ${type.requiredProfessionalIds.length} ${type.requiredProfessionalIds.length === 1 ? "função" : "funções"}` : "Obrigatório para todos"}</span>}
-                  {type.inIntegration && <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">Entra na integração</span>}
-                </div>
-                <div className="lg:w-24 flex lg:justify-end gap-1">
-                  {canWrite && <Tip text="Editar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Editar ${type.name}`} onClick={() => setEditing(type)}><Icon name="pencil" className="w-4 h-4" /></Button></Tip>}
-                  {canWrite && (
-                    <ConfirmDialog title={`Inativar "${type.name}"?`} description="O tipo deixa de aparecer para novos envios. Os documentos que já existem continuam nas pastas." onConfirm={() => inactivate(type.id)}>
-                      <span><Tip text="Inativar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Inativar ${type.name}`}><Icon name="archive" className="w-4 h-4" /></Button></Tip></span>
-                    </ConfirmDialog>
-                  )}
-                </div>
-              </div>
-            ))}
-          </section>
-        );
-      })}
+      <ListCard>
+        {canWrite && <ListToolbar><Button onClick={() => setEditing("novo")}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Novo tipo</span></Button></ListToolbar>}
+        <DataTable rows={rows} columns={columnsOf(data?.folders ?? [])} getRowId={(type) => type.id} ariaLabel="Tipos de documento" minWidth={760}
+          loading={isLoading} error={error ? errorMessage(error) : null}
+          actions={canWrite ? (type) => (
+            <DocumentTypeRowActions name={type.name} onEdit={() => setEditing(type)} onInactivate={() => inactivate(type.id)}
+              inactivateDescription="O tipo deixa de aparecer para novos envios. Os documentos que já existem continuam nas pastas." />
+          ) : undefined}
+          empty={<EmptyState title="Nenhum tipo de documento cadastrado." />} />
+      </ListCard>
 
       {editing && data && <TypeDialog type={editing === "novo" ? undefined : editing} options={data} onClose={() => setEditing(null)} onSaved={refresh} />}
     </>

@@ -1,4 +1,3 @@
-import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -6,10 +5,12 @@ import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
-import Input from "@/components/general-components/Input";
-import Pagination from "@/components/general-components/Pagination";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import Select from "@/components/general-components/Select";
 import { dateBr, errorMessage } from "../../comercial/-shared/commercial";
 import { HOLDER_OPTIONS, stockApi } from "../-shared/stock";
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/suprimentos/equipamentos/"
   }),
 });
 
-const LIMIT = 50;
+const LIMITS = [10, 30, 50, 100];
 
 /** Equipamentos: cada peça rastreada (etiqueta), onde está, a situação e o que vence. */
 function UnitsPage() {
@@ -38,12 +39,13 @@ function UnitsPage() {
   const [holderType, setHolderType] = useState(initial.holderType ?? "");
   const [due, setDue] = useState(initial.due === "1");
   const [page, setPage] = useState(0);
+  const [limit, setLimit] = useState(50);
   const [printing, setPrinting] = useState(false);
   const params = {
-    page, limit: LIMIT, ...(search.trim() ? { search: search.trim() } : {}), ...(status ? { status } : {}), ...(holderType ? { holderType } : {}),
+    page, limit, ...(search.trim() ? { search: search.trim() } : {}), ...(status ? { status } : {}), ...(holderType ? { holderType } : {}),
     ...(due ? { due: "1" } : {}), ...(initial.itemId ? { itemId: initial.itemId } : {}),
   };
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: [EQUIP_KEYS.units, params],
     queryFn: () => stockApi.get<{ rows: UnitRow[]; total: number }>("units", params),
     placeholderData: (previous) => previous,
@@ -54,72 +56,66 @@ function UnitsPage() {
   const rows = data?.rows ?? [];
   const filtered = !!(search || status || holderType || due || initial.itemId);
 
+  const openUnit = (unit: UnitRow) => navigate({ to: "/suprimentos/equipamentos/$unitId", params: { unitId: String(unit.id) } });
+  const clearFilters = () => { setSearch(""); setStatus(""); setHolderType(""); setDue(false); setPage(0); if (initial.itemId) navigate({ to: "/suprimentos/equipamentos", search: {} }); };
+  const columns: DataColumn<UnitRow>[] = [
+    {
+      id: "tag", header: "Etiqueta", className: "w-36", cell: (unit) => (
+        <div>
+          <p className="font-semibold tabular-nums">{unit.tag}</p>
+          {unit.serialNumber && <p className="text-xs text-muted-foreground">série {unit.serialNumber}</p>}
+        </div>
+      ),
+    },
+    { id: "item", header: "Item", cell: (unit) => <span className="truncate block max-w-sm">{unit.item}{unit.length !== null ? <span className="text-xs text-muted-foreground"> · {unit.length} m</span> : null}</span> },
+    { id: "status", header: "Situação", className: "w-44", cell: (unit) => <UnitStatusBadge status={unit.status} needsInspection={unit.needsInspection} /> },
+    { id: "holder", header: "Onde está", className: "text-muted-foreground", cell: (unit) => <span className="truncate block max-w-[13rem]">{unit.holder}</span> },
+    {
+      id: "dues", header: "Vencimentos", cell: (unit) => (
+        <div className="flex flex-nowrap gap-1 items-center text-xs whitespace-nowrap">
+          {unit.dues.inspection && <DueStateBadge state={unit.dues.inspection} label="Inspeção" />}
+          {unit.dues.calibration && <DueStateBadge state={unit.dues.calibration} label="Calibração" />}
+          {unit.dues.life && <DueStateBadge state={unit.dues.life} label="Vida útil" />}
+          {!unit.dues.inspection && !unit.dues.calibration && !unit.dues.life && <span className="text-muted-foreground">{unit.lifeEndsAt ? `vida até ${dateBr(unit.lifeEndsAt)}` : "—"}</span>}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Peças</h1>
-          <p className="text-sm text-muted-foreground">Cada peça com etiqueta: onde está, a situação e os vencimentos de inspeção, calibração e vida útil.</p>
-        </div>
-        <Button type="button" variant="outline" disabled={!rows.length} onClick={() => setPrinting(true)}><Icon name="qr-code" className="w-4 h-4 mr-1" /> {rows.length && data && data.total > rows.length ? `Imprimir etiquetas desta página (${rows.length})` : `Imprimir etiquetas${rows.length ? ` (${rows.length})` : ""}`}</Button>
-      </div>
+      <PageHeader title="Peças" description="Cada peça com etiqueta: onde está, a situação e os vencimentos de inspeção, calibração e vida útil." />
 
-      <div className="flex flex-col xl:flex-row xl:flex-wrap xl:items-center gap-3 my-4 p-4 rounded-card border bg-card">
-        <div className="w-full xl:w-72"><Input name="search" value={search} onValueChange={(_, value) => reset(setSearch)(String(value))} placeholder="Buscar por etiqueta, série ou item..." icon="search" /></div>
-        <div className="w-full xl:w-52"><Select name="status" options={UNIT_STATUS_OPTIONS} state={status} clearable modal={false} placeholder="Todas (menos baixadas)" onChange={(_, value) => reset(setStatus)(String(value ?? ""))} /></div>
-        <div className="w-full xl:w-52"><Select name="holderType" options={HOLDER_OPTIONS} state={holderType} clearable modal={false} placeholder="Em qualquer lugar" onChange={(_, value) => reset(setHolderType)(String(value ?? ""))} /></div>
-        <div className="flex items-center gap-2">
-          <Checkbox id="due" checked={due} onCheckedChange={(checked) => reset(setDue)(checked === true)} />
-          <Label htmlFor="due">Só vencidos ou a vencer</Label>
-        </div>
-        {initial.itemId && <Button type="button" variant="ghost" size="sm" onClick={() => navigate({ to: "/suprimentos/equipamentos", search: {} })}>Tirar o filtro do item</Button>}
-      </div>
+      <ListCard>
+        <ListToolbar search={{ value: search, onChange: (text) => reset(setSearch)(text), placeholder: "Buscar por etiqueta, série ou item..." }}>
+          <Button type="button" variant="outline" disabled={!rows.length} onClick={() => setPrinting(true)}><Icon name="qr-code" className="w-4 h-4" /> <span className="hidden sm:inline">{rows.length && data && data.total > rows.length ? `Imprimir etiquetas desta página (${rows.length})` : `Imprimir etiquetas${rows.length ? ` (${rows.length})` : ""}`}</span></Button>
+        </ListToolbar>
 
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {!error && (
-        <div className="rounded-card border bg-card overflow-x-auto">
-          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
-            <div className="w-40">Etiqueta</div>
-            <div className="flex-1">Item</div>
-            <div className="w-44">Situação</div>
-            <div className="w-56">Onde está</div>
-            <div className="w-64">Vencimentos</div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="w-full sm:w-52"><Select name="status" options={UNIT_STATUS_OPTIONS} state={status} clearable modal={false} placeholder="Todas (menos baixadas)" onChange={(_, value) => reset(setStatus)(String(value ?? ""))} /></div>
+          <div className="w-full sm:w-52"><Select name="holderType" options={HOLDER_OPTIONS} state={holderType} clearable modal={false} placeholder="Em qualquer lugar" onChange={(_, value) => reset(setHolderType)(String(value ?? ""))} /></div>
+          <div className="flex items-center gap-2">
+            <Checkbox id="due" checked={due} onCheckedChange={(checked) => reset(setDue)(checked === true)} />
+            <Label htmlFor="due">Só vencidos ou a vencer</Label>
           </div>
-          {isLoading && Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
-          {!isLoading && !rows.length && (filtered ? <p className="p-6 text-sm text-muted-foreground">Nenhuma peça com esses filtros.</p> : (
-            <div className="p-6 text-sm grid gap-3 justify-items-start">
-              <p className="font-medium">Nenhuma peça com etiqueta ainda.</p>
-              <p className="text-muted-foreground">Cinto, talabarte, trava-quedas e instrumentos são controlados peça por peça. Cadastre o item como equipamento reutilizável e dê entrada: cada peça ganha uma etiqueta com QR, e a inspeção e a calibração passam a ser cobradas aqui.</p>
-              {can("create_itens_estoque") && (
-                <Button type="button" onClick={() => navigate({ to: "/suprimentos/estoque/itens/$itemId", params: { itemId: "novo" }, search: { tipo: "reutilizavel" } as never })}>
-                  <Icon name="plus" className="w-4 h-4 mr-1" /> Cadastrar equipamento reutilizável
-                </Button>
-              )}
-            </div>
-          ))}
-          {rows.map((unit) => (
-            <button key={unit.id} type="button" onClick={() => navigate({ to: "/suprimentos/equipamentos/$unitId", params: { unitId: String(unit.id) } })}
-              className={`min-w-[880px] w-full text-left flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-              <div className="w-40">
-                <p className="font-semibold tabular-nums">{unit.tag}</p>
-                {unit.serialNumber && <p className="text-xs text-muted-foreground">série {unit.serialNumber}</p>}
-              </div>
-              <div className="flex-1 min-w-0 pr-4 truncate">{unit.item}{unit.length !== null ? <span className="text-xs text-muted-foreground"> · {unit.length} m</span> : null}</div>
-              <div className="w-44"><UnitStatusBadge status={unit.status} needsInspection={unit.needsInspection} /></div>
-              <div className="w-56 text-muted-foreground truncate">{unit.holder}</div>
-              <div className="w-64 flex flex-wrap gap-1 items-center text-xs">
-                {unit.dues.inspection && <DueStateBadge state={unit.dues.inspection} label="Inspeção" />}
-                {unit.dues.calibration && <DueStateBadge state={unit.dues.calibration} label="Calibração" />}
-                {unit.dues.life && <DueStateBadge state={unit.dues.life} label="Vida útil" />}
-                {!unit.dues.inspection && !unit.dues.calibration && !unit.dues.life && <span className="text-muted-foreground">{unit.lifeEndsAt ? `vida até ${dateBr(unit.lifeEndsAt)}` : "—"}</span>}
-              </div>
-            </button>
-          ))}
+          {initial.itemId && <Button type="button" variant="ghost" size="sm" onClick={() => navigate({ to: "/suprimentos/equipamentos", search: {} })}>Tirar o filtro do item</Button>}
         </div>
-      )}
-      {data && data.total > LIMIT && (
-        <div className="mt-4"><Pagination totalItems={data.total} itemsPerPage={LIMIT} currentPage={page} onPageChange={setPage} maxVisiblePages={5} /></div>
-      )}
+
+        <DataTable rows={data?.rows} columns={columns} getRowId={(unit) => unit.id} ariaLabel="Peças"
+          loading={isLoading || isFetching} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+          onRowClick={openUnit}
+          empty={filtered
+            ? <EmptyState icon="search-x" title="Nenhuma peça com esses filtros." action={<Button variant="outline" size="sm" onClick={clearFilters}>Limpar filtros</Button>} />
+            : <EmptyState title="Nenhuma peça com etiqueta ainda."
+              description="Cinto, talabarte, trava-quedas e instrumentos são controlados peça por peça. Cadastre o item como equipamento reutilizável e dê entrada: cada peça ganha uma etiqueta com QR, e a inspeção e a calibração passam a ser cobradas aqui."
+              action={can("create_itens_estoque") && (
+                <Button type="button" size="sm" onClick={() => navigate({ to: "/suprimentos/estoque/itens/$itemId", params: { itemId: "novo" }, search: { tipo: "reutilizavel" } as never })}>
+                  <Icon name="plus" className="w-4 h-4" /> Cadastrar equipamento reutilizável
+                </Button>
+              )} />} />
+
+        <ListFooter total={data?.total ?? 0} page={page} limit={limit} limits={LIMITS} onPageChange={setPage} onLimitChange={(value) => { setLimit(value); setPage(0); }} />
+      </ListCard>
       {printing && <PrintLabelsDialog units={rows.map((unit) => ({ tag: unit.tag, item: unit.item }))} onClose={() => setPrinting(false)} />}
     </>
   );

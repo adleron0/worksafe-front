@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
-import { NumField, Tip, errorMessage } from "../../comercial/-shared/commercial";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
+import { NumField, errorMessage } from "../../comercial/-shared/commercial";
 import { FILES_ABILITY, FILES_KEY, FileType, filesApi } from "../-shared/files";
+import DocumentTypeRowActions from "../../rh/_documentos/-components/DocumentTypeRowActions";
 
 export const Route = createFileRoute("/_authenticated/arquivos/_pastas/tipos-de-documento")({
   component: FileTypesPage,
@@ -20,6 +23,15 @@ export const Route = createFileRoute("/_authenticated/arquivos/_pastas/tipos-de-
 
 interface Draft { name: string; expires: boolean; validityMonths: number; warnDays: number; required: boolean }
 const draftOf = (type?: FileType): Draft => ({ name: type?.name ?? "", expires: type?.expires ?? true, validityMonths: type?.validityMonths ?? 12, warnDays: type?.warnDays ?? 30, required: type?.required ?? false });
+
+const COLUMNS: DataColumn<FileType>[] = [
+  { id: "name", header: "Tipo", className: "min-w-[220px]", cell: (type) => <p className="font-medium truncate max-w-[20rem]">{type.name}</p> },
+  {
+    id: "validity", header: "Validade",
+    cell: (type) => <span className="text-muted-foreground whitespace-nowrap">{type.expires ? `Vence${type.validityMonths ? ` em ${type.validityMonths} ${type.validityMonths === 1 ? "mês" : "meses"}` : ""} · aviso ${type.warnDays} dias antes` : "Não vence"}</span>,
+  },
+  { id: "required", header: "Obrigatório", cell: (type) => (type.required ? <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">Obrigatório</span> : <span className="text-muted-foreground">—</span>) },
+];
 
 /** Tipos de documento da empresa: se vence, a validade sugerida, quando avisar e se é obrigatório ter um vigente. */
 function FileTypesPage() {
@@ -40,40 +52,21 @@ function FileTypesPage() {
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Tipos de documento</h1>
-          <p className="text-sm text-muted-foreground">Os documentos da empresa que têm validade ou que não podem faltar. As validades são sugestões: confira com o que cada documento diz.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline"><Link to="/arquivos/vencimentos"><Icon name="calendar-clock" className="w-4 h-4 mr-1" /> Vencimentos</Link></Button>
-          {canManage && <Button onClick={() => setEditing("novo")}><Icon name="plus" className="w-4 h-4 mr-1" /> Novo tipo</Button>}
-        </div>
-      </div>
+      <PageHeader title="Tipos de documento" description="Os documentos da empresa que têm validade ou que não podem faltar. As validades são sugestões: confira com o que cada documento diz." />
 
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {isLoading && <div className="mt-4 grid gap-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>}
-      {data && !data.rows.length && <p className="mt-4 p-6 rounded-lg border text-sm text-muted-foreground">Nenhum tipo de documento.</p>}
-
-      {!!data?.rows.length && (
-        <section className="mt-4 rounded-card border bg-card overflow-hidden">
-          {data.rows.map((type) => (
-            <div key={type.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
-              <div className="flex-1 min-w-0 font-medium">{type.name}</div>
-              <div className="lg:w-72 text-muted-foreground">{type.expires ? `Vence${type.validityMonths ? ` em ${type.validityMonths} ${type.validityMonths === 1 ? "mês" : "meses"}` : ""} · aviso ${type.warnDays} dias antes` : "Não vence"}</div>
-              <div className="lg:w-40">{type.required && <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">Obrigatório</span>}</div>
-              <div className="lg:w-24 flex lg:justify-end gap-1">
-                {canManage && <Tip text="Editar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Editar ${type.name}`} onClick={() => setEditing(type)}><Icon name="pencil" className="w-4 h-4" /></Button></Tip>}
-                {canManage && (
-                  <ConfirmDialog title={`Inativar "${type.name}"?`} description="O tipo deixa de poder ser escolhido e de ser cobrado como obrigatório. Os arquivos que já o usam continuam com ele." onConfirm={() => inactivate(type.id)}>
-                    <span><Tip text="Inativar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Inativar ${type.name}`}><Icon name="archive" className="w-4 h-4" /></Button></Tip></span>
-                  </ConfirmDialog>
-                )}
-              </div>
-            </div>
-          ))}
-        </section>
-      )}
+      <ListCard>
+        <ListToolbar>
+          <Button asChild variant="outline"><Link to="/arquivos/vencimentos"><Icon name="calendar-clock" className="w-4 h-4" /> <span className="hidden sm:inline">Vencimentos</span></Link></Button>
+          {canManage && <Button onClick={() => setEditing("novo")}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Novo tipo</span></Button>}
+        </ListToolbar>
+        <DataTable rows={data?.rows} columns={COLUMNS} getRowId={(type) => type.id} ariaLabel="Tipos de documento" minWidth={640}
+          loading={isLoading} error={error ? errorMessage(error) : null}
+          actions={canManage ? (type) => (
+            <DocumentTypeRowActions name={type.name} onEdit={() => setEditing(type)} onInactivate={() => inactivate(type.id)}
+              inactivateDescription="O tipo deixa de poder ser escolhido e de ser cobrado como obrigatório. Os arquivos que já o usam continuam com ele." />
+          ) : undefined}
+          empty={<EmptyState title="Nenhum tipo de documento." />} />
+      </ListCard>
 
       {editing && <TypeDialog type={editing === "novo" ? undefined : editing} onClose={() => setEditing(null)} onSaved={refresh} />}
     </>

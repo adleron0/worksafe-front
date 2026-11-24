@@ -1,14 +1,13 @@
-import { clickableRow } from "@/utils/clickable-row";
-import tailwindUtils from "@/utils/tailwind.utils";
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import DocStatusBadge from "@/components/general-components/DocStatusBadge";
 import Icon from "@/components/general-components/Icon";
-import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import StatusChips from "@/components/general-components/StatusChips";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import { cn } from "@/lib/utils";
 import { dateBr, errorMessage, todayIso } from "../../comercial/-shared/commercial";
 import { stockApi } from "./stock";
@@ -17,6 +16,7 @@ import { EQUIP_KEYS } from "./equipment";
 /** Vencimentos (GET stock/dues): usado na tela "Inspeções e calibrações" e na rota antiga /vencimentos. */
 
 interface DueRow { type: string; label: string; date: string | null; state: "vencido" | "a_vencer"; target: string; unitId?: number; itemId?: number; lotId?: number; where: string }
+type DueLine = DueRow & { key: number };
 interface Dues { rows: DueRow[]; counts: { vencido: number; a_vencer: number } }
 
 export const DUE_TYPES = [
@@ -45,20 +45,33 @@ export function DuesPanel({ initialType = "" }: { initialType?: string }) {
   const [state, setState] = useState("");
   const [search, setSearch] = useState("");
   const params = { days, ...(type ? { type } : {}) };
-  const { data, isLoading, error } = useQuery({
+  const navigate = useNavigate();
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: [EQUIP_KEYS.dues, params], queryFn: () => stockApi.get<Dues>("dues", params), placeholderData: (previous) => previous,
   });
   const term = search.trim().toLowerCase();
   const rows = (data?.rows ?? []).filter((row) => (!state || row.state === state) && (!term || row.target.toLowerCase().includes(term)));
   const empty = type || state || search ? "Nada com esses filtros." : "Nada vencido ou a vencer no período. Tudo em dia.";
 
+  const columns: DataColumn<DueLine>[] = [
+    {
+      id: "target", header: "Peça, lote ou item", cell: (row) => (
+        <span className="font-medium truncate block max-w-sm">
+          {row.unitId ? <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(row.unitId) }} className="hover:underline">{row.target}</Link>
+            : row.itemId ? <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: String(row.itemId) }} className="hover:underline">{row.target}</Link> : row.target}
+        </span>
+      ),
+    },
+    { id: "label", header: "Vencimento", className: "whitespace-nowrap", cell: (row) => row.label },
+    { id: "state", header: "Situação", className: "w-28", cell: (row) => <DocStatusBadge status={row.state} label={row.state === "vencido" ? "Vencido" : "A vencer"} /> },
+    { id: "when", header: "Quando", className: "text-muted-foreground whitespace-nowrap", cell: (row) => whenText(row) },
+    { id: "where", header: "Onde", className: "text-muted-foreground", cell: (row) => <span className="truncate block max-w-[12rem]">{row.where || "—"}</span> },
+  ];
+
   return (
     <>
-      <div className="flex flex-wrap gap-2 mt-4">
-        {[{ id: "", name: "Tudo" }, ...DUE_TYPES].map((option) => (
-          <Button key={option.id || "todos"} type="button" size="sm" variant={type === option.id ? "default" : "outline"} onClick={() => setType(option.id)}>{option.name}</Button>
-        ))}
-      </div>
+      <StatusChips className="mt-4" ariaLabel="Tipo de vencimento" value={type || "todos"} onChange={(value) => setType(value === "todos" ? "" : value)}
+        options={[{ value: "todos", label: "Tudo" }, ...DUE_TYPES.map((option) => ({ value: option.id, label: option.name }))]} />
       <div className="my-4 grid sm:grid-cols-2 gap-3">
         {CARDS.map((card) => (
           <button key={card.id} type="button" aria-pressed={state === card.id} onClick={() => setState(state === card.id ? "" : card.id)}
@@ -69,32 +82,19 @@ export function DuesPanel({ initialType = "" }: { initialType?: string }) {
           </button>
         ))}
       </div>
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 mb-4 p-4 rounded-card border bg-card">
-        <div className="w-full xl:w-56"><Select name="days" state={days} options={HORIZONS} modal={false} onChange={(_, value) => setDays(String(value || "30"))} /></div>
-        <div className="w-full xl:w-80"><Input name="search" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar por etiqueta, lote ou item..." icon="search" /></div>
-      </div>
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {!error && (
-        <div className="rounded-card border bg-card overflow-x-auto">
-          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
-            <div className="flex-1">Peça, lote ou item</div><div className="w-44">Vencimento</div><div className="w-28">Situação</div><div className="w-72">Quando</div><div className="w-48">Onde</div>
-          </div>
-          {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
-          {!isLoading && !rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
-          {rows.map((row, index) => (
-            <div key={`${row.type}-${row.unitId ?? row.lotId ?? row.itemId}-${index}`} {...(row.unitId || row.itemId ? clickableRow() : {})} className={`min-w-[880px] flex flex-row items-center gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm ${row.unitId || row.itemId ? tailwindUtils.itemClickable : "hover:bg-muted/40"}`}>
-              <div className="flex-1 min-w-0 pr-4 font-medium truncate">
-                {row.unitId ? <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(row.unitId) }} className="hover:underline">{row.target}</Link>
-                  : row.itemId ? <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: String(row.itemId) }} className="hover:underline">{row.target}</Link> : row.target}
-              </div>
-              <div className="w-44">{row.label}</div>
-              <div className="w-28"><DocStatusBadge status={row.state} label={row.state === "vencido" ? "Vencido" : "A vencer"} /></div>
-              <div className="w-72 text-muted-foreground">{whenText(row)}</div>
-              <div className="w-48 text-muted-foreground truncate">{row.where || "—"}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      <ListCard>
+        <ListToolbar search={{ value: search, onChange: setSearch, placeholder: "Buscar por etiqueta, lote ou item..." }}>
+          <div className="w-52"><Select name="days" state={days} options={HORIZONS} modal={false} onChange={(_, value) => setDays(String(value || "30"))} /></div>
+        </ListToolbar>
+        <DataTable rows={rows.map((row, key) => ({ ...row, key }))} columns={columns} getRowId={(row) => row.key} ariaLabel="Vencimentos" skeletonRows={4}
+          loading={isLoading || isFetching} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+          onRowClick={(row) => {
+            if (row.unitId) navigate({ to: "/suprimentos/equipamentos/$unitId", params: { unitId: String(row.unitId) } });
+            else if (row.itemId) navigate({ to: "/suprimentos/estoque/itens/$itemId", params: { itemId: String(row.itemId) } });
+          }}
+          rowClassName={(row) => (row.unitId || row.itemId ? undefined : "cursor-default")}
+          empty={<EmptyState icon={type || state || search ? "search-x" : "circle-check"} title={empty} />} />
+      </ListCard>
     </>
   );
 }

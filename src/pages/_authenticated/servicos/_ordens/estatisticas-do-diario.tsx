@@ -1,10 +1,12 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import useVerify from "@/hooks/use-verify";
 import { Skeleton } from "@/components/ui/skeleton";
 import CalendarPicker from "@/components/general-components/Calendar";
 import Icon from "@/components/general-components/Icon";
+import PageHeader from "@/components/general-components/PageHeader";
+import DataTable, { DataColumn } from "@/components/general-components/DataTable";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { Tip, dateBr, decimal, errorMessage, todayIso } from "../../comercial/-shared/commercial";
@@ -75,9 +77,44 @@ const tally = (options: Array<{ id: string; name: string; icon?: string }>, coun
   { label: "Sem registro", value: counts.sem_registro ?? 0, detail: `${counts.sem_registro ?? 0} RDO` },
 ];
 
+type PersonStats = Stats["byPerson"][number];
+type OrderStats = Stats["byOrder"][number];
+const dash = <span className="text-muted-foreground">—</span>;
+const PERSON_COLUMNS: DataColumn<PersonStats>[] = [
+  { id: "name", header: "Pessoa", cell: (person) => <span><span className="font-medium">{person.name}</span>{person.role && <span className="text-xs text-muted-foreground"> · {person.role}</span>}</span> },
+  { id: "days", header: "Dias", align: "right", cell: (person) => <span className="tabular-nums">{person.days}</span> },
+  { id: "hours", header: "Horas", align: "right", cell: (person) => <span className="tabular-nums whitespace-nowrap">{hoursText(person.hours)}</span> },
+  { id: "overtime", header: "Extras", align: "right", cell: (person) => <span className="tabular-nums whitespace-nowrap text-muted-foreground">{person.overtime ? hoursText(person.overtime) : "—"}</span> },
+  { id: "early", header: "Saiu antes", align: "right", cell: (person) => <span className={cn("tabular-nums", person.earlyLeaves > 0 ? "font-semibold text-red-600 dark:text-red-400" : "text-muted-foreground")}>{person.earlyLeaves || "—"}</span> },
+];
+const ORDER_COLUMNS: DataColumn<OrderStats>[] = [
+  {
+    id: "order", header: "Obra",
+    cell: (order) => (
+      <div className="min-w-0 max-w-[16rem]">
+        <p className="font-medium truncate">{order.customer}</p>
+        <p className="text-xs text-muted-foreground tabular-nums truncate">{order.number}</p>
+      </div>
+    ),
+  },
+  { id: "days", header: "Dias", align: "right", cell: (order) => <span className="tabular-nums">{order.days}</span> },
+  {
+    id: "hours", header: "Horas", align: "right",
+    cell: (order) => (
+      <div className="tabular-nums whitespace-nowrap">
+        {hoursText(order.hours)}
+        {order.overtime > 0 && <p className="text-xs text-muted-foreground">+ {hoursText(order.overtime)} extras</p>}
+      </div>
+    ),
+  },
+  { id: "lost", header: "Paradas", align: "right", cell: (order) => (order.hoursLost ? <span className="tabular-nums whitespace-nowrap">{hoursText(order.hoursLost)}</span> : dash) },
+  { id: "early", header: "Saiu antes", align: "right", cell: (order) => (order.earlyLeaves ? <span className="tabular-nums font-semibold text-red-600 dark:text-red-400">{order.earlyLeaves}</span> : dash) },
+];
+
 /** Estatísticas do diário: o que os RDOs de um período dizem sobre jornada, equipe, clima e paradas. */
 function DiaryStatsPage() {
   const { can } = useVerify();
+  const navigate = useNavigate();
   const search = Route.useSearch();
   const [from, setFrom] = useState(daysAgo(29));
   const [to, setTo] = useState(todayIso());
@@ -94,12 +131,9 @@ function DiaryStatsPage() {
 
   return (
     <>
-      <div>
-        <h1 className="text-xl font-bold">Estatísticas do diário de obra</h1>
-        <p className="text-sm text-muted-foreground">O que os RDOs do período dizem: jornada, presenças e horas, saídas antecipadas, clima, condição da frente de trabalho e paradas.</p>
-      </div>
+      <PageHeader title="Estatísticas do diário de obra" description="O que os RDOs do período dizem: jornada, presenças e horas, saídas antecipadas, clima, condição da frente de trabalho e paradas." />
 
-      <div className="flex flex-col xl:flex-row xl:items-end gap-3 my-4 p-4 rounded-card border bg-card">
+      <div className="flex flex-col xl:flex-row xl:items-end gap-3 mb-4 p-4 rounded-card border bg-card">
         <div className="w-full xl:w-44"><p className="text-xs text-muted-foreground mb-1">De</p>
           <CalendarPicker mode="single" name="statsFrom" className="w-full" value={from} fromYear={2024} toYear={2040} onValueChange={(_, value) => setFrom(String(value ?? "") || from)} /></div>
         <div className="w-full xl:w-44"><p className="text-xs text-muted-foreground mb-1">Até</p>
@@ -144,24 +178,7 @@ function DiaryStatsPage() {
 
           <div className="grid gap-4 xl:grid-cols-2">
             <Block title="Por pessoa" hint="Dias trabalhados, horas e quantas vezes saiu antes.">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[420px] text-sm">
-                  <thead><tr className="border-b text-xs text-muted-foreground">
-                    <th className="py-1.5 pr-2 text-left font-medium">Pessoa</th><th className="py-1.5 px-2 text-right font-medium">Dias</th><th className="py-1.5 px-2 text-right font-medium">Horas</th>
-                    <th className="py-1.5 px-2 text-right font-medium">Extras</th><th className="py-1.5 pl-2 text-right font-medium">Saiu antes</th>
-                  </tr></thead>
-                  <tbody>
-                    {data.byPerson.map((person) => (
-                      <tr key={person.name} className="border-b last:border-b-0">
-                        <td className="py-1.5 pr-2"><span className="font-medium">{person.name}</span>{person.role && <span className="text-xs text-muted-foreground"> · {person.role}</span>}</td>
-                        <td className="py-1.5 px-2 text-right tabular-nums">{person.days}</td><td className="py-1.5 px-2 text-right tabular-nums">{hoursText(person.hours)}</td>
-                        <td className="py-1.5 px-2 text-right tabular-nums text-muted-foreground">{person.overtime ? hoursText(person.overtime) : "—"}</td>
-                        <td className={cn("py-1.5 pl-2 text-right tabular-nums", person.earlyLeaves > 0 ? "font-semibold text-red-600 dark:text-red-400" : "text-muted-foreground")}>{person.earlyLeaves || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable rows={data.byPerson} columns={PERSON_COLUMNS} getRowId={(person) => person.name} ariaLabel="Por pessoa" minWidth={420} />
             </Block>
             <div className="grid gap-4 content-start">
               <Block title="Por função"><Bars empty="Sem horas lançadas." rows={data.byRole.map((role) => ({ label: role.role, value: role.hours + role.overtime, detail: `${hoursText(role.hours)}${role.overtime ? ` + ${hoursText(role.overtime)} extras` : ""} · ${role.presences} presença${role.presences === 1 ? "" : "s"}` }))} /></Block>
@@ -180,17 +197,8 @@ function DiaryStatsPage() {
             <Block title="Ocorrências"><Bars empty="Nenhuma ocorrência no período." rows={data.occurrences.map((item) => ({ label: OCCURRENCE_NAME[item.type] ?? item.type, value: item.count, detail: `${item.count}×${item.hoursLost ? ` · ${hoursText(item.hoursLost)} paradas` : ""}` }))} /></Block>
             {!orderId && (
               <Block title="Por obra">
-                <ul className="divide-y text-sm">
-                  {data.byOrder.map((order) => (
-                    <li key={order.id} className="py-2">
-                      <p className="font-medium truncate">{order.customer} <Link to="/servicos/ordens-de-servico/$orderId" params={{ orderId: String(order.id) }} className="font-normal text-muted-foreground underline tabular-nums">{order.number}</Link></p>
-                      <p className="text-xs text-muted-foreground tabular-nums">
-                        {order.days} dia{order.days === 1 ? "" : "s"} · {hoursText(order.hours)}{order.overtime ? ` + ${hoursText(order.overtime)} extras` : ""}
-                        {order.hoursLost ? ` · ${hoursText(order.hoursLost)} paradas` : ""}{order.earlyLeaves ? ` · ${order.earlyLeaves} saída${order.earlyLeaves === 1 ? "" : "s"} antecipada${order.earlyLeaves === 1 ? "" : "s"}` : ""}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
+                <DataTable rows={data.byOrder} columns={ORDER_COLUMNS} getRowId={(order) => order.id} ariaLabel="Por obra" minWidth={480}
+                  onRowClick={(order) => navigate({ to: "/servicos/ordens-de-servico/$orderId", params: { orderId: String(order.id) } })} />
               </Block>
             )}
           </div>

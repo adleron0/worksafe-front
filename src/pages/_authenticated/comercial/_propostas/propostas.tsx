@@ -1,5 +1,3 @@
-import { clickableRow } from "@/utils/clickable-row";
-import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,13 +6,13 @@ import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import KanbanView, { KanbanColumn } from "@/components/general-components/KanbanView";
 import Input from "@/components/general-components/Input";
-import Pagination from "@/components/general-components/Pagination";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
 import Select from "@/components/general-components/Select";
 import SummaryCards, { SummaryCard } from "@/components/general-components/SummaryCards";
 import { cn } from "@/lib/utils";
@@ -23,6 +21,8 @@ import { FollowUpChip } from "../-shared/activities";
 import { ProposalPanelSheet } from "../-shared/proposal-panel";
 import { downloadProposalPdf } from "../-shared/pdf";
 import DecisionDialog from "./-DecisionDialog";
+import ProposalRowActions, { ProposalRowAction, ProposalRowHandlers } from "./-ProposalRowActions";
+import { proposalColumns } from "./-proposalColumns";
 import {
   KIND_LABEL, KindBadge, PROPOSALS_KEY, Proposal, ProposalRow, ProposalStatus, StatusBadge,
 } from "../-shared/proposals";
@@ -43,15 +43,13 @@ const STATUS_COLOR: Record<string, string> = {
 };
 /** Colunas do kanban (o KanbanView do sistema): uma para cada situação do filtro da lista, na mesma ordem. */
 const COLUMNS: KanbanColumn[] = STATUS_OPTIONS.map(({ id, name }) => ({ id, name, value: id, color: STATUS_COLOR[id] }));
-/** Situações em que a proposta já tem link do cliente. */
-const LINKED: ProposalStatus[] = ["enviada", "visualizada", "aceita", "recusada", "expirada"];
 /** Filtro de situação da lista: uma situação ou "Em negociação" (enviadas + visualizadas). */
 type StatusFilter = "" | ProposalStatus | "negociacao";
 const NEGOTIATION: ProposalStatus[] = ["enviada", "visualizada"];
 type View = "lista" | "kanban";
 const VIEW_KEY = "worksafe.comercial.propostas.view";
 const KANBAN_LIMIT = 100;
-const LIMIT = 20;
+const LIMITS = [10, 20, 50, 100];
 
 function ProposalsPage() {
   const { can } = useVerify();
@@ -61,6 +59,7 @@ function ProposalsPage() {
   const [kind, setKind] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [limit, setLimit] = useState(20);
   // arquivadas (tiradas da lista) só aparecem quando pedidas
   const [archived, setArchived] = useState(false);
   // refaz o quadro quando um cartão é arrastado (a situação não muda por arrasto)
@@ -73,8 +72,8 @@ function ProposalsPage() {
   // no kanban as colunas já são as situações: vêm todas de uma vez, sem paginação
   const params = kanban
     ? { page: 0, limit: KANBAN_LIMIT, ...(kind ? { kind } : {}), ...(search.trim() ? { search: search.trim() } : {}), ...(archived ? { inactive: "true" } : {}) }
-    : { page, limit: LIMIT, ...(status ? { status: status === "negociacao" ? NEGOTIATION.join(",") : status } : {}), ...(kind ? { kind } : {}), ...(search.trim() ? { search: search.trim() } : {}), ...(archived ? { inactive: "true" } : {}) };
-  const { data, isLoading, error } = useQuery({
+    : { page, limit, ...(status ? { status: status === "negociacao" ? NEGOTIATION.join(",") : status } : {}), ...(kind ? { kind } : {}), ...(search.trim() ? { search: search.trim() } : {}), ...(archived ? { inactive: "true" } : {}) };
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: [PROPOSALS_KEY, params],
     queryFn: () => commercialApi.get<ListResponse>("proposals", params),
     placeholderData: (previous) => previous,
@@ -83,7 +82,7 @@ function ProposalsPage() {
   const open = (id: number) => navigate({ to: "/comercial/propostas/$proposalId", params: { proposalId: String(id) } });
 
   const { mutate: act } = useMutation({
-    mutationFn: ({ row, action }: { row: ProposalRow; action: "duplicate" | "revise" | "cancelada" | "inactive" | "active" }) => {
+    mutationFn: ({ row, action }: { row: ProposalRow; action: ProposalRowAction }) => {
       if (action === "duplicate" || action === "revise") return commercialApi.post<Proposal>(`proposals/${row.id}/${action}`);
       if (action === "inactive" || action === "active") return commercialApi.patch<Proposal>(`proposals/${action}/${row.id}`);
       return commercialApi.patch<Proposal>(`proposals/status/${row.id}`, { status: action });
@@ -139,64 +138,15 @@ function ProposalsPage() {
 
   if (!can(`view_${COMMERCIAL_ABILITY}`)) return null;
   const canCreate = can(`create_${COMMERCIAL_ABILITY}`);
-  const canUpdate = can(`update_${COMMERCIAL_ABILITY}`);
-  /** Menu de ações de uma proposta: o mesmo na linha da lista e no cartão do kanban. */
-  const rowMenu = (row: ProposalRow, onCard = false) => (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button className={onCard ? "h-6 w-6 p-0 shrink-0" : "h-8 w-8 rounded-lg p-0 border-transparent bg-transparent shadow-none text-muted-foreground hover:bg-muted"} variant={onCard ? "ghost" : "outline"} size="sm" aria-label={`Ações de ${row.number}`}>
-          <Icon name="ellipsis-vertical" className="w-3 h-3" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem className="gap-2" onSelect={() => open(row.id)}>
-          <Icon name={row.status === "rascunho" ? "pencil" : "eye"} className="w-3 h-3" /> {row.status === "rascunho" ? "Editar" : "Abrir"}
-        </DropdownMenuItem>
-        <DropdownMenuItem className="gap-2" onSelect={() => window.open(`/proposta/rascunho/${row.id}`, "_blank", "noopener")}><Icon name="monitor" className="w-3 h-3" /> Ver como o cliente</DropdownMenuItem>
-        <DropdownMenuItem className="gap-2" onSelect={() => setFollowing(row)}><Icon name="panel-right-open" className="w-3 h-3" /> Painel da proposta</DropdownMenuItem>
-        <DropdownMenuItem className="gap-2" onSelect={() => pdf(row)}><Icon name="file-down" className="w-3 h-3" /> Baixar PDF</DropdownMenuItem>
-        {LINKED.includes(row.status) && <DropdownMenuItem className="gap-2" onSelect={() => copyRowLink(row)}><Icon name="link" className="w-3 h-3" /> Copiar link do cliente</DropdownMenuItem>}
-        {canUpdate && row.status === "rascunho" && !row.inactiveAt && (<>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="p-0" onSelect={(event) => event.preventDefault()}>
-            <ConfirmDialog title={`Criar o link de ${row.number}?`}
-              description="O documento é congelado e a proposta ganha um link para o cliente ler e aceitar. Nenhum e-mail é enviado: o link é copiado para você mandar por onde quiser. Depois disso ela não é mais editada: para mudar algo, cria-se uma revisão."
-              onConfirm={() => changeStatus({ row, status: "enviada" })} titleBttn="Criar e copiar o link" iconBttn="copy" />
-          </DropdownMenuItem>
-          <DropdownMenuItem className="p-0" onSelect={(event) => event.preventDefault()}>
-            <ConfirmDialog title={`Enviar ${row.number} por e-mail?`}
-              description="O documento é congelado e o link é enviado para o e-mail do contato do cliente desta proposta. Depois de enviada ela não é mais editada: para mudar algo, cria-se uma revisão."
-              onConfirm={() => changeStatus({ row, status: "enviada", notify: true })} titleBttn="Enviar por e-mail" iconBttn="send" />
-          </DropdownMenuItem>
-        </>)}
-        {canUpdate && (row.status === "enviada" || row.status === "visualizada") && !row.inactiveAt && (<>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="gap-2" onSelect={() => setDecision({ row, kind: "aceita" })}><Icon name="check" className="w-3 h-3" /> Registrar aceite</DropdownMenuItem>
-          <DropdownMenuItem className="gap-2" onSelect={() => setDecision({ row, kind: "recusada" })}><Icon name="x" className="w-3 h-3" /> Registrar recusa</DropdownMenuItem>
-        </>)}
-        <DropdownMenuSeparator />
-        {canCreate && <DropdownMenuItem className="gap-2" onSelect={() => act({ row, action: "duplicate" })}><Icon name="copy" className="w-3 h-3" /> Duplicar</DropdownMenuItem>}
-        {canCreate && ["enviada", "visualizada", "recusada", "expirada"].includes(row.status) && (
-          <DropdownMenuItem className="gap-2" onSelect={() => act({ row, action: "revise" })}><Icon name="git-branch" className="w-3 h-3" /> Criar revisão</DropdownMenuItem>
-        )}
-        {canUpdate && ["rascunho", "enviada", "visualizada"].includes(row.status) && !row.inactiveAt && (
-          <DropdownMenuItem className="p-0" onSelect={(event) => event.preventDefault()}>
-            <ConfirmDialog title={`Cancelar ${row.number}?`} description="A proposta deixa de valer. Ela continua no histórico."
-              onConfirm={() => act({ row, action: "cancelada" })} titleBttn="Cancelar proposta" iconBttn="ban" />
-          </DropdownMenuItem>
-        )}
-        {can(`inactive_${COMMERCIAL_ABILITY}`) && ["rascunho", "cancelada", "recusada"].includes(row.status) && !row.inactiveAt && (
-          <DropdownMenuItem className="p-0" onSelect={(event) => event.preventDefault()}>
-            <ConfirmDialog title={`Arquivar ${row.number}?`} description={'A proposta sai da lista e do kanban. Nada é apagado: marque "Mostrar arquivadas" para vê-la de novo e trazê-la de volta.'}
-              onConfirm={() => act({ row, action: "inactive" })} titleBttn="Arquivar (tirar da lista)" iconBttn="archive" />
-          </DropdownMenuItem>
-        )}
-        {can(`activate_${COMMERCIAL_ABILITY}`) && row.inactiveAt && (
-          <DropdownMenuItem className="gap-2" onSelect={() => act({ row, action: "active" })}><Icon name="archive-restore" className="w-3 h-3" /> Trazer de volta à lista</DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+  /** Ações do menu ⋯ de uma proposta: as mesmas na linha da lista e no cartão do kanban. */
+  const handlers: ProposalRowHandlers = {
+    open, pdf,
+    openPanel: setFollowing,
+    copyLink: (row) => copyRowLink(row),
+    send: (row, notify) => changeStatus({ row, status: "enviada", ...(notify ? { notify: true } : {}) }),
+    decide: (row, kind) => setDecision({ row, kind }),
+    act: (row, action) => act({ row, action }),
+  };
   const summary = data?.summary ?? {};
   const allCount = Object.entries(summary).reduce((sum, [key, value]) => sum + (key === "substituida" ? 0 : value?.count ?? 0), 0);
   const negotiation = NEGOTIATION.reduce((acc, id) => ({ count: acc.count + (summary[id]?.count ?? 0), total: acc.total + (summary[id]?.total ?? 0) }), { count: 0, total: 0 });
@@ -210,12 +160,8 @@ function ProposalsPage() {
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Propostas</h1>
-          <p className="text-sm text-muted-foreground">Propostas comerciais de serviços e de treinamentos para empresas.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+      <PageHeader title="Propostas" description="Propostas comerciais de serviços e de treinamentos para empresas." className="mb-0"
+        actions={<>
           <div role="group" aria-label="Visualização" className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
             <Button variant={view === "lista" ? "default" : "ghost"} size="sm" onClick={() => changeView("lista")} aria-pressed={view === "lista"} className="h-7 gap-2">
               <Icon name="list" className="w-4 h-4" /> Lista
@@ -225,8 +171,7 @@ function ProposalsPage() {
             </Button>
           </div>
           {canCreate && <Button onClick={() => navigate({ to: "/comercial/propostas/nova" })}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova proposta</Button>}
-        </div>
-      </div>
+        </>} />
 
       <section aria-labelledby="proposals-summary-title" className="mt-5">
         <div className="flex flex-wrap items-center justify-between gap-2 min-h-7">
@@ -284,7 +229,7 @@ function ProposalsPage() {
                     <p className="font-medium text-sm truncate">{row.customer.name}</p>
                     <p className="text-xs text-muted-foreground truncate tabular-nums">{row.number}</p>
                   </button>
-                  {rowMenu(row, true)}
+                  <ProposalRowActions row={row} handlers={handlers} onCard />
                 </div>
                 <KindBadge kind={row.kind} />
                 <div className="space-y-1">
@@ -318,50 +263,20 @@ function ProposalsPage() {
         <p className="mt-3 text-xs text-muted-foreground">O kanban mostra as {KANBAN_LIMIT} propostas mais recentes de {data.total}. Use a busca, o tipo ou a visão em lista para chegar às demais.</p>
       )}
 
-      {!kanban && <div className="rounded-card border bg-card overflow-x-auto">
-        <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
-          <div className="w-40">Número</div>
-          <div className="flex-1">Cliente e título</div>
-          <div className="w-36">Criada</div>
-          <div className="w-40">Situação</div>
-          <div className="w-28">Validade</div>
-          <div className="w-36 text-right">Total</div>
-          <div className="w-16 text-right">Ações</div>
-        </div>
-        {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
-        {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-        {!isLoading && !error && !data?.rows.length && (
-          <p className="p-6 text-sm text-muted-foreground">
-            {search || status || kind ? "Nenhuma proposta com esses filtros." : "Nenhuma proposta ainda. Crie a primeira em \"Nova proposta\"."}
-          </p>
-        )}
-        {data?.rows.map((row) => (
-          <div key={row.id} {...clickableRow(() => open(row.id))} className={cn("flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm", tailwindUtils.itemClickable, row.inactiveAt && "opacity-60")}>
-            <div className="w-40">
-              <button type="button" className="font-semibold tabular-nums hover:underline text-left" onClick={() => open(row.id)}>{row.number}</button>
-              <KindBadge kind={row.kind} className="mt-0.5" />
-            </div>
-            <div className="flex-1 min-w-0 pr-4">
-              <p className="font-medium truncate">{row.customer.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{row.title}{row.seller ? ` · vendedor ${row.seller}` : ""}</p>
-              <FollowUpChip followUp={row.followUp} className="mt-1" />
-            </div>
-            <div className="w-36 min-w-0 text-xs text-muted-foreground">
-              <p><span className="hidden">Criada em </span><span className="tabular-nums">{createdAt(row.createdAt)}</span></p>
-              {row.createdBy && <p className="truncate">por {row.createdBy}</p>}
-            </div>
-            <div className="w-40 flex flex-wrap items-center gap-1"><StatusBadge status={row.status} expired={row.expired} />{row.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Arquivada</span>}</div>
-            <div className="w-28 text-muted-foreground"><span className="hidden text-xs">Validade: </span>{dateBr(row.validUntil)}</div>
-            <div className="w-36 text-right font-semibold tabular-nums">{money(row.total)}</div>
-            <div className="top-2 right-2 static w-16 flex justify-end">
-              {rowMenu(row)}
-            </div>
-          </div>
-        ))}
-      </div>}
-
-      {!kanban && data && data.total > LIMIT && (
-        <div className="mt-4"><Pagination totalItems={data.total} itemsPerPage={LIMIT} currentPage={page} onPageChange={setPage} maxVisiblePages={5} /></div>
+      {!kanban && (
+        <ListCard>
+          <DataTable rows={data?.rows} columns={proposalColumns} getRowId={(row) => row.id} ariaLabel="Propostas" minWidth={1000}
+            loading={isLoading || isFetching} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+            onRowClick={(row) => open(row.id)}
+            rowClassName={(row) => (row.inactiveAt ? "opacity-60" : undefined)}
+            actions={(row) => <ProposalRowActions row={row} handlers={handlers} />}
+            empty={search || status || kind
+              ? <EmptyState icon="search-x" title="Nenhuma proposta com esses filtros." />
+              : <EmptyState title="Nenhuma proposta ainda." description={'Crie a primeira em "Nova proposta".'}
+                  action={canCreate && <Button size="sm" onClick={() => navigate({ to: "/comercial/propostas/nova" })}><Icon name="plus" className="w-4 h-4" /> Nova proposta</Button>} />} />
+          <ListFooter total={data?.total ?? 0} page={page} limit={limit} limits={LIMITS}
+            onPageChange={setPage} onLimitChange={(next) => { setLimit(next); setPage(0); }} />
+        </ListCard>
       )}
       {(kanban || status === "") && (summary.substituida?.count ?? 0) > 0 && (
         <p className="mt-3 text-xs text-muted-foreground">
@@ -378,11 +293,5 @@ function ProposalsPage() {
     </>
   );
 }
-
-/** Data e hora da criação no fuso de quem está vendo (o createdAt vem em UTC). */
-const createdAt = (value: string) => {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "—" : `${date.toLocaleDateString("pt-BR")} ${date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
-};
 
 /** Dados mínimos para a proposta nascer como rascunho numerado; o resto é no editor. */

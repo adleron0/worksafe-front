@@ -1,18 +1,21 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { get } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import SideForm from "@/components/general-components/SideForm";
-import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import CalendarPicker from "@/components/general-components/Calendar";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import StatusChips from "@/components/general-components/StatusChips";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { cn } from "@/lib/utils";
 import AccountSelect from "../-shared/AccountSelect";
@@ -20,6 +23,7 @@ import { FINANCIAL_ABILITY, formatMoney, useChartAccounts, useCostCenters } from
 import { PAYABLES_KEY, useSuppliers } from "../-shared/payables";
 import { useCustomerOptions } from "../-shared/ledger";
 import { formatDate, paymentMethodLabel, paymentMethodOptions, toDateInput, todayInput } from "../_receber/-components/options";
+import RecurrenceRowActions from "./-components/RecurrenceRowActions";
 
 export const Route = createFileRoute("/_authenticated/financeiro/_recorrentes/recorrentes")({
   component: Recurrences,
@@ -36,9 +40,54 @@ interface Recurrence {
   upcoming: number; nextDue: string | null; yearTotal: number;
 }
 const KEY = "financialRecurrences";
+const KINDS: Array<{ value: Kind; label: string }> = [{ value: "payable", label: "A pagar" }, { value: "receivable", label: "A receber" }];
+const muted = "text-xs text-muted-foreground";
+const COLUMNS: DataColumn<Recurrence>[] = [
+  {
+    id: "description", header: "Descrição", className: "min-w-[240px]",
+    cell: (item) => (
+      <div className="min-w-0 max-w-[22rem]">
+        <p className="font-semibold truncate">{item.description}</p>
+        <p className={`${muted} truncate`}>
+          {[item.supplier?.name ?? item.customer?.name, item.chartAccount && `${item.chartAccount.code} ${item.chartAccount.name}`, item.costCenter?.name].filter(Boolean).join(" · ") || "Sem classificação"}
+        </p>
+      </div>
+    ),
+  },
+  {
+    id: "value", header: "Valor por mês",
+    cell: (item) => (
+      <div className="tabular-nums whitespace-nowrap">
+        <p className="font-medium">{formatMoney(item.value)}</p>
+        <p className={muted}>{item.paymentMethod ? paymentMethodLabel(item.paymentMethod) : "Forma a definir"}</p>
+      </div>
+    ),
+  },
+  {
+    id: "day", header: "Todo dia",
+    cell: (item) => (
+      <div className="whitespace-nowrap">
+        <p>Dia {item.dayOfMonth}</p>
+        <p className={muted}>desde {formatDate(item.startDate)}{item.endDate ? ` até ${formatDate(item.endDate)}` : ""}</p>
+      </div>
+    ),
+  },
+  {
+    id: "next", header: "Próximo vencimento",
+    cell: (item) => (item.inactiveAt
+      ? <span className="text-xs rounded bg-muted px-1.5 py-0.5">Encerrado</span>
+      : (
+        <div className="whitespace-nowrap">
+          <p>{item.nextDue ? formatDate(item.nextDue) : "—"}</p>
+          <p className={muted}>{item.upcoming} lançado(s) à frente · {formatMoney(item.yearTotal)}</p>
+        </div>
+      )),
+  },
+];
 
 function Recurrences() {
   const { can } = useVerify();
+  const navigate = useNavigate();
   const search = Route.useSearch();
   const [kind, setKind] = useState<Kind>(search.tipo === "receivable" ? "receivable" : "payable");
   const [editing, setEditing] = useState<Recurrence | null>(null);
@@ -60,87 +109,39 @@ function Recurrences() {
   const monthly = active.reduce((sum, r) => sum + Number(r.value), 0);
   const listPath = kind === "payable" ? "/financeiro/pagar" : "/financeiro/receber";
 
+  const openMonths = (item: Recurrence) => navigate({ to: listPath, search: { view: "todas", recurrenceId: String(item.id), order: "dueDate:asc" } as never });
+  const openNew = () => { setEditing(null); setOpenForm(true); };
+
   return (
     <>
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Recorrentes</h1>
-          <p className="text-sm text-muted-foreground">Despesas fixas (aluguel, internet, contador) e mensalidades. Os próximos 12 meses ficam lançados e entram no fluxo de caixa.</p>
-        </div>
-        {can(`create_${FINANCIAL_ABILITY}`) && <Button size="sm" onClick={() => { setEditing(null); setOpenForm(true); }}><Icon name="plus" className="w-4 h-4" /> Novo recorrente</Button>}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3 my-4">
-        <div className="flex gap-1 p-1 bg-muted rounded-lg">
-          <Button size="sm" className="h-7" variant={kind === "payable" ? "default" : "ghost"} onClick={() => setKind("payable")}>A pagar</Button>
-          <Button size="sm" className="h-7" variant={kind === "receivable" ? "default" : "ghost"} onClick={() => setKind("receivable")}>A receber</Button>
-        </div>
-        <div className="rounded-lg border px-3 py-1.5 text-sm">
-          <span className="text-muted-foreground">{active.length} ativo(s) · por mês </span>
-          <span className={cn("font-bold tabular-nums", kind === "payable" ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400")}>{formatMoney(monthly)}</span>
-        </div>
-      </div>
+      <PageHeader title="Recorrentes" description="Despesas fixas (aluguel, internet, contador) e mensalidades. Os próximos 12 meses ficam lançados e entram no fluxo de caixa." />
 
       <SideForm openSheet={openForm} setOpenSheet={setOpenForm} side="right"
         title={editing ? "Editar recorrente" : "Novo recorrente"}
         description={editing ? "A mudança vale para os lançamentos em aberto de hoje em diante. Os já vencidos e os pagos não mudam." : "Lance uma vez; o sistema cria um lançamento por mês."}
         form={<RecurrenceForm key={`${editing?.id ?? "new"}-${kind}`} kind={editing?.kind ?? kind} item={editing} close={() => setOpenForm(false)} />} />
 
-      <div className="rounded-card border bg-card overflow-x-auto">
-        <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
-          <div className="w-4/12">Descrição</div>
-          <div className="w-2/12">Valor por mês</div>
-          <div className="w-2/12">Todo dia</div>
-          <div className="w-2/12">Próximo vencimento</div>
-          <div className="w-2/12 text-right">Ações</div>
-        </div>
-        {isLoading && Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
-        {!isLoading && !active.length && <p className="p-6 text-sm text-muted-foreground text-center">Nenhum recorrente {kind === "payable" ? "a pagar" : "a receber"} ativo.</p>}
-        {[...active, ...(showEnded ? ended : [])].map((item) => (
-          <div key={item.id} className={cn("relative flex flex-row items-center gap-1 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm", item.inactiveAt && "opacity-60")}>
-            <div className="w-4/12 pr-10 min-w-0">
-              <p className="font-semibold break-words">{item.description}</p>
-              <p className="text-xs text-muted-foreground break-words">
-                {[item.supplier?.name ?? item.customer?.name, item.chartAccount && `${item.chartAccount.code} ${item.chartAccount.name}`, item.costCenter?.name].filter(Boolean).join(" · ") || "Sem classificação"}
-              </p>
-            </div>
-            <div className="w-2/12 tabular-nums">
-              <p className="font-medium">{formatMoney(item.value)}</p>
-              <p className="text-xs text-muted-foreground">{item.paymentMethod ? paymentMethodLabel(item.paymentMethod) : "Forma a definir"}</p>
-            </div>
-            <div className="w-2/12">
-              <p>Dia {item.dayOfMonth}</p>
-              <p className="text-xs text-muted-foreground">desde {formatDate(item.startDate)}{item.endDate ? ` até ${formatDate(item.endDate)}` : ""}</p>
-            </div>
-            <div className="w-2/12">
-              {item.inactiveAt ? <span className="text-xs rounded bg-muted px-1.5 py-0.5">Encerrado</span> : (
-                <>
-                  <p>{item.nextDue ? formatDate(item.nextDue) : "—"}</p>
-                  <p className="text-xs text-muted-foreground">{item.upcoming} lançado(s) à frente · {formatMoney(item.yearTotal)}</p>
-                </>
-              )}
-            </div>
-            <div className="top-2 right-2 static w-2/12 flex justify-end gap-1">
-              <Button size="sm" variant="outline" className="h-8" asChild>
-                <Link to={listPath} search={{ view: "todas", recurrenceId: String(item.id), order: "dueDate:asc" } as never}>Ver meses</Link>
-              </Button>
-              {!item.inactiveAt && can(`update_${FINANCIAL_ABILITY}`) && (
-                <Button size="sm" variant="outline" className="h-8 w-8 p-0" aria-label="Editar" onClick={() => { setEditing(item); setOpenForm(true); }}><Icon name="pencil" className="w-3 h-3" /></Button>
-              )}
-              {!item.inactiveAt && can(`inactive_${FINANCIAL_ABILITY}`) && (
-                <ConfirmDialog title="Encerrar este recorrente?" slideLabel="Deslize para encerrar"
-                  description="Não gera mais lançamentos e remove os meses futuros que ainda estão em aberto. Os já vencidos e os pagos ficam."
-                  onConfirm={() => end(item.id)}>
-                  <Button size="sm" variant="outline" className="h-8 w-8 p-0" aria-label="Encerrar"><Icon name="circle-stop" className="w-3 h-3" /></Button>
-                </ConfirmDialog>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-      {ended.length > 0 && (
-        <Button variant="link" size="sm" className="mt-2 px-0" onClick={() => setShowEnded((v) => !v)}>{showEnded ? "Esconder encerrados" : `Mostrar ${ended.length} encerrado(s)`}</Button>
-      )}
+      <ListCard>
+        <StatusChips ariaLabel="Tipo" value={kind} onChange={setKind} options={KINDS} />
+        <ListToolbar>
+          {can(`create_${FINANCIAL_ABILITY}`) && <Button onClick={openNew}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Novo recorrente</span></Button>}
+        </ListToolbar>
+        <p className="text-sm -mt-1">
+          <span className="text-muted-foreground">{active.length} ativo(s) · por mês </span>
+          <span className={cn("font-bold tabular-nums", kind === "payable" ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400")}>{formatMoney(monthly)}</span>
+        </p>
+        <DataTable rows={data ? [...active, ...(showEnded ? ended : [])] : undefined} columns={COLUMNS} getRowId={(item) => item.id} ariaLabel="Recorrentes" minWidth={820}
+          loading={isLoading} onRowClick={openMonths}
+          rowClassName={(item) => (item.inactiveAt ? "opacity-60" : undefined)}
+          actions={(item) => (
+            <RecurrenceRowActions description={item.description} ended={!!item.inactiveAt} canUpdate={can(`update_${FINANCIAL_ABILITY}`)} canEnd={can(`inactive_${FINANCIAL_ABILITY}`)}
+              onOpenMonths={() => openMonths(item)} onEdit={() => { setEditing(item); setOpenForm(true); }} onEnd={() => end(item.id)} />
+          )}
+          empty={<EmptyState title={`Nenhum recorrente ${kind === "payable" ? "a pagar" : "a receber"} ativo.`} />} />
+        {ended.length > 0 && (
+          <Button variant="link" size="sm" className="px-0 w-fit" onClick={() => setShowEnded((v) => !v)}>{showEnded ? "Esconder encerrados" : `Mostrar ${ended.length} encerrado(s)`}</Button>
+        )}
+      </ListCard>
     </>
   );
 }

@@ -7,12 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
+import StatusBadge from "@/components/general-components/StatusBadge";
+import RowActions from "../-shared/row-actions";
 import { Tip, errorMessage, newUid } from "../../comercial/-shared/commercial";
-import { Pill, stockApi } from "../-shared/stock";
+import { stockApi } from "../-shared/stock";
 import { EQUIP_KEYS, PERM_INSPECT, Template, TemplateQuestion } from "../-shared/equipment";
 
 export const Route = createFileRoute("/_authenticated/suprimentos/equipamentos/roteiros")({
@@ -28,7 +33,7 @@ function TemplatesPage() {
   const queryClient = useQueryClient();
   const [showInactive, setShowInactive] = useState(false);
   const [editing, setEditing] = useState<Template | "novo" | null>(null);
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: [EQUIP_KEYS.templates, showInactive],
     queryFn: () => stockApi.get<Template[]>("inspection-templates", showInactive ? { all: "1" } : undefined),
   });
@@ -41,45 +46,40 @@ function TemplatesPage() {
   if (!(can(`view_${PERM_INSPECT}`) || can(PERM_INSPECT) || can("view_equipamentos"))) return null;
   const canWrite = can(PERM_INSPECT);
 
+  const columns: DataColumn<Template>[] = [
+    {
+      id: "name", header: "Roteiro", cell: (template) => (
+        <div className="min-w-0 max-w-xl">
+          <p className="font-medium flex items-center gap-2">{template.name} {!template.active && <StatusBadge tone="neutral">Inativo</StatusBadge>}</p>
+          <p className="text-xs text-muted-foreground truncate">{template.items.map((q) => q.label).join(" · ")}</p>
+        </div>
+      ),
+    },
+    { id: "items", header: "Perguntas", className: "w-32 text-muted-foreground whitespace-nowrap", cell: (template) => `${template.items.length} pergunta(s)` },
+  ];
+
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Roteiros de inspeção</h1>
-          <p className="text-sm text-muted-foreground">As perguntas de cada inspeção. Os roteiros iniciais são um ponto de partida: revise com o responsável técnico.</p>
-        </div>
-        {canWrite && <Button onClick={() => setEditing("novo")}><Icon name="plus" className="w-4 h-4 mr-1" /> Novo roteiro</Button>}
-      </div>
-      <div className="flex items-center gap-2 my-4">
-        <Checkbox id="showInactive" checked={showInactive} onCheckedChange={(checked) => setShowInactive(checked === true)} />
-        <Label htmlFor="showInactive">Mostrar inativos</Label>
-      </div>
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {isLoading && <div className="grid gap-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>}
-      {data && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          {data.length === 0 && <p className="p-6 text-sm text-muted-foreground">Nenhum roteiro.</p>}
-          {data.map((template) => (
-            <div key={template.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium flex items-center gap-2">{template.name} {!template.active && <Pill>Inativo</Pill>}</p>
-                <p className="text-xs text-muted-foreground truncate">{template.items.map((q) => q.label).join(" · ")}</p>
-              </div>
-              <div className="lg:w-32 text-muted-foreground">{template.items.length} pergunta(s)</div>
-              <div className="lg:w-24 flex lg:justify-end gap-1">
-                {canWrite && <Tip text="Editar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Editar ${template.name}`} onClick={() => setEditing(template)}><Icon name="pencil" className="w-4 h-4" /></Button></Tip>}
-                {canWrite && (
-                  <Tip text={template.active ? "Inativar" : "Reativar"}>
-                    <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`${template.active ? "Inativar" : "Reativar"} ${template.name}`} onClick={() => toggle({ id: template.id, active: !template.active })}>
-                      <Icon name={template.active ? "archive" : "archive-restore"} className="w-4 h-4" />
-                    </Button>
-                  </Tip>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <PageHeader title="Roteiros de inspeção" description="As perguntas de cada inspeção. Os roteiros iniciais são um ponto de partida: revise com o responsável técnico." />
+      <ListCard>
+        <ListToolbar>
+          <div className="flex items-center gap-2">
+            <Checkbox id="showInactive" checked={showInactive} onCheckedChange={(checked) => setShowInactive(checked === true)} />
+            <Label htmlFor="showInactive">Mostrar inativos</Label>
+          </div>
+          {canWrite && <Button onClick={() => setEditing("novo")}><Icon name="plus" className="w-4 h-4" /> Novo roteiro</Button>}
+        </ListToolbar>
+        <DataTable rows={data} columns={columns} getRowId={(template) => template.id} ariaLabel="Roteiros de inspeção" skeletonRows={4} minWidth={560}
+          loading={isLoading} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+          rowClassName={(template) => (template.active ? undefined : "opacity-60")}
+          actions={canWrite ? (template) => (
+            <RowActions label={`Ações do roteiro ${template.name}`} actions={[
+              { id: "edit", label: "Editar", icon: "pencil", onSelect: () => setEditing(template) },
+              { id: "toggle", label: template.active ? "Inativar" : "Reativar", icon: template.active ? "archive" : "archive-restore", separator: true, onSelect: () => toggle({ id: template.id, active: !template.active }) },
+            ]} />
+          ) : undefined}
+          empty={<EmptyState title="Nenhum roteiro." />} />
+      </ListCard>
       {editing && <TemplateDialog template={editing === "novo" ? undefined : editing} onClose={() => setEditing(null)} onSaved={refresh} />}
     </>
   );

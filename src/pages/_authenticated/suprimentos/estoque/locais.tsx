@@ -7,14 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
-import { Tip, errorMessage } from "../../comercial/-shared/commercial";
-import { Location, Pill, STOCK_ABILITY, STOCK_KEYS, StockOptions, stockApi, useStockOptions } from "../-shared/stock";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
+import StatusBadge from "@/components/general-components/StatusBadge";
+import { errorMessage } from "../../comercial/-shared/commercial";
+import RowActions from "../-shared/row-actions";
+import { Location, STOCK_ABILITY, STOCK_KEYS, StockOptions, stockApi, useStockOptions } from "../-shared/stock";
 
 export const Route = createFileRoute("/_authenticated/suprimentos/estoque/locais")({
   component: LocationsPage,
@@ -27,7 +31,7 @@ function LocationsPage() {
   const [editing, setEditing] = useState<Location | "novo" | null>(null);
   const [showInactive, setShowInactive] = useState(false);
   const { data: options } = useStockOptions();
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: [STOCK_KEYS.locations, showInactive],
     queryFn: () => stockApi.get<Location[]>("locations", showInactive ? { all: "1" } : undefined),
   });
@@ -41,47 +45,45 @@ function LocationsPage() {
   if (!can(`view_${STOCK_ABILITY}`)) return null;
   const rows = data ?? [];
 
+  const columns: DataColumn<Location>[] = [
+    {
+      id: "name", header: "Local", cell: (row) => (
+        <div className="min-w-0 max-w-sm">
+          <p className="font-medium flex items-center gap-2">{row.name} {!row.active && <StatusBadge tone="neutral">Inativo</StatusBadge>}</p>
+          {row.notes && <p className="text-xs text-muted-foreground truncate">{row.notes}</p>}
+        </div>
+      ),
+    },
+    { id: "kind", header: "Tipo", className: "text-muted-foreground whitespace-nowrap", cell: (row) => row.kindLabel },
+    { id: "place", header: "Lugar", className: "text-muted-foreground", cell: (row) => <span className="truncate block max-w-[13rem]">{row.place ?? "—"}</span> },
+    { id: "responsible", header: "Responsável", className: "text-muted-foreground", cell: (row) => <span className="truncate block max-w-[11rem]">{row.responsible ?? "Sem responsável"}</span> },
+    { id: "items", header: "Itens", align: "right", className: "w-24 tabular-nums whitespace-nowrap", cell: (row) => `${row.items} item(ns)` },
+  ];
+  const actions = (row: Location) => (
+    <RowActions label={`Ações do local ${row.name}`} actions={[
+      { id: "edit", label: "Editar", icon: "pencil", hidden: !can(`update_${STOCK_ABILITY}`), onSelect: () => setEditing(row) },
+      { id: "inactive", label: "Inativar", icon: "archive", hidden: !(row.active && can(`inactive_${STOCK_ABILITY}`)), separator: true, onSelect: () => toggle({ id: row.id, active: false }),
+        confirm: { title: `Inativar "${row.name}"?`, description: "Só dá para inativar um local sem saldo: transfira o que estiver nele antes." } },
+      { id: "active", label: "Reativar", icon: "archive-restore", hidden: !(!row.active && can(`activate_${STOCK_ABILITY}`)), separator: true, onSelect: () => toggle({ id: row.id, active: true }) },
+    ]} />
+  );
+
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Locais de estoque</h1>
-          <p className="text-sm text-muted-foreground">Onde o material fica guardado. Obras, funcionários e locações não entram aqui: o sistema controla à parte.</p>
-        </div>
-        {can(`create_${STOCK_ABILITY}`) && <Button onClick={() => setEditing("novo")}><Icon name="plus" className="w-4 h-4 mr-1" /> Novo local</Button>}
-      </div>
-      <div className="flex items-center gap-2 my-4">
-        <Checkbox id="showInactive" checked={showInactive} onCheckedChange={(checked) => setShowInactive(checked === true)} />
-        <Label htmlFor="showInactive">Mostrar inativos</Label>
-      </div>
-
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {isLoading && <div className="grid gap-2">{Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>}
-      {!isLoading && !error && (
-        <div className="rounded-card border bg-card overflow-hidden">
-          {rows.map((row) => (
-            <div key={row.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium flex items-center gap-2">{row.name} {!row.active && <Pill>Inativo</Pill>}</p>
-                {row.notes && <p className="text-xs text-muted-foreground truncate">{row.notes}</p>}
-              </div>
-              <div className="lg:w-44 text-muted-foreground">{row.kindLabel}</div>
-              <div className="lg:w-52 text-muted-foreground truncate">{row.place ?? "—"}</div>
-              <div className="lg:w-44 text-muted-foreground truncate">{row.responsible ? `Resp.: ${row.responsible}` : "Sem responsável"}</div>
-              <div className="lg:w-28 tabular-nums">{row.items} item(ns)</div>
-              <div className="lg:w-24 flex lg:justify-end gap-1">
-                {can(`update_${STOCK_ABILITY}`) && <Tip text="Editar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Editar ${row.name}`} onClick={() => setEditing(row)}><Icon name="pencil" className="w-4 h-4" /></Button></Tip>}
-                {row.active && can(`inactive_${STOCK_ABILITY}`) && (
-                  <ConfirmDialog title={`Inativar "${row.name}"?`} description="Só dá para inativar um local sem saldo: transfira o que estiver nele antes." onConfirm={() => toggle({ id: row.id, active: false })}>
-                    <span><Tip text="Inativar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Inativar ${row.name}`}><Icon name="archive" className="w-4 h-4" /></Button></Tip></span>
-                  </ConfirmDialog>
-                )}
-                {!row.active && can(`activate_${STOCK_ABILITY}`) && <Tip text="Reativar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Reativar ${row.name}`} onClick={() => toggle({ id: row.id, active: true })}><Icon name="archive-restore" className="w-4 h-4" /></Button></Tip>}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <PageHeader title="Locais de estoque" description="Onde o material fica guardado. Obras, funcionários e locações não entram aqui: o sistema controla à parte." />
+      <ListCard>
+        <ListToolbar>
+          <div className="flex items-center gap-2 mr-auto">
+            <Checkbox id="showInactive" checked={showInactive} onCheckedChange={(checked) => setShowInactive(checked === true)} />
+            <Label htmlFor="showInactive">Mostrar inativos</Label>
+          </div>
+          {can(`create_${STOCK_ABILITY}`) && <Button onClick={() => setEditing("novo")}><Icon name="plus" className="w-4 h-4" /> Novo local</Button>}
+        </ListToolbar>
+        <DataTable rows={rows} columns={columns} getRowId={(row) => row.id} ariaLabel="Locais de estoque" skeletonRows={3}
+          loading={isLoading} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+          rowClassName={(row) => (row.active ? undefined : "opacity-60")} actions={actions}
+          empty={<EmptyState title="Nenhum local de estoque ainda." />} />
+      </ListCard>
 
       {editing && <LocationDialog location={editing === "novo" ? undefined : editing} options={options} onClose={() => setEditing(null)} onSaved={refresh} />}
     </>

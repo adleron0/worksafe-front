@@ -1,4 +1,3 @@
-import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,10 +6,13 @@ import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
-import { cn } from "@/lib/utils";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import StatusChips from "@/components/general-components/StatusChips";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import { COMMERCIAL_ABILITY, commercialApi, errorMessage, money } from "../-shared/commercial";
 import { DEALS_KEY, DEAL_STATUS, Deal, DealRow, DealStatus, DealStatusBadge } from "../-shared/deals";
 import { KindBadge } from "../-shared/proposals";
@@ -19,8 +21,56 @@ export const Route = createFileRoute("/_authenticated/comercial/_negociacoes/neg
   component: DealsPage,
 });
 
-const FILTERS: Array<{ value: "" | DealStatus; label: string }> = [
-  { value: "", label: "Todas" }, { value: "aberta", label: "Abertas" }, { value: "ganha", label: "Ganhas" }, { value: "parcial", label: "Parcialmente ganhas" }, { value: "perdida", label: "Perdidas" },
+type Filter = "todas" | DealStatus;
+const FILTERS: Array<{ value: Filter; label: string }> = [
+  { value: "todas", label: "Todas" }, { value: "aberta", label: "Abertas" }, { value: "ganha", label: "Ganhas" }, { value: "parcial", label: "Parcialmente ganhas" }, { value: "perdida", label: "Perdidas" },
+];
+
+const columns: DataColumn<DealRow>[] = [
+  { id: "number", header: "Número", className: "w-32 font-semibold tabular-nums", cell: (row) => row.number },
+  {
+    id: "title", header: "Título e cliente",
+    cell: (row) => (
+      <div className="min-w-0 max-w-[24rem]">
+        <p className="font-medium truncate">{row.title}</p>
+        <p className="text-xs text-muted-foreground truncate">{[row.customer?.name, row.seller].filter(Boolean).join(" · ")}</p>
+      </div>
+    ),
+  },
+  {
+    id: "proposals", header: "Propostas",
+    cell: (row) => (
+      <div className="flex flex-wrap gap-1.5 max-w-[22rem]">
+        {row.proposals.map((p) => (
+          <span key={p.id} className="inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs"><KindBadge kind={p.kind} /> <span className="tabular-nums">{p.number}</span></span>
+        ))}
+      </div>
+    ),
+  },
+  {
+    id: "status", header: "Situação", className: "w-48",
+    cell: (row) => (
+      <div className="flex flex-wrap items-center gap-1">
+        <DealStatusBadge status={row.status} />
+        {row.breach && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300 whitespace-nowrap">Revisar desconto</span>}
+      </div>
+    ),
+  },
+  {
+    id: "total", header: "Total", align: "right", className: "w-40",
+    cell: (row) => (
+      <div>
+        <p className="font-semibold tabular-nums">{money(row.total)}</p>
+        {(row.discountTotal > 0 || (row.won > 0 && row.status !== "ganha")) && (
+          <p className="text-xs text-muted-foreground whitespace-nowrap">
+            {row.discountTotal > 0 && `desconto conjunto ${money(row.discountTotal)}`}
+            {row.discountTotal > 0 && row.won > 0 && row.status !== "ganha" && " · "}
+            {row.won > 0 && row.status !== "ganha" && <span style={{ color: DEAL_STATUS.ganha.color }}>ganho {money(row.won)}</span>}
+          </p>
+        )}
+      </div>
+    ),
+  },
 ];
 
 /** Negociações: propostas do mesmo cliente agrupadas (serviço, locação, treinamento), cada uma com a sua NF. */
@@ -31,73 +81,34 @@ function DealsPage() {
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
   const params = { ...(search.trim() ? { search: search.trim() } : {}) };
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: [DEALS_KEY, params],
     queryFn: () => commercialApi.get<{ rows: DealRow[] }>("deals", params),
     placeholderData: (previous) => previous,
   });
   if (!can(`view_${COMMERCIAL_ABILITY}`)) return null;
-  const rows = (data?.rows ?? []).filter((row) => !status || row.status === status);
-  const count = (value: "" | DealStatus) => (data?.rows ?? []).filter((row) => !value || row.status === value).length;
+  const canCreate = can(`create_${COMMERCIAL_ABILITY}`);
+  const rows = data ? data.rows.filter((row) => !status || row.status === status) : undefined;
+  const count = (value: Filter) => (data?.rows ?? []).filter((row) => value === "todas" || row.status === value).length;
   const open = (id: number) => navigate({ to: "/comercial/negociacoes/$dealId", params: { dealId: String(id) } });
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Negociações</h1>
-          <p className="text-sm text-muted-foreground">Propostas do mesmo cliente juntas (serviço, locação, treinamento). Cada uma continua com o seu contrato e a sua nota; aqui fica o total e o desconto pelo fechamento conjunto.</p>
-        </div>
-        {can(`create_${COMMERCIAL_ABILITY}`) && <Button type="button" onClick={() => setCreating(true)}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova negociação</Button>}
-      </div>
+      <PageHeader title="Negociações" description="Propostas do mesmo cliente juntas (serviço, locação, treinamento). Cada uma continua com o seu contrato e a sua nota; aqui fica o total e o desconto pelo fechamento conjunto." />
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-card border bg-card">
-        <div className="flex flex-wrap rounded-md border overflow-hidden w-fit" role="tablist" aria-label="Situação">
-          {FILTERS.map((filter) => (
-            <button key={filter.value || "all"} type="button" role="tab" aria-selected={status === filter.value} onClick={() => setStatus(filter.value)}
-              className={cn("px-3 py-1.5 text-sm", status === filter.value ? "bg-primary-soft text-primary-soft-foreground font-medium" : "hover:bg-muted")}>
-              {filter.label} <span className="opacity-70 tabular-nums">{count(filter.value)}</span>
-            </button>
-          ))}
-        </div>
-        <div className="w-full xl:w-80">
-          <Input name="search" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar por número ou título..." icon="search" />
-        </div>
-      </div>
-
-      {isLoading ? <Skeleton className="h-40 w-full" /> : error ? <p className="text-sm text-destructive">{errorMessage(error)}</p> : rows.length === 0 ? (
-        <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">
-          {data?.rows.length ? "Nenhuma negociação nesta situação." : "Nenhuma negociação ainda. Junte numa negociação as propostas de um cliente que pediu mais de uma coisa (por exemplo, serviço e locação em notas separadas)."}
-        </div>
-      ) : (
-        <ul className="grid gap-2">
-          {rows.map((row) => (
-            <li key={row.id}>
-              <button type="button" onClick={() => open(row.id)} className={`w-full text-left rounded-card border bg-card p-3 grid gap-2 md:grid-cols-[1fr_auto] md:items-center hover:bg-card ${tailwindUtils.cardClickable}`}>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold tabular-nums">{row.number}</span>
-                    <DealStatusBadge status={row.status} />
-                    {row.breach && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300">Revisar desconto</span>}
-                  </div>
-                  <p className="text-sm truncate">{row.title}</p>
-                  <p className="text-xs text-muted-foreground truncate">{[row.customer?.name, row.seller].filter(Boolean).join(" · ")}</p>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    {row.proposals.map((p) => (
-                      <span key={p.id} className="inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs"><KindBadge kind={p.kind} /> <span className="tabular-nums">{p.number}</span></span>
-                    ))}
-                  </div>
-                </div>
-                <div className="md:text-right text-sm">
-                  <p className="text-lg font-bold tabular-nums">{money(row.total)}</p>
-                  {row.discountTotal > 0 && <p className="text-xs text-muted-foreground">desconto conjunto {money(row.discountTotal)}</p>}
-                  {row.won > 0 && row.status !== "ganha" && <p className="text-xs" style={{ color: DEAL_STATUS.ganha.color }}>ganho {money(row.won)}</p>}
-                </div>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ListCard>
+        <StatusChips<Filter> value={status || "todas"} onChange={(value) => setStatus(value === "todas" ? "" : value)}
+          options={FILTERS.map((filter) => ({ value: filter.value, label: filter.label, count: count(filter.value) }))} />
+        <ListToolbar search={{ value: search, onChange: setSearch, placeholder: "Buscar por número ou título..." }}>
+          {canCreate && <Button type="button" onClick={() => setCreating(true)}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Nova negociação</span></Button>}
+        </ListToolbar>
+        <DataTable rows={rows} columns={columns} getRowId={(row) => row.id} ariaLabel="Negociações" minWidth={960}
+          loading={isLoading || isFetching} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+          onRowClick={(row) => open(row.id)}
+          empty={data?.rows.length
+            ? <EmptyState icon="search-x" title="Nenhuma negociação nesta situação." />
+            : <EmptyState title="Nenhuma negociação ainda." description="Junte numa negociação as propostas de um cliente que pediu mais de uma coisa (por exemplo, serviço e locação em notas separadas)." />} />
+      </ListCard>
 
       {creating && <NewDealDialog onClose={() => setCreating(false)} onCreated={(deal) => open(deal.id)} />}
     </>

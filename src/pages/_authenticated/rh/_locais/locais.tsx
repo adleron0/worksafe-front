@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
@@ -16,7 +15,13 @@ import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import MapView, { MapPoint } from "@/components/general-components/MapView";
 import Select from "@/components/general-components/Select";
-import { Tip, dateBr, errorMessage } from "../../comercial/-shared/commercial";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
+import { errorMessage } from "../../comercial/-shared/commercial";
+import { customerPointColumns, placeColumns } from "./-components/placeColumns";
+import { CustomerPointRowActions, PlaceRowActions } from "./-components/PlaceRowActions";
 import { CUSTOMER_POINTS_KEY, CustomerPoint, CustomerPoints, PLACES_ABILITY, PLACES_KEY, PLACE_COLOR, Place, PlaceList, PointDialog, placesApi, usePlaces } from "../-shared/places";
 
 export const Route = createFileRoute("/_authenticated/rh/_locais/locais")({
@@ -30,11 +35,8 @@ function PlacesPage() {
   const canWrite = can(`update_${PLACES_ABILITY}`);
   return (
     <>
-      <div>
-        <h1 className="text-xl font-bold">Locais</h1>
-        <p className="text-sm text-muted-foreground">Os pontos da empresa (centros de treinamento, bases temporárias) e onde fica cada cliente. É o que o mapa de alocação mostra.</p>
-      </div>
-      <Tabs defaultValue="empresa" className="mt-4">
+      <PageHeader title="Locais" description="Os pontos da empresa (centros de treinamento, bases temporárias) e onde fica cada cliente. É o que o mapa de alocação mostra." />
+      <Tabs defaultValue="empresa">
         <TabsList>
           <TabsTrigger value="empresa">Locais da empresa</TabsTrigger>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
@@ -61,34 +63,18 @@ function CompanyPlaces({ canWrite }: { canWrite: boolean }) {
 
   return (
     <div className="grid gap-4">
-      {canWrite && <Button className="w-fit" onClick={() => setEditing("novo")}><Icon name="plus" className="w-4 h-4 mr-1" /> Novo local</Button>}
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {isLoading && <Skeleton className="h-40 w-full" />}
-      {data && (
-        <div className="grid gap-4 xl:grid-cols-2">
-          <div className="rounded-lg border">
-            {!data.rows.length && <p className="p-6 text-sm text-muted-foreground">Nenhum local cadastrado. Comece pelo centro de treinamento.</p>}
-            {data.rows.map((place) => (
-              <div key={place.id} className="flex items-start gap-3 border-b px-4 py-3 text-sm last:border-b-0">
-                <span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: PLACE_COLOR[place.kind] ?? "#475569" }} />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{place.name} <span className="font-normal text-muted-foreground">· {place.kindName}</span></p>
-                  <p className="text-xs text-muted-foreground">{place.address ?? "Sem endereço"}</p>
-                  {(place.startDate || place.endDate) && <p className="text-xs text-muted-foreground">{place.startDate ? `desde ${dateBr(place.startDate)}` : ""}{place.endDate ? ` até ${dateBr(place.endDate)}` : ""}{!place.current ? " · fora do período" : ""}</p>}
-                  {place.latitude === null && <p className="text-xs text-amber-700 dark:text-amber-400">Sem ponto no mapa</p>}
-                </div>
-                {canWrite && <Tip text="Editar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Editar ${place.name}`} onClick={() => setEditing(place)}><Icon name="pencil" className="w-4 h-4" /></Button></Tip>}
-                {canWrite && (
-                  <ConfirmDialog title={`Inativar "${place.name}"?`} description="O local some do mapa e das escolhas. O que já foi lançado nele continua guardado." onConfirm={() => inactivate(place.id)}>
-                    <span><Tip text="Inativar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Inativar ${place.name}`}><Icon name="archive" className="w-4 h-4" /></Button></Tip></span>
-                  </ConfirmDialog>
-                )}
-              </div>
-            ))}
-          </div>
+      <div className="grid gap-4 xl:grid-cols-2 items-start">
+        <ListCard>
+          {canWrite && <ListToolbar><Button onClick={() => setEditing("novo")}><Icon name="plus" className="w-4 h-4" /> Novo local</Button></ListToolbar>}
+          <DataTable rows={data?.rows} columns={placeColumns} getRowId={(place) => place.id} ariaLabel="Locais da empresa" minWidth={480} skeletonRows={4}
+            loading={isLoading} error={error ? errorMessage(error) : null}
+            actions={canWrite ? (place) => <PlaceRowActions place={place} onEdit={() => setEditing(place)} onInactivate={() => inactivate(place.id)} /> : undefined}
+            empty={<EmptyState title="Nenhum local cadastrado." description="Comece pelo centro de treinamento." />} />
+        </ListCard>
+        {data && (
           <MapView className="h-96" markers={points.map((place) => ({ id: place.id, latitude: place.latitude as number, longitude: place.longitude as number, label: `${place.name} · ${place.kindName}`, color: PLACE_COLOR[place.kind], onClick: canWrite ? () => setEditing(place) : undefined }))} />
-        </div>
-      )}
+        )}
+      </div>
       {editing && data && <PlaceDialog place={editing === "novo" ? undefined : editing} options={data} onClose={() => setEditing(null)} />}
     </div>
   );
@@ -206,8 +192,6 @@ function PlaceDialog({ place, options, onClose }: { place?: Place; options: Plac
 
 // ---------------------------------------------------------------- ponto dos clientes
 
-const SOURCE_TEXT = { endereco: "pelo endereço", manual: "ajustado à mão" } as const;
-
 function CustomerPlaces({ canWrite }: { canWrite: boolean }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -254,39 +238,32 @@ function CustomerPlaces({ canWrite }: { canWrite: boolean }) {
 
   return (
     <div className="grid gap-4">
-      <div className="flex flex-col gap-3 rounded-card border bg-card p-4 xl:flex-row xl:items-center">
-        <div className="w-full xl:w-80"><Input name="customerSearch" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar cliente..." icon="search" /></div>
-        <div className="flex items-center gap-2">
-          <Checkbox id="customerMissing" checked={missing} onCheckedChange={(checked) => setMissing(checked === true)} />
-          <Label htmlFor="customerMissing" className="font-normal">Só quem está sem ponto{data ? ` (${data.missing} de ${data.total})` : ""}</Label>
-        </div>
-        {canWrite && !!data?.missing && (
-          <ConfirmDialog title={`Localizar ${data.missing} cliente(s) pelo endereço?`} description="O endereço de cada cliente (sem o nome) é consultado num serviço de mapas externo, um por vez. Pode levar alguns minutos; dá para continuar usando o sistema." onConfirm={locateAll}>
-            <Button type="button" variant="outline" className="xl:ml-auto" disabled={!!progress}><Icon name="map-pinned" className="w-4 h-4 mr-1" /> {progress ?? "Localizar todos sem ponto"}</Button>
-          </ConfirmDialog>
+      <div className="grid gap-4 xl:grid-cols-2 items-start">
+        <ListCard>
+          <ListToolbar search={{ value: search, onChange: setSearch, placeholder: "Buscar cliente..." }}>
+            <div className="flex items-center gap-2">
+              <Checkbox id="customerMissing" checked={missing} onCheckedChange={(checked) => setMissing(checked === true)} />
+              <Label htmlFor="customerMissing" className="font-normal whitespace-nowrap">Só sem ponto{data ? ` (${data.missing} de ${data.total})` : ""}</Label>
+            </div>
+          </ListToolbar>
+          {canWrite && !!data?.missing && (
+            <ConfirmDialog title={`Localizar ${data.missing} cliente(s) pelo endereço?`} description="O endereço de cada cliente (sem o nome) é consultado num serviço de mapas externo, um por vez. Pode levar alguns minutos; dá para continuar usando o sistema." onConfirm={locateAll}>
+              <Button type="button" variant="outline" className="w-fit" disabled={!!progress}><Icon name="map-pinned" className="w-4 h-4" /> {progress ?? "Localizar todos sem ponto"}</Button>
+            </ConfirmDialog>
+          )}
+          <div className="max-h-[32rem] overflow-y-auto">
+            <DataTable rows={data?.rows} columns={customerPointColumns} getRowId={(customer) => customer.id} ariaLabel="Pontos dos clientes" minWidth={480} skeletonRows={4}
+              loading={isLoading} error={error ? errorMessage(error) : null}
+              actions={canWrite ? (customer) => (
+                <CustomerPointRowActions customer={customer} locating={locating && locatingId === customer.id} onLocate={() => locate(customer.id)} onPick={() => setPicking(customer)} />
+              ) : undefined}
+              empty={<EmptyState icon="search-x" title="Nenhum cliente com esses filtros." />} />
+          </div>
+        </ListCard>
+        {data && (
+          <MapView className="h-[32rem]" markers={points.map((customer) => ({ id: customer.id, latitude: customer.latitude as number, longitude: customer.longitude as number, label: customer.name, color: "#2563eb", onClick: canWrite ? () => setPicking(customer) : undefined }))} />
         )}
       </div>
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {isLoading && <Skeleton className="h-40 w-full" />}
-      {data && (
-        <div className="grid gap-4 xl:grid-cols-2">
-          <div className="max-h-[32rem] overflow-y-auto rounded-lg border">
-            {!data.rows.length && <p className="p-6 text-sm text-muted-foreground">Nenhum cliente com esses filtros.</p>}
-            {data.rows.map((customer) => (
-              <div key={customer.id} className="flex items-start gap-3 border-b px-4 py-3 text-sm last:border-b-0">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{customer.name}</p>
-                  <p className="text-xs text-muted-foreground">{customer.address ?? "Sem endereço no cadastro"}</p>
-                  <p className={customer.source ? "text-xs text-muted-foreground" : "text-xs text-amber-700 dark:text-amber-400"}>{customer.source ? `Ponto ${SOURCE_TEXT[customer.source]}` : "Sem ponto no mapa"}</p>
-                </div>
-                {canWrite && customer.city && <Tip text="Localizar pelo endereço do cadastro"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={locating && locatingId === customer.id} aria-label={`Localizar ${customer.name} pelo endereço`} onClick={() => locate(customer.id)}><Icon name="locate-fixed" className="w-4 h-4" /></Button></Tip>}
-                {canWrite && <Tip text="Ajustar no mapa"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Ajustar o ponto de ${customer.name} no mapa`} onClick={() => setPicking(customer)}><Icon name="map-pin" className="w-4 h-4" /></Button></Tip>}
-              </div>
-            ))}
-          </div>
-          <MapView className="h-[32rem]" markers={points.map((customer) => ({ id: customer.id, latitude: customer.latitude as number, longitude: customer.longitude as number, label: customer.name, color: "#2563eb", onClick: canWrite ? () => setPicking(customer) : undefined }))} />
-        </div>
-      )}
       {picking && (
         <PointDialog title={`Ponto de ${picking.name}`} description={picking.address ? `Endereço do cadastro: ${picking.address}. Clique no mapa ou arraste o alfinete.` : undefined}
           point={picking.latitude !== null && picking.longitude !== null ? { latitude: picking.latitude, longitude: picking.longitude } : null}

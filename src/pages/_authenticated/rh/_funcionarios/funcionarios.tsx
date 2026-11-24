@@ -1,25 +1,26 @@
-import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
-import Input from "@/components/general-components/Input";
-import Pagination from "@/components/general-components/Pagination";
 import Select from "@/components/general-components/Select";
-import { formatPHONE } from "@/utils/phone-mask";
-import { dateBr, errorMessage } from "../../comercial/-shared/commercial";
-import { EMPLOYEES_ABILITY, EMPLOYEES_KEY, EMPLOYEE_OPTIONS_KEY, EmployeeList, EmployeeOptions, EmployeeStatusBadge, employeesApi } from "../-shared/employees";
-import { DocStatusBadge } from "../-shared/documents";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import ListFooter from "@/components/general-components/ListFooter";
+import StatusChips from "@/components/general-components/StatusChips";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
+import { errorMessage } from "../../comercial/-shared/commercial";
+import { EMPLOYEES_ABILITY, EMPLOYEES_KEY, EMPLOYEE_OPTIONS_KEY, EmployeeList, EmployeeOptions, employeesApi } from "../-shared/employees";
+import { employeeColumns } from "./-components/employeeColumns";
 
 export const Route = createFileRoute("/_authenticated/rh/_funcionarios/funcionarios")({
   component: EmployeesPage,
 });
 
 const LIMIT = 20;
-const DOC_SIGNAL: Record<string, string> = { em_dia: "Em dia", a_vencer: "A vencer", vencido: "Vencido", faltando: "Faltando" };
+const STATUS_COLOR: Record<string, string> = { ativo: "#22c55e", ferias: "#3b82f6", afastado: "#f59e0b", suspenso: "#ef4444", indisponivel: "#f59e0b", desligado: "#6b7280" };
 
 /** Funcionários: quem trabalha para a empresa, a função de cada um e a situação de hoje. */
 function EmployeesPage() {
@@ -44,70 +45,37 @@ function EmployeesPage() {
   const working = Object.entries(summary).reduce((sum, [key, count]) => (key === "desligado" ? sum : sum + (count ?? 0)), 0);
   const empty = search || status || professionalId ? "Nenhum funcionário com esses filtros." : "Nenhum funcionário cadastrado ainda.";
 
+  const canCreate = can(`create_${EMPLOYEES_ABILITY}`);
+
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Funcionários</h1>
-          <p className="text-sm text-muted-foreground">Quem trabalha para a empresa, a função de cada um e a situação de hoje.</p>
-        </div>
-        {can(`create_${EMPLOYEES_ABILITY}`) && <Button onClick={() => open("novo")}><Icon name="plus" className="w-4 h-4 mr-1" /> Novo funcionário</Button>}
-      </div>
+      <PageHeader title="Funcionários" description="Quem trabalha para a empresa, a função de cada um e a situação de hoje." />
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-card border bg-card">
-        <div className="w-full xl:w-60">
-          <Select name="status" state={status} clearable placeholder={`Todos em atividade (${working})`} modal={false}
-            options={(options?.statuses ?? []).map(({ id, name }) => ({ id, name: `${name} (${summary[id] ?? 0})` }))}
-            onChange={(_, value) => { setStatus(String(value ?? "")); setPage(0); }} />
-        </div>
-        <div className="w-full xl:w-60">
-          <Select name="professionalId" state={professionalId} clearable placeholder="Todas as funções" modal={false} options={options?.professionals ?? []}
-            onChange={(_, value) => { setProfessionalId(String(value ?? "")); setPage(0); }} />
-        </div>
-        <div className="w-full xl:w-80">
-          <Input name="search" value={search} onValueChange={(_, value) => { setSearch(String(value)); setPage(0); }} placeholder={options?.canSeePersonal ? "Buscar por nome, matrícula ou CPF..." : "Buscar por nome ou matrícula..."} icon="search" />
-        </div>
-      </div>
-
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-
-      {!error && (
-        <div className="rounded-card border bg-card overflow-x-auto">
-          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
-            <div className="flex-1">Funcionário</div>
-            <div className="w-64">Função</div>
-            <div className="w-56">Situação</div>
-            <div className="w-32">Documentos</div>
-            <div className="w-40">Telefone</div>
-            <div className="w-28">Admissão</div>
+      <ListCard>
+        <StatusChips value={status} onChange={(value) => { setStatus(value); setPage(0); }}
+          options={[
+            { value: "", label: "Todos em atividade", count: working },
+            ...(options?.statuses ?? []).map(({ id, name }) => ({ value: id as string, label: name, count: summary[id] ?? 0, color: STATUS_COLOR[id] })),
+          ]} />
+        <ListToolbar search={{ value: search, onChange: (text) => { setSearch(text); setPage(0); }, placeholder: options?.canSeePersonal ? "Buscar por nome, matrícula ou CPF..." : "Buscar por nome ou matrícula..." }}>
+          <div className="w-48 sm:w-60">
+            <Select name="professionalId" state={professionalId} clearable placeholder="Todas as funções" modal={false} options={options?.professionals ?? []}
+              onChange={(_, value) => { setProfessionalId(String(value ?? "")); setPage(0); }} />
           </div>
-          {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
-          {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
-          {data?.rows.map((row) => (
-            <button key={row.id} type="button" onClick={() => open(row.id)}
-              className={`min-w-[880px] w-full text-left flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-              <div className="flex-1 min-w-0 pr-4">
-                <p className="font-medium truncate">{row.name}</p>
-                <p className="text-xs text-muted-foreground truncate">{[row.registration && `matrícula ${row.registration}`, row.hasUser && "tem acesso ao sistema"].filter(Boolean).join(" · ") || "—"}</p>
-              </div>
-              <div className="w-64 min-w-0 pr-4">
-                <p className="truncate">{row.primaryRole ?? <span className="text-muted-foreground">Sem função</span>}</p>
-                {row.roles.length > 1 && <p className="text-xs text-muted-foreground truncate">também {row.roles.filter((role) => !role.isPrimary).map((role) => role.name).join(", ")}</p>}
-              </div>
-              <div className="w-56"><EmployeeStatusBadge status={row.status} label={row.statusLabel} until={row.statusUntil} /></div>
-              <div className="w-32">{row.documents && row.documents !== "vazia" && row.documents !== "sem_validade" ? <DocStatusBadge status={row.documents} label={DOC_SIGNAL[row.documents]} /> : <span className="text-muted-foreground">—</span>}</div>
-              <div className="w-40 text-muted-foreground tabular-nums">{row.phone ? formatPHONE(row.phone) : "—"}</div>
-              <div className="w-28 text-muted-foreground tabular-nums">{dateBr(row.admissionDate)}</div>
-            </button>
-          ))}
-        </div>
-      )}
-      {data && data.total > LIMIT && (
-        <div className="mt-4"><Pagination totalItems={data.total} itemsPerPage={LIMIT} currentPage={page} onPageChange={setPage} maxVisiblePages={5} /></div>
-      )}
-      {(summary.desligado ?? 0) > 0 && !status && (
-        <p className="mt-3 text-xs text-muted-foreground">{summary.desligado} desligado(s) não aparecem aqui; filtre por "Desligado" para ver.</p>
-      )}
+          {canCreate && <Button onClick={() => open("novo")}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Novo funcionário</span></Button>}
+        </ListToolbar>
+
+        <DataTable rows={data?.rows} columns={employeeColumns} getRowId={(row) => row.id} ariaLabel="Funcionários" minWidth={880}
+          loading={isLoading} error={error ? errorMessage(error) : null} onRowClick={(row) => open(row.id)}
+          empty={search || status || professionalId
+            ? <EmptyState icon="search-x" title={empty} />
+            : <EmptyState title={empty} action={canCreate && <Button size="sm" onClick={() => open("novo")}><Icon name="plus" className="w-4 h-4" /> Novo funcionário</Button>} />} />
+
+        <ListFooter total={data?.total ?? 0} page={page} limit={LIMIT} limits={[LIMIT]} onPageChange={setPage} />
+        {(summary.desligado ?? 0) > 0 && !status && (
+          <p className="text-xs text-muted-foreground">{summary.desligado} desligado(s) não aparecem aqui; filtre por "Desligado" para ver.</p>
+        )}
+      </ListCard>
     </>
   );
 }

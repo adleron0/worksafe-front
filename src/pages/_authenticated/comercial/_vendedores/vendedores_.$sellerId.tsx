@@ -14,7 +14,9 @@ import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
-import Pagination from "@/components/general-components/Pagination";
+import ListCard from "@/components/general-components/ListCard";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { useBankAccounts } from "../../financeiro/-shared/financial";
@@ -51,7 +53,7 @@ function SellerWalletPage() {
     queryFn: () => commercialApi.get<WalletDetail>(`sellers/${sellerId}`),
   });
   const params = { page, limit: LIMIT, ...(type ? { type } : {}), ...(origin ? { origin } : {}) };
-  const { data: entries, isLoading: loadingEntries } = useQuery({
+  const { data: entries, isLoading: loadingEntries, isFetching: fetchingEntries, error: entriesError, refetch: refetchEntries } = useQuery({
     queryKey: [WALLET_ENTRIES_KEY, sellerId, params],
     queryFn: () => commercialApi.get<EntriesResponse>(`sellers/${sellerId}/entries`, params),
     placeholderData: (previous) => previous,
@@ -196,8 +198,8 @@ function SellerWalletPage() {
         </section>
       </div>
 
-      <section className="rounded-card border bg-card overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-3 p-4 border-b">
+      <ListCard>
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
           <h2 className="font-semibold lg:mr-auto">Histórico</h2>
           <div className="flex flex-wrap rounded-md border overflow-hidden w-fit" role="tablist" aria-label="Tipo de lançamento">
             {TYPE_FILTERS.map((filter) => (
@@ -214,59 +216,63 @@ function SellerWalletPage() {
           </div>
         </div>
 
-        <div className="hidden lg:flex items-center py-2 px-4 bg-muted/50 text-xs font-medium text-muted-foreground">
-          <div className="w-24">Data</div>
-          <div className="w-28">Tipo</div>
-          <div className="flex-1">Descrição</div>
-          <div className="w-24">Situação</div>
-          <div className="w-32 text-right">Valor</div>
-          <div className="w-10" />
-        </div>
-        {loadingEntries && !entries && Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
-        {entries && entries.rows.length === 0 && (
-          <p className="p-6 text-sm text-muted-foreground">
-            {type || origin ? "Nenhum lançamento com esses filtros." : "Nenhum lançamento ainda. As comissões aparecem aqui quando uma venda com este vendedor é feita."}
-          </p>
-        )}
-        {entries?.rows.map((entry) => {
-          const gone = entry.status === "cancelada" || entry.status === "estornado";
-          return (
-            <div key={entry.id} className={cn("flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm", gone && "text-muted-foreground")}>
-              <div className="lg:w-24 tabular-nums">{dateBr(entry.occurredAt)}</div>
-              <div className="lg:w-28">
-                <p className="font-medium">{TYPE_LABEL[entry.type]}</p>
-                {entry.type !== "pagamento" && <p className="text-xs text-muted-foreground">{ORIGIN_LABEL[entry.origin]}</p>}
-              </div>
-              <div className="flex-1 min-w-0 lg:pr-4">
-                <p className="truncate">{entry.description}</p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {entry.type === "comissao" && entry.rate !== null && entry.baseValue !== null && `${decimal(entry.rate, 2)}% de ${money(entry.baseValue)}`}
-                  {entry.type === "comissao" && entry.status === "liberada" && entry.releasedAt && ` · liberada em ${dateBr(entry.releasedAt)}`}
-                  {entry.type === "pagamento" && [paymentLabel(entry.paymentMethod), entry.bankAccount?.name, entry.createdBy && `por ${entry.createdBy}`].filter(Boolean).join(" · ")}
-                  {entry.type === "ajuste" && entry.createdBy && `por ${entry.createdBy}`}
-                  {entry.note && ` · ${entry.note}`}
-                  {entry.reverseReason && ` · estornado: ${entry.reverseReason}`}
-                  {entry.contract && <> · <Link to="/comercial/contratos/$contractId" params={{ contractId: String(entry.contract.id) }} className="underline">{entry.contract.number}</Link></>}
-                </p>
-              </div>
-              <div className="lg:w-24"><EntryStatusBadge status={entry.status} /></div>
-              <div className={cn("lg:w-32 lg:text-right font-semibold tabular-nums", gone && "line-through font-normal", !gone && entry.amount < 0 && "text-muted-foreground")}>
-                {entry.amount < 0 ? "− " : entry.type === "comissao" ? "" : "+ "}{money(Math.abs(entry.amount))}
-              </div>
-              <div className="lg:w-10 flex lg:justify-end">
-                {canUpdate && entry.type !== "comissao" && entry.status === "efetivado" && (
-                  <Tip text="Estornar este lançamento">
-                    <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Estornar este lançamento" onClick={() => setReversing(entry)}>
-                      <Icon name="undo-2" className="w-4 h-4" />
-                    </Button>
-                  </Tip>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </section>
-      {entries && entries.total > LIMIT && <div className="mt-4"><Pagination totalItems={entries.total} itemsPerPage={LIMIT} currentPage={page} onPageChange={setPage} maxVisiblePages={5} /></div>}
+        <DataTable rows={entries?.rows} getRowId={(entry) => entry.id} ariaLabel="Histórico da carteira" minWidth={760} skeletonRows={3}
+          loading={loadingEntries || fetchingEntries} error={entriesError ? errorMessage(entriesError) : null} onRetry={() => refetchEntries()}
+          rowClassName={(entry) => (entry.status === "cancelada" || entry.status === "estornado" ? "text-muted-foreground" : undefined)}
+          columns={[
+            { id: "date", header: "Data", className: "w-24 tabular-nums", cell: (entry) => dateBr(entry.occurredAt) },
+            {
+              id: "type", header: "Tipo", className: "w-28",
+              cell: (entry) => (
+                <div>
+                  <p className="font-medium">{TYPE_LABEL[entry.type]}</p>
+                  {entry.type !== "pagamento" && <p className="text-xs text-muted-foreground">{ORIGIN_LABEL[entry.origin]}</p>}
+                </div>
+              ),
+            },
+            {
+              id: "description", header: "Descrição",
+              cell: (entry) => (
+                <div className="min-w-0 max-w-[30rem]">
+                  <p className="truncate">{entry.description}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {entry.type === "comissao" && entry.rate !== null && entry.baseValue !== null && `${decimal(entry.rate, 2)}% de ${money(entry.baseValue)}`}
+                    {entry.type === "comissao" && entry.status === "liberada" && entry.releasedAt && ` · liberada em ${dateBr(entry.releasedAt)}`}
+                    {entry.type === "pagamento" && [paymentLabel(entry.paymentMethod), entry.bankAccount?.name, entry.createdBy && `por ${entry.createdBy}`].filter(Boolean).join(" · ")}
+                    {entry.type === "ajuste" && entry.createdBy && `por ${entry.createdBy}`}
+                    {entry.note && ` · ${entry.note}`}
+                    {entry.reverseReason && ` · estornado: ${entry.reverseReason}`}
+                    {entry.contract && <> · <Link to="/comercial/contratos/$contractId" params={{ contractId: String(entry.contract.id) }} className="underline">{entry.contract.number}</Link></>}
+                  </p>
+                </div>
+              ),
+            },
+            { id: "status", header: "Situação", className: "w-24", cell: (entry) => <EntryStatusBadge status={entry.status} /> },
+            {
+              id: "amount", header: "Valor", align: "right", className: "w-32",
+              cell: (entry) => {
+                const gone = entry.status === "cancelada" || entry.status === "estornado";
+                return (
+                  <span className={cn("font-semibold tabular-nums", gone && "line-through font-normal", !gone && entry.amount < 0 && "text-muted-foreground")}>
+                    {entry.amount < 0 ? "− " : entry.type === "comissao" ? "" : "+ "}{money(Math.abs(entry.amount))}
+                  </span>
+                );
+              },
+            },
+          ]}
+          actions={(entry) => canUpdate && entry.type !== "comissao" && entry.status === "efetivado" ? (
+            <Tip text="Estornar este lançamento">
+              <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Estornar este lançamento" onClick={() => setReversing(entry)}>
+                <Icon name="undo-2" className="w-4 h-4" />
+              </Button>
+            </Tip>
+          ) : null}
+          empty={type || origin
+            ? <EmptyState icon="search-x" title="Nenhum lançamento com esses filtros." />
+            : <EmptyState title="Nenhum lançamento ainda." description="As comissões aparecem aqui quando uma venda com este vendedor é feita." />} />
+
+        <ListFooter total={entries?.total ?? 0} page={page} limit={LIMIT} onPageChange={setPage} />
+      </ListCard>
 
       {dialog === "pay" && <PaymentDialog wallet={wallet} onClose={() => setDialog("")} onDone={() => { setDialog(""); refresh(); }} />}
       {dialog === "commission" && <CommissionDialog wallet={wallet} onClose={() => setDialog("")} onDone={() => { setDialog(""); refresh(); }} />}

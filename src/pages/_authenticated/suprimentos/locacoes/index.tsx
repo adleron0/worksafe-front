@@ -1,15 +1,16 @@
-import tailwindUtils from "@/utils/tailwind.utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
-import Input from "@/components/general-components/Input";
 import KanbanView, { KanbanColumn } from "@/components/general-components/KanbanView";
-import Select from "@/components/general-components/Select";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import StatusChips, { StatusChipOption } from "@/components/general-components/StatusChips";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import ViewToggle, { useStoredView } from "@/components/general-components/ViewToggle";
 import { dateBr, errorMessage, money } from "../../comercial/-shared/commercial";
 import { PERIOD_LABEL, RENTALS_ABILITY, RENTAL_KEYS, RENTAL_STAGES, RENTAL_STAGE_LABEL, RentalList, RentalRow, RentalStage, RentalStageBadge, rentalsApi } from "../-shared/rentals";
@@ -35,7 +36,7 @@ function RentalsPage() {
   const kanban = view === "kanban";
 
   const params = { ...(!kanban && stage ? (stage === "cancelada" ? { status: "cancelada" } : { stage }) : {}), ...(search.trim() ? { search: search.trim() } : {}) };
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: [RENTAL_KEYS.list, params],
     queryFn: () => rentalsApi.get<RentalList>("", params),
     placeholderData: (previous) => previous,
@@ -64,89 +65,89 @@ function RentalsPage() {
     ? <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">{row.fromContract ? `A faturar ${money(row.pendingValue)}` : "Faturar"}</span>
     : null);
 
+  const stageOptions: StatusChipOption[] = [
+    { value: "todas", label: "Todas, menos canceladas" },
+    ...RENTAL_STAGES.map(({ id, name, color }) => ({ value: id, label: name, color, count: summary[id] ?? 0 })),
+    { value: "cancelada", label: "Canceladas", color: "#6b7280", count: summary.cancelada ?? 0 },
+  ];
+  const columns: DataColumn<RentalRow>[] = [
+    {
+      id: "number", header: "Número", className: "w-32", cell: (row) => (
+        <div>
+          <p className="font-semibold tabular-nums">{row.number}</p>
+          <p className="text-xs text-muted-foreground tabular-nums">{row.contract ? row.contract.number : "sem venda"}</p>
+        </div>
+      ),
+    },
+    {
+      id: "customer", header: "Cliente e itens", cell: (row) => (
+        <div className="min-w-0 max-w-md">
+          <p className="font-medium truncate">{row.customer}</p>
+          <p className="text-xs text-muted-foreground truncate">{row.summary}</p>
+        </div>
+      ),
+    },
+    { id: "stage", header: "Etapa", className: "whitespace-nowrap", cell: (row) => <span className="inline-flex items-center gap-1"><RentalStageBadge stage={row.stage} />{billBadge(row)}</span> },
+    { id: "when", header: "Período", className: "text-xs text-muted-foreground whitespace-nowrap", cell: (row) => when(row) },
+    {
+      id: "value", header: "Valor", align: "right", className: "w-36 tabular-nums whitespace-nowrap", cell: (row) => (
+        <div>
+          <p>{money(row.ratePerPeriod)}<span className="text-xs text-muted-foreground"> /{PERIOD_LABEL[row.period]}</span></p>
+          {row.billed > 0 && <p className="text-xs text-muted-foreground">faturado {money(row.billed)}</p>}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Ordens de locação</h1>
-          <p className="text-sm text-muted-foreground">Cada proposta de locação aceita vira uma OL: entregar, acompanhar a devolução, faturar os períodos e acertar a caução.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => navigate({ to: "/suprimentos/locacoes/disponibilidade" })}><Icon name="chart-gantt" className="w-4 h-4 mr-1" /> Disponibilidade</Button>
-          {can("create_comercial") && <Button variant="outline" onClick={() => navigate({ to: "/comercial/propostas/nova", search: { tipo: "locacao" } })}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova proposta de locação</Button>}
-        </div>
-      </div>
+      <PageHeader title="Ordens de locação" description="Cada proposta de locação aceita vira uma OL: entregar, acompanhar a devolução, faturar os períodos e acertar a caução." />
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-card border bg-card">
-        <ViewToggle view={view} onChange={changeView} />
-        {!kanban && (
-          <div className="w-full xl:w-60">
-            <Select name="stage" state={stage} clearable placeholder="Todas, menos canceladas" modal={false}
-              options={[...RENTAL_STAGES, { id: "cancelada" as const, name: "Canceladas" }].map(({ id, name }) => ({ id, name: `${name} (${summary[id] ?? 0})` }))}
-              onChange={(_, value) => setStage(String(value ?? ""))} />
+      <ListCard>
+        {!kanban && <StatusChips options={stageOptions} value={stage || "todas"} onChange={(value) => setStage(value === "todas" ? "" : value)} ariaLabel="Etapa" />}
+
+        <ListToolbar search={{ value: search, onChange: setSearch, placeholder: "Buscar por número ou cliente..." }}>
+          {toBill > 0 && <p className="hidden md:block text-sm text-muted-foreground">{toBill} ordem(ns) com período para faturar</p>}
+          <ViewToggle view={view} onChange={changeView} />
+          <Button variant="outline" onClick={() => navigate({ to: "/suprimentos/locacoes/disponibilidade" })}><Icon name="chart-gantt" className="w-4 h-4" /> <span className="hidden sm:inline">Disponibilidade</span></Button>
+          {can("create_comercial") && <Button onClick={() => navigate({ to: "/comercial/propostas/nova", search: { tipo: "locacao" } })}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Nova proposta de locação</span></Button>}
+        </ListToolbar>
+
+        {kanban && error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
+        {kanban && !error && (
+          <div className="p-2">
+            <KanbanView key={boardKey} data={rows.filter((row) => row.stage !== "cancelada")} columns={COLUMNS} statusField="stage" isLoading={isLoading} storageKey="worksafe.suprimentos.locacoes.kanban.hidden" columnWidth={260}
+              emptyMessage={empty} onStatusChange={drop}>
+              {(row: RentalRow) => (
+                <button type="button" className="w-full p-3 space-y-2 text-left" onClick={() => open(row.id)}>
+                  <div>
+                    <p className="font-medium text-sm truncate">{row.customer}</p>
+                    <p className="text-xs text-muted-foreground truncate tabular-nums">{row.number}{row.contract ? ` · ${row.contract.number}` : " · sem venda"}</p>
+                  </div>
+                  <div className="space-y-1 text-xs text-muted-foreground">
+                    <p className="truncate">{row.summary}</p>
+                    <p className="flex items-center gap-2"><Icon name="calendar" className="w-3 h-3 shrink-0" /> <span className={row.stage === "atrasada" ? "font-semibold text-red-600 dark:text-red-400" : ""}>{when(row)}</span></p>
+                    {billBadge(row)}
+                  </div>
+                  <p className="pt-2 border-t text-sm font-semibold tabular-nums">{money(row.ratePerPeriod)} <span className="text-xs font-normal text-muted-foreground">por {PERIOD_LABEL[row.period]}{row.billing === "unico" ? " · pagamento único" : ""}</span></p>
+                </button>
+              )}
+            </KanbanView>
           </div>
         )}
-        <div className="w-full xl:w-80">
-          <Input name="search" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar por número ou cliente..." icon="search" />
-        </div>
-        {toBill > 0 && <p className="xl:ml-auto text-sm text-muted-foreground">{toBill} ordem(ns) com período para faturar</p>}
-      </div>
 
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-
-      {kanban && !error && (
-        <div className="p-2">
-          <KanbanView key={boardKey} data={rows.filter((row) => row.stage !== "cancelada")} columns={COLUMNS} statusField="stage" isLoading={isLoading} storageKey="worksafe.suprimentos.locacoes.kanban.hidden" columnWidth={260}
-            emptyMessage={empty} onStatusChange={drop}>
-            {(row: RentalRow) => (
-              <button type="button" className="w-full p-3 space-y-2 text-left" onClick={() => open(row.id)}>
-                <div>
-                  <p className="font-medium text-sm truncate">{row.customer}</p>
-                  <p className="text-xs text-muted-foreground truncate tabular-nums">{row.number}{row.contract ? ` · ${row.contract.number}` : " · sem venda"}</p>
-                </div>
-                <div className="space-y-1 text-xs text-muted-foreground">
-                  <p className="truncate">{row.summary}</p>
-                  <p className="flex items-center gap-2"><Icon name="calendar" className="w-3 h-3 shrink-0" /> <span className={row.stage === "atrasada" ? "font-semibold text-red-600 dark:text-red-400" : ""}>{when(row)}</span></p>
-                  {billBadge(row)}
-                </div>
-                <p className="pt-2 border-t text-sm font-semibold tabular-nums">{money(row.ratePerPeriod)} <span className="text-xs font-normal text-muted-foreground">por {PERIOD_LABEL[row.period]}{row.billing === "unico" ? " · pagamento único" : ""}</span></p>
-              </button>
-            )}
-          </KanbanView>
-        </div>
-      )}
-
-      {!kanban && !error && (
-        <div className="rounded-card border bg-card overflow-x-auto">
-          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
-            <div className="w-36">Número</div>
-            <div className="flex-1">Cliente e itens</div>
-            <div className="w-40">Etapa</div>
-            <div className="w-56">Período</div>
-            <div className="w-40 text-right">Valor</div>
-          </div>
-          {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
-          {!isLoading && !rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
-          {rows.map((row) => (
-            <button key={row.id} type="button" onClick={() => open(row.id)} className={`min-w-[880px] w-full text-left flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-              <div className="w-36">
-                <p className="font-semibold tabular-nums">{row.number}</p>
-                <p className="text-xs text-muted-foreground tabular-nums">{row.contract ? row.contract.number : "sem venda"}</p>
-              </div>
-              <div className="flex-1 min-w-0 pr-4">
-                <p className="font-medium truncate">{row.customer}</p>
-                <p className="text-xs text-muted-foreground truncate">{row.summary}</p>
-              </div>
-              <div className="w-40 flex flex-wrap gap-1"><RentalStageBadge stage={row.stage} />{billBadge(row)}</div>
-              <div className="w-56 text-xs text-muted-foreground">{when(row)}</div>
-              <div className="w-40 text-right tabular-nums">{money(row.ratePerPeriod)}<span className="text-xs text-muted-foreground"> /{PERIOD_LABEL[row.period]}</span>{row.billed > 0 && <p className="text-xs text-muted-foreground">faturado {money(row.billed)}</p>}</div>
-            </button>
-          ))}
-        </div>
-      )}
-      {(summary.cancelada ?? 0) > 0 && (kanban || !stage) && (
-        <p className="mt-3 text-xs text-muted-foreground">{summary.cancelada} ordem(ns) de locação cancelada(s) não aparecem aqui; na visão em lista, filtre por "Canceladas".</p>
-      )}
+        {!kanban && (
+          <DataTable rows={data?.rows} columns={columns} getRowId={(row) => row.id} ariaLabel="Ordens de locação"
+            loading={isLoading || isFetching} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+            onRowClick={(row) => open(row.id)}
+            empty={search || stage
+              ? <EmptyState icon="search-x" title={empty} action={<Button variant="outline" size="sm" onClick={() => { setSearch(""); setStage(""); }}>Limpar filtros</Button>} />
+              : <EmptyState title="Nenhuma ordem de locação ainda." description="Ela nasce sozinha quando uma proposta de locação é aceita." />} />
+        )}
+        {(summary.cancelada ?? 0) > 0 && (kanban || !stage) && (
+          <p className="text-xs text-muted-foreground">{summary.cancelada} ordem(ns) de locação cancelada(s) não aparecem aqui; na visão em lista, filtre por "Canceladas".</p>
+        )}
+      </ListCard>
     </>
   );
 }

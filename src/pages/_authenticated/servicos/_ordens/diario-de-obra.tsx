@@ -1,14 +1,18 @@
 import { clickableRow } from "@/utils/clickable-row";
 import tailwindUtils from "@/utils/tailwind.utils";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
 import { dateBr, errorMessage } from "../../comercial/-shared/commercial";
 import { ORDERS_ABILITY, RDO_PERMISSION } from "../-shared/orders";
-import { RECENT_REPORTS_KEY, RecentReports, ReportLine, reportsApi } from "../-shared/reports";
+import { recentReportColumns } from "./-components/recentReportColumns";
+import { RECENT_REPORTS_KEY, RecentReports, reportsApi } from "../-shared/reports";
 
 export const Route = createFileRoute("/_authenticated/servicos/_ordens/diario-de-obra")({
   component: DiaryPage,
@@ -17,22 +21,20 @@ export const Route = createFileRoute("/_authenticated/servicos/_ordens/diario-de
 /** A tela do encarregado: as obras em andamento, com o RDO de hoje a um toque, e os últimos RDOs. */
 function DiaryPage() {
   const { can } = useVerify();
+  const navigate = useNavigate();
   const { data, isLoading, error } = useQuery({ queryKey: [RECENT_REPORTS_KEY], queryFn: () => reportsApi.get<RecentReports>("service-reports") });
   if (!can(`view_${ORDERS_ABILITY}`)) return null;
   const canEdit = can(RDO_PERMISSION);
   return (
     <>
-      <div>
-        <h1 className="text-xl font-bold">Diário de obra (RDO)</h1>
-        <p className="text-sm text-muted-foreground">Lance o relatório de cada dia de obra: equipe, horas, o que foi feito e o avanço.</p>
-      </div>
+      <PageHeader title="Diário de obra (RDO)" description="Lance o relatório de cada dia de obra: equipe, horas, o que foi feito e o avanço." />
 
       {error && <p className="my-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
       {isLoading && <Skeleton className="h-24 w-full my-4" />}
 
       {data && (
         <>
-          <h2 className="mt-5 mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Obras em andamento</h2>
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Obras em andamento</h2>
           {data.running.length === 0 && <p className="rounded-card border bg-card p-4 text-sm text-muted-foreground">Nenhuma obra em execução. O RDO é liberado quando a execução da ordem de serviço é iniciada.</p>}
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {data.running.map((order) => {
@@ -61,12 +63,11 @@ function DiaryPage() {
           </div>
 
           <h2 className="mt-6 mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Últimos RDOs</h2>
-          <div className="rounded-lg border px-4">
-            {data.rows.length === 0 && <p className="py-4 text-sm text-muted-foreground">Nenhum RDO lançado ainda.</p>}
-            <ul className="divide-y">
-              {data.rows.map((row) => <ReportLine key={row.id} row={row} orderId={row.orderId} context={row.order ? `${row.order.customer} · ${row.order.number} · ${row.order.title}` : undefined} />)}
-            </ul>
-          </div>
+          <ListCard>
+            <DataTable rows={data.rows} columns={recentReportColumns} getRowId={(row) => row.id} ariaLabel="Últimos RDOs" minWidth={820}
+              onRowClick={(row) => navigate({ to: "/servicos/ordens-de-servico/$orderId/rdo/$reportId", params: { orderId: String(row.orderId), reportId: String(row.id) } })}
+              empty={<EmptyState title="Nenhum RDO lançado ainda." />} />
+          </ListCard>
         </>
       )}
     </>

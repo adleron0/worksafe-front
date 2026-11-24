@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import CalendarPicker from "@/components/general-components/Calendar";
 import Icon from "@/components/general-components/Icon";
+import PageHeader from "@/components/general-components/PageHeader";
 import { dateBr, errorMessage, money } from "../../comercial/-shared/commercial";
 import { STOCK_ABILITY, downloadCsv, qty, stockApi } from "../-shared/stock";
 import { REPORT_KEY, StockReport } from "../-shared/inventory";
@@ -50,14 +51,10 @@ function ReportsPage() {
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Relatórios do estoque</h1>
-          <p className="text-sm text-muted-foreground">{data ? `De ${dateBr(data.from)} a ${dateBr(data.to)}` : "Sem período escolhido: os últimos 30 dias."}{!seesCost && data ? " Valores só para quem vê custos." : ""}</p>
-        </div>
-        <Button type="button" variant="outline" disabled={!data} onClick={exportCsv}><Icon name="download" className="w-4 h-4 mr-1" /> Exportar planilha</Button>
-      </div>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 my-4 p-4 rounded-card border bg-card">
+      <PageHeader title="Relatórios do estoque"
+        description={<>{data ? `De ${dateBr(data.from)} a ${dateBr(data.to)}` : "Sem período escolhido: os últimos 30 dias."}{!seesCost && data ? " Valores só para quem vê custos." : ""}</>}
+        actions={<Button type="button" variant="outline" disabled={!data} onClick={exportCsv}><Icon name="download" className="w-4 h-4" /> Exportar planilha</Button>} />
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4 p-4 rounded-card border bg-card">
         <div className="w-full sm:w-44"><CalendarPicker mode="single" name="from" className="w-full" value={from} placeholder="De" fromYear={2020} toYear={2040} onValueChange={(_, v) => setFrom(String(v ?? ""))} /></div>
         <div className="w-full sm:w-44"><CalendarPicker mode="single" name="to" className="w-full" value={to} placeholder="Até" fromYear={2020} toYear={2040} onValueChange={(_, v) => setTo(String(v ?? ""))} /></div>
         {(from || to) && <Button type="button" variant="ghost" size="sm" onClick={() => { setFrom(""); setTo(""); }}>Últimos 30 dias</Button>}

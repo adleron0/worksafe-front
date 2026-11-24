@@ -2,8 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import useVerify from "@/hooks/use-verify";
-import { Skeleton } from "@/components/ui/skeleton";
-import Input from "@/components/general-components/Input";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import { errorMessage } from "../comercial/-shared/commercial";
 import { FINANCIAL_ABILITY } from "../financeiro/-shared/financial";
 import { formatDocument } from "../financeiro/-shared/payables";
@@ -30,43 +32,35 @@ function SuppliersPage() {
 
 interface StockSupplier { id: number; name: string; legalName: string | null; document: string | null; supplies: string | null; contactName: string | null; email: string | null; phone: string | null; active: boolean }
 
+const SUPPLIER_COLUMNS: DataColumn<StockSupplier>[] = [
+  {
+    id: "name", header: "Fornecedor", cell: (supplier) => (
+      <div className="min-w-0 max-w-md">
+        <p className="font-medium truncate">{supplier.name}</p>
+        <p className="text-xs text-muted-foreground truncate">{[supplier.document && formatDocument(supplier.document), supplier.supplies].filter(Boolean).join(" · ") || "—"}</p>
+      </div>
+    ),
+  },
+  { id: "contact", header: "Contato", className: "text-xs text-muted-foreground", cell: (supplier) => <span className="truncate block max-w-sm">{[supplier.contactName, supplier.phone, supplier.email].filter(Boolean).join(" · ") || "—"}</span> },
+];
+
 function SupplierList() {
   const [search, setSearch] = useState("");
   const term = search.trim();
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: [STOCK_KEYS.suppliers, term],
     queryFn: () => stockApi.get<StockSupplier[]>("suppliers", term ? { search: term } : undefined),
     placeholderData: (previous) => previous,
   });
-  const rows = data ?? [];
   return (
     <>
-      <div>
-        <h1 className="text-xl font-bold">Fornecedores</h1>
-        <p className="text-sm text-muted-foreground">De quem a empresa compra. O cadastro rápido fica no pedido de compra; o completo, com dados bancários, em Financeiro → Fornecedores.</p>
-      </div>
-      <div className="my-4 p-4 rounded-card border bg-card">
-        <div className="w-full xl:w-80"><Input name="search" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar por nome ou o que fornece..." icon="search" /></div>
-      </div>
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {!error && (
-        <div className="rounded-card border bg-card overflow-x-auto">
-          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
-            <div className="flex-1">Fornecedor</div><div className="w-1/3">Contato</div>
-          </div>
-          {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
-          {!isLoading && !rows.length && <p className="p-6 text-sm text-muted-foreground">Nenhum fornecedor encontrado.</p>}
-          {rows.map((supplier) => (
-            <div key={supplier.id} className="min-w-[880px] flex flex-row items-center gap-1 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium">{supplier.name}</p>
-                <p className="text-xs text-muted-foreground">{[supplier.document && formatDocument(supplier.document), supplier.supplies].filter(Boolean).join(" · ") || "—"}</p>
-              </div>
-              <div className="w-1/3 text-xs text-muted-foreground break-words">{[supplier.contactName, supplier.phone, supplier.email].filter(Boolean).join(" · ") || "—"}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      <PageHeader title="Fornecedores" description="De quem a empresa compra. O cadastro rápido fica no pedido de compra; o completo, com dados bancários, em Financeiro → Fornecedores." />
+      <ListCard>
+        <ListToolbar search={{ value: search, onChange: setSearch, placeholder: "Buscar por nome ou o que fornece..." }} />
+        <DataTable rows={data} columns={SUPPLIER_COLUMNS} getRowId={(supplier) => supplier.id} ariaLabel="Fornecedores" skeletonRows={4} minWidth={640}
+          loading={isLoading || isFetching} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+          empty={<EmptyState icon={term ? "search-x" : "inbox"} title="Nenhum fornecedor encontrado." />} />
+      </ListCard>
     </>
   );
 }

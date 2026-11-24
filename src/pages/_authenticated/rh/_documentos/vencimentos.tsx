@@ -1,17 +1,18 @@
-import { clickableRow } from "@/utils/clickable-row";
-import tailwindUtils from "@/utils/tailwind.utils";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
-import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import DataTable, { EmptyState } from "@/components/general-components/DataTable";
 import { cn } from "@/lib/utils";
-import { dateBr, errorMessage } from "../../comercial/-shared/commercial";
-import { DOCS_ABILITY, DOCS_EXPIRING_KEY, DocStatusBadge, ExpiringList, ExpiringRow, documentsApi, openDocument } from "../-shared/documents";
+import { Tip, errorMessage } from "../../comercial/-shared/commercial";
+import { DOCS_ABILITY, DOCS_EXPIRING_KEY, ExpiringList, documentsApi, openDocument } from "../-shared/documents";
+import { expiringColumns } from "./-components/expiringColumns";
 
 export const Route = createFileRoute("/_authenticated/rh/_documentos/vencimentos")({
   component: ExpiringPage,
@@ -23,16 +24,10 @@ const CARDS = [
   { id: "faltando", title: "Obrigatórios faltando", hint: "Ainda não foram enviados", icon: "file-question" },
 ] as const;
 
-const whenText = (row: ExpiringRow) => {
-  if (row.status === "faltando" || row.days === null) return "não enviado";
-  if (row.days < 0) return `venceu há ${-row.days} ${row.days === -1 ? "dia" : "dias"} (${dateBr(row.expiryDate)})`;
-  if (row.days === 0) return `vence hoje (${dateBr(row.expiryDate)})`;
-  return `vence em ${row.days} ${row.days === 1 ? "dia" : "dias"} (${dateBr(row.expiryDate)})`;
-};
-
 /** Vencimentos: só o que pede ação nos documentos de quem está na empresa. */
 function ExpiringPage() {
   const { can } = useVerify();
+  const navigate = useNavigate();
   const [status, setStatus] = useState("");
   const [typeId, setTypeId] = useState("");
   const [search, setSearch] = useState("");
@@ -49,12 +44,9 @@ function ExpiringPage() {
 
   return (
     <>
-      <div>
-        <h1 className="text-xl font-bold">Vencimentos</h1>
-        <p className="text-sm text-muted-foreground">Documentos de funcionários vencidos, a vencer e obrigatórios que ainda não foram enviados.</p>
-      </div>
+      <PageHeader title="Vencimentos" description="Documentos de funcionários vencidos, a vencer e obrigatórios que ainda não foram enviados." />
 
-      <div className="my-4 grid sm:grid-cols-3 gap-3">
+      <div className="mb-4 grid sm:grid-cols-3 gap-3">
         {CARDS.map((card) => (
           <button key={card.id} type="button" aria-pressed={status === card.id} onClick={() => setStatus(status === card.id ? "" : card.id)}
             className={cn("rounded-card border bg-card p-4 text-left transition-colors hover:bg-muted/40", status === card.id && "border-primary bg-primary/5")}>
@@ -65,41 +57,24 @@ function ExpiringPage() {
         ))}
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 mb-4 p-4 rounded-card border bg-card">
-        <div className="w-full xl:w-72">
-          <Select name="typeId" state={typeId} clearable placeholder="Todos os tipos de documento" modal={false} options={data?.types ?? []} onChange={(_, value) => setTypeId(String(value ?? ""))} />
-        </div>
-        <div className="w-full xl:w-80">
-          <Input name="search" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar pelo nome do funcionário..." icon="search" />
-        </div>
-      </div>
-
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {!error && (
-        <div className="rounded-card border bg-card overflow-x-auto">
-          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
-            <div className="flex-1">Funcionário</div>
-            <div className="w-72">Documento</div>
-            <div className="w-32">Situação</div>
-            <div className="w-64">Quando</div>
-            <div className="w-24 text-right">Ações</div>
+      <ListCard>
+        <ListToolbar search={{ value: search, onChange: setSearch, placeholder: "Buscar pelo nome do funcionário..." }}>
+          <div className="w-56 sm:w-72">
+            <Select name="typeId" state={typeId} clearable placeholder="Todos os tipos de documento" modal={false} options={data?.types ?? []} onChange={(_, value) => setTypeId(String(value ?? ""))} />
           </div>
-          {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
-          {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">{empty}</p>}
-          {data?.rows.map((row) => (
-            <div key={row.key} {...clickableRow()} className={`min-w-[880px] flex flex-row items-center gap-0 px-4 py-3 last:border-b-0 text-sm ${tailwindUtils.itemClickable}`}>
-              <div className="flex-1 min-w-0 pr-4"><Link to="/rh/funcionarios/$employeeId" params={{ employeeId: String(row.employee.id) }} className="font-medium hover:underline">{row.employee.name}</Link></div>
-              <div className="w-72 pr-4 truncate">{row.typeName}</div>
-              <div className="w-32"><DocStatusBadge status={row.status} label={row.statusLabel} /></div>
-              <div className="w-64 text-muted-foreground">{whenText(row)}</div>
-              <div className="w-24 flex justify-end gap-1">
-                {row.documentId && <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => openDocument({ id: row.documentId as number, fileName: row.typeName })}><Icon name="eye" className="w-4 h-4 mr-1" /> Ver</Button>}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      {data && data.total > data.rows.length && <p className="mt-3 text-xs text-muted-foreground">Mostrando {data.rows.length} de {data.total}. Use os filtros para chegar aos demais.</p>}
+        </ListToolbar>
+        <DataTable rows={data?.rows} columns={expiringColumns} getRowId={(row) => row.key} ariaLabel="Vencimentos" minWidth={760}
+          loading={isLoading} error={error ? errorMessage(error) : null}
+          onRowClick={(row) => navigate({ to: "/rh/funcionarios/$employeeId", params: { employeeId: String(row.employee.id) } })}
+          actions={(row) => row.documentId && (
+            <Tip text="Ver documento">
+              <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Ver ${row.typeName} de ${row.employee.name}`}
+                onClick={() => openDocument({ id: row.documentId as number, fileName: row.typeName })}><Icon name="eye" className="w-4 h-4" /></Button>
+            </Tip>
+          )}
+          empty={<EmptyState icon={status || typeId || search ? "search-x" : "circle-check"} title={empty} />} />
+        {data && data.total > data.rows.length && <p className="text-xs text-muted-foreground">Mostrando {data.rows.length} de {data.total}. Use os filtros para chegar aos demais.</p>}
+      </ListCard>
     </>
   );
 }

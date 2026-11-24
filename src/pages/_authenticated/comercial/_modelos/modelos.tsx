@@ -10,7 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import DataTable, { EmptyState, RowActionsTrigger } from "@/components/general-components/DataTable";
 import Icon from "@/components/general-components/Icon";
 import RichTextEditor from "@/components/general-components/RichTextEditor";
 import Select from "@/components/general-components/Select";
@@ -89,17 +94,13 @@ function TemplatesPage() {
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Identidade, modelos e termos</h1>
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            A identidade dá cara à proposta, o modelo é o texto-base e os termos são os textos jurídicos. Na proposta, tudo é copiado e pode ser editado sem mexer aqui.
-          </p>
-        </div>
-        <label className="flex items-center gap-2 text-sm cursor-pointer shrink-0">
-          <Switch checked={showInactive} onCheckedChange={setShowInactive} aria-label="Mostrar inativos" /> Mostrar inativos
-        </label>
-      </div>
+      <PageHeader title="Identidade, modelos e termos" className="mb-0"
+        description="A identidade dá cara à proposta, o modelo é o texto-base e os termos são os textos jurídicos. Na proposta, tudo é copiado e pode ser editado sem mexer aqui."
+        actions={
+          <label className="flex items-center gap-2 text-sm cursor-pointer shrink-0">
+            <Switch checked={showInactive} onCheckedChange={setShowInactive} aria-label="Mostrar inativos" /> Mostrar inativos
+          </label>
+        } />
 
       <Tabs defaultValue="identidade" className="mt-4">
         <TabsList>
@@ -144,25 +145,63 @@ function TemplatesPage() {
           <p className="text-xs rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 px-3 py-2">
             Os termos iniciais são um ponto de partida. Peça ao seu advogado para revisar os textos antes de usá-los em propostas reais.
           </p>
-          {canCreate && <div><Button type="button" onClick={() => setTermForm({})}><Icon name="plus" className="w-4 h-4 mr-1" /> Novo termo</Button></div>}
-          {terms.isLoading && <Skeleton className="h-32 w-full" />}
-          <div className="grid gap-3">
-            {terms.data?.map((row) => (
-              <article key={row.id} className={cn("rounded-card border bg-card p-4 grid gap-2", row.inactiveAt && "opacity-60")}>
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold">{row.title}{row.inactiveAt && <span className="ml-2 text-xs font-normal rounded bg-muted px-1.5 py-0.5">Inativo</span>}</p>
-                  <span className="text-xs text-muted-foreground">{TERM_KINDS.find((k) => k.id === row.kind)?.name ?? row.kind}</span>
-                </div>
-                <p className="text-sm text-muted-foreground">{plain(row.body)}</p>
-                {actions("terms", row, row.title, () => setTermForm({ row }))}
-              </article>
-            ))}
-          </div>
+          <ListCard>
+            {canCreate && (
+              <ListToolbar>
+                <Button type="button" onClick={() => setTermForm({})}><Icon name="plus" className="w-4 h-4" /> Novo termo</Button>
+              </ListToolbar>
+            )}
+            <DataTable rows={terms.data} getRowId={(row) => row.id} ariaLabel="Termos jurídicos" minWidth={760}
+              loading={terms.isLoading || terms.isFetching} error={terms.error ? errorMessage(terms.error) : null} onRetry={() => terms.refetch()}
+              onRowClick={canUpdate ? (row) => { if (!row.inactiveAt) setTermForm({ row }); } : undefined}
+              rowClassName={(row) => (row.inactiveAt ? "opacity-60" : undefined)}
+              columns={[
+                {
+                  id: "title", header: "Título", className: "w-72",
+                  cell: (row) => <p className="font-medium">{row.title}{row.inactiveAt && <span className="ml-2 text-xs font-normal rounded bg-muted px-1.5 py-0.5">Inativo</span>}</p>,
+                },
+                { id: "kind", header: "Assunto", className: "w-40 text-muted-foreground", cell: (row) => TERM_KINDS.find((k) => k.id === row.kind)?.name ?? row.kind },
+                { id: "body", header: "Texto", cell: (row) => <p className="text-muted-foreground truncate max-w-[32rem]">{plain(row.body)}</p> },
+              ]}
+              actions={(row) => (
+                <TermRowActions row={row} canUpdate={canUpdate} canInactivate={canInactivate} canActivate={canActivate}
+                  onEdit={() => setTermForm({ row })} onToggle={(action) => toggle({ entity: "terms", id: row.id, action })} />
+              )}
+              empty={<EmptyState title="Nenhum termo." action={canCreate && <Button size="sm" onClick={() => setTermForm({})}><Icon name="plus" className="w-4 h-4" /> Novo termo</Button>} />} />
+          </ListCard>
         </TabsContent>
       </Tabs>
 
       {templateForm && <TemplateDialog row={templateForm.row} terms={(terms.data ?? []).filter((t) => !t.inactiveAt)} variables={variables.data ?? []} onClose={() => setTemplateForm(null)} onSaved={refresh} />}
       {termForm && <TermDialog row={termForm.row} nextOrder={(terms.data?.length ?? 0) + 1} onClose={() => setTermForm(null)} onSaved={refresh} />}
+    </>
+  );
+}
+
+/** Menu ⋯ de um termo: editar, inativar e reativar. */
+function TermRowActions({ row, canUpdate, canInactivate, canActivate, onEdit, onToggle }: {
+  row: Term; canUpdate: boolean; canInactivate: boolean; canActivate: boolean; onEdit: () => void; onToggle: (action: "inactive" | "active") => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const canEdit = canUpdate && !row.inactiveAt;
+  const canOff = canInactivate && !row.inactiveAt;
+  const canOn = canActivate && !!row.inactiveAt;
+  if (!canEdit && !canOff && !canOn) return null;
+  return (
+    <>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild><RowActionsTrigger label={`Ações de ${row.title}`} /></DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {canEdit && <DropdownMenuItem className="gap-2" onSelect={onEdit}><Icon name="pencil" className="w-3.5 h-3.5" /> Editar</DropdownMenuItem>}
+          {canOff && <DropdownMenuItem className="gap-2" onSelect={() => setConfirming(true)}><Icon name="power-off" className="w-3.5 h-3.5" /> Inativar</DropdownMenuItem>}
+          {canOn && <DropdownMenuItem className="gap-2" onSelect={() => onToggle("active")}><Icon name="power" className="w-3.5 h-3.5" /> Reativar</DropdownMenuItem>}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {confirming && (
+        <ConfirmDialog open onOpenChange={(isOpen) => { if (!isOpen) setConfirming(false); }} title={`Inativar ${row.title}?`}
+          description="Deixa de aparecer para novas propostas. Propostas já feitas guardam o próprio texto e não mudam."
+          onConfirm={() => { onToggle("inactive"); setConfirming(false); }} />
+      )}
     </>
   );
 }

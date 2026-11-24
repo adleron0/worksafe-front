@@ -4,9 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
-import Pagination from "@/components/general-components/Pagination";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { dateBr, errorMessage } from "../../comercial/-shared/commercial";
@@ -41,16 +45,11 @@ function InspectionsPage() {
   if (!(can(`view_${EQUIP_ABILITY}`) || can(`view_${PERM_INSPECT}`))) return null;
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Inspeções e calibrações</h1>
-          <p className="text-sm text-muted-foreground">O que inspecionar agora, o que vai vencer e o histórico. Peça com inspeção ou calibração vencida não sai do estoque.</p>
-        </div>
-        {can(`view_${EQUIP_ABILITY}`) && (
-          <Button asChild variant="outline"><Link to="/suprimentos/equipamentos/calibracao"><Icon name="gauge" className="w-4 h-4 mr-1" /> Calibração e manutenção</Link></Button>
-        )}
-      </div>
-      <Tabs value={view} onValueChange={setView} className="mt-4">
+      <PageHeader title="Inspeções e calibrações" description="O que inspecionar agora, o que vai vencer e o histórico. Peça com inspeção ou calibração vencida não sai do estoque."
+        actions={can(`view_${EQUIP_ABILITY}`) && (
+          <Button asChild variant="outline"><Link to="/suprimentos/equipamentos/calibracao"><Icon name="gauge" className="w-4 h-4" /> Calibração e manutenção</Link></Button>
+        )} />
+      <Tabs value={view} onValueChange={setView}>
         <TabsList>
           <TabsTrigger value="fazer">A fazer</TabsTrigger>
           {can(`view_${EQUIP_ABILITY}`) && <TabsTrigger value="vencimentos">Vencimentos</TabsTrigger>}
@@ -65,92 +64,98 @@ function InspectionsPage() {
   );
 }
 
+type TodoUnit = Todo["units"][number];
+type TodoLot = Todo["lots"][number];
+
 function TodoList({ onInspect }: { onInspect: (target: InspectionTarget) => void }) {
   const { can } = useVerify();
-  const { data, isLoading, error } = useQuery({ queryKey: [EQUIP_KEYS.inspections, "fazer"], queryFn: () => stockApi.get<Todo>("inspections") });
+  const { data, isLoading, error, refetch } = useQuery({ queryKey: [EQUIP_KEYS.inspections, "fazer"], queryFn: () => stockApi.get<Todo>("inspections") });
   const canInspect = can(PERM_INSPECT);
-  if (error) return <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>;
-  if (isLoading) return <div className="mt-4 grid gap-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>;
   const units = data?.units ?? [], lots = data?.lots ?? [];
+  const unitColumns: DataColumn<TodoUnit>[] = [
+    {
+      id: "unit", header: "Peça", cell: (unit) => (
+        <div className="min-w-0 max-w-md">
+          <p className="truncate"><Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(unit.id) }} className="font-semibold tabular-nums hover:underline">{unit.tag}</Link><span className="text-muted-foreground"> · {unit.item}</span></p>
+          <p className="text-xs text-muted-foreground truncate">{unit.holder}</p>
+        </div>
+      ),
+    },
+    { id: "status", header: "Situação", className: "w-44", cell: (unit) => <UnitStatusBadge status={unit.status} /> },
+    {
+      id: "reason", header: "Motivo", className: "whitespace-nowrap", cell: (unit) => (
+        <span className="inline-flex items-center gap-2">
+          <span className={cn("text-xs font-medium", unit.reason === "Vencida" || unit.reason === "Extraordinária" ? "text-red-600 dark:text-red-400" : "")}>{unit.reason}</span>
+          {unit.nextInspectionAt && <span className="text-xs text-muted-foreground">{dateBr(unit.nextInspectionAt)}</span>}
+        </span>
+      ),
+    },
+    ...(canInspect ? [{
+      id: "inspect", header: "", align: "right" as const, className: "w-36", cell: (unit: TodoUnit) => (
+        <Button type="button" size="sm" variant="outline" onClick={() => onInspect({ unitId: unit.id, label: `${unit.tag} · ${unit.item}`, templateId: unit.templateId, kind: unit.reason === "Extraordinária" ? "extraordinaria" : unit.reason === "Esperando inspeção" ? "recebimento" : "periodica" })}><Icon name="list-checks" className="w-3 h-3" /> Inspecionar</Button>
+      ),
+    }] : []),
+  ];
+  const lotColumns: DataColumn<TodoLot>[] = [
+    { id: "lot", header: "Lote", cell: (lot) => <span className="truncate block max-w-md"><span className="font-semibold">Lote {lot.number}</span><span className="text-muted-foreground"> · <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: String(lot.itemId) }} className="hover:underline">{lot.item}</Link></span></span> },
+    { id: "state", header: "Vencimento", className: "whitespace-nowrap", cell: (lot) => <span className="inline-flex items-center gap-2"><DueStateBadge state={lot.state} /> <span className="text-xs text-muted-foreground">{lot.nextInspectionAt ? dateBr(lot.nextInspectionAt) : "sem registro"}</span></span> },
+    ...(canInspect ? [{
+      id: "inspect", header: "", align: "right" as const, className: "w-36", cell: (lot: TodoLot) => (
+        <Button type="button" size="sm" variant="outline" onClick={() => onInspect({ lotId: lot.id, label: `Lote ${lot.number} · ${lot.item}`, templateId: lot.templateId })}><Icon name="list-checks" className="w-3 h-3" /> Inspecionar</Button>
+      ),
+    }] : []),
+  ];
   return (
     <div className="mt-4 grid gap-4">
-      <section className="rounded-card border bg-card overflow-hidden">
-        <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm">Peças ({units.length})</h2>
-        {units.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhuma peça para inspecionar.</p>}
-        {units.map((unit) => (
-          <div key={unit.id} className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 border-t text-sm">
-            <div className="flex-1 min-w-0 lg:pr-4">
-              <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(unit.id) }} className="font-semibold tabular-nums hover:underline">{unit.tag}</Link>
-              <span className="text-muted-foreground"> · {unit.item}</span>
-              <p className="text-xs text-muted-foreground truncate">{unit.holder}</p>
-            </div>
-            <div className="lg:w-44"><UnitStatusBadge status={unit.status} /></div>
-            <div className="lg:w-56 flex flex-wrap items-center gap-2">
-              <span className={cn("text-xs font-medium", unit.reason === "Vencida" || unit.reason === "Extraordinária" ? "text-red-600 dark:text-red-400" : "")}>{unit.reason}</span>
-              {unit.nextInspectionAt && <span className="text-xs text-muted-foreground">{dateBr(unit.nextInspectionAt)}</span>}
-            </div>
-            <div className="lg:w-44 flex lg:justify-end">
-              {canInspect && <Button type="button" size="sm" variant="outline" onClick={() => onInspect({ unitId: unit.id, label: `${unit.tag} · ${unit.item}`, templateId: unit.templateId, kind: unit.reason === "Extraordinária" ? "extraordinaria" : unit.reason === "Esperando inspeção" ? "recebimento" : "periodica" })}><Icon name="list-checks" className="w-3 h-3 mr-1" /> Inspecionar</Button>}
-            </div>
-          </div>
-        ))}
-      </section>
+      <ListCard>
+        <h2 className="font-semibold text-sm">Peças ({units.length})</h2>
+        <DataTable rows={units} columns={unitColumns} getRowId={(unit) => unit.id} ariaLabel="Peças para inspecionar" skeletonRows={4}
+          loading={isLoading} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+          empty={<EmptyState icon="circle-check" title="Nenhuma peça para inspecionar." />} />
+      </ListCard>
       {lots.length > 0 && (
-        <section className="rounded-card border bg-card overflow-hidden">
-          <h2 className="px-4 py-2 bg-muted/50 font-semibold text-sm">Lotes ({lots.length})</h2>
-          {lots.map((lot) => (
-            <div key={lot.id} className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0 px-4 py-3 border-t text-sm">
-              <div className="flex-1 min-w-0 lg:pr-4">
-                <span className="font-semibold">Lote {lot.number}</span>
-                <span className="text-muted-foreground"> · <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: String(lot.itemId) }} className="hover:underline">{lot.item}</Link></span>
-              </div>
-              <div className="lg:w-56 flex items-center gap-2"><DueStateBadge state={lot.state} /> <span className="text-xs text-muted-foreground">{lot.nextInspectionAt ? dateBr(lot.nextInspectionAt) : "sem registro"}</span></div>
-              <div className="lg:w-44 flex lg:justify-end">
-                {canInspect && <Button type="button" size="sm" variant="outline" onClick={() => onInspect({ lotId: lot.id, label: `Lote ${lot.number} · ${lot.item}`, templateId: lot.templateId })}><Icon name="list-checks" className="w-3 h-3 mr-1" /> Inspecionar</Button>}
-              </div>
-            </div>
-          ))}
-        </section>
+        <ListCard>
+          <h2 className="font-semibold text-sm">Lotes ({lots.length})</h2>
+          <DataTable rows={lots} columns={lotColumns} getRowId={(lot) => lot.id} ariaLabel="Lotes para inspecionar" minWidth={560} />
+        </ListCard>
       )}
     </div>
   );
 }
 
+type DoneRow = Done["rows"][number];
+const DONE_LIMIT = 50;
+const DONE_COLUMNS: DataColumn<DoneRow>[] = [
+  { id: "date", header: "Data", className: "w-24 tabular-nums", cell: (row) => dateBr(row.date) },
+  {
+    id: "target", header: "Peça ou lote", cell: (row) => (
+      <div className="min-w-0 max-w-md">
+        <p className="truncate">{row.unitId ? <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(row.unitId) }} className="hover:underline">{row.target}</Link> : row.target}</p>
+        {row.notes && <p className="text-xs text-muted-foreground truncate">{row.notes}</p>}
+      </div>
+    ),
+  },
+  { id: "kind", header: "Tipo", className: "whitespace-nowrap", cell: (row) => row.kindLabel },
+  { id: "result", header: "Resultado", className: "whitespace-nowrap", cell: (row) => <StatusBadge tone={row.result === "reprovado" ? "danger" : row.result === "aprovado" ? "success" : "warning"}>{row.resultLabel}</StatusBadge> },
+  { id: "inspector", header: "Inspetor", className: "text-muted-foreground", cell: (row) => <span className="truncate block max-w-[12rem]">{row.inspector ?? "—"}</span> },
+];
+
 function DoneList() {
   const [result, setResult] = useState("");
   const [page, setPage] = useState(0);
   const params = { view: "registradas", page, ...(result ? { result } : {}) };
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: [EQUIP_KEYS.inspections, params], queryFn: () => stockApi.get<Done>("inspections", params), placeholderData: (previous) => previous,
   });
   return (
-    <>
-      <div className="flex flex-col xl:flex-row gap-3 my-4 p-4 rounded-card border bg-card">
-        <div className="w-full xl:w-60"><Select name="result" options={INSPECTION_RESULTS} state={result} clearable modal={false} placeholder="Qualquer resultado" onChange={(_, value) => { setResult(String(value ?? "")); setPage(0); }} /></div>
-      </div>
-      {error && <p className="p-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-      {!error && (
-        <div className="rounded-card border bg-card overflow-x-auto">
-          <div className="flex min-w-[880px] items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
-            <div className="w-28">Data</div><div className="flex-1">Peça ou lote</div><div className="w-36">Tipo</div><div className="w-48">Resultado</div><div className="w-48">Inspetor</div>
-          </div>
-          {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
-          {!isLoading && !data?.rows.length && <p className="p-6 text-sm text-muted-foreground">Nenhuma inspeção registrada.</p>}
-          {data?.rows.map((row) => (
-            <div key={row.id} className="min-w-[880px] flex flex-row items-center gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
-              <div className="w-28 tabular-nums">{dateBr(row.date)}</div>
-              <div className="flex-1 min-w-0 pr-4">
-                {row.unitId ? <Link to="/suprimentos/equipamentos/$unitId" params={{ unitId: String(row.unitId) }} className="hover:underline">{row.target}</Link> : row.target}
-                {row.notes && <p className="text-xs text-muted-foreground truncate">{row.notes}</p>}
-              </div>
-              <div className="w-36">{row.kindLabel}</div>
-              <div className={cn("w-48 font-medium", row.result === "reprovado" ? "text-red-600 dark:text-red-400" : row.result === "aprovado" ? "text-green-700 dark:text-green-400" : "text-amber-600 dark:text-amber-400")}>{row.resultLabel}</div>
-              <div className="w-48 text-muted-foreground truncate">{row.inspector ?? "—"}</div>
-            </div>
-          ))}
-        </div>
-      )}
-      {data && data.total > 50 && <div className="mt-4"><Pagination totalItems={data.total} itemsPerPage={50} currentPage={page} onPageChange={setPage} maxVisiblePages={5} /></div>}
-    </>
+    <ListCard className="mt-4">
+      <ListToolbar>
+        <div className="w-full sm:w-60 mr-auto"><Select name="result" options={INSPECTION_RESULTS} state={result} clearable modal={false} placeholder="Qualquer resultado" onChange={(_, value) => { setResult(String(value ?? "")); setPage(0); }} /></div>
+      </ListToolbar>
+      <DataTable rows={data?.rows} columns={DONE_COLUMNS} getRowId={(row) => row.id} ariaLabel="Inspeções registradas" skeletonRows={4}
+        loading={isLoading || isFetching} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
+        empty={<EmptyState title={result ? "Nenhuma inspeção com esse resultado." : "Nenhuma inspeção registrada."} />} />
+      <ListFooter total={data?.total ?? 0} page={page} limit={DONE_LIMIT} onPageChange={setPage} />
+    </ListCard>
   );
 }

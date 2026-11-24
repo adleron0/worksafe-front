@@ -3,9 +3,14 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import useVerify from "@/hooks/use-verify";
 import { Skeleton } from "@/components/ui/skeleton";
-import Pagination from "@/components/general-components/Pagination";
+import { Button } from "@/components/ui/button";
+import Icon from "@/components/general-components/Icon";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListFooter from "@/components/general-components/ListFooter";
+import StatusChips from "@/components/general-components/StatusChips";
+import { EmptyState } from "@/components/general-components/DataTable";
 import Select from "@/components/general-components/Select";
-import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, errorMessage } from "../-shared/commercial";
 import { ACTIVITIES_KEY, ACTIVITY_PERMISSION, ActivityItem, ActivityList, useActivityDialogs, useActivityUsers } from "../-shared/activities";
 import { ProposalPanelSheet } from "../-shared/proposal-panel";
@@ -21,7 +26,7 @@ const FILTERS: Array<{ id: Filter; name: string; key: "overdue" | "today" | "upc
   { id: "proximas", name: "Próximas", key: "upcoming", empty: "Nada marcado para os próximos dias." },
   { id: "feitas", name: "Já feitas", key: "done", empty: "Nenhum contato registrado ainda." },
 ];
-const LIMIT = 30;
+const LIMITS = [10, 30, 50, 100];
 
 /** Agenda do Comercial: tudo o que está marcado com os clientes, de todas as propostas. */
 function FollowUpPage() {
@@ -30,6 +35,7 @@ function FollowUpPage() {
   const [filter, setFilter] = useState<Filter | null>(null);
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(0);
+  const [limit, setLimit] = useState(30);
   const { dialogs, edit, complete } = useActivityDialogs({});
   const [panel, setPanel] = useState<number | null>(null);
 
@@ -40,8 +46,8 @@ function FollowUpPage() {
   });
   const summary = counts?.summary;
   const active: Filter = filter ?? (summary ? (summary.overdue ? "atrasadas" : summary.today ? "hoje" : "proximas") : "hoje");
-  const params = { status: active, page, limit: LIMIT, ...(userId ? { userId } : {}) };
-  const { data, isLoading, error } = useQuery({
+  const params = { status: active, page, limit, ...(userId ? { userId } : {}) };
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: [ACTIVITIES_KEY, params], enabled: Boolean(summary),
     queryFn: () => commercialApi.get<ActivityList>("activities", params),
     placeholderData: (previous) => previous,
@@ -51,41 +57,40 @@ function FollowUpPage() {
   const canEdit = can(ACTIVITY_PERMISSION);
   return (
     <>
-      <div>
-        <h1 className="text-xl font-bold">Acompanhamento</h1>
-        <p className="text-sm text-muted-foreground">Retornos, reuniões e tarefas marcados com os clientes. Para registrar um contato ou agendar, abra a proposta.</p>
-      </div>
+      <PageHeader title="Acompanhamento" description="Retornos, reuniões e tarefas marcados com os clientes. Para registrar um contato ou agendar, abra a proposta." />
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 my-4 p-4 rounded-card border bg-card">
-        <div className="flex flex-wrap gap-1 p-1 bg-muted rounded-lg w-fit">
-          {FILTERS.map((item) => (
-            <button key={item.id} type="button" onClick={() => { setFilter(item.id); setPage(0); }}
-              className={cn("rounded-md px-3 h-8 text-sm font-medium", active === item.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
-              {item.name}
-              <span className={cn("ml-1.5 tabular-nums", active !== item.id && item.id === "atrasadas" && (summary?.overdue ?? 0) > 0 ? "text-red-600 dark:text-red-400 font-semibold" : "opacity-70")}>
-                {summary?.[item.key] ?? 0}
-              </span>
-            </button>
-          ))}
+      <ListCard>
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+          <StatusChips<Filter> value={active} onChange={(value) => { setFilter(value); setPage(0); }} ariaLabel="Quando" className="lg:flex-1"
+            options={FILTERS.map((item) => ({
+              value: item.id, label: item.name, count: summary?.[item.key] ?? 0,
+              // atrasadas ganham o quadradinho vermelho quando há alguma
+              ...(item.id === "atrasadas" && (summary?.overdue ?? 0) > 0 ? { color: "#ef4444" } : {}),
+            }))} />
+          <div className="w-full lg:w-64">
+            <Select name="userId" state={userId} clearable placeholder="Todos os responsáveis" modal={false}
+              options={users.map((user) => ({ id: String(user.id), name: user.name }))}
+              onChange={(_, value) => { setUserId(String(value ?? "")); setPage(0); }} />
+          </div>
         </div>
-        <div className="w-full xl:w-64">
-          <Select name="userId" state={userId} clearable placeholder="Todos os responsáveis" modal={false}
-            options={users.map((user) => ({ id: String(user.id), name: user.name }))}
-            onChange={(_, value) => { setUserId(String(value ?? "")); setPage(0); }} />
-        </div>
-      </div>
 
-      <div className="rounded-lg border px-4">
-        {(isLoading || !summary) && <Skeleton className="h-16 w-full my-3" />}
-        {error && <p className="py-4 text-destructive font-medium">Erro: {errorMessage(error)}</p>}
-        {data && !data.rows.length && <p className="py-6 text-sm text-muted-foreground">{FILTERS.find((item) => item.id === active)?.empty}</p>}
-        {data && data.rows.length > 0 && (
-          <ul>{data.rows.map((activity) => <ActivityItem key={activity.id} activity={activity} canEdit={canEdit} showContext onComplete={complete} onEdit={edit} onOpenProposal={setPanel} />)}</ul>
-        )}
-      </div>
-      {data && data.total > LIMIT && (
-        <div className="mt-4"><Pagination totalItems={data.total} itemsPerPage={LIMIT} currentPage={page} onPageChange={setPage} maxVisiblePages={5} /></div>
-      )}
+        <div>
+          {(isLoading || !summary) && <Skeleton className="h-16 w-full my-3" />}
+          {error && (
+            <div className="py-10 flex flex-col items-center gap-2 text-center">
+              <p className="text-sm font-medium text-destructive">Não foi possível carregar: {errorMessage(error)}</p>
+              <Button variant="outline" size="sm" onClick={() => refetch()}><Icon name="rotate-cw" className="w-3.5 h-3.5" /> Tentar de novo</Button>
+            </div>
+          )}
+          {data && !data.rows.length && !error && <EmptyState icon="calendar-check" title={FILTERS.find((item) => item.id === active)?.empty ?? "Nada por aqui."} />}
+          {data && data.rows.length > 0 && (
+            <ul>{data.rows.map((activity) => <ActivityItem key={activity.id} activity={activity} canEdit={canEdit} showContext onComplete={complete} onEdit={edit} onOpenProposal={setPanel} />)}</ul>
+          )}
+        </div>
+
+        <ListFooter total={data?.total ?? 0} page={page} limit={limit} limits={LIMITS}
+          onPageChange={setPage} onLimitChange={(next) => { setLimit(next); setPage(0); }} />
+      </ListCard>
       {dialogs}
       <ProposalPanelSheet proposalId={panel} onClose={() => setPanel(null)} />
     </>

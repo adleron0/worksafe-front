@@ -26,6 +26,7 @@ import { DocumentPaper } from "../-shared/document";
 import { KIND_LABEL, formatCnpj } from "../-shared/proposals";
 import { docLabel } from "@/utils/documento";
 import VagasDoItem, { useContractReservations } from "@/pages/_authenticated/treinamentos/_turmas/-empresas/VagasDoItem";
+import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 export const Route = createFileRoute("/_authenticated/comercial/_contratos/contratos_/$contractId")({
   component: ContractPage,
@@ -50,6 +51,8 @@ function ContractPage() {
     queryKey: [CONTRACT_KEY, contractId],
     queryFn: () => commercialApi.get<Contract>(`contracts/${contractId}`),
   });
+  // bots nas páginas: o bot sabe qual registro está aberto ("este", "esta")
+  useBotContext({ entity: "contrato", id: Number(contractId) || undefined, label: "Contrato", title: contract ? `${contract.number} · ${contract.title}` : undefined });
   const { data: reservations } = useContractReservations(Number(contractId), Boolean(contract?.classes.length) && (can("list_classes") || can("list_comercial")));
   useEffect(() => { if (contract) setDates({ startDate: contract.startDate, endDate: contract.endDate, notes: contract.notes ?? "" }); }, [contract]);
 

@@ -20,6 +20,7 @@ import {
 import { DOCS_ABILITY, EmployeeDocuments } from "../-shared/documents";
 import { EmployeeAllocation } from "../-shared/allocation";
 import { EmployeePpeTab } from "../../suprimentos/-shared/ppe";
+import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 export const Route = createFileRoute("/_authenticated/rh/_funcionarios/funcionarios_/$employeeId")({
   component: EmployeePage,
@@ -53,6 +54,8 @@ function EmployeePage() {
     queryFn: () => employeesApi.get<Employee>(employeeId),
     enabled: !isNew,
   });
+  // bots nas páginas: o bot sabe qual registro está aberto ("este", "esta")
+  useBotContext({ entity: "funcionario", id: Number(employeeId) || undefined, label: "Funcionário", title: employee?.name });
   const { data: options } = useQuery({ queryKey: [EMPLOYEE_OPTIONS_KEY], queryFn: () => employeesApi.get<EmployeeOptions>("options") });
   useEffect(() => { if (employee) setDraft(draftOf(employee)); }, [employee]);
 

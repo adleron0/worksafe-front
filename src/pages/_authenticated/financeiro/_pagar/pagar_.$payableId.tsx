@@ -9,6 +9,7 @@ import { FINANCIAL_ABILITY } from "../-shared/financial";
 import { Payable } from "../-shared/payables";
 import { useBackToList } from "@/hooks/use-back-to-list";
 import PayableForm from "./-PayableForm";
+import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 export const Route = createFileRoute("/_authenticated/financeiro/_pagar/pagar_/$payableId")({
   component: EditPayable,
@@ -24,6 +25,8 @@ function EditPayable() {
     queryFn: () => get<Payable>("financial-payables", payableId),
     gcTime: 0, // sem cache: abrir de novo sempre traz a versão salva
   });
+  // bots nas páginas: o bot sabe qual registro está aberto ("este", "esta")
+  useBotContext({ entity: "conta_pagar", id: Number(payableId) || undefined, label: "Conta a pagar", title: data?.description });
   if (!can(`view_${FINANCIAL_ABILITY}`)) return null;
   const badge = data && (data.inactiveAt ? <StatusBadge>Excluída</StatusBadge> : data.status === "paga" ? <StatusBadge tone="success">Paga</StatusBadge> : <StatusBadge tone="primary">Em aberto</StatusBadge>);
   return (

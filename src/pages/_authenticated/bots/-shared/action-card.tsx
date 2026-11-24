@@ -7,6 +7,10 @@ import SlideConfirm from "@/components/general-components/SlideConfirm";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import { ACTIONS_KEY, PendingAction, STATUS_KEY, aiApi, dateTimeBr } from "./bots";
 
+/** Depois que uma ação confirmada grava, as telas abertas buscam de novo (as consultas dos bots ficam de fora). */
+const refreshScreens = (queryClient: ReturnType<typeof useQueryClient>) =>
+  queryClient.invalidateQueries({ predicate: (query) => !String(query.queryKey[0] ?? "").startsWith("ai") });
+
 const STATUS_STYLE: Record<PendingAction["status"], { label: string; className: string; icon: string }> = {
   pendente: { label: "Aguardando sua confirmação", className: "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40", icon: "shield-alert" },
   confirmada: { label: "Confirmada", className: "border-emerald-300 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/40", icon: "circle-check" },
@@ -31,6 +35,7 @@ export function ActionCard({ action, onDone }: { action: PendingAction; onDone?:
     mutationFn: () => aiApi.post<PendingAction & { message: string | null; link: string | null }>(`actions/${action.id}/confirm`),
     onSuccess: (data) => {
       refresh();
+      if (data.status === "confirmada") refreshScreens(queryClient);
       if (data.status === "confirmada") toast({ title: "Feito", description: data.message ?? undefined, variant: "success" });
       else toast({ title: "A ação não foi feita", description: data.error ?? undefined, variant: "destructive" });
     },

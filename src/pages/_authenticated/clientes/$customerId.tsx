@@ -14,6 +14,7 @@ import { errorMessage } from "../comercial/-shared/commercial";
 import CustomerForm from "./-components/CustomerForm";
 import { CustomerContactsPanel } from "./-components/CustomerContacts";
 import { IEntity } from "./-interfaces/entity.interface";
+import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 export const Route = createFileRoute("/_authenticated/clientes/$customerId")({
   component: CustomerPage,
@@ -39,6 +40,8 @@ function CustomerPage() {
     queryFn: () => get<IEntity>("customer", String(id)),
     enabled: !isNew && id > 0,
   });
+  // bots nas páginas: o bot sabe qual registro está aberto ("este", "esta")
+  useBotContext(isNew ? null : { entity: "cliente", id: id || undefined, label: "Cliente", title: customer?.name });
 
   const toggle = useMutation({
     mutationFn: () => patch(entity.model, `${customer?.active ? "inactive" : "active"}/${id}`),

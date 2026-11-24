@@ -7,6 +7,7 @@ import Loader from '@/components/general-components/Loader';
 import Footer from '@/template/Footer';
 import { HelpProvider } from '@/help/HelpContext';
 import { HelpCenter } from '@/help/HelpCenter';
+import { BotChatProvider, BotQuickChat } from '@/pages/_authenticated/bots/-shared/bot-chat';
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: async ({ context }) => {
@@ -35,6 +36,7 @@ function AuthenticatedLayout() {
   const chatOpen = location.pathname === '/bots/conversas' ? !!search.bot : appScreen && !!search.conversa && search.aba !== 'comentarios';
   return (
     <HelpProvider>
+    <BotChatProvider>
     <div className='flex h-dvh w-screen overflow-x-hidden'>
       <Sidebar />
       <section id='main' className='w-full h-full min-w-0 flex flex-col bg-muted/40'>
@@ -46,7 +48,9 @@ function AuthenticatedLayout() {
         <div className={appScreen ? 'max-lg:hidden' : ''}><Footer /></div>
       </section>
       <HelpCenter />
+      <BotQuickChat />
     </div>
+    </BotChatProvider>
     </HelpProvider>
   );
 }

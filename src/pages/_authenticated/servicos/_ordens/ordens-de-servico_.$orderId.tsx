@@ -30,6 +30,7 @@ import { OrderStockPanel } from "../../suprimentos/-shared/stock-order";
 import { TEAM_DOCUMENTS_KEY, TeamDocumentsPanel } from "../../rh/-shared/team-documents";
 import { RecordFilesPanel } from "../../arquivos/-shared/record-files";
 import { PointDialog } from "../../rh/-shared/places";
+import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 export const Route = createFileRoute("/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId")({
   component: OrderPage,
@@ -59,6 +60,8 @@ function OrderPage() {
   const [newItem, setNewItem] = useState("");
 
   const { data: order, isLoading, error } = useQuery({ queryKey: [ORDER_KEY, orderId], queryFn: () => ordersApi.get<Order>(orderId) });
+  // bots nas páginas: o bot sabe qual registro está aberto ("este", "esta")
+  useBotContext({ entity: "os", id: Number(orderId) || undefined, label: "Ordem de serviço", title: order ? `${order.number} · ${order.title}` : undefined });
   const { data: options } = useQuery({ queryKey: ["serviceOrderOptions"], staleTime: 5 * 60 * 1000, queryFn: () => ordersApi.get<OrderOptions>("options") });
   useEffect(() => { if (order) setAgenda(agendaOf(order)); }, [order]);
 

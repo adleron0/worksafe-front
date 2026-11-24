@@ -19,7 +19,10 @@ import { BotAvatar } from "../-shared/avatar";
 import { FaceEditor } from "../-shared/face-editor";
 import { PersonalityPicker } from "../-shared/personality-picker";
 import { BOTS_KEY, BUDGET_KEY, BotFull, BotsConfig, BudgetView, CatalogModel, CatalogTool, RISK_CLASS, RISK_LABEL, STATUS_KEY, TEAM_KEY, aiApi, dateTimeBr } from "../-shared/bots";
+import { PAGE_CATALOG } from "../-shared/pages";
 import api from "@/services/api";
+
+const PAGE_GROUPS = [...new Set(PAGE_CATALOG.map((page) => page.group))];
 
 export const Route = createFileRoute("/_authenticated/bots/_admin/configuracao")({
   component: ConfigPage,
@@ -373,6 +376,7 @@ function ProviderKeyItem({ row }: { row: ProviderKeyRow }) {
     queryClient.invalidateQueries({ queryKey: [STATUS_KEY] });
     queryClient.invalidateQueries({ queryKey: [BOTS_KEY] });
     queryClient.invalidateQueries({ queryKey: [TEAM_KEY] });
+      queryClient.invalidateQueries({ queryKey: ["aiPageBots"] });
   };
   const save = useMutation({
     mutationFn: () => aiApi.put<ProviderKeyRow>(`provider-keys/${row.provider}`, { key: value }),
@@ -423,7 +427,7 @@ function ProviderKeyItem({ row }: { row: ProviderKeyRow }) {
 function newBot(config: BotsConfig): BotFull {
   const recommended = config.models.find((item) => item.recommended) ?? config.models[0];
   return {
-    id: 0, key: "", name: "", persona: "", role: "", avatar: "r:bola.ciano.nenhum.n.normal", description: "", icon: "bot", active: true, shortcuts: [],
+    id: 0, key: "", name: "", persona: "", role: "", avatar: "r:bola.ciano.nenhum.n.normal", description: "", icon: "bot", active: true, shortcuts: [], pages: [],
     provider: recommended?.provider ?? "gemini", providerLabel: recommended?.providerLabel ?? "", model: recommended?.id ?? "", providerReady: !!recommended?.available,
     capabilities: [], hiddenCount: 0, instructions: "", tools: config.tools.filter((tool) => ["pedir_ao_colega", "passar_para_colega"].includes(tool.name)).map((tool) => tool.name),
     permissionKey: "", version: 0, fallbackProvider: null, fallbackModel: null, economyProvider: null, economyModel: null, economyMode: false, updatedAt: "", custom: true,
@@ -450,22 +454,22 @@ function BotEditor({ bot, config, isNew, onCreated, onCancel, onArchived }: { bo
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(() => ({
     name: bot.name, persona: bot.persona, role: bot.role, avatar: bot.avatar, description: bot.description, active: bot.active, instructions: bot.instructions, tools: bot.tools,
-    provider: bot.provider, model: bot.model, fallbackProvider: bot.fallbackProvider ?? "", fallbackModel: bot.fallbackModel ?? "", shortcuts: bot.shortcuts,
+    provider: bot.provider, model: bot.model, fallbackProvider: bot.fallbackProvider ?? "", fallbackModel: bot.fallbackModel ?? "", shortcuts: bot.shortcuts, pages: bot.pages ?? [],
     economyProvider: bot.economyProvider ?? "", economyModel: bot.economyModel ?? "", economyMode: !!bot.economyMode,
   }));
   const budget = useQuery({ queryKey: [BUDGET_KEY], queryFn: () => aiApi.get<BudgetView>("budget") });
   const [versionsOpen, setVersionsOpen] = useState(false);
   useEffect(() => { setVersionsOpen(false); }, [bot.id]);
   const set = <K extends keyof typeof draft>(key: K, value: (typeof draft)[K]) => setDraft((current) => ({ ...current, [key]: value }));
-  const done = (title: string) => { queryClient.invalidateQueries({ queryKey: [CONFIG_KEY] }); queryClient.invalidateQueries({ queryKey: [BOTS_KEY] }); toast({ title, variant: "success" }); };
+  const done = (title: string) => { queryClient.invalidateQueries({ queryKey: [CONFIG_KEY] }); queryClient.invalidateQueries({ queryKey: [BOTS_KEY] }); queryClient.invalidateQueries({ queryKey: ["aiPageBots"] }); toast({ title, variant: "success" }); };
   const save = useMutation({
     mutationFn: async () => {
       const body = { ...draft, fallbackProvider: draft.fallbackProvider || null, fallbackModel: draft.fallbackModel || null, economyProvider: draft.economyProvider || null, economyModel: draft.economyModel || null, economyMode: draft.economyMode && !!draft.economyModel };
       if (!isNew) return aiApi.put<BotFull>(`bots/${bot.id}`, body);
       const created = await aiApi.post<BotFull>("bots", body);
       // a reserva e o "desligado" vão no cadastro normal, depois de criado
-      if (body.fallbackModel || body.economyModel || !body.active) return aiApi.put<BotFull>(`bots/${created.id}`, { fallbackProvider: body.fallbackProvider, fallbackModel: body.fallbackModel, economyProvider: body.economyProvider, economyModel: body.economyModel, economyMode: body.economyMode, active: body.active, shortcuts: body.shortcuts });
-      if (body.shortcuts.length) return aiApi.put<BotFull>(`bots/${created.id}`, { shortcuts: body.shortcuts });
+      if (body.fallbackModel || body.economyModel || !body.active) return aiApi.put<BotFull>(`bots/${created.id}`, { fallbackProvider: body.fallbackProvider, fallbackModel: body.fallbackModel, economyProvider: body.economyProvider, economyModel: body.economyModel, economyMode: body.economyMode, active: body.active, shortcuts: body.shortcuts, pages: body.pages });
+      if (body.shortcuts.length || body.pages.length) return aiApi.put<BotFull>(`bots/${created.id}`, { shortcuts: body.shortcuts, pages: body.pages });
       return created;
     },
     onSuccess: (saved) => {
@@ -473,6 +477,7 @@ function BotEditor({ bot, config, isNew, onCreated, onCancel, onArchived }: { bo
       queryClient.invalidateQueries({ queryKey: [CONFIG_KEY] });
       queryClient.invalidateQueries({ queryKey: [BOTS_KEY] });
       queryClient.invalidateQueries({ queryKey: [TEAM_KEY] });
+      queryClient.invalidateQueries({ queryKey: ["aiPageBots"] });
       toast({ title: `${saved.persona} foi criado`, description: `Permissão "${saved.permissionKey}" dada ao perfil super e a você. Para outras pessoas conversarem com ele, libere essa permissão em Perfis.`, variant: "success" });
       onCreated?.(saved.id);
     },
@@ -484,6 +489,7 @@ function BotEditor({ bot, config, isNew, onCreated, onCancel, onArchived }: { bo
       queryClient.invalidateQueries({ queryKey: [CONFIG_KEY] });
       queryClient.invalidateQueries({ queryKey: [BOTS_KEY] });
       queryClient.invalidateQueries({ queryKey: [TEAM_KEY] });
+      queryClient.invalidateQueries({ queryKey: ["aiPageBots"] });
       toast({ title: `${bot.persona} foi excluído`, variant: "success" });
       onArchived?.();
     },
@@ -594,6 +600,24 @@ function BotEditor({ bot, config, isNew, onCreated, onCancel, onArchived }: { bo
         </div>
       </div>
       <div>
+        <Label>Aparece em</Label>
+        <p className="mt-0.5 text-xs text-muted-foreground">O rosto do bot fica no topo destas páginas; clicar abre a janela rápida de conversa, já sabendo a tela e o registro aberto. "Todas as telas" vale para a área inteira.</p>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {PAGE_GROUPS.map((group) => (
+            <div key={group} className="rounded-md border p-2">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{group}</p>
+              {PAGE_CATALOG.filter((page) => page.group === group).map((page) => (
+                <label key={page.key} className="flex cursor-pointer items-center gap-2 py-1 text-xs">
+                  <Checkbox checked={draft.pages.includes(page.key)} onCheckedChange={(checked) => set("pages", checked ? [...draft.pages, page.key] : draft.pages.filter((key) => key !== page.key))} />
+                  <span>{page.label}</span>
+                </label>
+              ))}
+            </div>
+          ))}
+        </div>
+        {draft.pages.length === 0 && <p className="mt-1 text-xs text-muted-foreground">Sem página: o bot só aparece na área de Bots.</p>}
+      </div>
+      <div>
         <Label>Atalhos na conversa</Label>
         <div className="mt-2 grid gap-2">
           {draft.shortcuts.map((shortcut, index) => (
@@ -612,7 +636,7 @@ function BotEditor({ bot, config, isNew, onCreated, onCancel, onArchived }: { bo
         </Button>
         {isNew && <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>}
         {!isNew && !bot.custom && (
-          <ConfirmDialog title="Voltar ao padrão do sistema?" description="Instruções, ferramentas, nome e atalhos voltam ao padrão. A versão atual fica no histórico." onConfirm={() => reset.mutate()}>
+          <ConfirmDialog title="Voltar ao padrão do sistema?" description="Instruções, ferramentas, nome, atalhos e páginas voltam ao padrão. A versão atual fica no histórico." onConfirm={() => reset.mutate()}>
             <Button type="button" variant="outline">Voltar ao padrão</Button>
           </ConfirmDialog>
         )}

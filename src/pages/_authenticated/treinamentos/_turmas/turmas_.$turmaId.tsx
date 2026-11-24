@@ -7,6 +7,7 @@ import useVerify from "@/hooks/use-verify";
 import TurmaPage from "./-components/TurmaPage";
 import { IEntity } from "./-interfaces/entity.interface";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 export const Route = createFileRoute(
   "/_authenticated/treinamentos/_turmas/turmas_/$turmaId",
@@ -32,6 +33,8 @@ function EditarTurmaPage() {
     },
     enabled: !!turmaId,
   });
+  // bots nas páginas: o bot sabe qual registro está aberto ("este", "esta")
+  useBotContext({ entity: "turma", id: Number(turmaId) || undefined, label: "Turma", title: data?.name });
 
   // Acesso direto (recarregar/abrir link): as permissões chegam depois do
   // primeiro render. Sem esperar o usuário, a checagem falhava e a página

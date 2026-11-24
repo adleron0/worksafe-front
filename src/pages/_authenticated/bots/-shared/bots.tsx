@@ -9,6 +9,8 @@ export interface BotCapability { name: string; title: string; risk: "read" | "dr
 export interface Bot {
   id: number; key: string; name: string; persona: string; role: string; avatar: string; description: string; icon: string; active: boolean;
   shortcuts: Array<{ label: string; prompt: string }>;
+  /** páginas do sistema onde o bot aparece no topo (chaves de -shared/pages.ts) */
+  pages: string[];
   provider: string; providerLabel: string; model: string; providerReady: boolean;
   capabilities: BotCapability[]; hiddenCount: number;
 }
@@ -48,7 +50,9 @@ export interface Conversation { id: number; title: string; lastMessageAt: string
 export interface RunStep { at: string; kind: "tool" | "notice"; label: string; tool?: string; status: "running" | "ok" | "refused" | "denied" | "error" | "pending"; pendingActionId?: number }
 export interface Run { id: number; status: "running" | "done" | "error" | "stopped"; steps: RunStep[]; error: string | null; startedAt: string; endedAt: string | null }
 export type Message =
-  | { id: number; role: "user" | "assistant" | "notice"; text: string; attachments: Array<{ name: string; mediaType: string; size: number }>; toolCalls: Array<{ name: string; title: string }>; createdAt: string }
+  | { id: number; role: "user" | "assistant" | "notice"; text: string; attachments: Array<{ name: string; mediaType: string; size: number }>; toolCalls: Array<{ name: string; title: string }>; createdAt: string;
+      /** de que tela a mensagem foi enviada (janela rápida dos bots nas páginas) */
+      page?: { label: string; path: string; title: string | null } | null }
   | { id: number; role: "tool"; results: Array<{ name: string; status: string; pendingActionId: number | null; handoff?: { conversationId: number; botId: number; persona: string } | null }>; createdAt: string };
 export interface PendingAction {
   id: number; tool: string; title: string; summary: string; details: Array<{ label: string; value: string }>;

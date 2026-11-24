@@ -26,6 +26,7 @@ import {
 import { REORDER_STORAGE_KEY, ReorderDraft, qty, readReorderDraft, useItemOptions } from "../-shared/stock";
 import { PurchaseReceiveDialog, pendingOf } from "../-shared/stock-receive";
 import { SERVICE_STORAGE_KEY, ServiceDraft, readServiceDraft } from "../-shared/equipment";
+import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 export const Route = createFileRoute("/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId")({
   component: PurchasePage,
@@ -95,6 +96,8 @@ function PurchasePage() {
     queryFn: () => purchasesApi.get<Purchase>(purchaseId),
     enabled: !isNew,
   });
+  // bots nas páginas: o bot sabe qual registro está aberto ("este", "esta")
+  useBotContext({ entity: "pedido_compra", id: Number(purchaseId) || undefined, label: "Pedido de compra", title: purchase ? `${purchase.number} · ${purchase.title}` : undefined });
   const { data: options } = useQuery({ queryKey: [PURCHASE_OPTIONS_KEY], queryFn: () => purchasesApi.get<PurchaseOptions>("options") });
   useEffect(() => { if (purchase) setDraft(draftOf(purchase)); }, [purchase]);
   // as linhas da reposição já foram lidas: não voltam num próximo "novo pedido"

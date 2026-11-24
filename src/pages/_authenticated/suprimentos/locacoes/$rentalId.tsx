@@ -24,6 +24,7 @@ import { MovementDetailDialog } from "../-shared/stock-movements";
 import {
   CHARGE_LABEL, PERIOD_LABEL, RENTALS_ABILITY, RENTAL_KEYS, RENTAL_STATUS_LABEL, RENTAL_STEPS, Rental, RentalOptions, RentalStageBadge, RentalStatus, RentPeriod, rentalsApi,
 } from "../-shared/rentals";
+import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 export const Route = createFileRoute("/_authenticated/suprimentos/locacoes/$rentalId")({
   component: RentalPage,
@@ -88,6 +89,8 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
     queryFn: () => rentalsApi.get<Rental>(rentalId),
     enabled: !isNew,
   });
+  // bots nas páginas: o bot sabe qual registro está aberto ("este", "esta")
+  useBotContext({ entity: "locacao", id: Number(rentalId) || undefined, label: "Locação", title: rental ? `${rental.number}${rental.customer ? ` · ${rental.customer.name}` : ""}` : undefined });
   const { data: options } = useQuery({ queryKey: [RENTAL_KEYS.options], queryFn: () => rentalsApi.get<RentalOptions>("options") });
   useEffect(() => { if (rental) setDraft(draftOf(rental)); }, [rental]);
 

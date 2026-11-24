@@ -11,6 +11,7 @@ import Form from "./-components/FinancialRecordsForm";
 import { RECEIVABLE_ENTITY } from "./-components/entity";
 import { IFinancialRecord } from "./-interfaces/entity.interface";
 import { receivableStatus } from "./-components/receivableColumns";
+import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 export const Route = createFileRoute("/_authenticated/financeiro/_receber/receber_/$recordId")({
   component: EditReceivable,
@@ -26,6 +27,8 @@ function EditReceivable() {
     queryFn: () => get<IFinancialRecord>("financial-records", recordId),
     gcTime: 0, // sem cache: abrir de novo sempre traz a versão salva
   });
+  // bots nas páginas: o bot sabe qual registro está aberto ("este", "esta")
+  useBotContext({ entity: "conta_receber", id: Number(recordId) || undefined, label: "Conta a receber", title: data?.description });
   if (!can(`view_${FINANCIAL_ABILITY}`)) return null;
   const status = data && (data.inactiveAt ? { label: "Inativa", tone: "neutral" as const } : receivableStatus(data));
   return (

@@ -19,6 +19,7 @@ import {
 } from "../-shared/deals";
 import { KindBadge, PROPOSAL_KEY, PROPOSALS_KEY, ProposalKind, ProposalStatus, StatusBadge } from "../-shared/proposals";
 import { ProposalPanelSheet } from "../-shared/proposal-panel";
+import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 export const Route = createFileRoute("/_authenticated/comercial/_negociacoes/negociacoes_/$dealId")({
   component: DealPage,
@@ -48,6 +49,8 @@ function DealPage() {
     queryFn: () => commercialApi.get<Deal>(`deals/${dealId}`),
     retry: false,
   });
+  // bots nas páginas: o bot sabe qual registro está aberto ("este", "esta")
+  useBotContext({ entity: "negociacao", id: Number(dealId) || undefined, label: "Negociação", title: deal ? `${deal.number} · ${deal.title}` : undefined });
   useEffect(() => {
     if (!deal) return;
     setDiscount(deal.discount); setTitle(deal.title); setNotes(deal.notes ?? "");

@@ -9,6 +9,7 @@ import { useBackToList } from "@/hooks/use-back-to-list";
 import Form from "./-components/CoursesForm";
 import { COURSE_ENTITY } from "./-entity";
 import { IEntity } from "./-interfaces/entity.interface";
+import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 export const Route = createFileRoute("/_authenticated/treinamentos/_cursos/cursos_/$courseId")({
   component: EditCourse,
@@ -24,6 +25,8 @@ function EditCourse() {
     queryFn: () => get<IEntity>(COURSE_ENTITY.model, courseId),
     gcTime: 0, // sem cache: abrir de novo sempre traz a versão salva
   });
+  // bots nas páginas: o bot sabe qual registro está aberto ("este", "esta")
+  useBotContext({ entity: "curso", id: Number(courseId) || undefined, label: "Curso", title: data?.name });
   if (!can(`update_${COURSE_ENTITY.ability}`)) return null;
   const badge = data && (data.active === false ? <StatusBadge>Inativo</StatusBadge> : <StatusBadge tone="success">Ativo</StatusBadge>);
   return (

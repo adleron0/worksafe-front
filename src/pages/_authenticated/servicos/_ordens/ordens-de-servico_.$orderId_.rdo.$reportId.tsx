@@ -23,6 +23,7 @@ import {
   hoursText, isTime, reportsApi, spanMinutes, workedHours,
 } from "../-shared/reports";
 import { TEAM_OPTIONS_KEY, TeamOptions, TeamPicker } from "../-shared/team";
+import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 export const Route = createFileRoute("/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId")({
   component: ReportPage,
@@ -115,6 +116,8 @@ function ReportPage() {
     // o modelo em branco não é guardado: abrir de novo traz a equipe e o avanço atuais
     gcTime: isNew ? 0 : undefined,
   });
+  // bots nas páginas: o bot sabe qual registro está aberto ("este", "esta")
+  useBotContext({ entity: "rdo", id: Number(reportId) || undefined, label: "RDO", title: report ? `RDO de ${report.date.slice(0, 10).split("-").reverse().join("/")} · OS ${report.order?.number ?? orderId}` : undefined });
   useEffect(() => { if (report) setForm(formOf(report)); }, [report]);
 
   const refreshAll = () => {

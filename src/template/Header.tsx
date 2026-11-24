@@ -5,6 +5,7 @@ import { Button } from "../components/ui/button";
 import AvatarMenu from "../components/general-components/AvatarMenu";
 import { ThemeToggle } from "../components/general-components/ThemeToggle";
 import { HelpButton } from "@/help/HelpCenter";
+import { BotDock } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 const Header = () => {
   const { setOpenSidebar } = useGeneralContext();
@@ -29,6 +30,7 @@ const Header = () => {
         </div>
       </div>
       <div className="flex items-center gap-2 sm:gap-4">
+        <BotDock />
         <HelpButton />
         <ThemeToggle variant="ghost" />
         <AvatarMenu />

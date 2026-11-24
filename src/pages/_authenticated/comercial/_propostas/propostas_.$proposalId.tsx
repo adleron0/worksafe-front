@@ -28,6 +28,7 @@ import { RecordFilesPanel } from "../../arquivos/-shared/record-files";
 import WizardSteps, { STEPS, StepKey, StepState } from "./-WizardSteps";
 import { RentalConditionsPanel, RentalPeriodPanel } from "./-RentalTerms";
 import { MeasurementPlanEditor, defaultPlan } from "../-shared/measurement";
+import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 /** Título provisório de quem acabou de escolher o cliente e ainda não deu nome à proposta. */
 const PLACEHOLDER_TITLE = "Nova proposta";
@@ -79,6 +80,8 @@ function ProposalEditorPage() {
     // o rascunho da tela nasce desta resposta: não recarregar sozinho por cima do que está sendo editado
     refetchOnWindowFocus: false, staleTime: Infinity,
   });
+  // bots nas páginas: o bot sabe qual registro está aberto ("este", "esta")
+  useBotContext({ entity: "proposta", id: Number(proposalId) || undefined, label: "Proposta", title: proposal ? `${proposal.number} · ${proposal.customer?.name ?? ""}` : undefined });
   const { data: options } = useQuery({
     queryKey: ["commercialProposalOptions", proposal?.draft.referenceDate, proposal?.draft.taxRegime],
     queryFn: () => commercialApi.get<ProposalOptions>("proposals/options", {

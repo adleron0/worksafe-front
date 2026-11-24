@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Icon from "@/components/general-components/Icon";
@@ -53,15 +53,9 @@ const VisitanteForm = ({ formData, openSheet }: FormProps) => {
         <Label>Status</Label>
         <div className="mt-2">
           {formData.blocked ? (
-            <Badge variant="destructive" className="text-sm">
-              <Icon name="ban" className="w-4 h-4 mr-1" />
-              Bloqueado
-            </Badge>
+            <StatusBadge tone="danger">Bloqueado</StatusBadge>
           ) : (
-            <Badge className="bg-green-500 text-sm">
-              <Icon name="check-circle" className="w-4 h-4 mr-1" />
-              Ativo
-            </Badge>
+            <StatusBadge tone="success">Ativo</StatusBadge>
           )}
         </div>
       </div>

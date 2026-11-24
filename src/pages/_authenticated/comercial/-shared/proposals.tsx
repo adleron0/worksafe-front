@@ -1,6 +1,6 @@
 import type { ContractPlan, MeasurementPlanDraft } from "./measurement";
-import Icon from "@/components/general-components/Icon";
-import { cn } from "@/lib/utils";
+import UiStatusBadge, { type StatusTone } from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 
 export type ProposalKind = "servico" | "treinamento" | "locacao";
 export type ProposalStatus = "rascunho" | "enviada" | "visualizada" | "aceita" | "recusada" | "expirada" | "cancelada" | "substituida";
@@ -194,40 +194,32 @@ export const STATUS_LABEL: Record<ProposalStatus, string> = {
   rascunho: "Rascunho", enviada: "Enviada", visualizada: "Visualizada", aceita: "Aceita", recusada: "Recusada",
   expirada: "Expirada", cancelada: "Cancelada", substituida: "Substituída",
 };
-const STATUS_CLASS: Record<ProposalStatus, string> = {
-  rascunho: "bg-muted text-muted-foreground",
-  enviada: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
-  visualizada: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200",
-  aceita: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200",
-  recusada: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
-  expirada: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200",
-  cancelada: "bg-muted text-muted-foreground line-through",
-  substituida: "bg-muted text-muted-foreground",
+/** Tom do status (padrão Unyo) de cada situação da proposta. */
+export const STATUS_TONE: Record<ProposalStatus, StatusTone> = {
+  rascunho: "neutral", enviada: "info", visualizada: "primary", aceita: "success", recusada: "danger",
+  expirada: "warning", cancelada: "neutral", substituida: "neutral",
 };
+const ENDED: ProposalStatus[] = ["aceita", "recusada", "cancelada", "substituida"];
 
 export function StatusBadge({ status, expired }: { status: ProposalStatus; expired?: boolean }) {
   return (
     <span className="inline-flex items-center gap-1">
-      <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", STATUS_CLASS[status])}>{STATUS_LABEL[status]}</span>
-      {expired && <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", STATUS_CLASS.expirada)}>Validade vencida</span>}
+      <UiStatusBadge tone={STATUS_TONE[status] ?? "neutral"} pulse={!ENDED.includes(status)}>{STATUS_LABEL[status] ?? status}</UiStatusBadge>
+      {expired && <UiStatusBadge tone="warning">Validade vencida</UiStatusBadge>}
     </span>
   );
 }
 
 /** Cor e ícone de cada tipo de proposta: para bater o olho e saber se é serviço ou treinamento. */
-const KIND_STYLE: Record<ProposalKind, { icon: string; className: string }> = {
-  servico: { icon: "wrench", className: "border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-200" },
-  treinamento: { icon: "graduation-cap", className: "border-violet-300 bg-violet-50 text-violet-800 dark:border-violet-900 dark:bg-violet-950 dark:text-violet-200" },
-  locacao: { icon: "handshake", className: "border-teal-300 bg-teal-50 text-teal-800 dark:border-teal-900 dark:bg-teal-950 dark:text-teal-200" },
+const KIND_STYLE: Record<ProposalKind, { icon: string; color: string }> = {
+  servico: { icon: "wrench", color: "#0284c7" },
+  treinamento: { icon: "graduation-cap", color: "#7c3aed" },
+  locacao: { icon: "handshake", color: "#0d9488" },
 };
 /** Etiqueta do tipo da proposta (serviço, treinamento ou locação), com ícone e cor próprios. */
 export function KindBadge({ kind, className }: { kind: ProposalKind; className?: string }) {
   const style = KIND_STYLE[kind] ?? KIND_STYLE.servico;
-  return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap", style.className, className)}>
-      <Icon name={style.icon} className="w-3 h-3 shrink-0" /> {KIND_LABEL[kind] ?? kind}
-    </span>
-  );
+  return <TagBadge icon={style.icon} color={style.color} className={className}>{KIND_LABEL[kind] ?? kind}</TagBadge>;
 }
 
 export const DUE_RULE_OPTIONS: Array<{ id: DueRule; name: string }> = [

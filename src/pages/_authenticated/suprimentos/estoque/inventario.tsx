@@ -15,6 +15,7 @@ import ListCard from "@/components/general-components/ListCard";
 import ListToolbar from "@/components/general-components/ListToolbar";
 import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import { PERM_ADJUST, toOptions, useStockOptions } from "../-shared/stock";
 import { LocationField, useLocationValue } from "../-shared/stock-pickers";
@@ -40,7 +41,7 @@ function CountsPage() {
 
   const columns: DataColumn<CountRow>[] = [
     { id: "id", header: "Nº", className: "w-16 font-semibold tabular-nums", cell: (row) => `#${row.id}` },
-    { id: "location", header: "Local", cell: (row) => <span className="inline-flex items-center gap-2">{row.location} {row.blindCount && <StatusBadge tone="neutral">Às cegas</StatusBadge>}</span> },
+    { id: "location", header: "Local", cell: (row) => <span className="inline-flex items-center gap-2">{row.location} {row.blindCount && <TagBadge>Às cegas</TagBadge>}</span> },
     { id: "status", header: "Situação", className: "w-28", cell: (row) => <StatusBadge tone={COUNT_TONE[countStatusTone(row.status)]}>{row.status === "aberta" ? "Aberta" : row.status === "fechada" ? "Fechada" : "Cancelada"}</StatusBadge> },
     { id: "openedAt", header: "Aberta em", className: "w-28 text-muted-foreground tabular-nums", cell: (row) => new Date(row.openedAt).toLocaleDateString("pt-BR") },
     { id: "counted", header: "Contados", align: "right", className: "w-28 tabular-nums", cell: (row) => `${row.counted} de ${row.lines}` },

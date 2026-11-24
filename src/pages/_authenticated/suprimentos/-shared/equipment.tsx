@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
 import DocStatusBadge from "@/components/general-components/DocStatusBadge";
+import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
@@ -87,13 +88,11 @@ export function DueStateBadge({ state, label }: { state: DueState | null; label?
 }
 
 export function UnitStatusBadge({ status, needsInspection }: { status: UnitStatus; needsInspection?: boolean }) {
-  const tone = status === "disponivel" ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300"
-    : status === "bloqueado" || status === "baixado" ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
-      : status === "em_uso" ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300";
+  const tone: StatusTone = status === "disponivel" ? "success" : status === "bloqueado" || status === "baixado" ? "danger" : status === "em_uso" ? "info" : "warning";
   return (
     <span className="inline-flex items-center gap-1">
-      <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", tone)}>{UNIT_STATUS_LABEL[status] ?? status}</span>
-      {needsInspection && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300 whitespace-nowrap">Inspeção pedida</span>}
+      <StatusBadge tone={tone}>{UNIT_STATUS_LABEL[status] ?? status}</StatusBadge>
+      {needsInspection && <StatusBadge tone="warning">Inspeção pedida</StatusBadge>}
     </span>
   );
 }

@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
@@ -30,7 +31,7 @@ const columns: DataColumn<SellerRow>[] = [
           <AvatarFallback className="text-xs">{initials(row.name)}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="font-medium truncate">{row.name}{row.inactiveAt && <span className="ml-2 text-xs rounded bg-muted px-1.5 py-0.5 font-normal">Inativo</span>}</p>
+          <p className="font-medium truncate">{row.name}{row.inactiveAt && <StatusBadge tone="neutral" className="ml-2 align-middle">Inativo</StatusBadge>}</p>
           <p className="text-xs text-muted-foreground truncate">{row.email}</p>
         </div>
       </div>

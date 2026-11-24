@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import StatusBadge, { type StatusTone } from "@/components/general-components/StatusBadge";
 import { CustomerOption, DueRule, ProposalKind } from "./proposals";
 import type { RetentionRates } from "./retentions";
 import type { ContractPlan, WorkMeasurement, WorkSummary } from "./measurement";
@@ -91,13 +91,9 @@ export const CONTRACTS_KEY = "commercialContracts";
 export const CONTRACT_KEY = "commercialContract";
 
 export const CONTRACT_STATUS_LABEL: Record<ContractStatus, string> = { vigente: "Vigente", concluido: "Concluído", cancelado: "Cancelado" };
-const CLASSES: Record<ContractStatus, string> = {
-  vigente: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200",
-  concluido: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
-  cancelado: "bg-muted text-muted-foreground line-through",
-};
+const TONES: Record<ContractStatus, StatusTone> = { vigente: "primary", concluido: "success", cancelado: "neutral" };
 export function ContractStatusBadge({ status }: { status: ContractStatus }) {
-  return <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", CLASSES[status])}>{CONTRACT_STATUS_LABEL[status]}</span>;
+  return <StatusBadge tone={TONES[status] ?? "neutral"} pulse={status === "vigente"}>{CONTRACT_STATUS_LABEL[status] ?? status}</StatusBadge>;
 }
 
 export const pctBr = (value: number) => `${String(Math.round(value * 100) / 100).replace(".", ",")}%`;
@@ -126,3 +122,10 @@ export const PAYMENT_METHOD_OPTIONS = [
 export const RECORD_STATUS_LABEL: Record<string, string> = {
   waiting: "Em aberto", processing: "Processando", received: "Recebido", overdue: "Vencido", cancelled: "Cancelado", declined: "Recusado", chargeback: "Estornado",
 };
+const RECORD_STATUS_TONE: Record<string, StatusTone> = {
+  waiting: "primary", processing: "info", received: "success", overdue: "danger", cancelled: "neutral", declined: "danger", chargeback: "danger",
+};
+/** Situação do lançamento no financeiro (parcela, medição faturada); pago fica sempre verde. */
+export function RecordStatusBadge({ status, paid }: { status: string; paid?: boolean }) {
+  return <StatusBadge tone={paid ? "success" : RECORD_STATUS_TONE[status] ?? "primary"} pulse={!paid}>{RECORD_STATUS_LABEL[status] ?? status}</StatusBadge>;
+}

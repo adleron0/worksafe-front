@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/general-components/Icon";
-import { Badge } from "@/components/ui/badge";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import { ICertificate } from "../-interfaces/entity.interface";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -44,7 +44,7 @@ const Form = ({ formData, setOpenForm }: FormProps) => {
 
   const getStatusBadge = () => {
     if (formData?.inactiveAt) {
-      return <Badge variant="destructive">Inativo</Badge>;
+      return <StatusBadge tone="neutral">Inativo</StatusBadge>;
     }
 
     if (formData?.expirationDate) {
@@ -57,11 +57,11 @@ const Form = ({ formData, setOpenForm }: FormProps) => {
       today.setHours(0, 0, 0, 0);
       expDate.setHours(0, 0, 0, 0);
       if (expDate < today) {
-        return <Badge variant="destructive">Expirado</Badge>;
+        return <StatusBadge tone="danger">Expirado</StatusBadge>;
       }
     }
 
-    return <Badge variant="default">Válido</Badge>;
+    return <StatusBadge tone="success">Válido</StatusBadge>;
   };
 
   if (!formData) return null;
@@ -119,9 +119,9 @@ const Form = ({ formData, setOpenForm }: FormProps) => {
           {formData.showOnWebsiteConsent !== undefined && (
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Exibir no site:</span>
-              <Badge variant={formData.showOnWebsiteConsent ? "default" : "outline"}>
+              <StatusBadge tone={formData.showOnWebsiteConsent ? "success" : "neutral"} pulse={false}>
                 {formData.showOnWebsiteConsent ? "Autorizado" : "Não autorizado"}
-              </Badge>
+              </StatusBadge>
             </div>
           )}
         </div>

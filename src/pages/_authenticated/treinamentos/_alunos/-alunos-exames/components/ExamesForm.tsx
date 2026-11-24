@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/general-components/Icon";
-import { Badge } from "@/components/ui/badge";
+import StatusBadge from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import { IEntity, IExamResponseItem } from "../interfaces/entity.interface";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -125,9 +126,9 @@ const Form = ({ formData, setOpenForm }: FormProps) => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Status:</span>
-            <Badge variant={formData.result ? "success" : "destructive"}>
+            <StatusBadge tone={formData.result ? "success" : "danger"} pulse={false}>
               {formData.result ? "Aprovado" : "Reprovado"}
-            </Badge>
+            </StatusBadge>
           </div>
           
           {examData && (
@@ -185,13 +186,13 @@ const Form = ({ formData, setOpenForm }: FormProps) => {
                             Questão {index + 1}
                           </span>
                           {isCorrect ? (
-                            <Badge variant="success" className="text-xs">
+                            <StatusBadge tone="success" pulse={false}>
                               Correta
-                            </Badge>
+                            </StatusBadge>
                           ) : (
-                            <Badge variant="destructive" className="text-xs">
+                            <StatusBadge tone="danger" pulse={false}>
                               Incorreta
-                            </Badge>
+                            </StatusBadge>
                           )}
                         </div>
                         <Icon 
@@ -243,9 +244,9 @@ const Form = ({ formData, setOpenForm }: FormProps) => {
                                       />
                                     )}
                                     {!isSelected && isOptionCorrect && (
-                                      <Badge variant="default" className="text-xs">
+                                      <TagBadge icon="check" color="#16a34a">
                                         Correta
-                                      </Badge>
+                                      </TagBadge>
                                     )}
                                   </div>
                                 );

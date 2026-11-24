@@ -4,6 +4,7 @@ import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/general-components/Icon";
+import TagBadge from "@/components/general-components/TagBadge";
 import PageHeader from "@/components/general-components/PageHeader";
 import ListCard from "@/components/general-components/ListCard";
 import ListToolbar from "@/components/general-components/ListToolbar";
@@ -22,7 +23,7 @@ const COLUMNS: DataColumn<FileType>[] = [
     id: "validity", header: "Validade",
     cell: (type) => <span className="text-muted-foreground whitespace-nowrap">{type.expires ? `Vence${type.validityMonths ? ` em ${type.validityMonths} ${type.validityMonths === 1 ? "mês" : "meses"}` : ""} · aviso ${type.warnDays} dias antes` : "Não vence"}</span>,
   },
-  { id: "required", header: "Obrigatório", cell: (type) => (type.required ? <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">Obrigatório</span> : <span className="text-muted-foreground">—</span>) },
+  { id: "required", header: "Obrigatório", cell: (type) => (type.required ? <TagBadge icon="asterisk">Obrigatório</TagBadge> : <span className="text-muted-foreground">—</span>) },
 ];
 
 /** Tipos de documento da empresa: se vence, a validade sugerida, quando avisar e se é obrigatório ter um vigente. */

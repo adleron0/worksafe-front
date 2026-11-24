@@ -10,6 +10,7 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import DocStatusBadge, { STATUS_TONE } from "@/components/general-components/DocStatusBadge";
 import DocumentFolder from "@/components/general-components/DocumentFolder";
 import Icon from "@/components/general-components/Icon";
+import TagBadge from "@/components/general-components/TagBadge";
 import Input from "@/components/general-components/Input";
 import { blobErrorMessage, openApiFile, sizeText } from "@/lib/open-file";
 import { cn } from "@/lib/utils";
@@ -59,7 +60,7 @@ function FileRow({ file, where, canWrite, canManage, onModal, onTrash, onPurgeVe
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" className="max-w-full truncate text-left font-medium hover:underline" onClick={() => openFile(file, !file.inline)}>{file.name}</button>
-            {file.typeName && <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium whitespace-nowrap">{file.typeName}</span>}
+            {file.typeName && <TagBadge>{file.typeName}</TagBadge>}
             {file.status !== "sem_validade" && <DocStatusBadge status={file.status} label={file.statusLabel} />}
           </div>
           <p className="text-xs text-muted-foreground truncate">{sizeText(file.size)}{file.uploadedBy ? ` · enviado por ${file.uploadedBy}` : ""} · {dateBr(file.createdAt)}{file.expiryDate ? ` · vence em ${dateBr(file.expiryDate)}` : ""}</p>

@@ -1,5 +1,5 @@
-import Icon from "@/components/general-components/Icon";
 import StatusBadge from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
 import { ONLINE_COURSES_ENABLED } from "@/lib/features";
 import { More, NameCell, formatDay, muted } from "../../-shared/lista";
@@ -14,7 +14,6 @@ type Row = IEntity & {
   periodSubscriptionsFinalDate?: string | null;
 };
 const r = (item: IEntity) => item as Row;
-const tag = "inline-flex items-center gap-1 rounded-chip border bg-muted/50 px-1.5 py-px text-[11px] font-medium text-muted-foreground whitespace-nowrap";
 
 export const turmasColumns: DataColumn<IEntity>[] = [
   {
@@ -41,7 +40,7 @@ export const turmasColumns: DataColumn<IEntity>[] = [
   {
     id: "period", header: "Período", className: "whitespace-nowrap",
     cell: (item) => item.periodClass === "UNLIMITED"
-      ? <span className={tag}><Icon name="infinity" className="w-3 h-3" />Ilimitado</span>
+      ? <TagBadge icon="infinity">Ilimitado</TagBadge>
       : (
         <div className="tabular-nums">
           <p>{formatDay(item.initialDate || "2024-01-01", true)}</p>
@@ -53,8 +52,8 @@ export const turmasColumns: DataColumn<IEntity>[] = [
     id: "subscriptions", header: "Inscrições", className: "whitespace-nowrap",
     cell: (item) => {
       const row = r(item);
-      if (!row.allowSubscriptions) return <span className={tag}><Icon name="x-circle" className="w-3 h-3" />Desabilitadas</span>;
-      if (row.periodSubscriptionsType === "UNLIMITED") return <span className={`${tag} text-green-700 dark:text-green-400`}><Icon name="infinity" className="w-3 h-3" />Sempre aberta</span>;
+      if (!row.allowSubscriptions) return <StatusBadge tone="neutral" pulse={false}>Desabilitadas</StatusBadge>;
+      if (row.periodSubscriptionsType === "UNLIMITED") return <StatusBadge tone="success">Sempre aberta</StatusBadge>;
       return (
         <div className="tabular-nums">
           <p>{row.periodSubscriptionsInitialDate ? formatDay(row.periodSubscriptionsInitialDate, true) : "-"}</p>
@@ -72,9 +71,9 @@ export const turmasColumns: DataColumn<IEntity>[] = [
         <More lines={[min && `Mínimo: ${min} alunos`, r(item).unlimitedSubscriptions ? "Inscritos ilimitados" : max && `Máximo: ${max} alunos`]}>
           <span className="inline-flex items-center gap-1">
             {r(item).unlimitedSubscriptions
-              ? <span className={tag}><Icon name="infinity" className="w-3 h-3" />Ilimitados</span>
-              : max ? <span className={tag}><Icon name="arrow-big-up-dash" className="w-3 h-3" />{max}</span> : null}
-            {min && <span className={tag}><Icon name="arrow-big-down-dash" className="w-3 h-3" />{min}</span>}
+              ? <TagBadge icon="infinity">Ilimitados</TagBadge>
+              : max ? <TagBadge icon="arrow-big-up-dash">{max}</TagBadge> : null}
+            {min && <TagBadge icon="arrow-big-down-dash">{min}</TagBadge>}
             {!min && !max && !r(item).unlimitedSubscriptions && <span className="text-muted-foreground">—</span>}
           </span>
         </More>

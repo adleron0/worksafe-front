@@ -31,7 +31,7 @@ export function siteServicesColumns(): DataColumn<IEntity>[] {
     },
     {
       id: "status", header: "Situação", className: "whitespace-nowrap",
-      cell: (item) => <StatusBadge tone={item.active ? "success" : "danger"}>{item.active ? "Ativo" : "Inativo"}</StatusBadge>,
+      cell: (item) => <StatusBadge tone={item.active ? "success" : "neutral"}>{item.active ? "Ativo" : "Inativo"}</StatusBadge>,
     },
   ];
 }

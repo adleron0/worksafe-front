@@ -3,6 +3,7 @@ import Icon from "@/components/general-components/Icon";
 import InfoHint from "@/components/general-components/InfoHint";
 import { SortButton } from "@/components/general-components/SortButton";
 import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
 import { IFinancialRecord } from "../-interfaces/entity.interface";
 import { OPEN_STATUSES, formatCurrency, formatDate, paymentMethodLabel, todayInput } from "./options";
@@ -27,7 +28,6 @@ export function receivableStatus(item: IFinancialRecord, today?: string) {
 
 const person = (item: IFinancialRecord) => item.customer?.name || item.trainee?.name || item.subscription?.name || "";
 const muted = "text-xs text-muted-foreground";
-const tag = "inline-flex items-center gap-1 rounded-chip border bg-muted/50 px-1.5 py-px text-[11px] font-medium text-muted-foreground whitespace-nowrap";
 
 /** Dado com detalhes: o ⓘ antes (sempre visível, mesmo com o texto cortado) e o conteúdo. */
 function More({ children, lines }: { children: React.ReactNode; lines: Array<string | number | false | null | undefined> }) {
@@ -56,7 +56,7 @@ export function receivableColumns(today?: string, sort?: { order?: string; onSor
             <p className="truncate">
               <span className="font-medium">{who || item.description || "Sem cliente"}</span>
               <span className="text-xs text-muted-foreground"> #{item.id}</span>
-              {!who && <span className={`${tag} ml-1.5`}>sem cliente</span>}
+              {!who && <TagBadge className="ml-1.5">sem cliente</TagBadge>}
             </p>
             {second && (
               <More lines={[contact && contact !== second && contact, who && item.description && item.description !== second && item.description, plan && plan !== second && plan]}>
@@ -108,12 +108,12 @@ export function receivableColumns(today?: string, sort?: { order?: string; onSor
       id: "origin", header: "Origem", mobile: "meta",
       cell: (item) => (
         <div className="flex flex-wrap items-center gap-1 max-w-[10.5rem]">
-          <span className={tag}><Icon name={item.gateway === "manual" ? "hand-coins" : "credit-card"} className="w-3 h-3" />{GATEWAY[item.gateway] ?? item.gateway}</span>
-          {item.installmentNumber && item.installmentTotal && <span className={tag}>{item.installmentNumber}/{item.installmentTotal}</span>}
-          {item.recurrenceId && <span className={tag}><Icon name="repeat" className="w-3 h-3" />mensal</span>}
+          <TagBadge icon={item.gateway === "manual" ? "hand-coins" : "credit-card"}>{GATEWAY[item.gateway] ?? item.gateway}</TagBadge>
+          {item.installmentNumber && item.installmentTotal && <TagBadge>{item.installmentNumber}/{item.installmentTotal}</TagBadge>}
+          {item.recurrenceId && <TagBadge icon="repeat">mensal</TagBadge>}
           {item.contractId && (
-            <Link to="/comercial/contratos/$contractId" params={{ contractId: String(item.contractId) }} className={`${tag} hover:text-foreground hover:border-primary/50`}>
-              <Icon name="file-signature" className="w-3 h-3" />contrato
+            <Link to="/comercial/contratos/$contractId" params={{ contractId: String(item.contractId) }} className="rounded-chip hover:opacity-80">
+              <TagBadge icon="file-signature">contrato</TagBadge>
             </Link>
           )}
         </div>

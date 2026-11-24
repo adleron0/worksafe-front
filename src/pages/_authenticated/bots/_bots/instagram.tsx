@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import { Tip, errorMessage } from "../../comercial/-shared/commercial";
 import { BotAvatar } from "../-shared/avatar";
 import { Bot, aiApi, ago, dateTimeBr, timeBr, useBots } from "../-shared/bots";
@@ -68,8 +69,8 @@ function Initials({ name, size = 44 }: { name: string | null; size?: number }) {
 function WindowBadge({ conv }: { conv: Pick<IgConversationItem, "canReply" | "replyUntil"> }) {
   if (!conv.replyUntil) return null;
   return conv.canReply
-    ? <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">janela de resposta fecha em {closesIn(conv.replyUntil)}</span>
-    : <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">fora da janela de 24h</span>;
+    ? <StatusBadge tone="success">janela de resposta fecha em {closesIn(conv.replyUntil)}</StatusBadge>
+    : <StatusBadge tone="neutral" pulse={false}>fora da janela de 24h</StatusBadge>;
 }
 
 /** Bots → Instagram: Direct e comentários da conta da empresa. */
@@ -470,7 +471,7 @@ function CommentRow({ comment, onDone }: { comment: IgPost["comments"][number]; 
           <p className="flex flex-wrap items-center gap-2 text-sm">
             <span className="font-semibold">{comment.username ? `@${comment.username}` : "Alguém"}</span>
             <span className="text-[11px] text-muted-foreground">{comment.timestamp ? ago(comment.timestamp) : ""}</span>
-            {comment.hidden && <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">oculto</span>}
+            {comment.hidden && <StatusBadge tone="neutral" pulse={false}>oculto</StatusBadge>}
           </p>
           <p className={`whitespace-pre-wrap break-words text-sm ${comment.hidden ? "text-muted-foreground" : ""}`}>{comment.text}</p>
           <div className="mt-1 flex flex-wrap gap-1">

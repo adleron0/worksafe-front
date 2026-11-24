@@ -10,6 +10,6 @@ export const profileColumns: DataColumn<IEntity>[] = [
   },
   {
     id: "status", header: "Situação",
-    cell: (item) => <StatusBadge tone={item.inactiveAt ? "danger" : "success"}>{item.inactiveAt ? "Inativo" : "Ativo"}</StatusBadge>,
+    cell: (item) => <StatusBadge tone={item.inactiveAt ? "neutral" : "success"}>{item.inactiveAt ? "Inativo" : "Ativo"}</StatusBadge>,
   },
 ];

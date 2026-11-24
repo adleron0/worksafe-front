@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import UiStatusBadge from "@/components/general-components/StatusBadge";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
@@ -251,7 +252,7 @@ function ProposalsPage() {
                 </div>
                 <div className="pt-2 border-t flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold tabular-nums">{money(row.total)}</p>
-                  {row.inactiveAt ? <span className="text-xs rounded bg-muted px-1.5 py-0.5">Arquivada</span> : row.expired && <StatusBadge status={row.status} expired />}
+                  {row.inactiveAt ? <UiStatusBadge tone="neutral" pulse={false}>Arquivada</UiStatusBadge> : row.expired && <StatusBadge status={row.status} expired />}
                 </div>
               </div>
             )}

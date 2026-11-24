@@ -520,3 +520,11 @@
 /* Barra lateral sempre escura: no tema claro, chumbo; no escuro, um tom abaixo da página. */
 .sidebar-escura { background-color: hsl(30 5% 9%); border-right-color: transparent; }
 html.dark .sidebar-escura { background-color: hsl(30 6% 6%); border-right-color: hsl(var(--border)); }
+
+/* Ponto do StatusBadge (padrão Unyo): anel suave que expande a partir do ponto. */
+@keyframes status-dot-pulse {
+  0% { box-shadow: 0 0 0 0 currentColor; }
+  70%, 100% { box-shadow: 0 0 0 4px transparent; }
+}
+.status-dot-pulse { animation: status-dot-pulse 2s cubic-bezier(0.2, 0, 0, 1) infinite; }
+@media (prefers-reduced-motion: reduce) { .status-dot-pulse { animation: none; } }

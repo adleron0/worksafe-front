@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import StatusBadge, { type StatusTone } from "@/components/general-components/StatusBadge";
 import { ProposalKind, ProposalStatus } from "./proposals";
 
 /** Negociação: propostas do mesmo cliente agrupadas (espelha a API). */
@@ -64,11 +64,8 @@ export const ACTION_LABEL: Record<PlanAction, string> = {
   gravar: "Vai mudar", revisar: "Muda por revisão", travada: "Aceita: não muda", fora: "Fora da conta", igual: "Sem mudança",
 };
 
+const DEAL_TONE: Record<DealStatus, StatusTone> = { aberta: "info", ganha: "success", parcial: "warning", perdida: "danger", vazia: "neutral" };
 export function DealStatusBadge({ status, className }: { status: DealStatus; className?: string }) {
   const meta = DEAL_STATUS[status];
-  return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded bg-muted px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", className)}>
-      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: meta.color }} /> {meta.label}
-    </span>
-  );
+  return <StatusBadge tone={DEAL_TONE[status] ?? "neutral"} pulse={status === "aberta"} className={className}>{meta?.label ?? status}</StatusBadge>;
 }

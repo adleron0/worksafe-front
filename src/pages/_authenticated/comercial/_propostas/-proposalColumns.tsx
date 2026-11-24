@@ -1,4 +1,5 @@
 import type { DataColumn } from "@/components/general-components/DataTable";
+import UiStatusBadge from "@/components/general-components/StatusBadge";
 import { dateBr, money } from "../-shared/commercial";
 import { FollowUpChip } from "../-shared/activities";
 import { KindBadge, ProposalRow, StatusBadge } from "../-shared/proposals";
@@ -44,7 +45,7 @@ export const proposalColumns: DataColumn<ProposalRow>[] = [
     cell: (row) => (
       <div className="flex flex-wrap items-center gap-1">
         <StatusBadge status={row.status} expired={row.expired} />
-        {row.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Arquivada</span>}
+        {row.inactiveAt && <UiStatusBadge tone="neutral" pulse={false}>Arquivada</UiStatusBadge>}
       </div>
     ),
   },

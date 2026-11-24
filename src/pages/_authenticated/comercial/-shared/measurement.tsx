@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
+import StatusBadge, { type StatusTone } from "@/components/general-components/StatusBadge";
 import { NumField, money } from "./commercial";
 
 /**
@@ -154,16 +155,16 @@ export interface WorkSummary {
   measured: number; balance: number; invoiced: number; deposit: number; open: number | null;
   depositRecord: { id: number; status: string; value: number; dueDate: string | null; paid: boolean } | null;
 }
-export const WORK_STATUS: Record<WorkStatus, { label: string; className: string }> = {
-  rascunho: { label: "Rascunho", className: "bg-muted text-muted-foreground" },
-  enviada: { label: "Com o cliente", className: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200" },
-  contestada: { label: "Contestado", className: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200" },
-  aprovada: { label: "Aprovado", className: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200" },
-  faturada: { label: "Faturado", className: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200" },
+export const WORK_STATUS: Record<WorkStatus, { label: string; tone: StatusTone }> = {
+  rascunho: { label: "Rascunho", tone: "neutral" },
+  enviada: { label: "Com o cliente", tone: "warning" },
+  contestada: { label: "Contestado", tone: "danger" },
+  aprovada: { label: "Aprovado", tone: "info" },
+  faturada: { label: "Faturado", tone: "success" },
 };
 export function WorkStatusBadge({ status }: { status: WorkStatus }) {
   const s = WORK_STATUS[status] ?? WORK_STATUS.rascunho;
-  return <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", s.className)}>{s.label}</span>;
+  return <StatusBadge tone={s.tone} pulse={status !== "faturada"}>{s.label}</StatusBadge>;
 }
 export const pctBr = (value: number | undefined | null) => `${(Math.round((value ?? 0) * 100) / 100).toString().replace(".", ",")}%`;
 

@@ -4,8 +4,7 @@ import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Status, StatusIndicator, StatusLabel } from "@/components/ui/kibo-ui/status";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import useVerify from "@/hooks/use-verify";
@@ -59,33 +58,13 @@ const ComentarioForm = ({ formData, openSheet, entity }: FormProps) => {
   const getStatusComponent = () => {
     switch (formData?.status) {
       case 'published':
-        return (
-          <Status status="online" className="w-fit">
-            <StatusIndicator />
-            <StatusLabel>Aprovado</StatusLabel>
-          </Status>
-        );
+        return <StatusBadge tone="success" className="w-fit">Aprovado</StatusBadge>;
       case 'pending':
-        return (
-          <Status status="waiting" className="w-fit">
-            <StatusIndicator />
-            <StatusLabel>Pendente</StatusLabel>
-          </Status>
-        );
+        return <StatusBadge tone="warning" className="w-fit">Pendente</StatusBadge>;
       case 'hidden':
-        return (
-          <Status status="offline" className="w-fit">
-            <StatusIndicator />
-            <StatusLabel>Oculto</StatusLabel>
-          </Status>
-        );
+        return <StatusBadge tone="neutral" className="w-fit">Oculto</StatusBadge>;
       default:
-        return (
-          <Status status="waiting" className="w-fit">
-            <StatusIndicator />
-            <StatusLabel>{formData?.status}</StatusLabel>
-          </Status>
-        );
+        return <StatusBadge tone="warning" className="w-fit">{formData?.status}</StatusBadge>;
     }
   };
 
@@ -185,9 +164,9 @@ const ComentarioForm = ({ formData, openSheet, entity }: FormProps) => {
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-xs font-medium">{reply.visitor?.name || "Anônimo"}</span>
-                  <Badge variant="outline" className="text-xs h-5">
+                  <StatusBadge tone={reply.status === 'published' ? "success" : reply.status === 'pending' ? "warning" : "danger"}>
                     {reply.status === 'published' ? 'Aprovado' : reply.status === 'pending' ? 'Pendente' : 'Rejeitado'}
-                  </Badge>
+                  </StatusBadge>
                 </div>
                 <p className="text-xs text-muted-foreground line-clamp-2">{reply.content}</p>
               </div>

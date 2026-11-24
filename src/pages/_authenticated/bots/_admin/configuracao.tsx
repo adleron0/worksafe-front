@@ -12,13 +12,15 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import { BotAvatar } from "../-shared/avatar";
 import { FaceEditor } from "../-shared/face-editor";
 import { PersonalityPicker } from "../-shared/personality-picker";
-import { BOTS_KEY, BUDGET_KEY, BotFull, BotsConfig, BudgetView, CatalogModel, CatalogTool, RISK_CLASS, RISK_LABEL, STATUS_KEY, TEAM_KEY, aiApi, dateTimeBr } from "../-shared/bots";
+import { BOTS_KEY, BUDGET_KEY, BotFull, BotsConfig, BudgetView, CatalogModel, CatalogTool, RISK_COLOR, RISK_ICON, RISK_LABEL, STATUS_KEY, TEAM_KEY, aiApi, dateTimeBr } from "../-shared/bots";
 import { PAGE_CATALOG } from "../-shared/pages";
 import api from "@/services/api";
 
@@ -82,11 +84,11 @@ function ProvidersCard({ config }: { config: BotsConfig }) {
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-medium">Fornecedores de IA:</span>
         {config.providers.map((provider) => (
-          <span key={provider.id} className={`rounded-full px-2 py-0.5 text-xs font-medium ${provider.available ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300" : "bg-muted text-muted-foreground"}`}>
+          <StatusBadge key={provider.id} tone={provider.available ? "success" : "neutral"} pulse={false}>
             {provider.label}: {provider.available ? "chave configurada" : "sem chave"}
-          </span>
+          </StatusBadge>
         ))}
-        {!config.enabled && <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">Bots desligados (AI_BOTS_ENABLED)</span>}
+        {!config.enabled && <StatusBadge tone="danger">Bots desligados (AI_BOTS_ENABLED)</StatusBadge>}
         {can("chaves_ia_bots") && (
           <Button type="button" size="sm" variant="outline" className="ml-auto" onClick={() => setKeysOpen(true)}>
             <Icon name="key-round" className="h-4 w-4" /> Chaves de IA
@@ -389,16 +391,16 @@ function ProviderKeyItem({ row }: { row: ProviderKeyRow }) {
     onError: (err) => toast({ title: "Não foi possível remover", description: errorMessage(err), variant: "destructive" }),
   });
   const badge = row.source === "tela"
-    ? { text: `Cadastrada aqui ${row.hint ?? ""}`, cls: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300" }
+    ? { text: `Cadastrada aqui ${row.hint ?? ""}`, tone: "success" as const }
     : row.source === "servidor"
-      ? { text: `Variável do servidor (${row.envName})`, cls: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300" }
-      : { text: "Sem chave", cls: "bg-muted text-muted-foreground" };
+      ? { text: `Variável do servidor (${row.envName})`, tone: "info" as const }
+      : { text: "Sem chave", tone: "neutral" as const };
 
   return (
     <div className="rounded-md border p-3">
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-medium">{row.label}</span>
-        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.cls}`}>{badge.text}</span>
+        <StatusBadge tone={badge.tone} pulse={false}>{badge.text}</StatusBadge>
         {row.source === "tela" && row.updatedAt && <span className="text-xs text-muted-foreground">desde {dateTimeBr(row.updatedAt)}</span>}
         <div className="ml-auto flex gap-2">
           {!editing && <Button type="button" size="sm" variant="outline" onClick={() => setEditing(true)}>{row.source ? "Trocar chave" : "Cadastrar chave"}</Button>}
@@ -587,7 +589,7 @@ function BotEditor({ bot, config, isNew, onCreated, onCancel, onArchived }: { bo
         <div className="mt-2 grid gap-3 md:grid-cols-3 [&>*]:min-w-0">
           {(["read", "draft", "sensitive"] as const).map((risk) => (
             <div key={risk} className="rounded-md border p-2">
-              <p className={`mb-2 w-fit rounded-full px-2 py-0.5 text-[11px] font-medium ${RISK_CLASS[risk]}`}>{RISK_LABEL[risk]}</p>
+              <div className="mb-2"><TagBadge icon={RISK_ICON[risk]} color={RISK_COLOR[risk]}>{RISK_LABEL[risk]}</TagBadge></div>
               {byRisk(risk).length === 0 && <p className="py-1 text-xs text-muted-foreground">Nenhuma aqui.</p>}
               {byRisk(risk).map((tool) => (
                 <label key={tool.name} className="flex cursor-pointer items-start gap-2 py-1 text-xs">

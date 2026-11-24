@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import TagBadge from "@/components/general-components/TagBadge";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import Dialog from "@/components/general-components/Dialog";
@@ -288,21 +290,17 @@ export default function EmitirCertificadosDialog({
                         </span>
                       )}
                       {r.suggested && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
-                          <Icon name="sparkles" className="h-3 w-3" />
-                          Maior nota
-                        </span>
+                        <TagBadge icon="sparkles" color="#d97706">Maior nota</TagBadge>
                       )}
                     </div>
                   </div>
                   <div className="w-24 text-center">
                     {r.certificate ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
-                        <Icon name="check" className="h-3 w-3" />
+                      <StatusBadge tone="success" pulse={false} title={`Emitido em ${format(new Date(r.certificate.createdAt), "dd/MM/yy")}`}>
                         {format(new Date(r.certificate.createdAt), "dd/MM/yy")}
-                      </span>
+                      </StatusBadge>
                     ) : (
-                      <span className="text-[11px] text-muted-foreground">Não emitido</span>
+                      <StatusBadge tone="neutral" pulse={false}>Não emitido</StatusBadge>
                     )}
                   </div>
                   <div className="flex w-14 justify-center">

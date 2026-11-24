@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import TagBadge from "@/components/general-components/TagBadge";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Dialog from "@/components/general-components/Dialog";
 import Icon from "@/components/general-components/Icon";
@@ -208,10 +209,7 @@ export default function AlunosDestaqueDialog({
                   <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                     <span>{formatScore(row.examScore)}</span>
                     {row.suggested && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
-                        <Icon name="sparkles" className="h-3 w-3" />
-                        Sugerido: maior nota
-                      </span>
+                      <TagBadge icon="sparkles" color="#d97706">Sugerido: maior nota</TagBadge>
                     )}
                   </div>
                 </div>

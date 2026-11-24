@@ -39,7 +39,7 @@ export const reviewsColumns: DataColumn<IReview>[] = [
     cell: (item) => (
       <span className="inline-flex items-center gap-1.5">
         <StatusBadge tone={item.authorizationExposeReview ? "info" : "neutral"}>{item.authorizationExposeReview ? "Exposto na LP" : "Oculto na LP"}</StatusBadge>
-        <StatusBadge tone={!item.inactiveAt ? "success" : "danger"}>{!item.inactiveAt ? "Ativo" : "Inativo"}</StatusBadge>
+        <StatusBadge tone={!item.inactiveAt ? "success" : "neutral"}>{!item.inactiveAt ? "Ativo" : "Inativo"}</StatusBadge>
       </span>
     ),
   },

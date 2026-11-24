@@ -7,7 +7,7 @@ import { useLoader } from "@/context/GeneralContext";
 import { z } from "zod";
 import { AlertCircle, ArrowLeft, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import {
   AlertDialog,
@@ -874,9 +874,9 @@ const TurmaPage = ({ formData, onSuccess }: TurmaPageProps) => {
         )}
         <h1 className="text-base font-semibold truncate">{pageTitle}</h1>
         {formData && (
-          <Badge variant={formData.active ? "default" : "secondary"}>
+          <StatusBadge tone={formData.active ? "success" : "neutral"}>
             {formData.active ? "Ativa" : "Inativa"}
-          </Badge>
+          </StatusBadge>
         )}
       </div>
       <div className="flex items-center gap-2 shrink-0">

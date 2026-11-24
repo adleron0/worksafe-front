@@ -23,6 +23,7 @@ import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import TagBadge from "@/components/general-components/TagBadge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
@@ -266,7 +267,7 @@ export function PermissionMatrix({ mode, targetId, title, subtitle, backTo, back
         </p>
       )}
       {mode === "user" && inherited.length > 0 && (
-        <p className="mt-3 text-xs text-muted-foreground">Marcadas com <span className="rounded bg-muted px-1 py-0.5 font-medium">perfil</span> vêm do perfil do usuário; para tirá-las, mude o perfil. Aqui você dá permissões a mais só para esta pessoa.</p>
+        <p className="mt-3 text-xs text-muted-foreground">Marcadas com <TagBadge>perfil</TagBadge> vêm do perfil do usuário; para tirá-las, mude o perfil. Aqui você dá permissões a mais só para esta pessoa.</p>
       )}
 
       {error && <p className="mt-4 text-sm text-destructive">Erro ao carregar as permissões.</p>}
@@ -311,7 +312,7 @@ export function PermissionMatrix({ mode, targetId, title, subtitle, backTo, back
                           <label className={cn("flex min-w-0 items-start gap-2 py-1.5 text-[13px]", assignable(perm) ? "cursor-pointer" : "cursor-default", perm.name.startsWith("view_") && !long && "font-medium")}>
                             <span className="pt-0.5"><Box checked={isOn(perm.id)} disabled={!assignable(perm) || saving} label={perm.description} onChange={(value) => toggle([perm.id], value)} /></span>
                             <span className={cn("min-w-0 flex-1 break-words leading-snug", long && "text-[12.5px]")}>{label}</span>
-                            {fromProfile && <span className="shrink-0 rounded bg-muted px-1 py-0.5 text-[10px] font-medium text-muted-foreground">perfil</span>}
+                            {fromProfile && <TagBadge className="shrink-0">perfil</TagBadge>}
                             {locked && <Lock className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-label="Fora do seu acesso" />}
                           </label>
                         );

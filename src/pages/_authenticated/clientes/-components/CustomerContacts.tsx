@@ -1,4 +1,5 @@
 import { useState } from "react";
+import TagBadge from "@/components/general-components/TagBadge";
 import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, patch, post, put } from "@/services/api";
@@ -13,7 +14,6 @@ import Select from "@/components/general-components/Select";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import { formatPHONE } from "@/utils/phone-mask";
-import { cn } from "@/lib/utils";
 import { Tip, errorMessage } from "../../comercial/-shared/commercial";
 
 /** Para que o contato é usado. A ordem é a mesma em toda a tela. */
@@ -136,10 +136,10 @@ export function CustomerContactsPanel({ customerId }: { customerId: number }) {
                 {CONTACT_ROLES.filter((role) => contact[role.flag]).map((role) => {
                   const isDefault = contact[role.def];
                   const chip = (
-                    <span className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs",
-                      isDefault ? "border-primary bg-primary/10 text-foreground" : "text-muted-foreground")}>
-                      <Icon name={isDefault ? "star" : role.icon} className={cn("w-3 h-3", isDefault && "text-primary fill-primary")} />
-                      {role.label}{isDefault ? " · padrão" : ""}
+                    <span className="inline-flex">
+                      <TagBadge icon={isDefault ? "star" : role.icon} color={isDefault ? "hsl(var(--primary))" : undefined}>
+                        {role.label}{isDefault ? " · padrão" : ""}
+                      </TagBadge>
                     </span>
                   );
                   return isDefault || !canEdit ? (

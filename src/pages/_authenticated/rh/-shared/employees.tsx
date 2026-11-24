@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
 import Select from "@/components/general-components/Select";
-import { cn } from "@/lib/utils";
+import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
 import { dateBr, errorMessage, todayIso } from "../../comercial/-shared/commercial";
 
 /** Funcionários (RH): tipos (espelham a API), situação e o lançamento no histórico. */
@@ -52,17 +52,13 @@ export const employeesApi = {
   delete: async <T,>(path: string) => (await api.delete<T>(`employees/${path}`)).data,
 };
 
-const STATUS_COLOR: Record<EmployeeStatus, string> = {
-  ativo: "#22c55e", ferias: "#3b82f6", afastado: "#f59e0b", suspenso: "#ef4444", indisponivel: "#f59e0b", desligado: "#6b7280",
+const STATUS_TONE: Record<EmployeeStatus, StatusTone> = {
+  ativo: "success", ferias: "info", afastado: "warning", suspenso: "danger", indisponivel: "warning", desligado: "neutral",
 };
 
 /** Selo da situação, com "até quando" quando a pessoa está fora por um período. */
 export function EmployeeStatusBadge({ status, label, until }: { status: EmployeeStatus; label: string; until?: string | null }) {
-  return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded bg-muted px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", status === "desligado" && "text-muted-foreground")}>
-      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: STATUS_COLOR[status] }} /> {label}{until ? ` até ${dateBr(until)}` : ""}
-    </span>
-  );
+  return <StatusBadge tone={STATUS_TONE[status] ?? "neutral"} pulse={status !== "desligado"}>{label}{until ? ` até ${dateBr(until)}` : ""}</StatusBadge>;
 }
 
 export const periodText = (start: string, end: string | null, period: boolean) => (!period ? dateBr(start) : end ? `${dateBr(start)} a ${dateBr(end)}` : `desde ${dateBr(start)}, sem data de volta`);

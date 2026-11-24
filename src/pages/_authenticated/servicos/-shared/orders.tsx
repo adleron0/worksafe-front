@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
 import SlideConfirm from "@/components/general-components/SlideConfirm";
-import { cn } from "@/lib/utils";
+import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
 import { dateBr, errorMessage, todayIso } from "../../comercial/-shared/commercial";
 import { BILLING_KEY } from "../../comercial/-shared/contracts";
 import { PROPOSAL_KEY } from "../../comercial/-shared/proposals";
@@ -91,14 +91,16 @@ export function moveLabel(from: OrderStatus, to: OrderStatus): string {
   return ({ a_mobilizar: "Liberar sem pedido", agendada: "Agendar", em_execucao: "Iniciar a execução", concluida: "Concluir o serviço", encerrada: "Encerrar" } as Record<string, string>)[to] ?? ORDER_STATUS_LABEL[to];
 }
 
+/** Tom do selo de cada etapa da OS (o mais próximo da cor do quadro). */
+const ORDER_STAGE_TONE: Record<OrderStatus, StatusTone> = {
+  a_liberar: "neutral", a_mobilizar: "warning", agendada: "info", em_execucao: "primary", concluida: "success", encerrada: "success", cancelada: "neutral",
+};
+
 export function OrderStageBadge({ status, late }: { status: OrderStatus; late?: boolean }) {
-  const color = ORDER_STAGES.find((stage) => stage.id === status)?.color ?? "#6b7280";
   return (
     <span className="inline-flex items-center gap-1">
-      <span className={cn("inline-flex items-center gap-1.5 rounded bg-muted px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", status === "cancelada" && "line-through text-muted-foreground")}>
-        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} /> {ORDER_STATUS_LABEL[status]}
-      </span>
-      {late && <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300 whitespace-nowrap">Atrasada</span>}
+      <StatusBadge tone={ORDER_STAGE_TONE[status] ?? "neutral"} pulse={status !== "encerrada" && status !== "cancelada"}>{ORDER_STATUS_LABEL[status]}</StatusBadge>
+      {late && <StatusBadge tone="danger">Atrasada</StatusBadge>}
     </span>
   );
 }

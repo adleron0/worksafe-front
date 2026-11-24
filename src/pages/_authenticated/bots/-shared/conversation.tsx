@@ -8,11 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import { Tip, errorMessage } from "../../comercial/-shared/commercial";
 import { ActionCard } from "./action-card";
 import { BotAvatar } from "./avatar";
 import {
-  Bot, Conversation, ConversationView, Markdown, Message, RISK_CLASS, RISK_LABEL, RunStep, STATUS_KEY, STATUS_LABEL, TOOL_LABEL, aiApi, timeBr,
+  Bot, Conversation, ConversationView, Markdown, Message, RISK_COLOR, RISK_ICON, RISK_LABEL, RunStep, STATUS_KEY, STATUS_LABEL, TOOL_LABEL, aiApi, timeBr,
 } from "./bots";
 import api from "@/services/api";
 import type { Shortcut } from "./pages";
@@ -290,14 +292,14 @@ function AboutSheet({ bot, wide, open, onOpenChange }: { bot: Bot; wide: boolean
           <SheetDescription>{bot.role}. {bot.description}</SheetDescription>
         </SheetHeader>
         <div className="mt-3 flex justify-center">
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${bot.providerReady ? "bg-muted text-muted-foreground" : "bg-destructive/10 text-destructive"}`}>
-            {bot.providerReady ? `${bot.providerLabel} · ${bot.model}` : "IA sem chave configurada"}
-          </span>
+          {bot.providerReady
+            ? <TagBadge icon="cpu" size="md">{`${bot.providerLabel} · ${bot.model}`}</TagBadge>
+            : <StatusBadge tone="danger">IA sem chave configurada</StatusBadge>}
         </div>
         <p className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">O que posso fazer por você</p>
         <div className="flex flex-wrap gap-1.5">
           {bot.capabilities.map((tool) => (
-            <span key={tool.name} className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${RISK_CLASS[tool.risk]}`}>{TOOL_LABEL[tool.name] ?? tool.title} · {RISK_LABEL[tool.risk]}</span>
+            <TagBadge key={tool.name} icon={RISK_ICON[tool.risk]} color={RISK_COLOR[tool.risk]}>{TOOL_LABEL[tool.name] ?? tool.title} · {RISK_LABEL[tool.risk]}</TagBadge>
           ))}
         </div>
         <p className="mt-3 text-xs text-muted-foreground">"Com confirmação" só acontece depois que você desliza para confirmar. Os bots usam as suas permissões.</p>

@@ -4,6 +4,7 @@ import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/general-components/Icon";
+import TagBadge from "@/components/general-components/TagBadge";
 import PageHeader from "@/components/general-components/PageHeader";
 import ListCard from "@/components/general-components/ListCard";
 import ListToolbar from "@/components/general-components/ListToolbar";
@@ -16,7 +17,6 @@ export const Route = createFileRoute("/_authenticated/rh/_documentos/tipos-de-do
   component: DocumentTypesPage,
 });
 
-const tag = "rounded bg-muted px-1.5 py-0.5 text-xs font-medium whitespace-nowrap";
 const columnsOf = (folders: DocTypes["folders"]): DataColumn<DocType>[] => [
   { id: "name", header: "Tipo", className: "min-w-[200px]", cell: (type) => <p className="font-medium truncate max-w-[18rem]">{type.name}</p> },
   {
@@ -32,8 +32,8 @@ const columnsOf = (folders: DocTypes["folders"]): DataColumn<DocType>[] => [
     cell: (type) => (type.required || type.inIntegration
       ? (
         <div className="flex gap-1">
-          {type.required && <span className={tag}>{type.requiredProfessionalIds.length ? `Obrigatório para ${type.requiredProfessionalIds.length} ${type.requiredProfessionalIds.length === 1 ? "função" : "funções"}` : "Obrigatório para todos"}</span>}
-          {type.inIntegration && <span className={tag}>Entra na integração</span>}
+          {type.required && <TagBadge icon="asterisk">{type.requiredProfessionalIds.length ? `Obrigatório para ${type.requiredProfessionalIds.length} ${type.requiredProfessionalIds.length === 1 ? "função" : "funções"}` : "Obrigatório para todos"}</TagBadge>}
+          {type.inIntegration && <TagBadge icon="log-in">Entra na integração</TagBadge>}
         </div>
       )
       : <span className="text-muted-foreground">—</span>),

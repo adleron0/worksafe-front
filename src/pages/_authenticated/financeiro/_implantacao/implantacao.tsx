@@ -6,6 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import TagBadge from "@/components/general-components/TagBadge";
 import Input from "@/components/general-components/Input";
 import CalendarPicker from "@/components/general-components/Calendar";
 import { Button } from "@/components/ui/button";
@@ -147,7 +148,7 @@ function Setup() {
                 {data.accounts.map((account) => (
                   <div key={account.id} className="min-w-[880px] flex flex-row items-center gap-2 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold">{account.name}{account.isDefault && <span className="ml-2 text-xs font-normal rounded-chip bg-primary-soft text-primary-soft-foreground px-1.5 py-0.5 font-medium">Padrão</span>}</p>
+                      <p className="font-semibold">{account.name}{account.isDefault && <TagBadge icon="star" className="ml-2">Padrão</TagBadge>}</p>
                       <p className="text-xs text-muted-foreground">
                         {account.type === "gateway" ? `${gatewayOptions.find((g) => g.id === account.gateway)?.name ?? "Gateway"} · saldo disponível no provedor` : [bankTypeLabel(account.type), account.bankName].filter(Boolean).join(" · ")}
                       </p>

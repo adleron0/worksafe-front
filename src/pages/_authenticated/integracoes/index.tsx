@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import TagBadge from "@/components/general-components/TagBadge";
 import GatewaysGrid from "./-gateways/-components/GatewaysGrid";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -36,9 +37,7 @@ function IntegrationsPage() {
             >
               <Icon name="message-square" className="h-4 w-4 flex-shrink-0" />
               <span>Comunicação</span>
-              <span className="text-[10px] bg-background/50 px-1.5 py-0.5 rounded ml-1">
-                Em breve
-              </span>
+              <TagBadge className="ml-1">Em breve</TagBadge>
             </TabsTrigger>
             <TabsTrigger
               value="analytics"
@@ -47,9 +46,7 @@ function IntegrationsPage() {
             >
               <Icon name="chart-bar" className="h-4 w-4 flex-shrink-0" />
               <span>Analytics</span>
-              <span className="text-[10px] bg-background/50 px-1.5 py-0.5 rounded ml-1">
-                Em breve
-              </span>
+              <TagBadge className="ml-1">Em breve</TagBadge>
             </TabsTrigger>
             <TabsTrigger
               value="webhooks"
@@ -58,9 +55,7 @@ function IntegrationsPage() {
             >
               <Icon name="webhook" className="h-4 w-4 flex-shrink-0" />
               <span>Webhooks</span>
-              <span className="text-[10px] bg-background/50 px-1.5 py-0.5 rounded ml-1">
-                Em breve
-              </span>
+              <TagBadge className="ml-1">Em breve</TagBadge>
             </TabsTrigger>
           </TabsList>
           <ScrollBar

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import StatusBadge from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import SimpleCrud from "../-shared/SimpleCrud";
 import TransfersSection from "../-shared/transfers";
 import { BankAccount, bankTypeLabel, formatMoney, gatewayOptions } from "../-shared/financial";
@@ -36,7 +37,7 @@ function BankAccounts() {
           <div className="min-w-0">
             <p className="font-medium">
               {item.name}
-              {item.isDefault && <StatusBadge tone="primary" className="ml-2">Padrão</StatusBadge>}
+              {item.isDefault && <TagBadge icon="star" className="ml-2">Padrão</TagBadge>}
               {item.inactiveAt && <StatusBadge className="ml-2">Inativa</StatusBadge>}
             </p>
             {(bankLine(item) || item.pixKey) && <p className="text-xs text-muted-foreground truncate">{[bankLine(item), item.pixKey && `Pix: ${item.pixKey}`].filter(Boolean).join(" · ")}</p>}

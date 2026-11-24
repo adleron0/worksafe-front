@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import useVerify from "@/hooks/use-verify";
@@ -42,7 +43,7 @@ const columns: DataColumn<DealRow>[] = [
     cell: (row) => (
       <div className="flex flex-wrap gap-1.5 max-w-[22rem]">
         {row.proposals.map((p) => (
-          <span key={p.id} className="inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs"><KindBadge kind={p.kind} /> <span className="tabular-nums">{p.number}</span></span>
+          <span key={p.id} className="inline-flex items-center gap-1 text-xs"><KindBadge kind={p.kind} /> <span className="tabular-nums">{p.number}</span></span>
         ))}
       </div>
     ),
@@ -52,7 +53,7 @@ const columns: DataColumn<DealRow>[] = [
     cell: (row) => (
       <div className="flex flex-wrap items-center gap-1">
         <DealStatusBadge status={row.status} />
-        {row.breach && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300 whitespace-nowrap">Revisar desconto</span>}
+        {row.breach && <StatusBadge tone="warning">Revisar desconto</StatusBadge>}
       </div>
     ),
   },

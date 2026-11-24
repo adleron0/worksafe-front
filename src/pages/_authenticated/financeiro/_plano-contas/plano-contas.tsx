@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import CalendarPicker from "@/components/general-components/Calendar";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import Input from "@/components/general-components/Input";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { cn } from "@/lib/utils";
@@ -180,7 +181,7 @@ function ChartOfAccounts() {
                 ) : <span className="w-6 shrink-0" />}
                 <span className="tabular-nums text-xs text-muted-foreground mr-2 shrink-0">{account.code}</span>
                 <span className={cn("truncate", account.level < 3 && (isParent || account.level === 1) ? "font-semibold" : "")}>{highlight(account.name)}</span>
-                {inactive && <span className="ml-2 text-xs rounded bg-muted px-1.5 py-0.5 shrink-0">Inativa</span>}
+                {inactive && <StatusBadge tone="neutral" className="ml-2 shrink-0">Inativa</StatusBadge>}
                 {isParent && isCollapsed && <span className="ml-2 text-xs text-muted-foreground shrink-0">{account.children} conta(s)</span>}
               </div>
               {/* no celular: lançamentos, valor e ações numa linha só; no desktop viram colunas */}

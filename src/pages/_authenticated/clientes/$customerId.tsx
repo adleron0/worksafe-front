@@ -1,4 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, patch } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
@@ -85,7 +86,7 @@ function CustomerPage() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-xl font-bold truncate">{customer!.name}</h1>
-                  {!customer!.active && <span className="rounded-full bg-red-200 text-red-900 dark:bg-red-900 dark:text-red-200 px-2 py-0.5 text-xs">Inativo</span>}
+                  {!customer!.active && <StatusBadge tone="neutral">Inativo</StatusBadge>}
                 </div>
                 <p className="text-sm text-muted-foreground truncate">
                   {docLabel(customer!.cnpj)} {formatDocumento(customer!.cnpj)}

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useVerify from "@/hooks/use-verify";
 import StatusBadge from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import { FormPageHeader, FormPageSkeleton } from "@/components/general-components/FormPage";
 import { EmptyState } from "@/components/general-components/DataTable";
 import { useBackToList } from "@/hooks/use-back-to-list";
@@ -28,7 +29,7 @@ function EditRecurrence() {
     <>
       <FormPageHeader backTo="/financeiro/recorrentes" backLabel="Recorrentes" title={data ? data.description : "Editar recorrente"}
         description="A mudança vale para os lançamentos em aberto de hoje em diante. Os já vencidos e os pagos não mudam."
-        badge={data && (data.inactiveAt ? <StatusBadge>Encerrado</StatusBadge> : <StatusBadge tone="primary">{data.kind === "payable" ? "A pagar" : "A receber"}</StatusBadge>)} />
+        badge={data && (data.inactiveAt ? <StatusBadge>Encerrado</StatusBadge> : <TagBadge icon="repeat">{data.kind === "payable" ? "A pagar" : "A receber"}</TagBadge>)} />
       {isLoading ? <FormPageSkeleton />
         : isError || !data ? <EmptyState icon="search-x" title="Recorrente não encontrado." />
           : data.inactiveAt ? <EmptyState title="Este recorrente foi encerrado." description="Recorrentes encerrados não podem ser editados." />

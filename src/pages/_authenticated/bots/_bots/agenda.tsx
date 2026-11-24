@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import { BotAvatar } from "../-shared/avatar";
 import { TEAM_KEY, aiApi, dateTimeBr } from "../-shared/bots";
@@ -74,7 +75,7 @@ function AgendaPage() {
             <div key={row.id} className="flex flex-wrap items-start gap-3 border-b px-4 py-3 last:border-b-0">
               <Icon name={row.frequency === "event" ? "zap" : "clock"} className={`mt-0.5 h-4 w-4 ${row.frequency === "event" ? "text-amber-500" : "text-muted-foreground"}`} />
               <div className="min-w-0 flex-1 basis-56">
-                <p className="font-medium">{row.name} {!row.active && <span className="ml-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-normal text-muted-foreground">pausada</span>}</p>
+                <p className="font-medium">{row.name} {!row.active && <StatusBadge tone="neutral" className="ml-1">pausada</StatusBadge>}</p>
                 <p className="text-xs text-muted-foreground">
                   {whenText(row)} · {row.channels.map((channel) => CHANNEL_LABEL[channel] ?? channel).join(", ")}
                   {row.active && row.frequency !== "event" && row.nextRunAt ? ` · próxima: ${dateTimeBr(row.nextRunAt)}` : ""}

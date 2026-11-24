@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import Icon from "@/components/general-components/Icon";
 import StatusBadge from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
 import { CertificateThumbnail } from "@/components/general-components/visualizadorCertificados";
 import { renderVersion, resolveHighlight, themeInfo } from "@/components/general-components/visualizadorCertificados/highlight";
@@ -20,6 +20,9 @@ const formatDate = (date: string | Date | undefined) => {
 };
 
 /** Válido = ativo e dentro da validade (comparando só as datas, sem fuso). */
+
+/** Cor da etiqueta de destaque (a cor principal de cada acabamento do selo). */
+const HIGHLIGHT_TAG_COLOR: Record<string, string> = { ouro: "#d4a017", prata: "#7b8791", holografico: "#a855f7" };
 export const isValidCertificate = (item: ICertificate) => {
   if (item.inactiveAt) return false;
   if (item.expirationDate) {
@@ -65,10 +68,7 @@ export const certificadosColumns: DataColumn<ICertificate>[] = [
             <p className="font-medium truncate flex items-center gap-1.5">
               <span className="truncate">{item.trainee?.name || "Não informado"}</span>
               {highlightTheme && highlight && (
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-px text-[10px] font-semibold" style={{ background: highlightTheme.gradient, color: highlightTheme.text }}>
-                  <Icon name={highlightTheme.icon} className="h-3 w-3" />
-                  {highlight.label}
-                </span>
+                <TagBadge icon={highlightTheme.icon} color={HIGHLIGHT_TAG_COLOR[highlightTheme.id] ?? "#d4a017"} className="shrink-0">{highlight.label}</TagBadge>
               )}
             </p>
             <p className={`${muted} truncate`}>{item.course?.name || "Não informado"}</p>

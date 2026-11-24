@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { Tip, dateBr, errorMessage } from "../../comercial/-shared/commercial";
@@ -128,7 +129,7 @@ function EmployeePage() {
           <div className="flex flex-wrap items-center gap-2 mt-1">
             <h1 className="text-xl font-bold">{employee?.name ?? "Novo funcionário"}</h1>
             {employee && <EmployeeStatusBadge status={employee.status} label={employee.statusLabel} until={employee.statusUntil} />}
-            {employee?.inactive && <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">Cadastro inativo</span>}
+            {employee?.inactive && <StatusBadge tone="neutral">Cadastro inativo</StatusBadge>}
           </div>
           {employee && <p className="text-sm text-muted-foreground truncate">{[employee.primaryRole ?? "Sem função", employee.registration && `matrícula ${employee.registration}`].filter(Boolean).join(" · ")}</p>}
         </div>

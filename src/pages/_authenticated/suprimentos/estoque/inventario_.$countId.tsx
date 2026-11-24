@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import Input from "@/components/general-components/Input";
 import { Input as ShadInput } from "@/components/ui/input";
 import SlideConfirm from "@/components/general-components/SlideConfirm";
@@ -81,7 +82,7 @@ function CountPage() {
           <Link to="/suprimentos/estoque/inventario" className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1"><Icon name="arrow-left" className="w-3 h-3" /> Inventário</Link>
           <div className="flex flex-wrap items-center gap-2 mt-1">
             <h1 className="text-xl font-bold">Contagem #{count.id} · {count.location?.name}</h1>
-            <Pill tone={countStatusTone(count.status)}>{count.status === "aberta" ? "Aberta" : count.status === "fechada" ? "Fechada" : "Cancelada"}</Pill>
+            <StatusBadge tone={({ amber: "warning", green: "success", muted: "neutral" } as const)[countStatusTone(count.status)]}>{count.status === "aberta" ? "Aberta" : count.status === "fechada" ? "Fechada" : "Cancelada"}</StatusBadge>
             {count.blindCount && <Pill>Às cegas</Pill>}
           </div>
           {open && missingCount > 0 && <p className="text-xs text-amber-700 dark:text-amber-400">Faltam {missingCount} item(ns) para contar. Dá para fechar assim mesmo, considerando zero.</p>}

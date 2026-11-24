@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, dateBr, errorMessage, money } from "../-shared/commercial";
 import {
   CONTRACTS_KEY, CONTRACT_KEY, Contract, ContractClassSlot, ContractInstallment, ContractStatus, ContractStatusBadge,
-  RECORD_STATUS_LABEL, dueRuleText, pctBr, workText,
+  RecordStatusBadge, dueRuleText, pctBr, workText,
 } from "../-shared/contracts";
 import { BillDialog, CustomerOrderCard, MeasurementBillDialog } from "../-shared/billing";
 import { RETENTION_TAXES, RetentionRates } from "../-shared/retentions";
@@ -162,7 +162,7 @@ function ContractPage() {
                         <div className="lg:w-32 font-semibold tabular-nums">{money(m.value)}</div>
                         <div className="flex-1 min-w-0">
                           {m.record ? (
-                            <p><span className={cn("rounded px-1.5 py-0.5 text-xs font-medium", m.record.paid ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200" : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200")}>{RECORD_STATUS_LABEL[m.record.status] ?? m.record.status}</span>{" "}
+                            <p><RecordStatusBadge status={m.record.status} paid={m.record.paid} />{" "}
                               NF {m.record.invoiceNumber} de {dateBr(m.record.invoiceIssuedAt)} · vence em {dateBr(m.record.dueDate)}{m.record.paidAt ? ` · pago em ${dateBr(m.record.paidAt)}` : ""}</p>
                           ) : <p className="text-muted-foreground">Sem valor a cobrar (coberta pela caução)</p>}
                         </div>
@@ -213,9 +213,7 @@ function ContractPage() {
                   <div className="flex-1 min-w-0">
                     {installment.record ? (
                       <p>
-                        <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium", installment.record.paid ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200" : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200")}>
-                          {RECORD_STATUS_LABEL[installment.record.status] ?? installment.record.status}
-                        </span>{" "}
+                        <RecordStatusBadge status={installment.record.status} paid={installment.record.paid} />{" "}
                         NF {installment.record.invoiceNumber} de {dateBr(installment.record.invoiceIssuedAt)} · vence em {dateBr(installment.record.dueDate)}
                         {installment.record.netValue != null && installment.record.netValue < installment.value ? ` · líquido ${money(installment.record.netValue)}` : ""}
                         {installment.record.paidAt ? ` · pago em ${dateBr(installment.record.paidAt)}` : ""}

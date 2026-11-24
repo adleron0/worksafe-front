@@ -5,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import KanbanView, { KanbanColumn } from "@/components/general-components/KanbanView";
 import PageHeader from "@/components/general-components/PageHeader";
 import ListCard from "@/components/general-components/ListCard";
@@ -62,7 +63,7 @@ function RentalsPage() {
   const empty = search || stage ? "Nenhuma ordem de locação com esses filtros." : "Nenhuma ordem de locação ainda. Ela nasce sozinha quando uma proposta de locação é aceita.";
   const when = (row: RentalRow) => `${dateBr(row.startDate)}${row.expectedEnd ? ` a ${dateBr(row.expectedEnd)}` : " · até devolver"}`;
   const billBadge = (row: RentalRow) => (row.toBill
-    ? <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">{row.fromContract ? `A faturar ${money(row.pendingValue)}` : "Faturar"}</span>
+    ? <StatusBadge tone="warning">{row.fromContract ? `A faturar ${money(row.pendingValue)}` : "Faturar"}</StatusBadge>
     : null);
 
   const stageOptions: StatusChipOption[] = [

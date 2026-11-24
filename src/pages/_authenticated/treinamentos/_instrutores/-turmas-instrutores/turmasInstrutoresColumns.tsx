@@ -10,6 +10,6 @@ export const turmasInstrutoresColumns: DataColumn<IEntity>[] = [
   },
   {
     id: "status", header: "Status",
-    cell: (item) => <StatusBadge tone={!item.inactiveAt ? "success" : "danger"}>{!item.inactiveAt ? "Ativo" : "Inativo"}</StatusBadge>,
+    cell: (item) => <StatusBadge tone={!item.inactiveAt ? "success" : "neutral"}>{!item.inactiveAt ? "Ativo" : "Inativo"}</StatusBadge>,
   },
 ];

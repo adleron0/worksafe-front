@@ -97,11 +97,9 @@ export const useTeam = (enabled = true) => useQuery({ queryKey: [TEAM_KEY], enab
 export const usePendingActions = () => useQuery({ queryKey: [ACTIONS_KEY], refetchInterval: 20 * 1000, queryFn: () => aiApi.get<PendingAction[]>("actions") });
 
 export const RISK_LABEL: Record<BotCapability["risk"], string> = { read: "Consulta", draft: "Rascunho", sensitive: "Com confirmação" };
-export const RISK_CLASS: Record<BotCapability["risk"], string> = {
-  read: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300",
-  draft: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  sensitive: "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300",
-};
+/** Cor da etiqueta de cada nível de risco (TagBadge colorida). */
+export const RISK_COLOR: Record<BotCapability["risk"], string> = { read: "#0ea5e9", draft: "#f59e0b", sensitive: "#f43f5e" };
+export const RISK_ICON: Record<BotCapability["risk"], string> = { read: "eye", draft: "file-pen-line", sensitive: "shield-alert" };
 /** Nome curto de cada ferramenta, para as etiquetas "o que este bot pode fazer". */
 export const TOOL_LABEL: Record<string, string> = {
   minha_esteira: "Sua esteira", buscar_clientes: "Buscar clientes", listar_propostas: "Propostas", ver_proposta: "Detalhe da proposta",

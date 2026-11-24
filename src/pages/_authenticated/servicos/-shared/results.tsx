@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
+import TagBadge from "@/components/general-components/TagBadge";
 import { cn } from "@/lib/utils";
 import { Tip, decimal, errorMessage, marginZoneOf, money } from "../../comercial/-shared/commercial";
 import { ORDER_RESULT_KEY, OrderStatus, ordersApi } from "./orders";
@@ -27,12 +28,18 @@ export interface ResultList {
 export const RESULTS_KEY = "serviceOrderResults";
 export const COSTS_PERMISSION = "view_custos_comercial";
 
+/** A cor de cada faixa de margem (a mesma da barra da proposta). */
+const MARGIN_COLOR: Record<string, string> = { "Risco de prejuízo": "#ef4444", Apertada: "#f59e0b", "Saudável": "#22c55e", Excelente: "#3b82f6" };
 const marginText = (margin: number | null) => (margin === null ? "—" : `${decimal(margin, 1)}%`);
 /** Margem na escala de cores da proposta, com a palavra junto para não depender só da cor. */
 export function MarginTag({ margin, showLabel = true }: { margin: number | null; showLabel?: boolean }) {
   if (margin === null) return <span className="text-muted-foreground">—</span>;
   const zone = marginZoneOf(margin / 100);
-  return <span className={cn("font-semibold tabular-nums whitespace-nowrap", zone.text)}>{marginText(margin)}{showLabel && <span className="font-normal"> · {zone.label.toLowerCase()}</span>}</span>;
+  return (
+    <TagBadge icon="gauge" color={MARGIN_COLOR[zone.label]} className="tabular-nums">
+      <span className="font-semibold">{marginText(margin)}</span>{showLabel && <> · {zone.label.toLowerCase()}</>}
+    </TagBadge>
+  );
 }
 /** A obra caminha para fechar acima ou abaixo do que a proposta previu. */
 export function Versus({ projected, budget }: { projected: number; budget: number }) {

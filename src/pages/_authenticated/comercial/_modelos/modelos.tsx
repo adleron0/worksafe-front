@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import TagBadge from "@/components/general-components/TagBadge";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
@@ -126,8 +128,8 @@ function TemplatesPage() {
                     </p>
                   </div>
                   <div className="flex gap-1 flex-wrap justify-end">
-                    {row.isDefault && <span className="text-xs rounded-chip bg-primary-soft text-primary-soft-foreground px-1.5 py-0.5 font-medium">Padrão</span>}
-                    {row.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Inativo</span>}
+                    {row.isDefault && <TagBadge icon="star" color="hsl(var(--primary))">Padrão</TagBadge>}
+                    {row.inactiveAt && <StatusBadge tone="neutral">Inativo</StatusBadge>}
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-3">{plain(row.body)}</p>
@@ -158,7 +160,7 @@ function TemplatesPage() {
               columns={[
                 {
                   id: "title", header: "Título", className: "w-72",
-                  cell: (row) => <p className="font-medium">{row.title}{row.inactiveAt && <span className="ml-2 text-xs font-normal rounded bg-muted px-1.5 py-0.5">Inativo</span>}</p>,
+                  cell: (row) => <p className="font-medium">{row.title}{row.inactiveAt && <StatusBadge tone="neutral" className="ml-2 align-middle">Inativo</StatusBadge>}</p>,
                 },
                 { id: "kind", header: "Assunto", className: "w-40 text-muted-foreground", cell: (row) => TERM_KINDS.find((k) => k.id === row.kind)?.name ?? row.kind },
                 { id: "body", header: "Texto", cell: (row) => <p className="text-muted-foreground truncate max-w-[32rem]">{plain(row.body)}</p> },

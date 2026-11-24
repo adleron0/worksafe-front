@@ -6,6 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import Select from "@/components/general-components/Select";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import Input from "@/components/general-components/Input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -44,10 +45,10 @@ interface DraftRow { id: number; bankAccount: string; status: Draft["status"]; s
 const DRAFT_STATUS: Record<Draft["status"], string> = { rascunho: "aguardando revisão", nao_confere: "soma não confere", parcial: "lançado em parte", lancado: "lançado", descartado: "descartado" };
 
 const STATUS = {
-  conciliado: { text: "Já conciliada", className: "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300", icon: "circle-check" },
-  sugerido: { text: "Par encontrado", className: "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300", icon: "link" },
-  sem_par: { text: "Sem par", className: "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300", icon: "circle-help" },
-  antes_inicio: { text: "Antes da data inicial", className: "bg-muted text-muted-foreground", icon: "history" },
+  conciliado: { text: "Já conciliada", tone: "success" },
+  sugerido: { text: "Par encontrado", tone: "info" },
+  sem_par: { text: "Sem par", tone: "warning" },
+  antes_inicio: { text: "Antes da data inicial", tone: "neutral" },
 } as const;
 const SETTLED = (status: Line["status"]) => status === "conciliado" || status === "antes_inicio";
 
@@ -197,7 +198,7 @@ function Reconciliation() {
                 <span className="font-medium">{row.bankAccount}</span>
                 <span className="text-muted-foreground">{formatDate(row.periodFrom)} a {formatDate(row.periodTo)}</span>
                 {row.fileName && <span className="text-muted-foreground truncate max-w-56">{row.fileName}</span>}
-                <span className={cn("rounded px-1.5 py-0.5 text-xs", row.status === "nao_confere" ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300" : "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300")}>{DRAFT_STATUS[row.status]}</span>
+                <StatusBadge tone={row.status === "nao_confere" ? "warning" : "info"}>{DRAFT_STATUS[row.status]}</StatusBadge>
               </Link>
             ))}
           </div>
@@ -220,10 +221,10 @@ function Reconciliation() {
         <>
           <div className="flex flex-wrap items-center gap-3 mb-3 text-sm">
             <span className="text-muted-foreground">{formatDate(preview.period.from)} a {formatDate(preview.period.to)} · {preview.totals.lines} linha(s):</span>
-            <span className="rounded bg-green-100 dark:bg-green-950/50 px-2 py-0.5">{preview.totals.reconciled} já conciliada(s)</span>
-            <span className="rounded bg-blue-100 dark:bg-blue-950/50 px-2 py-0.5">{preview.totals.suggested} com par</span>
-            <span className="rounded bg-amber-100 dark:bg-amber-950/50 px-2 py-0.5">{preview.totals.unmatched} sem par</span>
-            {preview.totals.beforeStart > 0 && <span className="rounded bg-muted px-2 py-0.5">{preview.totals.beforeStart} antes da data inicial</span>}
+            <StatusBadge tone="success" pulse={false}>{preview.totals.reconciled} já conciliada(s)</StatusBadge>
+            <StatusBadge tone="info" pulse={false}>{preview.totals.suggested} com par</StatusBadge>
+            <StatusBadge tone="warning" pulse={false}>{preview.totals.unmatched} sem par</StatusBadge>
+            {preview.totals.beforeStart > 0 && <StatusBadge tone="neutral" pulse={false}>{preview.totals.beforeStart} antes da data inicial</StatusBadge>}
             <Button variant="link" size="sm" className="px-0" onClick={() => setHideDone((v) => !v)}>{hideDone ? "Mostrar as já resolvidas" : "Esconder as já resolvidas"}</Button>
             {can(`update_${FINANCIAL_ABILITY}`) && <Button className="ml-auto" disabled={applying || !pending || (!!draft && (!draft.check.ok || draft.status === "lancado" || draft.status === "descartado"))} onClick={() => apply()}>{draft ? "Lançar" : "Conciliar"} {pending} linha(s)</Button>}
           </div>
@@ -264,7 +265,7 @@ function Reconciliation() {
                   <div className="xl:w-24 shrink-0 text-muted-foreground">{formatDate(line.date)}</div>
                   <div className="flex-1 xl:flex-none xl:w-4/12 min-w-0 break-words">{line.memo || "Sem histórico"}</div>
                   <div className={cn("xl:w-32 shrink-0 tabular-nums font-semibold text-right", line.amount < 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400")}>{formatMoney(line.amount)}</div>
-                  <div className="xl:w-32 shrink-0"><span className={cn("inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium", status.className)}><Icon name={status.icon} className="w-3 h-3" />{status.text}</span></div>
+                  <div className="xl:w-32 shrink-0"><StatusBadge tone={status.tone} pulse={!SETTLED(line.status)}>{status.text}</StatusBadge></div>
                   {line.status === "antes_inicio" && <p className="w-full xl:w-auto xl:flex-1 text-xs text-muted-foreground">Já está dentro do saldo inicial. Nada a fazer.</p>}
                   {!SETTLED(line.status) && (
                     <div className="w-full xl:w-auto xl:flex-1 flex flex-col gap-2 min-w-0">

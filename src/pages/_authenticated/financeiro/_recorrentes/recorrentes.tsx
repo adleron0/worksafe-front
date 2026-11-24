@@ -5,6 +5,7 @@ import api, { get } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import PageHeader from "@/components/general-components/PageHeader";
 import ListCard from "@/components/general-components/ListCard";
 import ListToolbar from "@/components/general-components/ListToolbar";
@@ -59,7 +60,7 @@ const COLUMNS: DataColumn<Recurrence>[] = [
   {
     id: "next", header: "Próximo vencimento",
     cell: (item) => (item.inactiveAt
-      ? <span className="text-xs rounded bg-muted px-1.5 py-0.5">Encerrado</span>
+      ? <StatusBadge tone="neutral" pulse={false}>Encerrado</StatusBadge>
       : (
         <div className="whitespace-nowrap">
           <p>{item.nextDue ? formatDate(item.nextDue) : "—"}</p>

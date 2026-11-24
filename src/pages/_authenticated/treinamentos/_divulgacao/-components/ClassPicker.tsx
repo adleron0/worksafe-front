@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import Icon from "@/components/general-components/Icon";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import StatusBadge, { type StatusTone } from "@/components/general-components/StatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useMarketingSettings } from "../-lib/data";
@@ -11,11 +11,11 @@ import type { MarketingClass } from "../-lib/types";
 import { dateParts, money, situationOf, remainingSeats } from "../-lib/variables";
 import DivulgarDialog from "./DivulgarDialog";
 
-const SITUATION: Record<string, { label: string; className: string }> = {
-  vagas_abertas: { label: "Vagas abertas", className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" },
-  ultimas_vagas: { label: "Últimas vagas", className: "bg-amber-500/15 text-amber-700 dark:text-amber-300" },
-  lotada: { label: "Lotada", className: "bg-red-500/15 text-red-700 dark:text-red-300" },
-  promocao: { label: "Promoção", className: "bg-sky-500/15 text-sky-700 dark:text-sky-300" },
+const SITUATION: Record<string, { label: string; tone: StatusTone }> = {
+  vagas_abertas: { label: "Vagas abertas", tone: "success" },
+  ultimas_vagas: { label: "Últimas vagas", tone: "warning" },
+  lotada: { label: "Lotada", tone: "danger" },
+  promocao: { label: "Promoção", tone: "info" },
 };
 
 /** Próximas turmas (a partir de hoje), com atalho para divulgar. */
@@ -97,10 +97,10 @@ export default function ClassPicker() {
                       {price > 0 && <span className="text-muted-foreground">· {money(price)}</span>}
                     </div>
                     <div className="flex items-center justify-between gap-2 pt-1">
-                      <Badge variant="secondary" className={SITUATION[sit].className}>
+                      <StatusBadge tone={SITUATION[sit].tone}>
                         {SITUATION[sit].label}
                         {left !== null && sit !== "lotada" ? ` · ${left} vaga${left === 1 ? "" : "s"}` : ""}
-                      </Badge>
+                      </StatusBadge>
                       <Button size="sm" onClick={() => setClassId(t.id)}>
                         <Icon name="megaphone" className="w-3.5 h-3.5" /> Divulgar
                       </Button>

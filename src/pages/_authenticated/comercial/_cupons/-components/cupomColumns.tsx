@@ -3,11 +3,11 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Icon from "@/components/general-components/Icon";
 import StatusBadge from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
 import { ICupom } from "../-interfaces/entity.interface";
 
 const muted = "text-xs text-muted-foreground";
-const tag = "inline-flex items-center gap-1 rounded-chip border bg-muted/50 px-1.5 py-px text-[11px] font-medium text-muted-foreground whitespace-nowrap";
 const money = (value: number | string) => `R$ ${Number(value).toFixed(2).replace(".", ",")}`;
 
 /** Data do backend (ISO com fuso ou AAAA-MM-DD) sem deslocar o dia. */
@@ -50,10 +50,10 @@ export const cupomColumns: DataColumn<ICupom>[] = [
           <Icon name="ticket" className="w-3.5 h-3.5 text-primary shrink-0" />
           <span className="font-semibold text-primary truncate">{item.code}</span>
           {item.course && (
-            <span className="inline-flex items-center gap-0.5"><span className={`${tag}`}><Icon name="square-library" className="w-3 h-3" />curso</span><InfoHint lines={[`Vinculado ao curso ${item.course.name}`]} /></span>
+            <span className="inline-flex items-center gap-0.5"><TagBadge icon="square-library">curso</TagBadge><InfoHint lines={[`Vinculado ao curso ${item.course.name}`]} /></span>
           )}
           {item.class && (
-            <span className="inline-flex items-center gap-0.5"><span className={`${tag}`}><Icon name="clipboard-list" className="w-3 h-3" />turma</span><InfoHint lines={[`Vinculado à turma ${item.class.name}`]} /></span>
+            <span className="inline-flex items-center gap-0.5"><TagBadge icon="clipboard-list">turma</TagBadge><InfoHint lines={[`Vinculado à turma ${item.class.name}`]} /></span>
           )}
         </p>
         {item.description && <p className={`${muted} truncate`}>{item.description}</p>}

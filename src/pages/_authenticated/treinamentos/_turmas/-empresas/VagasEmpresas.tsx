@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import StatusBadge from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,6 +37,9 @@ export const reservationKeys = {
 
 const STATUS_TEXT: Record<StudentResult["status"], string> = {
   inscrito: "Inscrito", convertido: "Passou para a empresa", ja_estava: "Já estava", erro: "Não entrou",
+};
+const STATUS_TONE: Record<StudentResult["status"], "success" | "info" | "neutral" | "danger"> = {
+  inscrito: "success", convertido: "info", ja_estava: "neutral", erro: "danger",
 };
 
 export default function VagasEmpresas({ classId, isClosed = false }: { classId: number; isClosed?: boolean }) {
@@ -132,12 +136,12 @@ function ReservationCard({ reservation: r, canWrite }: { reservation: Reservatio
           <div className="mt-1 flex flex-wrap gap-1.5">
             {r.contract ? (
               <Link to="/comercial/contratos/$contractId" params={{ contractId: String(r.contract.id) }}>
-                <Badge variant="outline" className="gap-1"><Icon name="file-signature" className="w-3 h-3" /> Venda {r.contract.number}</Badge>
+                <TagBadge icon="file-signature">Venda {r.contract.number}</TagBadge>
               </Link>
             ) : (
-              <Badge variant="outline">Sem venda (cortesia)</Badge>
+              <TagBadge icon="gift">Sem venda (cortesia)</TagBadge>
             )}
-            <Badge variant={r.open > 0 ? "secondary" : "default"}>{r.used} de {r.seats} com nome</Badge>
+            <StatusBadge tone={r.open > 0 ? "warning" : "success"}>{r.used} de {r.seats} com nome</StatusBadge>
           </div>
           {r.notes && <p className="mt-1 text-xs text-muted-foreground">{r.notes}</p>}
         </div>
@@ -277,7 +281,7 @@ export function InscreverAlunosDialog({ reservation: r, onClose }: { reservation
             {results.map((x, i) => (
               <li key={i} className="flex items-start justify-between gap-2 px-3 py-1.5">
                 <span className="min-w-0"><span className="font-medium">{x.name || "(sem nome)"}</span> <span className="text-xs text-muted-foreground">{formatCpf(x.cpf)}</span>{x.message && <span className="block text-xs text-muted-foreground">{x.message}</span>}</span>
-                <Badge variant={x.status === "erro" ? "destructive" : "secondary"} className="shrink-0">{STATUS_TEXT[x.status]}</Badge>
+                <StatusBadge tone={STATUS_TONE[x.status] ?? "neutral"} pulse={false} className="shrink-0">{STATUS_TEXT[x.status]}</StatusBadge>
               </li>
             ))}
           </ul>

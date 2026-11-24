@@ -26,6 +26,6 @@ export const areaColumns: DataColumn<Area>[] = [
   },
   {
     id: "status", header: "Situação",
-    cell: (area) => <StatusBadge tone={area.inactiveAt ? "danger" : "success"}>{area.inactiveAt ? "Inativa" : "Ativa"}</StatusBadge>,
+    cell: (area) => <StatusBadge tone={area.inactiveAt ? "neutral" : "success"}>{area.inactiveAt ? "Inativa" : "Ativa"}</StatusBadge>,
   },
 ];

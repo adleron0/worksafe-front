@@ -5,7 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { useLoader } from "@/context/GeneralContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import TagBadge from "@/components/general-components/TagBadge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Dialog from "@/components/general-components/Dialog";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
@@ -99,7 +99,7 @@ export default function PostRowActions({ item, entity, onEdit }: { item: IPost; 
             {item.category && (
               <>
                 <span>•</span>
-                <Badge variant="outline">{item.category.name}</Badge>
+                <TagBadge icon="folder">{item.category.name}</TagBadge>
               </>
             )}
             <PostStatusBadge status={item.status} />
@@ -116,7 +116,7 @@ export default function PostRowActions({ item, entity, onEdit }: { item: IPost; 
           {item.tags && item.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 pt-4 border-t">
               {item.tags.map((tagItem) => (
-                <Badge key={tagItem.tag.id} variant="secondary">{tagItem.tag.name}</Badge>
+                <TagBadge key={tagItem.tag.id} icon="tag">{tagItem.tag.name}</TagBadge>
               ))}
             </div>
           )}

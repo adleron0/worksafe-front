@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import ListCard from "@/components/general-components/ListCard";
@@ -211,7 +212,7 @@ function ItemPage() {
           <Link to="/suprimentos/estoque/itens" className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1"><Icon name="arrow-left" className="w-3 h-3" /> Itens do estoque</Link>
           <div className="flex flex-wrap items-center gap-2 mt-1">
             <h1 className="text-xl font-bold">{item ? `${item.code} — ${item.name}` : "Novo item"}</h1>
-            {item && !item.active && <Pill>Inativo</Pill>}
+            {item && !item.active && <StatusBadge tone="neutral">Inativo</StatusBadge>}
             {item?.low && <Pill tone="red">Abaixo do mínimo</Pill>}
           </div>
           {item && (

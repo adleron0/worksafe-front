@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/services/api";
 import useVerify from "@/hooks/use-verify";
-import { cn } from "@/lib/utils";
+import StatusBadge from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import { decimal } from "../../comercial/-shared/commercial";
 
 /** Estoque (Suprimentos): cliente da API, tipos (espelham a API) e utilitários comuns às telas. */
@@ -212,18 +213,13 @@ export const qty = (value?: number | null) => decimal(Number(value ?? 0), Number
 export function DueBadge({ state, label }: { state: DueState | null; label?: string }) {
   if (!state) return null;
   const text = label ?? (state === "vencido" ? "Vencido" : state === "a_vencer" ? "A vencer" : "Em dia");
-  return (
-    <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap",
-      state === "vencido" ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300" : state === "a_vencer" ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" : "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300")}>
-      {text}
-    </span>
-  );
+  return <StatusBadge tone={state === "vencido" ? "danger" : state === "a_vencer" ? "warning" : "success"}>{text}</StatusBadge>;
 }
 
+/** Selo curto: com tom é situação (StatusBadge, com o ponto); sem tom é etiqueta (TagBadge, neutra). */
 export const Pill = ({ children, tone = "muted" }: { children: React.ReactNode; tone?: "muted" | "red" | "amber" | "green" }) => (
-  <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap",
-    tone === "red" ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300" : tone === "amber" ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
-      : tone === "green" ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300" : "bg-muted text-muted-foreground")}>{children}</span>
+  tone === "muted" ? <TagBadge>{children}</TagBadge>
+    : <StatusBadge tone={tone === "red" ? "danger" : tone === "amber" ? "warning" : "success"}>{children}</StatusBadge>
 );
 
 // ---------------------------------------------------------------- consultas comuns

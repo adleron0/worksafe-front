@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import TagBadge from "@/components/general-components/TagBadge";
 import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 import { escapeHtml, printHtml } from "../-empresas/print";
@@ -254,7 +254,7 @@ const ListaPresenca = ({ classId, className, daysDuration = 1 }: ListaPresencaPr
           <div className="text-sm">
             <p>{name || '-'}</p>
             {sub.customerId ? (
-              <Badge variant="outline" className="mt-0.5 text-[10px]">{sub.reservationId ? 'vaga de empresa' : 'cliente'}</Badge>
+              <TagBadge icon={sub.reservationId ? 'building-2' : 'user'} className="mt-0.5">{sub.reservationId ? 'vaga de empresa' : 'cliente'}</TagBadge>
             ) : name ? <span className="text-xs text-muted-foreground">informada pelo aluno</span> : null}
           </div>
         );

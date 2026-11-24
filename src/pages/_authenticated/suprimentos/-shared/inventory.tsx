@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/services/api";
 import useVerify from "@/hooks/use-verify";
+import TagBadge from "@/components/general-components/TagBadge";
 import { Tip } from "../../comercial/-shared/commercial";
 
 /** Inventário e relatórios do estoque: cliente da API e tipos (espelham a API). */
@@ -58,9 +59,10 @@ export function SiteStockBadge({ productId }: { productId: number }) {
   if (!stock) return null;
   return (
     <Tip text={`Ligado ao item ${stock.item}`}>
-      <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: String(stock.itemId) }}
-        className={`inline-flex mt-1 rounded px-1.5 py-0.5 text-xs font-medium ${stock.availability === "pronta_entrega" ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"}`}>
-        Estoque: {stock.availability === "pronta_entrega" ? "pronta entrega" : "sob encomenda"}
+      <Link to="/suprimentos/estoque/itens/$itemId" params={{ itemId: String(stock.itemId) }} className="inline-flex mt-1">
+        <TagBadge icon="package" color={stock.availability === "pronta_entrega" ? "#22c55e" : "#f59e0b"}>
+          Estoque: {stock.availability === "pronta_entrega" ? "pronta entrega" : "sob encomenda"}
+        </TagBadge>
       </Link>
     </Tip>
   );

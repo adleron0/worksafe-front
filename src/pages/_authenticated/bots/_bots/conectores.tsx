@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
 import Select from "@/components/general-components/Select";
 import CalendarPicker from "@/components/general-components/Calendar";
 import { errorMessage } from "../../comercial/-shared/commercial";
@@ -25,12 +26,12 @@ type PostKind = "feed" | "story" | "carousel";
 interface SocialPost { id: number; kind: PostKind; caption: string; media: string[]; scheduledAt: string; status: string; permalink: string | null; error: string | null; botId: number | null; publishedAt: string | null }
 
 const KIND: Record<PostKind, string> = { feed: "Post no feed", story: "Story", carousel: "Carrossel" };
-const STATUS: Record<string, { label: string; className: string }> = {
-  scheduled: { label: "Agendado", className: "bg-sky-500/15 text-sky-700 dark:text-sky-300" },
-  processing: { label: "Publicando", className: "bg-amber-500/15 text-amber-700 dark:text-amber-300" },
-  published: { label: "Publicado", className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" },
-  failed: { label: "Falhou", className: "bg-red-500/15 text-red-700 dark:text-red-300" },
-  canceled: { label: "Cancelado", className: "bg-muted text-muted-foreground" },
+const STATUS: Record<string, { label: string; tone: StatusTone }> = {
+  scheduled: { label: "Agendado", tone: "info" },
+  processing: { label: "Publicando", tone: "info" },
+  published: { label: "Publicado", tone: "success" },
+  failed: { label: "Falhou", tone: "danger" },
+  canceled: { label: "Cancelado", tone: "neutral" },
 };
 const TABS = [
   { key: "upcoming", label: "Agendados" },
@@ -231,7 +232,7 @@ function InstagramPosts({ connected }: { connected: boolean }) {
               <div className="min-w-0 flex-1 text-sm">
                 <p className="flex flex-wrap items-center gap-2">
                   <span className="font-medium">{KIND[post.kind]}{post.kind === "carousel" ? ` · ${post.media.length} imagens` : ""}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS[post.status]?.className ?? ""}`}>{STATUS[post.status]?.label ?? post.status}</span>
+                  <StatusBadge tone={STATUS[post.status]?.tone ?? "neutral"}>{STATUS[post.status]?.label ?? post.status}</StatusBadge>
                   {post.botId && <span className="text-[11px] text-muted-foreground">pela Nina</span>}
                 </p>
                 <p className="text-xs text-muted-foreground">{post.status === "published" ? `Publicado em ${dateTimeBr(post.publishedAt)}` : dateTimeBr(post.scheduledAt)}{post.caption ? ` · ${post.caption.slice(0, 90)}${post.caption.length > 90 ? "…" : ""}` : ""}</p>

@@ -11,6 +11,7 @@ import CalendarPicker from "@/components/general-components/Calendar";
 import ColorPickerInput from "@/components/general-components/ColorPickerInput";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import TagBadge from "@/components/general-components/TagBadge";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-components/FormPage";
@@ -208,7 +209,7 @@ export function ActivityTypesDialog({ onClose }: { onClose: () => void }) {
             <div key={type.id} className="flex items-center gap-2 border-b px-3 py-2 text-sm last:border-b-0">
               <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: type.color }} />
               <span className="min-w-0 flex-1 truncate">{type.name}</span>
-              {!type.occupies && <span className="rounded bg-muted px-1.5 py-0.5 text-xs">não ocupa</span>}
+              {!type.occupies && <TagBadge>não ocupa</TagBadge>}
               <Tip text="Editar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Editar ${type.name}`} onClick={() => { setEditing({ id: type.id, name: type.name, color: type.color, occupies: type.occupies }); setError(""); }}><Icon name="pencil" className="w-4 h-4" /></Button></Tip>
               <ConfirmDialog title={`Inativar "${type.name}"?`} description="O tipo deixa de aparecer para novas atividades. As que já existem continuam no mapa." onConfirm={() => inactivate(type.id)}>
                 <span><Tip text="Inativar"><Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Inativar ${type.name}`}><Icon name="archive" className="w-4 h-4" /></Button></Tip></span>

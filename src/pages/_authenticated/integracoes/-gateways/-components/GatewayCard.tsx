@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { patch } from "@/services/api";
 import { useLoader } from "@/context/GeneralContext";
@@ -201,24 +202,13 @@ const GatewayCard: React.FC<GatewayCardProps> = ({
 
             {/* Status Badge - empurrado para o fundo */}
             <div className="flex items-center justify-between mt-auto pt-4">
-              <div className="flex items-center gap-2">
-                <div
-                  className={`h-2 w-2 rounded-full ${
-                    isConnected
-                      ? isActive
-                        ? "bg-green-500"
-                        : "bg-yellow-500"
-                      : "bg-gray-400"
-                  }`}
-                />
-                <span className="text-xs text-muted-foreground">
-                  {isConnected
-                    ? isActive
-                      ? "Ativo"
-                      : "Inativo"
-                    : "Não conectado"}
-                </span>
-              </div>
+              <StatusBadge tone={isConnected && isActive ? "success" : "neutral"} pulse={isConnected && isActive}>
+                {isConnected
+                  ? isActive
+                    ? "Ativo"
+                    : "Inativo"
+                  : "Não conectado"}
+              </StatusBadge>
 
               {!isConnected && (
                 <a

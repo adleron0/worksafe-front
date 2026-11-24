@@ -4,6 +4,7 @@ import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import { BotAvatar, STATUS_TEXT } from "../-shared/avatar";
 import { MemberActivity } from "../-shared/member-activity";
@@ -14,11 +15,8 @@ export const Route = createFileRoute("/_authenticated/bots/_bots/equipe")({
   component: TeamPage,
 });
 
-const STATUS_CHIP: Record<TeamMember["status"], string> = {
-  trabalhando: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-  aguardando: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-  disponivel: "bg-muted text-muted-foreground",
-  sem_chave: "bg-destructive/10 text-destructive",
+const STATUS_TONE: Record<TeamMember["status"], StatusTone> = {
+  trabalhando: "success", aguardando: "warning", disponivel: "neutral", sem_chave: "danger",
 };
 const ACTIVITY_ICON: Record<string, string> = { ok: "check", pending: "shield-alert", refused: "circle-slash", denied: "lock", error: "triangle-alert" };
 
@@ -86,7 +84,7 @@ function MemberCard({ member }: { member: TeamMember }) {
         <div className="min-w-0 flex-1">
           <p className="text-base font-semibold leading-tight">{member.persona}</p>
           <p className="text-xs text-muted-foreground">{member.role}</p>
-          <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_CHIP[member.status]}`}>{STATUS_TEXT[member.status]}</span>
+          <StatusBadge className="mt-2" tone={STATUS_TONE[member.status]} pulse={member.status !== "disponivel"}>{STATUS_TEXT[member.status]}</StatusBadge>
         </div>
       </div>
       <p className="mt-3 line-clamp-2 min-h-10 text-sm text-muted-foreground">{task}</p>

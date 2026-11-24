@@ -10,12 +10,12 @@ import { IPost } from "../-interfaces/entity.interface";
 const POST_STATUS: Record<string, { label: string; tone: StatusTone }> = {
   published: { label: "Publicado", tone: "success" },
   draft: { label: "Rascunho", tone: "neutral" },
-  archived: { label: "Arquivado", tone: "warning" },
+  archived: { label: "Arquivado", tone: "neutral" },
 };
 
 export function PostStatusBadge({ status }: { status: string }) {
   const info = POST_STATUS[status] ?? { label: status, tone: "neutral" as StatusTone };
-  return <StatusBadge tone={info.tone}>{info.label}</StatusBadge>;
+  return <StatusBadge tone={info.tone} pulse={status !== "archived"}>{info.label}</StatusBadge>;
 }
 
 export const formatPostDate = (date: string | Date | null | undefined) => {

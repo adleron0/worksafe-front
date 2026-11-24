@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
 import { stockApi } from "./stock";
 
 /** Ordem de Locação (OL): tipos (espelham a API), esteira e cliente da API. */
@@ -80,11 +80,11 @@ export const RENTAL_STAGE_LABEL: Record<RentalStage, string> = { a_entregar: "A 
 export const PERIOD_LABEL: Record<RentPeriod, string> = { dia: "dia", semana: "semana", mes: "mês" };
 export const CHARGE_LABEL: Record<string, string> = { aluguel: "Aluguel", avaria: "Avaria", falta: "Falta", frete: "Frete", avulso: "Avulso", caucao: "Caução", abatimento: "Caução abatida" };
 
+/** Tom do selo de cada etapa da OL (o mais próximo da cor do quadro). */
+const RENTAL_STAGE_TONE: Record<RentalStage, StatusTone> = {
+  a_entregar: "warning", ativa: "info", a_devolver: "warning", atrasada: "danger", devolvida: "primary", encerrada: "success", cancelada: "neutral",
+};
+
 export function RentalStageBadge({ stage }: { stage: RentalStage }) {
-  const color = RENTAL_STAGES.find((item) => item.id === stage)?.color ?? "#6b7280";
-  return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded bg-muted px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", stage === "cancelada" && "line-through text-muted-foreground", stage === "atrasada" && "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300")}>
-      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} /> {RENTAL_STAGE_LABEL[stage]}
-    </span>
-  );
+  return <StatusBadge tone={RENTAL_STAGE_TONE[stage] ?? "neutral"} pulse={stage !== "encerrada" && stage !== "cancelada"}>{RENTAL_STAGE_LABEL[stage]}</StatusBadge>;
 }

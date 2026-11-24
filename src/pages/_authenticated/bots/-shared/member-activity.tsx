@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
 import Select from "@/components/general-components/Select";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import { BotAvatar } from "./avatar";
@@ -20,11 +21,11 @@ interface ActivityTask {
 interface BotActivity { days: number; seesAll: boolean; requests: ActivityRequest[]; tasks: ActivityTask[] }
 
 const PERIODS = [{ id: "1", name: "Hoje" }, { id: "7", name: "Últimos 7 dias" }, { id: "30", name: "Últimos 30 dias" }];
-const REQUEST_STATUS: Record<ActivityRequest["status"], { label: string; className: string }> = {
-  running: { label: "trabalhando", className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" },
-  done: { label: "respondido", className: "bg-muted text-muted-foreground" },
-  error: { label: "falhou", className: "bg-destructive/10 text-destructive" },
-  stopped: { label: "interrompido", className: "bg-muted text-muted-foreground" },
+const REQUEST_STATUS: Record<ActivityRequest["status"], { label: string; tone: StatusTone }> = {
+  running: { label: "trabalhando", tone: "success" },
+  done: { label: "respondido", tone: "neutral" },
+  error: { label: "falhou", tone: "danger" },
+  stopped: { label: "interrompido", tone: "neutral" },
 };
 const ORIGIN: Record<string, string> = { bots: "conversa", schedule: "agenda", mcp: "app de IA" };
 
@@ -75,7 +76,7 @@ export function MemberActivity({ member, tab, onClose }: { member: TeamMember; t
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
                       <span className={`flex items-center gap-1 font-medium ${item.mine ? "text-primary" : ""}`}><Icon name={item.origin === "schedule" ? "calendar-clock" : "user-round"} className="h-3.5 w-3.5" />{item.origin === "schedule" ? `Agenda de ${item.mine ? "você" : item.user}` : item.user}</span>
                       <span className="text-muted-foreground">{when(item.at)}</span>
-                      <span className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-medium ${REQUEST_STATUS[item.status].className}`}>{REQUEST_STATUS[item.status].label}</span>
+                      <StatusBadge className="ml-auto" tone={REQUEST_STATUS[item.status].tone} pulse={item.status === "running"}>{REQUEST_STATUS[item.status].label}</StatusBadge>
                     </div>
                     <p className="mt-1.5 line-clamp-3 whitespace-pre-line break-words text-sm">{item.ask || item.title}</p>
                     <div className="mt-1.5 flex min-w-0 items-center gap-3 text-xs text-muted-foreground">

@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
@@ -211,8 +212,10 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
             </li>
           ))}
           {(rental.stage === "a_devolver" || rental.stage === "atrasada") && (
-            <li className={cn("ml-2 rounded px-2 py-1 font-medium", rental.stage === "atrasada" ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300" : "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200")}>
-              {rental.stage === "atrasada" ? `Atrasada: devolução prevista em ${dateBr(rental.expectedEnd)}` : `A devolver em ${dateBr(rental.expectedEnd)}`}
+            <li className="ml-2">
+              <StatusBadge tone={rental.stage === "atrasada" ? "danger" : "warning"}>
+                {rental.stage === "atrasada" ? `Atrasada: devolução prevista em ${dateBr(rental.expectedEnd)}` : `A devolver em ${dateBr(rental.expectedEnd)}`}
+              </StatusBadge>
             </li>
           )}
         </ol>
@@ -260,7 +263,7 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
                       {line.tag && <span className="text-xs text-muted-foreground"> · peça {line.tag}{line.where ? ` (${line.where})` : ""}</span>}
                     </span>
                     <span className="text-xs text-muted-foreground tabular-nums">entregue {qty(line.deliveredQuantity)} · voltou {qty(line.returnedQuantity)} de {qty(line.quantity)} {line.unit}</span>
-                    {line.condition && line.condition !== "ok" && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">{CONDITION_LABEL[line.condition] ?? line.condition}</span>}
+                    {line.condition && line.condition !== "ok" && <StatusBadge tone={line.condition === "sujo" ? "warning" : "danger"}>{CONDITION_LABEL[line.condition] ?? line.condition}</StatusBadge>}
                     {line.damageValue ? <span className="text-xs text-red-600 dark:text-red-400 tabular-nums">avaria/falta {money(line.damageValue)}</span> : null}
                     <span className="tabular-nums">{money(line.rate)}<span className="text-xs text-muted-foreground"> /{PERIOD_LABEL[rental.period]}</span></span>
                   </li>
@@ -380,7 +383,7 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
                         <li key={m.id} className="py-1.5 flex items-center justify-between gap-3">
                           <span className="min-w-0"><span className="font-medium tabular-nums">{m.label}</span><span className="text-xs text-muted-foreground"> · {m.periodStart ? `${dateBr(m.periodStart)} a ${dateBr(m.periodEnd)}` : ""}{m.invoiceNumber ? ` · NF ${m.invoiceNumber}` : ""}</span></span>
                           <span className="flex items-center gap-2 shrink-0">
-                            <span className={cn("rounded px-1.5 py-0.5 text-xs", m.recordStatus === "received" ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300" : "bg-muted")}>{m.recordStatus === "received" ? "Recebida" : m.financialRecordId ? "Faturada" : "Sem valor"}</span>
+                            <StatusBadge tone={m.recordStatus === "received" ? "success" : m.financialRecordId ? "info" : "neutral"} pulse={m.recordStatus !== "received"}>{m.recordStatus === "received" ? "Recebida" : m.financialRecordId ? "Faturada" : "Sem valor"}</StatusBadge>
                             <span className="tabular-nums">{money(m.value)}</span>
                           </span>
                         </li>
@@ -423,9 +426,9 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
                         <span className="text-xs text-muted-foreground"> · {charge.kind === "aluguel" && !rental.fromContract ? `${dateBr(charge.periodStart)} a ${dateBr(charge.periodEnd)}` : charge.description ?? dateBr(charge.periodStart)}</span>
                       </span>
                       <span className="flex items-center gap-2 shrink-0">
-                        <span className={cn("rounded px-1.5 py-0.5 text-xs", !charge.financialRecordId && !charge.measurementId ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200" : charge.recordStatus === "received" || charge.recordStatus === "confirmed" ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300" : "bg-muted")}>
+                        <StatusBadge tone={!charge.financialRecordId && !charge.measurementId ? "warning" : charge.recordStatus === "received" || charge.recordStatus === "confirmed" ? "success" : "info"}>
                           {!charge.financialRecordId && !charge.measurementId ? "Sem faturar" : charge.recordStatus === "received" || charge.recordStatus === "confirmed" ? "Recebida" : "Faturada"}
-                        </span>
+                        </StatusBadge>
                         <span className="tabular-nums">{money(charge.value)}</span>
                       </span>
                     </li>
@@ -446,7 +449,7 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
                         <span className="font-medium tabular-nums">{movement.number}</span>
                         <span>{movement.typeLabel}</span>
                         {movement.signedBy && <span className="text-xs text-muted-foreground">· recebido por {movement.signedBy}</span>}
-                        {movement.reversed && <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-700 dark:bg-red-950 dark:text-red-300">Estornada</span>}
+                        {movement.reversed && <StatusBadge tone="danger">Estornada</StatusBadge>}
                       </button>
                     </li>
                   ))}

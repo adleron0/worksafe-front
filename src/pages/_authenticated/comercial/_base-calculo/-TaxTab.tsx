@@ -1,4 +1,5 @@
 import { useState } from "react";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -150,8 +151,8 @@ export default function TaxTab({ canCreate, canUpdate, canInactivate, canActivat
                   <p className="text-xs text-muted-foreground">{REGIME_LABEL[profile.regime]} · a partir de {dateBr(profile.effectiveFrom)}</p>
                 </div>
                 <div className="flex gap-1 flex-wrap justify-end">
-                  {profile.current && <span className="text-xs rounded-chip bg-primary-soft text-primary-soft-foreground px-1.5 py-0.5 font-medium">Em uso</span>}
-                  {profile.inactiveAt && <span className="text-xs rounded bg-muted px-1.5 py-0.5">Inativo</span>}
+                  {profile.current && <StatusBadge tone="primary">Em uso</StatusBadge>}
+                  {profile.inactiveAt && <StatusBadge tone="neutral">Inativo</StatusBadge>}
                 </div>
               </div>
               <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 tabular-nums">

@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import Icon from "@/components/general-components/Icon";
+import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
 import { dateBr, money } from "../../../comercial/-shared/commercial";
 import { BillingRow, BillingStage, dueRuleText } from "../../../comercial/-shared/contracts";
@@ -11,6 +12,8 @@ export const STAGES: Array<{ id: BillingStage; name: string; color: string; hint
   { id: "faturada", name: "Faturadas", color: "#3b82f6", hint: "Com nota, esperando o pagamento" },
   { id: "recebida", name: "Recebidas", color: "#22c55e", hint: "Pagas recentemente" },
 ];
+/** Tom do selo de cada etapa (o mais próximo da cor do quadro). */
+const STAGE_TONE: Record<BillingStage, StatusTone> = { aguardando: "neutral", liberada: "warning", faturada: "info", recebida: "success" };
 
 export const isWork = (row: BillingRow) => row.source === "obra";
 export const isMeasurement = (row: BillingRow) => row.source === "medicao" || row.source === "obra";
@@ -33,8 +36,8 @@ export function SaleLink({ row, canOpenSale }: { row: BillingRow; canOpenSale: b
 /** Pedido de compra do cliente (ou o aviso de que ainda não chegou). */
 export function CustomerOrderTag({ row }: { row: BillingRow }) {
   return row.customerOrder.number
-    ? <span className="inline-flex items-center gap-1"><Icon name="file-check" className="w-3 h-3 shrink-0" /> Pedido {row.customerOrder.number}</span>
-    : <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400"><Icon name="file-question" className="w-3 h-3 shrink-0" /> Sem pedido do cliente</span>;
+    ? <TagBadge icon="file-check">Pedido {row.customerOrder.number}</TagBadge>
+    : <TagBadge icon="file-question" color="#f59e0b">Sem pedido do cliente</TagBadge>;
 }
 
 const muted = "text-xs text-muted-foreground";
@@ -64,11 +67,7 @@ export const billingColumns = ({ canOpenSale }: { canOpenSale: boolean }): DataC
     id: "stage", header: "Etapa",
     cell: (row) => {
       const current = STAGES.find((item) => item.id === row.stage);
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 text-xs font-medium bg-muted whitespace-nowrap">
-          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: current?.color }} /> {current?.name ?? row.stage}
-        </span>
-      );
+      return <StatusBadge tone={STAGE_TONE[row.stage] ?? "neutral"} pulse={row.stage !== "recebida"}>{current?.name ?? row.stage}</StatusBadge>;
     },
   },
   { id: "value", header: "Valor", align: "right", cell: (row) => <span className="font-semibold tabular-nums whitespace-nowrap">{money(row.value)}</span> },

@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input as ShadInput } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
@@ -66,11 +67,10 @@ export function FollowUpChip({ followUp, className }: { followUp?: FollowUp | nu
   if (!next) return null;
   return (
     <Tip text={`${next.subject}${followUp.pending > 1 ? ` (mais ${followUp.pending - 1} marcado${followUp.pending > 2 ? "s" : ""})` : ""}`}>
-      <span className={cn("inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
-        next.overdue ? "border-red-300 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
-          : next.today ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300" : "text-muted-foreground", className)}>
-        <Icon name={TYPE_ICON[next.type] ?? "bell"} className="w-3 h-3 shrink-0" />
-        <span className="truncate">{next.overdue ? "Atrasado: " : "Retorno "}{dueLabel(next.dueDate, next.dueTime)}</span>
+      <span className={cn("inline-flex max-w-full", className)}>
+        <StatusBadge tone={next.overdue ? "danger" : next.today ? "warning" : "info"} className="max-w-full">
+          <span className="truncate">{next.overdue ? "Atrasado: " : "Retorno "}{dueLabel(next.dueDate, next.dueTime)}</span>
+        </StatusBadge>
       </span>
     </Tip>
   );

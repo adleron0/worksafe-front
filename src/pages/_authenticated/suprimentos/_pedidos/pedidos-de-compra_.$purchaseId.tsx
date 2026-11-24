@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
@@ -388,7 +389,7 @@ function PurchasePage() {
                     <li key={payable.id} className="py-1.5 flex items-center justify-between gap-3">
                       <span>{payable.installmentNumber ? `${payable.installmentNumber}/${payable.installmentTotal} · ` : ""}vence {dateBr(payable.dueDate)}</span>
                       <span className="flex items-center gap-2">
-                        <span className={cn("rounded px-1.5 py-0.5 text-xs", payable.status === "paga" ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300" : "bg-muted")}>{payable.status === "paga" ? "Paga" : "Aberta"}</span>
+                        <StatusBadge tone={payable.status === "paga" ? "success" : "primary"} pulse={payable.status !== "paga"}>{payable.status === "paga" ? "Paga" : "Aberta"}</StatusBadge>
                         <span className="tabular-nums">{money(payable.value)}</span>
                       </span>
                     </li>

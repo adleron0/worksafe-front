@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input as ShadInput } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import Icon from "@/components/general-components/Icon";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import { cn } from "@/lib/utils";
 import { dateBr, errorMessage, money } from "../../comercial/-shared/commercial";
 import { OrderStatus } from "./orders";
@@ -135,10 +136,10 @@ function Meter({ value, total, label, detail }: { value: number; total: number; 
 }
 
 export function ReportStatusBadge({ status, returned }: { status: string; returned?: boolean }) {
-  if (returned && status !== "fechado") return <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-950 dark:text-red-200 whitespace-nowrap">Devolvido</span>;
+  if (returned && status !== "fechado") return <StatusBadge tone="danger">Devolvido</StatusBadge>;
   return status === "fechado"
-    ? <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-950 dark:text-green-200 whitespace-nowrap">Fechado</span>
-    : <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-200 whitespace-nowrap">Rascunho</span>;
+    ? <StatusBadge tone="success" pulse={false}>Fechado</StatusBadge>
+    : <StatusBadge tone="neutral">Rascunho</StatusBadge>;
 }
 
 /** Uma linha de RDO, igual no diário da OS e na tela do encarregado. */

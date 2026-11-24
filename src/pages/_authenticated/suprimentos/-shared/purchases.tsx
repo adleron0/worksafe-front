@@ -14,6 +14,7 @@ import CalendarPicker from "@/components/general-components/Calendar";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
+import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
 import { cn } from "@/lib/utils";
 import { dateBr, errorMessage, money, todayIso } from "../../comercial/-shared/commercial";
 import { PAYABLES_KEY, PAYABLES_SUMMARY_KEY } from "../../financeiro/-shared/payables";
@@ -106,14 +107,16 @@ export function moveLabel(from: PurchaseStatus, to: PurchaseStatus): string {
 }
 export const GROUP_LABEL: Record<string, string> = { material: "Materiais", locacao: "Locações", terceiros: "Terceiros", outros: "Outros" };
 
+/** Tom do selo de cada etapa do pedido (o mais próximo da cor do quadro). */
+const PURCHASE_STAGE_TONE: Record<PurchaseStatus, StatusTone> = {
+  solicitado: "warning", aprovado: "primary", comprado: "info", recebido: "success", recusado: "danger", cancelado: "neutral",
+};
+
 export function PurchaseStageBadge({ status, late }: { status: PurchaseStatus; late?: boolean }) {
-  const color = PURCHASE_STAGES.find((stage) => stage.id === status)?.color ?? (status === "recusado" ? "#ef4444" : "#6b7280");
   return (
     <span className="inline-flex items-center gap-1">
-      <span className={cn("inline-flex items-center gap-1.5 rounded bg-muted px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", status === "cancelado" && "line-through text-muted-foreground")}>
-        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} /> {PURCHASE_STATUS_LABEL[status]}
-      </span>
-      {late && <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300 whitespace-nowrap">Atrasado</span>}
+      <StatusBadge tone={PURCHASE_STAGE_TONE[status] ?? "neutral"} pulse={status !== "recebido" && status !== "cancelado"}>{PURCHASE_STATUS_LABEL[status]}</StatusBadge>
+      {late && <StatusBadge tone="danger">Atrasado</StatusBadge>}
     </span>
   );
 }

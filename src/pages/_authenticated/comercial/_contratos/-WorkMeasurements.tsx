@@ -11,9 +11,8 @@ import CalendarPicker from "@/components/general-components/Calendar";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
-import { cn } from "@/lib/utils";
 import { NumField, commercialApi, dateBr, errorMessage, money, todayIso } from "../-shared/commercial";
-import { Contract, PAYMENT_METHOD_OPTIONS, RECORD_STATUS_LABEL } from "../-shared/contracts";
+import { Contract, PAYMENT_METHOD_OPTIONS, RECORD_STATUS_LABEL, RecordStatusBadge } from "../-shared/contracts";
 import { RetentionFields, RetentionRates, RetentionState, retentionList, retentionState, retentionSum } from "../-shared/retentions";
 import {
   ContractPlan, MeasurementPlanDraft, MeasurementPlanEditor, WorkLinesTable, WorkMeasurement, WorkStatusBadge, WorkSummary, defaultPlan, pctBr,
@@ -131,7 +130,7 @@ export function WorkMeasurementsSection({ contract, canUpdate, canBill, canUnbil
               <div className="md:w-36 shrink-0"><p className="font-semibold tabular-nums">{money(m.invoiceValue)}</p>{m.depositValue > 0 && <p className="text-xs text-muted-foreground">a receber {money(m.value)}</p>}</div>
               <div className="flex-1 min-w-0">
                 {m.record ? (
-                  <p><span className={cn("rounded px-1.5 py-0.5 text-xs font-medium", m.record.paid ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200" : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200")}>{RECORD_STATUS_LABEL[m.record.status] ?? m.record.status}</span>{" "}
+                  <p><RecordStatusBadge status={m.record.status} paid={m.record.paid} />{" "}
                     NF {m.record.invoiceNumber} de {dateBr(m.record.invoiceIssuedAt)} · vence em {dateBr(m.record.dueDate)}{m.record.netValue !== null && m.record.netValue < m.value ? ` · líquido ${money(m.record.netValue)}` : ""}</p>
                 ) : m.status === "enviada" ? <p className="text-muted-foreground">Enviado em {dateBr(m.sentAt)}: aguardando a aprovação do cliente pelo link.</p>
                   : m.status === "contestada" ? <p className="text-red-700 dark:text-red-400">Contestado por {m.decision?.name}: "{m.decision?.note}". Revise e reenvie.</p>

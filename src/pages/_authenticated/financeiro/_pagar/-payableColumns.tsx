@@ -3,6 +3,7 @@ import Icon from "@/components/general-components/Icon";
 import InfoHint from "@/components/general-components/InfoHint";
 import { SortButton } from "@/components/general-components/SortButton";
 import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatMoney } from "../-shared/financial";
@@ -17,6 +18,7 @@ const STATE: Record<DueState, { label: string; tone: StatusTone }> = {
   paga: { label: "Paga", tone: "success" },
 };
 const muted = "text-xs text-muted-foreground";
+/** Botão de abrir anexo (ícone só), no mesmo tamanho das etiquetas. */
 const tag = "inline-flex items-center gap-1 rounded-chip border bg-muted/50 px-1.5 py-px text-[11px] font-medium text-muted-foreground whitespace-nowrap";
 
 /** Dado com detalhes: o ⓘ antes (sempre visível, mesmo com o texto cortado) e o conteúdo. */
@@ -41,8 +43,8 @@ export function payableColumns(today: string, sort?: { order?: string; onSort: (
           <div className="min-w-0 max-w-[20rem]">
             <p className="truncate">
               <span className="font-medium">{item.description}</span>
-              {item.installmentNumber && item.installmentTotal && <span className={`${tag} ml-1.5`}>{item.installmentNumber}/{item.installmentTotal}</span>}
-              {item.recurrenceId && <span className={`${tag} ml-1.5`}><Icon name="repeat" className="w-3 h-3" />mensal</span>}
+              {item.installmentNumber && item.installmentTotal && <TagBadge className="ml-1.5">{item.installmentNumber}/{item.installmentTotal}</TagBadge>}
+              {item.recurrenceId && <TagBadge icon="repeat" className="ml-1.5">mensal</TagBadge>}
             </p>
             <More lines={[plan]}>
               <p className={`${muted} truncate`}>

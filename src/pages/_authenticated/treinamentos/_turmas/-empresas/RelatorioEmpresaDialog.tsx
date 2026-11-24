@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import Dialog from "@/components/general-components/Dialog";
 import Icon from "@/components/general-components/Icon";
 import { ReservationReport, dateBr, formatCnpj, formatCpf, reservationsApi } from "./api";
@@ -49,7 +49,7 @@ export default function RelatorioEmpresaDialog({ reservationId, onClose }: { res
                   <tr key={s.subscriptionId}>
                     <td className="p-2"><p>{s.name}</p><p className="text-xs text-muted-foreground">{formatCpf(s.cpf)}</p></td>
                     {s.attendance.map((a, i) => <td key={i} className="p-2 text-center">{mark(a)}</td>)}
-                    <td className="p-2 text-center">{s.exam ? <Badge variant={s.exam.passed ? "default" : "destructive"}>{s.exam.passed ? "Aprovado" : "Reprovado"}{s.exam.score !== null ? ` · ${s.exam.score}` : ""}</Badge> : "—"}</td>
+                    <td className="p-2 text-center">{s.exam ? <StatusBadge tone={s.exam.passed ? "success" : "danger"} pulse={false}>{s.exam.passed ? "Aprovado" : "Reprovado"}{s.exam.score !== null ? ` · ${s.exam.score}` : ""}</StatusBadge> : "—"}</td>
                     <td className="p-2">{s.certificate ? <a className="underline" href={certUrl(s.certificate.key)} target="_blank" rel="noreferrer">Ver</a> : "—"}</td>
                   </tr>
                 ))}

@@ -1,5 +1,5 @@
 import InfoHint from "@/components/general-components/InfoHint";
-import Icon from "@/components/general-components/Icon";
+import TagBadge from "@/components/general-components/TagBadge";
 import StatusBadge from "@/components/general-components/StatusBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -23,9 +23,7 @@ export function siteProductsColumns(): DataColumn<IEntity>[] {
             <p className="truncate">
               <span className="font-medium">{item.name}</span>
               {item.featured && (
-                <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-chip bg-primary-soft text-primary-soft-foreground px-1.5 py-px text-[11px] align-middle">
-                  <Icon name="star" className="w-2.5 h-2.5" />destaque
-                </span>
+                <TagBadge icon="star" className="ml-1.5 align-middle">destaque</TagBadge>
               )}
             </p>
             {(item.category || item.brand) && <p className={`${muted} truncate`}>{[item.category?.name, item.brand?.name].filter(Boolean).join(" · ")}</p>}
@@ -61,7 +59,7 @@ export function siteProductsColumns(): DataColumn<IEntity>[] {
     },
     {
       id: "status", header: "Situação", className: "whitespace-nowrap",
-      cell: (item) => <StatusBadge tone={item.active ? "success" : "danger"}>{item.active ? "Ativo" : "Inativo"}</StatusBadge>,
+      cell: (item) => <StatusBadge tone={item.active ? "success" : "neutral"}>{item.active ? "Ativo" : "Inativo"}</StatusBadge>,
     },
   ];
 }

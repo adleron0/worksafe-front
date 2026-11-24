@@ -1,11 +1,10 @@
 import StatusBadge from "@/components/general-components/StatusBadge";
+import TagBadge from "@/components/general-components/TagBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
 import { formatPHONE } from "@/utils/phone-mask";
 import { formatCPF } from "@/utils/cpf-mask";
 import { More, NameCell, muted } from "../../-shared/lista";
 import { IEntity } from "../-interfaces/entity.interface";
-
-const tag = "inline-flex items-center rounded-chip border bg-muted/50 px-1.5 py-px text-[11px] font-medium text-muted-foreground whitespace-nowrap";
 
 export const instructorsColumns: DataColumn<IEntity>[] = [
   {
@@ -25,7 +24,7 @@ export const instructorsColumns: DataColumn<IEntity>[] = [
       return (
         <More lines={items.length > 2 ? items : []}>
           <span className="flex items-center gap-1 max-w-[18rem] overflow-hidden">
-            {items.slice(0, 2).map((curriculo, index) => <span key={`curriculo-${index}`} className={`${tag} truncate max-w-[9rem]`}>{curriculo}</span>)}
+            {items.slice(0, 2).map((curriculo, index) => <TagBadge key={`curriculo-${index}`} className="max-w-[9rem]">{curriculo}</TagBadge>)}
             {items.length > 2 && <span className={muted}>+{items.length - 2}</span>}
           </span>
         </More>

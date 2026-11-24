@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import StatusBadge, { type StatusTone } from "@/components/general-components/StatusBadge";
 
 /** Números da carteira de um vendedor (sempre calculados dos lançamentos). */
 export interface WalletTotals {
@@ -53,16 +53,16 @@ export const PAYMENT_METHODS: Array<{ id: string; name: string }> = [
 ];
 export const paymentLabel = (id: string | null) => PAYMENT_METHODS.find((method) => method.id === id)?.name ?? (id === "asaas" ? "Asaas" : id ?? "");
 
-const STATUS: Record<EntryStatus, { label: string; className: string }> = {
-  prevista: { label: "Prevista", className: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200" },
-  liberada: { label: "Liberada", className: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200" },
-  cancelada: { label: "Cancelada", className: "bg-muted text-muted-foreground line-through" },
-  efetivado: { label: "Efetivado", className: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200" },
-  estornado: { label: "Estornado", className: "bg-muted text-muted-foreground line-through" },
+const STATUS: Record<EntryStatus, { label: string; tone: StatusTone }> = {
+  prevista: { label: "Prevista", tone: "warning" },
+  liberada: { label: "Liberada", tone: "success" },
+  cancelada: { label: "Cancelada", tone: "neutral" },
+  efetivado: { label: "Efetivado", tone: "info" },
+  estornado: { label: "Estornado", tone: "danger" },
 };
 export function EntryStatusBadge({ status }: { status: EntryStatus }) {
   const item = STATUS[status] ?? STATUS.prevista;
-  return <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", item.className)}>{item.label}</span>;
+  return <StatusBadge tone={item.tone} pulse={status === "prevista"}>{item.label}</StatusBadge>;
 }
 
 /** Iniciais para o avatar quando o usuário não tem foto. */

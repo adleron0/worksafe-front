@@ -94,17 +94,23 @@ function BotsPage() {
       onCreated={(id) => navigate({ search: { bot: bot.id, conversa: id }, replace: true })}
     />
   );
-  if (!wide) return <div className="flex h-full min-h-0 flex-col">{off}{pane}</div>;
+  const rail = (className: string) => <BotRail bots={bots!} current={bot} onPick={(id) => open(id)} className={className} />;
+  if (!wide) {
+    return (
+      <div className="flex h-full min-h-0">
+        {rail("border-r pt-[max(0.375rem,env(safe-area-inset-top))]")}
+        <div className="flex min-w-0 flex-1 flex-col">{off}{pane}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
       {off}
-      <div className="grid min-h-0 flex-1 grid-cols-[17rem_minmax(0,1fr)] gap-3">
-        <aside className="flex min-h-0 min-w-0 flex-col gap-3">
-          <BotPicker bots={bots!} current={bot} onPick={(id) => open(id)} />
-          <div className="flex min-h-40 flex-1 flex-col overflow-hidden rounded-lg border bg-background">
-            <ConversationList bot={bot} current={search.conversa} onPick={(id) => open(bot.id, id)} />
-          </div>
+      <div className="grid min-h-0 flex-1 grid-cols-[auto_15rem_minmax(0,1fr)] gap-3">
+        {rail("rounded-lg border")}
+        <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-background">
+          <ConversationList bot={bot} current={search.conversa} onPick={(id) => open(bot.id, id)} />
         </aside>
         {pane}
       </div>
@@ -143,25 +149,30 @@ function BotList({ bots, onPick }: { bots: Bot[]; onPick: (id: number) => void }
   );
 }
 
-function BotPicker({ bots, current, onPick }: { bots: Bot[]; current: Bot; onPick: (id: number) => void }) {
+/** Trilho fino com os rostos dos bots, para trocar de um para outro sem sair da conversa. */
+function BotRail({ bots, current, onPick, className = "" }: { bots: Bot[]; current: Bot; onPick: (id: number) => void; className?: string }) {
   const { data: team } = useTeam();
   return (
-    <div className="grid max-h-[45%] shrink-0 grid-cols-1 gap-1.5 overflow-y-auto">
-      {bots.map((bot) => (
-        <button
-          key={bot.id}
-          type="button"
-          onClick={() => onPick(bot.id)}
-          className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-2 py-1.5 text-left transition-colors ${bot.id === current.id ? "border-primary bg-primary/5" : "bg-background hover:bg-muted"}`}
-        >
-          <BotAvatar look={bot.avatar} size={32} status={statusOfTeam(team, bot.id)?.status as BotStatus | undefined} />
-          <span className="min-w-0">
-            <span className="block text-sm font-medium leading-tight">{bot.persona}</span>
-            <span className="line-clamp-1 text-xs text-muted-foreground">{bot.role}</span>
-          </span>
-        </button>
-      ))}
-    </div>
+    <nav aria-label="Bots" className={`scroll-oculto flex w-10 shrink-0 flex-col items-center gap-1 overflow-y-auto bg-background py-1.5 ${className}`}>
+      {bots.map((bot) => {
+        const member = statusOfTeam(team, bot.id);
+        const active = bot.id === current.id;
+        return (
+          <Tip key={bot.id} text={`${bot.persona} · ${bot.role}`}>
+            <button
+              type="button"
+              aria-label={`Conversar com ${bot.persona}`}
+              aria-current={active ? "true" : undefined}
+              onClick={() => onPick(bot.id)}
+              className={`relative grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-lg transition-colors ${active ? "bg-primary/15 ring-[1.5px] ring-primary" : "hover:bg-muted active:bg-muted"}`}
+            >
+              <BotAvatar look={bot.avatar} size={24} status={member?.status as BotStatus | undefined} still={!active} />
+              {!!member?.pendingForMe && <span className="absolute -right-1 -top-1 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-amber-500 px-0.5 text-[9px] font-bold text-white">{member.pendingForMe}</span>}
+            </button>
+          </Tip>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -179,7 +190,7 @@ function ConversationList({ bot, current, onPick, inSheet = false }: { bot: Bot;
         {inSheet ? <span className="truncate font-semibold">Conversas com {bot.persona}</span> : <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Conversas</span>}
         <Button type="button" size="sm" variant="outline" className={inSheet ? "h-8 shrink-0" : "h-7"} onClick={() => onPick(undefined)}><Icon name="plus" className="mr-1 h-3.5 w-3.5" /> Nova</Button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="scroll-fino min-h-0 flex-1 overflow-y-auto">
         {isLoading && <Skeleton className="m-2 h-16" />}
         {data && !data.length && <p className="p-3 text-xs text-muted-foreground">Nenhuma conversa ainda.</p>}
         {data?.map((conversation) => (
@@ -296,7 +307,7 @@ function ConversationPane({ bot, wide, conversationId, onPick, onBack, onCreated
         </Tip>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4 sm:py-4">
+      <div className="scroll-fino min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4 sm:py-4">
         <div className="flex min-h-full flex-col gap-3 sm:gap-4">
         {isLoading && <Skeleton className="h-24 w-full" />}
         {empty && <Welcome bot={bot} />}
@@ -310,7 +321,7 @@ function ConversationPane({ bot, wide, conversationId, onPick, onBack, onCreated
 
       <footer className="border-t px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-3">
         {empty && bot.shortcuts.length > 0 && (
-          <div className="-mx-2 mb-2 flex gap-1.5 overflow-x-auto px-2 [scrollbar-width:none] sm:-mx-3 sm:px-3">
+          <div className="-mx-2 mb-2 flex gap-1.5 scroll-oculto overflow-x-auto px-2 sm:-mx-3 sm:px-3">
             {bot.shortcuts.map((shortcut) => (
               <button
                 key={shortcut.label}

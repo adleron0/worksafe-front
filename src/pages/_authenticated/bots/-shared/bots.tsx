@@ -164,7 +164,7 @@ export function Markdown({ text, className = "" }: { text: string; className?: s
       i++;
       while (i < lines.length && !lines[i].startsWith("```")) body.push(lines[i++]);
       i++;
-      blocks.push(<pre key={key++} className="overflow-x-auto rounded-md bg-muted p-3 text-xs">{body.join("\n")}</pre>);
+      blocks.push(<pre key={key++} className="scroll-fino overflow-x-auto rounded-md bg-muted p-3 text-xs">{body.join("\n")}</pre>);
       continue;
     }
     const heading = /^(#{1,4})\s+(.*)$/.exec(line);
@@ -181,7 +181,7 @@ export function Markdown({ text, className = "" }: { text: string; className?: s
       const rows: string[][] = [];
       while (i < lines.length && lines[i].trim().startsWith("|")) rows.push(cells(lines[i++]));
       blocks.push(
-        <div key={key++} className="overflow-x-auto">
+        <div key={key++} className="scroll-fino overflow-x-auto">
           <table className="my-1 w-full border-collapse text-xs">
             <thead><tr>{head.map((cell, n) => <th key={n} className="border-b px-2 py-1 text-left font-semibold">{inline(cell, `th${key}${n}`)}</th>)}</tr></thead>
             <tbody>{rows.map((row, r) => <tr key={r} className="border-b last:border-b-0">{row.map((cell, n) => <td key={n} className="px-2 py-1 align-top">{inline(cell, `td${key}${r}${n}`)}</td>)}</tr>)}</tbody>

@@ -248,6 +248,34 @@
     background: hsl(var(--primary));
   }
 
+  /* rolagem discreta (chat dos bots): fina, sem trilho, mais visível só ao passar o mouse */
+  .scroll-fino::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .scroll-fino::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scroll-fino::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.25);
+    border-radius: 9999px;
+  }
+  .scroll-fino:hover::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.45);
+  }
+  /* sem barra nenhuma (trilho de bots, sugestões) */
+  .scroll-oculto {
+    scrollbar-width: none;
+  }
+  .scroll-oculto::-webkit-scrollbar {
+    display: none;
+  }
+  @supports (-moz-appearance: none) {
+    .scroll-fino {
+      scrollbar-width: thin;
+    }
+  }
+
   /* Chrome, Safari, Edge, Opera */
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {

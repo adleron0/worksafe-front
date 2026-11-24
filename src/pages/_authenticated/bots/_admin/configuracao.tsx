@@ -18,7 +18,7 @@ import { errorMessage } from "../../comercial/-shared/commercial";
 import { BotAvatar } from "../-shared/avatar";
 import { FaceEditor } from "../-shared/face-editor";
 import { PersonalityPicker } from "../-shared/personality-picker";
-import { BOTS_KEY, BotFull, BotsConfig, CatalogModel, CatalogTool, RISK_CLASS, RISK_LABEL, STATUS_KEY, TEAM_KEY, aiApi, dateTimeBr } from "../-shared/bots";
+import { BOTS_KEY, BUDGET_KEY, BotFull, BotsConfig, BudgetView, CatalogModel, CatalogTool, RISK_CLASS, RISK_LABEL, STATUS_KEY, TEAM_KEY, aiApi, dateTimeBr } from "../-shared/bots";
 import api from "@/services/api";
 
 export const Route = createFileRoute("/_authenticated/bots/_admin/configuracao")({
@@ -48,6 +48,7 @@ function ConfigPage() {
         <>
           <ProvidersCard config={data} />
           <ModelForAllCard config={data} />
+          <EconomyCard config={data} />
           <div className="grid gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
             <div className="flex flex-col gap-1">
               {data.bots.map((item) => (
@@ -101,7 +102,7 @@ const OTHER = "__outro__";
 const NONE = "__nenhum__";
 
 function modelOption(model: CatalogModel) {
-  const tags = [model.recommended ? "recomendado" : "", model.available ? "" : "sem chave"].filter(Boolean).join(", ");
+  const tags = [model.recommended ? "recomendado" : "", model.upcoming ? `dobra de preço em ${dayBr(model.upcoming.from)}` : "", model.available ? "" : "sem chave"].filter(Boolean).join(", ");
   return { id: `${model.provider}:${model.id}`, name: `${model.label} · ~${money(model.perThousand)} por mil perguntas${tags ? ` (${tags})` : ""}` };
 }
 
@@ -109,12 +110,12 @@ function modelOption(model: CatalogModel) {
  * Escolha do modelo pela lista (com preço e para que serve). "Outro modelo"
  * abre fornecedor e nome para digitar, para um modelo que não está na lista.
  */
-function ModelPicker({ name, config, provider, model, optional, onChange }: { name: string; config: BotsConfig; provider: string; model: string; optional?: boolean; onChange: (provider: string, model: string) => void }) {
+function ModelPicker({ name, config, provider, model, optional, noneLabel = "Sem reserva", onChange }: { name: string; config: BotsConfig; provider: string; model: string; optional?: boolean; noneLabel?: string; onChange: (provider: string, model: string) => void }) {
   const known = config.models.find((item) => item.provider === provider && item.id === model);
   const [custom, setCustom] = useState(!known && !!model);
   const value = !model && optional && !custom ? NONE : custom ? OTHER : `${provider}:${model}`;
   const options = [
-    ...(optional ? [{ id: NONE, name: "Sem reserva" }] : []),
+    ...(optional ? [{ id: NONE, name: noneLabel }] : []),
     ...config.models.map(modelOption),
     { id: OTHER, name: "Outro modelo (digitar o nome)" },
   ];
@@ -144,7 +145,7 @@ function ModelNote({ model }: { model: CatalogModel }) {
   return (
     <p className="text-xs text-muted-foreground">
       {model.note} Preço por milhão de tokens: {money(model.price.input)} de entrada e {money(model.price.output)} de saída.
-      {model.upcoming && <> A partir de {dayBr(model.upcoming.from)}, ~{money(model.upcoming.perThousand)} por mil perguntas.</>}
+      {model.upcoming && <span className="font-medium text-amber-700 dark:text-amber-400"> Atenção: o preço dobra em {dayBr(model.upcoming.from)} (~{money(model.upcoming.perThousand)} por mil perguntas).</span>}
       {!model.available && <span className="text-amber-700 dark:text-amber-400"> O {model.providerLabel} está sem chave: cadastre em "Chaves de IA".</span>}
     </p>
   );
@@ -188,6 +189,153 @@ function ModelForAllCard({ config }: { config: BotsConfig }) {
         </ConfirmDialog>
       </div>
       <p className="mt-2 text-xs text-muted-foreground">Hoje: {today || "nenhum bot"}. Para um bot só, troque no cadastro dele abaixo. O custo por mil perguntas é estimativa com o tamanho médio das conversas dos bots.</p>
+    </div>
+  );
+}
+
+/**
+ * Economia: precisão máxima (tudo no principal), o modelo econômico em vários
+ * bots de uma vez e o teto mensal de gasto com IA (com a barra do mês).
+ */
+function EconomyCard({ config }: { config: BotsConfig }) {
+  const queryClient = useQueryClient();
+  const { data: budget } = useQuery({ queryKey: [BUDGET_KEY], queryFn: () => aiApi.get<BudgetView>("budget") });
+  const cheapest = config.models.find((item) => item.id === "gemini-3.1-flash-lite") ?? config.models[config.models.length - 1];
+  const [eco, setEco] = useState({ provider: cheapest?.provider ?? "", model: cheapest?.id ?? "" });
+  const [selectedBots, setSelectedBots] = useState<number[]>(() => config.bots.map((bot) => bot.id));
+  const [turnOn, setTurnOn] = useState(true);
+  const [showBotBudgets, setShowBotBudgets] = useState(false);
+  const [form, setForm] = useState<{ value: string; warn: string; onExceed: "parar" | "economico"; provider: string; model: string; botBudgets: Record<string, string> } | null>(null);
+  useEffect(() => {
+    if (!budget || form) return;
+    setForm({
+      value: budget.monthlyBudgetUsd != null ? String(budget.monthlyBudgetUsd) : "", warn: String(budget.warnPercent), onExceed: budget.onExceed,
+      provider: budget.economyProvider ?? cheapest?.provider ?? "", model: budget.economyModel ?? cheapest?.id ?? "",
+      botBudgets: Object.fromEntries(Object.entries(budget.botBudgets ?? {}).map(([id, value]) => [id, String(value)])),
+    });
+  }, [budget, form, cheapest]);
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: [BUDGET_KEY] });
+    queryClient.invalidateQueries({ queryKey: [CONFIG_KEY] });
+    queryClient.invalidateQueries({ queryKey: [STATUS_KEY] });
+  };
+  const precision = useMutation({
+    mutationFn: (value: boolean) => aiApi.put<BudgetView>("budget", { maxPrecision: value }),
+    onSuccess: (saved) => { refresh(); toast({ title: saved.maxPrecision ? "Precisão máxima ligada: todos os bots no modelo principal" : "Precisão máxima desligada: vale o modo econômico de cada bot", variant: "success" }); },
+    onError: (error) => toast({ title: "Não foi possível salvar", description: errorMessage(error), variant: "destructive" }),
+  });
+  const applyEco = useMutation({
+    mutationFn: () => aiApi.put<{ changed: number }>("bots/economy", { botIds: selectedBots, economyProvider: eco.provider, economyModel: eco.model, economyMode: turnOn }),
+    onSuccess: (result) => { refresh(); queryClient.invalidateQueries({ queryKey: [BOTS_KEY] }); toast({ title: `Econômico aplicado em ${result.changed} bot${result.changed === 1 ? "" : "s"}`, variant: "success" }); },
+    onError: (error) => toast({ title: "Não foi possível aplicar", description: errorMessage(error), variant: "destructive" }),
+  });
+  const saveBudget = useMutation({
+    mutationFn: () => {
+      const f = form!;
+      const number = (text: string) => (text.trim() === "" ? null : Number(text.replace(",", ".")));
+      return aiApi.put<BudgetView>("budget", {
+        monthlyBudgetUsd: number(f.value), warnPercent: Number(f.warn), onExceed: f.onExceed,
+        economyProvider: f.provider || null, economyModel: f.model || null,
+        botBudgets: Object.fromEntries(Object.entries(f.botBudgets).map(([id, value]) => [id, number(value)]).filter(([, value]) => value != null)),
+      });
+    },
+    onSuccess: () => { refresh(); toast({ title: "Teto salvo", variant: "success" }); },
+    onError: (error) => toast({ title: "Não foi possível salvar o teto", description: errorMessage(error), variant: "destructive" }),
+  });
+  const ecoLabel = config.models.find((item) => item.provider === eco.provider && item.id === eco.model)?.label ?? eco.model;
+  const usingEco = config.bots.filter((bot) => bot.economyMode && bot.economyModel).length;
+  const percent = budget?.percent ?? 0;
+  const setF = (patch: Partial<NonNullable<typeof form>>) => setForm((current) => (current ? { ...current, ...patch } : current));
+
+  return (
+    <div className="grid gap-4 rounded-card border bg-card p-4 text-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <Label className="text-base">Economia</Label>
+        <span className="text-xs text-muted-foreground">· {usingEco} de {config.bots.length} bots com o modo econômico ligado</span>
+      </div>
+
+      <label className="flex items-start gap-2">
+        <Switch checked={!!budget?.maxPrecision} disabled={!budget || precision.isPending} onCheckedChange={(value) => precision.mutate(value)} className="mt-0.5" />
+        <span>
+          <span className="font-medium">Precisão máxima: usar sempre o modelo principal</span>
+          <span className="block text-xs text-muted-foreground">Ligada, todos os bots respondem só com o modelo principal de cada um, sem apagar o econômico configurado (desligou, volta como estava). Exceção: se o teto do mês estourar com "passar para o econômico", os bots passam para o econômico mesmo assim, porque o teto é uma proteção de gasto.</span>
+        </span>
+      </label>
+
+      <div className="grid gap-2 border-t pt-3">
+        <p className="font-medium">Aplicar o modelo econômico a vários bots</p>
+        <ModelPicker name="ecoForMany" config={config} provider={eco.provider} model={eco.model} onChange={(provider, model) => setEco({ provider, model })} />
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          {config.bots.map((bot) => (
+            <label key={bot.id} className="flex items-center gap-2 text-xs">
+              <Checkbox checked={selectedBots.includes(bot.id)} onCheckedChange={(checked) => setSelectedBots((current) => (checked ? [...current, bot.id] : current.filter((id) => id !== bot.id)))} />
+              {bot.persona} <span className="text-muted-foreground">· {bot.name}{bot.economyMode && bot.economyModel ? " · econômico ligado" : ""}</span>
+            </label>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-xs"><Switch checked={turnOn} onCheckedChange={setTurnOn} /> Ligar o modo econômico nesses bots</label>
+          <ConfirmDialog
+            title={`Usar ${ecoLabel} como econômico em ${selectedBots.length} bot${selectedBots.length === 1 ? "" : "s"}?`}
+            description={turnOn ? "Consultas e conversa passam a ir no econômico; quando for gravar no sistema, o modelo principal de cada bot decide. O modelo principal não muda." : "O econômico fica escolhido, mas o modo econômico desses bots fica desligado (tudo no principal)."}
+            onConfirm={() => applyEco.mutate()}
+          >
+            <Button type="button" size="sm" variant="outline" className="ml-auto" disabled={!selectedBots.length || eco.model.length < 3 || applyEco.isPending}>{applyEco.isPending ? "Aplicando..." : "Aplicar"}</Button>
+          </ConfirmDialog>
+        </div>
+      </div>
+
+      <div className="grid gap-3 border-t pt-3">
+        <p className="font-medium">Teto mensal de gasto com IA</p>
+        {budget && (
+          <div>
+            <div className="flex flex-wrap items-baseline justify-between gap-2 text-xs">
+              <span>Gasto em {budget.month}: <span className="font-semibold">{money(budget.spent)}</span> de {money(budget.budget)} {budget.percent !== null ? `(${budget.percent}%)` : ""}</span>
+              {budget.mode === "stop" && <span className="font-medium text-destructive">Teto atingido: bots parados até virar o mês</span>}
+              {budget.mode === "economy" && <span className="font-medium text-amber-700 dark:text-amber-400">Teto atingido: todos os bots no econômico até virar o mês</span>}
+              {budget.mode === "ok" && budget.warning && <span className="font-medium text-amber-700 dark:text-amber-400">Passou de {budget.warnPercent}% do teto</span>}
+            </div>
+            <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div className={`h-full ${percent >= 100 ? "bg-destructive" : budget.warning ? "bg-amber-500" : "bg-primary"}`} style={{ width: `${Math.min(100, percent)}%` }} />
+            </div>
+          </div>
+        )}
+        {form && (
+          <>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div><Label htmlFor="budgetValue">Teto do mês (US$)</Label><Input id="budgetValue" name="budgetValue" className="mt-1" inputMode="decimal" value={form.value} onValueChange={(_, value) => setF({ value: String(value) })} placeholder={budget?.envCap != null ? `Servidor: ${budget.envCap}` : "Padrão: 50"} /></div>
+              <div><Label htmlFor="budgetWarn">Avisar ao chegar em (%)</Label><Input id="budgetWarn" name="budgetWarn" className="mt-1" inputMode="numeric" value={form.warn} onValueChange={(_, value) => setF({ warn: String(value) })} /></div>
+              <div><Label>Ao estourar</Label><div className="mt-1"><Select name="budgetOnExceed" options={[{ id: "parar", name: "Parar os bots" }, { id: "economico", name: "Passar todos para o econômico" }]} state={form.onExceed} onChange={(_, value) => setF({ onExceed: String(value) === "economico" ? "economico" : "parar" })} /></div></div>
+            </div>
+            {form.onExceed === "economico" && (
+              <div>
+                <Label>Modelo econômico da empresa (depois do teto)</Label>
+                <ModelPicker name="budgetEconomy" config={config} provider={form.provider} model={form.model} onChange={(provider, model) => setF({ provider, model })} />
+                {budget && !budget.economyReady && <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400">O fornecedor desse modelo está sem chave: ao estourar, os bots param.</p>}
+              </div>
+            )}
+            <div className="text-xs">
+              <Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setShowBotBudgets((value) => !value)}>
+                <Icon name={showBotBudgets ? "chevron-down" : "chevron-right"} className="h-3 w-3" /> Teto por bot (opcional)
+              </Button>
+              {showBotBudgets && <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                {config.bots.map((bot) => (
+                  <div key={bot.id} className="flex items-center gap-2">
+                    <span className="flex-1 truncate">{bot.persona} <span className="text-muted-foreground">· {bot.name}</span></span>
+                    <Input name={`botBudget${bot.id}`} className="w-28" inputMode="decimal" value={form.botBudgets[String(bot.id)] ?? ""} onValueChange={(_, value) => setF({ botBudgets: { ...form.botBudgets, [String(bot.id)]: String(value) } })} placeholder="sem teto" />
+                  </div>
+                ))}
+              </div>}
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="flex-1 text-xs text-muted-foreground">
+                O aviso aparece aqui e como relatório no sistema, uma vez por mês. {budget?.envCap != null ? `O servidor limita o teto a ${money(budget.envCap)}: passou disso, os bots param sempre. ` : ""}O teto por bot faz o mesmo que o da empresa, só para aquele bot.
+              </p>
+              <Button type="button" size="sm" onClick={() => saveBudget.mutate()} disabled={saveBudget.isPending}>{saveBudget.isPending ? "Salvando..." : "Salvar teto"}</Button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -278,7 +426,7 @@ function newBot(config: BotsConfig): BotFull {
     id: 0, key: "", name: "", persona: "", role: "", avatar: "r:bola.ciano.nenhum.n.normal", description: "", icon: "bot", active: true, shortcuts: [],
     provider: recommended?.provider ?? "gemini", providerLabel: recommended?.providerLabel ?? "", model: recommended?.id ?? "", providerReady: !!recommended?.available,
     capabilities: [], hiddenCount: 0, instructions: "", tools: config.tools.filter((tool) => ["pedir_ao_colega", "passar_para_colega"].includes(tool.name)).map((tool) => tool.name),
-    permissionKey: "", version: 0, fallbackProvider: null, fallbackModel: null, updatedAt: "", custom: true,
+    permissionKey: "", version: 0, fallbackProvider: null, fallbackModel: null, economyProvider: null, economyModel: null, economyMode: false, updatedAt: "", custom: true,
   };
 }
 
@@ -303,18 +451,20 @@ function BotEditor({ bot, config, isNew, onCreated, onCancel, onArchived }: { bo
   const [draft, setDraft] = useState(() => ({
     name: bot.name, persona: bot.persona, role: bot.role, avatar: bot.avatar, description: bot.description, active: bot.active, instructions: bot.instructions, tools: bot.tools,
     provider: bot.provider, model: bot.model, fallbackProvider: bot.fallbackProvider ?? "", fallbackModel: bot.fallbackModel ?? "", shortcuts: bot.shortcuts,
+    economyProvider: bot.economyProvider ?? "", economyModel: bot.economyModel ?? "", economyMode: !!bot.economyMode,
   }));
+  const budget = useQuery({ queryKey: [BUDGET_KEY], queryFn: () => aiApi.get<BudgetView>("budget") });
   const [versionsOpen, setVersionsOpen] = useState(false);
   useEffect(() => { setVersionsOpen(false); }, [bot.id]);
   const set = <K extends keyof typeof draft>(key: K, value: (typeof draft)[K]) => setDraft((current) => ({ ...current, [key]: value }));
   const done = (title: string) => { queryClient.invalidateQueries({ queryKey: [CONFIG_KEY] }); queryClient.invalidateQueries({ queryKey: [BOTS_KEY] }); toast({ title, variant: "success" }); };
   const save = useMutation({
     mutationFn: async () => {
-      const body = { ...draft, fallbackProvider: draft.fallbackProvider || null, fallbackModel: draft.fallbackModel || null };
+      const body = { ...draft, fallbackProvider: draft.fallbackProvider || null, fallbackModel: draft.fallbackModel || null, economyProvider: draft.economyProvider || null, economyModel: draft.economyModel || null, economyMode: draft.economyMode && !!draft.economyModel };
       if (!isNew) return aiApi.put<BotFull>(`bots/${bot.id}`, body);
       const created = await aiApi.post<BotFull>("bots", body);
       // a reserva e o "desligado" vão no cadastro normal, depois de criado
-      if (body.fallbackModel || !body.active) return aiApi.put<BotFull>(`bots/${created.id}`, { fallbackProvider: body.fallbackProvider, fallbackModel: body.fallbackModel, active: body.active, shortcuts: body.shortcuts });
+      if (body.fallbackModel || body.economyModel || !body.active) return aiApi.put<BotFull>(`bots/${created.id}`, { fallbackProvider: body.fallbackProvider, fallbackModel: body.fallbackModel, economyProvider: body.economyProvider, economyModel: body.economyModel, economyMode: body.economyMode, active: body.active, shortcuts: body.shortcuts });
       if (body.shortcuts.length) return aiApi.put<BotFull>(`bots/${created.id}`, { shortcuts: body.shortcuts });
       return created;
     },
@@ -378,6 +528,23 @@ function BotEditor({ bot, config, isNew, onCreated, onCancel, onArchived }: { bo
         <div><Label htmlFor="botDescription">Descrição</Label><Input id="botDescription" name="botDescription" className="mt-1" value={draft.description} maxLength={300} onValueChange={(_, value) => set("description", String(value))} placeholder="O que ele faz, em uma linha (os colegas leem isto)" /></div>
         <div className="md:col-span-2"><Label>Modelo de IA</Label><ModelPicker name="botModel" config={config} provider={draft.provider} model={draft.model} onChange={(provider, model) => setDraft((current) => ({ ...current, provider, model }))} /></div>
         <div className="md:col-span-2"><Label>Reserva (se o principal falhar)</Label><ModelPicker name="botFallback" config={config} optional provider={draft.fallbackProvider} model={draft.fallbackModel} onChange={(provider, model) => setDraft((current) => ({ ...current, fallbackProvider: provider, fallbackModel: model }))} /></div>
+        <div className="md:col-span-2 grid gap-2 rounded-md border border-dashed p-3">
+          <Label>Modelo econômico</Label>
+          <ModelPicker name="botEconomy" config={config} optional noneLabel="Sem modelo econômico" provider={draft.economyProvider} model={draft.economyModel} onChange={(provider, model) => setDraft((current) => ({ ...current, economyProvider: provider, economyModel: model, economyMode: model ? current.economyMode : false }))} />
+          <label className="flex items-start gap-2 text-sm">
+            <Switch checked={draft.economyMode} disabled={!draft.economyModel} onCheckedChange={(value) => set("economyMode", value)} className="mt-0.5" />
+            <span>Usar o econômico em consultas e conversa; o principal decide quando for gravar no sistema</span>
+          </label>
+          <p className="text-xs text-muted-foreground">
+            Cada passo vai no econômico. Quando ele quer criar, alterar ou enviar algo (ferramentas de rascunho e com confirmação), o passo é refeito no principal ({config.models.find((item) => item.provider === draft.provider && item.id === draft.model)?.label ?? draft.model}), que decide e grava. Duas recusas ou erros seguidos também passam o resto da resposta para o principal. Pode ser de outro fornecedor.
+          </p>
+          {draft.economyMode && draft.economyProvider && !config.providers.find((item) => item.id === draft.economyProvider)?.available && (
+            <p className="text-xs font-medium text-amber-700 dark:text-amber-400">Econômico sem chave: usando o principal. Cadastre a chave do fornecedor em "Chaves de IA".</p>
+          )}
+          {draft.economyMode && budget.data?.maxPrecision && (
+            <p className="text-xs font-medium text-amber-700 dark:text-amber-400">"Precisão máxima" está ligada no bloco Economia: por enquanto este bot usa só o principal.</p>
+          )}
+        </div>
       </div>
       <div>
         <div className="flex items-center justify-between">

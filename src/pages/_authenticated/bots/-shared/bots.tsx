@@ -15,6 +15,10 @@ export interface Bot {
 export interface BotFull extends Bot {
   instructions: string; tools: string[]; permissionKey: string; version: number;
   fallbackProvider: string | null; fallbackModel: string | null; updatedAt: string;
+  /** modo econômico: consultas e conversa no econômico; o principal decide quando grava */
+  economyProvider?: string | null; economyModel?: string | null; economyMode?: boolean;
+  /** false = o fornecedor do econômico está sem chave (o motor usa o principal) */
+  economyReady?: boolean;
   /** criado na tela: pode ser excluído e não tem "Voltar ao padrão" */
   custom?: boolean;
 }
@@ -52,9 +56,24 @@ export interface PendingAction {
   conversationId: number | null; createdAt: string;
 }
 export interface ConversationView { id: number; title: string; botId: number; archived: boolean; messages: Message[]; run: Run | null; pendingActions: PendingAction[] }
-export interface UsageSummary { month: string; budget: number; spent: number; percent: number | null; rows: Array<{ provider: string; model: string; calls: number; inputTokens: number; outputTokens: number; costUsd: number }> }
+export interface UsageSummary { month: string; budget: number; spent: number; percent: number | null; warning?: boolean; rows: Array<{ provider: string; model: string; calls: number; inputTokens: number; outputTokens: number; costUsd: number }> }
 export interface AiStatus { enabled: boolean; mcpEnabled: boolean; providers: ProviderStatus[]; usage: UsageSummary | null; pendingActions: number }
 
+/** Teto de gasto da empresa (Configurar bots → Economia). */
+export interface BudgetView {
+  month: string; monthlyBudgetUsd: number | null; warnPercent: number; onExceed: "parar" | "economico";
+  economyProvider: string | null; economyModel: string | null; economyReady: boolean; maxPrecision: boolean;
+  botBudgets: Record<string, number>; envCap: number | null; budget: number; spent: number; percent: number | null; warning: boolean;
+  mode: "ok" | "economy" | "stop";
+}
+/** Gasto do mês por bot (auditoria). */
+export interface UsageByBot {
+  month: string; total: number; budget: number;
+  rows: Array<{ kind: "bot" | "schedule" | "mcp" | "other"; botId: number | null; label: string; runs: number; costUsd: number; economyCostUsd: number; primarySteps: number; economySteps: number; escalations: number; budgetUsd?: number | null; model?: string | null; economyModel?: string | null; economyMode?: boolean }>;
+  byModel: UsageSummary["rows"];
+}
+
+export const BUDGET_KEY = "aiBudget";
 export const BOTS_KEY = "aiBots";
 export const TEAM_KEY = "aiTeam";
 export const STATUS_KEY = "aiStatus";

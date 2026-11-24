@@ -9,7 +9,7 @@ import ListCard from "@/components/general-components/ListCard";
 import ListFooter from "@/components/general-components/ListFooter";
 import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import { errorMessage } from "../../comercial/-shared/commercial";
-import { STATUS_LABEL, UsageSummary, aiApi, dateTimeBr, usd } from "../-shared/bots";
+import { STATUS_LABEL, UsageByBot, UsageSummary, aiApi, dateTimeBr, usd } from "../-shared/bots";
 
 interface AuditRow { id: number; createdAt: string; user: string; origin: string; bot: string | null; tool: string; title: string; status: string; input: unknown; outputSummary: string | null; durationMs: number }
 
@@ -41,6 +41,7 @@ function AuditPage() {
   const [open, setOpen] = useState<AuditRow | null>(null);
   const enabled = can("view_auditoria_bots");
   const usage = useQuery({ queryKey: ["aiUsage"], enabled, queryFn: () => aiApi.get<UsageSummary>("usage") });
+  const byBot = useQuery({ queryKey: ["aiUsageByBot"], enabled, queryFn: () => aiApi.get<UsageByBot>("usage/bots") });
   const audit = useQuery({ queryKey: ["aiAudit", page, origin, status], enabled, queryFn: () => aiApi.get<{ total: number; rows: AuditRow[] }>("audit", { page, origin: origin || undefined, status: status || undefined }) });
   if (!enabled) return null;
 
@@ -67,7 +68,25 @@ function AuditPage() {
               <tbody>{usage.data.rows.map((row) => <tr key={`${row.provider}-${row.model}`} className="border-t"><td className="py-1">{row.provider} · {row.model}</td><td>{row.calls}</td><td>{row.inputTokens.toLocaleString("pt-BR")} / {row.outputTokens.toLocaleString("pt-BR")}</td><td className="text-right">{usd(row.costUsd)}</td></tr>)}</tbody>
             </table>
           )}
-          <p className="mt-2 text-[11px] text-muted-foreground">Estimativa pela tabela de preços do sistema. O teto é a variável AI_MONTHLY_BUDGET_USD do servidor: ao chegar nele, os bots param e os relatórios sem IA continuam.</p>
+          {byBot.data && byBot.data.rows.length > 0 && (
+            <div className="mt-4 overflow-x-auto">
+              <p className="text-xs font-medium">Por bot</p>
+              <table className="mt-1 w-full min-w-[640px] text-xs">
+                <thead><tr className="text-left text-muted-foreground"><th className="py-1">Bot</th><th>Respostas</th><th>Idas ao modelo (principal / econômico)</th><th>Escaladas</th><th className="text-right">No econômico</th><th className="text-right">Custo</th></tr></thead>
+                <tbody>{byBot.data.rows.map((row) => (
+                  <tr key={`${row.kind}-${row.botId ?? row.label}`} className="border-t">
+                    <td className="py-1">{row.label}{row.kind === "bot" && row.economyMode ? <span className="text-muted-foreground"> · econômico: {row.economyModel}</span> : null}{row.budgetUsd ? <span className="text-muted-foreground"> · teto {usd(row.budgetUsd)}</span> : null}</td>
+                    <td>{row.kind === "mcp" ? `${row.runs} ações` : row.kind === "other" ? "—" : row.runs}</td>
+                    <td>{row.kind === "bot" || row.kind === "schedule" ? `${row.primarySteps} / ${row.economySteps}` : "—"}</td>
+                    <td>{row.kind === "bot" || row.kind === "schedule" ? row.escalations : "—"}</td>
+                    <td className="text-right">{row.economyCostUsd ? usd(row.economyCostUsd) : "—"}</td>
+                    <td className="text-right">{usd(row.costUsd)}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          )}
+          <p className="mt-2 text-[11px] text-muted-foreground">Estimativa pela tabela de preços do sistema. O teto, o aviso e o que acontece ao estourar (parar ou passar para o econômico) ficam em Configurar bots → Economia; a variável AI_MONTHLY_BUDGET_USD do servidor, se existir, é o limite superior. "Escaladas" são passos que o econômico quis gravar e o principal refez.</p>
         </div>
       )}
       <ListCard>

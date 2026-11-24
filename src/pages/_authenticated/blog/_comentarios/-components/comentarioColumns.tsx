@@ -22,8 +22,8 @@ export function comentarioColumns(): DataColumn<IComentario>[] {
       cell: (item) => (
         <div className="min-w-0 max-w-[24rem]">
           <div className="flex items-start gap-1 min-w-0">
-            <p className="truncate">{item.content}</p>
             <InfoHint label="Ver comentário inteiro" className="mt-0.5"><p className="whitespace-pre-line">{item.content}</p></InfoHint>
+            <p className="truncate">{item.content}</p>
           </div>
           <p className="text-xs text-muted-foreground tabular-nums">{formatDate(item.createdAt)}</p>
         </div>

@@ -19,14 +19,14 @@ const STATE: Record<DueState, { label: string; tone: StatusTone }> = {
 const muted = "text-xs text-muted-foreground";
 const tag = "inline-flex items-center gap-1 rounded-chip border bg-muted/50 px-1.5 py-px text-[11px] font-medium text-muted-foreground whitespace-nowrap";
 
-/** Dado com detalhes: o conteúdo e, ao lado, o ⓘ que mostra o resto (InfoHint). */
+/** Dado com detalhes: o ⓘ antes (sempre visível, mesmo com o texto cortado) e o conteúdo. */
 function More({ children, lines }: { children: React.ReactNode; lines: Array<string | number | false | null | undefined> }) {
   const extra = lines.filter((line): line is string => typeof line === "string" && line !== "");
   if (!extra.length) return <>{children}</>;
   return (
     <div className="flex items-start gap-1 min-w-0">
-      <div className="min-w-0">{children}</div>
       <InfoHint lines={extra} className="mt-0.5" />
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

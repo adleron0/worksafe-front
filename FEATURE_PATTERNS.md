@@ -24,7 +24,7 @@ Toda lista nova segue o padrão abaixo (referência: `src/pages/_authenticated/f
 
 - Componentes em `src/components/general-components/`: `PageHeader`, `ListCard`, `ListToolbar` (+ `SearchInput`), `StatusChips`, `ActionsMenu`, `DataTable` (+ `EmptyState`, `RowActionsTrigger`), `ListFooter`, `StatusBadge`, `MonthRangePicker` (competência).
 - Coluna do `DataTable`: `{ id, header, sortField?, cell, align?, className? }`. No celular é a mesma tabela, rolando de lado dentro do cartão (como no Unyo) — nunca transformar a lista em cartões.
-- Célula em uma linha (no máximo uma segunda linha cinza 12px); o resto vai para o ícone ⓘ `InfoHint` ao lado do dado (passar o mouse mostra, clique/toque fixa) ou para a ficha. Não ponha balão nem `cursor-help` no próprio texto.
+- Célula em uma linha (no máximo uma segunda linha cinza 12px); o resto vai para o ícone ⓘ `InfoHint` ANTES do dado (no fim, o texto cortado esconderia o ícone) (passar o mouse mostra, clique/toque fixa) ou para a ficha. Não ponha balão nem `cursor-help` no próprio texto.
 - Linha que abre algo: `onRowClick` (cursor de seta curvada, `cursor-alias`); se só algumas abrem, use `isRowClickable`.
 - Ordenação sempre no título da coluna (`sortField` ou `SortButton`). Selo de situação: `StatusBadge tone="primary|neutral|success|warning|danger|info"`.
 - Cor da empresa só no botão primário, chip ativo e linha selecionada (`bg-primary-soft` / `text-primary-soft-foreground`). Raios: `rounded-card` (16) para cartões, `rounded-lg` (10) para botões e campos, `rounded-chip` (6) para chips e selos.

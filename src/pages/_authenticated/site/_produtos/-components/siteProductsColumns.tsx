@@ -41,8 +41,8 @@ export function siteProductsColumns(): DataColumn<IEntity>[] {
       id: "description", header: "Descrição",
       cell: (item) => item.description ? (
         <div className="flex items-start gap-1 min-w-0">
-          <p className="truncate max-w-[16rem] text-muted-foreground">{item.description}</p>
           <InfoHint label="Ver descrição inteira" lines={[item.description]} className="mt-0.5" />
+          <p className="truncate max-w-[16rem] text-muted-foreground">{item.description}</p>
         </div>
       ) : <span className="text-muted-foreground">-</span>,
     },

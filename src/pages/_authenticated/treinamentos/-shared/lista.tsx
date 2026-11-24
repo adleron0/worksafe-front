@@ -34,8 +34,8 @@ export function More({ children, lines }: { children: React.ReactNode; lines: Ar
   if (!extra.length) return <>{children}</>;
   return (
     <div className="flex items-start gap-1 min-w-0">
-      <div className="min-w-0">{children}</div>
       <InfoHint lines={extra} className="mt-0.5" />
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

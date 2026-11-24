@@ -57,8 +57,8 @@ export const recentReportColumns: DataColumn<RecentReport>[] = [
           {row.activities
             ? (
               <div className="flex items-start gap-1 min-w-0">
-                <p className="truncate text-muted-foreground">{text}</p>
                 <InfoHint label="Ver atividades" className="mt-0.5"><p className="whitespace-pre-line">{row.activities}</p></InfoHint>
+                <p className="truncate text-muted-foreground">{text}</p>
               </div>
             )
             : <p className="truncate text-muted-foreground">{text}</p>}

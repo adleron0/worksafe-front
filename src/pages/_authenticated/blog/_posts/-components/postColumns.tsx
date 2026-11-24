@@ -42,8 +42,8 @@ export function postColumns(): DataColumn<IPost>[] {
             <p className="font-medium truncate">{item.title}</p>
             {item.tags && item.tags.length > 0 ? (
               <div className="flex items-center gap-1 min-w-0">
-                <p className={`${muted} truncate`}>{item.slug}</p>
                 <InfoHint label="Ver tags" lines={[`Tags: ${item.tags.map((t) => t.tag.name).join(", ")}`]} />
+                <p className={`${muted} truncate`}>{item.slug}</p>
               </div>
             ) : (
               <p className={`${muted} truncate`}>{item.slug}</p>

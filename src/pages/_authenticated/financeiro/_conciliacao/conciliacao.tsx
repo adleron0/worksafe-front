@@ -166,12 +166,12 @@ function Reconciliation() {
   return (
     <>
       <div>
-        <h1 className="text-2xl font-bold">Conciliação bancária</h1>
+        <h1 className="text-xl font-bold">Conciliação bancária</h1>
         <p className="text-sm text-muted-foreground">Suba o extrato OFX do banco (exportado no internet banking). Cada linha é comparada com as contas lançadas; você confirma e a baixa sai com a data do extrato. Importar o mesmo extrato de novo não baixa nada duas vezes.</p>
       </div>
 
       {draft && (
-        <div className={cn("flex flex-wrap items-center gap-3 rounded-lg border p-3 my-4 text-sm", draft.check.ok ? "border-green-300 dark:border-green-900" : "border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40")}>
+        <div className={cn("flex flex-wrap items-center gap-3 rounded-card border bg-card p-3 my-4 text-sm", draft.check.ok ? "border-green-300 dark:border-green-900" : "border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40")}>
           <Icon name="file-text" className="w-5 h-5 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
             <p className="font-medium break-words">{draft.source === "mcp" ? "Extrato enviado pelo assistente" : "Extrato lido do PDF pelo assistente"}{draft.fileName ? ` · ${draft.fileName}` : ""} · {draft.bankAccount.name} · {DRAFT_STATUS[draft.status]}</p>
@@ -189,7 +189,7 @@ function Reconciliation() {
         </div>
       )}
       {!rascunho && !!openDrafts?.length && (
-        <div className="rounded-lg border p-3 mt-4 text-sm">
+        <div className="rounded-card border bg-card p-3 mt-4 text-sm">
           <p className="font-medium mb-2">Extratos lidos pelo assistente esperando revisão</p>
           <div className="flex flex-col gap-1">
             {openDrafts.map((row) => (
@@ -203,7 +203,7 @@ function Reconciliation() {
           </div>
         </div>
       )}
-      {!rascunho && <div className="flex flex-col md:flex-row md:items-end gap-3 rounded-lg border p-3 my-4">
+      {!rascunho && <div className="flex flex-col md:flex-row md:items-end gap-3 rounded-card border bg-card p-3 my-4">
         <div className="w-full md:w-64">
           <Label>Conta do extrato <span>*</span></Label>
           <Select name="bank" options={bankOptions} state={bankAccountId} onChange={(_, v) => { setBankAccountId(String(v)); setPreview(null); }} placeholder="Selecione a conta" />
@@ -233,7 +233,7 @@ function Reconciliation() {
               <span>Esta conta ainda não tem data inicial. Defina em <Link to="/financeiro/implantacao" className="underline">Implantação</Link> para o sistema ignorar o que é anterior a ela e o saldo bater com o do banco.</span>
             </p>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 rounded-lg border p-3 mb-3 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 rounded-card border bg-card p-3 mb-3 text-sm">
             <div>
               <Label htmlFor="statement">Saldo do extrato em {formatDate(preview.balance.date)}</Label>
               <Input id="statement" name="statement" format="currency" value={statement ?? ""} className="mt-1"
@@ -248,7 +248,7 @@ function Reconciliation() {
             <BalanceDiff label="Diferença agora" value={diffNow} />
             <BalanceDiff label={`Depois de conciliar ${pending} linha(s)`} value={diffAfter} />
           </div>
-          <div className="rounded-lg border overflow-hidden">
+          <div className="rounded-card border bg-card overflow-hidden">
             {!lines.length && <p className="p-6 text-sm text-center text-muted-foreground">Tudo conciliado.</p>}
             {lines.map((line) => {
               const status = STATUS[line.status];
@@ -260,7 +260,7 @@ function Reconciliation() {
                 { id: "ignorar", name: "Ignorar por enquanto" },
               ];
               return (
-                <div key={line.fitId} className={cn("flex flex-wrap xl:flex-nowrap items-center xl:items-start gap-x-3 gap-y-2 px-4 py-3 border-b last:border-b-0 text-sm", SETTLED(line.status) && "opacity-60")}>
+                <div key={line.fitId} className={cn("flex flex-wrap xl:flex-nowrap items-center xl:items-start gap-x-3 gap-y-2 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm", SETTLED(line.status) && "opacity-60")}>
                   <div className="xl:w-24 shrink-0 text-muted-foreground">{formatDate(line.date)}</div>
                   <div className="flex-1 xl:flex-none xl:w-4/12 min-w-0 break-words">{line.memo || "Sem histórico"}</div>
                   <div className={cn("xl:w-32 shrink-0 tabular-nums font-semibold text-right", line.amount < 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400")}>{formatMoney(line.amount)}</div>

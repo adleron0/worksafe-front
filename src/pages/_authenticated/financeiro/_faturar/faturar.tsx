@@ -116,7 +116,7 @@ function BillingPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 my-4">
         {STAGES.map((item) => (
-          <div key={item.id} className="rounded-lg border p-3">
+          <div key={item.id} className="rounded-card border bg-card p-3">
             <p className="text-xs text-muted-foreground flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} /> {item.name}{item.id === "recebida" && data ? ` (${data.recentDays} dias)` : ""}</p>
             <p className="font-semibold tabular-nums">{summary ? money(summary[item.id].total) : "—"}</p>
             <p className="text-xs text-muted-foreground">{summary ? `${summary[item.id].count} ${summary[item.id].count === 1 ? "item" : "itens"}` : item.hint}</p>
@@ -124,7 +124,7 @@ function BillingPage() {
         ))}
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3 mb-4 p-4 rounded-lg border">
+      <div className="flex flex-col xl:flex-row xl:items-center gap-3 mb-4 p-4 rounded-card border bg-card">
         <ViewToggle view={view} onChange={changeView} />
         {view === "lista" && (
           <div className="w-full xl:w-56">
@@ -174,8 +174,8 @@ function BillingPage() {
       )}
 
       {view === "lista" && !error && (
-        <div className="rounded-lg border overflow-hidden">
-          <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+        <div className="rounded-card border bg-card overflow-hidden">
+          <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
             <div className="w-56">Cliente e venda</div>
             <div className="flex-1">Parcela</div>
             <div className="w-28">Etapa</div>
@@ -187,7 +187,7 @@ function BillingPage() {
           {listed.map((row) => {
             const current = STAGES.find((item) => item.id === row.stage)!;
             return (
-              <div key={row.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm hover:bg-muted/40">
+              <div key={row.id} className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm hover:bg-muted/40">
                 <div className="lg:w-56 min-w-0 lg:pr-3">
                   <p className="font-medium truncate">{row.customer.name}</p>
                   <p className="text-xs text-muted-foreground truncate">{sale(row)} · {row.title}</p>

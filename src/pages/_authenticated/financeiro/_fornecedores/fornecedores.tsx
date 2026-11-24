@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import Input from "@/components/general-components/Input";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import SimpleCrud, { SimpleEntity, useSimpleSave } from "../-shared/SimpleCrud";
 import { SUPPLIER_OPTIONS_KEY, Supplier, formatDocument } from "../-shared/payables";
 
@@ -19,23 +20,21 @@ export const Route = createFileRoute("/_authenticated/financeiro/_fornecedores/f
   component: () => (
     <SimpleCrud<Supplier>
       entity={entity}
-      header={<>
-        <div className="flex-1">Fornecedor</div>
-        <div className="w-1/4">Contato</div>
-        <div className="w-1/4">Pagamento</div>
-        <div className="w-20 text-right pr-4">Contas</div>
-      </>}
-      renderRow={(item) => <>
-        <div className="flex-1 pr-10 lg:pr-2 min-w-0">
-          <p className="font-semibold">{item.name}{item.inactiveAt && <span className="ml-2 text-xs font-normal rounded bg-muted px-1.5 py-0.5">Inativo</span>}</p>
-          <p className="text-xs text-muted-foreground">{[formatDocument(item.document), item.supplies, item.city && [item.city, item.state].filter(Boolean).join("/")].filter(Boolean).join(" · ") || "—"}</p>
-        </div>
-        <div className="lg:w-1/4 lg:pr-2 text-xs text-muted-foreground break-words">{[item.contactName, item.phone, item.phone2, item.email].filter(Boolean).join(" · ") || "—"}</div>
-        <div className="lg:w-1/4 lg:pr-2 text-xs text-muted-foreground break-words">
-          {item.pixKey ? `Pix: ${item.pixKey}` : [item.bankName, item.agency && `Ag. ${item.agency}`, item.account && `Conta ${item.account}`].filter(Boolean).join(" · ") || "—"}
-        </div>
-        <div className="lg:w-20 lg:text-right lg:pr-4 tabular-nums"><span className="lg:hidden text-xs text-muted-foreground">Contas: </span>{item._count?.payables ?? 0}</div>
-      </>}
+      columns={[
+        { id: "name", header: "Fornecedor", mobile: "title", className: "min-w-[200px]", cell: (item) => (
+          <div className="min-w-0 sm:max-w-[22rem]">
+            <p className="font-medium sm:truncate">{item.name}{item.inactiveAt && <StatusBadge className="ml-2">Inativo</StatusBadge>}</p>
+            <p className="text-xs text-muted-foreground truncate">{[formatDocument(item.document), item.supplies, item.city && [item.city, item.state].filter(Boolean).join("/")].filter(Boolean).join(" · ") || "—"}</p>
+          </div>
+        ) },
+        { id: "contact", header: "Contato", mobile: "subtitle", cell: (item) => <span className="text-xs text-muted-foreground line-clamp-2 sm:max-w-[16rem]">{[item.contactName, item.phone, item.phone2, item.email].filter(Boolean).join(" · ") || "—"}</span> },
+        { id: "payment", header: "Pagamento", cell: (item) => (
+          <span className="text-xs text-muted-foreground line-clamp-2 sm:max-w-[14rem]">
+            {item.pixKey ? `Pix: ${item.pixKey}` : [item.bankName, item.agency && `Ag. ${item.agency}`, item.account && `Conta ${item.account}`].filter(Boolean).join(" · ") || "—"}
+          </span>
+        ) },
+        { id: "count", header: "Contas", align: "right", mobile: "end", cell: (item) => <span className="tabular-nums">{item._count?.payables ?? 0}</span> },
+      ]}
       renderForm={(props) => <SupplierForm {...props} />}
       inactivateWarning="Deixa de aparecer para novas contas. As contas já lançadas continuam ligadas."
     />

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import CalendarPicker from "@/components/general-components/Calendar";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import SimpleCrud, { SimpleEntity, useSimpleSave } from "../-shared/SimpleCrud";
 import TransfersSection from "../-shared/transfers";
 import { BankAccount, bankTypeLabel, bankTypeOptions, formatMoney, gatewayOptions } from "../-shared/financial";
@@ -45,28 +46,25 @@ function BankAccounts() {
     <>
     <SimpleCrud<BankAccount>
       entity={entity}
-      header={<>
-        <div className="flex-1">Conta</div>
-        <div className="w-44">Tipo</div>
-        <div className="w-40 text-right pr-6">Saldo</div>
-      </>}
-      renderRow={(item) => <>
-        <div className="flex-1 pr-10 lg:pr-2">
-          <p className="font-semibold">
-            {item.name}
-            {item.isDefault && <span className="ml-2 text-xs font-normal rounded bg-primary text-inverse-foreground px-1.5 py-0.5">Padrão</span>}
-            {item.inactiveAt && <span className="ml-2 text-xs font-normal rounded bg-muted px-1.5 py-0.5">Inativa</span>}
-          </p>
-          {bankLine(item) && <p className="text-xs text-muted-foreground">{bankLine(item)}</p>}
-          {item.pixKey && <p className="text-xs text-muted-foreground">Pix: {item.pixKey}</p>}
-        </div>
-        <div className="lg:w-44 text-muted-foreground">{bankTypeLabel(item.type)}</div>
-        <div className="lg:w-40 lg:text-right lg:pr-6 tabular-nums font-semibold">
-          <span className="lg:hidden text-xs text-muted-foreground font-normal">Saldo: </span>
-          {balanceOf(item.id) === undefined ? "—" : formatMoney(balanceOf(item.id))}
-          {startOf(item.id) && <p className="text-xs font-normal text-muted-foreground">desde {formatDate(startOf(item.id)!)}</p>}
-        </div>
-      </>}
+      columns={[
+        { id: "name", header: "Conta", mobile: "title", cell: (item) => (
+          <div className="min-w-0">
+            <p className="font-medium">
+              {item.name}
+              {item.isDefault && <StatusBadge tone="primary" className="ml-2">Padrão</StatusBadge>}
+              {item.inactiveAt && <StatusBadge className="ml-2">Inativa</StatusBadge>}
+            </p>
+            {(bankLine(item) || item.pixKey) && <p className="text-xs text-muted-foreground truncate">{[bankLine(item), item.pixKey && `Pix: ${item.pixKey}`].filter(Boolean).join(" · ")}</p>}
+          </div>
+        ) },
+        { id: "type", header: "Tipo", cell: (item) => <span className="text-muted-foreground">{bankTypeLabel(item.type)}</span> },
+        { id: "balance", header: "Saldo", align: "right", mobile: "end", className: "whitespace-nowrap", cell: (item) => (
+          <div>
+            <p className="tabular-nums font-semibold">{balanceOf(item.id) === undefined ? "—" : formatMoney(balanceOf(item.id))}</p>
+            {startOf(item.id) && <p className="text-xs text-muted-foreground">desde {formatDate(startOf(item.id)!)}</p>}
+          </div>
+        ) },
+      ]}
       renderForm={(props) => <BankAccountForm {...props} />}
       inactivateWarning="Deixa de aparecer na baixa. Os recebimentos e pagamentos já lançados continuam ligados à conta."
     />

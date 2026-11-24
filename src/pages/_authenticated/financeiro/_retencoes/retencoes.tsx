@@ -82,7 +82,7 @@ function RetentionsPage() {
     <>
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Impostos retidos</h1>
+          <h1 className="text-xl font-bold">Impostos retidos</h1>
           <p className="text-sm text-muted-foreground max-w-3xl">O que os clientes descontaram das notas e recolheram eles mesmos. Na guia do mês (DAS, ISS), esse valor entra como <b>retido</b>: não pode ser pago de novo.</p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
@@ -126,7 +126,7 @@ function RetentionsPage() {
             ))}
           </div>
 
-          <section className="rounded-lg border overflow-x-auto">
+          <section className="rounded-card border bg-card overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-xs text-muted-foreground">
                 <tr>

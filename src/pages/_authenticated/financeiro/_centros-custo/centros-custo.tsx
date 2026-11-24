@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import Input from "@/components/general-components/Input";
+import StatusBadge from "@/components/general-components/StatusBadge";
 import SimpleCrud, { SimpleEntity, useSimpleSave } from "../-shared/SimpleCrud";
 import { CostCenter } from "../-shared/financial";
 
@@ -19,19 +20,16 @@ export const Route = createFileRoute("/_authenticated/financeiro/_centros-custo/
   component: () => (
     <SimpleCrud<CostCenter>
       entity={entity}
-      header={<>
-        <div className="flex-1">Centro de custo</div>
-        <div className="w-32">Código</div>
-        <div className="w-32 text-right pr-6">Lançamentos</div>
-      </>}
-      renderRow={(item) => <>
-        <div className="flex-1 pr-10 lg:pr-2">
-          <p className="font-semibold">{item.name}{item.inactiveAt && <span className="ml-2 text-xs font-normal rounded bg-muted px-1.5 py-0.5">Inativo</span>}</p>
-          {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
-        </div>
-        <div className="lg:w-32 text-muted-foreground"><span className="lg:hidden text-xs">Código: </span>{item.code || "—"}</div>
-        <div className="lg:w-32 lg:text-right lg:pr-6 tabular-nums"><span className="lg:hidden text-xs text-muted-foreground">Lançamentos: </span>{(item._count?.financialRecords ?? 0) + (item._count?.payables ?? 0)}</div>
-      </>}
+      columns={[
+        { id: "name", header: "Centro de custo", mobile: "title", cell: (item) => (
+          <div className="min-w-0">
+            <p className="font-medium">{item.name}{item.inactiveAt && <StatusBadge className="ml-2">Inativo</StatusBadge>}</p>
+            {item.description && <p className="text-xs text-muted-foreground truncate max-w-md">{item.description}</p>}
+          </div>
+        ) },
+        { id: "code", header: "Código", cell: (item) => <span className="text-muted-foreground"><span className="sm:hidden">Código </span>{item.code || "—"}</span> },
+        { id: "count", header: "Lançamentos", align: "right", mobile: "end", cell: (item) => <span className="tabular-nums">{(item._count?.financialRecords ?? 0) + (item._count?.payables ?? 0)}</span> },
+      ]}
       renderForm={(props) => <CostCenterForm {...props} />}
     />
   ),

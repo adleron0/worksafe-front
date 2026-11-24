@@ -38,7 +38,7 @@ export default function TransfersSection() {
         </div>
         {can(`create_${FINANCIAL_ABILITY}`) && <Button size="sm" onClick={() => setOpen(true)}><Icon name="arrow-left-right" className="w-4 h-4" /> Transferir</Button>}
       </div>
-      <div className="rounded-lg border overflow-hidden">
+      <div className="rounded-card border bg-card overflow-hidden">
         {isLoading && <p className="p-4 text-sm text-muted-foreground">Carregando...</p>}
         {!isLoading && !data?.length && <p className="p-4 text-sm text-muted-foreground">Nenhuma transferência.</p>}
         {data?.map((t) => (

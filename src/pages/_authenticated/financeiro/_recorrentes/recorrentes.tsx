@@ -64,7 +64,7 @@ function Recurrences() {
     <>
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Recorrentes</h1>
+          <h1 className="text-xl font-bold">Recorrentes</h1>
           <p className="text-sm text-muted-foreground">Despesas fixas (aluguel, internet, contador) e mensalidades. Os próximos 12 meses ficam lançados e entram no fluxo de caixa.</p>
         </div>
         {can(`create_${FINANCIAL_ABILITY}`) && <Button size="sm" onClick={() => { setEditing(null); setOpenForm(true); }}><Icon name="plus" className="w-4 h-4" /> Novo recorrente</Button>}
@@ -86,8 +86,8 @@ function Recurrences() {
         description={editing ? "A mudança vale para os lançamentos em aberto de hoje em diante. Os já vencidos e os pagos não mudam." : "Lance uma vez; o sistema cria um lançamento por mês."}
         form={<RecurrenceForm key={`${editing?.id ?? "new"}-${kind}`} kind={editing?.kind ?? kind} item={editing} close={() => setOpenForm(false)} />} />
 
-      <div className="rounded-lg border overflow-hidden">
-        <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+      <div className="rounded-card border bg-card overflow-hidden">
+        <div className="hidden lg:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
           <div className="w-4/12">Descrição</div>
           <div className="w-2/12">Valor por mês</div>
           <div className="w-2/12">Todo dia</div>
@@ -97,7 +97,7 @@ function Recurrences() {
         {isLoading && Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-14 w-full my-1" />)}
         {!isLoading && !active.length && <p className="p-6 text-sm text-muted-foreground text-center">Nenhum recorrente {kind === "payable" ? "a pagar" : "a receber"} ativo.</p>}
         {[...active, ...(showEnded ? ended : [])].map((item) => (
-          <div key={item.id} className={cn("relative flex flex-col lg:flex-row lg:items-center gap-1 px-4 py-3 border-b last:border-b-0 text-sm", item.inactiveAt && "opacity-60")}>
+          <div key={item.id} className={cn("relative flex flex-col lg:flex-row lg:items-center gap-1 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm", item.inactiveAt && "opacity-60")}>
             <div className="lg:w-4/12 pr-10 min-w-0">
               <p className="font-semibold break-words">{item.description}</p>
               <p className="text-xs text-muted-foreground break-words">

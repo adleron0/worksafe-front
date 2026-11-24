@@ -116,7 +116,7 @@ function ChartOfAccounts() {
         )}
       </div>
 
-      <div className="flex flex-col lg:flex-row lg:items-center gap-3 my-4 p-4 rounded-lg border">
+      <div className="flex flex-col lg:flex-row lg:items-center gap-3 my-4 p-4 rounded-card border bg-card">
         <div className="flex rounded-md border overflow-hidden w-fit" role="tablist" aria-label="Natureza">
           {([["todas", "Todas"], ["receita", "Receitas"], ["despesa", "Despesas"]] as const).map(([value, label]) => (
             <button key={value} type="button" role="tab" aria-selected={nature === value} onClick={() => setNature(value)}
@@ -144,8 +144,8 @@ function ChartOfAccounts() {
         </Button>
       </div>
 
-      <div className="rounded-lg border overflow-hidden" role="treegrid" aria-label="Plano de contas">
-        <div className="hidden md:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground" role="row">
+      <div className="rounded-card border bg-card overflow-hidden" role="treegrid" aria-label="Plano de contas">
+        <div className="hidden md:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground" role="row">
           <div className="flex-1">Conta</div>
           <div className="w-28 text-right">Lançamentos</div>
           <div className="w-40 text-right">{month ? "Valor no mês" : "Valor total"}</div>

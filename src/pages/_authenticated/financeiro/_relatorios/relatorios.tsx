@@ -36,7 +36,7 @@ function Reports() {
     <>
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Relatórios financeiros</h1>
+          <h1 className="text-xl font-bold">Relatórios financeiros</h1>
           <p className="text-sm text-muted-foreground">Fluxo de caixa (o que entrou, saiu e vai entrar e sair) e o resultado do mês (DRE).</p>
         </div>
         <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
@@ -93,7 +93,7 @@ function CashFlow() {
 
   return (
     <div className="mt-4 flex flex-col gap-4">
-      <div className="flex flex-col lg:flex-row lg:items-end gap-3 rounded-lg border p-3">
+      <div className="flex flex-col lg:flex-row lg:items-end gap-3 rounded-card border bg-card p-3">
         <div className="min-w-64">
           <Label>Período</Label>
           <CalendarPicker mode="range" name="flowRange" value={`${from}|${to}`} numberOfMonths={2}
@@ -132,7 +132,7 @@ function CashFlow() {
             </div>
           )}
           {data.rows.length > 0 && data.rows.length <= 120 && (
-            <div className="rounded-lg border p-3">
+            <div className="rounded-card border bg-card p-3">
               <p className="text-sm font-medium mb-2">Entradas, saídas e saldo acumulado</p>
               <ChartContainer config={flowConfig} className="h-72 w-full">
                 <ComposedChart data={chart} margin={{ left: 4, right: 8, top: 8 }} barGap={2}>
@@ -150,9 +150,9 @@ function CashFlow() {
               </ChartContainer>
             </div>
           )}
-          <div className="rounded-lg border overflow-x-auto">
+          <div className="rounded-card border bg-card overflow-x-auto">
             <table className="w-full text-sm min-w-[760px]">
-              <thead className="bg-primary text-inverse-foreground">
+              <thead className="text-muted-foreground text-[12.5px] [&_th]:border-b [&_th]:font-semibold">
                 <tr className="text-left">
                   <th className="px-3 py-2 font-semibold">Período</th>
                   <th className="px-3 py-2 font-semibold text-right">Saldo inicial</th>
@@ -189,7 +189,7 @@ function CashFlow() {
 
 function Stat({ label, value, sub, strong, warn }: { label: string; value: number; sub?: string; strong?: boolean; warn?: boolean }) {
   return (
-    <div className={cn("rounded-lg border p-3 min-w-0", warn && "border-red-300 dark:border-red-800")}>
+    <div className={cn("rounded-card border bg-card p-3 min-w-0", warn && "border-red-300 dark:border-red-800")}>
       <p className="text-xs text-muted-foreground truncate">{label}</p>
       <p className={cn("text-lg tabular-nums truncate", strong ? "font-bold" : "font-semibold", (value < 0 || warn) && "text-red-600 dark:text-red-400")}>{formatMoney(value)}</p>
       {sub && <p className="text-xs text-muted-foreground truncate">{sub}</p>}
@@ -228,7 +228,7 @@ function Dre() {
 
   return (
     <div className="mt-4 flex flex-col gap-4">
-      <div className="flex flex-col md:flex-row md:items-end gap-3 rounded-lg border p-3">
+      <div className="flex flex-col md:flex-row md:items-end gap-3 rounded-card border bg-card p-3">
         <div className="w-64"><Label>Meses</Label><MonthRangePicker className="mt-1" clearable={false} from={from} to={to} onChange={(a, b) => { if (a && b) { setFrom(a); setTo(b); } }} /></div>
         <div className="w-56"><Label>Regime</Label><Select name="basis" options={[{ id: "competencia", name: "Competência (mês da conta)" }, { id: "caixa", name: "Caixa (mês do pagamento)" }]} state={basis} onChange={(_, v) => setBasis(String(v))} /></div>
         <div className="flex gap-1 flex-wrap">
@@ -246,11 +246,11 @@ function Dre() {
       {data && !hasData && <p className="text-sm text-muted-foreground rounded border p-6 text-center">Nenhum lançamento no período.</p>}
       {data && hasData && (
         <>
-          <div className="rounded-lg border overflow-x-auto">
+          <div className="rounded-card border bg-card overflow-x-auto">
             <table className="w-full text-sm" style={{ minWidth: `${320 + data.months.length * 110}px` }}>
-              <thead className="bg-primary text-inverse-foreground">
+              <thead className="text-muted-foreground text-[12.5px] [&_th]:border-b [&_th]:font-semibold">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold sticky left-0 bg-primary">Linha</th>
+                  <th className="px-3 py-2 text-left font-semibold sticky left-0 bg-card">Linha</th>
                   {data.months.map((m) => <th key={m} className="px-3 py-2 text-right font-semibold">{label(m)}</th>)}
                   <th className="px-3 py-2 text-right font-semibold">Total</th>
                 </tr>

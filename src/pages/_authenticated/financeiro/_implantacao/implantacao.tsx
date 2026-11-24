@@ -87,7 +87,7 @@ function Setup() {
   return (
     <>
       <div>
-        <h1 className="text-2xl font-bold">Implantação do financeiro</h1>
+        <h1 className="text-xl font-bold">Implantação do financeiro</h1>
         <p className="text-sm text-muted-foreground">
           Escolha a data a partir da qual o sistema acompanha o caixa e informe quanto havia em cada conta. Dali em diante, lance as contas e concilie os extratos: o saldo do sistema passa a bater com o do banco.
         </p>
@@ -97,7 +97,7 @@ function Setup() {
         <div className="flex flex-col gap-3 my-4">{Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-28 w-full" />)}</div>
       ) : (
         <div className="flex flex-col gap-4 my-4">
-          <div className={cn("flex items-start gap-3 rounded-lg border p-3 text-sm",
+          <div className={cn("flex items-start gap-3 rounded-card border bg-card p-3 text-sm",
             data.startDate ? "border-green-300 bg-green-50 text-green-800 dark:border-green-900 dark:bg-green-950/40 dark:text-green-200" : "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200")}>
             <Icon name={data.startDate ? "circle-check" : "flag"} className="w-4 h-4 mt-0.5 shrink-0" />
             <p>
@@ -108,7 +108,7 @@ function Setup() {
           </div>
 
           {/* 1. data */}
-          <section className="rounded-lg border p-4">
+          <section className="rounded-card border bg-card p-4">
             <h2 className="font-semibold flex items-center gap-2"><Step n={1} /> Data inicial</h2>
             <div className="flex flex-col md:flex-row md:items-end gap-3 mt-3">
               <div className="w-full md:w-56">
@@ -131,23 +131,23 @@ function Setup() {
           </section>
 
           {/* 2. saldos */}
-          <section className="rounded-lg border p-4">
+          <section className="rounded-card border bg-card p-4">
             <h2 className="font-semibold flex items-center gap-2"><Step n={2} /> Saldo de cada conta{eve && !future ? ` no fim de ${formatDate(eve)}` : ""}</h2>
             {!data.accounts.length ? (
               <p className="text-sm text-muted-foreground mt-3">
                 Nenhuma conta ativa. <Link to="/financeiro/contas-bancarias" className="underline">Cadastre as contas bancárias e o caixa</Link> e volte aqui.
               </p>
             ) : (
-              <div className="rounded-lg border overflow-hidden mt-3">
-                <div className="hidden md:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
+              <div className="rounded-card border bg-card overflow-hidden mt-3">
+                <div className="hidden md:flex items-center py-2.5 border-b px-4 font-semibold text-[12.5px] text-muted-foreground">
                   <div className="flex-1">Conta</div>
                   <div className="w-56">Saldo inicial</div>
                   <div className="w-40 text-right">Saldo hoje</div>
                 </div>
                 {data.accounts.map((account) => (
-                  <div key={account.id} className="flex flex-col md:flex-row md:items-center gap-2 px-4 py-3 border-b last:border-b-0 text-sm">
+                  <div key={account.id} className="flex flex-col md:flex-row md:items-center gap-2 px-4 py-2.5 border-b border-border/70 last:border-b-0 hover:bg-muted/40 transition-colors text-sm">
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold">{account.name}{account.isDefault && <span className="ml-2 text-xs font-normal rounded bg-primary text-inverse-foreground px-1.5 py-0.5">Padrão</span>}</p>
+                      <p className="font-semibold">{account.name}{account.isDefault && <span className="ml-2 text-xs font-normal rounded-chip bg-primary-soft text-primary-soft-foreground px-1.5 py-0.5 font-medium">Padrão</span>}</p>
                       <p className="text-xs text-muted-foreground">
                         {account.type === "gateway" ? `${gatewayOptions.find((g) => g.id === account.gateway)?.name ?? "Gateway"} · saldo disponível no provedor` : [bankTypeLabel(account.type), account.bankName].filter(Boolean).join(" · ")}
                       </p>
@@ -181,7 +181,7 @@ function Setup() {
           </section>
 
           {/* 3. antes da data */}
-          <section className="rounded-lg border p-4">
+          <section className="rounded-card border bg-card p-4">
             <h2 className="font-semibold flex items-center gap-2"><Step n={3} /> O que já existe no sistema</h2>
             <ul className="mt-3 flex flex-col gap-2 text-sm">
               <li className="flex gap-2">
@@ -203,7 +203,7 @@ function Setup() {
           </section>
 
           {/* 4. próximos passos */}
-          <section className="rounded-lg border p-4">
+          <section className="rounded-card border bg-card p-4">
             <h2 className="font-semibold flex items-center gap-2"><Step n={4} /> Para o saldo bater com o banco</h2>
             <ol className="mt-3 flex flex-col gap-2 text-sm">
               <Check done={data.progress.openPayables > 0} to="/financeiro/pagar" text="Lance as contas a pagar em aberto" detail={`${data.progress.openPayables} em aberto`} />

@@ -4,12 +4,14 @@ import { get, patch, post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { useLoader } from "@/context/GeneralContext";
-import Pagination from "@/components/general-components/Pagination";
-import HeaderLists from "@/components/general-components/HeaderLists";
 import SideForm from "@/components/general-components/SideForm";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
-import { Skeleton } from "@/components/ui/skeleton";
+import PageHeader from "@/components/general-components/PageHeader";
+import ListCard from "@/components/general-components/ListCard";
+import ListToolbar from "@/components/general-components/ListToolbar";
+import ListFooter from "@/components/general-components/ListFooter";
+import DataTable, { DataColumn, EmptyState, RowActionsTrigger } from "@/components/general-components/DataTable";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ApiError } from "@/general-interfaces/api.interface";
@@ -29,24 +31,24 @@ interface Row { id: number; name: string; inactiveAt?: string | null }
 
 interface SimpleCrudProps<T extends Row> {
   entity: SimpleEntity;
-  /** colunas além de nome e ações: cabeçalho e célula */
-  header: React.ReactNode;
-  renderRow: (item: T) => React.ReactNode;
+  /** colunas da tabela (as ações entram sozinhas no fim) */
+  columns: DataColumn<T>[];
   renderForm: (props: { formData?: T; close: () => void; onSaved: () => void }) => React.ReactNode;
   inactivateWarning?: string;
 }
 
 /** Listagem + gaveta de cadastro dos cadastros simples do financeiro. */
-export default function SimpleCrud<T extends Row>({ entity, header, renderRow, renderForm, inactivateWarning }: SimpleCrudProps<T>) {
+export default function SimpleCrud<T extends Row>({ entity, columns, renderForm, inactivateWarning }: SimpleCrudProps<T>) {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<T>();
+  const [confirm, setConfirm] = useState<{ item: T; action: "active" | "inactive" } | null>(null);
   const [searchParams, setSearchParams] = useState<{ limit: number; page: number; "like-name"?: string }>({ limit: 30, page: 0 });
   const listKey = `list${entity.pluralName}`;
 
-  const { data, isLoading, isError, error } = useQuery<{ rows: T[]; total: number } | undefined, ApiError>({
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery<{ rows: T[]; total: number } | undefined, ApiError>({
     queryKey: [listKey, searchParams],
     queryFn: () => get(entity.model, "", [
       ...Object.entries(searchParams).map(([key, value]) => ({ key, value })),
@@ -81,90 +83,64 @@ export default function SimpleCrud<T extends Row>({ entity, header, renderRow, r
   }, []);
 
   if (!can(`view_${FINANCIAL_ABILITY}`)) return null;
+  const canCreate = can(`create_${FINANCIAL_ABILITY}`);
+  const canUpdate = can(`update_${FINANCIAL_ABILITY}`);
+  const novo = `${entity.article === "a" ? "Nova" : "Novo"} ${entity.name.toLowerCase()}`;
+  const openNew = () => { setFormData(undefined); setOpenForm(true); };
+  const edit = (item: T) => { setFormData(item); setOpenForm(true); };
+
+  const rowActions = (item: T) => {
+    const canEdit = canUpdate && !item.inactiveAt;
+    const canInactive = !item.inactiveAt && can(`inactive_${FINANCIAL_ABILITY}`);
+    const canActive = !!item.inactiveAt && can(`activate_${FINANCIAL_ABILITY}`);
+    if (!canEdit && !canInactive && !canActive) return null;
+    return (
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild><RowActionsTrigger label={`Ações de ${item.name}`} /></DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {canEdit && <DropdownMenuItem className="gap-2" onSelect={() => edit(item)}><Icon name="pencil" className="w-3.5 h-3.5" /> Editar</DropdownMenuItem>}
+          {canInactive && <DropdownMenuItem className="gap-2" onSelect={() => setConfirm({ item, action: "inactive" })}><Icon name="power-off" className="w-3.5 h-3.5" /> Inativar</DropdownMenuItem>}
+          {canActive && <DropdownMenuItem className="gap-2" onSelect={() => setConfirm({ item, action: "active" })}><Icon name="power" className="w-3.5 h-3.5" /> Reativar</DropdownMenuItem>}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
 
   return (
     <>
-      <HeaderLists
-        titlePage={entity.pluralName}
-        descriptionPage={entity.description}
-        entityName={entity.name}
-        ability={FINANCIAL_ABILITY}
-        limit={data?.total || 0}
-        showInputSearch
-        showSearch={false}
-        showCreate
-        searchPlaceholder="Buscar pelo nome..."
-        searchParams={searchParams}
-        onlimitChange={(name, value) => setSearchParams((prev) => ({ ...prev, [name]: value, page: 0 }))}
-        openSearch={() => {}}
-        openForm={setOpenForm}
-        setFormData={setFormData}
-        setFormType={() => {}}
-        iconForm="plus"
-        addButtonName={entity.article === "a" ? "Nova" : "Novo"}
-        onTextSearch={handleTextSearch}
-      />
+      <PageHeader title={entity.pluralName} description={entity.description} />
+
+      <ListCard>
+        <ListToolbar search={{ value: searchParams["like-name"] ?? "", onChange: handleTextSearch, placeholder: "Buscar pelo nome" }}>
+          {canCreate && <Button onClick={openNew}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">{novo}</span></Button>}
+        </ListToolbar>
+
+        <DataTable rows={data?.rows} columns={columns} getRowId={(item) => item.id} ariaLabel={entity.pluralName} minWidth={560}
+          loading={isLoading || isFetching} error={isError ? error?.response?.data?.message || "erro desconhecido" : null} onRetry={() => refetch()}
+          onRowClick={(item) => { if (canUpdate && !item.inactiveAt) edit(item); }}
+          rowClassName={(item) => (item.inactiveAt ? "opacity-60" : undefined)}
+          actions={rowActions}
+          empty={searchParams["like-name"]
+            ? <EmptyState icon="search-x" title="Nada encontrado com esse nome." action={<Button variant="outline" size="sm" onClick={() => handleTextSearch("")}>Limpar busca</Button>} />
+            : <EmptyState title={`Nenhum${entity.article === "a" ? "a" : ""} ${entity.name.toLowerCase()} cadastrad${entity.article}.`} action={canCreate && <Button size="sm" onClick={openNew}><Icon name="plus" className="w-4 h-4" /> {novo}</Button>} />} />
+
+        <ListFooter total={data?.total ?? 0} page={searchParams.page} limit={searchParams.limit} limits={[10, 30, 50, 100]}
+          onPageChange={(page) => setSearchParams((prev) => ({ ...prev, page }))} onLimitChange={(limit) => setSearchParams((prev) => ({ ...prev, limit, page: 0 }))} />
+      </ListCard>
 
       <SideForm
         openSheet={openForm}
         setOpenSheet={setOpenForm}
-        title={formData ? `Editar ${formData.name}` : `Nov${entity.article} ${entity.name.toLowerCase()}`}
+        title={formData ? `Editar ${formData.name}` : novo}
         description={entity.description}
         side="right"
         form={<div key={formData?.id ?? "new"}>{renderForm({ formData, close: () => setOpenForm(false), onSaved: invalidate })}</div>}
       />
-
-      <div className="mt-4 rounded-lg border overflow-hidden">
-        <div className="hidden lg:flex items-center py-2 px-4 bg-primary font-semibold text-sm text-inverse-foreground">
-          {header}
-          <div className="w-20 text-right">Ações</div>
-        </div>
-        {isLoading && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12 w-full my-1" />)}
-        {isError && <p className="p-4 text-destructive font-medium">Erro: {error?.response?.data?.message}</p>}
-        {!isLoading && !isError && !data?.rows?.length && (
-          <p className="p-4 text-sm text-muted-foreground">Nenhum{entity.article === "a" ? "a" : ""} {entity.name.toLowerCase()} cadastrad{entity.article}.</p>
-        )}
-        {data?.rows?.map((item) => (
-          <div key={item.id} className={`relative flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-0 px-4 py-3 border-b last:border-b-0 text-sm ${item.inactiveAt ? "opacity-60" : ""}`}>
-            {renderRow(item)}
-            <div className="absolute top-2 right-2 lg:static lg:w-20 flex justify-end">
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
-                  <Button className="h-8 w-8 rounded-full p-0" variant="outline" size="sm" aria-label={`Ações de ${item.name}`}>
-                    <Icon name="ellipsis-vertical" className="w-3 h-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {can(`update_${FINANCIAL_ABILITY}`) && !item.inactiveAt && (
-                    <DropdownMenuItem className="gap-2" onSelect={() => { setFormData(item); setOpenForm(true); }}>
-                      <Icon name="pencil" className="w-3 h-3" /> Editar
-                    </DropdownMenuItem>
-                  )}
-                  {!item.inactiveAt && can(`inactive_${FINANCIAL_ABILITY}`) && (
-                    <DropdownMenuItem className="p-0" onSelect={(event) => event.preventDefault()}>
-                      <ConfirmDialog title={`Inativar ${item.name}?`}
-                        description={inactivateWarning ?? "Deixa de aparecer para novos lançamentos. Os lançamentos já feitos continuam ligados."}
-                        onConfirm={() => toggle({ item, action: "inactive" })} titleBttn="Inativar" iconBttn="power-off" />
-                    </DropdownMenuItem>
-                  )}
-                  {item.inactiveAt && can(`activate_${FINANCIAL_ABILITY}`) && (
-                    <DropdownMenuItem className="p-0" onSelect={(event) => event.preventDefault()}>
-                      <ConfirmDialog title={`Reativar ${item.name}?`} description="Volta a aparecer para novos lançamentos."
-                        onConfirm={() => toggle({ item, action: "active" })} titleBttn="Reativar" iconBttn="power" />
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {data && data.total > searchParams.limit && (
-        <div className="mt-4">
-          <Pagination totalItems={data.total} itemsPerPage={searchParams.limit} currentPage={searchParams.page}
-            onPageChange={(page) => setSearchParams((prev) => ({ ...prev, page }))} maxVisiblePages={5} />
-        </div>
+      {confirm && (
+        <ConfirmDialog open onOpenChange={(open) => { if (!open) setConfirm(null); }}
+          title={`${confirm.action === "inactive" ? "Inativar" : "Reativar"} ${confirm.item.name}?`}
+          description={confirm.action === "inactive" ? (inactivateWarning ?? "Deixa de aparecer para novos lançamentos. Os lançamentos já feitos continuam ligados.") : "Volta a aparecer para novos lançamentos."}
+          onConfirm={() => { toggle({ item: confirm.item, action: confirm.action }); setConfirm(null); }} />
       )}
     </>
   );

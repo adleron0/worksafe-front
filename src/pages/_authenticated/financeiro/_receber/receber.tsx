@@ -38,7 +38,7 @@ const DEFAULT_VIEW = "todas";
 const LIMITS = [10, 30, 50, 100, 200];
 const OPEN_VIEWS = ["abertas", "atrasadas", "hoje", "semana", "depois"];
 
-interface Summary { overdue: Bucket; dueToday: Bucket; dueWeek: Bucket; later: Bucket; received: Bucket; lost: Bucket; open: Bucket; paidPeriod: string }
+interface Summary { overdue: Bucket; dueToday: Bucket; dueWeek: Bucket; later: Bucket; received: Bucket; lost: Bucket; open: Bucket; all?: Bucket; excluded?: Bucket; paidPeriod: string }
 interface Response { today: string; view: string; rows: IFinancialRecord[]; total: number; summary: Summary }
 
 function Receivables() {
@@ -76,7 +76,8 @@ function Receivables() {
   const canUpdate = can(`update_${FINANCIAL_ABILITY}`);
   const canCreate = can(`create_${FINANCIAL_ABILITY}`);
   const filterCount = countFilters(filters);
-  const periodHint = summary?.paidPeriod && summary.paidPeriod !== "filtro" ? `${summary.paidPeriod.slice(5, 7)}/${summary.paidPeriod.slice(0, 4)}` : "no período";
+  // o cartão segue o recorte da lista; só a API antiga mandava o mês (AAAA-MM)
+  const periodHint = summary?.paidPeriod && /^\d{4}-\d{2}$/.test(summary.paidPeriod) ? `${summary.paidPeriod.slice(5, 7)}/${summary.paidPeriod.slice(0, 4)}` : undefined;
   const cards = [
     { view: "atrasadas", label: "Vencidas", bucket: summary?.overdue, tone: "text-red-600 dark:text-red-400", icon: "triangle-alert", color: "#dc2626" },
     { view: "hoje", label: "Vencem hoje", bucket: summary?.dueToday, tone: "text-amber-600 dark:text-amber-400", icon: "clock", color: "#d97706" },
@@ -88,8 +89,9 @@ function Receivables() {
   const exportNow = (ids?: number[]) => downloadXlsx("financial/receivables/export", ids ? [{ key: "ids", value: ids.join(",") }] : toParams({ ...filters, view }), "contas-a-receber.xlsx");
   const pickView = (next: string) => { selection.clear(); set({ view: next }); };
   const chipView = OPEN_VIEWS.includes(view) ? "abertas" : view;
-  // contagem só onde ela bate com a lista: a visão aberta (total da busca) e "Em aberto" (resumo)
-  const countOf = (id: string) => (id === chipView && data ? data.total : id === "abertas" ? summary?.open?.count : undefined);
+  // contagens no mesmo recorte da lista (o resumo da API segue os filtros); a visão aberta usa o total da busca
+  const COUNTS: Record<string, number | undefined> = { todas: summary?.all?.count, abertas: summary?.open?.count, recebidas: summary?.received?.count, canceladas: summary?.lost?.count, excluidas: summary?.excluded?.count };
+  const countOf = (id: string) => (id === chipView && data ? data.total : COUNTS[id]);
   const chips = [
     { value: "todas", label: "Todas", color: "hsl(var(--primary))" },
     { value: "abertas", label: "Em aberto", color: "#d97706" },

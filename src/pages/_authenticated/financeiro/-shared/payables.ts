@@ -70,7 +70,7 @@ export interface Payable {
 }
 
 interface Bucket { count: number; total: number }
-export interface PayableSummary { today: string; overdue: Bucket; dueToday: Bucket; dueWeek: Bucket; later: Bucket; paid: Bucket; open?: Bucket; paidPeriod?: string }
+export interface PayableSummary { today: string; overdue: Bucket; dueToday: Bucket; dueWeek: Bucket; later: Bucket; paid: Bucket; open?: Bucket; paidPeriod?: string; all?: Bucket; excluded?: Bucket }
 export interface PayableList { today: string; view: string; rows: Payable[]; total: number; summary: PayableSummary }
 
 export const PAYABLES_KEY = "listContas a Pagar";

@@ -80,7 +80,8 @@ function Payables() {
   const canCreate = can(`create_${FINANCIAL_ABILITY}`);
   const canArchive = can(`inactive_${FINANCIAL_ABILITY}`);
   const filterCount = countFilters(filters);
-  const paidHint = summary?.paidPeriod && summary.paidPeriod !== "filtro" ? `${summary.paidPeriod.slice(5, 7)}/${summary.paidPeriod.slice(0, 4)}` : "no período";
+  // o cartão segue o recorte da lista; só a API antiga mandava o mês (AAAA-MM)
+  const paidHint = summary?.paidPeriod && /^\d{4}-\d{2}$/.test(summary.paidPeriod) ? `${summary.paidPeriod.slice(5, 7)}/${summary.paidPeriod.slice(0, 4)}` : undefined;
 
   const cards = [
     { view: "atrasadas", label: "Atrasadas", bucket: summary?.overdue, tone: "text-red-600 dark:text-red-400", icon: "triangle-alert", color: "#dc2626" },
@@ -97,8 +98,9 @@ function Payables() {
   const exportNow = (ids?: number[]) => downloadXlsx("financial/payables/export", ids ? [{ key: "ids", value: ids.join(",") }] : toParams({ ...filters, view }), "contas-a-pagar.xlsx");
   const openSelected = selectedRows.filter((r) => r.status === "aberta" && !r.inactiveAt);
   const chipView = OPEN_VIEWS.includes(view) ? "abertas" : view;
-  // contagem só onde ela bate com a lista: a visão aberta (total da busca) e "Em aberto" (resumo)
-  const countOf = (id: string) => (id === chipView && data ? data.total : id === "abertas" ? summary?.open?.count : undefined);
+  // contagens no mesmo recorte da lista (o resumo da API segue os filtros); a visão aberta usa o total da busca
+  const COUNTS: Record<string, number | undefined> = { todas: summary?.all?.count, abertas: summary?.open?.count, pagas: summary?.paid?.count, excluidas: summary?.excluded?.count };
+  const countOf = (id: string) => (id === chipView && data ? data.total : COUNTS[id]);
   const chips = [
     { value: "todas", label: "Todas", color: "hsl(var(--primary))" },
     { value: "abertas", label: "Em aberto", color: "#d97706" },

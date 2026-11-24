@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, patch, post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
@@ -6,7 +7,7 @@ import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-components/FormPage";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
@@ -42,9 +43,9 @@ export interface CustomerContact {
   defaultFiscal: boolean;
 }
 
-type Draft = Omit<CustomerContact, "id" | "customerId" | "role" | "inactiveAt"> & { id?: number };
+export type Draft = Omit<CustomerContact, "id" | "customerId" | "role" | "inactiveAt"> & { id?: number };
 
-const EMPTY: Draft = {
+export const EMPTY: Draft = {
   name: "", email: "", phone: "", notes: "", roleId: null,
   isCommercial: false, isFinancial: false, isFiscal: false,
   defaultCommercial: false, defaultFinancial: false, defaultFiscal: false,
@@ -56,7 +57,10 @@ export function CustomerContactsPanel({ customerId }: { customerId: number }) {
   const { can } = useVerify();
   const canEdit = can("update_clientes") || can("create_clientes");
   const queryClient = useQueryClient();
-  const [editing, setEditing] = useState<Draft | null>(null);
+  const navigate = useNavigate();
+  // cadastro e edição do contato abrem em tela própria
+  const openContact = (contactId: number | "novo") =>
+    navigate({ to: "/clientes/$customerId/contatos/$contactId", params: { customerId: String(customerId), contactId: String(contactId) } });
 
   const { data, isLoading } = useQuery({
     queryKey: contactsKey(customerId),
@@ -92,7 +96,7 @@ export function CustomerContactsPanel({ customerId }: { customerId: number }) {
           <p className="text-xs text-muted-foreground">Marque quem é o comercial, o financeiro e o fiscal. O padrão de cada um é usado automaticamente, e dá para trocar na hora de usar.</p>
         </div>
         {canEdit && (
-          <Button type="button" size="sm" className="gap-1" onClick={() => setEditing({ ...EMPTY })}>
+          <Button type="button" size="sm" className="gap-1" onClick={() => openContact("novo")}>
             <Icon name="plus" className="w-4 h-4" /> Adicionar contato
           </Button>
         )}
@@ -153,7 +157,7 @@ export function CustomerContactsPanel({ customerId }: { customerId: number }) {
             </div>
             {canEdit && (
               <div className="flex gap-1 shrink-0">
-                <Button type="button" size="sm" variant="outline" className="gap-1" onClick={() => setEditing({ ...contact })}>
+                <Button type="button" size="sm" variant="outline" className="gap-1" onClick={() => openContact(contact.id)}>
                   <Icon name="pencil" className="w-3 h-3" /> Editar
                 </Button>
                 <ConfirmDialog
@@ -171,20 +175,12 @@ export function CustomerContactsPanel({ customerId }: { customerId: number }) {
         ))}
       </ul>
 
-      {editing && (
-        <ContactDialog
-          customerId={customerId}
-          draft={editing}
-          others={contacts.filter((c) => c.id !== editing.id)}
-          onClose={() => setEditing(null)}
-          onSaved={() => { setEditing(null); refresh(); }}
-        />
-      )}
     </section>
   );
 }
 
-function ContactDialog({ customerId, draft, others, onClose, onSaved }: {
+/** Cadastro e edição de contato do cliente, em tela própria. */
+export function ContactForm({ customerId, draft, others, onClose, onSaved }: {
   customerId: number; draft: Draft; others: CustomerContact[]; onClose: () => void; onSaved: () => void;
 }) {
   const [form, setForm] = useState<Draft>(draft);
@@ -229,20 +225,43 @@ function ContactDialog({ customerId, draft, others, onClose, onSaved }: {
     }));
   };
 
+  const roleName = roles?.rows?.find((role) => role.id === form.roleId)?.name;
+
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{form.id ? `Editar ${draft.name}` : "Novo contato"}</DialogTitle>
-          <DialogDescription>Quem fala com vocês por este cliente, e para que.</DialogDescription>
-        </DialogHeader>
-        <form onSubmit={submit} className="grid gap-3">
-          <div>
-            <Label htmlFor="contact-name">Nome <span>*</span></Label>
-            <Input id="contact-name" name="name" value={form.name} onValueChange={set} placeholder="Nome da pessoa" className="mt-1" />
-            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
-          </div>
-          <div className="grid sm:grid-cols-2 gap-3">
+    <form onSubmit={submit}>
+      <FormPageGrid aside={<>
+        <section className="rounded-card border bg-card p-4 flex flex-col gap-2.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Resumo</p>
+          <SummaryRow label="Nome">{form.name || "—"}</SummaryRow>
+          <SummaryRow label="Cargo">{roleName ?? "—"}</SummaryRow>
+          <SummaryRow label="Papéis">{CONTACT_ROLES.filter((role) => form[role.flag]).map((role) => role.label).join(", ") || "Nenhum"}</SummaryRow>
+        </section>
+        <div className="flex flex-col gap-2">
+          <Button type="submit" disabled={save.isPending}>{save.isPending ? "Salvando..." : "Salvar contato"}</Button>
+          <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+        </div>
+      </>}>
+        <FormSection title="Dados do contato" description="Quem fala com vocês por este cliente.">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="contact-name">Nome <span>*</span></Label>
+              <Input id="contact-name" name="name" value={form.name} onValueChange={set} placeholder="Nome da pessoa" className="mt-1" />
+              {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+            </div>
+            <div>
+              <Label>Cargo</Label>
+              <div className="mt-1">
+                <Select
+                  name="roleId"
+                  options={roles?.rows ?? []}
+                  state={form.roleId ? String(form.roleId) : ""}
+                  onChange={(name, value) => set(name, value ? Number(value) : null)}
+                  placeholder="Opcional"
+                  clearable
+                  modal
+                />
+              </div>
+            </div>
             <div>
               <Label htmlFor="contact-email">E-mail <span>*</span></Label>
               <Input id="contact-email" name="email" type="email" value={form.email} onValueChange={set} placeholder="nome@empresa.com.br" className="mt-1" />
@@ -254,62 +273,41 @@ function ContactDialog({ customerId, draft, others, onClose, onSaved }: {
               {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
             </div>
           </div>
-          <div>
-            <Label>Cargo</Label>
-            <div className="mt-1">
-              <Select
-                name="roleId"
-                options={roles?.rows ?? []}
-                state={form.roleId ? String(form.roleId) : ""}
-                onChange={(name, value) => set(name, value ? Number(value) : null)}
-                placeholder="Opcional"
-                clearable
-                modal
-              />
-            </div>
-          </div>
+        </FormSection>
 
-          <fieldset className="rounded-md border p-3">
-            <legend className="px-1 text-sm font-medium">Para que este contato é usado</legend>
-            <div className="grid gap-3">
-              {CONTACT_ROLES.map((role) => {
-                const holder = others.find((c) => c[role.def]);
-                return (
-                  <div key={role.flag} className="flex flex-col gap-1">
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <Checkbox className="mt-0.5" checked={form[role.flag]} onCheckedChange={(v) => toggleRole(role.flag, role.def, v === true)} />
+        <FormSection title="Para que este contato é usado" description="O padrão de cada papel é usado automaticamente, e dá para trocar na hora de usar.">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {CONTACT_ROLES.map((role) => {
+              const holder = others.find((c) => c[role.def]);
+              return (
+                <div key={role.flag} className="flex flex-col gap-1">
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <Checkbox className="mt-0.5" checked={form[role.flag]} onCheckedChange={(v) => toggleRole(role.flag, role.def, v === true)} />
+                    <span>
+                      <span className="text-sm font-medium">{role.label}</span>
+                      <span className="block text-xs text-muted-foreground">{role.hint}</span>
+                    </span>
+                  </label>
+                  {form[role.flag] && (
+                    <label className="ml-6 flex items-center gap-2 cursor-pointer text-xs">
+                      <Checkbox checked={form[role.def]} onCheckedChange={(v) => set(role.def, v === true)} />
                       <span>
-                        <span className="text-sm font-medium">{role.label}</span>
-                        <span className="block text-xs text-muted-foreground">{role.hint}</span>
+                        Usar como padrão
+                        {holder && !form[role.def] && <span className="text-muted-foreground"> (hoje é {holder.name})</span>}
+                        {holder && form[role.def] && <span className="text-muted-foreground"> (no lugar de {holder.name})</span>}
                       </span>
                     </label>
-                    {form[role.flag] && (
-                      <label className="ml-6 flex items-center gap-2 cursor-pointer text-xs">
-                        <Checkbox checked={form[role.def]} onCheckedChange={(v) => set(role.def, v === true)} />
-                        <span>
-                          Usar como padrão
-                          {holder && !form[role.def] && <span className="text-muted-foreground"> (hoje é {holder.name})</span>}
-                          {holder && form[role.def] && <span className="text-muted-foreground"> (no lugar de {holder.name})</span>}
-                        </span>
-                      </label>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </fieldset>
-
-          <div>
-            <Label htmlFor="contact-notes">Observação</Label>
-            <Input id="contact-notes" name="notes" value={form.notes ?? ""} onValueChange={set} placeholder="Ex.: só atende à tarde" className="mt-1" />
+                  )}
+                </div>
+              );
+            })}
           </div>
+        </FormSection>
 
-          <div className="flex justify-end gap-2 pt-1">
-            <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={save.isPending}>{save.isPending ? "Salvando..." : "Salvar contato"}</Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <FormSection title="Observação">
+          <Input id="contact-notes" name="notes" value={form.notes ?? ""} onValueChange={set} placeholder="Ex.: só atende à tarde" />
+        </FormSection>
+      </FormPageGrid>
+    </form>
   );
 }

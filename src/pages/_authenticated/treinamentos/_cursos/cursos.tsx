@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useRef, useState } from "react";
 // Serviços
 import { useQuery } from "@tanstack/react-query";
@@ -16,11 +16,11 @@ import { Button } from "@/components/ui/button";
 import CoursesRowActions from "./-components/CoursesRowActions";
 import { coursesColumns } from "./-components/coursesColumns";
 import { LIMITS, countFilters } from "../-shared/lista";
-import Form from "./-components/CoursesForm";
 import ExamForm from "./-components/CoursesExamForm";
 import SearchForm from "./-components/CoursesSearch";
 // Interfaces
 import { IEntity } from "./-interfaces/entity.interface";
+import { COURSE_ENTITY } from "./-entity";
 import { ApiError } from "@/general-interfaces/api.interface";
 
 export const Route = createFileRoute('/_authenticated/treinamentos/_cursos/cursos')({
@@ -29,15 +29,10 @@ export const Route = createFileRoute('/_authenticated/treinamentos/_cursos/curso
 
 function List() {
   const { can } = useVerify();
+  const navigate = useNavigate();
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
-  // Guard de fechamento: Form registra função que decide se bloqueia close (X/ESC/click-fora)
-  const closeGuardRef = useRef<(() => boolean) | null>(null);
-  const handleSetOpenForm = (open: boolean) => {
-    if (!open && closeGuardRef.current?.()) return;
-    setOpenForm(open);
-  };
   const [searchParams, setSearchParams] = useState<Record<string, any>>({
     limit: 10,
     page: 0,
@@ -46,12 +41,7 @@ function List() {
   const initialFormRef = useRef(searchParams);
 
   // Define variáveis de entidade
-  const entity = {
-    name: "Curso",
-    pluralName: "Cursos",
-    model: "courses",
-    ability: "treinamentos",
-  }
+  const entity = COURSE_ENTITY;
 
   interface Response {
     rows: IEntity[];
@@ -90,8 +80,8 @@ function List() {
 
   const canCreate = can(`create_${entity.ability}`);
   const canUpdate = can(`update_${entity.ability}`);
-  const openNew = () => { setFormData(undefined); setOpenForm(true); };
-  const openEdit = (item: IEntity) => { setFormData(item); setOpenForm(true); };
+  const openNew = () => navigate({ to: "/treinamentos/cursos/novo" });
+  const openEdit = (item: IEntity) => navigate({ to: "/treinamentos/cursos/$courseId", params: { courseId: String(item.id) } });
   const openExam = (item: IEntity) => { setFormData({ ...item, formType: 'exam' }); setOpenForm(true); };
   const filterCount = countFilters(searchParams, initialFormRef.current);
 
@@ -128,25 +118,14 @@ function List() {
         form={ <SearchForm onSubmit={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
       />
 
-      {/* Formulário de cadastro */}
+      {/* Exame do curso (editor de questões; o cadastro do curso abre em tela própria) */}
       <SideForm
         openSheet={openForm}
-        setOpenSheet={handleSetOpenForm}
-        title={formData
-          ? formData.formType === 'exam'
-            ? `Exame do ${entity.name} ${formData.name}`
-            : `Editar ${entity.name} ${formData.name}`
-          : `Cadastrar ${entity.name}`}
-        description={formData
-          ? formData.formType === 'exam'
-            ? `Gerencie as questões do exame para o curso ${formData.name}.`
-            : `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
-          : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
+        setOpenSheet={setOpenForm}
+        title={`Exame do ${entity.name} ${formData?.name ?? ""}`}
+        description={`Gerencie as questões do exame para o curso ${formData?.name ?? ""}.`}
         side="right"
-        form={formData && formData.formType === 'exam'
-          ? <ExamForm courseData={formData} openSheet={setOpenForm} entity={entity} />
-          : <Form formData={formData} openSheet={setOpenForm} entity={entity} registerCloseGuard={(fn) => { closeGuardRef.current = fn; }} />
-        }
+        form={formData ? <ExamForm courseData={formData} openSheet={setOpenForm} entity={entity} /> : null}
       />
 
     </>

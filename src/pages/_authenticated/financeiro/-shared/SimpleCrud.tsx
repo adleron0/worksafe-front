@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { get, patch, post, put } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
@@ -14,7 +15,9 @@ import ListFooter from "@/components/general-components/ListFooter";
 import DataTable, { DataColumn, EmptyState, RowActionsTrigger } from "@/components/general-components/DataTable";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { FormPageHeader, FormPageSkeleton } from "@/components/general-components/FormPage";
 import { ApiError } from "@/general-interfaces/api.interface";
+import { useBackToList } from "@/hooks/use-back-to-list";
 import { FINANCIAL_ABILITY } from "./financial";
 
 export interface SimpleEntity {
@@ -33,20 +36,26 @@ interface SimpleCrudProps<T extends Row> {
   entity: SimpleEntity;
   /** colunas da tabela (as ações entram sozinhas no fim) */
   columns: DataColumn<T>[];
-  renderForm: (props: { formData?: T; close: () => void; onSaved: () => void }) => React.ReactNode;
+  /** formulário na gaveta lateral (cadastros com até 4 campos) */
+  renderForm?: (props: { formData?: T; close: () => void; onSaved: () => void }) => React.ReactNode;
+  /** formulário em tela própria (cadastros com mais de 4 campos): rotas de novo e de edição */
+  pages?: SimplePages;
   inactivateWarning?: string;
 }
 
+/** Rotas das telas de cadastro: `edit` tem um parâmetro (`param`) com o id. */
+export interface SimplePages { list: string; new: string; edit: string; param: string }
+
 /** Listagem + gaveta de cadastro dos cadastros simples do financeiro. */
-export default function SimpleCrud<T extends Row>({ entity, columns, renderForm, inactivateWarning }: SimpleCrudProps<T>) {
+export default function SimpleCrud<T extends Row>({ entity, columns, renderForm, pages, inactivateWarning }: SimpleCrudProps<T>) {
   const { can } = useVerify();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { showLoader, hideLoader } = useLoader();
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<T>();
   const [confirm, setConfirm] = useState<{ item: T; action: "active" | "inactive" } | null>(null);
   const [searchParams, setSearchParams] = useState<{ limit: number; page: number; "like-name"?: string }>({ limit: 30, page: 0 });
-  const listKey = `list${entity.pluralName}`;
+  const listKey = simpleListKey(entity);
 
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery<{ rows: T[]; total: number } | undefined, ApiError>({
     queryKey: [listKey, searchParams],
@@ -57,10 +66,7 @@ export default function SimpleCrud<T extends Row>({ entity, columns, renderForm,
     ]),
   });
 
-  const invalidate = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [listKey] });
-    for (const key of entity.optionKeys ?? []) queryClient.invalidateQueries({ queryKey: [key] });
-  }, [queryClient, listKey, entity.optionKeys]);
+  const invalidate = useSimpleInvalidate(entity);
 
   const { mutate: toggle } = useMutation({
     mutationFn: ({ item, action }: { item: T; action: "active" | "inactive" }) => {
@@ -86,8 +92,14 @@ export default function SimpleCrud<T extends Row>({ entity, columns, renderForm,
   const canCreate = can(`create_${FINANCIAL_ABILITY}`);
   const canUpdate = can(`update_${FINANCIAL_ABILITY}`);
   const novo = `${entity.article === "a" ? "Nova" : "Novo"} ${entity.name.toLowerCase()}`;
-  const openNew = () => { setFormData(undefined); setOpenForm(true); };
-  const edit = (item: T) => { setFormData(item); setOpenForm(true); };
+  const openNew = () => {
+    if (pages) navigate({ to: pages.new as never });
+    else { setFormData(undefined); setOpenForm(true); }
+  };
+  const edit = (item: T) => {
+    if (pages) navigate({ to: pages.edit as never, params: { [pages.param]: String(item.id) } as never });
+    else { setFormData(item); setOpenForm(true); }
+  };
 
   const rowActions = (item: T) => {
     const canEdit = canUpdate && !item.inactiveAt;
@@ -129,20 +141,70 @@ export default function SimpleCrud<T extends Row>({ entity, columns, renderForm,
           onPageChange={(page) => setSearchParams((prev) => ({ ...prev, page }))} onLimitChange={(limit) => setSearchParams((prev) => ({ ...prev, limit, page: 0 }))} />
       </ListCard>
 
-      <SideForm
-        openSheet={openForm}
-        setOpenSheet={setOpenForm}
-        title={formData ? `Editar ${formData.name}` : novo}
-        description={entity.description}
-        side="right"
-        form={<div key={formData?.id ?? "new"}>{renderForm({ formData, close: () => setOpenForm(false), onSaved: invalidate })}</div>}
-      />
+      {renderForm && (
+        <SideForm
+          openSheet={openForm}
+          setOpenSheet={setOpenForm}
+          title={formData ? `Editar ${formData.name}` : novo}
+          description={entity.description}
+          side="right"
+          form={<div key={formData?.id ?? "new"}>{renderForm({ formData, close: () => setOpenForm(false), onSaved: invalidate })}</div>}
+        />
+      )}
       {confirm && (
         <ConfirmDialog open onOpenChange={(open) => { if (!open) setConfirm(null); }}
           title={`${confirm.action === "inactive" ? "Inativar" : "Reativar"} ${confirm.item.name}?`}
           description={confirm.action === "inactive" ? (inactivateWarning ?? "Deixa de aparecer para novos lançamentos. Os lançamentos já feitos continuam ligados.") : "Volta a aparecer para novos lançamentos."}
           onConfirm={() => { toggle({ item: confirm.item, action: confirm.action }); setConfirm(null); }} />
       )}
+    </>
+  );
+}
+
+const simpleListKey = (entity: SimpleEntity) => `list${entity.pluralName}`;
+
+/** Atualiza a listagem e os seletores de outras telas depois de salvar ou inativar. */
+export function useSimpleInvalidate(entity: SimpleEntity) {
+  const queryClient = useQueryClient();
+  return useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: [simpleListKey(entity)] });
+    for (const key of entity.optionKeys ?? []) queryClient.invalidateQueries({ queryKey: [key] });
+  }, [queryClient, entity]);
+}
+
+/**
+ * Tela própria de cadastro/edição de um cadastro simples (no lugar da gaveta):
+ * cabeçalho com "voltar", carrega o registro pela API na edição e entrega ao formulário
+ * o `close` (volta para a lista) e o `onSaved` (atualiza a listagem).
+ */
+export function SimpleFormPage<T extends Row>({ entity, pages, id, renderForm }: {
+  entity: SimpleEntity;
+  pages: SimplePages;
+  /** id do registro na edição; sem id é cadastro novo */
+  id?: string;
+  renderForm: (props: { formData?: T; close: () => void; onSaved: () => void }) => React.ReactNode;
+}) {
+  const { can } = useVerify();
+  const back = useBackToList(pages.list);
+  const onSaved = useSimpleInvalidate(entity);
+  const { data, isLoading, isError } = useQuery<T | undefined>({
+    queryKey: [`${simpleListKey(entity)}Item`, id],
+    queryFn: () => get<T>(entity.model, String(id)),
+    gcTime: 0, // sem cache: abrir de novo sempre traz a versão salva
+    enabled: Boolean(id),
+  });
+  if (!can(`${id ? "update" : "create"}_${FINANCIAL_ABILITY}`)) return null;
+  const novo = `${entity.article === "a" ? "Nova" : "Novo"} ${entity.name.toLowerCase()}`;
+  const missing = `${entity.name} não encontrad${entity.article}.`;
+  return (
+    <>
+      <FormPageHeader backTo={pages.list} backLabel={entity.pluralName} title={id ? (data ? `Editar ${data.name}` : `Editar ${entity.name.toLowerCase()}`) : novo}
+        description={entity.description} />
+      {!id ? renderForm({ close: back, onSaved })
+        : isLoading ? <FormPageSkeleton />
+          : isError || !data ? <EmptyState icon="search-x" title={missing} />
+            : data.inactiveAt ? <EmptyState title={`${entity.name} inativ${entity.article}.`} description="Reative na lista para editar." />
+              : <div key={data.id}>{renderForm({ formData: data, close: back, onSaved })}</div>}
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 export interface IEntity {
   id?: number;
   name: string;
@@ -16,3 +17,11 @@ export interface IEntity {
   updatedAt?: string | null;
   inactiveAt?: string | null;
 }
+
+/** Entidade dos serviços do site: usada na lista e nas telas de cadastro e edição. */
+export const siteServicesEntity: IDefaultEntity = {
+  name: "Serviços do Site",
+  pluralName: "Serviços do Site",
+  model: "site-services",
+  ability: "servicos_site",
+};

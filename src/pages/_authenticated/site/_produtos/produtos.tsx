@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useRef, useState } from "react";
 // Serviços
 import { useQuery } from "@tanstack/react-query";
@@ -17,7 +17,7 @@ import SideForm from "@/components/general-components/SideForm";
 import { siteProductsColumns } from "./-components/siteProductsColumns";
 import SiteItemRowActions from "../-shared/SiteItemRowActions";
 import { countFilters } from "../-shared/countFilters";
-import Form from "./-components/SiteProductsForm";
+import { siteProductsEntity } from "./-interfaces/entity.interface";
 import SearchForm from "./-components/SiteProductsSeach";
 import SiteProductsImagesList from "./-produtos-imagens/produtos-imagens";
 // Interfaces
@@ -31,7 +31,7 @@ export const Route = createFileRoute('/_authenticated/site/_produtos/produtos')(
 function List() {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
-  const [openForm, setOpenForm] = useState(false);
+  const navigate = useNavigate();
   const [openImageModal, setOpenImageModal] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
   const [searchParams, setSearchParams] = useState<{
@@ -47,12 +47,7 @@ function List() {
   const initialFormRef = useRef(searchParams);
 
   // Define variáveis de entidade
-  const entity = {
-    name: "Produtos do Site",
-    pluralName: "Produtos do Site",
-    model: "site-products",
-    ability: "loja_site",
-  }
+  const entity = siteProductsEntity;
 
   interface Response {
     rows: IEntity[];
@@ -110,8 +105,8 @@ function List() {
   const filterCount = countFilters(searchParams, ['active', 'createdAt']);
   const hasFilters = filterCount > 0 || !!searchParams['like-name'];
   const columns = siteProductsColumns();
-  const openNew = () => { setFormData(undefined); setOpenForm(true); };
-  const edit = (item: IEntity) => { setFormData(item); setOpenForm(true); };
+  const openNew = () => navigate({ to: "/site/produtos/novo" });
+  const edit = (item: IEntity) => navigate({ to: "/site/produtos/$productId", params: { productId: String(item.id) } });
   const openImages = (item: IEntity) => { setFormData(item); setOpenImageModal(true); };
 
   return (
@@ -126,20 +121,6 @@ function List() {
         description={`Preencha os campos abaixo para filtrar ${entity.pluralName}.`}
         side="left"
         form={ <SearchForm onSubmit={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
-      />
-
-      {/* Formulário de cadastro */}
-      <SideForm
-        openSheet={openForm}
-        setOpenSheet={setOpenForm}
-        title={formData 
-          ? `Editar ${entity.name} ${formData.name}`
-          : `Cadastrar ${entity.name}`}
-        description={formData 
-          ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
-          : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
-        side="right"
-        form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} /> }
       />
 
       {/* Listagem de items */}

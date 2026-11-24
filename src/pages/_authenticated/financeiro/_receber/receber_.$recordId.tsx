@@ -6,7 +6,7 @@ import StatusBadge from "@/components/general-components/StatusBadge";
 import { FormPageHeader, FormPageSkeleton } from "@/components/general-components/FormPage";
 import { EmptyState } from "@/components/general-components/DataTable";
 import { FINANCIAL_ABILITY } from "../-shared/financial";
-import { useBackToList } from "../-shared/useBackToList";
+import { useBackToList } from "@/hooks/use-back-to-list";
 import Form from "./-components/FinancialRecordsForm";
 import { RECEIVABLE_ENTITY } from "./-components/entity";
 import { IFinancialRecord } from "./-interfaces/entity.interface";

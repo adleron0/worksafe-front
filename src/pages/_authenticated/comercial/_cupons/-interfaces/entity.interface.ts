@@ -1,3 +1,4 @@
+import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 export interface ICupom {
   id: number;
   code: string;
@@ -61,3 +62,11 @@ export interface ICupomFormData {
   courseId?: number;
   active: boolean;
 }
+
+/** Entidade dos cupons: usada na lista e nas telas de cadastro e edição. */
+export const cupomEntity: IDefaultEntity = {
+  name: "Cupom",
+  pluralName: "Cupons",
+  model: "coupon",
+  ability: "cupoms",
+};

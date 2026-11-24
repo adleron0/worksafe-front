@@ -6,20 +6,22 @@ import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
+import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-components/FormPage";
 import Input from "@/components/general-components/Input";
 import NumberInput from "@/components/general-components/Number";
 import Select from "@/components/general-components/Select";
 import DatePickerInput from "@/components/general-components/Calendar";
 import { ICupom, ICupomFormData, DiscountType, CommissionType } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
+import { cupomEntity } from "../-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { format } from "date-fns";
 
 interface FormProps {
   formData: ICupom | null;
-  setOpenForm: (open: boolean) => void;
-  entity: IDefaultEntity;
+  /** Volta para a lista (fecha a tela). */
+  close: () => void;
+  entity?: IDefaultEntity;
 }
 
 interface Response {
@@ -27,7 +29,8 @@ interface Response {
   total: number;
 }
 
-const CupomForm: React.FC<FormProps> = ({ formData, setOpenForm, entity }) => {
+/** Cadastro e edição de cupom, em tela própria. */
+const CupomForm: React.FC<FormProps> = ({ formData, close, entity = cupomEntity }) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
 
@@ -221,7 +224,7 @@ const CupomForm: React.FC<FormProps> = ({ formData, setOpenForm, entity }) => {
         title: `${entity.name} cadastrado`,
         description: `${entity.name} foi cadastrado com sucesso.`,
       });
-      setOpenForm(false);
+      close();
     },
     onError: (error: any) => {
       hideLoader();
@@ -245,7 +248,7 @@ const CupomForm: React.FC<FormProps> = ({ formData, setOpenForm, entity }) => {
         title: `${entity.name} atualizado`,
         description: `${entity.name} foi atualizado com sucesso.`,
       });
-      setOpenForm(false);
+      close();
     },
     onError: (error: any) => {
       hideLoader();
@@ -292,170 +295,99 @@ const CupomForm: React.FC<FormProps> = ({ formData, setOpenForm, entity }) => {
     { id: 'fixed', name: 'Valor Fixo' },
   ];
 
+  const money = (value?: number) => Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const discountLabel = data.discountType === 'percentage' ? `${Number(data.discountValue || 0)}%` : money(data.discountValue);
+  const sellerName = sellersData?.rows?.find((seller) => String(seller.id) === String(data.sellerId))?.name;
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Seção 1 - Informações Básicas */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Informações Básicas</h3>
+    <form onSubmit={handleSubmit}>
+      <FormPageGrid aside={<>
+        <section className="rounded-card border bg-card p-4 flex flex-col gap-2.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Resumo</p>
+          <SummaryRow label="Código">{data.code || "—"}</SummaryRow>
+          <SummaryRow label="Desconto" strong>{discountLabel}</SummaryRow>
+          <SummaryRow label="Vendedor">{sellerName ?? "Sem vendedor"}</SummaryRow>
+          <SummaryRow label="Uso">{isUnlimited ? "Ilimitado" : `Até ${data.usageLimit || 1} vez(es)`}</SummaryRow>
+          <SummaryRow label="Válido até">{data.validUntil ? String(data.validUntil).slice(0, 10).split("-").reverse().join("/") : "Sem prazo"}</SummaryRow>
+          <SummaryRow label="Situação">{data.active ? "Ativo" : "Inativo"}</SummaryRow>
+        </section>
 
-        <div className="space-y-2">
-          <Label htmlFor="code">Código *</Label>
-          <Input
-            id="code"
-            name="code"
-            value={data.code}
-            onValueChange={handleChange}
-            placeholder="Digite o código do cupom"
-            // disabled={!!formData}
-          />
-          {errors.code && (
-            <p className="text-sm text-destructive mt-1">{errors.code}</p>
-          )}
+        <div className="flex flex-col gap-2">
+          <Button type="submit">
+            {formData ? "Atualizar" : "Cadastrar"}
+          </Button>
+          <Button type="button" variant="outline" onClick={close}>
+            Cancelar
+          </Button>
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="description">Descrição</Label>
-          <Input
-            id="description"
-            name="description"
-            value={data.description}
-            onValueChange={handleChange}
-            placeholder="Digite uma descrição para o cupom"
-          />
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="active"
-            checked={data.active}
-            onCheckedChange={(checked) => handleChange('active', checked)}
-          />
-          <Label htmlFor="active">Cupom ativo</Label>
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Seção 2 - Configuração do Desconto */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Configuração do Desconto</h3>
-
-        <div className="space-y-2">
-          <Label htmlFor="discountType">Tipo de Desconto *</Label>
-          <Select
-            name="discountType"
-            options={discountTypes}
-            state={data.discountType || "percentage"}
-            onChange={handleChange}
-            placeholder="Selecione o tipo de desconto"
-            value="id"
-            label="name"
-          />
-          {errors.discountType && (
-            <p className="text-sm text-destructive mt-1">{errors.discountType}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="discountValue">
-            Valor do Desconto * {data.discountType === 'percentage' ? '(%)' : '(R$)'}
-          </Label>
-          {data.discountType === 'percentage' ? (
-            <NumberInput
-              name="discountValue"
-              value={data.discountValue}
-              min={0}
-              max={100}
-              step={0.5}
-              onValueChange={handleChange}
-            />
-          ) : (
-            <Input
-              id="discountValue"
-              name="discountValue"
-              format="currency"
-              value={data.discountValue}
-              onValueChange={handleChange}
-              placeholder="R$ 0,00"
-            />
-          )}
-          {errors.discountValue && (
-            <p className="text-sm text-destructive mt-1">{errors.discountValue}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="minPurchaseValue">Valor Mínimo de Compra (R$)</Label>
-          <Input
-            id="minPurchaseValue"
-            name="minPurchaseValue"
-            format="currency"
-            value={data.minPurchaseValue || ""}
-            onValueChange={handleChange}
-            placeholder="R$ 0,00"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="maxDiscountValue">Valor Máximo de Desconto (R$)</Label>
-          <Input
-            id="maxDiscountValue"
-            name="maxDiscountValue"
-            format="currency"
-            value={data.maxDiscountValue || ""}
-            onValueChange={handleChange}
-            placeholder="R$ 0,00"
-          />
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Seção 3 - Vendedor e Comissão */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Vendedor e Comissão</h3>
-
-        <div className="space-y-2">
-          <Label htmlFor="sellerId">Vendedor</Label>
-          <Select
-            name="sellerId"
-            options={sellersData?.rows || []}
-            state={data.sellerId ? String(data.sellerId) : ""}
-            onChange={handleChange}
-            isLoading={isLoadingSellers}
-            placeholder="Selecione um vendedor"
-            value="id"
-            label="name"
-            clearable
-          />
-        </div>
-
-        {data.sellerId && (
-          <>
+      </>}>
+        {/* Seção 1 - Informações Básicas */}
+        <FormSection title="Informações Básicas" description="O código que o cliente digita no checkout.">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="commissionType">Tipo de Comissão *</Label>
-              <Select
-                name="commissionType"
-                options={commissionTypes}
-                state={data.commissionType || "percentage"}
-                onChange={handleChange}
-                placeholder="Selecione o tipo"
-                value="id"
-                label="name"
+              <Label htmlFor="code">Código *</Label>
+              <Input
+                id="code"
+                name="code"
+                value={data.code}
+                onValueChange={handleChange}
+                placeholder="Digite o código do cupom"
+                // disabled={!!formData}
               />
-              {errors.commissionType && (
-                <p className="text-sm text-destructive mt-1">{errors.commissionType}</p>
+              {errors.code && (
+                <p className="text-sm text-destructive mt-1">{errors.code}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="commissionValue">
-                Valor da Comissão * {data.commissionType === 'percentage' ? '(%)' : '(R$)'}
+              <Label htmlFor="description">Descrição</Label>
+              <Input
+                id="description"
+                name="description"
+                value={data.description}
+                onValueChange={handleChange}
+                placeholder="Digite uma descrição para o cupom"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="active"
+              checked={data.active}
+              onCheckedChange={(checked) => handleChange('active', checked)}
+            />
+            <Label htmlFor="active">Cupom ativo</Label>
+          </div>
+        </FormSection>
+
+        {/* Seção 2 - Configuração do Desconto */}
+        <FormSection title="Configuração do Desconto" description="Quanto o cupom tira do valor e os limites da compra.">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="discountType">Tipo de Desconto *</Label>
+              <Select
+                name="discountType"
+                options={discountTypes}
+                state={data.discountType || "percentage"}
+                onChange={handleChange}
+                placeholder="Selecione o tipo de desconto"
+                value="id"
+                label="name"
+              />
+              {errors.discountType && (
+                <p className="text-sm text-destructive mt-1">{errors.discountType}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="discountValue">
+                Valor do Desconto * {data.discountType === 'percentage' ? '(%)' : '(R$)'}
               </Label>
-              {data.commissionType === 'percentage' ? (
+              {data.discountType === 'percentage' ? (
                 <NumberInput
-                  name="commissionValue"
-                  value={data.commissionValue || 0}
+                  name="discountValue"
+                  value={data.discountValue}
                   min={0}
                   max={100}
                   step={0.5}
@@ -463,154 +395,221 @@ const CupomForm: React.FC<FormProps> = ({ formData, setOpenForm, entity }) => {
                 />
               ) : (
                 <Input
-                  id="commissionValue"
-                  name="commissionValue"
+                  id="discountValue"
+                  name="discountValue"
                   format="currency"
-                  value={data.commissionValue || 0}
+                  value={data.discountValue}
                   onValueChange={handleChange}
                   placeholder="R$ 0,00"
                 />
               )}
-              {errors.commissionValue && (
-                <p className="text-sm text-destructive mt-1">{errors.commissionValue}</p>
+              {errors.discountValue && (
+                <p className="text-sm text-destructive mt-1">{errors.discountValue}</p>
               )}
             </div>
-          </>
-        )}
-      </div>
 
-      <Separator />
+            <div className="space-y-2">
+              <Label htmlFor="minPurchaseValue">Valor Mínimo de Compra (R$)</Label>
+              <Input
+                id="minPurchaseValue"
+                name="minPurchaseValue"
+                format="currency"
+                value={data.minPurchaseValue || ""}
+                onValueChange={handleChange}
+                placeholder="R$ 0,00"
+              />
+            </div>
 
-      {/* Seção 4 - Restrições de Uso */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Restrições de Uso</h3>
-
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="unlimited"
-            checked={isUnlimited}
-            onCheckedChange={(checked) => {
-              setIsUnlimited(checked);
-              if (checked) {
-                setData(prev => ({ ...prev, usageLimit: undefined }));
-              } else {
-                // Quando desmarcar, define um valor padrão de 1
-                setData(prev => ({ ...prev, usageLimit: 1 }));
-              }
-            }}
-          />
-          <Label htmlFor="unlimited">Uso ilimitado</Label>
-        </div>
-
-        {!isUnlimited && (
-          <div className="space-y-2">
-            <Label htmlFor="usageLimit">Limite Total de Uso *</Label>
-            <NumberInput
-              name="usageLimit"
-              value={data.usageLimit || 1}
-              min={1}
-              onValueChange={handleChange}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="maxDiscountValue">Valor Máximo de Desconto (R$)</Label>
+              <Input
+                id="maxDiscountValue"
+                name="maxDiscountValue"
+                format="currency"
+                value={data.maxDiscountValue || ""}
+                onValueChange={handleChange}
+                placeholder="R$ 0,00"
+              />
+            </div>
           </div>
-        )}
+        </FormSection>
 
-        <div className="space-y-2">
-          <Label htmlFor="usagePerCustomer">Uso por Cliente *</Label>
-          <NumberInput
-            name="usagePerCustomer"
-            value={data.usagePerCustomer}
-            min={1}
-            onValueChange={handleChange}
-          />
-          {errors.usagePerCustomer && (
-            <p className="text-sm text-destructive mt-1">{errors.usagePerCustomer}</p>
-          )}
-        </div>
+        {/* Seção 3 - Vendedor e Comissão */}
+        <FormSection title="Vendedor e Comissão" description="Opcional: o vendedor que divulga o cupom recebe a comissão.">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="sellerId">Vendedor</Label>
+              <Select
+                name="sellerId"
+                options={sellersData?.rows || []}
+                state={data.sellerId ? String(data.sellerId) : ""}
+                onChange={handleChange}
+                isLoading={isLoadingSellers}
+                placeholder="Selecione um vendedor"
+                value="id"
+                label="name"
+                clearable
+              />
+            </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="validUntil">Válido até</Label>
-          <DatePickerInput
-            name="validUntil"
-            value={data.validUntil ? String(data.validUntil) : ""}
-            onValueChange={handleChange}
-            placeholder="Sem prazo"
-          />
-          {errors.validUntil && (
-            <p className="text-sm text-destructive mt-1">{errors.validUntil}</p>
-          )}
-        </div>
+            {data.sellerId && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="commissionType">Tipo de Comissão *</Label>
+                  <Select
+                    name="commissionType"
+                    options={commissionTypes}
+                    state={data.commissionType || "percentage"}
+                    onChange={handleChange}
+                    placeholder="Selecione o tipo"
+                    value="id"
+                    label="name"
+                  />
+                  {errors.commissionType && (
+                    <p className="text-sm text-destructive mt-1">{errors.commissionType}</p>
+                  )}
+                </div>
 
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="firstPurchaseOnly"
-            checked={data.firstPurchaseOnly}
-            onCheckedChange={(checked) => handleChange('firstPurchaseOnly', checked)}
-          />
-          <Label htmlFor="firstPurchaseOnly">Apenas primeira compra</Label>
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Seção 5 - Associações */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Associações (Opcional)</h3>
-
-        <div className="space-y-2">
-          <Label htmlFor="courseId">Curso</Label>
-          <Select
-            name="courseId"
-            options={courses?.rows || []}
-            state={data.courseId ? String(data.courseId) : ""}
-            onChange={handleChange}
-            isLoading={isLoadingCourses}
-            placeholder="Selecione um curso"
-            value="id"
-            label="name"
-            clearable
-          />
-        </div>
-
-        {data.courseId && (
-          <div className="space-y-2">
-            <Label htmlFor="classId">Turma</Label>
-            <Select
-              name="classId"
-              options={classesData?.rows || []}
-              state={data.classId ? String(data.classId) : ""}
-              onChange={handleChange}
-              isLoading={isLoadingClasses}
-              placeholder="Selecione uma turma"
-              value="id"
-              label="name"
-              clearable
-            />
+                <div className="space-y-2">
+                  <Label htmlFor="commissionValue">
+                    Valor da Comissão * {data.commissionType === 'percentage' ? '(%)' : '(R$)'}
+                  </Label>
+                  {data.commissionType === 'percentage' ? (
+                    <NumberInput
+                      name="commissionValue"
+                      value={data.commissionValue || 0}
+                      min={0}
+                      max={100}
+                      step={0.5}
+                      onValueChange={handleChange}
+                    />
+                  ) : (
+                    <Input
+                      id="commissionValue"
+                      name="commissionValue"
+                      format="currency"
+                      value={data.commissionValue || 0}
+                      onValueChange={handleChange}
+                      placeholder="R$ 0,00"
+                    />
+                  )}
+                  {errors.commissionValue && (
+                    <p className="text-sm text-destructive mt-1">{errors.commissionValue}</p>
+                  )}
+                </div>
+              </>
+            )}
           </div>
-        )}
-      </div>
+        </FormSection>
 
-      {/* {formData && (
-        <>
-          <Separator />
-          <div className="text-sm text-muted-foreground">
-            <p>Uso atual: {data.usageCount} vez(es)</p>
+        {/* Seção 4 - Restrições de Uso */}
+        <FormSection title="Restrições de Uso" description="Quantas vezes o cupom pode ser usado e até quando.">
+          <div className="flex flex-wrap gap-x-6 gap-y-3">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="unlimited"
+                checked={isUnlimited}
+                onCheckedChange={(checked) => {
+                  setIsUnlimited(checked);
+                  if (checked) {
+                    setData(prev => ({ ...prev, usageLimit: undefined }));
+                  } else {
+                    // Quando desmarcar, define um valor padrão de 1
+                    setData(prev => ({ ...prev, usageLimit: 1 }));
+                  }
+                }}
+              />
+              <Label htmlFor="unlimited">Uso ilimitado</Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="firstPurchaseOnly"
+                checked={data.firstPurchaseOnly}
+                onCheckedChange={(checked) => handleChange('firstPurchaseOnly', checked)}
+              />
+              <Label htmlFor="firstPurchaseOnly">Apenas primeira compra</Label>
+            </div>
           </div>
-        </>
-      )} */}
 
-      <div className="flex gap-2">
-        <Button type="submit" className="flex-1">
-          {formData ? "Atualizar" : "Cadastrar"}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setOpenForm(false)}
-          className="flex-1"
-        >
-          Cancelar
-        </Button>
-      </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {!isUnlimited && (
+              <div className="space-y-2">
+                <Label htmlFor="usageLimit">Limite Total de Uso *</Label>
+                <NumberInput
+                  name="usageLimit"
+                  value={data.usageLimit || 1}
+                  min={1}
+                  onValueChange={handleChange}
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="usagePerCustomer">Uso por Cliente *</Label>
+              <NumberInput
+                name="usagePerCustomer"
+                value={data.usagePerCustomer}
+                min={1}
+                onValueChange={handleChange}
+              />
+              {errors.usagePerCustomer && (
+                <p className="text-sm text-destructive mt-1">{errors.usagePerCustomer}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="validUntil">Válido até</Label>
+              <DatePickerInput
+                name="validUntil"
+                value={data.validUntil ? String(data.validUntil) : ""}
+                onValueChange={handleChange}
+                placeholder="Sem prazo"
+              />
+              {errors.validUntil && (
+                <p className="text-sm text-destructive mt-1">{errors.validUntil}</p>
+              )}
+            </div>
+          </div>
+        </FormSection>
+
+        {/* Seção 5 - Associações */}
+        <FormSection title="Associações (Opcional)" description="Limite o cupom a um curso ou a uma turma.">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="courseId">Curso</Label>
+              <Select
+                name="courseId"
+                options={courses?.rows || []}
+                state={data.courseId ? String(data.courseId) : ""}
+                onChange={handleChange}
+                isLoading={isLoadingCourses}
+                placeholder="Selecione um curso"
+                value="id"
+                label="name"
+                clearable
+              />
+            </div>
+
+            {data.courseId && (
+              <div className="space-y-2">
+                <Label htmlFor="classId">Turma</Label>
+                <Select
+                  name="classId"
+                  options={classesData?.rows || []}
+                  state={data.classId ? String(data.classId) : ""}
+                  onChange={handleChange}
+                  isLoading={isLoadingClasses}
+                  placeholder="Selecione uma turma"
+                  value="id"
+                  label="name"
+                  clearable
+                />
+              </div>
+            )}
+          </div>
+        </FormSection>
+      </FormPageGrid>
     </form>
   );
 };

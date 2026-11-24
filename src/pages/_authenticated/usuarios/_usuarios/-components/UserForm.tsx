@@ -12,6 +12,7 @@ import Select from "@/components/general-components/Select";
 import DropUpload from "@/components/general-components/DropUpload";
 import CalendarPicker from "@/components/general-components/Calendar";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
+import { FormPageGrid, FormSection } from "@/components/general-components/FormPage";
 
 interface UserFormProps {
   formData?: IEntity;
@@ -19,9 +20,11 @@ interface UserFormProps {
   openSheet: (open: boolean) => void;
   self?: boolean;
   defaultIsSeller?: boolean;
+  /** "page": tela própria (cadastro/edição pela lista); padrão: gaveta (Meu Perfil e troca de senha). */
+  layout?: "sheet" | "page";
 }
 
-const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = false }: UserFormProps) => {
+const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = false, layout = "sheet" }: UserFormProps) => {
   const queryClient = useQueryClient();
 
   // Schema
@@ -294,320 +297,412 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
     enabled: !self,
   });
 
+  // Campos do formulário: os mesmos na gaveta (Meu Perfil, senha) e na tela de cadastro/edição.
+  const avatarField = (
+    <div className="h-60 mb-2">
+      <DropUpload preset="avatar"
+        setImage={setDataForm}
+        EditPreview={preview}
+      />
+    </div>
+  );
+  const nameField = (
+    <div>
+      <Label htmlFor="name">Nome <span>*</span></Label>
+      <Input
+        id="name"
+        name="name"
+        placeholder="Digite nome do usuário"
+        value={dataForm.name}
+        onValueChange={handleChange}
+        className="mt-1"
+      />
+      {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+    </div>
+  );
+  const cpfField = (
+    <div>
+      <Label htmlFor="cpf">CPF <span>*</span></Label>
+      <Input
+        id="cpf"
+        name="cpf"
+        placeholder="000.000.000-00"
+        format="cpf"
+        value={dataForm.cpf}
+        onValueChange={handleChange}
+        className="mt-1"
+      />
+      {errors.cpf && <p className="text-red-500 text-sm">{errors.cpf}</p>}
+    </div>
+  );
+  const emailField = (
+    <div>
+      <Label htmlFor="email">Email <span>*</span></Label>
+      <Input
+        id="email"
+        name="email"
+        type="email"
+        placeholder="Digite email do usuário"
+        value={dataForm.email}
+        onValueChange={handleChange}
+        className="mt-1"
+      />
+      {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+    </div>
+  );
+  const phoneField = (
+    <div>
+      <Label htmlFor="phone">Telefone <span>*</span></Label>
+      <Input
+        id="phone"
+        name="phone"
+        placeholder="(11) 99999-9999"
+        format="phone"
+        value={dataForm.phone}
+        onValueChange={handleChange}
+        className="mt-1"
+      />
+      {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
+    </div>
+  );
+  const birthDateField = (
+    <div>
+      <Label htmlFor="birthDate">Data de Nascimento</Label>
+      <CalendarPicker
+        mode="natural"
+        name="birthDate"
+        value={dataForm.birthDate}
+        onValueChange={handleChange}
+        placeholder="DD/MM/AAAA"
+        fromYear={1900}
+        toYear={new Date().getFullYear()}
+      />
+      {errors.birthDate && <p className="text-red-500 text-sm">{errors.birthDate}</p>}
+    </div>
+  );
+  const zipCodeField = (
+    <div>
+      <Label htmlFor="zipCode">
+        CEP
+        {isLoadingCep && <span className="ml-2 text-xs text-muted-foreground">(buscando...)</span>}
+      </Label>
+      <Input
+        id="zipCode"
+        name="zipCode"
+        placeholder="00000-000"
+        format="cep"
+        value={dataForm.zipCode}
+        onValueChange={handleChange}
+        className="mt-1"
+        disabled={isLoadingCep}
+      />
+      {errors.zipCode && <p className="text-red-500 text-sm">{errors.zipCode}</p>}
+    </div>
+  );
+  const addressField = (
+    <div>
+      <Label htmlFor="address">Endereço</Label>
+      <Input
+        id="address"
+        name="address"
+        placeholder="Digite o endereço"
+        value={dataForm.address}
+        onValueChange={handleChange}
+        className="mt-1"
+      />
+      {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
+    </div>
+  );
+  const addressNumberField = (
+    <div>
+      <Label htmlFor="addressNumber">Número</Label>
+      <Input
+        id="addressNumber"
+        name="addressNumber"
+        placeholder="Número"
+        value={dataForm.addressNumber}
+        onValueChange={handleChange}
+        className="mt-1"
+      />
+      {errors.addressNumber && <p className="text-red-500 text-sm">{errors.addressNumber}</p>}
+    </div>
+  );
+  const addressComplementField = (
+    <div>
+      <Label htmlFor="addressComplement">Complemento</Label>
+      <Input
+        id="addressComplement"
+        name="addressComplement"
+        placeholder="Apto, sala, etc"
+        value={dataForm.addressComplement}
+        onValueChange={handleChange}
+        className="mt-1"
+      />
+      {errors.addressComplement && <p className="text-red-500 text-sm">{errors.addressComplement}</p>}
+    </div>
+  );
+  const neighborhoodField = (
+    <div>
+      <Label htmlFor="neighborhood">Bairro</Label>
+      <Input
+        id="neighborhood"
+        name="neighborhood"
+        placeholder="Digite o bairro"
+        value={dataForm.neighborhood}
+        onValueChange={handleChange}
+        className="mt-1"
+      />
+      {errors.neighborhood && <p className="text-red-500 text-sm">{errors.neighborhood}</p>}
+    </div>
+  );
+  const cityField = (
+    <div>
+      <Label htmlFor="city">Cidade</Label>
+      <Input
+        id="city"
+        name="city"
+        placeholder="Digite a cidade"
+        value={dataForm.city}
+        onValueChange={handleChange}
+        className="mt-1"
+      />
+      {errors.city && <p className="text-red-500 text-sm">{errors.city}</p>}
+    </div>
+  );
+  const stateField = (
+    <div>
+      <Label htmlFor="state">Estado</Label>
+      <Input
+        id="state"
+        name="state"
+        placeholder="UF"
+        maxLength={2}
+        value={dataForm.state}
+        onValueChange={handleChange}
+        className="mt-1"
+      />
+      {errors.state && <p className="text-red-500 text-sm">{errors.state}</p>}
+    </div>
+  );
+  const pixTypeField = (
+    <div>
+      <Label htmlFor="pixType">Tipo de Chave PIX (opcional)</Label>
+      <Select
+        name="pixType"
+        options={[
+          { id: 'CPF', name: 'CPF' },
+          { id: 'CNPJ', name: 'CNPJ' },
+          { id: 'EMAIL', name: 'E-mail' },
+          { id: 'PHONE', name: 'Telefone' },
+          { id: 'EVP', name: 'Chave Aleatória (EVP)' },
+        ]}
+        onChange={(name, value) => handleChange(name, typeof value === 'string' ? value : value[0])}
+        state={dataForm.pixType || "CPF"}
+        placeholder="Selecione o tipo de chave"
+      />
+      {errors.pixType && <p className="text-red-500 text-sm">{errors.pixType}</p>}
+    </div>
+  );
+  const pixKeyField = (
+    <div>
+      <Label htmlFor="pixKey">Chave PIX</Label>
+      <Input
+        id="pixKey"
+        name="pixKey"
+        placeholder={
+          dataForm.pixType === 'CPF' ? '000.000.000-00' :
+          dataForm.pixType === 'CNPJ' ? '00.000.000/0000-00' :
+          dataForm.pixType === 'EMAIL' ? 'email@exemplo.com' :
+          dataForm.pixType === 'PHONE' ? '(00) 00000-0000' :
+          dataForm.pixType === 'EVP' ? 'Chave aleatória de 32 caracteres' :
+          'Digite a chave PIX'
+        }
+        format={
+          dataForm.pixType === 'CPF' ? 'cpf' :
+          dataForm.pixType === 'CNPJ' ? 'cnpj' :
+          dataForm.pixType === 'PHONE' ? 'phone' :
+          'none'
+        }
+        type={dataForm.pixType === 'EMAIL' ? 'email' : 'text'}
+        value={dataForm.pixKey}
+        onValueChange={handleChange}
+        className="mt-1"
+        disabled={!dataForm.pixType}
+        maxLength={dataForm.pixType === 'EVP' ? 32 : undefined}
+        icon={
+          dataForm.pixType === 'CPF' ? 'user' :
+          dataForm.pixType === 'CNPJ' ? 'building' :
+          dataForm.pixType === 'EMAIL' ? 'mail' :
+          dataForm.pixType === 'PHONE' ? 'phone' :
+          dataForm.pixType === 'EVP' ? 'key' :
+          dataForm.pixType ? 'wallet' : undefined
+        }
+        iconPosition="left"
+      />
+      {errors.pixKey && <p className="text-red-500 text-sm">{errors.pixKey}</p>}
+      {dataForm.pixType === 'EVP' && dataForm.pixKey && (
+        <span className={`text-xs ${dataForm.pixKey.length === 32 ? 'text-green-500' : 'text-amber-500'}`}>
+          {dataForm.pixKey.length}/32 caracteres
+        </span>
+      )}
+    </div>
+  );
+  const profileField = (
+    <div>
+      <Label htmlFor="profileId">Função <span>*</span></Label>
+      <Select
+        name="profileId"
+        disabled={isFetchingProfiles}
+        options={profiles?.rows || []}
+        onChange={(name, value) => handleChange(name, Number(value))}
+        state={dataForm.profileId !== undefined ? String(dataForm.profileId) : ""}
+        placeholder="Selecione a função"
+      />
+      {errors.profileId && <p className="text-red-500 text-sm">{errors.profileId}</p>}
+    </div>
+  );
+  const passwordField = (
+    <div>
+      <Label htmlFor="password">Senha <span>*</span></Label>
+      <Input
+        id="password"
+        name="password"
+        type="text"
+        placeholder="Digite nova senha do usuário"
+        value={dataForm.password}
+        onValueChange={handleChange}
+        className="mt-1"
+      />
+      {
+        dataForm.password && (
+          <span className={`${dataForm.password?.length >= 6 ? "text-green-500" : "text-red-500"} text-xs`}>* Mínimo 6 caracteres</span>
+        )
+      }
+      {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+    </div>
+  );
+
+  const submitLabel = isPending || isPendingUpdate
+    ? formData
+      ? "Atualizando..."
+      : "Registrando..."
+    : formData
+    ? "Atualizar Usuário"
+    : "Registrar Usuário";
+  const savingLoader = (isPending || isPendingUpdate) && (
+    <Loader title={formData ? "Atualizando Usuário..." : "Registrando Usuário..."} />
+  );
+
+  // Tela própria (cadastro e edição pela lista de usuários)
+  if (layout === "page") {
+    return (
+      <form onSubmit={handleSubmit}>
+        <FormPageGrid aside={<>
+          {onlyPassword !== 'only' && (
+            <section className="rounded-card border bg-card p-4 flex flex-col gap-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Foto</p>
+              {avatarField}
+            </section>
+          )}
+          <div className="flex flex-col gap-2">
+            <Button type="submit" disabled={isPending || isPendingUpdate}>{submitLabel}</Button>
+            <Button type="button" variant="outline" onClick={() => openSheet(false)}>Cancelar</Button>
+          </div>
+        </>}>
+          {onlyPassword !== 'only' && (
+            <>
+              <FormSection title="Dados pessoais" description="Quem é a pessoa e como falar com ela.">
+                {nameField}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {cpfField}
+                  {emailField}
+                  {phoneField}
+                  {birthDateField}
+                </div>
+              </FormSection>
+
+              <FormSection title="Endereço" description="Opcional. Digite o CEP e o endereço vem sozinho.">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {zipCodeField}
+                  <div className="sm:col-span-2">{addressField}</div>
+                  {addressNumberField}
+                  {addressComplementField}
+                  {neighborhoodField}
+                  <div className="sm:col-span-2">{cityField}</div>
+                  {stateField}
+                </div>
+              </FormSection>
+
+              {/* chave PIX do vendedor: opcional, só para facilitar o pagamento das comissões */}
+              {dataForm.isSeller && (
+                <FormSection title="Chave PIX" description="Opcional, para facilitar o pagamento das comissões do vendedor.">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {pixTypeField}
+                    {pixKeyField}
+                  </div>
+                </FormSection>
+              )}
+            </>
+          )}
+
+          {((onlyPassword !== 'only' && !self) || onlyPassword === 'only' || onlyPassword === 'both') && (
+            <FormSection title="Acesso" description="A função define o que a pessoa pode fazer no sistema.">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {onlyPassword !== 'only' && !self && profileField}
+                {(onlyPassword === 'only' || onlyPassword === 'both') && passwordField}
+              </div>
+            </FormSection>
+          )}
+        </FormPageGrid>
+        {savingLoader}
+      </form>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
       {
         onlyPassword !== 'only' && (
           <>
-            <div className="h-60 mb-2">
-              <DropUpload preset="avatar"
-                setImage={setDataForm}
-                EditPreview={preview}
-              />
-            </div>
-            <div>
-              <Label htmlFor="name">Nome <span>*</span></Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder="Digite nome do usuário"
-                value={dataForm.name}
-                onValueChange={handleChange}
-                className="mt-1"
-              />
-              {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
-            </div>
-            <div>
-              <Label htmlFor="cpf">CPF <span>*</span></Label>
-              <Input
-                id="cpf"
-                name="cpf"
-                placeholder="000.000.000-00"
-                format="cpf"
-                value={dataForm.cpf}
-                onValueChange={handleChange}
-                className="mt-1"
-              />
-              {errors.cpf && <p className="text-red-500 text-sm">{errors.cpf}</p>}
-            </div>
-            <div>
-              <Label htmlFor="email">Email <span>*</span></Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Digite email do usuário"
-                value={dataForm.email}
-                onValueChange={handleChange}
-                className="mt-1"
-              />
-              {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
-            </div>
-            <div>
-              <Label htmlFor="phone">Telefone <span>*</span></Label>
-              <Input
-                id="phone"
-                name="phone"
-                placeholder="(11) 99999-9999"
-                format="phone"
-                value={dataForm.phone}
-                onValueChange={handleChange}
-                className="mt-1"
-              />
-              {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
-            </div>
-            <div>
-              <Label htmlFor="birthDate">Data de Nascimento</Label>
-              <CalendarPicker
-                mode="natural"
-                name="birthDate"
-                value={dataForm.birthDate}
-                onValueChange={handleChange}
-                placeholder="DD/MM/AAAA"
-                fromYear={1900}
-                toYear={new Date().getFullYear()}
-              />
-              {errors.birthDate && <p className="text-red-500 text-sm">{errors.birthDate}</p>}
-            </div>
-            <div>
-              <Label htmlFor="zipCode">
-                CEP
-                {isLoadingCep && <span className="ml-2 text-xs text-muted-foreground">(buscando...)</span>}
-              </Label>
-              <Input
-                id="zipCode"
-                name="zipCode"
-                placeholder="00000-000"
-                format="cep"
-                value={dataForm.zipCode}
-                onValueChange={handleChange}
-                className="mt-1"
-                disabled={isLoadingCep}
-              />
-              {errors.zipCode && <p className="text-red-500 text-sm">{errors.zipCode}</p>}
-            </div>
-            <div>
-              <Label htmlFor="address">Endereço</Label>
-              <Input
-                id="address"
-                name="address"
-                placeholder="Digite o endereço"
-                value={dataForm.address}
-                onValueChange={handleChange}
-                className="mt-1"
-              />
-              {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
-            </div>
+            {avatarField}
+            {nameField}
+            {cpfField}
+            {emailField}
+            {phoneField}
+            {birthDateField}
+            {zipCodeField}
+            {addressField}
             <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label htmlFor="addressNumber">Número</Label>
-                <Input
-                  id="addressNumber"
-                  name="addressNumber"
-                  placeholder="Número"
-                  value={dataForm.addressNumber}
-                  onValueChange={handleChange}
-                  className="mt-1"
-                />
-                {errors.addressNumber && <p className="text-red-500 text-sm">{errors.addressNumber}</p>}
-              </div>
-              <div>
-                <Label htmlFor="addressComplement">Complemento</Label>
-                <Input
-                  id="addressComplement"
-                  name="addressComplement"
-                  placeholder="Apto, sala, etc"
-                  value={dataForm.addressComplement}
-                  onValueChange={handleChange}
-                  className="mt-1"
-                />
-                {errors.addressComplement && <p className="text-red-500 text-sm">{errors.addressComplement}</p>}
-              </div>
+              {addressNumberField}
+              {addressComplementField}
             </div>
-            <div>
-              <Label htmlFor="neighborhood">Bairro</Label>
-              <Input
-                id="neighborhood"
-                name="neighborhood"
-                placeholder="Digite o bairro"
-                value={dataForm.neighborhood}
-                onValueChange={handleChange}
-                className="mt-1"
-              />
-              {errors.neighborhood && <p className="text-red-500 text-sm">{errors.neighborhood}</p>}
-            </div>
+            {neighborhoodField}
             <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label htmlFor="city">Cidade</Label>
-                <Input
-                  id="city"
-                  name="city"
-                  placeholder="Digite a cidade"
-                  value={dataForm.city}
-                  onValueChange={handleChange}
-                  className="mt-1"
-                />
-                {errors.city && <p className="text-red-500 text-sm">{errors.city}</p>}
-              </div>
-              <div>
-                <Label htmlFor="state">Estado</Label>
-                <Input
-                  id="state"
-                  name="state"
-                  placeholder="UF"
-                  maxLength={2}
-                  value={dataForm.state}
-                  onValueChange={handleChange}
-                  className="mt-1"
-                />
-                {errors.state && <p className="text-red-500 text-sm">{errors.state}</p>}
-              </div>
+              {cityField}
+              {stateField}
             </div>
             {/* chave PIX do vendedor: opcional, só para facilitar o pagamento das comissões */}
             {dataForm.isSeller && (
               <>
-                <div>
-                  <Label htmlFor="pixType">Tipo de Chave PIX (opcional)</Label>
-                  <Select
-                    name="pixType"
-                    options={[
-                      { id: 'CPF', name: 'CPF' },
-                      { id: 'CNPJ', name: 'CNPJ' },
-                      { id: 'EMAIL', name: 'E-mail' },
-                      { id: 'PHONE', name: 'Telefone' },
-                      { id: 'EVP', name: 'Chave Aleatória (EVP)' },
-                    ]}
-                    onChange={(name, value) => handleChange(name, typeof value === 'string' ? value : value[0])}
-                    state={dataForm.pixType || "CPF"}
-                    placeholder="Selecione o tipo de chave"
-                  />
-                  {errors.pixType && <p className="text-red-500 text-sm">{errors.pixType}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="pixKey">Chave PIX</Label>
-                  <Input
-                    id="pixKey"
-                    name="pixKey"
-                    placeholder={
-                      dataForm.pixType === 'CPF' ? '000.000.000-00' :
-                      dataForm.pixType === 'CNPJ' ? '00.000.000/0000-00' :
-                      dataForm.pixType === 'EMAIL' ? 'email@exemplo.com' :
-                      dataForm.pixType === 'PHONE' ? '(00) 00000-0000' :
-                      dataForm.pixType === 'EVP' ? 'Chave aleatória de 32 caracteres' :
-                      'Digite a chave PIX'
-                    }
-                    format={
-                      dataForm.pixType === 'CPF' ? 'cpf' :
-                      dataForm.pixType === 'CNPJ' ? 'cnpj' :
-                      dataForm.pixType === 'PHONE' ? 'phone' :
-                      'none'
-                    }
-                    type={dataForm.pixType === 'EMAIL' ? 'email' : 'text'}
-                    value={dataForm.pixKey}
-                    onValueChange={handleChange}
-                    className="mt-1"
-                    disabled={!dataForm.pixType}
-                    maxLength={dataForm.pixType === 'EVP' ? 32 : undefined}
-                    icon={
-                      dataForm.pixType === 'CPF' ? 'user' :
-                      dataForm.pixType === 'CNPJ' ? 'building' :
-                      dataForm.pixType === 'EMAIL' ? 'mail' :
-                      dataForm.pixType === 'PHONE' ? 'phone' :
-                      dataForm.pixType === 'EVP' ? 'key' :
-                      dataForm.pixType ? 'wallet' : undefined
-                    }
-                    iconPosition="left"
-                  />
-                  {errors.pixKey && <p className="text-red-500 text-sm">{errors.pixKey}</p>}
-                  {dataForm.pixType === 'EVP' && dataForm.pixKey && (
-                    <span className={`text-xs ${dataForm.pixKey.length === 32 ? 'text-green-500' : 'text-amber-500'}`}>
-                      {dataForm.pixKey.length}/32 caracteres
-                    </span>
-                  )}
-                </div>
+                {pixTypeField}
+                {pixKeyField}
               </>
             )}
-            {
-              !self &&
-              <div>
-                <Label htmlFor="profileId">Função <span>*</span></Label>
-                <Select
-                  name="profileId"
-                  disabled={isFetchingProfiles}
-                  options={profiles?.rows || []}
-                  onChange={(name, value) => handleChange(name, Number(value))}
-                  state={dataForm.profileId !== undefined ? String(dataForm.profileId) : ""}
-                  placeholder="Selecione a função"
-                />
-                {errors.profileId && <p className="text-red-500 text-sm">{errors.profileId}</p>}
-              </div>
-            }
+            {!self && profileField}
           </>
         )
       }
 
-      {
-        onlyPassword == 'only' && (
-          <div>
-            <Label htmlFor="password">Senha <span>*</span></Label>
-            <Input
-              id="password"
-              name="password"
-              type="text"
-              placeholder="Digite nova senha do usuário"
-              value={dataForm.password}
-              onValueChange={handleChange}
-              className="mt-1"
-            />
-            {
-              dataForm.password && (
-                <span className={`${dataForm.password?.length >= 6 ? "text-green-500" : "text-red-500"} text-xs`}>* Mínimo 6 caracteres</span>
-              )
-            }
-            {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
-          </div>
-        )
-      }
-
-{
-        onlyPassword == 'both' && (
-          <div>
-            <Label htmlFor="password">Senha <span>*</span></Label>
-            <Input
-              id="password"
-              name="password"
-              type="text"
-              placeholder="Digite nova senha do usuário"
-              value={dataForm.password}
-              onValueChange={handleChange}
-              className="mt-1"
-            />
-            {
-              dataForm.password && (
-                <span className={`${dataForm.password?.length >= 6 ? "text-green-500" : "text-red-500"} text-xs`}>* Mínimo 6 caracteres</span>
-              )
-            }
-            {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
-          </div>
-        )
-      }
+      {(onlyPassword == 'only' || onlyPassword == 'both') && passwordField}
 
       <Button
         type="submit"
         className="w-full my-4"
         disabled={isPending || isPendingUpdate}
       >
-        {isPending || isPendingUpdate
-          ? formData
-            ? "Atualizando..."
-            : "Registrando..."
-          : formData
-          ? "Atualizar Usuário"
-          : "Registrar Usuário"}
+        {submitLabel}
       </Button>
-      {(isPending || isPendingUpdate) && (
-        <Loader title={formData ? "Atualizando Usuário..." : "Registrando Usuário..."} />
-      )}
+      {savingLoader}
     </form>
   );
 };

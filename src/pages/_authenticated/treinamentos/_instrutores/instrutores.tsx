@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useRef, useState } from "react";
 // Serviços
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +13,6 @@ import DataTable, { EmptyState } from "@/components/general-components/DataTable
 import SideForm from "@/components/general-components/SideForm";
 import Icon from "@/components/general-components/Icon";
 import { Button } from "@/components/ui/button";
-import Form from "./-components/InstructorsForm";
 import SearchForm from "./-components/InstructorsSearch";
 import SignatureForm from "./-components/InstructorsFormSignature";
 import InstructorsRowActions from "./-components/InstructorsRowActions";
@@ -21,6 +20,7 @@ import { instructorsColumns } from "./-components/instructorsColumns";
 import { LIMITS, countFilters } from "../-shared/lista";
 // Interfaces
 import { IEntity } from "./-interfaces/entity.interface";
+import { INSTRUCTOR_ENTITY } from "./-entity";
 import { ApiError } from "@/general-interfaces/api.interface";
 
 export const Route = createFileRoute('/_authenticated/treinamentos/_instrutores/instrutores')({
@@ -29,8 +29,8 @@ export const Route = createFileRoute('/_authenticated/treinamentos/_instrutores/
 
 function List() {
   const { can } = useVerify();
+  const navigate = useNavigate();
   const [openSearch, setOpenSearch] = useState(false);
-  const [openForm, setOpenForm] = useState(false);
   const [openSignatureForm, setOpenSignatureForm] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
   const [searchParams, setSearchParams] = useState<Record<string, any>>({
@@ -41,12 +41,7 @@ function List() {
   const initialFormRef = useRef(searchParams);
 
   // Define variáveis de entidade
-  const entity = {
-    name: "Instrutor",
-    pluralName: "Instrutores",
-    model: "instructors",
-    ability: "instrutores",
-  }
+  const entity = INSTRUCTOR_ENTITY;
 
   interface Response {
     rows: IEntity[];
@@ -79,8 +74,8 @@ function List() {
 
   const canCreate = can(`create_${entity.ability}`);
   const canUpdate = can(`update_${entity.ability}`);
-  const openNew = () => { setFormData(undefined); setOpenForm(true); };
-  const openEdit = (item: IEntity) => { setFormData(item); setOpenForm(true); };
+  const openNew = () => navigate({ to: "/treinamentos/instrutores/novo" });
+  const openEdit = (item: IEntity) => navigate({ to: "/treinamentos/instrutores/$instructorId", params: { instructorId: String(item.id) } });
   const openSignature = (item: IEntity) => { setFormData(item); setOpenSignatureForm(true); };
   const filterCount = countFilters(searchParams, initialFormRef.current);
 
@@ -115,20 +110,6 @@ function List() {
         description={`Preencha os campos abaixo para filtrar ${entity.pluralName}.`}
         side="left"
         form={ <SearchForm onSubmit={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
-      />
-
-      {/* Formulário de cadastro */}
-      <SideForm
-        openSheet={openForm}
-        setOpenSheet={setOpenForm}
-        title={formData 
-          ? `Editar ${entity.name} ${formData.name}`
-          : `Cadastrar ${entity.name}`}
-        description={formData 
-          ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
-          : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
-        side="right"
-        form={ <Form formData={formData} openSheet={setOpenForm} entity={entity} /> }
       />
 
       {/* Formulário de assinatura */}

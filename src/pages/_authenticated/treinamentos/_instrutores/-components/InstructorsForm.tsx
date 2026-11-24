@@ -9,6 +9,7 @@ import Input from "@/components/general-components/Input";
 import TagInput from "@/components/general-components/TagInput";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { FormPageGrid, FormSection } from "@/components/general-components/FormPage";
 // Interfaces and validations
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -17,11 +18,12 @@ import { z } from "zod";
 
 interface FormProps {
   formData?: IEntity;
-  openSheet: (open: boolean) => void;
+  /** Volta para a lista (tela própria de cadastro/edição). */
+  close: () => void;
   entity: IDefaultEntity;
 }
 
-const Form = ({ formData, openSheet, entity }: FormProps) => {
+const Form = ({ formData, close, entity }: FormProps) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
 
@@ -85,9 +87,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
-      // Limpa o formulário e fecha o Sheet
+      // Limpa o formulário e volta para a lista
       setDataForm(initialFormRef.current);
-      openSheet(false);
+      close();
     },
     onError: (error: ApiError) => {
       hideLoader();
@@ -112,9 +114,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
-      // Limpa o formulário e fecha o Sheet
+      // Limpa o formulário e volta para a lista
       setDataForm(initialFormRef.current);
-      openSheet(false);
+      close();
     },
     onError: (error: ApiError) => {
       hideLoader();
@@ -190,136 +192,150 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
     }
   };
 
-  // Buscas de valores para variaveis de formulário
+  const isSaving = isPending || isPendingUpdate;
+  const errorHint = (name: string) => errors[name] && <p className="text-red-500 text-sm mt-1">{errors[name]}</p>;
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
-      <div className="h-60">
-        <DropUpload preset="avatar"
-          setImage={setDataForm}
-          EditPreview={preview}
-        />
-      </div>
-      <div>
-        <Label htmlFor="name">Nome <span>*</span></Label>
-          <Input
-            id="name"
-            name="name"
-            placeholder={`Digite nome do ${entity.name}`}
-            value={dataForm.name}
-            onValueChange={handleChange}
-            className="mt-1"
-          />
-        {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
-      </div>
-      
-      <div>
-        <Label htmlFor="email">Email <span>*</span></Label>
-        <Input
-          id="email"
-          name="email"
-          placeholder="Digite o email do instrutor"
-          value={dataForm.email}
-          onValueChange={handleChange}
-          className="mt-1"
-        />
-        {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
-      </div>
+    <form onSubmit={handleSubmit}>
+      <FormPageGrid aside={<>
+        <section className="rounded-card border bg-card p-4 flex flex-col gap-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Foto</p>
+          <div className="h-60">
+            <DropUpload preset="avatar"
+              setImage={setDataForm}
+              EditPreview={preview}
+            />
+          </div>
+        </section>
 
-      <div>
-        <Label htmlFor="cpf">CPF <span>*</span></Label>
-        <Input
-          id="cpf"
-          name="cpf"
-          placeholder="Digite o CPF do instrutor"
-          value={dataForm.cpf}
-          onValueChange={handleChange}
-          className="mt-1"
-          format="cpf"
-        />
-        {errors.cpf && <p className="text-red-500 text-sm">{errors.cpf}</p>}
-      </div>
+        <div className="flex flex-col gap-2">
+          <Button type="submit" disabled={isSaving}>
+            {isSaving
+              ? formData
+                ? "Atualizando..."
+                : "Registrando..."
+              : formData
+              ? `Atualizar ${entity.name}`
+              : `Registrar ${entity.name}`}
+          </Button>
+          <Button type="button" variant="outline" onClick={close}>Cancelar</Button>
+        </div>
+      </>}>
+        <FormSection title="Dados do instrutor" description="Identificação e contato.">
+          <div>
+            <Label htmlFor="name">Nome <span>*</span></Label>
+            <Input
+              id="name"
+              name="name"
+              placeholder={`Digite nome do ${entity.name}`}
+              value={dataForm.name}
+              onValueChange={handleChange}
+              className="mt-1"
+            />
+            {errorHint("name")}
+          </div>
 
-      <div>
-        <Label htmlFor="phone">Telefone</Label>
-        <Input
-          id="phone"
-          name="phone"
-          placeholder="Digite o telefone do instrutor"
-          value={dataForm.phone}
-          onValueChange={handleChange}
-          className="mt-1"
-          format="phone"
-        />
-        {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
-      </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="email">Email <span>*</span></Label>
+              <Input
+                id="email"
+                name="email"
+                placeholder="Digite o email do instrutor"
+                value={dataForm.email}
+                onValueChange={handleChange}
+                className="mt-1"
+              />
+              {errorHint("email")}
+            </div>
 
-      <div>
-        <Label htmlFor="curriculum">Currículo <span>*</span></Label>
-        <p className="text-xs text-muted-foreground font-medium">Adicione os itens do currículo do instrutor</p>
-        <TagInput
-          value={dataForm.curriculum}
-          onChange={(value) => handleChange('curriculum', value)}
-          separator="#"
-          placeholder="Digite um item do currículo e pressione Enter"
-          className="mt-1"
-        />
-        {errors.curriculum && <p className="text-red-500 text-sm">{errors.curriculum}</p>}
-      </div>
+            <div>
+              <Label htmlFor="cpf">CPF <span>*</span></Label>
+              <Input
+                id="cpf"
+                name="cpf"
+                placeholder="Digite o CPF do instrutor"
+                value={dataForm.cpf}
+                onValueChange={handleChange}
+                className="mt-1"
+                format="cpf"
+              />
+              {errorHint("cpf")}
+            </div>
 
-      <div>
-        <Label htmlFor="highlight">Destaque</Label>
-        <Input
-          id="highlight"
-          name="highlight"
-          placeholder="Digite algo de destque do instrutor"
-          value={dataForm.highlight}
-          onValueChange={handleChange}
-          className="mt-1"
-        />
-        {errors.highlight && <p className="text-red-500 text-sm">{errors.highlight}</p>}
-      </div>
+            <div>
+              <Label htmlFor="phone">Telefone</Label>
+              <Input
+                id="phone"
+                name="phone"
+                placeholder="Digite o telefone do instrutor"
+                value={dataForm.phone}
+                onValueChange={handleChange}
+                className="mt-1"
+                format="phone"
+              />
+              {errorHint("phone")}
+            </div>
+          </div>
+        </FormSection>
 
-      <div>
-        <Label htmlFor="formation">Formação <span>*</span></Label>
-        <p className="text-xs text-muted-foreground font-medium">Apenas a principal formação</p>
-        <Input
-          id="formation"
-          name="formation"
-          placeholder="Digite a formação do instrutor"
-          value={dataForm.formation}
-          onValueChange={handleChange}
-          className="mt-1"
-        />
-        {errors.formation && <p className="text-red-500 text-sm">{errors.formation}</p>}
-      </div>
+        <FormSection title="Formação e currículo" description="Formação principal, destaque e itens do currículo.">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="formation">Formação <span>*</span></Label>
+              <Input
+                id="formation"
+                name="formation"
+                placeholder="Digite a formação do instrutor"
+                value={dataForm.formation}
+                onValueChange={handleChange}
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground font-medium mt-1">Apenas a principal formação</p>
+              {errorHint("formation")}
+            </div>
 
-      <div>
-        <Label htmlFor="formationCode">Código da Formação</Label>
-        <Input
-          id="formationCode"
-          name="formationCode"
-          placeholder="Digite o código da formação"
-          value={dataForm.formationCode}
-          onValueChange={handleChange}
-          className="mt-1"
-        />
-        {errors.formationCode && <p className="text-red-500 text-sm">{errors.formationCode}</p>}
-      </div>
+            <div>
+              <Label htmlFor="formationCode">Código da Formação</Label>
+              <Input
+                id="formationCode"
+                name="formationCode"
+                placeholder="Digite o código da formação"
+                value={dataForm.formationCode}
+                onValueChange={handleChange}
+                className="mt-1"
+              />
+              {errorHint("formationCode")}
+            </div>
+          </div>
 
-      <Button
-        type="submit"
-        className="w-full my-4"
-        disabled={isPending || isPendingUpdate}
-      >
-        {isPending || isPendingUpdate
-          ? formData
-            ? "Atualizando..."
-            : "Registrando..."
-          : formData
-          ? `Atualizar ${entity.name}`
-          : `Registrar ${entity.name}`}
-      </Button>
+          <div>
+            <Label htmlFor="highlight">Destaque</Label>
+            <Input
+              id="highlight"
+              name="highlight"
+              placeholder="Digite algo de destque do instrutor"
+              value={dataForm.highlight}
+              onValueChange={handleChange}
+              className="mt-1"
+            />
+            {errorHint("highlight")}
+          </div>
+
+          <div>
+            <Label htmlFor="curriculum">Currículo <span>*</span></Label>
+            <p className="text-xs text-muted-foreground font-medium">Adicione os itens do currículo do instrutor</p>
+            <TagInput
+              value={dataForm.curriculum}
+              onChange={(value) => handleChange('curriculum', value)}
+              separator="#"
+              placeholder="Digite um item do currículo e pressione Enter"
+              className="mt-1"
+            />
+            {errorHint("curriculum")}
+          </div>
+        </FormSection>
+      </FormPageGrid>
     </form>
   );
 };

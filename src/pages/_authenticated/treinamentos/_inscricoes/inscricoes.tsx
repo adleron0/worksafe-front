@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useRef, useState, useEffect } from "react";
 // Serviços
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -29,7 +29,10 @@ import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
 // Interfaces
 import { IEntity } from "./-interfaces/entity.interface";
+import { SUBSCRIPTION_ENTITY } from "./-entity";
 import { ApiError } from "@/general-interfaces/api.interface";
+
+const SELECTION_KEY = "inscricoes-curso-turma";
 
 export const Route = createFileRoute('/_authenticated/treinamentos/_inscricoes/inscricoes')({
   component: List,
@@ -37,6 +40,7 @@ export const Route = createFileRoute('/_authenticated/treinamentos/_inscricoes/i
 
 function List({ classId, modalPopover }: { classId?: number; modalPopover?: boolean } = {}) {
   const { can } = useVerify();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
   const [openSearch, setOpenSearch] = useState(false);
@@ -49,8 +53,14 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
     return (stored as 'list' | 'kanban') || 'list';
   };
   
+  // Curso e turma escolhidos na tela de inscrições: guardados na aba para não se perderem
+  // ao voltar da tela de cadastro/edição (dentro da turma o classId já vem fixo).
+  const [storedSelection] = useState<{ courseId?: number; classId?: number }>(() => {
+    if (classId) return {};
+    try { return JSON.parse(sessionStorage.getItem(SELECTION_KEY) || "{}"); } catch { return {}; }
+  });
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>(getStoredViewMode());
-  const [courseId, setCourseId] = useState<number | string | undefined>(undefined);
+  const [courseId, setCourseId] = useState<number | string | undefined>(storedSelection.courseId);
   const [searchParams, setSearchParams] = useState<Record<string, any>>({
     limit: getStoredViewMode() === 'kanban' ? 'all' : 10,
     page: 0,
@@ -59,6 +69,14 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
     'order-name': 'asc',
   });
   const initialFormRef = useRef(searchParams);
+  // A turma guardada entra depois do estado inicial: "limpar filtros" continua sem turma, como antes.
+  useEffect(() => {
+    if (storedSelection.classId) setSearchParams((prev) => ({ ...prev, classId: storedSelection.classId }));
+  }, [storedSelection]);
+  useEffect(() => {
+    if (classId) return;
+    try { sessionStorage.setItem(SELECTION_KEY, JSON.stringify({ courseId, classId: searchParams.classId })); } catch { /* sem armazenamento: só não lembra */ }
+  }, [classId, courseId, searchParams.classId]);
 
   // Interface para um único item da classe
   interface ClassItem {
@@ -126,12 +144,7 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
   }, [viewMode]);
 
   // Define variáveis de entidade
-  const entity = {
-    name: "Inscrição",
-    pluralName: "Inscrições",
-    model: "subscription",
-    ability: "treinamentos",
-  }
+  const entity = SUBSCRIPTION_ENTITY;
 
   interface Response {
     rows: IEntity[];
@@ -272,8 +285,16 @@ function List({ classId, modalPopover }: { classId?: number; modalPopover?: bool
 
   const hasClass = !!classId || !!searchParams.classId;
   const canCreate = can(`create_${entity.ability}`) && hasClass;
-  const openNew = () => { setFormData(undefined); setOpenForm(true); };
-  const openEdit = (item: IEntity) => { setFormData(item); setOpenForm(true); };
+  // Dentro da turma (classId fixo) o formulário segue na gaveta; na tela de inscrições abre em tela própria.
+  const embedded = !!classId;
+  const openNew = () => {
+    if (embedded) { setFormData(undefined); setOpenForm(true); return; }
+    navigate({ to: "/treinamentos/inscricoes/nova", search: { turma: String(searchParams.classId) } });
+  };
+  const openEdit = (item: IEntity) => {
+    if (embedded) { setFormData(item); setOpenForm(true); return; }
+    navigate({ to: "/treinamentos/inscricoes/$subscriptionId", params: { subscriptionId: String(item.id) } });
+  };
   const filterCount = countFilters(searchParams, initialFormRef.current, ['classId']);
   const errorMessage = isError ? error?.response?.data?.message || `Erro ao carregar ${entity.pluralName}` : null;
   const limit = searchParams.limit === 'all' ? (data?.total || 0) : Number(searchParams.limit);
@@ -434,8 +455,7 @@ Deseja continuar?`,
                   item={item}
                   column={column}
                   entity={entity}
-                  setFormData={setFormData}
-                  setOpenForm={setOpenForm}
+                  onEdit={openEdit}
                   modalPopover={modalPopover}
                 />
               )}
@@ -452,8 +472,8 @@ Deseja continuar?`,
         side="left"
         form={<SearchForm onSearch={handleSearch} onClear={handleClear} searchParams={searchParams} />}
       />
-      {/* Formulário de cadastro */}
-      <SideForm
+      {/* Formulário de cadastro (só dentro da turma; na tela de inscrições é tela própria) */}
+      {embedded && <SideForm
         openSheet={openForm}
         setOpenSheet={setOpenForm}
         title={formData 
@@ -471,7 +491,7 @@ Deseja continuar?`,
             classId={Number(searchParams.classId) || Number(classId)}
           />
         }
-      />
+      />}
     </>
   )
 };

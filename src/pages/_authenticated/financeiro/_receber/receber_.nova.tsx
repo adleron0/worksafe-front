@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import useVerify from "@/hooks/use-verify";
 import { FormPageHeader } from "@/components/general-components/FormPage";
 import { FINANCIAL_ABILITY } from "../-shared/financial";
-import { useBackToList } from "../-shared/useBackToList";
+import { useBackToList } from "@/hooks/use-back-to-list";
 import Form from "./-components/FinancialRecordsForm";
 import { RECEIVABLE_ENTITY } from "./-components/entity";
 

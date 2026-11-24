@@ -11,7 +11,7 @@ import Select from "@/components/general-components/Select";
 import TimelineView, { TimelineRow } from "@/components/general-components/TimelineView";
 import { dateBr, errorMessage, todayIso } from "../../comercial/-shared/commercial";
 import { ALLOCATION_ABILITY, ALLOCATION_KEY, Allocation, CLASS_COLOR, CLASS_LABEL, PART, PART_LABEL, addDays, overlaps, spanColor, spanText } from "../-shared/allocation";
-import { Activity, ActivityDialog, ActivityTypesDialog, SHIFT_OPTIONS, Shift, activitiesApi, shiftsClash } from "../-shared/activities";
+import { ActivityTypesDialog, SHIFT_OPTIONS, Shift, shiftsClash } from "../-shared/activities";
 import { EmployeeStatusBadge, employeesApi } from "../-shared/employees";
 import { AllocationMapView } from "../-shared/allocation-map";
 
@@ -32,8 +32,6 @@ function AllocationPage() {
   const [freeFrom, setFreeFrom] = useState("");
   const [freeTo, setFreeTo] = useState("");
   const [freeShift, setFreeShift] = useState<Shift>("integral");
-  // atividade aberta: uma existente (pelo id), uma nova, ou nenhuma
-  const [activity, setActivity] = useState<{ id?: number } | null>(null);
   const [managingTypes, setManagingTypes] = useState(false);
   // linha do tempo (quando) ou mapa (onde); a escolha fica guardada neste navegador
   const [mode, setMode] = useState<"tempo" | "mapa">(() => { try { return localStorage.getItem("worksafe.rh.alocacao.modo") === "mapa" ? "mapa" : "tempo"; } catch { return "tempo"; } });
@@ -43,11 +41,11 @@ function AllocationPage() {
   const params = { from, to };
   const { data, isLoading, error } = useQuery({ queryKey: [ALLOCATION_KEY, params], queryFn: () => employeesApi.get<Allocation>("allocation", params), placeholderData: (previous) => previous });
 
-  const { data: opened } = useQuery({ queryKey: [ALLOCATION_KEY, "activity", activity?.id], enabled: !!activity?.id, queryFn: () => activitiesApi.get<Activity>(String(activity?.id)) });
   if (!can(`view_${ALLOCATION_ABILITY}`)) return null;
   const canWrite = can(`update_${ALLOCATION_ABILITY}`);
   const openOrder = (orderId: number) => navigate({ to: "/servicos/ordens-de-servico/$orderId", params: { orderId: String(orderId) } });
   const openEmployee = (id: number) => navigate({ to: "/rh/funcionarios/$employeeId", params: { employeeId: String(id) } });
+  const openActivity = (id: number) => navigate({ to: "/rh/mapa-de-alocacao/atividades/$activityId", params: { activityId: String(id) } });
 
   const searching = !!freeFrom;
   const searchTo = freeTo || freeFrom;
@@ -79,7 +77,7 @@ function AllocationPage() {
       // atividades fora de OS: aula, treinamento, atividade no CT...
       ...(data?.activities ?? []).filter((item) => item.employeeId === employee.id).map((item) => ({
         id: `a${item.activityId}`, start: item.start, end: item.end, label: `${item.typeName}${item.location ? ` · ${item.location}` : ""}`, color: item.color, part: PART[item.shift],
-        hint: `${item.typeName} · ${spanText(item.start, item.end)} · ${PART_LABEL[item.shift]}`, onClick: () => setActivity({ id: item.activityId }),
+        hint: `${item.typeName} · ${spanText(item.start, item.end)} · ${PART_LABEL[item.shift]}`, onClick: () => openActivity(item.activityId),
       })),
     ],
     bands: (data?.unavailable ?? []).filter((item) => item.employeeId === employee.id).map((item, index) => ({ id: index, start: item.start, end: item.end, label: item.label })),
@@ -99,7 +97,7 @@ function AllocationPage() {
         {canWrite && (
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={() => setManagingTypes(true)}><Icon name="tags" className="w-4 h-4 mr-1" /> Tipos de atividade</Button>
-            <Button type="button" onClick={() => setActivity({})}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova atividade</Button>
+            <Button type="button" onClick={() => navigate({ to: "/rh/mapa-de-alocacao/atividades/nova" })}><Icon name="plus" className="w-4 h-4 mr-1" /> Nova atividade</Button>
           </div>
         )}
       </div>
@@ -200,9 +198,6 @@ function AllocationPage() {
         </>
       )}
       </>)}
-      {activity && (!activity.id || opened) && (
-        <ActivityDialog activity={activity.id ? opened : undefined} employees={(data?.employees ?? []).filter((employee) => employee.status !== "desligado").map(({ id, name }) => ({ id, name }))} canWrite={canWrite} onClose={() => setActivity(null)} />
-      )}
       {managingTypes && <ActivityTypesDialog onClose={() => setManagingTypes(false)} />}
     </>
   );

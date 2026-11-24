@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import Input from "@/components/general-components/Input";
 import { Label } from "@/components/ui/label";
 import Select from "@/components/general-components/Select";
+import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-components/FormPage";
 // Interfaces
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
@@ -18,9 +19,11 @@ interface FormProps {
   entity: IDefaultEntity;
   classId: number;
   isInsideModal?: boolean;
+  /** "sheet": gaveta (dentro da turma); "page": tela própria de cadastro/edição. */
+  layout?: "sheet" | "page";
 }
 
-const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal = false }: FormProps) => {
+const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal = false, layout = "sheet" }: FormProps) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
   
@@ -142,119 +145,183 @@ const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal 
     setData(prev => ({ ...prev, [name]: value }));
   };
 
+  const isPage = layout === "page";
+  const customerName = data.customer?.corporateName || data.customer?.name
+    || customers?.rows?.find((customer) => customer.id === Number(data.customerId))?.name;
+  const statusOptions = [
+    { id: "pending", name: "Pendente" },
+    { id: "confirmed", name: "Confirmado" },
+    { id: "declined", name: "Recusado" }
+  ];
+
+  const nameField = (
+    <div className="space-y-2">
+      <Label htmlFor="name">Nome completo *</Label>
+      <Input
+        id="name"
+        name="name"
+        placeholder="Nome do inscrito"
+        value={data.name}
+        onValueChange={handleChange}
+        required
+      />
+    </div>
+  );
+  const cpfField = (
+    <div className="space-y-2">
+      <Label htmlFor="cpf">CPF *</Label>
+      <Input
+        id="cpf"
+        name="cpf"
+        format="cpf"
+        placeholder="000.000.000-00"
+        value={data.cpf}
+        onValueChange={handleChange}
+        required
+      />
+    </div>
+  );
+  const emailField = (
+    <div className="space-y-2">
+      <Label htmlFor="email">E-mail *</Label>
+      <Input
+        id="email"
+        name="email"
+        type="email"
+        placeholder="email@exemplo.com"
+        value={data.email}
+        onValueChange={handleChange}
+        required
+      />
+    </div>
+  );
+  const phoneField = (
+    <div className="space-y-2">
+      <Label htmlFor="phone">Telefone *</Label>
+      <Input
+        id="phone"
+        name="phone"
+        format="phone"
+        placeholder="(00) 0 0000-0000"
+        value={data.phone}
+        onValueChange={handleChange}
+        required
+      />
+    </div>
+  );
+  const workedAtField = (
+    <div className="space-y-2">
+      <Label htmlFor="workedAt">Empresa</Label>
+      <Input
+        id="workedAt"
+        name="workedAt"
+        placeholder="Nome da empresa"
+        value={data.workedAt}
+        onValueChange={handleChange}
+      />
+    </div>
+  );
+  const customerField = (
+    <div className="space-y-2">
+      <Label htmlFor="customerId">Empresa contratante</Label>
+      {data.reservationId ? (
+        <p className="text-sm text-muted-foreground">
+          {customerName || "Empresa"} — vaga comprada pela empresa (mude em Vagas de empresas).
+        </p>
+      ) : (
+        <>
+          <Select
+            name="customerId"
+            modal={isInsideModal}
+            searchable
+            clearable
+            options={customers?.rows ?? []}
+            state={data.customerId ? String(data.customerId) : ""}
+            onChange={(name, value) => handleChange(name, value ? Number(value) : null)}
+            placeholder="Nenhuma (aluno do site / avulso)"
+          />
+          <p className="text-xs text-muted-foreground">Cliente que paga a vaga deste aluno: o nome e o CNPJ dele saem no certificado.</p>
+        </>
+      )}
+    </div>
+  );
+  const occupationField = (
+    <div className="space-y-2">
+      <Label htmlFor="occupation">Profissão</Label>
+      <Input
+        id="occupation"
+        name="occupation"
+        placeholder="Cargo/Profissão"
+        value={data.occupation}
+        onValueChange={handleChange}
+      />
+    </div>
+  );
+  const statusField = (
+    <div className="space-y-2">
+      <Label htmlFor="subscribeStatus">Status *</Label>
+      <Select
+        name="subscribeStatus"
+        state={data.subscribeStatus}
+        options={statusOptions}
+        placeholder="Selecione um status"
+        onChange={handleChange}
+        modal={!isPage && !isInsideModal}
+      />
+    </div>
+  );
+
+  // Tela própria: seções em cartões e coluna lateral com resumo e botões.
+  if (isPage) {
+    return (
+      <form onSubmit={handleSubmit}>
+        <FormPageGrid aside={<>
+          <section className="rounded-card border bg-card p-4 flex flex-col gap-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Resumo</p>
+            <SummaryRow label="Inscrito">{data.name || "—"}</SummaryRow>
+            <SummaryRow label="Status">{statusOptions.find((option) => option.id === data.subscribeStatus)?.name ?? "—"}</SummaryRow>
+            <SummaryRow label="Contratante">{data.customerId ? customerName ?? "—" : "Nenhuma"}</SummaryRow>
+          </section>
+          <div className="flex flex-col gap-2">
+            <Button type="submit">{formData?.id ? "Atualizar" : "Cadastrar"}</Button>
+            <Button type="button" variant="outline" onClick={() => openSheet(false)}>Cancelar</Button>
+          </div>
+        </>}>
+          <FormSection title="Dados do inscrito" description="Quem vai fazer o curso e como falar com a pessoa.">
+            {nameField}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {cpfField}
+              {emailField}
+              {phoneField}
+              {occupationField}
+            </div>
+          </FormSection>
+          <FormSection title="Empresa" description="Onde a pessoa trabalha e quem paga a vaga.">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {workedAtField}
+              {customerField}
+            </div>
+          </FormSection>
+          <FormSection title="Situação" description="Pendente, confirmada ou recusada.">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {statusField}
+            </div>
+          </FormSection>
+        </FormPageGrid>
+      </form>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">Nome completo *</Label>
-        <Input
-          id="name"
-          name="name"
-          placeholder="Nome do inscrito"
-          value={data.name}
-          onValueChange={handleChange}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="cpf">CPF *</Label>
-        <Input
-          id="cpf"
-          name="cpf"
-          format="cpf"
-          placeholder="000.000.000-00"
-          value={data.cpf}
-          onValueChange={handleChange}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="email">E-mail *</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="email@exemplo.com"
-          value={data.email}
-          onValueChange={handleChange}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="phone">Telefone *</Label>
-        <Input
-          id="phone"
-          name="phone"
-          format="phone"
-          placeholder="(00) 0 0000-0000"
-          value={data.phone}
-          onValueChange={handleChange}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="workedAt">Empresa</Label>
-        <Input
-          id="workedAt"
-          name="workedAt"
-          placeholder="Nome da empresa"
-          value={data.workedAt}
-          onValueChange={handleChange}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="customerId">Empresa contratante</Label>
-        {data.reservationId ? (
-          <p className="text-sm text-muted-foreground">
-            {data.customer?.corporateName || data.customer?.name || "Empresa"} — vaga comprada pela empresa (mude em Vagas de empresas).
-          </p>
-        ) : (
-          <>
-            <Select
-              name="customerId"
-              modal={isInsideModal}
-              searchable
-              clearable
-              options={customers?.rows ?? []}
-              state={data.customerId ? String(data.customerId) : ""}
-              onChange={(name, value) => handleChange(name, value ? Number(value) : null)}
-              placeholder="Nenhuma (aluno do site / avulso)"
-            />
-            <p className="text-xs text-muted-foreground">Cliente que paga a vaga deste aluno: o nome e o CNPJ dele saem no certificado.</p>
-          </>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="occupation">Profissão</Label>
-        <Input
-          id="occupation"
-          name="occupation"
-          placeholder="Cargo/Profissão"
-          value={data.occupation}
-          onValueChange={handleChange}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="subscribeStatus">Status *</Label>
-        <Select
-          name="subscribeStatus"
-          state={data.subscribeStatus}
-          options={[
-            { id: "pending", name: "Pendente" },
-            { id: "confirmed", name: "Confirmado" },
-            { id: "declined", name: "Recusado" }
-          ]}
-          placeholder="Selecione um status"
-          onChange={handleChange}
-          modal={!isInsideModal}
-        />
-      </div>
+      {nameField}
+      {cpfField}
+      {emailField}
+      {phoneField}
+      {workedAtField}
+      {customerField}
+      {occupationField}
+      {statusField}
 
       <div className="flex gap-2 pt-4">
         <Button type="submit" className="flex-1">

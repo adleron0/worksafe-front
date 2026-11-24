@@ -16,16 +16,14 @@ interface SubscriptionCardProps {
   item: IEntity;
   column?: KanbanColumn;
   entity: IDefaultEntity;
-  setFormData: (data: IEntity) => void;
-  setOpenForm: (open: boolean) => void;
+  onEdit: (item: IEntity) => void;
   modalPopover?: boolean;
 }
 
 const SubscriptionCard = ({ 
   item, 
   entity,
-  setFormData, 
-  setOpenForm,
+  onEdit,
   modalPopover = false
 }: SubscriptionCardProps) => {
   const { can } = useVerify();
@@ -65,10 +63,7 @@ const SubscriptionCard = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="z-[100000]">
               <DropdownMenuItem 
-                onSelect={() => {
-                  setFormData(item);
-                  setOpenForm(true);
-                }}
+                onSelect={() => onEdit(item)}
               >
                 <Icon name="edit-3" className="w-3 h-3 mr-2" /> 
                 <span className="text-sm">Editar</span>

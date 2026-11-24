@@ -46,6 +46,7 @@ import { Route as AuthenticatedInventariosAreasIndexRouteImport } from './pages/
 import { Route as IndexPropostaRascunhoProposalIdRouteImport } from './pages/_index/proposta_.rascunho.$proposalId'
 import { Route as IndexCertificadosNomeIdRouteImport } from './pages/_index/certificados/$nome.$id'
 import { Route as IndexAuthStudentLoginRouteImport } from './pages/_index/auth/student/login'
+import { Route as AuthenticatedUsuariosUsuariosNovoRouteImport } from './pages/_authenticated/usuarios/_usuarios/novo'
 import { Route as AuthenticatedUsuariosPerfisPerfisRouteImport } from './pages/_authenticated/usuarios/_perfis/perfis'
 import { Route as AuthenticatedTreinamentosTurmasTurmasRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas'
 import { Route as AuthenticatedTreinamentosInstrutoresInstrutoresRouteImport } from './pages/_authenticated/treinamentos/_instrutores/instrutores'
@@ -126,24 +127,60 @@ import { Route as AuthenticatedArquivosPastasTiposDeDocumentoRouteImport } from 
 import { Route as AuthenticatedArquivosPastasPastasRouteImport } from './pages/_authenticated/arquivos/_pastas/pastas'
 import { Route as AuthenticatedArquivosPastasLixeiraRouteImport } from './pages/_authenticated/arquivos/_pastas/lixeira'
 import { Route as AuthenticatedUsuariosUsuariosUserIdPermissoesRouteImport } from './pages/_authenticated/usuarios/_usuarios/$userId.permissoes'
+import { Route as AuthenticatedUsuariosUsuariosUserIdEditarRouteImport } from './pages/_authenticated/usuarios/_usuarios/$userId.editar'
 import { Route as AuthenticatedTreinamentosTurmasTurmasNovaRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.nova'
 import { Route as AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas_.$turmaId'
+import { Route as AuthenticatedTreinamentosInstrutoresInstrutoresNovoRouteImport } from './pages/_authenticated/treinamentos/_instrutores/instrutores_.novo'
+import { Route as AuthenticatedTreinamentosInstrutoresInstrutoresInstructorIdRouteImport } from './pages/_authenticated/treinamentos/_instrutores/instrutores_.$instructorId'
+import { Route as AuthenticatedTreinamentosInscricoesInscricoesNovaRouteImport } from './pages/_authenticated/treinamentos/_inscricoes/inscricoes_.nova'
+import { Route as AuthenticatedTreinamentosInscricoesInscricoesSubscriptionIdRouteImport } from './pages/_authenticated/treinamentos/_inscricoes/inscricoes_.$subscriptionId'
+import { Route as AuthenticatedTreinamentosCursosCursosNovoRouteImport } from './pages/_authenticated/treinamentos/_cursos/cursos_.novo'
+import { Route as AuthenticatedTreinamentosCursosCursosCourseIdRouteImport } from './pages/_authenticated/treinamentos/_cursos/cursos_.$courseId'
+import { Route as AuthenticatedSuprimentosEstoqueLocaisNovoRouteImport } from './pages/_authenticated/suprimentos/estoque/locais_.novo'
+import { Route as AuthenticatedSuprimentosEstoqueLocaisLocationIdRouteImport } from './pages/_authenticated/suprimentos/estoque/locais_.$locationId'
 import { Route as AuthenticatedSuprimentosEstoqueItensItemIdRouteImport } from './pages/_authenticated/suprimentos/estoque/itens_.$itemId'
 import { Route as AuthenticatedSuprimentosEstoqueInventarioCountIdRouteImport } from './pages/_authenticated/suprimentos/estoque/inventario_.$countId'
+import { Route as AuthenticatedSuprimentosEquipamentosRoteirosNovoRouteImport } from './pages/_authenticated/suprimentos/equipamentos/roteiros_.novo'
+import { Route as AuthenticatedSuprimentosEquipamentosRoteirosTemplateIdRouteImport } from './pages/_authenticated/suprimentos/equipamentos/roteiros_.$templateId'
 import { Route as AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRouteImport } from './pages/_authenticated/suprimentos/_pedidos/pedidos-de-compra_.$purchaseId'
+import { Route as AuthenticatedSiteServicosServicosNovoRouteImport } from './pages/_authenticated/site/_servicos/servicos_.novo'
+import { Route as AuthenticatedSiteServicosServicosServiceIdRouteImport } from './pages/_authenticated/site/_servicos/servicos_.$serviceId'
+import { Route as AuthenticatedSiteProdutosProdutosNovoRouteImport } from './pages/_authenticated/site/_produtos/produtos_.novo'
+import { Route as AuthenticatedSiteProdutosProdutosProductIdRouteImport } from './pages/_authenticated/site/_produtos/produtos_.$productId'
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoOrderIdRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico_.$orderId'
+import { Route as AuthenticatedRhLocaisLocaisNovoRouteImport } from './pages/_authenticated/rh/_locais/locais_.novo'
+import { Route as AuthenticatedRhLocaisLocaisPlaceIdRouteImport } from './pages/_authenticated/rh/_locais/locais_.$placeId'
 import { Route as AuthenticatedRhFuncionariosFuncionariosEmployeeIdRouteImport } from './pages/_authenticated/rh/_funcionarios/funcionarios_.$employeeId'
+import { Route as AuthenticatedRhDocumentosTiposDeDocumentoNovoRouteImport } from './pages/_authenticated/rh/_documentos/tipos-de-documento_.novo'
+import { Route as AuthenticatedRhDocumentosTiposDeDocumentoTypeIdRouteImport } from './pages/_authenticated/rh/_documentos/tipos-de-documento_.$typeId'
+import { Route as AuthenticatedFinanceiroRecorrentesRecorrentesNovaRouteImport } from './pages/_authenticated/financeiro/_recorrentes/recorrentes_.nova'
+import { Route as AuthenticatedFinanceiroRecorrentesRecorrentesRecurrenceIdRouteImport } from './pages/_authenticated/financeiro/_recorrentes/recorrentes_.$recurrenceId'
 import { Route as AuthenticatedFinanceiroReceberReceberNovaRouteImport } from './pages/_authenticated/financeiro/_receber/receber_.nova'
 import { Route as AuthenticatedFinanceiroReceberReceberRecordIdRouteImport } from './pages/_authenticated/financeiro/_receber/receber_.$recordId'
 import { Route as AuthenticatedFinanceiroPagarPagarNovaRouteImport } from './pages/_authenticated/financeiro/_pagar/pagar_.nova'
 import { Route as AuthenticatedFinanceiroPagarPagarPayableIdRouteImport } from './pages/_authenticated/financeiro/_pagar/pagar_.$payableId'
+import { Route as AuthenticatedFinanceiroFornecedoresFornecedoresNovaRouteImport } from './pages/_authenticated/financeiro/_fornecedores/fornecedores_.nova'
+import { Route as AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRouteImport } from './pages/_authenticated/financeiro/_fornecedores/fornecedores_.$supplierId'
+import { Route as AuthenticatedFinanceiroContasBancariasContasBancariasNovaRouteImport } from './pages/_authenticated/financeiro/_contas-bancarias/contas-bancarias_.nova'
+import { Route as AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRouteImport } from './pages/_authenticated/financeiro/_contas-bancarias/contas-bancarias_.$bankAccountId'
 import { Route as AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores_.$sellerId'
 import { Route as AuthenticatedComercialPropostasPropostasNovaRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.nova'
 import { Route as AuthenticatedComercialPropostasPropostasProposalIdRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.$proposalId'
 import { Route as AuthenticatedComercialNegociacoesNegociacoesDealIdRouteImport } from './pages/_authenticated/comercial/_negociacoes/negociacoes_.$dealId'
+import { Route as AuthenticatedComercialCuponsCuponsNovoRouteImport } from './pages/_authenticated/comercial/_cupons/cupons_.novo'
+import { Route as AuthenticatedComercialCuponsCuponsCouponIdRouteImport } from './pages/_authenticated/comercial/_cupons/cupons_.$couponId'
 import { Route as AuthenticatedComercialContratosContratosContractIdRouteImport } from './pages/_authenticated/comercial/_contratos/contratos_.$contractId'
+import { Route as AuthenticatedClientesCustomerIdContatosContactIdRouteImport } from './pages/_authenticated/clientes/$customerId_.contatos.$contactId'
 import { Route as AuthenticatedBotsRelatoriosRelatoriosReportIdRouteImport } from './pages/_authenticated/bots/_relatorios/relatorios_.$reportId'
+import { Route as AuthenticatedBotsBotsAgendaNovaRouteImport } from './pages/_authenticated/bots/_bots/agenda_.nova'
+import { Route as AuthenticatedBotsBotsAgendaScheduleIdRouteImport } from './pages/_authenticated/bots/_bots/agenda_.$scheduleId'
+import { Route as AuthenticatedBlogPostsPostsNovoRouteImport } from './pages/_authenticated/blog/_posts/posts_.novo'
+import { Route as AuthenticatedBlogPostsPostsPostIdRouteImport } from './pages/_authenticated/blog/_posts/posts_.$postId'
+import { Route as AuthenticatedArquivosPastasTiposDeDocumentoNovoRouteImport } from './pages/_authenticated/arquivos/_pastas/tipos-de-documento_.novo'
+import { Route as AuthenticatedArquivosPastasTiposDeDocumentoTypeIdRouteImport } from './pages/_authenticated/arquivos/_pastas/tipos-de-documento_.$typeId'
 import { Route as AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRouteImport } from './pages/_authenticated/usuarios/_perfis/perfis_.$profileId.permissoes'
+import { Route as AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRouteImport } from './pages/_authenticated/rh/_alocacao/mapa-de-alocacao_.atividades.nova'
+import { Route as AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRouteImport } from './pages/_authenticated/rh/_alocacao/mapa-de-alocacao_.atividades.$activityId'
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico_.$orderId_.rdo.$reportId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -346,6 +383,12 @@ const IndexAuthStudentLoginRoute = IndexAuthStudentLoginRouteImport.update({
   path: '/auth/student/login',
   getParentRoute: () => IndexRoute,
 } as any)
+const AuthenticatedUsuariosUsuariosNovoRoute =
+  AuthenticatedUsuariosUsuariosNovoRouteImport.update({
+    id: '/usuarios/_usuarios/novo',
+    path: '/usuarios/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedUsuariosPerfisPerfisRoute =
   AuthenticatedUsuariosPerfisPerfisRouteImport.update({
     id: '/usuarios/_perfis/perfis',
@@ -828,6 +871,12 @@ const AuthenticatedUsuariosUsuariosUserIdPermissoesRoute =
     path: '/usuarios/$userId/permissoes',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedUsuariosUsuariosUserIdEditarRoute =
+  AuthenticatedUsuariosUsuariosUserIdEditarRouteImport.update({
+    id: '/usuarios/_usuarios/$userId/editar',
+    path: '/usuarios/$userId/editar',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedTreinamentosTurmasTurmasNovaRoute =
   AuthenticatedTreinamentosTurmasTurmasNovaRouteImport.update({
     id: '/treinamentos/_turmas/turmas_/nova',
@@ -838,6 +887,58 @@ const AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute =
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport.update({
     id: '/treinamentos/_turmas/turmas_/$turmaId',
     path: '/treinamentos/turmas/$turmaId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTreinamentosInstrutoresInstrutoresNovoRoute =
+  AuthenticatedTreinamentosInstrutoresInstrutoresNovoRouteImport.update({
+    id: '/treinamentos/_instrutores/instrutores_/novo',
+    path: '/treinamentos/instrutores/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTreinamentosInstrutoresInstrutoresInstructorIdRoute =
+  AuthenticatedTreinamentosInstrutoresInstrutoresInstructorIdRouteImport.update(
+    {
+      id: '/treinamentos/_instrutores/instrutores_/$instructorId',
+      path: '/treinamentos/instrutores/$instructorId',
+      getParentRoute: () => AuthenticatedRoute,
+    } as any,
+  )
+const AuthenticatedTreinamentosInscricoesInscricoesNovaRoute =
+  AuthenticatedTreinamentosInscricoesInscricoesNovaRouteImport.update({
+    id: '/treinamentos/_inscricoes/inscricoes_/nova',
+    path: '/treinamentos/inscricoes/nova',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTreinamentosInscricoesInscricoesSubscriptionIdRoute =
+  AuthenticatedTreinamentosInscricoesInscricoesSubscriptionIdRouteImport.update(
+    {
+      id: '/treinamentos/_inscricoes/inscricoes_/$subscriptionId',
+      path: '/treinamentos/inscricoes/$subscriptionId',
+      getParentRoute: () => AuthenticatedRoute,
+    } as any,
+  )
+const AuthenticatedTreinamentosCursosCursosNovoRoute =
+  AuthenticatedTreinamentosCursosCursosNovoRouteImport.update({
+    id: '/treinamentos/_cursos/cursos_/novo',
+    path: '/treinamentos/cursos/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTreinamentosCursosCursosCourseIdRoute =
+  AuthenticatedTreinamentosCursosCursosCourseIdRouteImport.update({
+    id: '/treinamentos/_cursos/cursos_/$courseId',
+    path: '/treinamentos/cursos/$courseId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEstoqueLocaisNovoRoute =
+  AuthenticatedSuprimentosEstoqueLocaisNovoRouteImport.update({
+    id: '/suprimentos/estoque/locais_/novo',
+    path: '/suprimentos/estoque/locais/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEstoqueLocaisLocationIdRoute =
+  AuthenticatedSuprimentosEstoqueLocaisLocationIdRouteImport.update({
+    id: '/suprimentos/estoque/locais_/$locationId',
+    path: '/suprimentos/estoque/locais/$locationId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedSuprimentosEstoqueItensItemIdRoute =
@@ -852,10 +953,46 @@ const AuthenticatedSuprimentosEstoqueInventarioCountIdRoute =
     path: '/suprimentos/estoque/inventario/$countId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSuprimentosEquipamentosRoteirosNovoRoute =
+  AuthenticatedSuprimentosEquipamentosRoteirosNovoRouteImport.update({
+    id: '/suprimentos/equipamentos/roteiros_/novo',
+    path: '/suprimentos/equipamentos/roteiros/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuprimentosEquipamentosRoteirosTemplateIdRoute =
+  AuthenticatedSuprimentosEquipamentosRoteirosTemplateIdRouteImport.update({
+    id: '/suprimentos/equipamentos/roteiros_/$templateId',
+    path: '/suprimentos/equipamentos/roteiros/$templateId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute =
   AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRouteImport.update({
     id: '/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId',
     path: '/suprimentos/pedidos-de-compra/$purchaseId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSiteServicosServicosNovoRoute =
+  AuthenticatedSiteServicosServicosNovoRouteImport.update({
+    id: '/site/_servicos/servicos_/novo',
+    path: '/site/servicos/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSiteServicosServicosServiceIdRoute =
+  AuthenticatedSiteServicosServicosServiceIdRouteImport.update({
+    id: '/site/_servicos/servicos_/$serviceId',
+    path: '/site/servicos/$serviceId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSiteProdutosProdutosNovoRoute =
+  AuthenticatedSiteProdutosProdutosNovoRouteImport.update({
+    id: '/site/_produtos/produtos_/novo',
+    path: '/site/produtos/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSiteProdutosProdutosProductIdRoute =
+  AuthenticatedSiteProdutosProdutosProductIdRouteImport.update({
+    id: '/site/_produtos/produtos_/$productId',
+    path: '/site/produtos/$productId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute =
@@ -864,10 +1001,46 @@ const AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute =
     path: '/servicos/ordens-de-servico/$orderId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedRhLocaisLocaisNovoRoute =
+  AuthenticatedRhLocaisLocaisNovoRouteImport.update({
+    id: '/rh/_locais/locais_/novo',
+    path: '/rh/locais/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedRhLocaisLocaisPlaceIdRoute =
+  AuthenticatedRhLocaisLocaisPlaceIdRouteImport.update({
+    id: '/rh/_locais/locais_/$placeId',
+    path: '/rh/locais/$placeId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute =
   AuthenticatedRhFuncionariosFuncionariosEmployeeIdRouteImport.update({
     id: '/rh/_funcionarios/funcionarios_/$employeeId',
     path: '/rh/funcionarios/$employeeId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedRhDocumentosTiposDeDocumentoNovoRoute =
+  AuthenticatedRhDocumentosTiposDeDocumentoNovoRouteImport.update({
+    id: '/rh/_documentos/tipos-de-documento_/novo',
+    path: '/rh/tipos-de-documento/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedRhDocumentosTiposDeDocumentoTypeIdRoute =
+  AuthenticatedRhDocumentosTiposDeDocumentoTypeIdRouteImport.update({
+    id: '/rh/_documentos/tipos-de-documento_/$typeId',
+    path: '/rh/tipos-de-documento/$typeId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceiroRecorrentesRecorrentesNovaRoute =
+  AuthenticatedFinanceiroRecorrentesRecorrentesNovaRouteImport.update({
+    id: '/financeiro/_recorrentes/recorrentes_/nova',
+    path: '/financeiro/recorrentes/nova',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceiroRecorrentesRecorrentesRecurrenceIdRoute =
+  AuthenticatedFinanceiroRecorrentesRecorrentesRecurrenceIdRouteImport.update({
+    id: '/financeiro/_recorrentes/recorrentes_/$recurrenceId',
+    path: '/financeiro/recorrentes/$recurrenceId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedFinanceiroReceberReceberNovaRoute =
@@ -894,6 +1067,32 @@ const AuthenticatedFinanceiroPagarPagarPayableIdRoute =
     path: '/financeiro/pagar/$payableId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanceiroFornecedoresFornecedoresNovaRoute =
+  AuthenticatedFinanceiroFornecedoresFornecedoresNovaRouteImport.update({
+    id: '/financeiro/_fornecedores/fornecedores_/nova',
+    path: '/financeiro/fornecedores/nova',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute =
+  AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRouteImport.update({
+    id: '/financeiro/_fornecedores/fornecedores_/$supplierId',
+    path: '/financeiro/fornecedores/$supplierId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceiroContasBancariasContasBancariasNovaRoute =
+  AuthenticatedFinanceiroContasBancariasContasBancariasNovaRouteImport.update({
+    id: '/financeiro/_contas-bancarias/contas-bancarias_/nova',
+    path: '/financeiro/contas-bancarias/nova',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute =
+  AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRouteImport.update(
+    {
+      id: '/financeiro/_contas-bancarias/contas-bancarias_/$bankAccountId',
+      path: '/financeiro/contas-bancarias/$bankAccountId',
+      getParentRoute: () => AuthenticatedRoute,
+    } as any,
+  )
 const AuthenticatedComercialVendedoresVendedoresSellerIdRoute =
   AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport.update({
     id: '/comercial/_vendedores/vendedores_/$sellerId',
@@ -918,10 +1117,28 @@ const AuthenticatedComercialNegociacoesNegociacoesDealIdRoute =
     path: '/comercial/negociacoes/$dealId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedComercialCuponsCuponsNovoRoute =
+  AuthenticatedComercialCuponsCuponsNovoRouteImport.update({
+    id: '/comercial/_cupons/cupons_/novo',
+    path: '/comercial/cupons/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedComercialCuponsCuponsCouponIdRoute =
+  AuthenticatedComercialCuponsCuponsCouponIdRouteImport.update({
+    id: '/comercial/_cupons/cupons_/$couponId',
+    path: '/comercial/cupons/$couponId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComercialContratosContratosContractIdRoute =
   AuthenticatedComercialContratosContratosContractIdRouteImport.update({
     id: '/comercial/_contratos/contratos_/$contractId',
     path: '/comercial/contratos/$contractId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedClientesCustomerIdContatosContactIdRoute =
+  AuthenticatedClientesCustomerIdContatosContactIdRouteImport.update({
+    id: '/clientes/$customerId_/contatos/$contactId',
+    path: '/clientes/$customerId/contatos/$contactId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedBotsRelatoriosRelatoriosReportIdRoute =
@@ -930,10 +1147,58 @@ const AuthenticatedBotsRelatoriosRelatoriosReportIdRoute =
     path: '/bots/relatorios/$reportId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedBotsBotsAgendaNovaRoute =
+  AuthenticatedBotsBotsAgendaNovaRouteImport.update({
+    id: '/bots/_bots/agenda_/nova',
+    path: '/bots/agenda/nova',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBotsBotsAgendaScheduleIdRoute =
+  AuthenticatedBotsBotsAgendaScheduleIdRouteImport.update({
+    id: '/bots/_bots/agenda_/$scheduleId',
+    path: '/bots/agenda/$scheduleId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBlogPostsPostsNovoRoute =
+  AuthenticatedBlogPostsPostsNovoRouteImport.update({
+    id: '/blog/_posts/posts_/novo',
+    path: '/blog/posts/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBlogPostsPostsPostIdRoute =
+  AuthenticatedBlogPostsPostsPostIdRouteImport.update({
+    id: '/blog/_posts/posts_/$postId',
+    path: '/blog/posts/$postId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedArquivosPastasTiposDeDocumentoNovoRoute =
+  AuthenticatedArquivosPastasTiposDeDocumentoNovoRouteImport.update({
+    id: '/arquivos/_pastas/tipos-de-documento_/novo',
+    path: '/arquivos/tipos-de-documento/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedArquivosPastasTiposDeDocumentoTypeIdRoute =
+  AuthenticatedArquivosPastasTiposDeDocumentoTypeIdRouteImport.update({
+    id: '/arquivos/_pastas/tipos-de-documento_/$typeId',
+    path: '/arquivos/tipos-de-documento/$typeId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute =
   AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRouteImport.update({
     id: '/usuarios/_perfis/perfis_/$profileId/permissoes',
     path: '/usuarios/perfis/$profileId/permissoes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute =
+  AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRouteImport.update({
+    id: '/rh/_alocacao/mapa-de-alocacao_/atividades/nova',
+    path: '/rh/mapa-de-alocacao/atividades/nova',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute =
+  AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRouteImport.update({
+    id: '/rh/_alocacao/mapa-de-alocacao_/atividades/$activityId',
+    path: '/rh/mapa-de-alocacao/atividades/$activityId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute =
@@ -1052,6 +1317,7 @@ export interface FileRoutesByFullPath {
   '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/usuarios/novo': typeof AuthenticatedUsuariosUsuariosNovoRoute
   '/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/proposta/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
@@ -1060,24 +1326,60 @@ export interface FileRoutesByFullPath {
   '/suprimentos/estoque': typeof AuthenticatedSuprimentosEstoqueIndexRoute
   '/suprimentos/locacoes': typeof AuthenticatedSuprimentosLocacoesIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
+  '/arquivos/tipos-de-documento/$typeId': typeof AuthenticatedArquivosPastasTiposDeDocumentoTypeIdRoute
+  '/arquivos/tipos-de-documento/novo': typeof AuthenticatedArquivosPastasTiposDeDocumentoNovoRoute
+  '/blog/posts/$postId': typeof AuthenticatedBlogPostsPostsPostIdRoute
+  '/blog/posts/novo': typeof AuthenticatedBlogPostsPostsNovoRoute
+  '/bots/agenda/$scheduleId': typeof AuthenticatedBotsBotsAgendaScheduleIdRoute
+  '/bots/agenda/nova': typeof AuthenticatedBotsBotsAgendaNovaRoute
   '/bots/relatorios/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
+  '/clientes/$customerId/contatos/$contactId': typeof AuthenticatedClientesCustomerIdContatosContactIdRoute
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
+  '/comercial/cupons/$couponId': typeof AuthenticatedComercialCuponsCuponsCouponIdRoute
+  '/comercial/cupons/novo': typeof AuthenticatedComercialCuponsCuponsNovoRoute
   '/comercial/negociacoes/$dealId': typeof AuthenticatedComercialNegociacoesNegociacoesDealIdRoute
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/financeiro/contas-bancarias/$bankAccountId': typeof AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute
+  '/financeiro/contas-bancarias/nova': typeof AuthenticatedFinanceiroContasBancariasContasBancariasNovaRoute
+  '/financeiro/fornecedores/$supplierId': typeof AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute
+  '/financeiro/fornecedores/nova': typeof AuthenticatedFinanceiroFornecedoresFornecedoresNovaRoute
   '/financeiro/pagar/$payableId': typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
   '/financeiro/pagar/nova': typeof AuthenticatedFinanceiroPagarPagarNovaRoute
   '/financeiro/receber/$recordId': typeof AuthenticatedFinanceiroReceberReceberRecordIdRoute
   '/financeiro/receber/nova': typeof AuthenticatedFinanceiroReceberReceberNovaRoute
+  '/financeiro/recorrentes/$recurrenceId': typeof AuthenticatedFinanceiroRecorrentesRecorrentesRecurrenceIdRoute
+  '/financeiro/recorrentes/nova': typeof AuthenticatedFinanceiroRecorrentesRecorrentesNovaRoute
+  '/rh/tipos-de-documento/$typeId': typeof AuthenticatedRhDocumentosTiposDeDocumentoTypeIdRoute
+  '/rh/tipos-de-documento/novo': typeof AuthenticatedRhDocumentosTiposDeDocumentoNovoRoute
   '/rh/funcionarios/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
+  '/rh/locais/$placeId': typeof AuthenticatedRhLocaisLocaisPlaceIdRoute
+  '/rh/locais/novo': typeof AuthenticatedRhLocaisLocaisNovoRoute
   '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
+  '/site/produtos/$productId': typeof AuthenticatedSiteProdutosProdutosProductIdRoute
+  '/site/produtos/novo': typeof AuthenticatedSiteProdutosProdutosNovoRoute
+  '/site/servicos/$serviceId': typeof AuthenticatedSiteServicosServicosServiceIdRoute
+  '/site/servicos/novo': typeof AuthenticatedSiteServicosServicosNovoRoute
   '/suprimentos/pedidos-de-compra/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
+  '/suprimentos/equipamentos/roteiros/$templateId': typeof AuthenticatedSuprimentosEquipamentosRoteirosTemplateIdRoute
+  '/suprimentos/equipamentos/roteiros/novo': typeof AuthenticatedSuprimentosEquipamentosRoteirosNovoRoute
   '/suprimentos/estoque/inventario/$countId': typeof AuthenticatedSuprimentosEstoqueInventarioCountIdRoute
   '/suprimentos/estoque/itens/$itemId': typeof AuthenticatedSuprimentosEstoqueItensItemIdRoute
+  '/suprimentos/estoque/locais/$locationId': typeof AuthenticatedSuprimentosEstoqueLocaisLocationIdRoute
+  '/suprimentos/estoque/locais/novo': typeof AuthenticatedSuprimentosEstoqueLocaisNovoRoute
+  '/treinamentos/cursos/$courseId': typeof AuthenticatedTreinamentosCursosCursosCourseIdRoute
+  '/treinamentos/cursos/novo': typeof AuthenticatedTreinamentosCursosCursosNovoRoute
+  '/treinamentos/inscricoes/$subscriptionId': typeof AuthenticatedTreinamentosInscricoesInscricoesSubscriptionIdRoute
+  '/treinamentos/inscricoes/nova': typeof AuthenticatedTreinamentosInscricoesInscricoesNovaRoute
+  '/treinamentos/instrutores/$instructorId': typeof AuthenticatedTreinamentosInstrutoresInstrutoresInstructorIdRoute
+  '/treinamentos/instrutores/novo': typeof AuthenticatedTreinamentosInstrutoresInstrutoresNovoRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
+  '/usuarios/$userId/editar': typeof AuthenticatedUsuariosUsuariosUserIdEditarRoute
   '/usuarios/$userId/permissoes': typeof AuthenticatedUsuariosUsuariosUserIdPermissoesRoute
+  '/rh/mapa-de-alocacao/atividades/$activityId': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute
+  '/rh/mapa-de-alocacao/atividades/nova': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute
   '/usuarios/perfis/$profileId/permissoes': typeof AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute
   '/servicos/ordens-de-servico/$orderId/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
 }
@@ -1187,6 +1489,7 @@ export interface FileRoutesByTo {
   '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/usuarios/novo': typeof AuthenticatedUsuariosUsuariosNovoRoute
   '/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/proposta/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
@@ -1195,24 +1498,60 @@ export interface FileRoutesByTo {
   '/suprimentos/estoque': typeof AuthenticatedSuprimentosEstoqueIndexRoute
   '/suprimentos/locacoes': typeof AuthenticatedSuprimentosLocacoesIndexRoute
   '/usuarios': typeof AuthenticatedUsuariosUsuariosIndexRoute
+  '/arquivos/tipos-de-documento/$typeId': typeof AuthenticatedArquivosPastasTiposDeDocumentoTypeIdRoute
+  '/arquivos/tipos-de-documento/novo': typeof AuthenticatedArquivosPastasTiposDeDocumentoNovoRoute
+  '/blog/posts/$postId': typeof AuthenticatedBlogPostsPostsPostIdRoute
+  '/blog/posts/novo': typeof AuthenticatedBlogPostsPostsNovoRoute
+  '/bots/agenda/$scheduleId': typeof AuthenticatedBotsBotsAgendaScheduleIdRoute
+  '/bots/agenda/nova': typeof AuthenticatedBotsBotsAgendaNovaRoute
   '/bots/relatorios/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
+  '/clientes/$customerId/contatos/$contactId': typeof AuthenticatedClientesCustomerIdContatosContactIdRoute
   '/comercial/contratos/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
+  '/comercial/cupons/$couponId': typeof AuthenticatedComercialCuponsCuponsCouponIdRoute
+  '/comercial/cupons/novo': typeof AuthenticatedComercialCuponsCuponsNovoRoute
   '/comercial/negociacoes/$dealId': typeof AuthenticatedComercialNegociacoesNegociacoesDealIdRoute
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/financeiro/contas-bancarias/$bankAccountId': typeof AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute
+  '/financeiro/contas-bancarias/nova': typeof AuthenticatedFinanceiroContasBancariasContasBancariasNovaRoute
+  '/financeiro/fornecedores/$supplierId': typeof AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute
+  '/financeiro/fornecedores/nova': typeof AuthenticatedFinanceiroFornecedoresFornecedoresNovaRoute
   '/financeiro/pagar/$payableId': typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
   '/financeiro/pagar/nova': typeof AuthenticatedFinanceiroPagarPagarNovaRoute
   '/financeiro/receber/$recordId': typeof AuthenticatedFinanceiroReceberReceberRecordIdRoute
   '/financeiro/receber/nova': typeof AuthenticatedFinanceiroReceberReceberNovaRoute
+  '/financeiro/recorrentes/$recurrenceId': typeof AuthenticatedFinanceiroRecorrentesRecorrentesRecurrenceIdRoute
+  '/financeiro/recorrentes/nova': typeof AuthenticatedFinanceiroRecorrentesRecorrentesNovaRoute
+  '/rh/tipos-de-documento/$typeId': typeof AuthenticatedRhDocumentosTiposDeDocumentoTypeIdRoute
+  '/rh/tipos-de-documento/novo': typeof AuthenticatedRhDocumentosTiposDeDocumentoNovoRoute
   '/rh/funcionarios/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
+  '/rh/locais/$placeId': typeof AuthenticatedRhLocaisLocaisPlaceIdRoute
+  '/rh/locais/novo': typeof AuthenticatedRhLocaisLocaisNovoRoute
   '/servicos/ordens-de-servico/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
+  '/site/produtos/$productId': typeof AuthenticatedSiteProdutosProdutosProductIdRoute
+  '/site/produtos/novo': typeof AuthenticatedSiteProdutosProdutosNovoRoute
+  '/site/servicos/$serviceId': typeof AuthenticatedSiteServicosServicosServiceIdRoute
+  '/site/servicos/novo': typeof AuthenticatedSiteServicosServicosNovoRoute
   '/suprimentos/pedidos-de-compra/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
+  '/suprimentos/equipamentos/roteiros/$templateId': typeof AuthenticatedSuprimentosEquipamentosRoteirosTemplateIdRoute
+  '/suprimentos/equipamentos/roteiros/novo': typeof AuthenticatedSuprimentosEquipamentosRoteirosNovoRoute
   '/suprimentos/estoque/inventario/$countId': typeof AuthenticatedSuprimentosEstoqueInventarioCountIdRoute
   '/suprimentos/estoque/itens/$itemId': typeof AuthenticatedSuprimentosEstoqueItensItemIdRoute
+  '/suprimentos/estoque/locais/$locationId': typeof AuthenticatedSuprimentosEstoqueLocaisLocationIdRoute
+  '/suprimentos/estoque/locais/novo': typeof AuthenticatedSuprimentosEstoqueLocaisNovoRoute
+  '/treinamentos/cursos/$courseId': typeof AuthenticatedTreinamentosCursosCursosCourseIdRoute
+  '/treinamentos/cursos/novo': typeof AuthenticatedTreinamentosCursosCursosNovoRoute
+  '/treinamentos/inscricoes/$subscriptionId': typeof AuthenticatedTreinamentosInscricoesInscricoesSubscriptionIdRoute
+  '/treinamentos/inscricoes/nova': typeof AuthenticatedTreinamentosInscricoesInscricoesNovaRoute
+  '/treinamentos/instrutores/$instructorId': typeof AuthenticatedTreinamentosInstrutoresInstrutoresInstructorIdRoute
+  '/treinamentos/instrutores/novo': typeof AuthenticatedTreinamentosInstrutoresInstrutoresNovoRoute
   '/treinamentos/turmas/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
+  '/usuarios/$userId/editar': typeof AuthenticatedUsuariosUsuariosUserIdEditarRoute
   '/usuarios/$userId/permissoes': typeof AuthenticatedUsuariosUsuariosUserIdPermissoesRoute
+  '/rh/mapa-de-alocacao/atividades/$activityId': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute
+  '/rh/mapa-de-alocacao/atividades/nova': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute
   '/usuarios/perfis/$profileId/permissoes': typeof AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute
   '/servicos/ordens-de-servico/$orderId/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
 }
@@ -1326,6 +1665,7 @@ export interface FileRoutesById {
   '/_authenticated/treinamentos/_instrutores/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/_authenticated/treinamentos/_turmas/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/_authenticated/usuarios/_perfis/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/_authenticated/usuarios/_usuarios/novo': typeof AuthenticatedUsuariosUsuariosNovoRoute
   '/_index/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/_index/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/_index/proposta_/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
@@ -1334,24 +1674,60 @@ export interface FileRoutesById {
   '/_authenticated/suprimentos/estoque/': typeof AuthenticatedSuprimentosEstoqueIndexRoute
   '/_authenticated/suprimentos/locacoes/': typeof AuthenticatedSuprimentosLocacoesIndexRoute
   '/_authenticated/usuarios/_usuarios/': typeof AuthenticatedUsuariosUsuariosIndexRoute
+  '/_authenticated/arquivos/_pastas/tipos-de-documento_/$typeId': typeof AuthenticatedArquivosPastasTiposDeDocumentoTypeIdRoute
+  '/_authenticated/arquivos/_pastas/tipos-de-documento_/novo': typeof AuthenticatedArquivosPastasTiposDeDocumentoNovoRoute
+  '/_authenticated/blog/_posts/posts_/$postId': typeof AuthenticatedBlogPostsPostsPostIdRoute
+  '/_authenticated/blog/_posts/posts_/novo': typeof AuthenticatedBlogPostsPostsNovoRoute
+  '/_authenticated/bots/_bots/agenda_/$scheduleId': typeof AuthenticatedBotsBotsAgendaScheduleIdRoute
+  '/_authenticated/bots/_bots/agenda_/nova': typeof AuthenticatedBotsBotsAgendaNovaRoute
   '/_authenticated/bots/_relatorios/relatorios_/$reportId': typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
+  '/_authenticated/clientes/$customerId_/contatos/$contactId': typeof AuthenticatedClientesCustomerIdContatosContactIdRoute
   '/_authenticated/comercial/_contratos/contratos_/$contractId': typeof AuthenticatedComercialContratosContratosContractIdRoute
+  '/_authenticated/comercial/_cupons/cupons_/$couponId': typeof AuthenticatedComercialCuponsCuponsCouponIdRoute
+  '/_authenticated/comercial/_cupons/cupons_/novo': typeof AuthenticatedComercialCuponsCuponsNovoRoute
   '/_authenticated/comercial/_negociacoes/negociacoes_/$dealId': typeof AuthenticatedComercialNegociacoesNegociacoesDealIdRoute
   '/_authenticated/comercial/_propostas/propostas_/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/_authenticated/comercial/_propostas/propostas_/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/_authenticated/comercial/_vendedores/vendedores_/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/_authenticated/financeiro/_contas-bancarias/contas-bancarias_/$bankAccountId': typeof AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute
+  '/_authenticated/financeiro/_contas-bancarias/contas-bancarias_/nova': typeof AuthenticatedFinanceiroContasBancariasContasBancariasNovaRoute
+  '/_authenticated/financeiro/_fornecedores/fornecedores_/$supplierId': typeof AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute
+  '/_authenticated/financeiro/_fornecedores/fornecedores_/nova': typeof AuthenticatedFinanceiroFornecedoresFornecedoresNovaRoute
   '/_authenticated/financeiro/_pagar/pagar_/$payableId': typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
   '/_authenticated/financeiro/_pagar/pagar_/nova': typeof AuthenticatedFinanceiroPagarPagarNovaRoute
   '/_authenticated/financeiro/_receber/receber_/$recordId': typeof AuthenticatedFinanceiroReceberReceberRecordIdRoute
   '/_authenticated/financeiro/_receber/receber_/nova': typeof AuthenticatedFinanceiroReceberReceberNovaRoute
+  '/_authenticated/financeiro/_recorrentes/recorrentes_/$recurrenceId': typeof AuthenticatedFinanceiroRecorrentesRecorrentesRecurrenceIdRoute
+  '/_authenticated/financeiro/_recorrentes/recorrentes_/nova': typeof AuthenticatedFinanceiroRecorrentesRecorrentesNovaRoute
+  '/_authenticated/rh/_documentos/tipos-de-documento_/$typeId': typeof AuthenticatedRhDocumentosTiposDeDocumentoTypeIdRoute
+  '/_authenticated/rh/_documentos/tipos-de-documento_/novo': typeof AuthenticatedRhDocumentosTiposDeDocumentoNovoRoute
   '/_authenticated/rh/_funcionarios/funcionarios_/$employeeId': typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
+  '/_authenticated/rh/_locais/locais_/$placeId': typeof AuthenticatedRhLocaisLocaisPlaceIdRoute
+  '/_authenticated/rh/_locais/locais_/novo': typeof AuthenticatedRhLocaisLocaisNovoRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
+  '/_authenticated/site/_produtos/produtos_/$productId': typeof AuthenticatedSiteProdutosProdutosProductIdRoute
+  '/_authenticated/site/_produtos/produtos_/novo': typeof AuthenticatedSiteProdutosProdutosNovoRoute
+  '/_authenticated/site/_servicos/servicos_/$serviceId': typeof AuthenticatedSiteServicosServicosServiceIdRoute
+  '/_authenticated/site/_servicos/servicos_/novo': typeof AuthenticatedSiteServicosServicosNovoRoute
   '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId': typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
+  '/_authenticated/suprimentos/equipamentos/roteiros_/$templateId': typeof AuthenticatedSuprimentosEquipamentosRoteirosTemplateIdRoute
+  '/_authenticated/suprimentos/equipamentos/roteiros_/novo': typeof AuthenticatedSuprimentosEquipamentosRoteirosNovoRoute
   '/_authenticated/suprimentos/estoque/inventario_/$countId': typeof AuthenticatedSuprimentosEstoqueInventarioCountIdRoute
   '/_authenticated/suprimentos/estoque/itens_/$itemId': typeof AuthenticatedSuprimentosEstoqueItensItemIdRoute
+  '/_authenticated/suprimentos/estoque/locais_/$locationId': typeof AuthenticatedSuprimentosEstoqueLocaisLocationIdRoute
+  '/_authenticated/suprimentos/estoque/locais_/novo': typeof AuthenticatedSuprimentosEstoqueLocaisNovoRoute
+  '/_authenticated/treinamentos/_cursos/cursos_/$courseId': typeof AuthenticatedTreinamentosCursosCursosCourseIdRoute
+  '/_authenticated/treinamentos/_cursos/cursos_/novo': typeof AuthenticatedTreinamentosCursosCursosNovoRoute
+  '/_authenticated/treinamentos/_inscricoes/inscricoes_/$subscriptionId': typeof AuthenticatedTreinamentosInscricoesInscricoesSubscriptionIdRoute
+  '/_authenticated/treinamentos/_inscricoes/inscricoes_/nova': typeof AuthenticatedTreinamentosInscricoesInscricoesNovaRoute
+  '/_authenticated/treinamentos/_instrutores/instrutores_/$instructorId': typeof AuthenticatedTreinamentosInstrutoresInstrutoresInstructorIdRoute
+  '/_authenticated/treinamentos/_instrutores/instrutores_/novo': typeof AuthenticatedTreinamentosInstrutoresInstrutoresNovoRoute
   '/_authenticated/treinamentos/_turmas/turmas_/$turmaId': typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   '/_authenticated/treinamentos/_turmas/turmas_/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
+  '/_authenticated/usuarios/_usuarios/$userId/editar': typeof AuthenticatedUsuariosUsuariosUserIdEditarRoute
   '/_authenticated/usuarios/_usuarios/$userId/permissoes': typeof AuthenticatedUsuariosUsuariosUserIdPermissoesRoute
+  '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/$activityId': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute
+  '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/nova': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute
   '/_authenticated/usuarios/_perfis/perfis_/$profileId/permissoes': typeof AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
 }
@@ -1464,6 +1840,7 @@ export interface FileRouteTypes {
     | '/treinamentos/instrutores'
     | '/treinamentos/turmas'
     | '/usuarios/perfis'
+    | '/usuarios/novo'
     | '/auth/student/login'
     | '/certificados/$nome/$id'
     | '/proposta/rascunho/$proposalId'
@@ -1472,24 +1849,60 @@ export interface FileRouteTypes {
     | '/suprimentos/estoque'
     | '/suprimentos/locacoes'
     | '/usuarios'
+    | '/arquivos/tipos-de-documento/$typeId'
+    | '/arquivos/tipos-de-documento/novo'
+    | '/blog/posts/$postId'
+    | '/blog/posts/novo'
+    | '/bots/agenda/$scheduleId'
+    | '/bots/agenda/nova'
     | '/bots/relatorios/$reportId'
+    | '/clientes/$customerId/contatos/$contactId'
     | '/comercial/contratos/$contractId'
+    | '/comercial/cupons/$couponId'
+    | '/comercial/cupons/novo'
     | '/comercial/negociacoes/$dealId'
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
     | '/comercial/vendedores/$sellerId'
+    | '/financeiro/contas-bancarias/$bankAccountId'
+    | '/financeiro/contas-bancarias/nova'
+    | '/financeiro/fornecedores/$supplierId'
+    | '/financeiro/fornecedores/nova'
     | '/financeiro/pagar/$payableId'
     | '/financeiro/pagar/nova'
     | '/financeiro/receber/$recordId'
     | '/financeiro/receber/nova'
+    | '/financeiro/recorrentes/$recurrenceId'
+    | '/financeiro/recorrentes/nova'
+    | '/rh/tipos-de-documento/$typeId'
+    | '/rh/tipos-de-documento/novo'
     | '/rh/funcionarios/$employeeId'
+    | '/rh/locais/$placeId'
+    | '/rh/locais/novo'
     | '/servicos/ordens-de-servico/$orderId'
+    | '/site/produtos/$productId'
+    | '/site/produtos/novo'
+    | '/site/servicos/$serviceId'
+    | '/site/servicos/novo'
     | '/suprimentos/pedidos-de-compra/$purchaseId'
+    | '/suprimentos/equipamentos/roteiros/$templateId'
+    | '/suprimentos/equipamentos/roteiros/novo'
     | '/suprimentos/estoque/inventario/$countId'
     | '/suprimentos/estoque/itens/$itemId'
+    | '/suprimentos/estoque/locais/$locationId'
+    | '/suprimentos/estoque/locais/novo'
+    | '/treinamentos/cursos/$courseId'
+    | '/treinamentos/cursos/novo'
+    | '/treinamentos/inscricoes/$subscriptionId'
+    | '/treinamentos/inscricoes/nova'
+    | '/treinamentos/instrutores/$instructorId'
+    | '/treinamentos/instrutores/novo'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
+    | '/usuarios/$userId/editar'
     | '/usuarios/$userId/permissoes'
+    | '/rh/mapa-de-alocacao/atividades/$activityId'
+    | '/rh/mapa-de-alocacao/atividades/nova'
     | '/usuarios/perfis/$profileId/permissoes'
     | '/servicos/ordens-de-servico/$orderId/rdo/$reportId'
   fileRoutesByTo: FileRoutesByTo
@@ -1599,6 +2012,7 @@ export interface FileRouteTypes {
     | '/treinamentos/instrutores'
     | '/treinamentos/turmas'
     | '/usuarios/perfis'
+    | '/usuarios/novo'
     | '/auth/student/login'
     | '/certificados/$nome/$id'
     | '/proposta/rascunho/$proposalId'
@@ -1607,24 +2021,60 @@ export interface FileRouteTypes {
     | '/suprimentos/estoque'
     | '/suprimentos/locacoes'
     | '/usuarios'
+    | '/arquivos/tipos-de-documento/$typeId'
+    | '/arquivos/tipos-de-documento/novo'
+    | '/blog/posts/$postId'
+    | '/blog/posts/novo'
+    | '/bots/agenda/$scheduleId'
+    | '/bots/agenda/nova'
     | '/bots/relatorios/$reportId'
+    | '/clientes/$customerId/contatos/$contactId'
     | '/comercial/contratos/$contractId'
+    | '/comercial/cupons/$couponId'
+    | '/comercial/cupons/novo'
     | '/comercial/negociacoes/$dealId'
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
     | '/comercial/vendedores/$sellerId'
+    | '/financeiro/contas-bancarias/$bankAccountId'
+    | '/financeiro/contas-bancarias/nova'
+    | '/financeiro/fornecedores/$supplierId'
+    | '/financeiro/fornecedores/nova'
     | '/financeiro/pagar/$payableId'
     | '/financeiro/pagar/nova'
     | '/financeiro/receber/$recordId'
     | '/financeiro/receber/nova'
+    | '/financeiro/recorrentes/$recurrenceId'
+    | '/financeiro/recorrentes/nova'
+    | '/rh/tipos-de-documento/$typeId'
+    | '/rh/tipos-de-documento/novo'
     | '/rh/funcionarios/$employeeId'
+    | '/rh/locais/$placeId'
+    | '/rh/locais/novo'
     | '/servicos/ordens-de-servico/$orderId'
+    | '/site/produtos/$productId'
+    | '/site/produtos/novo'
+    | '/site/servicos/$serviceId'
+    | '/site/servicos/novo'
     | '/suprimentos/pedidos-de-compra/$purchaseId'
+    | '/suprimentos/equipamentos/roteiros/$templateId'
+    | '/suprimentos/equipamentos/roteiros/novo'
     | '/suprimentos/estoque/inventario/$countId'
     | '/suprimentos/estoque/itens/$itemId'
+    | '/suprimentos/estoque/locais/$locationId'
+    | '/suprimentos/estoque/locais/novo'
+    | '/treinamentos/cursos/$courseId'
+    | '/treinamentos/cursos/novo'
+    | '/treinamentos/inscricoes/$subscriptionId'
+    | '/treinamentos/inscricoes/nova'
+    | '/treinamentos/instrutores/$instructorId'
+    | '/treinamentos/instrutores/novo'
     | '/treinamentos/turmas/$turmaId'
     | '/treinamentos/turmas/nova'
+    | '/usuarios/$userId/editar'
     | '/usuarios/$userId/permissoes'
+    | '/rh/mapa-de-alocacao/atividades/$activityId'
+    | '/rh/mapa-de-alocacao/atividades/nova'
     | '/usuarios/perfis/$profileId/permissoes'
     | '/servicos/ordens-de-servico/$orderId/rdo/$reportId'
   id:
@@ -1737,6 +2187,7 @@ export interface FileRouteTypes {
     | '/_authenticated/treinamentos/_instrutores/instrutores'
     | '/_authenticated/treinamentos/_turmas/turmas'
     | '/_authenticated/usuarios/_perfis/perfis'
+    | '/_authenticated/usuarios/_usuarios/novo'
     | '/_index/auth/student/login'
     | '/_index/certificados/$nome/$id'
     | '/_index/proposta_/rascunho/$proposalId'
@@ -1745,24 +2196,60 @@ export interface FileRouteTypes {
     | '/_authenticated/suprimentos/estoque/'
     | '/_authenticated/suprimentos/locacoes/'
     | '/_authenticated/usuarios/_usuarios/'
+    | '/_authenticated/arquivos/_pastas/tipos-de-documento_/$typeId'
+    | '/_authenticated/arquivos/_pastas/tipos-de-documento_/novo'
+    | '/_authenticated/blog/_posts/posts_/$postId'
+    | '/_authenticated/blog/_posts/posts_/novo'
+    | '/_authenticated/bots/_bots/agenda_/$scheduleId'
+    | '/_authenticated/bots/_bots/agenda_/nova'
     | '/_authenticated/bots/_relatorios/relatorios_/$reportId'
+    | '/_authenticated/clientes/$customerId_/contatos/$contactId'
     | '/_authenticated/comercial/_contratos/contratos_/$contractId'
+    | '/_authenticated/comercial/_cupons/cupons_/$couponId'
+    | '/_authenticated/comercial/_cupons/cupons_/novo'
     | '/_authenticated/comercial/_negociacoes/negociacoes_/$dealId'
     | '/_authenticated/comercial/_propostas/propostas_/$proposalId'
     | '/_authenticated/comercial/_propostas/propostas_/nova'
     | '/_authenticated/comercial/_vendedores/vendedores_/$sellerId'
+    | '/_authenticated/financeiro/_contas-bancarias/contas-bancarias_/$bankAccountId'
+    | '/_authenticated/financeiro/_contas-bancarias/contas-bancarias_/nova'
+    | '/_authenticated/financeiro/_fornecedores/fornecedores_/$supplierId'
+    | '/_authenticated/financeiro/_fornecedores/fornecedores_/nova'
     | '/_authenticated/financeiro/_pagar/pagar_/$payableId'
     | '/_authenticated/financeiro/_pagar/pagar_/nova'
     | '/_authenticated/financeiro/_receber/receber_/$recordId'
     | '/_authenticated/financeiro/_receber/receber_/nova'
+    | '/_authenticated/financeiro/_recorrentes/recorrentes_/$recurrenceId'
+    | '/_authenticated/financeiro/_recorrentes/recorrentes_/nova'
+    | '/_authenticated/rh/_documentos/tipos-de-documento_/$typeId'
+    | '/_authenticated/rh/_documentos/tipos-de-documento_/novo'
     | '/_authenticated/rh/_funcionarios/funcionarios_/$employeeId'
+    | '/_authenticated/rh/_locais/locais_/$placeId'
+    | '/_authenticated/rh/_locais/locais_/novo'
     | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId'
+    | '/_authenticated/site/_produtos/produtos_/$productId'
+    | '/_authenticated/site/_produtos/produtos_/novo'
+    | '/_authenticated/site/_servicos/servicos_/$serviceId'
+    | '/_authenticated/site/_servicos/servicos_/novo'
     | '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId'
+    | '/_authenticated/suprimentos/equipamentos/roteiros_/$templateId'
+    | '/_authenticated/suprimentos/equipamentos/roteiros_/novo'
     | '/_authenticated/suprimentos/estoque/inventario_/$countId'
     | '/_authenticated/suprimentos/estoque/itens_/$itemId'
+    | '/_authenticated/suprimentos/estoque/locais_/$locationId'
+    | '/_authenticated/suprimentos/estoque/locais_/novo'
+    | '/_authenticated/treinamentos/_cursos/cursos_/$courseId'
+    | '/_authenticated/treinamentos/_cursos/cursos_/novo'
+    | '/_authenticated/treinamentos/_inscricoes/inscricoes_/$subscriptionId'
+    | '/_authenticated/treinamentos/_inscricoes/inscricoes_/nova'
+    | '/_authenticated/treinamentos/_instrutores/instrutores_/$instructorId'
+    | '/_authenticated/treinamentos/_instrutores/instrutores_/novo'
     | '/_authenticated/treinamentos/_turmas/turmas_/$turmaId'
     | '/_authenticated/treinamentos/_turmas/turmas_/nova'
+    | '/_authenticated/usuarios/_usuarios/$userId/editar'
     | '/_authenticated/usuarios/_usuarios/$userId/permissoes'
+    | '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/$activityId'
+    | '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/nova'
     | '/_authenticated/usuarios/_perfis/perfis_/$profileId/permissoes'
     | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId'
   fileRoutesById: FileRoutesById
@@ -2033,6 +2520,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/student/login'
       preLoaderRoute: typeof IndexAuthStudentLoginRouteImport
       parentRoute: typeof IndexRoute
+    }
+    '/_authenticated/usuarios/_usuarios/novo': {
+      id: '/_authenticated/usuarios/_usuarios/novo'
+      path: '/usuarios/novo'
+      fullPath: '/usuarios/novo'
+      preLoaderRoute: typeof AuthenticatedUsuariosUsuariosNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/usuarios/_perfis/perfis': {
       id: '/_authenticated/usuarios/_perfis/perfis'
@@ -2594,6 +3088,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsuariosUsuariosUserIdPermissoesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/usuarios/_usuarios/$userId/editar': {
+      id: '/_authenticated/usuarios/_usuarios/$userId/editar'
+      path: '/usuarios/$userId/editar'
+      fullPath: '/usuarios/$userId/editar'
+      preLoaderRoute: typeof AuthenticatedUsuariosUsuariosUserIdEditarRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/treinamentos/_turmas/turmas_/nova': {
       id: '/_authenticated/treinamentos/_turmas/turmas_/nova'
       path: '/treinamentos/turmas/nova'
@@ -2606,6 +3107,62 @@ declare module '@tanstack/react-router' {
       path: '/treinamentos/turmas/$turmaId'
       fullPath: '/treinamentos/turmas/$turmaId'
       preLoaderRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/treinamentos/_instrutores/instrutores_/novo': {
+      id: '/_authenticated/treinamentos/_instrutores/instrutores_/novo'
+      path: '/treinamentos/instrutores/novo'
+      fullPath: '/treinamentos/instrutores/novo'
+      preLoaderRoute: typeof AuthenticatedTreinamentosInstrutoresInstrutoresNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/treinamentos/_instrutores/instrutores_/$instructorId': {
+      id: '/_authenticated/treinamentos/_instrutores/instrutores_/$instructorId'
+      path: '/treinamentos/instrutores/$instructorId'
+      fullPath: '/treinamentos/instrutores/$instructorId'
+      preLoaderRoute: typeof AuthenticatedTreinamentosInstrutoresInstrutoresInstructorIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/treinamentos/_inscricoes/inscricoes_/nova': {
+      id: '/_authenticated/treinamentos/_inscricoes/inscricoes_/nova'
+      path: '/treinamentos/inscricoes/nova'
+      fullPath: '/treinamentos/inscricoes/nova'
+      preLoaderRoute: typeof AuthenticatedTreinamentosInscricoesInscricoesNovaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/treinamentos/_inscricoes/inscricoes_/$subscriptionId': {
+      id: '/_authenticated/treinamentos/_inscricoes/inscricoes_/$subscriptionId'
+      path: '/treinamentos/inscricoes/$subscriptionId'
+      fullPath: '/treinamentos/inscricoes/$subscriptionId'
+      preLoaderRoute: typeof AuthenticatedTreinamentosInscricoesInscricoesSubscriptionIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/treinamentos/_cursos/cursos_/novo': {
+      id: '/_authenticated/treinamentos/_cursos/cursos_/novo'
+      path: '/treinamentos/cursos/novo'
+      fullPath: '/treinamentos/cursos/novo'
+      preLoaderRoute: typeof AuthenticatedTreinamentosCursosCursosNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/treinamentos/_cursos/cursos_/$courseId': {
+      id: '/_authenticated/treinamentos/_cursos/cursos_/$courseId'
+      path: '/treinamentos/cursos/$courseId'
+      fullPath: '/treinamentos/cursos/$courseId'
+      preLoaderRoute: typeof AuthenticatedTreinamentosCursosCursosCourseIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/estoque/locais_/novo': {
+      id: '/_authenticated/suprimentos/estoque/locais_/novo'
+      path: '/suprimentos/estoque/locais/novo'
+      fullPath: '/suprimentos/estoque/locais/novo'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueLocaisNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/estoque/locais_/$locationId': {
+      id: '/_authenticated/suprimentos/estoque/locais_/$locationId'
+      path: '/suprimentos/estoque/locais/$locationId'
+      fullPath: '/suprimentos/estoque/locais/$locationId'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueLocaisLocationIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/suprimentos/estoque/itens_/$itemId': {
@@ -2622,11 +3179,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSuprimentosEstoqueInventarioCountIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/suprimentos/equipamentos/roteiros_/novo': {
+      id: '/_authenticated/suprimentos/equipamentos/roteiros_/novo'
+      path: '/suprimentos/equipamentos/roteiros/novo'
+      fullPath: '/suprimentos/equipamentos/roteiros/novo'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEquipamentosRoteirosNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suprimentos/equipamentos/roteiros_/$templateId': {
+      id: '/_authenticated/suprimentos/equipamentos/roteiros_/$templateId'
+      path: '/suprimentos/equipamentos/roteiros/$templateId'
+      fullPath: '/suprimentos/equipamentos/roteiros/$templateId'
+      preLoaderRoute: typeof AuthenticatedSuprimentosEquipamentosRoteirosTemplateIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId': {
       id: '/_authenticated/suprimentos/_pedidos/pedidos-de-compra_/$purchaseId'
       path: '/suprimentos/pedidos-de-compra/$purchaseId'
       fullPath: '/suprimentos/pedidos-de-compra/$purchaseId'
       preLoaderRoute: typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/site/_servicos/servicos_/novo': {
+      id: '/_authenticated/site/_servicos/servicos_/novo'
+      path: '/site/servicos/novo'
+      fullPath: '/site/servicos/novo'
+      preLoaderRoute: typeof AuthenticatedSiteServicosServicosNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/site/_servicos/servicos_/$serviceId': {
+      id: '/_authenticated/site/_servicos/servicos_/$serviceId'
+      path: '/site/servicos/$serviceId'
+      fullPath: '/site/servicos/$serviceId'
+      preLoaderRoute: typeof AuthenticatedSiteServicosServicosServiceIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/site/_produtos/produtos_/novo': {
+      id: '/_authenticated/site/_produtos/produtos_/novo'
+      path: '/site/produtos/novo'
+      fullPath: '/site/produtos/novo'
+      preLoaderRoute: typeof AuthenticatedSiteProdutosProdutosNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/site/_produtos/produtos_/$productId': {
+      id: '/_authenticated/site/_produtos/produtos_/$productId'
+      path: '/site/produtos/$productId'
+      fullPath: '/site/produtos/$productId'
+      preLoaderRoute: typeof AuthenticatedSiteProdutosProdutosProductIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId': {
@@ -2636,11 +3235,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/rh/_locais/locais_/novo': {
+      id: '/_authenticated/rh/_locais/locais_/novo'
+      path: '/rh/locais/novo'
+      fullPath: '/rh/locais/novo'
+      preLoaderRoute: typeof AuthenticatedRhLocaisLocaisNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/rh/_locais/locais_/$placeId': {
+      id: '/_authenticated/rh/_locais/locais_/$placeId'
+      path: '/rh/locais/$placeId'
+      fullPath: '/rh/locais/$placeId'
+      preLoaderRoute: typeof AuthenticatedRhLocaisLocaisPlaceIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/rh/_funcionarios/funcionarios_/$employeeId': {
       id: '/_authenticated/rh/_funcionarios/funcionarios_/$employeeId'
       path: '/rh/funcionarios/$employeeId'
       fullPath: '/rh/funcionarios/$employeeId'
       preLoaderRoute: typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/rh/_documentos/tipos-de-documento_/novo': {
+      id: '/_authenticated/rh/_documentos/tipos-de-documento_/novo'
+      path: '/rh/tipos-de-documento/novo'
+      fullPath: '/rh/tipos-de-documento/novo'
+      preLoaderRoute: typeof AuthenticatedRhDocumentosTiposDeDocumentoNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/rh/_documentos/tipos-de-documento_/$typeId': {
+      id: '/_authenticated/rh/_documentos/tipos-de-documento_/$typeId'
+      path: '/rh/tipos-de-documento/$typeId'
+      fullPath: '/rh/tipos-de-documento/$typeId'
+      preLoaderRoute: typeof AuthenticatedRhDocumentosTiposDeDocumentoTypeIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/financeiro/_recorrentes/recorrentes_/nova': {
+      id: '/_authenticated/financeiro/_recorrentes/recorrentes_/nova'
+      path: '/financeiro/recorrentes/nova'
+      fullPath: '/financeiro/recorrentes/nova'
+      preLoaderRoute: typeof AuthenticatedFinanceiroRecorrentesRecorrentesNovaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/financeiro/_recorrentes/recorrentes_/$recurrenceId': {
+      id: '/_authenticated/financeiro/_recorrentes/recorrentes_/$recurrenceId'
+      path: '/financeiro/recorrentes/$recurrenceId'
+      fullPath: '/financeiro/recorrentes/$recurrenceId'
+      preLoaderRoute: typeof AuthenticatedFinanceiroRecorrentesRecorrentesRecurrenceIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/financeiro/_receber/receber_/nova': {
@@ -2671,6 +3312,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceiroPagarPagarPayableIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/financeiro/_fornecedores/fornecedores_/nova': {
+      id: '/_authenticated/financeiro/_fornecedores/fornecedores_/nova'
+      path: '/financeiro/fornecedores/nova'
+      fullPath: '/financeiro/fornecedores/nova'
+      preLoaderRoute: typeof AuthenticatedFinanceiroFornecedoresFornecedoresNovaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/financeiro/_fornecedores/fornecedores_/$supplierId': {
+      id: '/_authenticated/financeiro/_fornecedores/fornecedores_/$supplierId'
+      path: '/financeiro/fornecedores/$supplierId'
+      fullPath: '/financeiro/fornecedores/$supplierId'
+      preLoaderRoute: typeof AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/financeiro/_contas-bancarias/contas-bancarias_/nova': {
+      id: '/_authenticated/financeiro/_contas-bancarias/contas-bancarias_/nova'
+      path: '/financeiro/contas-bancarias/nova'
+      fullPath: '/financeiro/contas-bancarias/nova'
+      preLoaderRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasNovaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/financeiro/_contas-bancarias/contas-bancarias_/$bankAccountId': {
+      id: '/_authenticated/financeiro/_contas-bancarias/contas-bancarias_/$bankAccountId'
+      path: '/financeiro/contas-bancarias/$bankAccountId'
+      fullPath: '/financeiro/contas-bancarias/$bankAccountId'
+      preLoaderRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_vendedores/vendedores_/$sellerId': {
       id: '/_authenticated/comercial/_vendedores/vendedores_/$sellerId'
       path: '/comercial/vendedores/$sellerId'
@@ -2699,11 +3368,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComercialNegociacoesNegociacoesDealIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/comercial/_cupons/cupons_/novo': {
+      id: '/_authenticated/comercial/_cupons/cupons_/novo'
+      path: '/comercial/cupons/novo'
+      fullPath: '/comercial/cupons/novo'
+      preLoaderRoute: typeof AuthenticatedComercialCuponsCuponsNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/comercial/_cupons/cupons_/$couponId': {
+      id: '/_authenticated/comercial/_cupons/cupons_/$couponId'
+      path: '/comercial/cupons/$couponId'
+      fullPath: '/comercial/cupons/$couponId'
+      preLoaderRoute: typeof AuthenticatedComercialCuponsCuponsCouponIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_contratos/contratos_/$contractId': {
       id: '/_authenticated/comercial/_contratos/contratos_/$contractId'
       path: '/comercial/contratos/$contractId'
       fullPath: '/comercial/contratos/$contractId'
       preLoaderRoute: typeof AuthenticatedComercialContratosContratosContractIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/clientes/$customerId_/contatos/$contactId': {
+      id: '/_authenticated/clientes/$customerId_/contatos/$contactId'
+      path: '/clientes/$customerId/contatos/$contactId'
+      fullPath: '/clientes/$customerId/contatos/$contactId'
+      preLoaderRoute: typeof AuthenticatedClientesCustomerIdContatosContactIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/bots/_relatorios/relatorios_/$reportId': {
@@ -2713,11 +3403,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/bots/_bots/agenda_/nova': {
+      id: '/_authenticated/bots/_bots/agenda_/nova'
+      path: '/bots/agenda/nova'
+      fullPath: '/bots/agenda/nova'
+      preLoaderRoute: typeof AuthenticatedBotsBotsAgendaNovaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/bots/_bots/agenda_/$scheduleId': {
+      id: '/_authenticated/bots/_bots/agenda_/$scheduleId'
+      path: '/bots/agenda/$scheduleId'
+      fullPath: '/bots/agenda/$scheduleId'
+      preLoaderRoute: typeof AuthenticatedBotsBotsAgendaScheduleIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/blog/_posts/posts_/novo': {
+      id: '/_authenticated/blog/_posts/posts_/novo'
+      path: '/blog/posts/novo'
+      fullPath: '/blog/posts/novo'
+      preLoaderRoute: typeof AuthenticatedBlogPostsPostsNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/blog/_posts/posts_/$postId': {
+      id: '/_authenticated/blog/_posts/posts_/$postId'
+      path: '/blog/posts/$postId'
+      fullPath: '/blog/posts/$postId'
+      preLoaderRoute: typeof AuthenticatedBlogPostsPostsPostIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/arquivos/_pastas/tipos-de-documento_/novo': {
+      id: '/_authenticated/arquivos/_pastas/tipos-de-documento_/novo'
+      path: '/arquivos/tipos-de-documento/novo'
+      fullPath: '/arquivos/tipos-de-documento/novo'
+      preLoaderRoute: typeof AuthenticatedArquivosPastasTiposDeDocumentoNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/arquivos/_pastas/tipos-de-documento_/$typeId': {
+      id: '/_authenticated/arquivos/_pastas/tipos-de-documento_/$typeId'
+      path: '/arquivos/tipos-de-documento/$typeId'
+      fullPath: '/arquivos/tipos-de-documento/$typeId'
+      preLoaderRoute: typeof AuthenticatedArquivosPastasTiposDeDocumentoTypeIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/usuarios/_perfis/perfis_/$profileId/permissoes': {
       id: '/_authenticated/usuarios/_perfis/perfis_/$profileId/permissoes'
       path: '/usuarios/perfis/$profileId/permissoes'
       fullPath: '/usuarios/perfis/$profileId/permissoes'
       preLoaderRoute: typeof AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/nova': {
+      id: '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/nova'
+      path: '/rh/mapa-de-alocacao/atividades/nova'
+      fullPath: '/rh/mapa-de-alocacao/atividades/nova'
+      preLoaderRoute: typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/$activityId': {
+      id: '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/$activityId'
+      path: '/rh/mapa-de-alocacao/atividades/$activityId'
+      fullPath: '/rh/mapa-de-alocacao/atividades/$activityId'
+      preLoaderRoute: typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId': {
@@ -2824,29 +3570,66 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTreinamentosInstrutoresInstrutoresRoute: typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   AuthenticatedTreinamentosTurmasTurmasRoute: typeof AuthenticatedTreinamentosTurmasTurmasRoute
   AuthenticatedUsuariosPerfisPerfisRoute: typeof AuthenticatedUsuariosPerfisPerfisRoute
+  AuthenticatedUsuariosUsuariosNovoRoute: typeof AuthenticatedUsuariosUsuariosNovoRoute
   AuthenticatedInventariosAreasIndexRoute: typeof AuthenticatedInventariosAreasIndexRoute
   AuthenticatedSuprimentosEquipamentosIndexRoute: typeof AuthenticatedSuprimentosEquipamentosIndexRoute
   AuthenticatedSuprimentosEstoqueIndexRoute: typeof AuthenticatedSuprimentosEstoqueIndexRoute
   AuthenticatedSuprimentosLocacoesIndexRoute: typeof AuthenticatedSuprimentosLocacoesIndexRoute
   AuthenticatedUsuariosUsuariosIndexRoute: typeof AuthenticatedUsuariosUsuariosIndexRoute
+  AuthenticatedArquivosPastasTiposDeDocumentoTypeIdRoute: typeof AuthenticatedArquivosPastasTiposDeDocumentoTypeIdRoute
+  AuthenticatedArquivosPastasTiposDeDocumentoNovoRoute: typeof AuthenticatedArquivosPastasTiposDeDocumentoNovoRoute
+  AuthenticatedBlogPostsPostsPostIdRoute: typeof AuthenticatedBlogPostsPostsPostIdRoute
+  AuthenticatedBlogPostsPostsNovoRoute: typeof AuthenticatedBlogPostsPostsNovoRoute
+  AuthenticatedBotsBotsAgendaScheduleIdRoute: typeof AuthenticatedBotsBotsAgendaScheduleIdRoute
+  AuthenticatedBotsBotsAgendaNovaRoute: typeof AuthenticatedBotsBotsAgendaNovaRoute
   AuthenticatedBotsRelatoriosRelatoriosReportIdRoute: typeof AuthenticatedBotsRelatoriosRelatoriosReportIdRoute
+  AuthenticatedClientesCustomerIdContatosContactIdRoute: typeof AuthenticatedClientesCustomerIdContatosContactIdRoute
   AuthenticatedComercialContratosContratosContractIdRoute: typeof AuthenticatedComercialContratosContratosContractIdRoute
+  AuthenticatedComercialCuponsCuponsCouponIdRoute: typeof AuthenticatedComercialCuponsCuponsCouponIdRoute
+  AuthenticatedComercialCuponsCuponsNovoRoute: typeof AuthenticatedComercialCuponsCuponsNovoRoute
   AuthenticatedComercialNegociacoesNegociacoesDealIdRoute: typeof AuthenticatedComercialNegociacoesNegociacoesDealIdRoute
   AuthenticatedComercialPropostasPropostasProposalIdRoute: typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   AuthenticatedComercialPropostasPropostasNovaRoute: typeof AuthenticatedComercialPropostasPropostasNovaRoute
   AuthenticatedComercialVendedoresVendedoresSellerIdRoute: typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute
+  AuthenticatedFinanceiroContasBancariasContasBancariasNovaRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasNovaRoute
+  AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute: typeof AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute
+  AuthenticatedFinanceiroFornecedoresFornecedoresNovaRoute: typeof AuthenticatedFinanceiroFornecedoresFornecedoresNovaRoute
   AuthenticatedFinanceiroPagarPagarPayableIdRoute: typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
   AuthenticatedFinanceiroPagarPagarNovaRoute: typeof AuthenticatedFinanceiroPagarPagarNovaRoute
   AuthenticatedFinanceiroReceberReceberRecordIdRoute: typeof AuthenticatedFinanceiroReceberReceberRecordIdRoute
   AuthenticatedFinanceiroReceberReceberNovaRoute: typeof AuthenticatedFinanceiroReceberReceberNovaRoute
+  AuthenticatedFinanceiroRecorrentesRecorrentesRecurrenceIdRoute: typeof AuthenticatedFinanceiroRecorrentesRecorrentesRecurrenceIdRoute
+  AuthenticatedFinanceiroRecorrentesRecorrentesNovaRoute: typeof AuthenticatedFinanceiroRecorrentesRecorrentesNovaRoute
+  AuthenticatedRhDocumentosTiposDeDocumentoTypeIdRoute: typeof AuthenticatedRhDocumentosTiposDeDocumentoTypeIdRoute
+  AuthenticatedRhDocumentosTiposDeDocumentoNovoRoute: typeof AuthenticatedRhDocumentosTiposDeDocumentoNovoRoute
   AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute: typeof AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute
+  AuthenticatedRhLocaisLocaisPlaceIdRoute: typeof AuthenticatedRhLocaisLocaisPlaceIdRoute
+  AuthenticatedRhLocaisLocaisNovoRoute: typeof AuthenticatedRhLocaisLocaisNovoRoute
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute
+  AuthenticatedSiteProdutosProdutosProductIdRoute: typeof AuthenticatedSiteProdutosProdutosProductIdRoute
+  AuthenticatedSiteProdutosProdutosNovoRoute: typeof AuthenticatedSiteProdutosProdutosNovoRoute
+  AuthenticatedSiteServicosServicosServiceIdRoute: typeof AuthenticatedSiteServicosServicosServiceIdRoute
+  AuthenticatedSiteServicosServicosNovoRoute: typeof AuthenticatedSiteServicosServicosNovoRoute
   AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute: typeof AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute
+  AuthenticatedSuprimentosEquipamentosRoteirosTemplateIdRoute: typeof AuthenticatedSuprimentosEquipamentosRoteirosTemplateIdRoute
+  AuthenticatedSuprimentosEquipamentosRoteirosNovoRoute: typeof AuthenticatedSuprimentosEquipamentosRoteirosNovoRoute
   AuthenticatedSuprimentosEstoqueInventarioCountIdRoute: typeof AuthenticatedSuprimentosEstoqueInventarioCountIdRoute
   AuthenticatedSuprimentosEstoqueItensItemIdRoute: typeof AuthenticatedSuprimentosEstoqueItensItemIdRoute
+  AuthenticatedSuprimentosEstoqueLocaisLocationIdRoute: typeof AuthenticatedSuprimentosEstoqueLocaisLocationIdRoute
+  AuthenticatedSuprimentosEstoqueLocaisNovoRoute: typeof AuthenticatedSuprimentosEstoqueLocaisNovoRoute
+  AuthenticatedTreinamentosCursosCursosCourseIdRoute: typeof AuthenticatedTreinamentosCursosCursosCourseIdRoute
+  AuthenticatedTreinamentosCursosCursosNovoRoute: typeof AuthenticatedTreinamentosCursosCursosNovoRoute
+  AuthenticatedTreinamentosInscricoesInscricoesSubscriptionIdRoute: typeof AuthenticatedTreinamentosInscricoesInscricoesSubscriptionIdRoute
+  AuthenticatedTreinamentosInscricoesInscricoesNovaRoute: typeof AuthenticatedTreinamentosInscricoesInscricoesNovaRoute
+  AuthenticatedTreinamentosInstrutoresInstrutoresInstructorIdRoute: typeof AuthenticatedTreinamentosInstrutoresInstrutoresInstructorIdRoute
+  AuthenticatedTreinamentosInstrutoresInstrutoresNovoRoute: typeof AuthenticatedTreinamentosInstrutoresInstrutoresNovoRoute
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute: typeof AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute
   AuthenticatedTreinamentosTurmasTurmasNovaRoute: typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
+  AuthenticatedUsuariosUsuariosUserIdEditarRoute: typeof AuthenticatedUsuariosUsuariosUserIdEditarRoute
   AuthenticatedUsuariosUsuariosUserIdPermissoesRoute: typeof AuthenticatedUsuariosUsuariosUserIdPermissoesRoute
+  AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute: typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute
+  AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute: typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute
   AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute: typeof AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
 }
@@ -3016,6 +3799,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedTreinamentosTurmasTurmasRoute,
   AuthenticatedUsuariosPerfisPerfisRoute:
     AuthenticatedUsuariosPerfisPerfisRoute,
+  AuthenticatedUsuariosUsuariosNovoRoute:
+    AuthenticatedUsuariosUsuariosNovoRoute,
   AuthenticatedInventariosAreasIndexRoute:
     AuthenticatedInventariosAreasIndexRoute,
   AuthenticatedSuprimentosEquipamentosIndexRoute:
@@ -3026,10 +3811,26 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedSuprimentosLocacoesIndexRoute,
   AuthenticatedUsuariosUsuariosIndexRoute:
     AuthenticatedUsuariosUsuariosIndexRoute,
+  AuthenticatedArquivosPastasTiposDeDocumentoTypeIdRoute:
+    AuthenticatedArquivosPastasTiposDeDocumentoTypeIdRoute,
+  AuthenticatedArquivosPastasTiposDeDocumentoNovoRoute:
+    AuthenticatedArquivosPastasTiposDeDocumentoNovoRoute,
+  AuthenticatedBlogPostsPostsPostIdRoute:
+    AuthenticatedBlogPostsPostsPostIdRoute,
+  AuthenticatedBlogPostsPostsNovoRoute: AuthenticatedBlogPostsPostsNovoRoute,
+  AuthenticatedBotsBotsAgendaScheduleIdRoute:
+    AuthenticatedBotsBotsAgendaScheduleIdRoute,
+  AuthenticatedBotsBotsAgendaNovaRoute: AuthenticatedBotsBotsAgendaNovaRoute,
   AuthenticatedBotsRelatoriosRelatoriosReportIdRoute:
     AuthenticatedBotsRelatoriosRelatoriosReportIdRoute,
+  AuthenticatedClientesCustomerIdContatosContactIdRoute:
+    AuthenticatedClientesCustomerIdContatosContactIdRoute,
   AuthenticatedComercialContratosContratosContractIdRoute:
     AuthenticatedComercialContratosContratosContractIdRoute,
+  AuthenticatedComercialCuponsCuponsCouponIdRoute:
+    AuthenticatedComercialCuponsCuponsCouponIdRoute,
+  AuthenticatedComercialCuponsCuponsNovoRoute:
+    AuthenticatedComercialCuponsCuponsNovoRoute,
   AuthenticatedComercialNegociacoesNegociacoesDealIdRoute:
     AuthenticatedComercialNegociacoesNegociacoesDealIdRoute,
   AuthenticatedComercialPropostasPropostasProposalIdRoute:
@@ -3038,6 +3839,14 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialPropostasPropostasNovaRoute,
   AuthenticatedComercialVendedoresVendedoresSellerIdRoute:
     AuthenticatedComercialVendedoresVendedoresSellerIdRoute,
+  AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute:
+    AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute,
+  AuthenticatedFinanceiroContasBancariasContasBancariasNovaRoute:
+    AuthenticatedFinanceiroContasBancariasContasBancariasNovaRoute,
+  AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute:
+    AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute,
+  AuthenticatedFinanceiroFornecedoresFornecedoresNovaRoute:
+    AuthenticatedFinanceiroFornecedoresFornecedoresNovaRoute,
   AuthenticatedFinanceiroPagarPagarPayableIdRoute:
     AuthenticatedFinanceiroPagarPagarPayableIdRoute,
   AuthenticatedFinanceiroPagarPagarNovaRoute:
@@ -3046,22 +3855,67 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedFinanceiroReceberReceberRecordIdRoute,
   AuthenticatedFinanceiroReceberReceberNovaRoute:
     AuthenticatedFinanceiroReceberReceberNovaRoute,
+  AuthenticatedFinanceiroRecorrentesRecorrentesRecurrenceIdRoute:
+    AuthenticatedFinanceiroRecorrentesRecorrentesRecurrenceIdRoute,
+  AuthenticatedFinanceiroRecorrentesRecorrentesNovaRoute:
+    AuthenticatedFinanceiroRecorrentesRecorrentesNovaRoute,
+  AuthenticatedRhDocumentosTiposDeDocumentoTypeIdRoute:
+    AuthenticatedRhDocumentosTiposDeDocumentoTypeIdRoute,
+  AuthenticatedRhDocumentosTiposDeDocumentoNovoRoute:
+    AuthenticatedRhDocumentosTiposDeDocumentoNovoRoute,
   AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute:
     AuthenticatedRhFuncionariosFuncionariosEmployeeIdRoute,
+  AuthenticatedRhLocaisLocaisPlaceIdRoute:
+    AuthenticatedRhLocaisLocaisPlaceIdRoute,
+  AuthenticatedRhLocaisLocaisNovoRoute: AuthenticatedRhLocaisLocaisNovoRoute,
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute:
     AuthenticatedServicosOrdensOrdensDeServicoOrderIdRoute,
+  AuthenticatedSiteProdutosProdutosProductIdRoute:
+    AuthenticatedSiteProdutosProdutosProductIdRoute,
+  AuthenticatedSiteProdutosProdutosNovoRoute:
+    AuthenticatedSiteProdutosProdutosNovoRoute,
+  AuthenticatedSiteServicosServicosServiceIdRoute:
+    AuthenticatedSiteServicosServicosServiceIdRoute,
+  AuthenticatedSiteServicosServicosNovoRoute:
+    AuthenticatedSiteServicosServicosNovoRoute,
   AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute:
     AuthenticatedSuprimentosPedidosPedidosDeCompraPurchaseIdRoute,
+  AuthenticatedSuprimentosEquipamentosRoteirosTemplateIdRoute:
+    AuthenticatedSuprimentosEquipamentosRoteirosTemplateIdRoute,
+  AuthenticatedSuprimentosEquipamentosRoteirosNovoRoute:
+    AuthenticatedSuprimentosEquipamentosRoteirosNovoRoute,
   AuthenticatedSuprimentosEstoqueInventarioCountIdRoute:
     AuthenticatedSuprimentosEstoqueInventarioCountIdRoute,
   AuthenticatedSuprimentosEstoqueItensItemIdRoute:
     AuthenticatedSuprimentosEstoqueItensItemIdRoute,
+  AuthenticatedSuprimentosEstoqueLocaisLocationIdRoute:
+    AuthenticatedSuprimentosEstoqueLocaisLocationIdRoute,
+  AuthenticatedSuprimentosEstoqueLocaisNovoRoute:
+    AuthenticatedSuprimentosEstoqueLocaisNovoRoute,
+  AuthenticatedTreinamentosCursosCursosCourseIdRoute:
+    AuthenticatedTreinamentosCursosCursosCourseIdRoute,
+  AuthenticatedTreinamentosCursosCursosNovoRoute:
+    AuthenticatedTreinamentosCursosCursosNovoRoute,
+  AuthenticatedTreinamentosInscricoesInscricoesSubscriptionIdRoute:
+    AuthenticatedTreinamentosInscricoesInscricoesSubscriptionIdRoute,
+  AuthenticatedTreinamentosInscricoesInscricoesNovaRoute:
+    AuthenticatedTreinamentosInscricoesInscricoesNovaRoute,
+  AuthenticatedTreinamentosInstrutoresInstrutoresInstructorIdRoute:
+    AuthenticatedTreinamentosInstrutoresInstrutoresInstructorIdRoute,
+  AuthenticatedTreinamentosInstrutoresInstrutoresNovoRoute:
+    AuthenticatedTreinamentosInstrutoresInstrutoresNovoRoute,
   AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute:
     AuthenticatedTreinamentosTurmasTurmasTurmaIdRoute,
   AuthenticatedTreinamentosTurmasTurmasNovaRoute:
     AuthenticatedTreinamentosTurmasTurmasNovaRoute,
+  AuthenticatedUsuariosUsuariosUserIdEditarRoute:
+    AuthenticatedUsuariosUsuariosUserIdEditarRoute,
   AuthenticatedUsuariosUsuariosUserIdPermissoesRoute:
     AuthenticatedUsuariosUsuariosUserIdPermissoesRoute,
+  AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute:
+    AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute,
+  AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute:
+    AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute,
   AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute:
     AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute,
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute:

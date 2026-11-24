@@ -1,45 +1,29 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { get } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
-import SideForm from "@/components/general-components/SideForm";
 import Icon from "@/components/general-components/Icon";
-import Input from "@/components/general-components/Input";
-import Select from "@/components/general-components/Select";
-import CalendarPicker from "@/components/general-components/Calendar";
 import PageHeader from "@/components/general-components/PageHeader";
 import ListCard from "@/components/general-components/ListCard";
 import ListToolbar from "@/components/general-components/ListToolbar";
 import StatusChips from "@/components/general-components/StatusChips";
 import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { cn } from "@/lib/utils";
-import AccountSelect from "../-shared/AccountSelect";
-import { FINANCIAL_ABILITY, formatMoney, useChartAccounts, useCostCenters } from "../-shared/financial";
-import { PAYABLES_KEY, useSuppliers } from "../-shared/payables";
-import { useCustomerOptions } from "../-shared/ledger";
-import { formatDate, paymentMethodLabel, paymentMethodOptions, toDateInput, todayInput } from "../_receber/-components/options";
+import { FINANCIAL_ABILITY, formatMoney } from "../-shared/financial";
+import { PAYABLES_KEY } from "../-shared/payables";
+import { formatDate, paymentMethodLabel } from "../_receber/-components/options";
 import RecurrenceRowActions from "./-components/RecurrenceRowActions";
+import { Kind, RECURRENCES_KEY as KEY, Recurrence } from "./-components/RecurrenceForm";
 
 export const Route = createFileRoute("/_authenticated/financeiro/_recorrentes/recorrentes")({
   component: Recurrences,
   validateSearch: (search: Record<string, unknown>): { tipo?: string } => (search.tipo === "receivable" ? { tipo: "receivable" } : {}),
 });
 
-type Kind = "payable" | "receivable";
-interface Recurrence {
-  id: number; kind: Kind; description: string; value: number; dayOfMonth: number; startDate: string; endDate: string | null;
-  supplierId: number | null; customerId: number | null; chartAccountId: number | null; costCenterId: number | null; serviceOrderId: number | null;
-  paymentMethod: string | null; observations: string | null; inactiveAt: string | null;
-  supplier: { id: number; name: string } | null; customer: { id: number; name: string } | null;
-  chartAccount: { id: number; code: string; name: string } | null; costCenter: { id: number; name: string } | null;
-  upcoming: number; nextDue: string | null; yearTotal: number;
-}
-const KEY = "financialRecurrences";
 const KINDS: Array<{ value: Kind; label: string }> = [{ value: "payable", label: "A pagar" }, { value: "receivable", label: "A receber" }];
 const muted = "text-xs text-muted-foreground";
 const COLUMNS: DataColumn<Recurrence>[] = [
@@ -89,9 +73,12 @@ function Recurrences() {
   const { can } = useVerify();
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const [kind, setKind] = useState<Kind>(search.tipo === "receivable" ? "receivable" : "payable");
-  const [editing, setEditing] = useState<Recurrence | null>(null);
-  const [openForm, setOpenForm] = useState(false);
+  const [kind, setKindState] = useState<Kind>(search.tipo === "receivable" ? "receivable" : "payable");
+  // o tipo fica no endereço: ao voltar de um cadastro, a lista abre no mesmo tipo
+  const setKind = (next: Kind) => {
+    setKindState(next);
+    navigate({ to: "/financeiro/recorrentes", search: next === "receivable" ? { tipo: "receivable" } : {}, replace: true });
+  };
   const [showEnded, setShowEnded] = useState(false);
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery<Recurrence[] | undefined>({ queryKey: [KEY, kind], queryFn: () => get("financial", "recurrences", [{ key: "kind", value: kind }]) });
@@ -110,16 +97,12 @@ function Recurrences() {
   const listPath = kind === "payable" ? "/financeiro/pagar" : "/financeiro/receber";
 
   const openMonths = (item: Recurrence) => navigate({ to: listPath, search: { view: "todas", recurrenceId: String(item.id), order: "dueDate:asc" } as never });
-  const openNew = () => { setEditing(null); setOpenForm(true); };
+  const openNew = () => navigate({ to: "/financeiro/recorrentes/nova", search: kind === "receivable" ? { tipo: "receivable" } : {} });
+  const edit = (item: Recurrence) => navigate({ to: "/financeiro/recorrentes/$recurrenceId", params: { recurrenceId: String(item.id) } });
 
   return (
     <>
       <PageHeader title="Recorrentes" description="Despesas fixas (aluguel, internet, contador) e mensalidades. Os próximos 12 meses ficam lançados e entram no fluxo de caixa." />
-
-      <SideForm openSheet={openForm} setOpenSheet={setOpenForm} side="right"
-        title={editing ? "Editar recorrente" : "Novo recorrente"}
-        description={editing ? "A mudança vale para os lançamentos em aberto de hoje em diante. Os já vencidos e os pagos não mudam." : "Lance uma vez; o sistema cria um lançamento por mês."}
-        form={<RecurrenceForm key={`${editing?.id ?? "new"}-${kind}`} kind={editing?.kind ?? kind} item={editing} close={() => setOpenForm(false)} />} />
 
       <ListCard>
         <StatusChips ariaLabel="Tipo" value={kind} onChange={setKind} options={KINDS} />
@@ -135,7 +118,7 @@ function Recurrences() {
           rowClassName={(item) => (item.inactiveAt ? "opacity-60" : undefined)}
           actions={(item) => (
             <RecurrenceRowActions description={item.description} ended={!!item.inactiveAt} canUpdate={can(`update_${FINANCIAL_ABILITY}`)} canEnd={can(`inactive_${FINANCIAL_ABILITY}`)}
-              onOpenMonths={() => openMonths(item)} onEdit={() => { setEditing(item); setOpenForm(true); }} onEnd={() => end(item.id)} />
+              onOpenMonths={() => openMonths(item)} onEdit={() => edit(item)} onEnd={() => end(item.id)} />
           )}
           empty={<EmptyState title={`Nenhum recorrente ${kind === "payable" ? "a pagar" : "a receber"} ativo.`} />} />
         {ended.length > 0 && (
@@ -143,108 +126,5 @@ function Recurrences() {
         )}
       </ListCard>
     </>
-  );
-}
-
-function RecurrenceForm({ kind, item, close }: { kind: Kind; item: Recurrence | null; close: () => void }) {
-  const queryClient = useQueryClient();
-  const isEdit = Boolean(item);
-  const [state, setState] = useState({
-    description: item?.description ?? "", value: Number(item?.value ?? 0), startDate: toDateInput(item?.startDate) || todayInput(), endDate: toDateInput(item?.endDate),
-    supplierId: item?.supplierId ? String(item.supplierId) : "", customerId: item?.customerId ? String(item.customerId) : "",
-    chartAccountId: item?.chartAccountId ? String(item.chartAccountId) : "", costCenterId: item?.costCenterId ? String(item.costCenterId) : "",
-    paymentMethod: item?.paymentMethod ?? "", observations: item?.observations ?? "",
-  });
-  const [error, setError] = useState("");
-  const set = (name: string, value: string | number | string[] | null) => setState((prev) => ({ ...prev, [name]: Array.isArray(value) ? value[0] ?? "" : value ?? "" }));
-  const { data: suppliers } = useSuppliers(kind === "payable");
-  const { data: customers } = useCustomerOptions(kind === "receivable");
-  const { data: accounts } = useChartAccounts();
-  const { data: centers } = useCostCenters();
-  const { mutate, isPending } = useMutation({
-    mutationFn: async () => {
-      const body = {
-        kind, description: state.description.trim(), value: state.value, endDate: state.endDate || null,
-        ...(kind === "payable" ? { supplierId: state.supplierId || null } : { customerId: state.customerId || null }),
-        chartAccountId: state.chartAccountId || null, costCenterId: state.costCenterId || null, paymentMethod: state.paymentMethod || null, observations: state.observations,
-      };
-      return isEdit ? (await api.put(`financial/recurrences/${item!.id}`, body)).data : (await api.post("financial/recurrences", { ...body, startDate: state.startDate })).data;
-    },
-    onSuccess: (result) => {
-      toast({ title: isEdit ? `Recorrente atualizado (${result.changed ?? 0} mês(es) em aberto alterado(s))` : `Recorrente criado: ${result.created} mês(es) lançado(s)`, variant: "success" });
-      for (const k of [KEY, PAYABLES_KEY, "listContas a Receber", "financialReports"]) queryClient.invalidateQueries({ queryKey: [k] });
-      close();
-    },
-    onError: (err: ApiError) => setError(err.response?.data?.message || "Erro desconhecido."),
-  });
-  const submit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (state.description.trim().length < 2) return setError("Informe a descrição");
-    if (!state.value || state.value <= 0) return setError("Informe o valor");
-    if (kind === "receivable" && !state.customerId) return setError("Informe o cliente");
-    if (state.endDate && state.endDate < state.startDate) return setError("A data final é antes do primeiro vencimento");
-    setError("");
-    mutate();
-  };
-  return (
-    <form onSubmit={submit} className="flex flex-col gap-4 mt-4">
-      <p className="text-sm rounded bg-muted px-3 py-2">{kind === "payable" ? "Despesa fixa (a pagar)" : "Mensalidade (a receber)"}</p>
-      {kind === "payable" ? (
-        <div>
-          <Label>Fornecedor</Label>
-          <Select name="supplierId" options={(suppliers?.rows ?? []) as never[]} state={state.supplierId} onChange={set} placeholder="Sem fornecedor" clearable modal />
-        </div>
-      ) : (
-        <div>
-          <Label>Cliente <span>*</span></Label>
-          <Select name="customerId" options={(customers?.rows ?? []) as never[]} state={state.customerId} onChange={set} placeholder="Selecione o cliente" modal />
-        </div>
-      )}
-      <div>
-        <Label>Descrição <span>*</span></Label>
-        <Input name="description" value={state.description} maxLength={255} placeholder={kind === "payable" ? "Ex.: Aluguel do galpão" : "Ex.: Mensalidade de consultoria"} onValueChange={set} className="mt-1" />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <Label>Valor por mês <span>*</span></Label>
-          <Input name="value" format="currency" value={state.value} onValueChange={set} className="mt-1" />
-        </div>
-        <div>
-          <Label>Forma de pagamento</Label>
-          <Select name="paymentMethod" options={paymentMethodOptions} state={state.paymentMethod} onChange={set} placeholder="A definir" clearable modal />
-        </div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <Label>Primeiro vencimento <span>*</span></Label>
-          {isEdit ? <p className="text-sm mt-2">{formatDate(state.startDate)} (todo dia {item?.dayOfMonth})</p>
-            : <CalendarPicker mode="natural" name="startDate" value={state.startDate} onValueChange={set} placeholder="dd/mm/aaaa" className="mt-1" />}
-        </div>
-        <div>
-          <Label>Termina em</Label>
-          <CalendarPicker mode="natural" name="endDate" value={state.endDate} onValueChange={set} placeholder="Sem data para acabar" className="mt-1" />
-        </div>
-      </div>
-      <div className="rounded border p-3 flex flex-col gap-3">
-        <p className="font-medium text-sm">Classificação</p>
-        <div>
-          <Label>Conta (plano de contas)</Label>
-          <AccountSelect accounts={accounts ?? []} value={state.chartAccountId} nature={kind === "payable" ? "despesa" : "receita"} clearable onChange={(v) => set("chartAccountId", v)} placeholder="Sem conta" />
-        </div>
-        <div>
-          <Label>Centro de custo</Label>
-          <Select name="costCenterId" options={(centers?.rows ?? []) as never[]} state={state.costCenterId} onChange={set} placeholder="Sem centro de custo" clearable modal />
-        </div>
-      </div>
-      <div>
-        <Label>Observações</Label>
-        <Input name="observations" type="textArea" value={state.observations} maxLength={500} onValueChange={set} className="mt-1" />
-      </div>
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      <div className="flex gap-2">
-        <Button type="submit" className="flex-1" disabled={isPending}>{isEdit ? "Salvar" : "Criar recorrente"}</Button>
-        <Button type="button" variant="outline" className="flex-1" onClick={close}>Cancelar</Button>
-      </div>
-    </form>
   );
 }

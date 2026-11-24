@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useRef, useState, useCallback } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
@@ -10,11 +10,10 @@ import ListFooter from "@/components/general-components/ListFooter";
 import DataTable, { EmptyState } from "@/components/general-components/DataTable";
 import Icon from "@/components/general-components/Icon";
 import SideForm from "@/components/general-components/SideForm";
-import Dialog from "@/components/general-components/Dialog";
 import { Button } from "@/components/ui/button";
 import { postColumns } from "./-components/postColumns";
 import PostRowActions from "./-components/PostRowActions";
-import Form from "./-components/PostForm";
+import { postEntity } from "./-interfaces/entity.interface";
 import SearchForm from "./-components/PostSearch";
 import { IPost } from "./-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
@@ -27,8 +26,7 @@ export const Route = createFileRoute('/_authenticated/blog/_posts/posts')({
 function List() {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
-  const [openForm, setOpenForm] = useState(false);
-  const [formData, setFormData] = useState<IPost>();
+  const navigate = useNavigate();
   // Ordenação rápida: "campo:asc" | "campo:desc"; vazio = padrão (mais recentes primeiro)
   const [order, setOrder] = useState("");
   const [searchParams, setSearchParams] = useState<{
@@ -44,12 +42,7 @@ function List() {
   });
   const initialFormRef = useRef(searchParams);
 
-  const entity = {
-    name: "Post",
-    pluralName: "Posts",
-    model: "blog/posts",
-    ability: "blog",
-  }
+  const entity = postEntity;
 
   interface Response {
     rows: IPost[];
@@ -127,8 +120,8 @@ function List() {
   const filterCount = countFilters(searchParams, ['status', 'in-categoryId', 'featured', 'createdAt']);
   const hasFilters = filterCount > 0 || !!searchParams['like-title'];
   const columns = postColumns();
-  const openNew = () => { setFormData(undefined); setOpenForm(true); };
-  const edit = (item: IPost) => { setFormData(item); setOpenForm(true); };
+  const openNew = () => navigate({ to: "/blog/posts/novo" });
+  const edit = (item: IPost) => navigate({ to: "/blog/posts/$postId", params: { postId: String(item.id) } });
 
   return (
     <>
@@ -142,37 +135,6 @@ function List() {
         side="left"
         form={<SearchForm onSubmit={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} />}
       />
-
-      <Dialog
-        open={openForm}
-        onOpenChange={setOpenForm}
-        showBttn={false}
-        title={formData
-          ? `Editar ${entity.name} "${formData.title}"`
-          : `Cadastrar ${entity.name}`}
-        description={formData
-          ? `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} "${formData.title}".`
-          : `Por favor, preencha com atenção todas as informações necessárias para cadastrar o ${entity.name}.`}
-        className="sm:max-w-[900px]"
-        classNameContent="pb-0"
-        footer={
-          <div className="flex gap-2 w-full">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpenForm(false)}
-              className="flex-1"
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" form="post-form" className="flex-1">
-              {formData ? "Atualizar" : "Cadastrar"}
-            </Button>
-          </div>
-        }
-      >
-        <Form formData={formData} openSheet={setOpenForm} entity={entity} />
-      </Dialog>
 
       <ListCard>
         <ListToolbar

@@ -11,19 +11,23 @@ import TagInput from "@/components/general-components/TagInput";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-components/FormPage";
 // Interfaces and validations
 import { IEntity } from "@/pages/_authenticated/site/_produtos/-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
+import { siteProductsEntity } from "../-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { z } from "zod";
 
 interface FormProps {
   formData?: IEntity;
-  openSheet: (open: boolean) => void;
-  entity: IDefaultEntity;
+  /** Volta para a lista (fecha a tela). */
+  close: () => void;
+  entity?: IDefaultEntity;
 }
 
-const Form = ({ formData, openSheet, entity }: FormProps) => {
+/** Cadastro e edição de produto do site, em tela própria. */
+const Form = ({ formData, close, entity = siteProductsEntity }: FormProps) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
 
@@ -87,9 +91,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
-      // Limpa o formulário e fecha o Sheet
+      // Limpa o formulário e volta para a lista
       setDataForm(initialFormRef.current);
-      openSheet(false);
+      close();
     },
     onError: (error: ApiError) => {
       hideLoader();
@@ -115,9 +119,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
-      // Limpa o formulário e fecha o Sheet
+      // Limpa o formulário e volta para a lista
       setDataForm(initialFormRef.current);
-      openSheet(false);
+      close();
     },
     onError: (error: ApiError) => {
       hideLoader();
@@ -180,131 +184,149 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   const { data: categoryOptions = [], isLoading: loadingCategories } = useOptions("site-product-categories", formData?.category);
   const { data: brandOptions = [], isLoading: loadingBrands } = useOptions("site-product-brands", formData?.brand);
 
+  const money = (value?: number) => (value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
-      <DropUpload preset="product"
-        setImage={setDataForm}
-        EditPreview={preview}
-      />
-      <div>
-        <Label htmlFor="name">Nome <span>*</span></Label>
-          <Input
-            id="name"
-            name="name"
-            placeholder={`Digite nome do ${entity.name}`}
-            value={dataForm.name}
-            onValueChange={handleChange}
-            className="mt-1"
+    <form onSubmit={handleSubmit}>
+      <FormPageGrid aside={<>
+        <section className="rounded-card border bg-card p-4 flex flex-col gap-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Imagem</p>
+          <DropUpload preset="product"
+            setImage={setDataForm}
+            EditPreview={preview}
           />
-        {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
-      </div>
+        </section>
 
-      <div className="flex gap-2 items-center my-2">
-        <Label htmlFor="featured" className="cursor-pointer">Produto Destaque</Label>
-        <Switch
-          id="featured"
-          name="featured"
-          checked={dataForm.featured}
-          onCheckedChange={() => setDataForm((prev) => ({ ...prev, featured: !prev.featured }))}
-          className="mt-1"
-        />
-      </div>
+        <section className="rounded-card border bg-card p-4 flex flex-col gap-2.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Resumo</p>
+          <SummaryRow label="Valor de venda" strong>{money(dataForm.price)}</SummaryRow>
+          {!!dataForm.oldPrice && <SummaryRow label="Valor antigo"><span className="line-through">{money(dataForm.oldPrice)}</span></SummaryRow>}
+          <SummaryRow label="Categoria">{categoryOptions.find((c) => String(c.id) === dataForm.categoryId)?.name ?? "Sem categoria"}</SummaryRow>
+          <SummaryRow label="Marca">{brandOptions.find((b) => String(b.id) === dataForm.brandId)?.name ?? "Sem marca"}</SummaryRow>
+          <SummaryRow label="Destaque">{dataForm.featured ? "Sim" : "Não"}</SummaryRow>
+        </section>
 
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <Label htmlFor="categoryId">Categoria</Label>
-          <Select
-            name="categoryId"
-            options={categoryOptions}
-            state={dataForm.categoryId}
-            onChange={(_, value) => handleChange("categoryId", String(value ?? ""))}
-            placeholder="Sem categoria"
-            isLoading={loadingCategories}
-            clearable
-          />
+        <div className="flex flex-col gap-2">
+          <Button type="submit" disabled={isPending || isPendingUpdate}>
+            {isPending || isPendingUpdate
+              ? formData
+                ? "Atualizando..."
+                : "Registrando..."
+              : formData
+              ? `Atualizar ${entity.name}`
+              : `Registrar ${entity.name}`}
+          </Button>
+          <Button type="button" variant="outline" onClick={close}>Cancelar</Button>
         </div>
-        <div>
-          <Label htmlFor="brandId">Marca</Label>
-          <Select
-            name="brandId"
-            options={brandOptions}
-            state={dataForm.brandId}
-            onChange={(_, value) => handleChange("brandId", String(value ?? ""))}
-            placeholder="Sem marca"
-            isLoading={loadingBrands}
-            clearable
-          />
-        </div>
-      </div>
-      <p className="text-xs text-muted-foreground font-medium -mt-1">
-        {/* texto sem link: a lista de opções abre por cima e o clique atravessava */}
-        Viram os filtros da loja no site. Cadastre novas em Site → Categorias da Loja / Marcas.
-      </p>
+      </>}>
+        <FormSection title="Dados do produto" description="Nome, descrição e características que aparecem na loja do site.">
+          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-4 sm:items-end">
+            <div>
+              <Label htmlFor="name">Nome <span>*</span></Label>
+              <Input
+                id="name"
+                name="name"
+                placeholder={`Digite nome do ${entity.name}`}
+                value={dataForm.name}
+                onValueChange={handleChange}
+                className="mt-1"
+              />
+              {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+            </div>
+            <div className="flex gap-2 items-center h-10">
+              <Label htmlFor="featured" className="cursor-pointer">Produto Destaque</Label>
+              <Switch
+                id="featured"
+                name="featured"
+                checked={dataForm.featured}
+                onCheckedChange={() => setDataForm((prev) => ({ ...prev, featured: !prev.featured }))}
+              />
+            </div>
+          </div>
 
-      <div>
-        <Label htmlFor="price">Valor de venda atual</Label>
-        <Input
-          id="price"
-          name="price"
-          value={dataForm.price}
-          onValueChange={handleChange}
-          format="currency"
-          className="mt-1"
-        />
-      </div>
+          <div>
+            <Label htmlFor="description">Descrição <span>*</span></Label>
+            <Input
+              id="description"
+              name="description"
+              placeholder="Descreva o produto"
+              value={dataForm.description}
+              onValueChange={handleChange}
+              type="textArea"
+              className="mt-1"
+            />
+            {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+          </div>
 
-      <div>
-        <Label htmlFor="oldPrice">Valor antigo</Label>
-        <p className="text-xs text-muted-foreground font-medium">Para evidenciar quando houver promoções</p>
-        <Input
-          id="oldPrice"
-          name="oldPrice"
-          value={dataForm.oldPrice}
-          onValueChange={handleChange}
-          format="currency"
-          className="mt-1"
-        />
-      </div>
+          <div>
+            <Label htmlFor="features">Características</Label>
+            <p className="text-xs text-muted-foreground font-medium">Adicione as características do produto</p>
+            <TagInput
+              value={dataForm.features || ''}
+              onChange={(value) => handleChange('features', value)}
+              separator="#"
+              placeholder="Digite uma característica e pressione Enter"
+              className="mt-1"
+            />
+          </div>
+        </FormSection>
 
-      <div>
-        <Label htmlFor="description">Descrição <span>*</span></Label>
-        <Input
-          id="description"
-          name="description"
-          placeholder="Descreva o produto"
-          value={dataForm.description}
-          onValueChange={handleChange}
-          type="textArea"
-          className="mt-1"
-        />
-        {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
-      </div>
-      
-      <div>
-        <Label htmlFor="features">Características</Label>
-        <p className="text-xs text-muted-foreground font-medium">Adicione as características do produto</p>
-        <TagInput
-          value={dataForm.features || ''}
-          onChange={(value) => handleChange('features', value)}
-          separator="#"
-          placeholder="Digite uma característica e pressione Enter"
-          className="mt-1"
-        />
-      </div>
+        <FormSection title="Classificação" description="Viram os filtros da loja no site. Cadastre novas em Site → Categorias da Loja / Marcas.">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="categoryId">Categoria</Label>
+              <Select
+                name="categoryId"
+                options={categoryOptions}
+                state={dataForm.categoryId}
+                onChange={(_, value) => handleChange("categoryId", String(value ?? ""))}
+                placeholder="Sem categoria"
+                isLoading={loadingCategories}
+                clearable
+              />
+            </div>
+            <div>
+              <Label htmlFor="brandId">Marca</Label>
+              <Select
+                name="brandId"
+                options={brandOptions}
+                state={dataForm.brandId}
+                onChange={(_, value) => handleChange("brandId", String(value ?? ""))}
+                placeholder="Sem marca"
+                isLoading={loadingBrands}
+                clearable
+              />
+            </div>
+          </div>
+        </FormSection>
 
-      <Button
-        type="submit"
-        className="w-full my-4"
-        disabled={isPending || isPendingUpdate}
-      >
-        {isPending || isPendingUpdate
-          ? formData
-            ? "Atualizando..."
-            : "Registrando..."
-          : formData
-          ? `Atualizar ${entity.name}`
-          : `Registrar ${entity.name}`}
-      </Button>
+        <FormSection title="Preço" description="O valor antigo aparece riscado, para evidenciar quando houver promoções.">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="price">Valor de venda atual</Label>
+              <Input
+                id="price"
+                name="price"
+                value={dataForm.price}
+                onValueChange={handleChange}
+                format="currency"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="oldPrice">Valor antigo</Label>
+              <Input
+                id="oldPrice"
+                name="oldPrice"
+                value={dataForm.oldPrice}
+                onValueChange={handleChange}
+                format="currency"
+                className="mt-1"
+              />
+            </div>
+          </div>
+        </FormSection>
+      </FormPageGrid>
     </form>
   );
 };

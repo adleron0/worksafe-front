@@ -1,3 +1,4 @@
+import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 export interface IProductImage {
   id: number;
   imageUrl: string;
@@ -25,3 +26,11 @@ export interface IEntity {
   inactiveAt?: string | null;
   images?: IProductImage[];
 }
+
+/** Entidade dos produtos do site: usada na lista e nas telas de cadastro e edição. */
+export const siteProductsEntity: IDefaultEntity = {
+  name: "Produtos do Site",
+  pluralName: "Produtos do Site",
+  model: "site-products",
+  ability: "loja_site",
+};

@@ -13,6 +13,7 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
+import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-components/FormPage";
 import { Tip, errorMessage, todayIso } from "../../comercial/-shared/commercial";
 import useVerify from "@/hooks/use-verify";
 import { ALLOCATION_KEY } from "./allocation";
@@ -44,18 +45,18 @@ export const activitiesApi = {
 };
 export const useActivityTypes = (enabled = true) => useQuery({ queryKey: [ACTIVITY_TYPES_KEY], enabled, staleTime: 5 * 60 * 1000, queryFn: () => activitiesApi.get<{ rows: ActivityType[] }>("types") });
 
-interface ActivityDialogProps {
+interface ActivityFormProps {
   /** Atividade em edição; vazio = nova. */
   activity?: Activity;
   /** Quem já vem marcado numa atividade nova (por exemplo, a pessoa da ficha). */
   employeeIds?: number[];
   employees: Array<{ id: number; name: string }>;
   canWrite: boolean;
-  onClose: () => void;
+  close: () => void;
 }
 
-/** Lançar ou alterar uma atividade: o que é, quem, onde, quando e em que parte do dia. */
-export function ActivityDialog({ activity, employeeIds = [], employees, canWrite, onClose }: ActivityDialogProps) {
+/** Lançar ou alterar uma atividade (o que é, quem, onde, quando e em que parte do dia), em tela cheia. */
+export function ActivityForm({ activity, employeeIds = [], employees, canWrite, close }: ActivityFormProps) {
   const queryClient = useQueryClient();
   const { data: types } = useActivityTypes();
   const [typeId, setTypeId] = useState(activity ? String(activity.typeId) : "");
@@ -73,7 +74,7 @@ export function ActivityDialog({ activity, employeeIds = [], employees, canWrite
   const [error, setError] = useState("");
   // quem está numa atividade antiga e saiu da lista (desligado) continua aparecendo
   const options = [...employees, ...(activity?.employees ?? []).filter((employee) => !employees.some((item) => item.id === employee.id))].map(({ id, name }) => ({ id: String(id), name }));
-  const done = () => { queryClient.invalidateQueries({ queryKey: [ALLOCATION_KEY] }); onClose(); };
+  const done = () => { queryClient.invalidateQueries({ queryKey: [ALLOCATION_KEY] }); close(); };
 
   const { mutate: save, isPending } = useMutation({
     mutationFn: () => {
@@ -96,27 +97,48 @@ export function ActivityDialog({ activity, employeeIds = [], employees, canWrite
     if (endDate && endDate < startDate) return setError("O fim não pode ser antes do início.");
     setError(""); save();
   };
+  const typeOptions = [...(types?.rows ?? []), ...(activity && !types?.rows.some((type) => type.id === activity.typeId) ? [{ id: activity.typeId, name: activity.typeName }] : [])].map(({ id, name }) => ({ id: String(id), name }));
   const current = types?.rows.find((type) => String(type.id) === typeId);
+  const dayBr = (iso: string) => iso.split("-").reverse().join("/");
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{activity ? "Atividade" : "Nova atividade"}</DialogTitle>
-          <DialogDescription>O que não é ordem de serviço: aula, treinamento, atividade no centro de treinamento, deslocamento. Aparece no mapa de alocação.</DialogDescription>
-        </DialogHeader>
-        <form onSubmit={submit} className="grid gap-4">
-          <div>
-            <Label>Tipo <span>*</span></Label>
-            <Select name="typeId" modal disabled={!canWrite} options={[...(types?.rows ?? []), ...(activity && !types?.rows.some((type) => type.id === activity.typeId) ? [{ id: activity.typeId, name: activity.typeName }] : [])].map(({ id, name }) => ({ id: String(id), name }))}
-              state={typeId} onChange={(_, value) => { setTypeId(String(value ?? "")); setError(""); }} placeholder="Selecione" />
-            {current && !current.occupies && <p className="mt-1 text-xs text-muted-foreground">Este tipo não ocupa a pessoa: ela continua aparecendo como livre para escala.</p>}
+    <form onSubmit={submit}>
+      <FormPageGrid aside={<>
+        <section className="rounded-card border bg-card p-4 flex flex-col gap-2.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Resumo</p>
+          <SummaryRow label="Tipo">{typeOptions.find((type) => type.id === typeId)?.name ?? "—"}</SummaryRow>
+          <SummaryRow label="Pessoas">{people.length ? `${people.length} pessoa(s)` : "—"}</SummaryRow>
+          <SummaryRow label="Quando">{startDate ? (endDate && endDate !== startDate ? `${dayBr(startDate)} a ${dayBr(endDate)}` : dayBr(startDate)) : "—"}</SummaryRow>
+          <SummaryRow label="Parte do dia">{SHIFT_OPTIONS.find((option) => option.id === shift)?.name}</SummaryRow>
+          {current && <SummaryRow label="Ocupa a pessoa">{current.occupies ? "Sim" : "Não"}</SummaryRow>}
+        </section>
+        {error && <p className="text-red-500 text-sm px-1">{error}</p>}
+        <div className="flex flex-col gap-2">
+          {canWrite && <Button type="submit" disabled={isPending}>{isPending ? "Salvando..." : activity ? "Salvar" : "Lançar"}</Button>}
+          <Button type="button" variant="outline" onClick={close}>{canWrite ? "Cancelar" : "Voltar"}</Button>
+          {activity && canWrite && (
+            <ConfirmDialog title="Cancelar esta atividade?" description="Ela sai do mapa de alocação para todas as pessoas que estavam nela." onConfirm={() => remove()}>
+              <Button type="button" variant="ghost" className="text-red-600"><Icon name="trash-2" className="w-4 h-4 mr-1" /> Cancelar atividade</Button>
+            </ConfirmDialog>
+          )}
+        </div>
+      </>}>
+        <FormSection title="O que é e quem" description="O que não é ordem de serviço: aula, treinamento, atividade no centro de treinamento, deslocamento. Aparece no mapa de alocação.">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label>Tipo <span>*</span></Label>
+              <Select name="typeId" modal disabled={!canWrite} options={typeOptions}
+                state={typeId} onChange={(_, value) => { setTypeId(String(value ?? "")); setError(""); }} placeholder="Selecione" />
+              {current && !current.occupies && <p className="mt-1 text-xs text-muted-foreground">Este tipo não ocupa a pessoa: ela continua aparecendo como livre para escala.</p>}
+            </div>
+            <div>
+              <Label>Quem <span>*</span></Label>
+              <Select name="people" multiple modal disabled={!canWrite} options={options} state={people} placeholder="Escolha uma ou mais pessoas"
+                onChange={(_, value) => setPeople(Array.isArray(value) ? value.map(String) : value ? [String(value)] : [])} />
+            </div>
           </div>
-          <div>
-            <Label>Quem <span>*</span></Label>
-            <Select name="people" multiple modal disabled={!canWrite} options={options} state={people} placeholder="Escolha uma ou mais pessoas"
-              onChange={(_, value) => setPeople(Array.isArray(value) ? value.map(String) : value ? [String(value)] : [])} />
-          </div>
+        </FormSection>
+        <FormSection title="Quando" description="Os dias e a parte do dia em que a pessoa fica ocupada.">
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <Label>De <span>*</span></Label>
@@ -131,36 +153,27 @@ export function ActivityDialog({ activity, employeeIds = [], employees, canWrite
               <Select name="activityShift" modal disabled={!canWrite} options={SHIFT_OPTIONS} state={shift} onChange={(_, value) => setShift((String(value ?? "integral") as Shift))} placeholder="Dia inteiro" />
             </div>
           </div>
-          {placeOptions.length > 0 && (
+        </FormSection>
+        <FormSection title="Onde">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {placeOptions.length > 0 && (
+              <div>
+                <Label>Local da empresa</Label>
+                <Select name="activityPlace" modal clearable disabled={!canWrite} options={placeOptions} state={placeId} placeholder="Nenhum (use o campo ao lado)"
+                  onChange={(_, value) => { const next = String(value ?? ""); setPlaceId(next); const place = places?.rows.find((item) => String(item.id) === next); if (place && !location.trim()) setLocation(place.name); }} />
+              </div>
+            )}
             <div>
-              <Label>Local da empresa</Label>
-              <Select name="activityPlace" modal clearable disabled={!canWrite} options={placeOptions} state={placeId} placeholder="Nenhum (use o campo abaixo)"
-                onChange={(_, value) => { const next = String(value ?? ""); setPlaceId(next); const place = places?.rows.find((item) => String(item.id) === next); if (place && !location.trim()) setLocation(place.name); }} />
+              <Label htmlFor="activityLocation">Onde</Label>
+              <Input id="activityLocation" name="activityLocation" className="mt-1" value={location} maxLength={200} disabled={!canWrite} onValueChange={(_, value) => setLocation(String(value))} placeholder="Ex.: CT Recife" />
             </div>
-          )}
-          <div>
-            <Label htmlFor="activityLocation">Onde</Label>
-            <Input id="activityLocation" name="activityLocation" className="mt-1" value={location} maxLength={200} disabled={!canWrite} onValueChange={(_, value) => setLocation(String(value))} placeholder="Ex.: CT Recife" />
           </div>
-          <div>
-            <Label htmlFor="activityNotes">Observação</Label>
-            <Textarea id="activityNotes" className="mt-1" rows={2} maxLength={500} disabled={!canWrite} value={notes} onChange={(event) => setNotes(event.target.value)} />
-          </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          <DialogFooter className="gap-2 sm:justify-between">
-            {activity && canWrite ? (
-              <ConfirmDialog title="Cancelar esta atividade?" description="Ela sai do mapa de alocação para todas as pessoas que estavam nela." onConfirm={() => remove()}>
-                <Button type="button" variant="outline" className="text-red-600"><Icon name="trash-2" className="w-4 h-4 mr-1" /> Cancelar atividade</Button>
-              </ConfirmDialog>
-            ) : <span />}
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>{canWrite ? "Fechar" : "Voltar"}</Button>
-              {canWrite && <Button type="submit" disabled={isPending}>{isPending ? "Salvando..." : activity ? "Salvar" : "Lançar"}</Button>}
-            </div>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </FormSection>
+        <FormSection title="Observação">
+          <Textarea id="activityNotes" aria-label="Observação" rows={3} maxLength={500} disabled={!canWrite} value={notes} onChange={(event) => setNotes(event.target.value)} />
+        </FormSection>
+      </FormPageGrid>
+    </form>
   );
 }
 

@@ -14,16 +14,21 @@ import RichTextEditor from "@/components/general-components/RichTextEditor";
 import { IPost } from "../-interfaces/entity.interface";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
+import { postEntity } from "../-interfaces/entity.interface";
 import { useLoader } from "@/context/GeneralContext";
 import AIAssistant from "./AIAssistant";
+import { Button } from "@/components/ui/button";
+import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-components/FormPage";
 
 interface FormProps {
   formData?: IPost;
-  openSheet: (open: boolean) => void;
-  entity: IDefaultEntity;
+  /** Volta para a lista (fecha a tela). */
+  close: () => void;
+  entity?: IDefaultEntity;
 }
 
-const PostForm = ({ formData, openSheet, entity }: FormProps) => {
+/** Cadastro e edição de post do blog, em tela própria. */
+const PostForm = ({ formData, close, entity = postEntity }: FormProps) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
 
@@ -147,7 +152,7 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
       setDataForm(initialFormRef.current);
-      openSheet(false);
+      close();
     },
     onError: (error: ApiError) => {
       hideLoader();
@@ -180,7 +185,7 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
       setDataForm(initialFormRef.current);
-      openSheet(false);
+      close();
     },
     onError: (error: ApiError) => {
       hideLoader();
@@ -261,128 +266,13 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
     return <Loader title="Carregando..." />;
   }
 
+  const categoryName = categoryOptions?.rows?.find((c: { id: number; name: string }) => c.id === dataForm.categoryId)?.name;
+  const statusName = statusOptions.find((option) => option.id === dataForm.status)?.name;
+
   return (
-    <form id="post-form" onSubmit={handleSubmit} className="space-y-4">
-      {/* Linha superior - Campos de configuração em grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Título */}
-        <div>
-          <Label htmlFor="title">Título *</Label>
-          <Input
-            id="title"
-            name="title"
-            placeholder="Título do post"
-            value={dataForm.title}
-            onValueChange={handleChange}
-            required
-          />
-          {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
-        </div>
-
-        {/* Slug */}
-        <div>
-          <Label htmlFor="slug">Slug *</Label>
-          <Input
-            id="slug"
-            name="slug"
-            placeholder="slug-do-post"
-            value={dataForm.slug}
-            onValueChange={handleChange}
-            required
-          />
-          {errors.slug && <p className="text-red-500 text-sm">{errors.slug}</p>}
-        </div>
-
-        {/* Status */}
-        <div>
-          <Label htmlFor="status">Status *</Label>
-          <Select
-            name="status"
-            options={statusOptions}
-            state={dataForm.status}
-            onChange={handleStatusChange}
-            placeholder="Selecione o status"
-          />
-          {errors.status && <p className="text-red-500 text-sm">{errors.status}</p>}
-        </div>
-      </div>
-
-      {/* Segunda linha - Tags, Categoria, Autor, Destaque */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-        {/* Tags */}
-        <div>
-          <Label htmlFor="tagIds">Tags *</Label>
-          <Select
-            name="tagIds"
-            disabled={isFetchingTags}
-            options={tagOptions?.rows || []}
-            state={dataForm.tagIds?.map(id => id.toString()) || []}
-            onChange={handleTagsChange}
-            placeholder="Selecione as tags"
-            multiple
-          />
-          {errors.tagIds && <p className="text-red-500 text-sm">{errors.tagIds}</p>}
-        </div>
-
-        {/* Categoria */}
-        <div>
-          <Label htmlFor="categoryId">Categoria *</Label>
-          <Select
-            name="categoryId"
-            disabled={isFetchingCategories}
-            options={categoryOptions?.rows || []}
-            state={dataForm.categoryId?.toString() || ""}
-            onChange={handleCategoryChange}
-            placeholder="Selecione a categoria"
-          />
-          {errors.categoryId && <p className="text-red-500 text-sm">{errors.categoryId}</p>}
-        </div>
-
-        {/* Autor */}
-        <div>
-          <Label htmlFor="authorId">Autor</Label>
-          <Select
-            name="authorId"
-            disabled={isFetchingUsers}
-            options={userOptions?.rows || []}
-            state={dataForm.authorId?.toString() || ""}
-            onChange={handleAuthorChange}
-            placeholder="Usuário logado"
-            label="name"
-            clearable
-          />
-          {errors.authorId && <p className="text-red-500 text-sm">{errors.authorId}</p>}
-        </div>
-
-        {/* Destaque */}
-        <div className="flex items-center gap-2 p-2 rounded-lg border">
-          <Switch
-            id="featured"
-            checked={dataForm.featured}
-            onCheckedChange={(checked) => setDataForm(prev => ({ ...prev, featured: checked }))}
-          />
-          <Label htmlFor="featured" className="cursor-pointer text-sm">Destaque</Label>
-        </div>
-      </div>
-
-      {/* Terceira linha - Resumo e Imagem */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-        {/* Resumo */}
-        <div className="md:col-span-3">
-          <Label htmlFor="excerpt">Resumo *</Label>
-          <Textarea
-            id="excerpt"
-            name="excerpt"
-            placeholder="Breve resumo do post (exibido na listagem)"
-            value={dataForm.excerpt}
-            onChange={(e) => handleChange("excerpt", e.target.value)}
-            rows={5}
-          />
-          {errors.excerpt && <p className="text-red-500 text-sm">{errors.excerpt}</p>}
-        </div>
-
-        {/* Imagem de Capa */}
-        <div>
+    <form id="post-form" onSubmit={handleSubmit}>
+      <FormPageGrid aside={<>
+        <section className="rounded-card border bg-card p-4 flex flex-col gap-2">
           <Label htmlFor="image">Imagem de Capa *</Label>
           <DropUpload preset="cover"
             setImage={setDataForm}
@@ -391,35 +281,163 @@ const PostForm = ({ formData, openSheet, entity }: FormProps) => {
             cover={true}
           />
           {errors.image && <p className="text-red-500 text-sm">{errors.image}</p>}
-        </div>
-      </div>
+        </section>
 
-      {/* Conteúdo - Full width */}
-      <div>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-          <Label htmlFor="content">Conteúdo *</Label>
-          <AIAssistant
-            currentTitle={dataForm.title}
-            currentExcerpt={dataForm.excerpt}
-            currentContent={dataForm.content}
-            currentCategory={
-              categoryOptions?.rows?.find(
-                (c: { id: number; name: string }) => c.id === dataForm.categoryId
-              )?.name
-            }
-            onApplyContent={handleContentChange}
-          />
+        <section className="rounded-card border bg-card p-4 flex flex-col gap-2.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Resumo</p>
+          <SummaryRow label="Status">{statusName ?? "—"}</SummaryRow>
+          <SummaryRow label="Categoria">{categoryName ?? "—"}</SummaryRow>
+          <SummaryRow label="Tags">{dataForm.tagIds.length || "Nenhuma"}</SummaryRow>
+          <SummaryRow label="Destaque">{dataForm.featured ? "Sim" : "Não"}</SummaryRow>
+        </section>
+
+        <div className="flex flex-col gap-2">
+          <Button type="submit">{formData ? "Atualizar" : "Cadastrar"}</Button>
+          <Button type="button" variant="outline" onClick={close}>Cancelar</Button>
         </div>
-        <div>
-          <RichTextEditor
-            value={dataForm.content}
-            onChange={handleContentChange}
-            placeholder="Escreva o conteúdo do post..."
-            height={350}
-          />
-        </div>
-        {errors.content && <p className="text-red-500 text-sm">{errors.content}</p>}
-      </div>
+      </>}>
+        <FormSection title="Dados do post" description="Título, endereço e o resumo que aparece na listagem do blog.">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Título */}
+            <div>
+              <Label htmlFor="title">Título *</Label>
+              <Input
+                id="title"
+                name="title"
+                placeholder="Título do post"
+                value={dataForm.title}
+                onValueChange={handleChange}
+                required
+              />
+              {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
+            </div>
+
+            {/* Slug */}
+            <div>
+              <Label htmlFor="slug">Slug *</Label>
+              <Input
+                id="slug"
+                name="slug"
+                placeholder="slug-do-post"
+                value={dataForm.slug}
+                onValueChange={handleChange}
+                required
+              />
+              {errors.slug && <p className="text-red-500 text-sm">{errors.slug}</p>}
+            </div>
+          </div>
+
+          {/* Resumo */}
+          <div>
+            <Label htmlFor="excerpt">Resumo *</Label>
+            <Textarea
+              id="excerpt"
+              name="excerpt"
+              placeholder="Breve resumo do post (exibido na listagem)"
+              value={dataForm.excerpt}
+              onChange={(e) => handleChange("excerpt", e.target.value)}
+              rows={4}
+            />
+            {errors.excerpt && <p className="text-red-500 text-sm">{errors.excerpt}</p>}
+          </div>
+        </FormSection>
+
+        <FormSection title="Publicação e classificação" description="Situação do post, onde ele aparece no blog e quem assina.">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Status */}
+            <div>
+              <Label htmlFor="status">Status *</Label>
+              <Select
+                name="status"
+                options={statusOptions}
+                state={dataForm.status}
+                onChange={handleStatusChange}
+                placeholder="Selecione o status"
+              />
+              {errors.status && <p className="text-red-500 text-sm">{errors.status}</p>}
+            </div>
+
+            {/* Categoria */}
+            <div>
+              <Label htmlFor="categoryId">Categoria *</Label>
+              <Select
+                name="categoryId"
+                disabled={isFetchingCategories}
+                options={categoryOptions?.rows || []}
+                state={dataForm.categoryId?.toString() || ""}
+                onChange={handleCategoryChange}
+                placeholder="Selecione a categoria"
+              />
+              {errors.categoryId && <p className="text-red-500 text-sm">{errors.categoryId}</p>}
+            </div>
+
+            {/* Autor */}
+            <div>
+              <Label htmlFor="authorId">Autor</Label>
+              <Select
+                name="authorId"
+                disabled={isFetchingUsers}
+                options={userOptions?.rows || []}
+                state={dataForm.authorId?.toString() || ""}
+                onChange={handleAuthorChange}
+                placeholder="Usuário logado"
+                label="name"
+                clearable
+              />
+              {errors.authorId && <p className="text-red-500 text-sm">{errors.authorId}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            {/* Tags */}
+            <div className="sm:col-span-2">
+              <Label htmlFor="tagIds">Tags *</Label>
+              <Select
+                name="tagIds"
+                disabled={isFetchingTags}
+                options={tagOptions?.rows || []}
+                state={dataForm.tagIds?.map(id => id.toString()) || []}
+                onChange={handleTagsChange}
+                placeholder="Selecione as tags"
+                multiple
+              />
+              {errors.tagIds && <p className="text-red-500 text-sm">{errors.tagIds}</p>}
+            </div>
+
+            {/* Destaque */}
+            <div className="flex items-center gap-2 p-2 rounded-lg border">
+              <Switch
+                id="featured"
+                checked={dataForm.featured}
+                onCheckedChange={(checked) => setDataForm(prev => ({ ...prev, featured: checked }))}
+              />
+              <Label htmlFor="featured" className="cursor-pointer text-sm">Destaque</Label>
+            </div>
+          </div>
+        </FormSection>
+
+        {/* Conteúdo - largura cheia */}
+        <FormSection title="Conteúdo *" description="O texto do post. O assistente de IA ajuda a escrever ou revisar.">
+          <div className="flex justify-end -mt-2">
+            <AIAssistant
+              currentTitle={dataForm.title}
+              currentExcerpt={dataForm.excerpt}
+              currentContent={dataForm.content}
+              currentCategory={categoryName}
+              onApplyContent={handleContentChange}
+            />
+          </div>
+          <div>
+            <RichTextEditor
+              value={dataForm.content}
+              onChange={handleContentChange}
+              placeholder="Escreva o conteúdo do post..."
+              height={500}
+            />
+            {errors.content && <p className="text-red-500 text-sm">{errors.content}</p>}
+          </div>
+        </FormSection>
+      </FormPageGrid>
     </form>
   );
 };

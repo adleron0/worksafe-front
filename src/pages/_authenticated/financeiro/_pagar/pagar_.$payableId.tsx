@@ -7,7 +7,7 @@ import { FormPageHeader, FormPageSkeleton } from "@/components/general-component
 import { EmptyState } from "@/components/general-components/DataTable";
 import { FINANCIAL_ABILITY } from "../-shared/financial";
 import { Payable } from "../-shared/payables";
-import { useBackToList } from "../-shared/useBackToList";
+import { useBackToList } from "@/hooks/use-back-to-list";
 import PayableForm from "./-PayableForm";
 
 export const Route = createFileRoute("/_authenticated/financeiro/_pagar/pagar_/$payableId")({

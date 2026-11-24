@@ -1,3 +1,4 @@
+import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
 import { ITag } from "../../_tags/-interfaces/entity.interface";
 import { ICategoria } from "../../_categorias/-interfaces/entity.interface";
 
@@ -35,3 +36,11 @@ export interface IPostTag {
   postId: number;
   tagId: number;
 }
+
+/** Entidade dos posts: usada na lista e nas telas de cadastro e edição. */
+export const postEntity: IDefaultEntity = {
+  name: "Post",
+  pluralName: "Posts",
+  model: "blog/posts",
+  ability: "blog",
+};

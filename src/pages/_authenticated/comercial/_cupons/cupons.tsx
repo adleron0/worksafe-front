@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
@@ -11,7 +11,7 @@ import ListToolbar from "@/components/general-components/ListToolbar";
 import ListFooter from "@/components/general-components/ListFooter";
 import DataTable, { EmptyState } from "@/components/general-components/DataTable";
 import { Button } from "@/components/ui/button";
-import Form from "./-components/CupomForm";
+import { cupomEntity } from "./-interfaces/entity.interface";
 import SearchForm from "./-components/CupomSearch";
 import CupomRowActions from "./-components/CupomRowActions";
 import { cupomColumns } from "./-components/cupomColumns";
@@ -29,8 +29,7 @@ const FILTER_KEYS = ["code", "description", "sellerId", "discountType", "active"
 function List() {
   const { can } = useVerify();
   const [openSearch, setOpenSearch] = useState(false);
-  const [openForm, setOpenForm] = useState(false);
-  const [formData, setFormData] = useState<ICupom | null>(null);
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useState<Record<string, any>>({
     limit: 10,
     page: 0,
@@ -39,12 +38,7 @@ function List() {
   });
   const initialFormRef = useRef(searchParams);
 
-  const entity = {
-    name: "Cupom",
-    pluralName: "Cupons",
-    model: "coupon",
-    ability: "cupoms",
-  }
+  const entity = cupomEntity;
 
   interface Response {
     rows: ICupom[];
@@ -73,8 +67,8 @@ function List() {
   if (!can(`view_${entity.ability}`)) return null;
 
   const canCreate = can(`create_${entity.ability}`);
-  const openNew = () => { setFormData(null); setOpenForm(true); };
-  const openEdit = (item: ICupom) => { setFormData(item); setOpenForm(true); };
+  const openNew = () => navigate({ to: "/comercial/cupons/novo" });
+  const openEdit = (item: ICupom) => navigate({ to: "/comercial/cupons/$couponId", params: { couponId: String(item.id) } });
   const isSet = (value: unknown) => value !== undefined && value !== null && value !== "";
   const filterCount = FILTER_KEYS.filter((key) => isSet(searchParams[key])).length
     + (isSet(searchParams['validUntil-gte']) || isSet(searchParams['validUntil-lte']) ? 1 : 0);
@@ -107,15 +101,6 @@ function List() {
         description={`Preencha os campos abaixo para filtrar ${entity.pluralName.toLowerCase()}.`}
         side="left"
         form={ <SearchForm onSearch={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams} /> }
-      />
-
-      <SideForm
-        openSheet={openForm}
-        setOpenSheet={setOpenForm}
-        title={formData ? `Editar ${entity.name}` : `Cadastrar ${entity.name}`}
-        description={formData ? `Edite os dados do ${entity.name.toLowerCase()} abaixo.` : `Preencha os dados do novo ${entity.name.toLowerCase()}.`}
-        side="right"
-        form={ <Form formData={formData} setOpenForm={setOpenForm} entity={entity} /> }
       />
     </>
   );

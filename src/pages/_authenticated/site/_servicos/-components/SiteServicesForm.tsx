@@ -11,19 +11,23 @@ import FaqGenerator from "@/components/general-components/FaqGenerator";
 import SitePageFields, { SitePageValues } from "@/components/general-components/SitePageFields";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { FormPageGrid, FormSection } from "@/components/general-components/FormPage";
 // Interfaces and validations
 import { IEntity } from "../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
+import { siteServicesEntity } from "../-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { z } from "zod";
 
 interface FormProps {
   formData?: IEntity;
-  openSheet: (open: boolean) => void;
-  entity: IDefaultEntity;
+  /** Volta para a lista (fecha a tela). */
+  close: () => void;
+  entity?: IDefaultEntity;
 }
 
-const Form = ({ formData, openSheet, entity }: FormProps) => {
+/** Cadastro e edição de serviço do site, em tela própria. */
+const Form = ({ formData, close, entity = siteServicesEntity }: FormProps) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
 
@@ -87,9 +91,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
-      // Limpa o formulário e fecha o Sheet
+      // Limpa o formulário e volta para a lista
       setDataForm(initialFormRef.current);
-      openSheet(false);
+      close();
     },
     onError: (error: ApiError) => {
       hideLoader();
@@ -114,9 +118,9 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
         variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: [`list${entity.pluralName}`] });
-      // Limpa o formulário e fecha o Sheet
+      // Limpa o formulário e volta para a lista
       setDataForm(initialFormRef.current);
-      openSheet(false);
+      close();
     },
     onError: (error: ApiError) => {
       hideLoader();
@@ -189,74 +193,84 @@ const Form = ({ formData, openSheet, entity }: FormProps) => {
   // Buscas de valores para variaveis de formulário
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full mt-4">
-      <DropUpload preset="card"
-        setImage={setDataForm}
-        EditPreview={preview}
-      />
-      <div>
-        <Label htmlFor="name">Nome <span>*</span></Label>
-          <Input
-            id="name"
-            name="name"
-            placeholder={`Digite nome do ${entity.name}`}
-            value={dataForm.name}
-            onValueChange={handleChange}
-            className="mt-1"
+    <form onSubmit={handleSubmit}>
+      <FormPageGrid aside={<>
+        <section className="rounded-card border bg-card p-4 flex flex-col gap-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Imagem</p>
+          <DropUpload preset="card"
+            setImage={setDataForm}
+            EditPreview={preview}
           />
-        {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
-      </div>
-      
-      <div>
-        <Label htmlFor="features">Características</Label>
-        <p className="text-xs text-muted-foreground font-medium">Adicione as características do serviço</p>
-        <TagInput
-          value={dataForm.features || ''}
-          onChange={(value) => handleChange('features', value)}
-          separator="#"
-          placeholder="Digite uma característica e pressione Enter"
-          className="mt-1"
-        />
-      </div>
+        </section>
 
-      <SitePageFields
-        values={dataForm as SitePageValues}
-        onChange={(field, value) => handleChange(field, value)}
-        name={dataForm.name}
-        basePath="/servicos/"
-        showDescription
-      />
-      {(errors.seoTitle || errors.seoDescription) && (
-        <p className="text-red-500 text-sm">{errors.seoTitle || errors.seoDescription}</p>
-      )}
+        <div className="flex flex-col gap-2">
+          <Button type="submit" disabled={isPending || isPendingUpdate}>
+            {isPending || isPendingUpdate
+              ? formData
+                ? "Atualizando..."
+                : "Registrando..."
+              : formData
+              ? `Atualizar ${entity.name}`
+              : `Registrar ${entity.name}`}
+          </Button>
+          <Button type="button" variant="outline" onClick={close}>Cancelar</Button>
+        </div>
+      </>}>
+        <FormSection title="Dados do serviço" description="Nome e características que aparecem no cartão do serviço.">
+          <div>
+            <Label htmlFor="name">Nome <span>*</span></Label>
+            <Input
+              id="name"
+              name="name"
+              placeholder={`Digite nome do ${entity.name}`}
+              value={dataForm.name}
+              onValueChange={handleChange}
+              className="mt-1"
+            />
+            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+          </div>
 
-      <div className="mt-2">
-        <FaqGenerator
-          formData={dataForm}
-          setFormData={setDataForm}
-          fieldName="faq"
-          errors={errors}
-          setErrors={setErrors}
-          title="Perguntas frequentes da página"
-          description="Aparecem na página do serviço e no Google"
-          questionPlaceholder="Ex: Vocês atendem fora de Pernambuco?"
-          answerPlaceholder="Ex: Sim, atendemos todo o Nordeste com equipe própria..."
-        />
-      </div>
+          <div>
+            <Label htmlFor="features">Características</Label>
+            <p className="text-xs text-muted-foreground font-medium">Adicione as características do serviço</p>
+            <TagInput
+              value={dataForm.features || ''}
+              onChange={(value) => handleChange('features', value)}
+              separator="#"
+              placeholder="Digite uma característica e pressione Enter"
+              className="mt-1"
+            />
+          </div>
+        </FormSection>
 
-      <Button
-        type="submit"
-        className="w-full my-4"
-        disabled={isPending || isPendingUpdate}
-      >
-        {isPending || isPendingUpdate
-          ? formData
-            ? "Atualizando..."
-            : "Registrando..."
-          : formData
-          ? `Atualizar ${entity.name}`
-          : `Registrar ${entity.name}`}
-      </Button>
+        {/* o bloco já traz título e explicação; aqui ele só vira um cartão como as outras seções */}
+        <section className="rounded-card border bg-card p-4 sm:p-5 [&>div]:mt-0 [&>div]:border-0 [&>div]:p-0">
+          <SitePageFields
+            values={dataForm as SitePageValues}
+            onChange={(field, value) => handleChange(field, value)}
+            name={dataForm.name}
+            basePath="/servicos/"
+            showDescription
+          />
+          {(errors.seoTitle || errors.seoDescription) && (
+            <p className="text-red-500 text-sm mt-2">{errors.seoTitle || errors.seoDescription}</p>
+          )}
+        </section>
+
+        <section className="rounded-card border bg-card p-4 sm:p-5">
+          <FaqGenerator
+            formData={dataForm}
+            setFormData={setDataForm}
+            fieldName="faq"
+            errors={errors}
+            setErrors={setErrors}
+            title="Perguntas frequentes da página"
+            description="Aparecem na página do serviço e no Google"
+            questionPlaceholder="Ex: Vocês atendem fora de Pernambuco?"
+            answerPlaceholder="Ex: Sim, atendemos todo o Nordeste com equipe própria..."
+          />
+        </section>
+      </FormPageGrid>
     </form>
   );
 };

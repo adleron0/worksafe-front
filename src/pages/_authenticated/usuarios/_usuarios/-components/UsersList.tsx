@@ -1,5 +1,6 @@
 // Serviços
 import { useRef, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import useWindowSize from "@/hooks/use-windowSize";
@@ -48,7 +49,7 @@ function UsersList({
   const [openSearch, setOpenSearch] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [formData, setFormData] = useState<IEntity>();
-  const [formType, setFormType] = useState("both");
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useState<Record<string, any>>({
     limit: 10,
     page: 0,
@@ -96,9 +97,10 @@ function UsersList({
   if (!can(`view_${entity.ability}`)) return null;
 
   const canCreate = showCreateButton && can(`create_${entity.ability}`);
-  const openNew = () => { setFormData(undefined); setFormType("both"); setOpenForm(true); };
-  const openEdit = (user: IEntity) => { setFormData(user); setFormType(""); setOpenForm(true); };
-  const openPassword = (user: IEntity) => { setFormData(user); setFormType("only"); setOpenForm(true); };
+  // cadastro e edição abrem em tela própria; a troca de senha (um campo) continua na gaveta
+  const openNew = () => navigate({ to: "/usuarios/novo" });
+  const openEdit = (user: IEntity) => navigate({ to: "/usuarios/$userId/editar", params: { userId: String(user.id) } });
+  const openPassword = (user: IEntity) => { setFormData(user); setOpenForm(true); };
   const isSet = (value: unknown) => value !== undefined && value !== null && value !== "" && !(Array.isArray(value) && value.every((v) => v === undefined || v === null));
   const filterCount = FILTER_KEYS.filter((key) => isSet(searchParams[key])).length;
   const filtered = filterCount > 0 || !!searchParams['like-name'];
@@ -135,23 +137,15 @@ function UsersList({
         form={ <SearchForm onSubmit={handleSearch} onClear={handleClear} openSheet={setOpenSearch} params={searchParams}/> }
       />
 
-      {/* Formulário de cadastro */}
+      {/* Troca de senha */}
       {showCreateButton && (
         <SideForm
           openSheet={openForm}
           setOpenSheet={setOpenForm}
-          title={formData
-            ? formType === 'only'
-              ? `Alterar senha de ${formData.name}`
-              : `Editar ${entity.name} ${formData.name}`
-            : `Cadastrar ${entity.name}`}
-          description={formData
-            ? formType === 'only'
-              ? `Atenção com a ação a seguir, ela irá alterar a senha do ${entity.name} ${formData.name}.`
-              : `Atenção com a ação a seguir, ela irá alterar os dados do ${entity.name} ${formData.name}.`
-            : `Por favor, preencha com atenção todas as informações necessárias para cadastrar ${entity.name}.`}
-          side={formType === 'only' ? (width && width > 768 ? "right" : "bottom") : "right"}
-          form={ <Form openSheet={setOpenForm} formData={formData} onlyPassword={formType} defaultIsSeller={defaultIsSeller}/> }
+          title={formData ? `Alterar senha de ${formData.name}` : "Alterar senha"}
+          description={formData ? `Atenção com a ação a seguir, ela irá alterar a senha do ${entity.name} ${formData.name}.` : ""}
+          side={width && width > 768 ? "right" : "bottom"}
+          form={ <Form openSheet={setOpenForm} formData={formData} onlyPassword="only" defaultIsSeller={defaultIsSeller}/> }
         />
       )}
     </>

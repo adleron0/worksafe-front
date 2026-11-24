@@ -7,6 +7,7 @@ import Icon from "@/components/general-components/Icon";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import { BotAvatar, STATUS_TEXT } from "../-shared/avatar";
 import { MemberActivity } from "../-shared/member-activity";
+import { MemberMemory } from "../-shared/member-memory";
 import { TeamActivity, TeamMember, ago, dateTimeBr, useAiStatus, useTeam } from "../-shared/bots";
 
 export const Route = createFileRoute("/_authenticated/bots/_bots/equipe")({
@@ -77,6 +78,7 @@ function MemberCard({ member }: { member: TeamMember }) {
         ? `${member.pendingForMe} ${member.pendingForMe === 1 ? "ação espera" : "ações esperam"} a sua confirmação`
         : member.lastActivityAt ? `Última atividade ${ago(member.lastActivityAt)}` : "Ainda não trabalhou";
   const [open, setOpen] = useState<"pedidos" | "tarefas" | null>(null);
+  const [memory, setMemory] = useState(false);
   return (
     <div className="group flex flex-col rounded-2xl border bg-background p-4 transition-shadow hover:shadow-md">
       <div className="flex items-start gap-3">
@@ -107,11 +109,15 @@ function MemberCard({ member }: { member: TeamMember }) {
             <Icon name="message-circle" className="mr-1 h-4 w-4" /> {member.lastConversation || member.working.mine ? "Continuar" : "Conversar"}
           </Link>
         </Button>
+        <Button size="sm" variant="outline" aria-label={`Memória de ${member.persona}`} onClick={() => setMemory(true)}>
+          <Icon name="brain" className="mr-1 h-4 w-4" /> Memória
+        </Button>
         <Button asChild size="sm" variant="outline" aria-label={`Nova conversa com ${member.persona}`}>
           <Link to="/bots/conversas" search={{ bot: member.id }}><Icon name="plus" className="h-4 w-4" /></Link>
         </Button>
       </div>
       {open && <MemberActivity member={member} tab={open} onClose={() => setOpen(null)} />}
+      {memory && <MemberMemory member={member} onClose={() => setMemory(false)} />}
     </div>
   );
 }

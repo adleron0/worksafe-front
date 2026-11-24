@@ -61,6 +61,7 @@ export const aiApi = {
   post: async <T,>(path: string, body?: unknown) => (await api.post<T>(`ai/${path}`, body ?? {})).data,
   put: async <T,>(path: string, body?: unknown) => (await api.put<T>(`ai/${path}`, body ?? {})).data,
   patch: async <T,>(path: string, body?: unknown) => (await api.patch<T>(`ai/${path}`, body ?? {})).data,
+  delete: async <T,>(path: string) => (await api.delete<T>(`ai/${path}`)).data,
 };
 
 export const useAiStatus = () => useQuery({ queryKey: [STATUS_KEY], staleTime: 30 * 1000, queryFn: () => aiApi.get<AiStatus>("status") });

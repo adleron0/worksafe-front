@@ -21,7 +21,7 @@ function ActionsPage() {
     <div className="grid gap-4">
       <div>
         <h1 className="text-xl font-bold">Ações pendentes</h1>
-        <p className="text-sm text-muted-foreground">O que os bots prepararam e só acontece quando você confirma: envio de proposta, publicação, mudança de etapa. Inclui o que veio de apps de IA conectados (Claude, ChatGPT…). Cada ação vale por 30 minutos.</p>
+        <p className="text-sm text-muted-foreground max-sm:line-clamp-3">O que os bots prepararam e só acontece quando você confirma: envio de proposta, publicação, mudança de etapa. Inclui o que veio de apps de IA conectados (Claude, ChatGPT…). Cada ação vale por 30 minutos.</p>
       </div>
       {error && <p className="text-destructive">Erro: {errorMessage(error)}</p>}
       {isLoading && <Skeleton className="h-32 w-full" />}

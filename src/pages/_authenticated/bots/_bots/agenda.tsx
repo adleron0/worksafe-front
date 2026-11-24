@@ -87,12 +87,12 @@ function AgendaPage() {
   const canSchedule = can("agendar_bots");
   return (
     <div className="grid gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-xl font-bold">Agenda da equipe</h1>
-          <p className="text-sm text-muted-foreground">Tarefas que os assistentes fazem sozinhos: no horário marcado ou quando algo acontece no sistema. Rodam com as permissões de quem criou, e o que sai para fora continua esperando a sua confirmação. Dá para criar falando com eles: "toda segunda às 8h, me mande…".</p>
+          <p className="text-sm text-muted-foreground max-sm:line-clamp-2">Tarefas que os assistentes fazem sozinhos: no horário marcado ou quando algo acontece no sistema. Rodam com as permissões de quem criou, e o que sai para fora continua esperando a sua confirmação. Dá para criar falando com eles: "toda segunda às 8h, me mande…".</p>
         </div>
-        {canSchedule && <Button type="button" onClick={() => setEditing("novo")}><Icon name="plus" className="mr-1 h-4 w-4" /> Nova tarefa</Button>}
+        {canSchedule && <Button type="button" className="shrink-0" onClick={() => setEditing("novo")}><Icon name="plus" className="mr-1 h-4 w-4" /> Nova<span className="hidden sm:inline">&nbsp;tarefa</span></Button>}
       </div>
       {error && <p className="text-destructive">Erro: {errorMessage(error)}</p>}
       {isLoading && <Skeleton className="h-40 w-full" />}
@@ -116,7 +116,7 @@ function AgendaPage() {
           {group.rows.map((row) => (
             <div key={row.id} className="flex flex-wrap items-start gap-3 border-b px-4 py-3 last:border-b-0">
               <Icon name={row.frequency === "event" ? "zap" : "clock"} className={`mt-0.5 h-4 w-4 ${row.frequency === "event" ? "text-amber-500" : "text-muted-foreground"}`} />
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 basis-56">
                 <p className="font-medium">{row.name} {!row.active && <span className="ml-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-normal text-muted-foreground">pausada</span>}</p>
                 <p className="text-xs text-muted-foreground">
                   {whenText(row)} · {row.channels.map((channel) => CHANNEL_LABEL[channel] ?? channel).join(", ")}
@@ -133,7 +133,7 @@ function AgendaPage() {
                   </p>
                 )}
               </div>
-              {canSchedule && <div className="flex shrink-0 gap-1">
+              {canSchedule && <div className="ml-7 flex shrink-0 gap-1 sm:ml-0">
                 <Button type="button" variant="outline" size="sm" disabled={run.isPending} onClick={() => run.mutate(row.id)}><Icon name="play" className="mr-1 h-3.5 w-3.5" /> Rodar agora</Button>
                 <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={row.active ? "Pausar" : "Retomar"} onClick={() => toggle.mutate(row)}><Icon name={row.active ? "pause" : "play-circle"} className="h-4 w-4" /></Button>
                 <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Editar ${row.name}`} onClick={() => setEditing(row)}><Icon name="pencil" className="h-4 w-4" /></Button>

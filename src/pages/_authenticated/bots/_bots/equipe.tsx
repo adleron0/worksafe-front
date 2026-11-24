@@ -34,17 +34,17 @@ function TeamPage() {
   const actions = members.reduce((sum, member) => sum + member.today.actions, 0);
 
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4 sm:gap-5">
       {/* topo */}
-      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/15 via-background to-background p-6">
+      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/15 via-background to-background p-4 sm:p-6">
         <div className="absolute right-6 top-1/2 hidden -translate-y-1/2 gap-1 lg:flex">
           {members.slice(0, 6).map((member) => (
             <BotAvatar key={member.id} look={member.avatar} size={60} status={member.status} />
           ))}
         </div>
         <p className="text-xs font-semibold uppercase tracking-widest text-primary">Equipe de assistentes</p>
-        <h1 className="mt-1 text-2xl font-bold">Quem está com você hoje</h1>
-        <p className="mt-1 max-w-xl text-sm text-muted-foreground">Cada assistente cuida de uma área, usa as suas permissões e só faz o que sai para fora depois que você confirma.</p>
+        <h1 className="mt-1 text-xl font-bold sm:text-2xl">Quem está com você hoje</h1>
+        <p className="mt-1 max-w-xl text-sm text-muted-foreground max-sm:line-clamp-2">Cada assistente cuida de uma área, usa as suas permissões e só faz o que sai para fora depois que você confirma.</p>
         <div className="mt-4 flex flex-wrap gap-2 text-xs">
           <span className="rounded-full bg-emerald-500/15 px-3 py-1 font-medium text-emerald-700 dark:text-emerald-300">{working} trabalhando agora</span>
           <Link to="/bots/acoes" className={`rounded-full px-3 py-1 font-medium ${waiting ? "bg-amber-500/15 text-amber-700 dark:text-amber-300" : "bg-muted text-muted-foreground"}`}>{waiting} esperando você</Link>

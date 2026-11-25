@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
@@ -362,6 +363,12 @@ function ChatPane({ id, wide, onBack, panel, onPanel }: { id: number; wide: bool
     onError: (err) => toast({ title: "Não deu certo", description: errorMessage(err), variant: "destructive" }),
   });
 
+  const [hiding, setHiding] = useState(false);
+  const hide = useMutation({
+    mutationFn: () => chatApi.post(`conversations/${id}/hide`),
+    onSuccess: () => { toast({ title: "Contato oculto", description: "Nada dele aparece ou é gravado no sistema. Para mostrar de novo: Números → Configurar.", variant: "success" }); invalidate(); onBack(); },
+    onError: (err) => toast({ title: "Não deu para ocultar", description: errorMessage(err), variant: "destructive" }),
+  });
   const name = data ? contactName(data.contact) : "";
   const mine = !!data?.assignedUser && data.assignedUser.id === user;
   const resolved = data?.status === "resolvida";
@@ -386,6 +393,16 @@ function ChatPane({ id, wide, onBack, panel, onPanel }: { id: number; wide: bool
         {data && (resolved
           ? <Button size="sm" variant="outline" disabled={patch.isPending} onClick={() => patch.mutate({ status: "aberta" })}><Icon name="rotate-ccw" className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Reabrir</span></Button>
           : <Button size="sm" disabled={patch.isPending} onClick={() => patch.mutate({ status: "resolvida" })}><Icon name="check" className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Resolver</span></Button>)}
+        {data && (can("responder_conversas") || can("canais_conversas")) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost" className="h-9 w-9 shrink-0 p-0" aria-label="Mais ações"><Icon name="ellipsis-vertical" className="h-4 w-4" /></Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setHiding(true)}><Icon name="eye-off" className="mr-2 h-4 w-4" />Ocultar do sistema</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         {onPanel && (
           <Tip text={panel ? "Esconder a ficha do contato" : "Mostrar a ficha do contato"}>
             <Button size="sm" variant="ghost" className="h-9 w-9 p-0" onClick={onPanel} aria-label="Ficha do contato"><Icon name={panel ? "panel-right-close" : "panel-right-open"} className="h-4 w-4" /></Button>
@@ -413,6 +430,9 @@ function ChatPane({ id, wide, onBack, panel, onPanel }: { id: number; wide: bool
       </div>
 
       {data && <Composer conv={data} />}
+      <ConfirmDialog open={hiding} onOpenChange={setHiding} title={`Ocultar ${name || "este contato"} do sistema?`}
+        description="Para conversas pessoais. As mensagens dele são apagadas do sistema e as próximas não são gravadas. No celular nada muda. Dá para mostrar de novo em Números → Configurar, mas o que foi apagado não volta."
+        slideLabel="Deslize para ocultar" onConfirm={() => hide.mutate()} />
     </section>
   );
 }

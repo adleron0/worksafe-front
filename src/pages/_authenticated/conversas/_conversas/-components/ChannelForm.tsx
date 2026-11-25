@@ -14,6 +14,7 @@ import Select from "@/components/general-components/Select";
 import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-components/FormPage";
 import { cn } from "@/lib/utils";
 import { BotAvatar } from "../../../bots/-shared/avatar";
+import HiddenContacts from "./HiddenContacts";
 import { NumField, errorMessage } from "../../../comercial/-shared/commercial";
 import { BotMode, CHAT_KEY, Channel, ChatMeta, ChatSettings, ContactAvatar, DAYS, PAGES, chatApi } from "../../-shared/chat";
 
@@ -158,6 +159,8 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
           )}
           {assinatura.enabled && <p className="text-xs text-muted-foreground">Assim o cliente vê. Na caixa de entrada a mensagem aparece sem o nome, que já fica no balão. Mensagens pelo celular e a resposta automática de fora do horário não levam nome.</p>}
         </FormSection>
+
+        {channel && <HiddenContacts channelId={channel.id} whatsapp={!instagram} />}
 
         {instagram ? (
           <p className="flex items-start gap-2 rounded-card border bg-card px-4 py-3 text-sm text-muted-foreground"><Icon name="info" className="mt-0.5 h-4 w-4 shrink-0" />No Instagram, a resposta automática da Nina, o horário e o limite do dia ficam em Bots → Conectores. Aqui você escolhe o nome, o setor e quem da equipe atende.</p>

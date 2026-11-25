@@ -753,12 +753,8 @@ function ContactPanel({ id }: { id: number }) {
               onChange={(_, value) => patch.mutate({ assignedUserId: value ? Number(value) : null })} />
           </Field>
           <Field label="Situação">
-            <div className="flex rounded-lg border bg-background p-0.5 text-xs font-medium">
-              {([["aberta", "Aberta"], ["aguardando", "Aguardando"], ["resolvida", "Resolvida"]] as const).map(([key, label]) => (
-                <button key={key} type="button" onClick={() => patch.mutate({ status: key })}
-                  className={cn("flex-1 cursor-pointer rounded-md px-2 py-1.5 transition-colors", data.status === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")}>{label}</button>
-              ))}
-            </div>
+            <Select name="status" options={[{ id: "aberta", name: "Aberta" }, { id: "aguardando", name: "Aguardando o cliente" }, { id: "resolvida", name: "Resolvida" }]}
+              state={data.status} onChange={(_, value) => value && value !== data.status && patch.mutate({ status: value })} />
           </Field>
         </div>
       </PanelSection>

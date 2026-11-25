@@ -24,6 +24,8 @@ export interface ChatSettings {
   limites: { novosPorDia: number; porMinuto: number; porHora: number; porDia: number };
   intervalo: { min: number; max: number };
   horario: { enabled: boolean; dias: number[]; inicio: string; fim: string; mensagemFora: string };
+  /** nome de quem respondeu na frente de cada mensagem enviada pelo sistema */
+  assinatura: { enabled: boolean; formato: "primeiro" | "completo" };
 }
 export interface Channel {
   id: number; type: "whatsapp" | "instagram"; name: string; color: string | null; sector: string | null; defaultBotId: number | null; botMode: BotMode;
@@ -66,6 +68,8 @@ export interface ConversationDetail extends ConversationItem {
   hasMore: boolean;
   /** Instagram: até quando dá para responder (24 h depois da última mensagem do cliente) */
   replyUntil: string | null;
+  /** como as minhas mensagens saem assinadas neste número (null = sem assinatura) */
+  signature: string | null;
 }
 
 // ---------------------------------------------------------------- tempo real (estado)

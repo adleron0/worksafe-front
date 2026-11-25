@@ -42,6 +42,10 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
   const [error, setError] = useState("");
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => ({ ...current, [key]: value }));
   const setLimit = (key: keyof ChatSettings["limites"], value: number) => setDraft((current) => ({ ...current, settings: { ...current.settings, limites: { ...current.settings.limites, [key]: Math.min(MAX[key], Math.max(key === "novosPorDia" ? 0 : 1, Math.round(value))) } } }));
+  const assinatura = draft.settings.assinatura ?? { enabled: true, formato: "primeiro" as const };
+  const setSignature = (patch: Partial<ChatSettings["assinatura"]>) => setDraft((current) => ({ ...current, settings: { ...current.settings, assinatura: { ...assinatura, ...patch } } }));
+  const myName = meta.users.find((u) => u.id === Number(user?.sub))?.name?.trim() || "Seu nome";
+  const shownName = assinatura.formato === "completo" ? myName : myName.split(" ")[0];
   const setHours = (patch: Partial<ChatSettings["horario"]>) => setDraft((current) => ({ ...current, settings: { ...current.settings, horario: { ...current.settings.horario, ...patch } } }));
 
   const save = useMutation({
@@ -79,6 +83,7 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
             <SummaryRow label="Número"><span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: draft.color }} />{draft.name.trim() || "—"}</span></SummaryRow>
             <SummaryRow label="Setor">{sectorName ?? "—"}</SummaryRow>
             {!instagram && <SummaryRow label="Bot">{bot ? `${bot.persona ?? bot.name} · ${meta.botModes.find((m) => m.id === draft.botMode)?.name}` : "Sem bot"}</SummaryRow>}
+            <SummaryRow label="Assinatura">{assinatura.enabled ? (assinatura.formato === "completo" ? "Nome completo" : "Primeiro nome") : "Sem nome"}</SummaryRow>
             <SummaryRow label="Equipe">{draft.memberIds.length ? `${draft.memberIds.length} ${draft.memberIds.length === 1 ? "pessoa" : "pessoas"}` : "—"}</SummaryRow>
             {!instagram && <SummaryRow label="Horário">{horario.enabled ? `${horario.inicio}–${horario.fim}` : "Sempre"}</SummaryRow>}
             {!instagram && <SummaryRow label="Novos por dia">{limites.novosPorDia}</SummaryRow>}
@@ -129,6 +134,29 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
               })}
             </div>
           </div>
+        </FormSection>
+
+        <FormSection title="Assinatura" description="O cliente vê quem está respondendo: o nome vai na frente de cada mensagem enviada pelo sistema. Se for o bot, vai o nome dele.">
+          <label className="flex items-center gap-3">
+            <Switch checked={assinatura.enabled} onCheckedChange={(checked) => setSignature({ enabled: checked })} />
+            <span className="text-sm">{assinatura.enabled ? "Mensagens saem com o nome de quem respondeu" : "Mensagens saem sem nome"}</span>
+          </label>
+          {assinatura.enabled && (
+            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-center">
+              <div className="flex rounded-lg border bg-background p-0.5 text-xs font-medium sm:max-w-xs">
+                {([["primeiro", "Primeiro nome"], ["completo", "Nome completo"]] as const).map(([key, label]) => (
+                  <button key={key} type="button" onClick={() => setSignature({ formato: key })}
+                    className={cn("flex-1 cursor-pointer rounded-md px-2 py-1.5 transition-colors", assinatura.formato === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")}>{label}</button>
+                ))}
+              </div>
+              <div className="chat-wallpaper flex justify-end rounded-xl border p-3">
+                <div className="max-w-[90%] rounded-2xl rounded-br-md bg-primary-soft px-3 py-1.5 text-[13px] leading-snug shadow-xs">
+                  {!instagram ? <b>{shownName}:</b> : <span>{shownName}:</span>}<br />Bom dia! Temos turma no dia 10.
+                </div>
+              </div>
+            </div>
+          )}
+          {assinatura.enabled && <p className="text-xs text-muted-foreground">Assim o cliente vê. Na caixa de entrada a mensagem aparece sem o nome, que já fica no balão. Mensagens pelo celular e a resposta automática de fora do horário não levam nome.</p>}
         </FormSection>
 
         {instagram ? (

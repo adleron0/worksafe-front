@@ -599,6 +599,11 @@ function Composer({ conv }: { conv: ConversationDetail }) {
               <Icon name={icon} className="h-3.5 w-3.5" />{label}
             </button>
           ))}
+          {!isNote && conv.signature && !blocked && (
+            <Tip text="O cliente vê seu nome na frente da mensagem. Dá para mudar em Números → Configurar.">
+              <span className="ml-2 hidden min-w-0 items-center gap-1 truncate text-[11px] text-muted-foreground sm:flex"><Icon name="signature" className="h-3 w-3 shrink-0" /><span className="truncate">sai como <b className="font-semibold text-foreground/80">{conv.signature}:</b></span></span>
+            </Tip>
+          )}
           {!isNote && instagram && win.open && (
             <Tip text="O Instagram só deixa responder até 24 h depois da última mensagem do cliente.">
               <span className={cn("ml-auto flex items-center gap-1 text-[11px]", win.soon ? "font-medium text-amber-700 dark:text-amber-300" : "text-muted-foreground")}><Icon name="clock-3" className="h-3 w-3" />pode responder por mais {win.label}</span>

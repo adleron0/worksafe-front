@@ -553,7 +553,7 @@ function Composer({ conv }: { conv: ConversationDetail }) {
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [recording, setRecording] = useState(false);
-  const [confirmNew, setConfirmNew] = useState<null | { kind: "text" | "file"; ptt?: boolean; file?: File }>(null);
+  const [confirmNew, setConfirmNew] = useState<null | { kind: "text" | "file"; ptt?: boolean; file?: File; body?: string }>(null);
   const area = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
   const canReply = can("responder_conversas");
@@ -568,8 +568,12 @@ function Composer({ conv }: { conv: ConversationDetail }) {
     : !canReply ? "Você pode ler, mas não responder (falta a permissão \"responder_conversas\")." : "";
   const isNote = mode === "note";
 
-  const done = () => { setText(""); setFile(null); setRecording(false); queryClient.invalidateQueries({ queryKey: [CHAT_KEY] }); area.current?.focus(); };
-  const failed = (err: unknown, retry: { kind: "text" | "file"; ptt?: boolean; file?: File }) => {
+  // a caixa nunca fica travada: o texto sai na hora e dá para continuar digitando
+  const keepFocus = () => { area.current?.focus(); setTimeout(() => area.current?.focus(), 0); };
+  const done = () => { setFile(null); setRecording(false); queryClient.invalidateQueries({ queryKey: [CHAT_KEY] }); keepFocus(); };
+  const failed = (err: unknown, retry: { kind: "text" | "file"; ptt?: boolean; file?: File; body?: string }) => {
+    // não deu: o texto volta para a caixa (se a pessoa não começou outro)
+    if (retry.body) setText((current) => (current.trim() ? current : retry.body!));
     const res = (err as { response?: { status?: number; data?: { code?: string } } }).response;
     if (res?.status === 409 && res.data?.code === "confirm_new") return setConfirmNew(retry);
     toast({ title: isNote ? "Não foi possível salvar a nota" : "Não foi possível enviar", description: errorMessage(err), variant: "destructive" });
@@ -579,7 +583,7 @@ function Composer({ conv }: { conv: ConversationDetail }) {
       ? chatApi.post(`conversations/${conv.id}/notes`, { text: body })
       : chatApi.post(`conversations/${conv.id}/messages`, { text: body, confirmedNew: confirmed }),
     onSuccess: done,
-    onError: (err) => failed(err, { kind: "text" }),
+    onError: (err, vars) => failed(err, { kind: "text", body: vars.body }),
   });
   const upload = useMutation({
     mutationFn: ({ upload, caption, ptt, confirmed }: { upload: File; caption: string; ptt?: boolean; confirmed?: boolean }) => {
@@ -590,7 +594,7 @@ function Composer({ conv }: { conv: ConversationDetail }) {
       if (confirmed) form.append("confirmedNew", "true");
       return chatApi.post(`conversations/${conv.id}/media`, form);
     },
-    onSuccess: done,
+    onSuccess: () => { setText(""); done(); },
     onError: (err, vars) => failed(err, { kind: "file", ptt: vars.ptt, file: vars.upload }),
   });
   const busy = send.isPending || upload.isPending;
@@ -600,13 +604,15 @@ function Composer({ conv }: { conv: ConversationDetail }) {
     if (picked.size > MAX_FILE) return toast({ title: "Arquivo grande demais", description: "O limite do WhatsApp é 16 MB. Mande um link ou um arquivo menor.", variant: "destructive" });
     setMode("reply");
     setFile(picked);
-    area.current?.focus();
+    keepFocus();
   };
   const submit = () => {
-    if (busy) return;
-    if (!isNote && file) { if (!blocked) upload.mutate({ upload: file, caption: text.trim() }); return; }
+    if (!isNote && file) { if (!blocked && !upload.isPending) upload.mutate({ upload: file, caption: text.trim() }); return; }
     const body = text.trim();
-    if (body && (isNote || !blocked)) send.mutate({ body });
+    if (!body || (!isNote && blocked)) return;
+    setText("");
+    keepFocus();
+    send.mutate({ body });
   };
   const placeholder = isNote ? "Nota interna: só a equipe vê" : file ? "Legenda (opcional)" : `Mensagem para ${contactName(conv.contact)}`;
   const firstLink = useMemo(() => !isNote && conv.contact.isNew && /(https?:\/\/|www\.)/i.test(text), [isNote, conv.contact.isNew, text]);
@@ -619,7 +625,7 @@ function Composer({ conv }: { conv: ConversationDetail }) {
       <div className="mx-auto max-w-3xl">
         <div className="mb-1.5 flex items-center gap-1">
           {([["reply", "message-circle", "Responder"], ["note", "sticky-note", "Nota interna"]] as const).map(([key, icon, label]) => (
-            <button key={key} type="button" onClick={() => { setMode(key); area.current?.focus(); }}
+            <button key={key} type="button" onClick={() => { setMode(key); keepFocus(); }}
               className={cn("flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap transition-colors", mode === key ? (key === "note" ? "bg-amber-500/15 text-amber-800 dark:text-amber-300" : "bg-primary/10 text-primary") : "text-muted-foreground hover:bg-muted")}>
               <Icon name={icon} className="h-3.5 w-3.5" />{label}
             </button>
@@ -660,7 +666,7 @@ function Composer({ conv }: { conv: ConversationDetail }) {
               <Textarea ref={area} value={text} onChange={(event) => setText(event.target.value)} rows={1}
                 onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); submit(); } }}
                 onPaste={(event) => { const pasted = event.clipboardData.files?.[0]; if (pasted && !isNote) { event.preventDefault(); choose(pasted); } }}
-                placeholder={placeholder} disabled={busy}
+                placeholder={placeholder} disabled={upload.isPending}
                 className={cn("field-sizing-content max-h-40 min-h-11 flex-1 resize-none rounded-2xl py-2.5 text-base sm:text-sm", isNote && "border-amber-500/40 bg-background")} />
               {showMic ? (
                 <Tip text="Gravar áudio">
@@ -669,7 +675,7 @@ function Composer({ conv }: { conv: ConversationDetail }) {
                   </Button>
                 </Tip>
               ) : (
-                <Button type="button" onClick={submit} disabled={busy || (!text.trim() && !(file && !isNote))} aria-label={isNote ? "Salvar nota" : "Enviar"}
+                <Button type="button" onClick={submit} disabled={upload.isPending || (!text.trim() && !(file && !isNote))} aria-label={isNote ? "Salvar nota" : "Enviar"}
                   className={cn("h-11 w-11 shrink-0 rounded-full p-0", isNote && "bg-amber-500 text-white hover:bg-amber-600")}>
                   <Icon name={busy ? "loader-circle" : isNote ? "check" : "send-horizontal"} className={cn("h-5 w-5", busy && "animate-spin")} />
                 </Button>
@@ -685,7 +691,7 @@ function Composer({ conv }: { conv: ConversationDetail }) {
           const retry = confirmNew;
           setConfirmNew(null);
           if (retry?.kind === "file" && retry.file) upload.mutate({ upload: retry.file, caption: retry.ptt ? "" : text.trim(), ptt: retry.ptt, confirmed: true });
-          else send.mutate({ body: text.trim(), confirmed: true });
+          else if (retry?.body) { setText((current) => (current.trim() === retry.body ? "" : current)); send.mutate({ body: retry.body, confirmed: true }); }
         }} />
     </footer>
   );

@@ -156,6 +156,9 @@ function ConversationListPane({ box, channelId, current, onPick, onBox, onChanne
         <div className="flex items-center gap-2">
           <h1 className="mr-auto text-lg font-bold">Conversas</h1>
           {list.isFetching && !list.isLoading && <Icon name="loader-circle" className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+          <Tip text={box === "resolvidas" ? "Voltar às abertas" : "Ver resolvidas"}>
+            <Button size="sm" variant={box === "resolvidas" ? "default" : "outline"} className="h-8 w-8 p-0" aria-label="Resolvidas" onClick={() => onBox(box === "resolvidas" ? "abertas" : "resolvidas")}><Icon name="archive" className="h-4 w-4" /></Button>
+          </Tip>
           {can("responder_conversas") && (
             <Tip text="Começar uma conversa com um número">
               <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => setStarting(true)} aria-label="Nova conversa"><Icon name="square-pen" className="h-4 w-4" /></Button>
@@ -167,30 +170,34 @@ function ConversationListPane({ box, channelId, current, onPick, onBox, onChanne
             </Tip>
           )}
         </div>
-        <Input name="busca" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar por nome, telefone ou mensagem" icon="search" className="h-9" />
-        <div className="scroll-oculto -mx-3 flex gap-1 overflow-x-auto px-3">
-          {BOXES.map((item) => {
-            const count = item.key === "resolvidas" ? undefined : counts?.[item.key];
-            const on = box === item.key;
-            return (
-              <button key={item.key} type="button" onClick={() => onBox(item.key)}
-                className={cn("flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors", on ? "border-primary bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted hover:text-foreground")}>
-                {item.label}
-                {!!count && <span className={cn("rounded-full px-1.5 text-[10px] tabular-nums", on ? "bg-primary-foreground/20" : item.key === "nao_lidas" ? "bg-primary text-primary-foreground" : "bg-muted")}>{count}</span>}
-              </button>
-            );
-          })}
+        <div className="flex gap-2">
+          <Input name="busca" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar conversa" icon="search" className="h-9 min-w-0 flex-1" />
+          {many && <ChannelFilter channels={channels.data!} value={channelId} onChange={onChannel} />}
         </div>
-        {many && (
-          <div className="scroll-oculto -mx-3 -mt-1 flex gap-1 overflow-x-auto px-3">
-            <button type="button" onClick={() => onChannel(undefined)} className={cn("shrink-0 cursor-pointer rounded-full px-2 py-0.5 text-[11px] font-medium", !channelId ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted")}>Todos os números</button>
-            {channels.data!.map((c) => (
-              <button key={c.id} type="button" onClick={() => onChannel(channelId === c.id ? undefined : c.id)}
-                className={cn("flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium", channelId === c.id ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted")}>
-                <span className="h-2 w-2 rounded-full" style={{ background: c.color ?? "#149E5E" }} />{c.name}
-              </button>
-            ))}
+        {box === "resolvidas" ? (
+          <div className="flex h-8 items-center gap-2 rounded-lg bg-muted px-2.5 text-xs">
+            <Icon name="archive" className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="mr-auto font-medium">Conversas resolvidas</span>
+            <button type="button" onClick={() => onBox("abertas")} className="cursor-pointer font-medium text-primary hover:underline">Voltar às abertas</button>
           </div>
+        ) : (
+          <div className="@container"><div role="tablist" className="grid grid-cols-4 gap-0.5 rounded-lg bg-muted p-0.5">
+            {BOXES.filter((item) => item.key !== "resolvidas").map((item) => {
+              const count = counts?.[item.key as Exclude<Box, "resolvidas">];
+              const on = box === item.key;
+              return (
+                <button key={item.key} type="button" role="tab" aria-selected={on} onClick={() => onBox(item.key)}
+                  className={cn("flex h-7 min-w-0 cursor-pointer items-center justify-center rounded-md px-0.5 text-xs font-medium transition-colors", on ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground")}>
+                  <span className="truncate">{item.label}</span>
+                  {!!count && (
+                    <span className={cn("ml-0.5 hidden shrink-0 text-[10px] font-semibold tabular-nums @xs:inline",
+                      item.key === "nao_lidas" ? "rounded-full bg-primary px-1 leading-4 text-primary-foreground" : on ? "text-muted-foreground" : "text-muted-foreground/70")}>{count > 99 ? "99+" : count}</span>
+                  )}
+                  {!!count && item.key === "nao_lidas" && <span className="ml-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary @xs:hidden" />}
+                </button>
+              );
+            })}
+          </div></div>
         )}
       </div>
 
@@ -650,4 +657,39 @@ function PanelSection({ title, children }: { title: string; children: React.Reac
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="grid gap-1"><span className="text-xs text-muted-foreground">{label}</span>{children}</div>;
+}
+
+/** Filtro por número: um botão compacto ao lado da busca, sem rolagem lateral. */
+function ChannelFilter({ channels, value, onChange }: { channels: { id: number; name: string; color?: string | null; status: string }[]; value?: number; onChange: (id?: number) => void }) {
+  const [open, setOpen] = useState(false);
+  const current = channels.find((c) => c.id === value);
+  const pick = (id?: number) => { onChange(id); setOpen(false); };
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <Tip text={current ? `Só ${current.name}` : "Filtrar por número"}>
+        <PopoverTrigger asChild>
+          <Button size="sm" variant="outline" aria-label="Filtrar por número" className={cn("h-9 shrink-0 gap-1.5 px-2.5", current && "border-primary/50")}>
+            {current ? <span className="h-2 w-2 rounded-full" style={{ background: current.color ?? "#149E5E" }} /> : <Icon name="smartphone" className="h-4 w-4" />}
+            <span className="hidden max-w-24 truncate text-xs sm:inline">{current ? current.name : "Todos"}</span>
+            <Icon name="chevron-down" className="h-3.5 w-3.5 text-muted-foreground" />
+          </Button>
+        </PopoverTrigger>
+      </Tip>
+      <PopoverContent align="end" className="w-60 p-1">
+        <p className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Mostrar conversas de</p>
+        {[{ id: undefined as number | undefined, name: "Todos os números", color: null as string | null, status: "conectado" }, ...channels].map((c) => {
+          const on = c.id === value;
+          return (
+            <button key={c.id ?? "all"} type="button" onClick={() => pick(c.id)}
+              className={cn("flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted", on && "bg-muted font-medium")}>
+              {c.id === undefined ? <Icon name="layers" className="h-3.5 w-3.5 text-muted-foreground" /> : <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: c.color ?? "#149E5E" }} />}
+              <span className="min-w-0 flex-1 truncate">{c.name}</span>
+              {c.id !== undefined && c.status !== "conectado" && <Icon name="wifi-off" className="h-3.5 w-3.5 text-amber-600" />}
+              {on && <Icon name="check" className="h-3.5 w-3.5 text-primary" />}
+            </button>
+          );
+        })}
+      </PopoverContent>
+    </Popover>
+  );
 }

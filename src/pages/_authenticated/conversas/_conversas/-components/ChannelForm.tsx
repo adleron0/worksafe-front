@@ -151,7 +151,7 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
               </div>
               <div className="chat-wallpaper flex justify-end rounded-xl border p-3">
                 <div className="max-w-[90%] rounded-2xl rounded-br-md bg-primary-soft px-3 py-1.5 text-[13px] leading-snug shadow-xs">
-                  {!instagram ? <b>{shownName}:</b> : <span>{shownName}:</span>}<br />Bom dia! Temos turma no dia 10.
+                  {!instagram ? <i>{shownName}:</i> : <span>{shownName}:</span>}<br />Bom dia! Temos turma no dia 10.
                 </div>
               </div>
             </div>

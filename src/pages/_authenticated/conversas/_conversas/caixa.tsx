@@ -601,7 +601,7 @@ function Composer({ conv }: { conv: ConversationDetail }) {
           ))}
           {!isNote && conv.signature && !blocked && (
             <Tip text="O cliente vê seu nome na frente da mensagem. Dá para mudar em Números → Configurar.">
-              <span className="ml-2 hidden min-w-0 items-center gap-1 truncate text-[11px] text-muted-foreground sm:flex"><Icon name="signature" className="h-3 w-3 shrink-0" /><span className="truncate">sai como <b className="font-semibold text-foreground/80">{conv.signature}:</b></span></span>
+              <span className="ml-2 hidden min-w-0 items-center gap-1 truncate text-[11px] text-muted-foreground sm:flex"><Icon name="signature" className="h-3 w-3 shrink-0" /><span className="truncate">sai como <i className="text-foreground/80">{conv.signature}:</i></span></span>
             </Tip>
           )}
           {!isNote && instagram && win.open && (

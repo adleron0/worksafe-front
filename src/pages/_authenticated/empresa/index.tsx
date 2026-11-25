@@ -10,6 +10,7 @@ import { useTheme } from "@/context/ThemeContext";
 import { generateTheme } from "@/utils/color-utils";
 // Template Page
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import GoogleLoginCard from "./-components/GoogleLoginCard";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import Input from "@/components/general-components/Input";
@@ -946,6 +947,7 @@ const Empresa = () => {
           </form>
         </CardContent>
       </Card>
+      {can("update_company") && <GoogleLoginCard />}
     </div>
   );
 };

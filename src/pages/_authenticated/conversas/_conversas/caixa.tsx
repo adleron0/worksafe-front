@@ -15,15 +15,15 @@ import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
-import TagBadge from "@/components/general-components/TagBadge";
 import { cn } from "@/lib/utils";
 import { Tip, errorMessage } from "../../comercial/-shared/commercial";
 import {
   Box, CHAT_KEY, ChatMessage, ConversationDetail, ConversationItem, ConversationList, PAGES, TICK_LABEL,
-  ChannelLogo, ChannelPill, ContactAvatar, InstagramLogo, MessageTicks, WhatsAppLogo, chatApi, contactHandle, contactName, dayLabel, timeBr, useChannels, useChatMeta, useLiveInterval, useMedia, when,
+  ChannelLogo, ContactAvatar, InstagramLogo, MessageTicks, WhatsAppLogo, chatApi, contactHandle, contactName, dayLabel, timeBr, useChannels, useChatMeta, useLiveInterval, useMedia, when,
 } from "../-shared/chat";
 import { setSound, useChatSound } from "../-shared/live";
 import { ACCEPT, MAX_FILE, MessageMedia, PendingFile, VoiceRecorder } from "./-components/media";
+import ContactPanel from "./-components/ContactPanel";
 
 interface Search { conversa?: number; caixa?: Box; numero?: number }
 
@@ -695,84 +695,6 @@ function Composer({ conv }: { conv: ConversationDetail }) {
         }} />
     </footer>
   );
-}
-
-// ---------------------------------------------------------------- ficha do contato
-
-function ContactPanel({ id }: { id: number }) {
-  const conv = useConversation(id);
-  const meta = useChatMeta();
-  const queryClient = useQueryClient();
-  const data = conv.data;
-  const patch = useMutation({
-    mutationFn: (body: Record<string, unknown>) => chatApi.patch<ConversationDetail>(`conversations/${id}`, body),
-    onSuccess: (out) => { queryClient.setQueryData([CHAT_KEY, "conversation", id], out); queryClient.invalidateQueries({ queryKey: [CHAT_KEY, "list"] }); },
-    onError: (err) => toast({ title: "Não deu certo", description: errorMessage(err), variant: "destructive" }),
-  });
-  if (!data) return <aside className="border-l p-4"><Skeleton className="h-40" /></aside>;
-  const name = contactName(data.contact);
-  const copy = (value: string) => { navigator.clipboard?.writeText(value); toast({ title: "Copiado", variant: "success" }); };
-
-  return (
-    <aside className="scroll-fino flex min-h-0 flex-col overflow-y-auto border-l bg-muted/20">
-      <div className="grid justify-items-center gap-2 border-b px-4 py-6 text-center">
-        <ContactAvatar name={name} url={data.contact.avatarUrl} size={72} />
-        <div className="min-w-0">
-          <p className="truncate font-semibold">{name}</p>
-          {data.contact.pushName && data.contact.pushName !== name && <p className="truncate text-xs text-muted-foreground">{data.channel.type === "instagram" ? "No Instagram" : "No WhatsApp"}: {data.contact.pushName}</p>}
-        </div>
-        <button type="button" onClick={() => copy(contactHandle(data.contact, data.channel.type))} className="flex cursor-pointer items-center gap-1.5 rounded-full bg-background px-3 py-1 text-xs font-medium shadow-xs hover:bg-muted">
-          <ChannelLogo type={data.channel.type} className="h-3.5 w-3.5" />{contactHandle(data.contact, data.channel.type)}<Icon name="copy" className="h-3 w-3 text-muted-foreground" />
-        </button>
-        {data.contact.optOut && <TagBadge icon="bell-off" color="#dc2626">pediu para não receber</TagBadge>}
-      </div>
-
-      <PanelSection title="Cliente">
-        {data.customer ? (
-          <Link to="/clientes/$customerId" params={{ customerId: String(data.customer.id) }} className="flex items-center gap-3 rounded-xl border bg-background p-3 transition-colors hover:border-primary/40">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary"><Icon name="building-2" className="h-4 w-4" /></span>
-            <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{data.customer.name}</span><span className="text-xs text-muted-foreground">Abrir a ficha do cliente</span></span>
-            <Icon name="chevron-right" className="h-4 w-4 text-muted-foreground" />
-          </Link>
-        ) : (
-          <div className="rounded-xl border border-dashed bg-background/60 p-3 text-xs text-muted-foreground">
-            <p className="flex items-center gap-1.5 font-medium text-foreground"><Icon name="link-2-off" className="h-3.5 w-3.5" />Sem cliente vinculado</p>
-            <p className="mt-1">{data.channel.type === "instagram" ? "No Instagram não vem telefone: o vínculo com o cliente chega na próxima fase." : "O sistema liga sozinho quando o telefone bate com o cadastro de um cliente ou de um contato dele."}</p>
-          </div>
-        )}
-      </PanelSection>
-
-      <PanelSection title="Atendimento">
-        <div className="grid gap-3">
-          <Field label="Número"><ChannelPill channel={data.channel} /></Field>
-          <Field label="Setor">
-            <Select name="sector" options={meta.data?.sectors ?? []} state={data.sector ?? ""} placeholder="Sem setor" onChange={(_, value) => patch.mutate({ sector: value || null })} />
-          </Field>
-          <Field label="Responsável">
-            <Select name="owner" searchable clearable options={(meta.data?.users ?? []).map((u) => ({ id: String(u.id), name: u.name }))} state={data.assignedUser ? String(data.assignedUser.id) : ""} placeholder="Sem dono"
-              onChange={(_, value) => patch.mutate({ assignedUserId: value ? Number(value) : null })} />
-          </Field>
-          <Field label="Situação">
-            <Select name="status" options={[{ id: "aberta", name: "Aberta" }, { id: "aguardando", name: "Aguardando o cliente" }, { id: "resolvida", name: "Resolvida" }]}
-              state={data.status} onChange={(_, value) => value && value !== data.status && patch.mutate({ status: value })} />
-          </Field>
-        </div>
-      </PanelSection>
-    </aside>
-  );
-}
-
-function PanelSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="border-b px-4 py-4">
-      <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">{title}</h3>
-      {children}
-    </section>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="grid gap-1"><span className="text-xs text-muted-foreground">{label}</span>{children}</div>;
 }
 
 /** Filtro por número: um botão compacto ao lado da busca, sem rolagem lateral. */

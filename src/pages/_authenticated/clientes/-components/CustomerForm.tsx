@@ -37,9 +37,11 @@ interface FormProps {
   /** Na página do cliente: o formulário fica aberto e avisa quem chamou ao salvar. */
   page?: boolean;
   onSaved?: (row: IEntity) => void;
+  /** Cadastro novo já com alguns campos (ex.: nome e telefone vindos de uma conversa). */
+  initial?: { name?: string; phone?: string };
 }
 
-const Form = ({ formData, openSheet, entity, page = false, onSaved }: FormProps) => {
+const Form = ({ formData, openSheet, entity, page = false, onSaved, initial }: FormProps) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
 
@@ -89,12 +91,12 @@ const Form = ({ formData, openSheet, entity, page = false, onSaved }: FormProps)
   type FormData = z.infer<typeof Schema>;
 
   const [dataForm, setDataForm] = useState<FormData>({
-    name: formData?.name || "",
+    name: formData?.name || initial?.name || "",
     corporateName: formData?.corporateName || "",
     email: formData?.email || "",
     imageUrl: formData?.imageUrl || null,
     image: null,
-    phone: formData?.phone || "",
+    phone: formData?.phone || initial?.phone || "",
     cnpj: formData?.cnpj || "",
     stateId: formData?.stateId || 0,
     cityId: formData?.cityId || 0,

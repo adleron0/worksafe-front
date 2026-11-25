@@ -16,8 +16,18 @@ import CustomerForm from "./-components/CustomerForm";
 import { CustomerContactsPanel } from "./-components/CustomerContacts";
 import { IEntity } from "./-interfaces/entity.interface";
 import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
+import { chatApi } from "@/pages/_authenticated/conversas/-shared/chat";
+
+interface Search { nome?: string; telefone?: string; conversa?: number }
 
 export const Route = createFileRoute("/_authenticated/clientes/$customerId")({
+  // vindo de uma conversa: já abre com nome e telefone e, ao salvar, vincula e volta para ela
+  validateSearch: (search: Record<string, unknown>): Search => ({
+    nome: search.nome != null && search.nome !== "" ? String(search.nome).slice(0, 120) : undefined,
+    // o roteador transforma "11912345678" em número: aceita os dois
+    telefone: search.telefone != null && search.telefone !== "" ? String(search.telefone).slice(0, 30) : undefined,
+    conversa: Number(search.conversa) > 0 ? Number(search.conversa) : undefined,
+  }),
   component: CustomerPage,
 });
 
@@ -30,6 +40,7 @@ const entity = { name: "Cliente", pluralName: "Clientes", model: "customer", abi
  */
 function CustomerPage() {
   const { customerId } = Route.useParams();
+  const fromChat = Route.useSearch();
   const isNew = customerId === "novo";
   const id = Number(customerId);
   const { can } = useVerify();
@@ -117,14 +128,33 @@ function CustomerPage() {
           <p className="text-xs text-muted-foreground mb-3">
             {isNew ? "Comece pelo CNPJ: os dados da empresa vêm sozinhos. Depois de cadastrar, aparecem os contatos e os arquivos." : "Cadastro, endereço e classificação."}
           </p>
+          {isNew && fromChat.conversa && (
+            <p className="mb-3 flex items-center gap-2 rounded-lg bg-primary/8 px-3 py-2 text-xs text-foreground">
+              <Icon name="message-circle" className="h-3.5 w-3.5 shrink-0 text-primary" />
+              <span className="flex-1">Ao salvar, o cliente já fica vinculado à conversa e você volta para ela.</span>
+              <Link to="/conversas/caixa" search={{ conversa: fromChat.conversa }} className="shrink-0 font-medium text-primary hover:underline">Voltar sem cadastrar</Link>
+            </p>
+          )}
           {canEdit ? (
             <CustomerForm
               key={customer?.id ?? "novo"}
               page
               formData={isNew ? undefined : customer}
+              initial={isNew ? { name: fromChat.nome, phone: fromChat.telefone } : undefined}
               entity={entity}
-              onSaved={(row) => {
-                if (isNew && row?.id) navigate({ to: "/clientes/$customerId", params: { customerId: String(row.id) }, replace: true });
+              onSaved={async (row) => {
+                if (!isNew || !row?.id) return;
+                if (fromChat.conversa) {
+                  try {
+                    await chatApi.patch(`conversations/${fromChat.conversa}/contact`, { customerId: row.id });
+                    toast({ title: "Cliente cadastrado e vinculado à conversa", variant: "success" });
+                  } catch (error) {
+                    toast({ title: "Cliente cadastrado, mas não deu para vincular", description: errorMessage(error), variant: "destructive" });
+                  }
+                  navigate({ to: "/conversas/caixa", search: { conversa: fromChat.conversa } });
+                  return;
+                }
+                navigate({ to: "/clientes/$customerId", params: { customerId: String(row.id) }, replace: true });
               }}
             />
           ) : (

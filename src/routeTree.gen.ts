@@ -17,6 +17,7 @@ import { Route as IndexIndexRouteImport } from './pages/_index/index'
 import { Route as StudentProfileRouteImport } from './pages/student/profile'
 import { Route as IndexEnviarImagensRouteImport } from './pages/_index/enviar-imagens'
 import { Route as IndexConectarIaRouteImport } from './pages/_index/conectar-ia'
+import { Route as IndexAcessoRouteImport } from './pages/_index/acesso'
 import { Route as AuthenticatedHomeRouteImport } from './pages/_authenticated/home'
 import { Route as AuthenticatedBuildingRouteImport } from './pages/_authenticated/building'
 import { Route as IndexCertificadosIndexRouteImport } from './pages/_index/certificados/index'
@@ -48,7 +49,9 @@ import { Route as IndexPropostaRascunhoProposalIdRouteImport } from './pages/_in
 import { Route as IndexOsOrderIdImprimirRouteImport } from './pages/_index/os.$orderId.imprimir'
 import { Route as IndexCertificadosNomeIdRouteImport } from './pages/_index/certificados/$nome.$id'
 import { Route as IndexAuthStudentLoginRouteImport } from './pages/_index/auth/student/login'
+import { Route as AuthenticatedUsuariosUsuariosPedidosAcessoRouteImport } from './pages/_authenticated/usuarios/_usuarios/pedidos-acesso'
 import { Route as AuthenticatedUsuariosUsuariosNovoRouteImport } from './pages/_authenticated/usuarios/_usuarios/novo'
+import { Route as AuthenticatedUsuariosUsuariosConvidadosRouteImport } from './pages/_authenticated/usuarios/_usuarios/convidados'
 import { Route as AuthenticatedUsuariosPerfisPerfisRouteImport } from './pages/_authenticated/usuarios/_perfis/perfis'
 import { Route as AuthenticatedTreinamentosTurmasTurmasRouteImport } from './pages/_authenticated/treinamentos/_turmas/turmas'
 import { Route as AuthenticatedTreinamentosInstrutoresInstrutoresRouteImport } from './pages/_authenticated/treinamentos/_instrutores/instrutores'
@@ -229,6 +232,11 @@ const IndexConectarIaRoute = IndexConectarIaRouteImport.update({
   path: '/conectar-ia',
   getParentRoute: () => IndexRoute,
 } as any)
+const IndexAcessoRoute = IndexAcessoRouteImport.update({
+  id: '/acesso',
+  path: '/acesso',
+  getParentRoute: () => IndexRoute,
+} as any)
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   id: '/home',
   path: '/home',
@@ -401,10 +409,22 @@ const IndexAuthStudentLoginRoute = IndexAuthStudentLoginRouteImport.update({
   path: '/auth/student/login',
   getParentRoute: () => IndexRoute,
 } as any)
+const AuthenticatedUsuariosUsuariosPedidosAcessoRoute =
+  AuthenticatedUsuariosUsuariosPedidosAcessoRouteImport.update({
+    id: '/usuarios/_usuarios/pedidos-acesso',
+    path: '/usuarios/pedidos-acesso',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedUsuariosUsuariosNovoRoute =
   AuthenticatedUsuariosUsuariosNovoRouteImport.update({
     id: '/usuarios/_usuarios/novo',
     path: '/usuarios/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedUsuariosUsuariosConvidadosRoute =
+  AuthenticatedUsuariosUsuariosConvidadosRouteImport.update({
+    id: '/usuarios/_usuarios/convidados',
+    path: '/usuarios/convidados',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedUsuariosPerfisPerfisRoute =
@@ -1268,6 +1288,7 @@ export interface FileRoutesByFullPath {
   '/student': typeof StudentRouteWithChildren
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/acesso': typeof IndexAcessoRoute
   '/conectar-ia': typeof IndexConectarIaRoute
   '/enviar-imagens': typeof IndexEnviarImagensRoute
   '/student/profile': typeof StudentProfileRoute
@@ -1374,7 +1395,9 @@ export interface FileRoutesByFullPath {
   '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/usuarios/convidados': typeof AuthenticatedUsuariosUsuariosConvidadosRoute
   '/usuarios/novo': typeof AuthenticatedUsuariosUsuariosNovoRoute
+  '/usuarios/pedidos-acesso': typeof AuthenticatedUsuariosUsuariosPedidosAcessoRoute
   '/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/os/$orderId/imprimir': typeof IndexOsOrderIdImprimirRoute
@@ -1448,6 +1471,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/building': typeof AuthenticatedBuildingRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/acesso': typeof IndexAcessoRoute
   '/conectar-ia': typeof IndexConectarIaRoute
   '/enviar-imagens': typeof IndexEnviarImagensRoute
   '/student/profile': typeof StudentProfileRoute
@@ -1554,7 +1578,9 @@ export interface FileRoutesByTo {
   '/treinamentos/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/treinamentos/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/usuarios/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/usuarios/convidados': typeof AuthenticatedUsuariosUsuariosConvidadosRoute
   '/usuarios/novo': typeof AuthenticatedUsuariosUsuariosNovoRoute
+  '/usuarios/pedidos-acesso': typeof AuthenticatedUsuariosUsuariosPedidosAcessoRoute
   '/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/os/$orderId/imprimir': typeof IndexOsOrderIdImprimirRoute
@@ -1632,6 +1658,7 @@ export interface FileRoutesById {
   '/student': typeof StudentRouteWithChildren
   '/_authenticated/building': typeof AuthenticatedBuildingRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/_index/acesso': typeof IndexAcessoRoute
   '/_index/conectar-ia': typeof IndexConectarIaRoute
   '/_index/enviar-imagens': typeof IndexEnviarImagensRoute
   '/student/profile': typeof StudentProfileRoute
@@ -1738,7 +1765,9 @@ export interface FileRoutesById {
   '/_authenticated/treinamentos/_instrutores/instrutores': typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   '/_authenticated/treinamentos/_turmas/turmas': typeof AuthenticatedTreinamentosTurmasTurmasRoute
   '/_authenticated/usuarios/_perfis/perfis': typeof AuthenticatedUsuariosPerfisPerfisRoute
+  '/_authenticated/usuarios/_usuarios/convidados': typeof AuthenticatedUsuariosUsuariosConvidadosRoute
   '/_authenticated/usuarios/_usuarios/novo': typeof AuthenticatedUsuariosUsuariosNovoRoute
+  '/_authenticated/usuarios/_usuarios/pedidos-acesso': typeof AuthenticatedUsuariosUsuariosPedidosAcessoRoute
   '/_index/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/_index/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
   '/_index/os/$orderId/imprimir': typeof IndexOsOrderIdImprimirRoute
@@ -1815,6 +1844,7 @@ export interface FileRouteTypes {
     | '/student'
     | '/building'
     | '/home'
+    | '/acesso'
     | '/conectar-ia'
     | '/enviar-imagens'
     | '/student/profile'
@@ -1921,7 +1951,9 @@ export interface FileRouteTypes {
     | '/treinamentos/instrutores'
     | '/treinamentos/turmas'
     | '/usuarios/perfis'
+    | '/usuarios/convidados'
     | '/usuarios/novo'
+    | '/usuarios/pedidos-acesso'
     | '/auth/student/login'
     | '/certificados/$nome/$id'
     | '/os/$orderId/imprimir'
@@ -1995,6 +2027,7 @@ export interface FileRouteTypes {
   to:
     | '/building'
     | '/home'
+    | '/acesso'
     | '/conectar-ia'
     | '/enviar-imagens'
     | '/student/profile'
@@ -2101,7 +2134,9 @@ export interface FileRouteTypes {
     | '/treinamentos/instrutores'
     | '/treinamentos/turmas'
     | '/usuarios/perfis'
+    | '/usuarios/convidados'
     | '/usuarios/novo'
+    | '/usuarios/pedidos-acesso'
     | '/auth/student/login'
     | '/certificados/$nome/$id'
     | '/os/$orderId/imprimir'
@@ -2178,6 +2213,7 @@ export interface FileRouteTypes {
     | '/student'
     | '/_authenticated/building'
     | '/_authenticated/home'
+    | '/_index/acesso'
     | '/_index/conectar-ia'
     | '/_index/enviar-imagens'
     | '/student/profile'
@@ -2284,7 +2320,9 @@ export interface FileRouteTypes {
     | '/_authenticated/treinamentos/_instrutores/instrutores'
     | '/_authenticated/treinamentos/_turmas/turmas'
     | '/_authenticated/usuarios/_perfis/perfis'
+    | '/_authenticated/usuarios/_usuarios/convidados'
     | '/_authenticated/usuarios/_usuarios/novo'
+    | '/_authenticated/usuarios/_usuarios/pedidos-acesso'
     | '/_index/auth/student/login'
     | '/_index/certificados/$nome/$id'
     | '/_index/os/$orderId/imprimir'
@@ -2418,6 +2456,13 @@ declare module '@tanstack/react-router' {
       path: '/conectar-ia'
       fullPath: '/conectar-ia'
       preLoaderRoute: typeof IndexConectarIaRouteImport
+      parentRoute: typeof IndexRoute
+    }
+    '/_index/acesso': {
+      id: '/_index/acesso'
+      path: '/acesso'
+      fullPath: '/acesso'
+      preLoaderRoute: typeof IndexAcessoRouteImport
       parentRoute: typeof IndexRoute
     }
     '/_authenticated/home': {
@@ -2637,11 +2682,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexAuthStudentLoginRouteImport
       parentRoute: typeof IndexRoute
     }
+    '/_authenticated/usuarios/_usuarios/pedidos-acesso': {
+      id: '/_authenticated/usuarios/_usuarios/pedidos-acesso'
+      path: '/usuarios/pedidos-acesso'
+      fullPath: '/usuarios/pedidos-acesso'
+      preLoaderRoute: typeof AuthenticatedUsuariosUsuariosPedidosAcessoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/usuarios/_usuarios/novo': {
       id: '/_authenticated/usuarios/_usuarios/novo'
       path: '/usuarios/novo'
       fullPath: '/usuarios/novo'
       preLoaderRoute: typeof AuthenticatedUsuariosUsuariosNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/usuarios/_usuarios/convidados': {
+      id: '/_authenticated/usuarios/_usuarios/convidados'
+      path: '/usuarios/convidados'
+      fullPath: '/usuarios/convidados'
+      preLoaderRoute: typeof AuthenticatedUsuariosUsuariosConvidadosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/usuarios/_perfis/perfis': {
@@ -3730,7 +3789,9 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTreinamentosInstrutoresInstrutoresRoute: typeof AuthenticatedTreinamentosInstrutoresInstrutoresRoute
   AuthenticatedTreinamentosTurmasTurmasRoute: typeof AuthenticatedTreinamentosTurmasTurmasRoute
   AuthenticatedUsuariosPerfisPerfisRoute: typeof AuthenticatedUsuariosPerfisPerfisRoute
+  AuthenticatedUsuariosUsuariosConvidadosRoute: typeof AuthenticatedUsuariosUsuariosConvidadosRoute
   AuthenticatedUsuariosUsuariosNovoRoute: typeof AuthenticatedUsuariosUsuariosNovoRoute
+  AuthenticatedUsuariosUsuariosPedidosAcessoRoute: typeof AuthenticatedUsuariosUsuariosPedidosAcessoRoute
   AuthenticatedInventariosAreasIndexRoute: typeof AuthenticatedInventariosAreasIndexRoute
   AuthenticatedSuprimentosEquipamentosIndexRoute: typeof AuthenticatedSuprimentosEquipamentosIndexRoute
   AuthenticatedSuprimentosEstoqueIndexRoute: typeof AuthenticatedSuprimentosEstoqueIndexRoute
@@ -3967,8 +4028,12 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedTreinamentosTurmasTurmasRoute,
   AuthenticatedUsuariosPerfisPerfisRoute:
     AuthenticatedUsuariosPerfisPerfisRoute,
+  AuthenticatedUsuariosUsuariosConvidadosRoute:
+    AuthenticatedUsuariosUsuariosConvidadosRoute,
   AuthenticatedUsuariosUsuariosNovoRoute:
     AuthenticatedUsuariosUsuariosNovoRoute,
+  AuthenticatedUsuariosUsuariosPedidosAcessoRoute:
+    AuthenticatedUsuariosUsuariosPedidosAcessoRoute,
   AuthenticatedInventariosAreasIndexRoute:
     AuthenticatedInventariosAreasIndexRoute,
   AuthenticatedSuprimentosEquipamentosIndexRoute:
@@ -4103,6 +4168,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 interface IndexRouteChildren {
+  IndexAcessoRoute: typeof IndexAcessoRoute
   IndexConectarIaRoute: typeof IndexConectarIaRoute
   IndexEnviarImagensRoute: typeof IndexEnviarImagensRoute
   IndexIndexRoute: typeof IndexIndexRoute
@@ -4121,6 +4187,7 @@ interface IndexRouteChildren {
 }
 
 const IndexRouteChildren: IndexRouteChildren = {
+  IndexAcessoRoute: IndexAcessoRoute,
   IndexConectarIaRoute: IndexConectarIaRoute,
   IndexEnviarImagensRoute: IndexEnviarImagensRoute,
   IndexIndexRoute: IndexIndexRoute,

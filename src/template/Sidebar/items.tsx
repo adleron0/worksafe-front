@@ -16,7 +16,7 @@ export interface SidebarLink extends SidebarAccess {
   icon: string;
   path: string;
   /** Contador ao lado do nome (ex.: conversas não lidas do Instagram). */
-  badge?: "instagramUnread" | "chatUnread";
+  badge?: "instagramUnread" | "chatUnread" | "accessRequests";
 }
 
 /** Rótulo pequeno que separa partes de um submenu (ex.: "cadastros"). */
@@ -305,6 +305,8 @@ export const footerGroup: SidebarGroup = {
       subitems: [
         { title: "Usuários", icon: "square-user", ability: "user", path: "/usuarios" },
         { title: "Perfis", icon: "user-pen", ability: "profile", path: "/usuarios/perfis" },
+        { title: "Pedidos de acesso", icon: "user-check", permissions: ["aprovar_acesso_user"], path: "/usuarios/pedidos-acesso", badge: "accessRequests" },
+        { title: "Convidados", icon: "user-plus", permissions: ["convidar_externo_user"], path: "/usuarios/convidados" },
       ],
     },
     { title: "Integrações", icon: "unplug", path: "/integracoes", ability: "financeiro" },

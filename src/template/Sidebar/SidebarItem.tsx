@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { isDivider, type SidebarLink, type SidebarSubitem } from "./items";
 import { useInstagramUnread } from "@/pages/_authenticated/bots/-shared/instagram";
 import { useChatUnread } from "@/pages/_authenticated/conversas/-shared/chat";
+import { usePendingAccessCount } from "@/pages/_authenticated/usuarios/-shared/access";
 
 /** Contador do item (só busca quando o item está visível, ou seja, com a permissão). */
 const InstagramUnread = () => {
@@ -19,7 +20,13 @@ const ChatUnread = () => {
   if (!count) return null;
   return <span className="ml-auto grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground ring-1 ring-background">{count > 99 ? "99+" : count}</span>;
 };
-const Badge = ({ kind }: { kind?: SidebarLink["badge"] }) => (kind === "instagramUnread" ? <InstagramUnread /> : kind === "chatUnread" ? <ChatUnread /> : null);
+const AccessRequests = () => {
+  const count = usePendingAccessCount(true);
+  if (!count) return null;
+  return <span className="ml-auto grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground ring-1 ring-background">{count > 99 ? "99+" : count}</span>;
+};
+const Badge = ({ kind }: { kind?: SidebarLink["badge"] }) =>
+  kind === "instagramUnread" ? <InstagramUnread /> : kind === "chatUnread" ? <ChatUnread /> : kind === "accessRequests" ? <AccessRequests /> : null;
 
 interface SidebarItemProps {
   title: string;

@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { takeAfterLogin } from "@/lib/after-login";
 import Loader from "@/components/general-components/Loader";
 import { useState, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { postLogin } from "@/services/auth/loginService";
 import { useForm, Controller } from "react-hook-form";
@@ -17,7 +17,15 @@ import { LoginData } from "@/general-interfaces/auth.interface";
 import { useAuth } from "@/context/AuthContext";
 import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
 import DynamicLogo from "@/components/general-components/DynamicLogo";
-import { ArrowUpRight, Building2, KeyRound, Lock, Mail, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Building2, ChevronDown, KeyRound, Lock, Mail, ShieldCheck } from "lucide-react";
+import {
+  GOOGLE_ERRORS,
+  exchangeGoogleTicket,
+  googleEnabled,
+  googleStartUrl,
+  pendingToken,
+} from "@/services/auth/googleService";
+import GoogleIcon from "@/components/general-components/GoogleIcon";
 
 export const Route = createFileRoute("/_index/")({
   loader: async () => {
@@ -38,6 +46,14 @@ function Login() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const { data: googleOn } = useQuery({
+    queryKey: ["google-login-enabled"],
+    queryFn: googleEnabled,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
   const { control, handleSubmit } = useForm<LoginData>({
     defaultValues: {
       email: "",
@@ -57,6 +73,58 @@ function Login() {
     }
   }, [accessToken, navigate, reloadUser]);
 
+  const enterWith = (token: string) => {
+    pendingToken.clear();
+    setAccessTokenState(token);
+    localStorage.removeItem("secretWord");
+    localStorage.setItem("accessToken", token);
+    setIsLogged(true);
+    reloadUser();
+    const next = takeAfterLogin();
+    if (next) window.location.assign(next);
+    else navigate({ to: "/home" });
+  };
+
+  // Volta do Google: #gt=<ticket> (uso único) ou #ge=<motivo da recusa>.
+  // O fragmento é apagado na hora, antes de qualquer outra coisa.
+  useEffect(() => {
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const ticket = hash.get("gt");
+    const error = hash.get("ge");
+    if (!ticket && !error) return;
+    window.history.replaceState(null, "", window.location.pathname);
+    if (error) {
+      // no próximo ciclo: este efeito roda antes de o <Toaster> começar a escutar
+      setTimeout(() =>
+        toast({
+          title: "Não foi possível entrar",
+          description: GOOGLE_ERRORS[error] ?? "Tente de novo.",
+          variant: "destructive",
+          duration: 7000,
+        }), 50);
+      return;
+    }
+    setGoogleBusy(true);
+    exchangeGoogleTicket(ticket!)
+      .then((res) => {
+        if (res.status === "ok") enterWith(res.accessToken);
+        else {
+          pendingToken.set(res.pendingToken);
+          navigate({ to: "/acesso" });
+        }
+      })
+      .catch(() => {
+        setGoogleBusy(false);
+        toast({
+          title: "Não foi possível entrar",
+          description: GOOGLE_ERRORS.estado_invalido,
+          variant: "destructive",
+          duration: 7000,
+        });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const { mutate: executeLogin, isPending } = useMutation<
     { accessToken: string },
     Error,
@@ -64,16 +132,7 @@ function Login() {
   >({
     mutationFn: postLogin,
     onSuccess: (data) => {
-      setAccessTokenState(data.accessToken);
-      localStorage.removeItem("secretWord");
-      localStorage.setItem("accessToken", data.accessToken);
-      setIsLogged(true);
-      reloadUser();
-      const next = takeAfterLogin();
-      if (next) window.location.assign(next);
-      else navigate({
-        to: "/home",
-      });
+      enterWith(data.accessToken);
       toast({
         title: "Bem Vindo!",
         description: "Login realizado com sucesso",
@@ -162,11 +221,42 @@ function Login() {
             </p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">Entrar na intranet</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Use seu e-mail de acesso, sua senha e o CNPJ da empresa.
+              {googleOn
+                ? "Entre com a sua conta Google da empresa."
+                : "Use seu e-mail de acesso, sua senha e o CNPJ da empresa."}
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {googleOn && (
+            <>
+              <Button
+                asChild={!googleBusy}
+                disabled={googleBusy}
+                size="lg"
+                variant="outline"
+                className="h-11 w-full gap-3 rounded-xl text-[15px]"
+              >
+                {googleBusy ? (
+                  <span><VscLoading className="animate-spin" /> Entrando…</span>
+                ) : (
+                  <a href={googleStartUrl()}>
+                    <GoogleIcon className="h-5 w-5" /> Entrar com Google
+                  </a>
+                )}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setShowPasswordForm((v) => !v)}
+                className="mx-auto mt-4 flex items-center gap-1 text-xs text-muted-foreground transition hover:text-foreground"
+              >
+                Entrar com e-mail e senha
+                <ChevronDown className={`h-3.5 w-3.5 transition ${showPasswordForm ? "rotate-180" : ""}`} />
+              </button>
+            </>
+          )}
+
+          {(!googleOn || showPasswordForm) && (
+          <form onSubmit={handleSubmit(onSubmit)} className={`space-y-4 ${googleOn ? "mt-4" : ""}`}>
             <div className="space-y-1.5">
               <Label htmlFor="email">E-mail</Label>
               <div className="relative">
@@ -234,6 +324,7 @@ function Login() {
               {isPending ? <VscLoading className="animate-spin" /> : "Entrar"}
             </Button>
           </form>
+          )}
 
           <div className="my-6 flex items-center gap-4">
             <Separator className="flex-1" />

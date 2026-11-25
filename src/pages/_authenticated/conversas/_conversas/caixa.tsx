@@ -490,6 +490,11 @@ function Bubble({ message, conversationId, grouped }: { message: ChatMessage; co
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [CHAT_KEY] }),
     onError: (err) => toast({ title: "Não foi possível reenviar", description: errorMessage(err), variant: "destructive" }),
   });
+  const refetchMedia = useMutation({
+    mutationFn: () => chatApi.post(`conversations/${conversationId}/messages/${message.id}/media`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [CHAT_KEY] }),
+    onError: (err) => toast({ title: "Não deu para baixar", description: errorMessage(err), variant: "destructive" }),
+  });
 
   if (message.direction === "note" && message.type === "event") {
     return (
@@ -515,7 +520,7 @@ function Bubble({ message, conversationId, grouped }: { message: ChatMessage; co
         out ? "rounded-2xl rounded-br-md bg-primary-soft text-foreground" : "rounded-2xl rounded-bl-md bg-background",
         grouped && (out ? "rounded-br-2xl" : "rounded-bl-2xl"),
         message.status === "failed" && "ring-1 ring-red-400")}>
-        {media && <MessageMedia message={message} out={out} />}
+        {media && <MessageMedia message={message} out={out} onRetry={() => refetchMedia.mutate()} retrying={refetchMedia.isPending} />}
         {message.text && <span className="whitespace-pre-wrap break-words">{message.text}</span>}
         <span className="float-right mt-1 ml-2 flex translate-y-0.5 items-center gap-1 text-[10px] text-muted-foreground">
           {out && message.sentBy && <span className="hidden max-w-24 truncate group-hover:inline">{message.sentBy}</span>}

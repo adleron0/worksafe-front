@@ -13,6 +13,7 @@ import { commercialApi, dateBr, errorMessage, money, todayIso } from "./commerci
 import { Checkbox } from "@/components/ui/checkbox";
 import { RetentionFields, RetentionRates, RetentionState, rebase, retentionList, retentionState, retentionSum } from "./retentions";
 import { Contract, ContractInstallment, CustomerOrder, PAYMENT_METHOD_OPTIONS, dueRuleText } from "./contracts";
+import EmitNfseCallout from "../../financeiro/_notas/-shared/EmitNfseCallout";
 
 type BillContract = { id: number; number: string; customer: { name: string }; customerOrder?: CustomerOrder | null; retentionRates?: RetentionRates };
 type BillInstallment = Pick<ContractInstallment, "id" | "number" | "total" | "value" | "suggestedDue" | "dueRule" | "dueDate" | "dueDays" | "work" | "depositValue">;
@@ -72,6 +73,7 @@ export function BillDialog({ contract, installment, others = [], onClose, onDone
           </DialogDescription>
         </DialogHeader>
         <form className="grid gap-4" onSubmit={submit}>
+          <EmitNfseCallout origin={{ kind: "installments", contractId: contract.id, installmentIds: chosen.map((i) => i.id) }} onLeave={onClose} />
           <div className="grid sm:grid-cols-3 gap-3">
             <div><Label htmlFor="billNumber">Número da nota <span>*</span></Label>
               <ShadInput id="billNumber" className="mt-1" value={form.invoiceNumber} maxLength={60} autoFocus onChange={(event) => setForm((f) => ({ ...f, invoiceNumber: event.target.value }))} /></div>
@@ -256,6 +258,7 @@ export function MeasurementBillDialog({ contract, rental, lines, onClose, onDone
           </DialogDescription>
         </DialogHeader>
         <form className="grid gap-4" onSubmit={submit}>
+          {total > 0 && <EmitNfseCallout origin={{ kind: "rental", contractId: contract.id, rentalId: rental.id }} onLeave={onClose} />}
           <ul className="rounded border divide-y text-sm">
             {lines.map((line, index) => (
               <li key={index} className="px-3 py-1.5 flex items-center justify-between gap-3">

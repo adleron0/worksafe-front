@@ -112,6 +112,9 @@ export default function InvoiceView({ invoice }: { invoice: Invoice }) {
             <ul className="list-disc pl-4">{invoice.messages.map((m) => <li key={m.code + m.message}>{m.code && !["conexao", "nao-gerada"].includes(m.code) ? <b>{m.code}: </b> : null}{m.message}</li>)}</ul>
           </div>
         )}
+        {invoice.origin?.label && (
+          <p className="rounded-card border bg-muted/50 p-3 text-sm flex items-center gap-1.5"><Icon name="link" className="w-4 h-4" /> Nota de {invoice.origin.label}{invoice.originBilledAt ? " · faturada" : ""}</p>
+        )}
         {invoice.status === "cancelada" && <p className="rounded-card border bg-muted p-3 text-sm">Cancelada em {dateTimeBr(invoice.cancelledAt)}: {invoice.cancelReason}</p>}
         {invoice.status === "substituida" && invoice.replacedById && (
           <p className="rounded-card border bg-muted p-3 text-sm">Substituída pela <Link to="/financeiro/notas/$invoiceId" params={{ invoiceId: String(invoice.replacedById) }} className="underline">nota nova</Link>.</p>

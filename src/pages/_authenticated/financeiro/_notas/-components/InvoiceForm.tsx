@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Response } from "@/general-interfaces/api.interface";
 import { cn } from "@/lib/utils";
 import { errorMessage, money } from "../../../comercial/-shared/commercial";
-import { FEDERAL_TAXES, FederalTax, FISCAL_KEYS, formatDoc, Invoice, Preview, todayIso, useFiscalSettings, useServiceCodes } from "../-shared/fiscal";
+import { FEDERAL_TAXES, FederalTax, FISCAL_KEYS, formatDoc, Invoice, InvoiceOrigin, OriginDraft, Preview, todayIso, useFiscalSettings, useServiceCodes } from "../-shared/fiscal";
 
 type TakerMode = "cliente" | "avulso";
 interface AddressState { cep: string; street: string; number: string; complement: string; district: string; cityName: string; uf: string }
@@ -59,6 +59,26 @@ const addDays = (iso: string, days: number) => { const d = new Date(`${iso}T12:0
 const num = (value: string) => (value === "" ? null : Number(String(value).replace(",", ".")));
 const pick = (v: string | string[]) => String(Array.isArray(v) ? v[0] ?? "" : v);
 
+/** Estado do formulário a partir do rascunho sugerido pela origem (parcela, boletim, OL). */
+function stateFromDraft(draft: OriginDraft): State {
+  const base = stateFrom(null);
+  return {
+    ...base,
+    customerId: String(draft.customerId),
+    serviceCodeId: draft.serviceCodeId ? String(draft.serviceCodeId) : "",
+    description: draft.description,
+    competence: draft.competence,
+    grossValue: draft.grossValue,
+    issRate: draft.issRate !== null ? String(draft.issRate) : "",
+    issWithheld: draft.issWithheld,
+    rates: Object.fromEntries(FEDERAL_TAXES.map((t) => [t.id, draft.retentions?.[t.id]?.rate != null ? String(draft.retentions[t.id]!.rate) : ""])) as Record<FederalTax, string>,
+    reference: draft.reference ?? "",
+    order: draft.order ?? "",
+    createReceivable: false,
+    dueDate: "",
+  };
+}
+
 function stateFrom(invoice: Invoice | null): State {
   const t = invoice?.taker;
   const custom = !!invoice && invoice.takerKind !== "cliente";
@@ -86,8 +106,8 @@ function stateFrom(invoice: Invoice | null): State {
     order: invoice?.order ?? "",
     notes: invoice?.notes ?? "",
     createReceivable: invoice ? !!invoice.receivable : true,
-    dueDate: invoice?.receivable?.dueDate ?? addDays(todayIso(), 30),
-    paymentMethod: invoice?.receivable?.paymentMethod ?? "boleto",
+    dueDate: invoice?.origin ? invoice.origin.dueDate ?? "" : invoice?.receivable?.dueDate ?? addDays(todayIso(), 30),
+    paymentMethod: invoice?.origin?.paymentMethod ?? invoice?.receivable?.paymentMethod ?? "boleto",
     number: "",
     issuedAt: todayIso(),
     accessKey: "",
@@ -99,11 +119,13 @@ function stateFrom(invoice: Invoice | null): State {
  * A coluna da direita é a prévia calculada pela API: valores, retenções, líquido,
  * o que impede emitir (erros) e o que merece atenção (avisos).
  */
-export default function InvoiceForm({ invoice, external = false }: { invoice: Invoice | null; external?: boolean }) {
+export default function InvoiceForm({ invoice, external = false, draft }: { invoice: Invoice | null; external?: boolean; draft?: OriginDraft | null }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [state, setState] = useState<State>(() => stateFrom(invoice));
-  const touchedDescription = useRef(!!invoice?.description);
+  const [state, setState] = useState<State>(() => (draft ? stateFromDraft(draft) : stateFrom(invoice)));
+  const touchedDescription = useRef(!!invoice?.description || !!draft?.description);
+  // de onde a nota nasceu: ao autorizar, o sistema fatura essa origem com o número da nota
+  const origin: (InvoiceOrigin & { label?: string }) | null = draft ? { ...draft.origin, label: draft.originLabel } : invoice?.origin && !invoice.originBilledAt ? invoice.origin : null;
   const { data: settings } = useFiscalSettings();
   const { data: services } = useServiceCodes();
   const { can } = useVerify();
@@ -151,9 +173,12 @@ export default function InvoiceForm({ invoice, external = false }: { invoice: In
       reference: state.reference,
       order: state.order,
       notes: state.notes,
-      receivable: state.createReceivable ? { create: true, dueDate: state.dueDate, paymentMethod: state.paymentMethod } : undefined,
+      receivable: origin
+        ? { dueDate: state.dueDate || undefined, paymentMethod: state.paymentMethod }
+        : state.createReceivable ? { create: true, dueDate: state.dueDate, paymentMethod: state.paymentMethod } : undefined,
+      origin: origin ? { kind: origin.kind, contractId: origin.contractId, installmentIds: origin.installmentIds, measurementId: origin.measurementId, rentalId: origin.rentalId } : undefined,
     };
-  }, [state]);
+  }, [state, origin]);
 
   // prévia calculada pela API (com uma pausa enquanto digita)
   const [debounced, setDebounced] = useState(body);
@@ -277,14 +302,21 @@ export default function InvoiceForm({ invoice, external = false }: { invoice: In
         </FormSection>
       )}
 
+      {origin && (
+        <div className="rounded-card border border-primary/40 bg-primary-soft p-4 text-sm">
+          <p className="font-semibold flex items-center gap-1.5"><Icon name="link" className="w-4 h-4" /> Nota de {origin.label ?? "uma origem do contrato"}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Quando a nota for autorizada, o sistema fatura essa origem com o número da nota: conta a receber, caução, comissão e retenções. O cliente e o valor vêm da origem.</p>
+        </div>
+      )}
+
       <FormSection title="Tomador" description="Quem recebe a nota. Os dados vêm do cadastro; dá para corrigir só nesta nota.">
-        <div className="flex gap-2">
+        {!origin && <div className="flex gap-2">
           {(["cliente", "avulso"] as TakerMode[]).map((mode) => (
             <Button key={mode} type="button" size="sm" variant={state.takerMode === mode ? "default" : "outline"} onClick={() => set("takerMode", mode)}>
               {mode === "cliente" ? "Cliente cadastrado" : "Digitar os dados"}
             </Button>
           ))}
-        </div>
+        </div>}
         {state.takerMode === "cliente" && !canListCustomers && (
           <p className="text-sm text-amber-700">Seu perfil não pode ver a lista de clientes. Use "Digitar os dados" ou peça a permissão de clientes.</p>
         )}
@@ -292,7 +324,7 @@ export default function InvoiceForm({ invoice, external = false }: { invoice: In
           <div>
             <Label>Cliente <span>*</span></Label>
             <Select name="customerId" options={(customers?.rows ?? []) as never[]} state={state.customerId} onChange={(_, v) => set("customerId", pick(v))}
-              placeholder="Selecione o cliente" isLoading={loadingCustomers} searchable modal />
+              placeholder="Selecione o cliente" isLoading={loadingCustomers} disabled={!!origin} searchable modal />
           </div>
         )}
         {state.takerMode === "cliente" && preview && !state.editTaker && (
@@ -352,7 +384,8 @@ export default function InvoiceForm({ invoice, external = false }: { invoice: In
 
       <FormSection title="Valores e retenções" description="Informe as alíquotas que o cliente retém; o sistema calcula os valores e o líquido.">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div><Label>Valor do serviço <span>*</span></Label><Input name="grossValue" format="currency" value={state.grossValue} onValueChange={(_, v) => set("grossValue", Number(v) || 0)} className="mt-1" /></div>
+          <div><Label>Valor do serviço <span>*</span></Label><Input name="grossValue" format="currency" value={state.grossValue} disabled={!!origin} onValueChange={(_, v) => set("grossValue", Number(v) || 0)} className="mt-1" />
+            {origin && <p className="text-[11px] text-muted-foreground mt-0.5">O valor da origem (antes da caução).</p>}</div>
           <div><Label>Desconto incondicionado</Label><Input name="discountValue" format="currency" value={state.discountValue} onValueChange={(_, v) => set("discountValue", Number(v) || 0)} className="mt-1" /></div>
           <div><Label>Alíquota do ISS (%)</Label><Input name="issRate" value={state.issRate} inputMode="decimal" placeholder="a do serviço fiscal" onValueChange={(_, v) => set("issRate", String(v))} className="mt-1" /></div>
         </div>
@@ -378,7 +411,20 @@ export default function InvoiceForm({ invoice, external = false }: { invoice: In
         <div><Label>Observações da nota</Label><Input type="textArea" name="notes" rows={2} value={state.notes} placeholder={settings?.defaultNotes ?? ""} onValueChange={(_, v) => set("notes", String(v))} className="mt-1" /></div>
       </FormSection>
 
-      {!invoice?.replacesId && (
+      {origin && (
+        <FormSection title="Cobrança" description="A conta a receber sai do faturamento da origem quando a nota for autorizada.">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label>Vencimento</Label>
+              <CalendarPicker mode="natural" name="dueDate" value={state.dueDate || null} placeholder="pela regra da origem" onValueChange={(_, v) => set("dueDate", v ?? "")} className="mt-1" />
+              <p className="text-[11px] text-muted-foreground mt-0.5">Vazio: segue a regra combinada (dias após a nota, % da obra...).</p>
+            </div>
+            <div><Label>Forma de pagamento</Label><Select name="paymentMethod" options={PAYMENT as never[]} state={state.paymentMethod} onChange={(_, v) => set("paymentMethod", pick(v))} modal /></div>
+          </div>
+        </FormSection>
+      )}
+
+      {!invoice?.replacesId && !origin && (
         <FormSection title="Cobrança" description="A nota pode já gerar a conta a receber, com o líquido e as retenções no relatório de impostos retidos.">
           <label className="flex items-center gap-2 text-sm">
             <Checkbox checked={state.createReceivable} onCheckedChange={(v) => set("createReceivable", v === true)} /> {external ? "Gerar a conta a receber agora" : "Gerar a conta a receber quando a nota for autorizada"}

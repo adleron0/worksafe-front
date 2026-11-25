@@ -71,6 +71,8 @@ export interface Invoice {
   externalUrl: string | null;
   messages: Array<{ code: string; message: string }>;
   receivable: { dueDate?: string; description?: string | null; paymentMethod?: string } | null;
+  origin: (InvoiceOrigin & { label?: string }) | null;
+  originBilledAt: string | null;
   replacesId: number | null;
   replacedById: number | null;
   cancelReason: string | null;
@@ -80,6 +82,33 @@ export interface Invoice {
   createdAt: string;
   events?: Array<{ id: number; kind: string; detail: Record<string, unknown> | null; createdAt: string; userId: number | null }>;
   receivables?: Array<{ id: number; description: string | null; value: number; netValue: number | null; status: string; dueDate: string | null; paidAt: string | null; inactiveAt: string | null }>;
+}
+
+export interface InvoiceOrigin {
+  kind: "installments" | "measurement" | "rental";
+  contractId: number;
+  installmentIds?: number[];
+  measurementId?: number;
+  rentalId?: number;
+  dueDate?: string | null;
+  paymentMethod?: string | null;
+}
+
+/** Rascunho sugerido a partir de uma origem (GET fiscal/invoices/from-origin). */
+export interface OriginDraft {
+  takerKind: "cliente";
+  customerId: number;
+  serviceCodeId: number | null;
+  grossValue: number;
+  competence: string;
+  issWithheld: boolean;
+  issRate: number | null;
+  retentions: Partial<Record<FederalTax, { rate?: number | null }>>;
+  reference: string;
+  order: string | null;
+  description: string;
+  origin: InvoiceOrigin;
+  originLabel: string;
 }
 
 export interface InvoiceList {

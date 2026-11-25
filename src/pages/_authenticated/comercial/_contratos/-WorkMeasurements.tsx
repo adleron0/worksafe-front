@@ -18,6 +18,7 @@ import {
   ContractPlan, MeasurementPlanDraft, MeasurementPlanEditor, WorkLinesTable, WorkMeasurement, WorkStatusBadge, WorkSummary, defaultPlan, pctBr,
 } from "../-shared/measurement";
 import { WorkReport, WorkReportPaper, printWorkReport } from "../-shared/measurement-report";
+import EmitNfseCallout from "../../financeiro/_notas/-shared/EmitNfseCallout";
 
 type Done = (contract: Contract) => void;
 const plusDays = (days: number) => { const d = new Date(); d.setDate(d.getDate() + days); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
@@ -316,6 +317,7 @@ export function WorkBillDialog({ contract, measurement, onClose, onDone }: {
           if (retentionSum(retentions) >= measurement.value) return setError("As retenções passam do valor a receber");
           setError(""); mutate();
         }}>
+          <EmitNfseCallout origin={{ kind: "measurement", contractId: contract.id, measurementId: measurement.id }} onLeave={onClose} />
           <WorkLinesTable lines={measurement.lines} invoiceValue={measurement.invoiceValue} depositValue={measurement.depositValue} value={measurement.value} />
           <div className="grid sm:grid-cols-2 gap-3">
             <div><Label htmlFor="workNf">Número da nota <span>*</span></Label>

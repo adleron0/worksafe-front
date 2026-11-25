@@ -120,17 +120,33 @@ function MemberCard({ member }: { member: TeamMember }) {
   );
 }
 
+/** Junta ações iguais em sequência (mesmo bot, mesma ação, mesma pessoa) numa linha só com "×N". */
+function groupActivity(activity: TeamActivity[]) {
+  const groups: { item: TeamActivity; count: number }[] = [];
+  for (const item of activity) {
+    const last = groups[groups.length - 1];
+    const same = last && last.item.persona === item.persona && last.item.title === item.title
+      && last.item.status === item.status && last.item.user === item.user && last.item.origin === item.origin;
+    if (same) last.count += 1;
+    else groups.push({ item, count: 1 });
+  }
+  return groups;
+}
+
 function ActivityFeed({ activity }: { activity: TeamActivity[] }) {
+  const groups = groupActivity(activity);
   return (
     <aside className="rounded-2xl border bg-background p-4">
       <p className="text-sm font-semibold">O que a equipe fez</p>
       {!activity.length && <p className="mt-3 text-sm text-muted-foreground">Nada ainda. Comece uma conversa.</p>}
       <ol className="mt-3 space-y-3">
-        {activity.map((item) => (
+        {groups.map(({ item, count }) => (
           <li key={item.id} className="flex gap-2.5 text-sm">
             <BotAvatar look={item.avatar} size={28} />
             <div className="min-w-0 flex-1">
-              <p className="leading-snug"><span className="font-medium">{item.persona ?? "Assistente"}</span> <span className="text-muted-foreground">{item.title.toLowerCase()}</span></p>
+              <p className="leading-snug"><span className="font-medium">{item.persona ?? "Assistente"}</span> <span className="text-muted-foreground">{item.title.toLowerCase()}</span>
+                {count > 1 && <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 align-middle text-[10px] font-semibold tabular-nums text-muted-foreground">×{count}</span>}
+              </p>
               <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
                 <Icon name={ACTIVITY_ICON[item.status] ?? "dot"} className="h-3 w-3" />
                 {ago(item.at)}{item.user ? ` · para ${item.user}` : ""}{item.origin === "mcp" ? " · pelo app de IA" : item.origin === "schedule" ? " · agendado" : ""}

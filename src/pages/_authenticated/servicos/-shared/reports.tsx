@@ -15,7 +15,7 @@ import { OrderStatus } from "./orders";
 /** `in`/`out` só vêm preenchidos quando a pessoa entrou ou saiu em hora diferente da do dia. */
 /** `employeeId` e `professionalId`: pessoa e função do cadastro; sem eles é pessoa avulsa e a função vale pelo texto. */
 export interface CrewMember { name: string; role: string; hours: number; overtime: number; in?: string | null; out?: string | null; leaveReason?: string | null; employeeId?: number | null; professionalId?: number | null }
-export interface StepProgress { step: number; title: string; percent: number }
+export interface StepProgress { step: number; title: string; percent: number; today?: boolean }
 export interface Occurrence { type: string; description: string; hoursLost: number }
 export interface Photo { url: string; caption: string }
 export interface ReportOrder { id: number; number: string; status: OrderStatus; title: string; customer: { id: number; name: string } | null; startedAt: string | null; finishedAt: string | null; location: string | null }

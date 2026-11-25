@@ -26,8 +26,20 @@ import { TEAM_OPTIONS_KEY, TeamOptions, TeamPicker } from "../-shared/team";
 import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
 
 export const Route = createFileRoute("/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId")({
+  // `date`: RDO novo de um dia que ficou sem (vem do calendário da obra)
+  validateSearch: (search: Record<string, unknown>): { date?: string } => (/^\d{4}-\d{2}-\d{2}$/.test(String(search.date ?? "")) ? { date: String(search.date) } : {}),
   component: ReportPage,
 });
+
+/** O RDO em três momentos do dia, cada um uma tela curta no celular. */
+type Moment = "chegada" | "durante" | "saida";
+const MOMENTS: Array<{ id: Moment; name: string; icon: string; hint: string }> = [
+  { id: "chegada", name: "Chegada", icon: "sunrise", hint: "Hora de entrada, clima, frente de trabalho e equipe" },
+  { id: "durante", name: "Durante", icon: "hammer", hint: "O que foi feito, avanço, ocorrências e fotos" },
+  { id: "saida", name: "Saída", icon: "sunset", hint: "Hora de saída, clima e como a frente ficou" },
+];
+/** Em que momento o RDO abre: novo na chegada; com entrada e sem saída, durante; com saída, na saída. */
+const momentOf = (report: Report): Moment => (report.id === null || !report.startTime ? "chegada" : report.endTime ? "saida" : "durante");
 
 /** Na tela a pessoa sempre tem os três campos (vazios quando segue a hora do dia); `own` abre o bloco da hora própria. */
 interface CrewRow extends CrewMember { in: string; out: string; leaveReason: string; own: boolean }
@@ -92,7 +104,10 @@ function ConditionField({ label, value, note, disabled, placeholder, onValue, on
 /** RDO de um dia de obra, pensado para o celular: uma coluna, campos grandes, botões fixos embaixo. */
 function ReportPage() {
   const { orderId, reportId } = Route.useParams();
+  const search = Route.useSearch();
   const { can } = useVerify();
+  const [moment, setMoment] = useState<Moment | null>(null);
+  const [otherSteps, setOtherSteps] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [picking, setPicking] = useState(false);
@@ -111,14 +126,14 @@ function ReportPage() {
     queryFn: () => ordersApi.get<TeamOptions>(`${orderId}/team-options`, { from: pickDate, to: pickDate }),
   });
   const { data: report, isLoading, error } = useQuery({
-    queryKey: [REPORT_KEY, orderId, reportId],
-    queryFn: () => reportsApi.get<Report>(isNew ? `service-orders/${orderId}/reports/template` : `service-reports/${reportId}`),
+    queryKey: [REPORT_KEY, orderId, reportId, search.date ?? null],
+    queryFn: () => reportsApi.get<Report>(isNew ? `service-orders/${orderId}/reports/template` : `service-reports/${reportId}`, isNew && search.date ? { date: search.date } : undefined),
     // o modelo em branco não é guardado: abrir de novo traz a equipe e o avanço atuais
     gcTime: isNew ? 0 : undefined,
   });
   // bots nas páginas: o bot sabe qual registro está aberto ("este", "esta")
   useBotContext({ entity: "rdo", id: Number(reportId) || undefined, label: "RDO", title: report ? `RDO de ${report.date.slice(0, 10).split("-").reverse().join("/")} · OS ${report.order?.number ?? orderId}` : undefined });
-  useEffect(() => { if (report) setForm(formOf(report)); }, [report]);
+  useEffect(() => { if (report) { setForm(formOf(report)); setMoment((current) => current ?? momentOf(report)); } }, [report]);
 
   const refreshAll = () => {
     queryClient.invalidateQueries({ queryKey: [DIARY_KEY, orderId] });
@@ -186,6 +201,25 @@ function ReportPage() {
   const linkedIds = new Set(form.crew.map((member) => member.employeeId).filter((id): id is number => !!id));
   const totalHours = form.crew.reduce((sum, member) => sum + member.hours, 0);
   const totalOvertime = form.crew.reduce((sum, member) => sum + member.overtime, 0);
+  // lendo (fechado ou sem permissão), tudo de uma vez; preenchendo, um momento por vez
+  const showAll = !editable;
+  const current = moment ?? "chegada";
+  const shows = (which: Moment) => showAll || current === which;
+  const nextMoment = MOMENTS[MOMENTS.findIndex((item) => item.id === current) + 1];
+  // à vista: as previstas para hoje e as que já começaram e não terminaram; o resto fica em "outra etapa"
+  const inFocus = (step: StepProgress) => !!step.today || (step.percent > 0 && step.percent < 100);
+  const todaySteps = form.progress.filter(inFocus);
+  const restSteps = form.progress.filter((step) => !inFocus(step));
+  const progressSlider = (step: StepProgress) => {
+    const index = form.progress.findIndex((item) => item.step === step.step);
+    return (
+      <div key={step.step}>
+        <div className="flex items-baseline justify-between gap-3 text-sm"><span className="min-w-0 break-words">{step.title}</span><b className="tabular-nums shrink-0">{step.percent}%</b></div>
+        <Slider className="mt-2" min={0} max={100} step={5} value={[step.percent]} disabled={!editable} aria-label={`Avanço de ${step.title}`}
+          onValueChange={([value]) => set("progress", form.progress.map((item, i) => (i === index ? { ...item, percent: value } : item)))} />
+      </div>
+    );
+  };
 
   const upload = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -229,7 +263,25 @@ function ReportPage() {
         </p>
       )}
 
+      {editable && (
+        <nav className="sticky top-0 z-10 -mx-1 mt-3 bg-background/95 backdrop-blur px-1 py-2" aria-label="Momentos do RDO">
+          <div className="grid grid-cols-3 gap-1 rounded-lg border p-1">
+            {MOMENTS.map((item, index) => (
+              <button key={item.id} type="button" onClick={() => { setMoment(item.id); window.scrollTo({ top: 0 }); }} aria-current={current === item.id ? "step" : undefined}
+                className={cn("rounded-md px-2 py-2 text-sm font-medium flex items-center justify-center gap-1.5", current === item.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")}>
+                <span className="tabular-nums text-xs opacity-80">{index + 1}</span> {item.name}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground text-center">{MOMENTS.find((item) => item.id === current)?.hint}</p>
+        </nav>
+      )}
+      {editable && isNew && current === "chegada" && form.crew.length > 0 && (
+        <p className="mt-2 rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">A equipe, a hora de entrada e os equipamentos vieram do último RDO (ou da escala da OS). Confira e ajuste só o que mudou.</p>
+      )}
+
       <div className="mt-4 grid gap-4">
+        {shows("chegada") && <>
         <Section title="O dia">
           <div className="grid grid-cols-2 gap-3">
             <div><Label className="text-xs">Data</Label>
@@ -314,6 +366,9 @@ function ReportPage() {
           )}
         </Section>
 
+        </>}
+
+        {shows("durante") && <>
         <Section title="O que foi feito">
           <Textarea aria-label="O que foi feito" rows={4} maxLength={5000} value={form.activities} disabled={!editable} placeholder="Ex.: jateamento do costado, lado norte; primeira demão de primer"
             onChange={(event) => set("activities", event.target.value)} />
@@ -321,13 +376,15 @@ function ReportPage() {
 
         {form.progress.length > 0 && (
           <Section title="Avanço das etapas" hint="Quanto de cada etapa do cronograma está pronto até hoje (acumulado).">
-            {form.progress.map((step, index) => (
-              <div key={step.step}>
-                <div className="flex items-baseline justify-between gap-3 text-sm"><span className="min-w-0 break-words">{step.title}</span><b className="tabular-nums shrink-0">{step.percent}%</b></div>
-                <Slider className="mt-2" min={0} max={100} step={5} value={[step.percent]} disabled={!editable} aria-label={`Avanço de ${step.title}`}
-                  onValueChange={([value]) => set("progress", form.progress.map((item, i) => (i === index ? { ...item, percent: value } : item)))} />
-              </div>
-            ))}
+            {todaySteps.length > 0 && <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground -mb-1">Previstas para hoje e em andamento</p>}
+            {(todaySteps.length > 0 ? todaySteps : form.progress).map(progressSlider)}
+            {todaySteps.length > 0 && restSteps.length > 0 && (
+              showAll || otherSteps
+                ? <>{!showAll && <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground -mb-1 mt-2">Outras etapas</p>}{restSteps.map(progressSlider)}</>
+                : <Button type="button" variant="ghost" size="sm" className="w-fit h-8 px-2 text-xs" onClick={() => setOtherSteps(true)}>
+                    <Icon name="plus" className="w-3 h-3 mr-1" /> Outra etapa ({restSteps.length})
+                  </Button>
+            )}
           </Section>
         )}
 
@@ -353,6 +410,17 @@ function ReportPage() {
           )}
         </Section>
 
+        {editable && can("create_pedidos_de_compra") && (
+          <a href={`/suprimentos/pedidos-de-compra/novo?os=${orderId}`} target="_blank" rel="noopener noreferrer"
+            className="rounded-card border border-dashed bg-card p-3 text-sm flex items-center gap-3 hover:bg-muted/40">
+            <Icon name="package-plus" className="w-5 h-5 text-muted-foreground shrink-0" />
+            <span className="flex-1"><b>Faltou material?</b> <span className="text-muted-foreground">Peça a compra para esta obra. Abre em outra aba; o RDO continua aqui.</span></span>
+            <Icon name="external-link" className="w-4 h-4 text-muted-foreground" />
+          </a>
+        )}
+        </>}
+
+        {shows("saida") && <>
         <Section title="Saída" hint="Preencha no fim do dia: a hora em que a equipe saiu, o clima e como a frente de trabalho ficou.">
           <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3 items-end">
             <div><Label htmlFor="endTime" className="text-xs">Hora de saída</Label>
@@ -387,6 +455,9 @@ function ReportPage() {
             <Textarea id="reportNotes" className="mt-1" rows={2} maxLength={5000} value={form.notes} disabled={!editable} onChange={(event) => set("notes", event.target.value)} /></div>
         </Section>
 
+        </>}
+
+        {shows("durante") && (
         <Section title="Fotos" hint={`Até ${MAX_PHOTOS} fotos. A legenda ajuda quem lê depois.`}>
           {form.photos.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -412,6 +483,13 @@ function ReportPage() {
           )}
           {!editable && form.photos.length === 0 && <p className="text-sm text-muted-foreground">Sem fotos.</p>}
         </Section>
+        )}
+
+        {editable && nextMoment && (
+          <Button type="button" variant="outline" className="h-11" onClick={() => { setMoment(nextMoment.id); window.scrollTo({ top: 0 }); }}>
+            Próximo: {nextMoment.name} <Icon name="arrow-right" className="w-4 h-4 ml-1" />
+          </Button>
+        )}
       </div>
 
       {/* ações sempre à mão, no rodapé */}

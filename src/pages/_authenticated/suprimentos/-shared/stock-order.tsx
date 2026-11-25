@@ -112,7 +112,7 @@ export function OrderStockPanel({ orderId }: { orderId: number }) {
   );
 }
 
-function DispatchDialog({ orderId, orderNumber, onClose, onDone }: { orderId: number; orderNumber: string; onClose: () => void; onDone: (id: number) => void }) {
+export function DispatchDialog({ orderId, orderNumber, onClose, onDone }: { orderId: number; orderNumber: string; onClose: () => void; onDone: (id: number) => void }) {
   const refresh = useStockRefresh();
   const { user } = useAuth();
   const [locationId, setLocationId] = useState("");
@@ -168,7 +168,7 @@ function DispatchDialog({ orderId, orderNumber, onClose, onDone }: { orderId: nu
 type UnitBack = "obra" | "ok" | "problema" | "faltando";
 interface ReturnLine { key: string; itemId: number; lotId: number | null; unitId: number | null; label: string; unit: string; max: number; quantity: number; problem: boolean; back: UnitBack; isUnit: boolean; consumable: boolean }
 
-function ReturnDialog({ data, onClose, onDone }: { data: OrderStock; onClose: () => void; onDone: (id: number) => void }) {
+export function ReturnDialog({ data, onClose, onDone }: { data: OrderStock; onClose: () => void; onDone: (id: number) => void }) {
   const refresh = useStockRefresh();
   const [locationId, setLocationId] = useState("");
   const [note, setNote] = useState("");

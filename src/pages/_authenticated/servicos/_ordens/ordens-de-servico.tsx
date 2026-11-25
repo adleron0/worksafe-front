@@ -18,7 +18,7 @@ import {
   nextStage, ordersApi, periodText,
 } from "../-shared/orders";
 import OrderRowActions from "./-components/OrderRowActions";
-import { CustomerOrder, orderColumns } from "./-components/orderColumns";
+import { CustomerOrder, OrderProgress, orderColumns } from "./-components/orderColumns";
 
 export const Route = createFileRoute("/_authenticated/servicos/_ordens/ordens-de-servico")({
   component: OrdersPage,
@@ -43,7 +43,7 @@ function OrdersPage() {
 
   const params = kanban
     ? { page: 0, limit: KANBAN_LIMIT, ...(search.trim() ? { search: search.trim() } : {}) }
-    : { page, limit: LIMIT, ...(status ? { status } : {}), ...(search.trim() ? { search: search.trim() } : {}) };
+    : { page, limit: LIMIT, ...(status === "sem_rdo" ? { noReportToday: 1 } : status ? { status } : {}), ...(search.trim() ? { search: search.trim() } : {}) };
   const { data, isLoading, error } = useQuery({
     queryKey: [ORDERS_KEY, params],
     queryFn: () => ordersApi.get<OrderList>("", params),
@@ -74,7 +74,7 @@ function OrdersPage() {
 
   const move = (row: OrderRow, target: OrderStatus) => setMoving({ order: row, target });
   const rowMenu = (row: OrderRow, onCard = false) => <OrderRowActions row={row} canUpdate={canUpdate} onOpen={open} onMove={move} onCard={onCard} />;
-  const empty = search || status ? "Nenhuma ordem de serviço com esses filtros." : "Nenhuma ordem de serviço ainda. Ela nasce sozinha quando uma proposta de serviço é aceita.";
+  const empty = status === "sem_rdo" ? "Todas as obras em execução já têm RDO hoje." : search || status ? "Nenhuma ordem de serviço com esses filtros." : "Nenhuma ordem de serviço ainda. Ela nasce sozinha quando uma proposta de serviço é aceita.";
 
   return (
     <>
@@ -88,6 +88,7 @@ function OrdersPage() {
               { value: "", label: "Todas as etapas", count: activeCount },
               ...ORDER_STAGES.map(({ id, name, color }) => ({ value: id as string, label: name, count: summary[id] ?? 0, color })),
               { value: "cancelada", label: "Canceladas", count: summary.cancelada ?? 0 },
+              ...((summary.em_execucao ?? 0) > 0 ? [{ value: "sem_rdo", label: "Sem RDO hoje" }] : []),
             ]} />
         )}
         <ListToolbar search={{ value: search, onChange: (text) => { setSearch(text); setPage(0); }, placeholder: "Buscar por número, título ou cliente..." }} />
@@ -111,6 +112,7 @@ function OrdersPage() {
                     {row.responsible && <p className="flex items-center gap-2 truncate"><Icon name="user" className="w-3 h-3 shrink-0" /> {row.responsible}</p>}
                     <p className="truncate"><CustomerOrder row={row} /></p>
                   </div>
+                  {row.progress && row.progress.done !== null && <div className="pt-2 border-t"><OrderProgress row={row} /></div>}
                   {(row.status === "a_liberar" || row.status === "a_mobilizar" || row.status === "agendada") && row.checklist.total > 0 && (
                     <div className="pt-2 border-t">
                       <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Mobilização</span><span className="tabular-nums">{row.checklist.done}/{row.checklist.total}</span></div>

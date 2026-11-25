@@ -21,6 +21,8 @@ export interface OrderRow {
   proposal: { id: number; number: string } | null; customerOrderNumber: string | null;
   plannedStart: string | null; plannedEnd: string | null; startedAt: string | null; finishedAt: string | null;
   responsible: string | null; location: string | null; checklist: { done: number; total: number }; late: boolean;
+  /** Obra andando: avanço × previsto e o RDO de hoje. */
+  progress: { done: number | null; planned: number | null; todayReport: "nenhum" | "rascunho" | "fechado" | null; lastReport: string | null } | null;
 }
 export interface OrderList { rows: OrderRow[]; total: number; summary: Partial<Record<OrderStatus, number>> }
 
@@ -41,16 +43,23 @@ export interface Order {
   point?: { latitude: number | null; longitude: number | null; source: "obra" | "local" | "cliente" | null; own: { latitude: number; longitude: number } | null; place: { id: number; name: string } | null; customer: { latitude: number; longitude: number } | null };
   responsible: { id: number; name: string } | null; team: TeamMember[];
   plannedStart: string | null; plannedEnd: string | null; startedAt: string | null; finishedAt: string | null;
-  scope: ScopeSection[]; schedule: { unit: "dia" | "semana" | "mes"; steps: Array<{ title: string; start: number; duration: number }> } | null;
+  scope: ScopeSection[]; schedule: OrderSchedule | null;
+  /** Cronograma da proposta, guardado quando a OS foi replanejada. */
+  baseline: OrderSchedule | null;
+  /** Riscos e EPIs obrigatórios (saem na folha). */
+  safety: string | null; publicEnabled: boolean; canSeeValues: boolean;
   checklist: ChecklistItem[]; notes: string | null; conclusionNotes: string | null; closedAt: string | null;
   canSeeCosts: boolean; budget: { revenue: number; cost: number; tax: number; commission: number; profit: number; groups: Array<{ type: string; label: string; cost: number }> } | null;
   events: OrderEvent[];
 }
+export interface OrderSchedule { unit: "dia" | "semana" | "mes"; steps: Array<{ title: string; start: number; duration: number; details?: string | null }> }
 export interface OrderOptions { users: Array<{ id: number; name: string }> }
 
 export const ORDERS_KEY = "serviceOrders";
 export const ORDER_KEY = "serviceOrder";
 export const ORDER_RESULT_KEY = "serviceOrderResult";
+export const ORDER_SHEET_KEY = "serviceOrderSheet";
+export const ORDER_PUBLIC_KEY = "serviceOrderPublic";
 export const ORDERS_ABILITY = "ordens_de_servico";
 /** Lançar e fechar RDO tem permissão própria: o encarregado preenche o diário sem poder alterar a OS. */
 export const RDO_PERMISSION = "update_rdo";
@@ -60,6 +69,7 @@ export const ordersApi = {
   get: async <T,>(path = "", params?: Record<string, unknown>) => (await api.get<T>(`service-orders${path ? `/${path}` : ""}`, { params })).data,
   put: async <T,>(path: string, body?: unknown) => (await api.put<T>(`service-orders/${path}`, body ?? {})).data,
   patch: async <T,>(path: string, body?: unknown) => (await api.patch<T>(`service-orders/${path}`, body ?? {})).data,
+  post: async <T,>(path: string, body?: unknown) => (await api.post<T>(`service-orders/${path}`, body ?? {})).data,
 };
 
 /** As etapas, na ordem da esteira. Cancelada fica fora do quadro. */

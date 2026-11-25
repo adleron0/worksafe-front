@@ -32,6 +32,7 @@ import { Route as IndexNegociacaoKeyRouteImport } from './pages/_index/negociaca
 import { Route as IndexMedicaoKeyRouteImport } from './pages/_index/medicao.$key'
 import { Route as IndexCertificadosEfeitosRouteImport } from './pages/_index/certificados/efeitos'
 import { Route as IndexCertificadosIdRouteImport } from './pages/_index/certificados/$id'
+import { Route as IndexAcompanharKeyRouteImport } from './pages/_index/acompanhar.$key'
 import { Route as AuthenticatedSuprimentosFornecedoresRouteImport } from './pages/_authenticated/suprimentos/fornecedores'
 import { Route as AuthenticatedInventariosDashboardRouteImport } from './pages/_authenticated/inventarios/dashboard'
 import { Route as AuthenticatedInventariosAutorizadosRouteImport } from './pages/_authenticated/inventarios/autorizados'
@@ -44,6 +45,7 @@ import { Route as AuthenticatedSuprimentosEstoqueIndexRouteImport } from './page
 import { Route as AuthenticatedSuprimentosEquipamentosIndexRouteImport } from './pages/_authenticated/suprimentos/equipamentos/index'
 import { Route as AuthenticatedInventariosAreasIndexRouteImport } from './pages/_authenticated/inventarios/areas/index'
 import { Route as IndexPropostaRascunhoProposalIdRouteImport } from './pages/_index/proposta_.rascunho.$proposalId'
+import { Route as IndexOsOrderIdImprimirRouteImport } from './pages/_index/os.$orderId.imprimir'
 import { Route as IndexCertificadosNomeIdRouteImport } from './pages/_index/certificados/$nome.$id'
 import { Route as IndexAuthStudentLoginRouteImport } from './pages/_index/auth/student/login'
 import { Route as AuthenticatedUsuariosUsuariosNovoRouteImport } from './pages/_authenticated/usuarios/_usuarios/novo'
@@ -179,6 +181,8 @@ import { Route as AuthenticatedBlogPostsPostsPostIdRouteImport } from './pages/_
 import { Route as AuthenticatedArquivosPastasTiposDeDocumentoNovoRouteImport } from './pages/_authenticated/arquivos/_pastas/tipos-de-documento_.novo'
 import { Route as AuthenticatedArquivosPastasTiposDeDocumentoTypeIdRouteImport } from './pages/_authenticated/arquivos/_pastas/tipos-de-documento_.$typeId'
 import { Route as AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRouteImport } from './pages/_authenticated/usuarios/_perfis/perfis_.$profileId.permissoes'
+import { Route as AuthenticatedServicosOrdensOrdensDeServicoOrderIdEditarRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico_.$orderId_.editar'
+import { Route as AuthenticatedServicosOrdensOrdensDeServicoOrderIdSectionRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico_.$orderId_.$section'
 import { Route as AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRouteImport } from './pages/_authenticated/rh/_alocacao/mapa-de-alocacao_.atividades.nova'
 import { Route as AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRouteImport } from './pages/_authenticated/rh/_alocacao/mapa-de-alocacao_.atividades.$activityId'
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico_.$orderId_.rdo.$reportId'
@@ -302,6 +306,11 @@ const IndexCertificadosIdRoute = IndexCertificadosIdRouteImport.update({
   path: '/certificados/$id',
   getParentRoute: () => IndexRoute,
 } as any)
+const IndexAcompanharKeyRoute = IndexAcompanharKeyRouteImport.update({
+  id: '/acompanhar/$key',
+  path: '/acompanhar/$key',
+  getParentRoute: () => IndexRoute,
+} as any)
 const AuthenticatedSuprimentosFornecedoresRoute =
   AuthenticatedSuprimentosFornecedoresRouteImport.update({
     id: '/suprimentos/fornecedores',
@@ -373,6 +382,11 @@ const IndexPropostaRascunhoProposalIdRoute =
     path: '/proposta/rascunho/$proposalId',
     getParentRoute: () => IndexRoute,
   } as any)
+const IndexOsOrderIdImprimirRoute = IndexOsOrderIdImprimirRouteImport.update({
+  id: '/os/$orderId/imprimir',
+  path: '/os/$orderId/imprimir',
+  getParentRoute: () => IndexRoute,
+} as any)
 const IndexCertificadosNomeIdRoute = IndexCertificadosNomeIdRouteImport.update({
   id: '/certificados/$nome/$id',
   path: '/certificados/$nome/$id',
@@ -1189,6 +1203,18 @@ const AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute =
     path: '/usuarios/perfis/$profileId/permissoes',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedServicosOrdensOrdensDeServicoOrderIdEditarRoute =
+  AuthenticatedServicosOrdensOrdensDeServicoOrderIdEditarRouteImport.update({
+    id: '/servicos/_ordens/ordens-de-servico_/$orderId_/editar',
+    path: '/servicos/ordens-de-servico/$orderId/editar',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedServicosOrdensOrdensDeServicoOrderIdSectionRoute =
+  AuthenticatedServicosOrdensOrdensDeServicoOrderIdSectionRouteImport.update({
+    id: '/servicos/_ordens/ordens-de-servico_/$orderId_/$section',
+    path: '/servicos/ordens-de-servico/$orderId/$section',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute =
   AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRouteImport.update({
     id: '/rh/_alocacao/mapa-de-alocacao_/atividades/nova',
@@ -1225,6 +1251,7 @@ export interface FileRoutesByFullPath {
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/suprimentos/fornecedores': typeof AuthenticatedSuprimentosFornecedoresRoute
+  '/acompanhar/$key': typeof IndexAcompanharKeyRoute
   '/certificados/$id': typeof IndexCertificadosIdRoute
   '/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
   '/medicao/$key': typeof IndexMedicaoKeyRoute
@@ -1320,6 +1347,7 @@ export interface FileRoutesByFullPath {
   '/usuarios/novo': typeof AuthenticatedUsuariosUsuariosNovoRoute
   '/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
+  '/os/$orderId/imprimir': typeof IndexOsOrderIdImprimirRoute
   '/proposta/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
   '/suprimentos/equipamentos': typeof AuthenticatedSuprimentosEquipamentosIndexRoute
@@ -1380,6 +1408,8 @@ export interface FileRoutesByFullPath {
   '/usuarios/$userId/permissoes': typeof AuthenticatedUsuariosUsuariosUserIdPermissoesRoute
   '/rh/mapa-de-alocacao/atividades/$activityId': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute
   '/rh/mapa-de-alocacao/atividades/nova': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute
+  '/servicos/ordens-de-servico/$orderId/$section': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdSectionRoute
+  '/servicos/ordens-de-servico/$orderId/editar': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdEditarRoute
   '/usuarios/perfis/$profileId/permissoes': typeof AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute
   '/servicos/ordens-de-servico/$orderId/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
 }
@@ -1397,6 +1427,7 @@ export interface FileRoutesByTo {
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/suprimentos/fornecedores': typeof AuthenticatedSuprimentosFornecedoresRoute
+  '/acompanhar/$key': typeof IndexAcompanharKeyRoute
   '/certificados/$id': typeof IndexCertificadosIdRoute
   '/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
   '/medicao/$key': typeof IndexMedicaoKeyRoute
@@ -1492,6 +1523,7 @@ export interface FileRoutesByTo {
   '/usuarios/novo': typeof AuthenticatedUsuariosUsuariosNovoRoute
   '/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
+  '/os/$orderId/imprimir': typeof IndexOsOrderIdImprimirRoute
   '/proposta/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
   '/inventarios/areas': typeof AuthenticatedInventariosAreasIndexRoute
   '/suprimentos/equipamentos': typeof AuthenticatedSuprimentosEquipamentosIndexRoute
@@ -1552,6 +1584,8 @@ export interface FileRoutesByTo {
   '/usuarios/$userId/permissoes': typeof AuthenticatedUsuariosUsuariosUserIdPermissoesRoute
   '/rh/mapa-de-alocacao/atividades/$activityId': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute
   '/rh/mapa-de-alocacao/atividades/nova': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute
+  '/servicos/ordens-de-servico/$orderId/$section': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdSectionRoute
+  '/servicos/ordens-de-servico/$orderId/editar': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdEditarRoute
   '/usuarios/perfis/$profileId/permissoes': typeof AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute
   '/servicos/ordens-de-servico/$orderId/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
 }
@@ -1573,6 +1607,7 @@ export interface FileRoutesById {
   '/_authenticated/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/_authenticated/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
   '/_authenticated/suprimentos/fornecedores': typeof AuthenticatedSuprimentosFornecedoresRoute
+  '/_index/acompanhar/$key': typeof IndexAcompanharKeyRoute
   '/_index/certificados/$id': typeof IndexCertificadosIdRoute
   '/_index/certificados/efeitos': typeof IndexCertificadosEfeitosRoute
   '/_index/medicao/$key': typeof IndexMedicaoKeyRoute
@@ -1668,6 +1703,7 @@ export interface FileRoutesById {
   '/_authenticated/usuarios/_usuarios/novo': typeof AuthenticatedUsuariosUsuariosNovoRoute
   '/_index/auth/student/login': typeof IndexAuthStudentLoginRoute
   '/_index/certificados/$nome/$id': typeof IndexCertificadosNomeIdRoute
+  '/_index/os/$orderId/imprimir': typeof IndexOsOrderIdImprimirRoute
   '/_index/proposta_/rascunho/$proposalId': typeof IndexPropostaRascunhoProposalIdRoute
   '/_authenticated/inventarios/areas/': typeof AuthenticatedInventariosAreasIndexRoute
   '/_authenticated/suprimentos/equipamentos/': typeof AuthenticatedSuprimentosEquipamentosIndexRoute
@@ -1728,6 +1764,8 @@ export interface FileRoutesById {
   '/_authenticated/usuarios/_usuarios/$userId/permissoes': typeof AuthenticatedUsuariosUsuariosUserIdPermissoesRoute
   '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/$activityId': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute
   '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/nova': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute
+  '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/$section': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdSectionRoute
+  '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/editar': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdEditarRoute
   '/_authenticated/usuarios/_perfis/perfis_/$profileId/permissoes': typeof AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute
   '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId': typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
 }
@@ -1748,6 +1786,7 @@ export interface FileRouteTypes {
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
     | '/suprimentos/fornecedores'
+    | '/acompanhar/$key'
     | '/certificados/$id'
     | '/certificados/efeitos'
     | '/medicao/$key'
@@ -1843,6 +1882,7 @@ export interface FileRouteTypes {
     | '/usuarios/novo'
     | '/auth/student/login'
     | '/certificados/$nome/$id'
+    | '/os/$orderId/imprimir'
     | '/proposta/rascunho/$proposalId'
     | '/inventarios/areas'
     | '/suprimentos/equipamentos'
@@ -1903,6 +1943,8 @@ export interface FileRouteTypes {
     | '/usuarios/$userId/permissoes'
     | '/rh/mapa-de-alocacao/atividades/$activityId'
     | '/rh/mapa-de-alocacao/atividades/nova'
+    | '/servicos/ordens-de-servico/$orderId/$section'
+    | '/servicos/ordens-de-servico/$orderId/editar'
     | '/usuarios/perfis/$profileId/permissoes'
     | '/servicos/ordens-de-servico/$orderId/rdo/$reportId'
   fileRoutesByTo: FileRoutesByTo
@@ -1920,6 +1962,7 @@ export interface FileRouteTypes {
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
     | '/suprimentos/fornecedores'
+    | '/acompanhar/$key'
     | '/certificados/$id'
     | '/certificados/efeitos'
     | '/medicao/$key'
@@ -2015,6 +2058,7 @@ export interface FileRouteTypes {
     | '/usuarios/novo'
     | '/auth/student/login'
     | '/certificados/$nome/$id'
+    | '/os/$orderId/imprimir'
     | '/proposta/rascunho/$proposalId'
     | '/inventarios/areas'
     | '/suprimentos/equipamentos'
@@ -2075,6 +2119,8 @@ export interface FileRouteTypes {
     | '/usuarios/$userId/permissoes'
     | '/rh/mapa-de-alocacao/atividades/$activityId'
     | '/rh/mapa-de-alocacao/atividades/nova'
+    | '/servicos/ordens-de-servico/$orderId/$section'
+    | '/servicos/ordens-de-servico/$orderId/editar'
     | '/usuarios/perfis/$profileId/permissoes'
     | '/servicos/ordens-de-servico/$orderId/rdo/$reportId'
   id:
@@ -2095,6 +2141,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventarios/autorizados'
     | '/_authenticated/inventarios/dashboard'
     | '/_authenticated/suprimentos/fornecedores'
+    | '/_index/acompanhar/$key'
     | '/_index/certificados/$id'
     | '/_index/certificados/efeitos'
     | '/_index/medicao/$key'
@@ -2190,6 +2237,7 @@ export interface FileRouteTypes {
     | '/_authenticated/usuarios/_usuarios/novo'
     | '/_index/auth/student/login'
     | '/_index/certificados/$nome/$id'
+    | '/_index/os/$orderId/imprimir'
     | '/_index/proposta_/rascunho/$proposalId'
     | '/_authenticated/inventarios/areas/'
     | '/_authenticated/suprimentos/equipamentos/'
@@ -2250,6 +2298,8 @@ export interface FileRouteTypes {
     | '/_authenticated/usuarios/_usuarios/$userId/permissoes'
     | '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/$activityId'
     | '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/nova'
+    | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/$section'
+    | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/editar'
     | '/_authenticated/usuarios/_perfis/perfis_/$profileId/permissoes'
     | '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId'
   fileRoutesById: FileRoutesById
@@ -2423,6 +2473,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexCertificadosIdRouteImport
       parentRoute: typeof IndexRoute
     }
+    '/_index/acompanhar/$key': {
+      id: '/_index/acompanhar/$key'
+      path: '/acompanhar/$key'
+      fullPath: '/acompanhar/$key'
+      preLoaderRoute: typeof IndexAcompanharKeyRouteImport
+      parentRoute: typeof IndexRoute
+    }
     '/_authenticated/suprimentos/fornecedores': {
       id: '/_authenticated/suprimentos/fornecedores'
       path: '/suprimentos/fornecedores'
@@ -2505,6 +2562,13 @@ declare module '@tanstack/react-router' {
       path: '/proposta/rascunho/$proposalId'
       fullPath: '/proposta/rascunho/$proposalId'
       preLoaderRoute: typeof IndexPropostaRascunhoProposalIdRouteImport
+      parentRoute: typeof IndexRoute
+    }
+    '/_index/os/$orderId/imprimir': {
+      id: '/_index/os/$orderId/imprimir'
+      path: '/os/$orderId/imprimir'
+      fullPath: '/os/$orderId/imprimir'
+      preLoaderRoute: typeof IndexOsOrderIdImprimirRouteImport
       parentRoute: typeof IndexRoute
     }
     '/_index/certificados/$nome/$id': {
@@ -3452,6 +3516,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/editar': {
+      id: '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/editar'
+      path: '/servicos/ordens-de-servico/$orderId/editar'
+      fullPath: '/servicos/ordens-de-servico/$orderId/editar'
+      preLoaderRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdEditarRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/$section': {
+      id: '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/$section'
+      path: '/servicos/ordens-de-servico/$orderId/$section'
+      fullPath: '/servicos/ordens-de-servico/$orderId/$section'
+      preLoaderRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdSectionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/nova': {
       id: '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/nova'
       path: '/rh/mapa-de-alocacao/atividades/nova'
@@ -3630,6 +3708,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedUsuariosUsuariosUserIdPermissoesRoute: typeof AuthenticatedUsuariosUsuariosUserIdPermissoesRoute
   AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute: typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute
   AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute: typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute
+  AuthenticatedServicosOrdensOrdensDeServicoOrderIdSectionRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdSectionRoute
+  AuthenticatedServicosOrdensOrdensDeServicoOrderIdEditarRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdEditarRoute
   AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute: typeof AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute: typeof AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute
 }
@@ -3916,6 +3996,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute,
   AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute:
     AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRoute,
+  AuthenticatedServicosOrdensOrdensDeServicoOrderIdSectionRoute:
+    AuthenticatedServicosOrdensOrdensDeServicoOrderIdSectionRoute,
+  AuthenticatedServicosOrdensOrdensDeServicoOrderIdEditarRoute:
+    AuthenticatedServicosOrdensOrdensDeServicoOrderIdEditarRoute,
   AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute:
     AuthenticatedUsuariosPerfisPerfisProfileIdPermissoesRoute,
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute:
@@ -3930,6 +4014,7 @@ interface IndexRouteChildren {
   IndexConectarIaRoute: typeof IndexConectarIaRoute
   IndexEnviarImagensRoute: typeof IndexEnviarImagensRoute
   IndexIndexRoute: typeof IndexIndexRoute
+  IndexAcompanharKeyRoute: typeof IndexAcompanharKeyRoute
   IndexCertificadosIdRoute: typeof IndexCertificadosIdRoute
   IndexCertificadosEfeitosRoute: typeof IndexCertificadosEfeitosRoute
   IndexMedicaoKeyRoute: typeof IndexMedicaoKeyRoute
@@ -3939,6 +4024,7 @@ interface IndexRouteChildren {
   IndexCertificadosIndexRoute: typeof IndexCertificadosIndexRoute
   IndexAuthStudentLoginRoute: typeof IndexAuthStudentLoginRoute
   IndexCertificadosNomeIdRoute: typeof IndexCertificadosNomeIdRoute
+  IndexOsOrderIdImprimirRoute: typeof IndexOsOrderIdImprimirRoute
   IndexPropostaRascunhoProposalIdRoute: typeof IndexPropostaRascunhoProposalIdRoute
 }
 
@@ -3946,6 +4032,7 @@ const IndexRouteChildren: IndexRouteChildren = {
   IndexConectarIaRoute: IndexConectarIaRoute,
   IndexEnviarImagensRoute: IndexEnviarImagensRoute,
   IndexIndexRoute: IndexIndexRoute,
+  IndexAcompanharKeyRoute: IndexAcompanharKeyRoute,
   IndexCertificadosIdRoute: IndexCertificadosIdRoute,
   IndexCertificadosEfeitosRoute: IndexCertificadosEfeitosRoute,
   IndexMedicaoKeyRoute: IndexMedicaoKeyRoute,
@@ -3955,6 +4042,7 @@ const IndexRouteChildren: IndexRouteChildren = {
   IndexCertificadosIndexRoute: IndexCertificadosIndexRoute,
   IndexAuthStudentLoginRoute: IndexAuthStudentLoginRoute,
   IndexCertificadosNomeIdRoute: IndexCertificadosNomeIdRoute,
+  IndexOsOrderIdImprimirRoute: IndexOsOrderIdImprimirRoute,
   IndexPropostaRascunhoProposalIdRoute: IndexPropostaRascunhoProposalIdRoute,
 }
 

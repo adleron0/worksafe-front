@@ -20,7 +20,7 @@ import { errorMessage } from "../../comercial/-shared/commercial";
 import { BotAvatar } from "../-shared/avatar";
 import { FaceEditor } from "../-shared/face-editor";
 import { PersonalityPicker } from "../-shared/personality-picker";
-import { BOTS_KEY, BUDGET_KEY, BotFull, BotsConfig, BudgetView, CatalogModel, CatalogTool, RISK_COLOR, RISK_ICON, RISK_LABEL, STATUS_KEY, TEAM_KEY, aiApi, dateTimeBr } from "../-shared/bots";
+import { BOTS_KEY, BUDGET_KEY, BotFull, BotsConfig, BudgetView, CatalogModel, CatalogTool, RISK_COLOR, RISK_ICON, RISK_LABEL, STATUS_KEY, TEAM_KEY, aiApi, brl, dateTimeBr, fxNote } from "../-shared/bots";
 import { PAGE_CATALOG } from "../-shared/pages";
 import api from "@/services/api";
 
@@ -210,14 +210,19 @@ function EconomyCard({ config }: { config: BotsConfig }) {
   const [selectedBots, setSelectedBots] = useState<number[]>(() => config.bots.map((bot) => bot.id));
   const [turnOn, setTurnOn] = useState(true);
   const [showBotBudgets, setShowBotBudgets] = useState(false);
-  const [form, setForm] = useState<{ value: string; warn: string; onExceed: "parar" | "economico"; provider: string; model: string; botBudgets: Record<string, string> } | null>(null);
+  const [form, setForm] = useState<{ value: string; warn: string; onExceed: "parar" | "economico"; provider: string; model: string; botBudgets: Record<string, string>; rate: string } | null>(null);
+  // a tela mostra e recebe reais; o teto continua guardado em dólar (o preço dos modelos é em dólar)
+  const rate = budget?.fx?.rate ?? 5.5;
+  const toBrl = (usd: number) => String(Math.round(usd * rate * 100) / 100).replace(".", ",");
   useEffect(() => {
     if (!budget || form) return;
     setForm({
-      value: budget.monthlyBudgetUsd != null ? String(budget.monthlyBudgetUsd) : "", warn: String(budget.warnPercent), onExceed: budget.onExceed,
+      value: budget.monthlyBudgetUsd != null ? toBrl(budget.monthlyBudgetUsd) : "", warn: String(budget.warnPercent), onExceed: budget.onExceed,
       provider: budget.economyProvider ?? cheapest?.provider ?? "", model: budget.economyModel ?? cheapest?.id ?? "",
-      botBudgets: Object.fromEntries(Object.entries(budget.botBudgets ?? {}).map(([id, value]) => [id, String(value)])),
+      botBudgets: Object.fromEntries(Object.entries(budget.botBudgets ?? {}).map(([id, value]) => [id, toBrl(value)])),
+      rate: budget.usdBrlRate != null ? String(budget.usdBrlRate).replace(".", ",") : "",
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [budget, form, cheapest]);
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: [BUDGET_KEY] });
@@ -235,16 +240,22 @@ function EconomyCard({ config }: { config: BotsConfig }) {
     onError: (error) => toast({ title: "Não foi possível aplicar", description: errorMessage(error), variant: "destructive" }),
   });
   const saveBudget = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const f = form!;
-      const number = (text: string) => (text.trim() === "" ? null : Number(text.replace(",", ".")));
+      // "1.234,56", "1234,56" e "5.86" valem
+      const number = (text: string) => { const t = text.trim(); if (!t) return null; return Number(t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t); };
+      // a cotação vai primeiro: os reais digitados viram dólar pela cotação que passa a valer
+      const manual = number(f.rate);
+      let useRate = rate;
+      if (manual !== (budget?.usdBrlRate ?? null)) useRate = (await aiApi.put<BudgetView>("budget", { usdBrlRate: manual })).fx?.rate ?? rate;
+      const toUsd = (text: string) => { const value = number(text); return value == null ? null : Math.round((value / useRate) * 10000) / 10000; };
       return aiApi.put<BudgetView>("budget", {
-        monthlyBudgetUsd: number(f.value), warnPercent: Number(f.warn), onExceed: f.onExceed,
+        monthlyBudgetUsd: toUsd(f.value), warnPercent: Number(f.warn), onExceed: f.onExceed,
         economyProvider: f.provider || null, economyModel: f.model || null,
-        botBudgets: Object.fromEntries(Object.entries(f.botBudgets).map(([id, value]) => [id, number(value)]).filter(([, value]) => value != null)),
+        botBudgets: Object.fromEntries(Object.entries(f.botBudgets).map(([id, value]) => [id, toUsd(value)]).filter(([, value]) => value != null)),
       });
     },
-    onSuccess: () => { refresh(); toast({ title: "Teto salvo", variant: "success" }); },
+    onSuccess: () => { setForm(null); refresh(); toast({ title: "Teto salvo", variant: "success" }); },
     onError: (error) => toast({ title: "Não foi possível salvar o teto", description: errorMessage(error), variant: "destructive" }),
   });
   const ecoLabel = config.models.find((item) => item.provider === eco.provider && item.id === eco.model)?.label ?? eco.model;
@@ -295,7 +306,7 @@ function EconomyCard({ config }: { config: BotsConfig }) {
         {budget && (
           <div>
             <div className="flex flex-wrap items-baseline justify-between gap-2 text-xs">
-              <span>Gasto em {budget.month}: <span className="font-semibold">{money(budget.spent)}</span> de {money(budget.budget)} {budget.percent !== null ? `(${budget.percent}%)` : ""}</span>
+              <span>Gasto em {budget.month}: <span className="font-semibold">{brl(budget.spent, budget.fx)}</span> de {brl(budget.budget, budget.fx)} {budget.percent !== null ? `(${budget.percent}%)` : ""}</span>
               {budget.mode === "stop" && <span className="font-medium text-destructive">Teto atingido: bots parados até virar o mês</span>}
               {budget.mode === "economy" && <span className="font-medium text-amber-700 dark:text-amber-400">Teto atingido: todos os bots no econômico até virar o mês</span>}
               {budget.mode === "ok" && budget.warning && <span className="font-medium text-amber-700 dark:text-amber-400">Passou de {budget.warnPercent}% do teto</span>}
@@ -307,8 +318,9 @@ function EconomyCard({ config }: { config: BotsConfig }) {
         )}
         {form && (
           <>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div><Label htmlFor="budgetValue">Teto do mês (US$)</Label><Input id="budgetValue" name="budgetValue" className="mt-1" inputMode="decimal" value={form.value} onValueChange={(_, value) => setF({ value: String(value) })} placeholder={budget?.envCap != null ? `Servidor: ${budget.envCap}` : "Padrão: 50"} /></div>
+            <div className="grid gap-3 sm:grid-cols-4">
+              <div><Label htmlFor="budgetValue">Teto do mês (R$)</Label><Input id="budgetValue" name="budgetValue" className="mt-1" inputMode="decimal" value={form.value} onValueChange={(_, value) => setF({ value: String(value) })} placeholder={budget?.envCap != null ? `Servidor: ${toBrl(budget.envCap)}` : `Padrão: ${toBrl(50)}`} /></div>
+              <div><Label htmlFor="budgetRate">Cotação do dólar (R$)</Label><Input id="budgetRate" name="budgetRate" className="mt-1" inputMode="decimal" value={form.rate} onValueChange={(_, value) => setF({ rate: String(value) })} placeholder={budget?.fx && budget.fx.source !== "manual" ? `Automática: ${String(budget.fx.rate).replace(".", ",")}` : "Automática"} /></div>
               <div><Label htmlFor="budgetWarn">Avisar ao chegar em (%)</Label><Input id="budgetWarn" name="budgetWarn" className="mt-1" inputMode="numeric" value={form.warn} onValueChange={(_, value) => setF({ warn: String(value) })} /></div>
               <div><Label>Ao estourar</Label><div className="mt-1"><Select name="budgetOnExceed" options={[{ id: "parar", name: "Parar os bots" }, { id: "economico", name: "Passar todos para o econômico" }]} state={form.onExceed} onChange={(_, value) => setF({ onExceed: String(value) === "economico" ? "economico" : "parar" })} /></div></div>
             </div>
@@ -334,7 +346,7 @@ function EconomyCard({ config }: { config: BotsConfig }) {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <p className="flex-1 text-xs text-muted-foreground">
-                O aviso aparece aqui e como relatório no sistema, uma vez por mês. {budget?.envCap != null ? `O servidor limita o teto a ${money(budget.envCap)}: passou disso, os bots param sempre. ` : ""}O teto por bot faz o mesmo que o da empresa, só para aquele bot.
+                O aviso aparece aqui e como relatório no sistema, uma vez por mês. {budget?.envCap != null ? `O servidor limita o teto a ${brl(budget.envCap, budget.fx)}: passou disso, os bots param sempre. ` : ""}O teto por bot faz o mesmo que o da empresa, só para aquele bot. Valores em reais: {fxNote(budget?.fx)}. Deixe a cotação vazia para usar a do Banco Central do dia, ou informe a da sua fatura do Google.
               </p>
               <Button type="button" size="sm" onClick={() => saveBudget.mutate()} disabled={saveBudget.isPending}>{saveBudget.isPending ? "Salvando..." : "Salvar teto"}</Button>
             </div>

@@ -9,7 +9,7 @@ import ListCard from "@/components/general-components/ListCard";
 import ListFooter from "@/components/general-components/ListFooter";
 import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import { errorMessage } from "../../comercial/-shared/commercial";
-import { STATUS_LABEL, UsageByBot, UsageSummary, aiApi, dateTimeBr, usd } from "../-shared/bots";
+import { STATUS_LABEL, UsageByBot, UsageSummary, aiApi, brl, dateTimeBr, fxNote } from "../-shared/bots";
 
 interface AuditRow { id: number; createdAt: string; user: string; origin: string; bot: string | null; tool: string; title: string; status: string; input: unknown; outputSummary: string | null; durationMs: number }
 
@@ -53,10 +53,10 @@ function AuditPage() {
           <div className="flex flex-wrap items-end gap-4">
             <div>
               <p className="text-xs text-muted-foreground">Gasto em {usage.data.month}</p>
-              <p className="text-2xl font-bold">{usd(usage.data.spent)}</p>
+              <p className="text-2xl font-bold">{brl(usage.data.spent, usage.data.fx)}</p>
             </div>
             <div className="min-w-48 flex-1">
-              <p className="text-xs text-muted-foreground">Teto mensal: {usd(usage.data.budget)} {usage.data.percent !== null ? `(${usage.data.percent}%)` : ""}</p>
+              <p className="text-xs text-muted-foreground">Teto mensal: {brl(usage.data.budget, usage.data.fx)} {usage.data.percent !== null ? `(${usage.data.percent}%)` : ""}</p>
               <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
                 <div className={`h-full ${Number(usage.data.percent) >= 90 ? "bg-destructive" : "bg-primary"}`} style={{ width: `${Math.min(100, usage.data.percent ?? 0)}%` }} />
               </div>
@@ -65,7 +65,7 @@ function AuditPage() {
           {usage.data.rows.length > 0 && (
             <table className="mt-4 w-full text-xs">
               <thead><tr className="text-left text-muted-foreground"><th className="py-1">Modelo</th><th>Chamadas</th><th>Tokens (entrada / saída)</th><th className="text-right">Custo</th></tr></thead>
-              <tbody>{usage.data.rows.map((row) => <tr key={`${row.provider}-${row.model}`} className="border-t"><td className="py-1">{row.provider} · {row.model}</td><td>{row.calls}</td><td>{row.inputTokens.toLocaleString("pt-BR")} / {row.outputTokens.toLocaleString("pt-BR")}</td><td className="text-right">{usd(row.costUsd)}</td></tr>)}</tbody>
+              <tbody>{usage.data.rows.map((row) => <tr key={`${row.provider}-${row.model}`} className="border-t"><td className="py-1">{row.provider} · {row.model}</td><td>{row.calls}</td><td>{row.inputTokens.toLocaleString("pt-BR")} / {row.outputTokens.toLocaleString("pt-BR")}</td><td className="text-right">{brl(row.costUsd, usage.data.fx)}</td></tr>)}</tbody>
             </table>
           )}
           {byBot.data && byBot.data.rows.length > 0 && (
@@ -75,18 +75,18 @@ function AuditPage() {
                 <thead><tr className="text-left text-muted-foreground"><th className="py-1">Bot</th><th>Respostas</th><th>Idas ao modelo (principal / econômico)</th><th>Escaladas</th><th className="text-right">No econômico</th><th className="text-right">Custo</th></tr></thead>
                 <tbody>{byBot.data.rows.map((row) => (
                   <tr key={`${row.kind}-${row.botId ?? row.label}`} className="border-t">
-                    <td className="py-1">{row.label}{row.kind === "bot" && row.economyMode ? <span className="text-muted-foreground"> · econômico: {row.economyModel}</span> : null}{row.budgetUsd ? <span className="text-muted-foreground"> · teto {usd(row.budgetUsd)}</span> : null}</td>
+                    <td className="py-1">{row.label}{row.kind === "bot" && row.economyMode ? <span className="text-muted-foreground"> · econômico: {row.economyModel}</span> : null}{row.budgetUsd ? <span className="text-muted-foreground"> · teto {brl(row.budgetUsd, byBot.data.fx)}</span> : null}</td>
                     <td>{row.kind === "mcp" ? `${row.runs} ações` : row.kind === "other" ? "—" : row.runs}</td>
                     <td>{row.kind === "bot" || row.kind === "schedule" ? `${row.primarySteps} / ${row.economySteps}` : "—"}</td>
                     <td>{row.kind === "bot" || row.kind === "schedule" ? row.escalations : "—"}</td>
-                    <td className="text-right">{row.economyCostUsd ? usd(row.economyCostUsd) : "—"}</td>
-                    <td className="text-right">{usd(row.costUsd)}</td>
+                    <td className="text-right">{row.economyCostUsd ? brl(row.economyCostUsd, byBot.data.fx) : "—"}</td>
+                    <td className="text-right">{brl(row.costUsd, byBot.data.fx)}</td>
                   </tr>
                 ))}</tbody>
               </table>
             </div>
           )}
-          <p className="mt-2 text-[11px] text-muted-foreground">Estimativa pela tabela de preços do sistema. O teto, o aviso e o que acontece ao estourar (parar ou passar para o econômico) ficam em Configurar bots → Economia; a variável AI_MONTHLY_BUDGET_USD do servidor, se existir, é o limite superior. "Escaladas" são passos que o econômico quis gravar e o principal refez.</p>
+          <p className="mt-2 text-[11px] text-muted-foreground">Estimativa pela tabela de preços do sistema (em dólar), convertida para reais: {fxNote(usage.data.fx)}; dá para fixar outra cotação em Configurar bots → Economia. O teto, o aviso e o que acontece ao estourar (parar ou passar para o econômico) ficam em Configurar bots → Economia; a variável AI_MONTHLY_BUDGET_USD do servidor, se existir, é o limite superior. "Escaladas" são passos que o econômico quis gravar e o principal refez.</p>
         </div>
       )}
       <ListCard>

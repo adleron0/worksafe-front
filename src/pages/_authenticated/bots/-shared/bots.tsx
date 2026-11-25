@@ -60,19 +60,21 @@ export interface PendingAction {
   conversationId: number | null; createdAt: string;
 }
 export interface ConversationView { id: number; title: string; botId: number; archived: boolean; messages: Message[]; run: Run | null; pendingActions: PendingAction[] }
-export interface UsageSummary { month: string; budget: number; spent: number; percent: number | null; warning?: boolean; rows: Array<{ provider: string; model: string; calls: number; inputTokens: number; outputTokens: number; costUsd: number }> }
+/** Cotação do dólar usada para mostrar o gasto em reais. */
+export interface FxInfo { rate: number; source: "manual" | "bcb" | "aproximada"; date: string | null }
+export interface UsageSummary { fx?: FxInfo; month: string; budget: number; spent: number; percent: number | null; warning?: boolean; rows: Array<{ provider: string; model: string; calls: number; inputTokens: number; outputTokens: number; costUsd: number }> }
 export interface AiStatus { enabled: boolean; mcpEnabled: boolean; providers: ProviderStatus[]; usage: UsageSummary | null; pendingActions: number }
 
 /** Teto de gasto da empresa (Configurar bots → Economia). */
 export interface BudgetView {
   month: string; monthlyBudgetUsd: number | null; warnPercent: number; onExceed: "parar" | "economico";
   economyProvider: string | null; economyModel: string | null; economyReady: boolean; maxPrecision: boolean;
-  botBudgets: Record<string, number>; envCap: number | null; budget: number; spent: number; percent: number | null; warning: boolean;
+  botBudgets: Record<string, number>; usdBrlRate: number | null; fx?: FxInfo; envCap: number | null; budget: number; spent: number; percent: number | null; warning: boolean;
   mode: "ok" | "economy" | "stop";
 }
 /** Gasto do mês por bot (auditoria). */
 export interface UsageByBot {
-  month: string; total: number; budget: number;
+  fx?: FxInfo; month: string; total: number; budget: number;
   rows: Array<{ kind: "bot" | "schedule" | "mcp" | "other"; botId: number | null; label: string; runs: number; costUsd: number; economyCostUsd: number; primarySteps: number; economySteps: number; escalations: number; budgetUsd?: number | null; model?: string | null; economyModel?: string | null; economyMode?: boolean }>;
   byModel: UsageSummary["rows"];
 }
@@ -124,6 +126,19 @@ export const TOOL_LABEL: Record<string, string> = {
 };
 export const STATUS_LABEL: Record<string, string> = { ok: "feito", refused: "recusado", denied: "sem permissão", error: "falhou", pending: "aguardando confirmação", running: "em andamento" };
 
+/** Valor em dólar mostrado em reais pela cotação (centavos; abaixo de R$ 1, até 3 casas). */
+export const brl = (valueUsd: number, fx?: FxInfo | null) => {
+  const value = valueUsd * (fx?.rate ?? 5.5);
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: value > 0 && value < 1 ? 3 : 2 });
+};
+/** "Dólar a R$ 5,86 (PTAX de 23/11)". */
+export const fxNote = (fx?: FxInfo | null) => {
+  if (!fx) return "";
+  const rate = fx.rate.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  if (fx.source === "manual") return `Dólar a ${rate} (cotação informada na tela)`;
+  if (fx.source === "bcb") return `Dólar a ${rate} (PTAX do Banco Central${fx.date ? ` de ${fx.date.slice(8, 10)}/${fx.date.slice(5, 7)}` : ""})`;
+  return `Dólar a ${rate} (aproximada: o Banco Central não respondeu)`;
+};
 export const usd = (value: number) => value.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: value < 1 ? 4 : 2 });
 /** "há 5 min", "há 2 h", "ontem"… */
 export function ago(value?: string | null) {

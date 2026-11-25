@@ -207,6 +207,7 @@ export const groups: SidebarGroup[] = [
         ability: "financeiro",
         subitems: [
           { title: "A Faturar", icon: "receipt", path: "/financeiro/faturar" },
+          { title: "Notas Fiscais", permissions: ["view_nfse"], icon: "file-badge", path: "/financeiro/notas" },
           { title: "Contas a Receber", icon: "trending-up", path: "/financeiro/receber" },
           { title: "Contas a Pagar", icon: "trending-down", path: "/financeiro/pagar" },
           { title: "Recorrentes", icon: "repeat", path: "/financeiro/recorrentes" },
@@ -219,7 +220,7 @@ export const groups: SidebarGroup[] = [
           { title: "Centros de Custo", icon: "target", path: "/financeiro/centros-custo" },
           { title: "Contas Bancárias", icon: "landmark", path: "/financeiro/contas-bancarias" },
           { title: "Implantação", icon: "rocket", path: "/financeiro/implantacao" },
-          // { title: "Notas Fiscais", icon: "receipt", path: "/financeiro/notas-fiscais" },
+          { title: "Fiscal (NFS-e)", permissions: ["config_fiscal"], icon: "stamp", path: "/financeiro/fiscal" },
         ],
       },
     ],

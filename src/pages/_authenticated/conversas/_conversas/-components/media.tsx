@@ -42,6 +42,15 @@ export function MessageMedia({ message, out, onRetry, retrying }: { message: Cha
     );
   }
   if (!media.url || broken) {
+    if (media.state === "history" && onRetry) {
+      return (
+        <button type="button" disabled={retrying} onClick={onRetry} className="mb-1 flex w-full cursor-pointer items-center gap-2 rounded-lg bg-foreground/5 px-2.5 py-2 text-left text-xs text-muted-foreground hover:bg-foreground/10">
+          <Icon name={MEDIA_ICON[type] ?? "paperclip"} className="h-4 w-4" />
+          <span className="truncate">{media.fileName || MEDIA_LABEL[type] || "Anexo"}</span>
+          <span className="ml-auto flex shrink-0 items-center gap-1 text-[11px] font-medium text-primary"><Icon name={retrying ? "loader-circle" : "download"} className={cn("h-3 w-3", retrying && "animate-spin")} />baixar</span>
+        </button>
+      );
+    }
     const why = broken ? "não deu para abrir" : media.state === "too_big" ? "grande demais para baixar" : media.state === "failed" ? "não deu para baixar" : "abre no celular";
     return (
       <span className="mb-1 flex items-center gap-2 rounded-lg bg-foreground/5 px-2.5 py-2 text-xs text-muted-foreground">

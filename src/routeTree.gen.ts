@@ -104,6 +104,7 @@ import { Route as AuthenticatedFinanceiroFaturarFaturarRouteImport } from './pag
 import { Route as AuthenticatedFinanceiroContasBancariasContasBancariasRouteImport } from './pages/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
 import { Route as AuthenticatedFinanceiroConciliacaoConciliacaoRouteImport } from './pages/_authenticated/financeiro/_conciliacao/conciliacao'
 import { Route as AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport } from './pages/_authenticated/financeiro/_centros-custo/centros-custo'
+import { Route as AuthenticatedConversasConversasRespostasRouteImport } from './pages/_authenticated/conversas/_conversas/respostas'
 import { Route as AuthenticatedConversasConversasNumerosRouteImport } from './pages/_authenticated/conversas/_conversas/numeros'
 import { Route as AuthenticatedConversasConversasCaixaRouteImport } from './pages/_authenticated/conversas/_conversas/caixa'
 import { Route as AuthenticatedComercialVendedoresVendedoresRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores'
@@ -741,6 +742,12 @@ const AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute =
     path: '/financeiro/centros-custo',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedConversasConversasRespostasRoute =
+  AuthenticatedConversasConversasRespostasRouteImport.update({
+    id: '/conversas/_conversas/respostas',
+    path: '/conversas/respostas',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedConversasConversasNumerosRoute =
   AuthenticatedConversasConversasNumerosRouteImport.update({
     id: '/conversas/_conversas/numeros',
@@ -1343,6 +1350,7 @@ export interface FileRoutesByFullPath {
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/conversas/caixa': typeof AuthenticatedConversasConversasCaixaRoute
   '/conversas/numeros': typeof AuthenticatedConversasConversasNumerosRoute
+  '/conversas/respostas': typeof AuthenticatedConversasConversasRespostasRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   '/financeiro/conciliacao': typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   '/financeiro/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -1526,6 +1534,7 @@ export interface FileRoutesByTo {
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/conversas/caixa': typeof AuthenticatedConversasConversasCaixaRoute
   '/conversas/numeros': typeof AuthenticatedConversasConversasNumerosRoute
+  '/conversas/respostas': typeof AuthenticatedConversasConversasRespostasRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   '/financeiro/conciliacao': typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   '/financeiro/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -1713,6 +1722,7 @@ export interface FileRoutesById {
   '/_authenticated/comercial/_vendedores/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/_authenticated/conversas/_conversas/caixa': typeof AuthenticatedConversasConversasCaixaRoute
   '/_authenticated/conversas/_conversas/numeros': typeof AuthenticatedConversasConversasNumerosRoute
+  '/_authenticated/conversas/_conversas/respostas': typeof AuthenticatedConversasConversasRespostasRoute
   '/_authenticated/financeiro/_centros-custo/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   '/_authenticated/financeiro/_conciliacao/conciliacao': typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   '/_authenticated/financeiro/_contas-bancarias/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -1899,6 +1909,7 @@ export interface FileRouteTypes {
     | '/comercial/vendedores'
     | '/conversas/caixa'
     | '/conversas/numeros'
+    | '/conversas/respostas'
     | '/financeiro/centros-custo'
     | '/financeiro/conciliacao'
     | '/financeiro/contas-bancarias'
@@ -2082,6 +2093,7 @@ export interface FileRouteTypes {
     | '/comercial/vendedores'
     | '/conversas/caixa'
     | '/conversas/numeros'
+    | '/conversas/respostas'
     | '/financeiro/centros-custo'
     | '/financeiro/conciliacao'
     | '/financeiro/contas-bancarias'
@@ -2268,6 +2280,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comercial/_vendedores/vendedores'
     | '/_authenticated/conversas/_conversas/caixa'
     | '/_authenticated/conversas/_conversas/numeros'
+    | '/_authenticated/conversas/_conversas/respostas'
     | '/_authenticated/financeiro/_centros-custo/centros-custo'
     | '/_authenticated/financeiro/_conciliacao/conciliacao'
     | '/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
@@ -3067,6 +3080,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/conversas/_conversas/respostas': {
+      id: '/_authenticated/conversas/_conversas/respostas'
+      path: '/conversas/respostas'
+      fullPath: '/conversas/respostas'
+      preLoaderRoute: typeof AuthenticatedConversasConversasRespostasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/conversas/_conversas/numeros': {
       id: '/_authenticated/conversas/_conversas/numeros'
       path: '/conversas/numeros'
@@ -3737,6 +3757,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComercialVendedoresVendedoresRoute: typeof AuthenticatedComercialVendedoresVendedoresRoute
   AuthenticatedConversasConversasCaixaRoute: typeof AuthenticatedConversasConversasCaixaRoute
   AuthenticatedConversasConversasNumerosRoute: typeof AuthenticatedConversasConversasNumerosRoute
+  AuthenticatedConversasConversasRespostasRoute: typeof AuthenticatedConversasConversasRespostasRoute
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute: typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   AuthenticatedFinanceiroConciliacaoConciliacaoRoute: typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   AuthenticatedFinanceiroContasBancariasContasBancariasRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -3926,6 +3947,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedConversasConversasCaixaRoute,
   AuthenticatedConversasConversasNumerosRoute:
     AuthenticatedConversasConversasNumerosRoute,
+  AuthenticatedConversasConversasRespostasRoute:
+    AuthenticatedConversasConversasRespostasRoute,
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute:
     AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute,
   AuthenticatedFinanceiroConciliacaoConciliacaoRoute:

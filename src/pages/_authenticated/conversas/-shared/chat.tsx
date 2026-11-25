@@ -40,6 +40,7 @@ export interface ChatMeta {
   defaults: ChatSettings;
   bots: { id: number; name: string; persona: string | null; role: string | null; avatar: string | null; key: string }[];
   users: { id: number; name: string; imageUrl: string | null }[];
+  tagColors: string[];
   serverReady: boolean;
 }
 export type ConversationStatus = "aberta" | "aguardando" | "resolvida";
@@ -49,7 +50,10 @@ export interface ConversationItem {
   contact: { id: number; name: string | null; pushName: string | null; phone: string | null; avatarUrl: string | null; optOut: boolean; isNew: boolean };
   customer: { id: number; name: string } | null;
   assignedUser: { id: number; name: string; imageUrl: string | null } | null;
+  tags: ChatTag[];
 }
+export interface ChatTag { id: number; name: string; color: string; conversations?: number }
+export interface QuickReply { id: number; shortcut: string; title: string; text: string; sector: string | null; uses: number }
 export type Box = "abertas" | "minhas" | "sem_dono" | "nao_lidas" | "resolvidas";
 export interface ConversationList { items: ConversationItem[]; counts: Record<Exclude<Box, "resolvidas">, number> }
 export type MessageStatus = "queued" | "sending" | "sent" | "delivered" | "read" | "failed" | "received";
@@ -81,6 +85,33 @@ export const setChatLive = (value: boolean) => { if (liveOn !== value) { liveOn 
 export const useChatLive = () => useSyncExternalStore((fn) => { liveListeners.add(fn); return () => liveListeners.delete(fn); }, () => liveOn);
 /** Intervalo de atualização: devagar com o tempo real ligado, rápido sem ele. */
 export const useLiveInterval = (fallbackMs: number, liveMs = 60000) => (useChatLive() ? liveMs : fallbackMs);
+
+export const useQuickReplies = (enabled = true) => useQuery({ queryKey: [CHAT_KEY, "replies"], enabled, staleTime: 60000, queryFn: () => chatApi.get<QuickReply[]>("quick-replies") });
+export const useChatTags = (enabled = true) => useQuery({ queryKey: [CHAT_KEY, "tags"], enabled, staleTime: 60000, queryFn: () => chatApi.get<ChatTag[]>("tags") });
+
+/** Etiqueta pequena: bolinha na cor + nome. */
+export function TagChip({ tag, className, onRemove }: { tag: Pick<ChatTag, "name" | "color">; className?: string; onRemove?: () => void }) {
+  return (
+    <span className={cn("inline-flex max-w-full items-center gap-1 rounded-full border bg-background px-1.5 py-px text-[10px] font-medium text-muted-foreground", className)}>
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: tag.color }} />
+      <span className="truncate">{tag.name}</span>
+      {onRemove && <button type="button" onClick={onRemove} aria-label={`Tirar ${tag.name}`} className="-mr-0.5 cursor-pointer rounded-full hover:text-foreground"><Icon name="x" className="h-2.5 w-2.5" /></button>}
+    </span>
+  );
+}
+
+/** Troca as variáveis da resposta rápida pelos dados da conversa. */
+export function fillReply(text: string, vars: { nome?: string | null; empresa?: string | null; atendente?: string | null }) {
+  const nome = (vars.nome ?? "").trim();
+  const looksLikeName = !!nome && !/^[+\d\s()-]+$/.test(nome) && !nome.startsWith("@");
+  const first = looksLikeName ? nome.split(/\s+/)[0] : "";
+  return text
+    .replace(/\{primeiro_nome\}/gi, first)
+    .replace(/\{nome\}/gi, looksLikeName ? nome : "")
+    .replace(/\{empresa\}/gi, (vars.empresa ?? "").trim())
+    .replace(/\{atendente\}/gi, (vars.atendente ?? "").trim().split(/\s+/)[0] ?? "")
+    .replace(/ +([!?.,])/g, "$1").replace(/ {2,}/g, " ");
+}
 
 export const useChatMeta = (enabled = true) => useQuery({ queryKey: [CHAT_KEY, "meta"], enabled, staleTime: 5 * 60 * 1000, queryFn: () => chatApi.get<ChatMeta>("meta") });
 export const useChannels = (enabled = true, refetchInterval: number | false = 15000) =>

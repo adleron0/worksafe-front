@@ -18,20 +18,21 @@ import Select from "@/components/general-components/Select";
 import { cn } from "@/lib/utils";
 import { Tip, errorMessage } from "../../comercial/-shared/commercial";
 import {
-  Box, CHAT_KEY, ChatMessage, ConversationDetail, ConversationItem, ConversationList, PAGES, TICK_LABEL,
-  ChannelLogo, ContactAvatar, InstagramLogo, MessageTicks, WhatsAppLogo, chatApi, contactHandle, contactName, dayLabel, timeBr, useChannels, useChatMeta, useLiveInterval, useMedia, when,
+  Box, CHAT_KEY, ChatMessage, ChatTag, ConversationDetail, ConversationItem, ConversationList, PAGES, TICK_LABEL,
+  ChannelLogo, ContactAvatar, InstagramLogo, MessageTicks, QuickReply, TagChip, useChatTags, WhatsAppLogo, chatApi, contactHandle, contactName, dayLabel, fillReply, timeBr, useChannels, useChatMeta, useLiveInterval, useMedia, useQuickReplies, when,
 } from "../-shared/chat";
 import { setSound, useChatSound } from "../-shared/live";
 import { ACCEPT, MAX_FILE, MessageMedia, PendingFile, VoiceRecorder } from "./-components/media";
 import ContactPanel from "./-components/ContactPanel";
 
-interface Search { conversa?: number; caixa?: Box; numero?: number }
+interface Search { conversa?: number; caixa?: Box; numero?: number; etiqueta?: number }
 
 export const Route = createFileRoute("/_authenticated/conversas/_conversas/caixa")({
   validateSearch: (search: Record<string, unknown>): Search => ({
     conversa: Number(search.conversa) > 0 ? Number(search.conversa) : undefined,
     caixa: ["minhas", "sem_dono", "nao_lidas", "resolvidas"].includes(String(search.caixa)) ? (search.caixa as Box) : undefined,
     numero: Number(search.numero) > 0 ? Number(search.numero) : undefined,
+    etiqueta: Number(search.etiqueta) > 0 ? Number(search.etiqueta) : undefined,
   }),
   component: Inbox,
 });
@@ -61,7 +62,8 @@ function Inbox() {
   if (channels.isLoading) return <Skeleton className="h-full min-h-96 rounded-card" />;
   if (channels.data && !channels.data.length) return <NoChannels manage={can("canais_conversas")} />;
 
-  const list = <ConversationListPane box={box} channelId={search.numero} current={search.conversa} onPick={open}
+  const list = <ConversationListPane box={box} channelId={search.numero} tagId={search.etiqueta} current={search.conversa} onPick={open}
+    onTag={(etiqueta) => navigate({ search: (prev) => ({ ...prev, etiqueta }) })}
     onBox={(caixa) => navigate({ search: (prev) => ({ ...prev, caixa: caixa === "abertas" ? undefined : caixa }) })}
     onChannel={(numero) => navigate({ search: (prev) => ({ ...prev, numero }) })} />;
 
@@ -134,9 +136,10 @@ function EmptyChat() {
 
 // ---------------------------------------------------------------- lista
 
-function ConversationListPane({ box, channelId, current, onPick, onBox, onChannel }: {
-  box: Box; channelId?: number; current?: number; onPick: (id: number) => void; onBox: (box: Box) => void; onChannel: (id?: number) => void;
+function ConversationListPane({ box, channelId, tagId, current, onPick, onBox, onChannel, onTag }: {
+  box: Box; channelId?: number; tagId?: number; current?: number; onPick: (id: number) => void; onBox: (box: Box) => void; onChannel: (id?: number) => void; onTag: (id?: number) => void;
 }) {
+  const tags = useChatTags();
   const listMs = useLiveInterval(LIST_MS, 30000);
   const sound = useChatSound();
   const { can } = useVerify();
@@ -146,10 +149,10 @@ function ConversationListPane({ box, channelId, current, onPick, onBox, onChanne
   const channels = useChannels(true, 30000);
   useEffect(() => { const timer = setTimeout(() => setTerm(search.trim()), 300); return () => clearTimeout(timer); }, [search]);
   const list = useQuery({
-    queryKey: [CHAT_KEY, "list", box, channelId ?? null, term],
+    queryKey: [CHAT_KEY, "list", box, channelId ?? null, tagId ?? null, term],
     refetchInterval: listMs,
     placeholderData: keepPreviousData,
-    queryFn: () => chatApi.get<ConversationList>("conversations", { box, channelId, search: term || undefined }),
+    queryFn: () => chatApi.get<ConversationList>("conversations", { box, channelId, tagId, search: term || undefined }),
   });
   const counts = list.data?.counts;
   const many = (channels.data?.length ?? 0) > 1;
@@ -180,7 +183,7 @@ function ConversationListPane({ box, channelId, current, onPick, onBox, onChanne
         </div>
         <div className="flex gap-2">
           <Input name="busca" value={search} onValueChange={(_, value) => setSearch(String(value))} placeholder="Buscar conversa" icon="search" className="h-9 min-w-0 flex-1" />
-          {many && <ChannelFilter channels={channels.data!} value={channelId} onChange={onChannel} />}
+          <ChannelFilter channels={many ? channels.data! : []} value={channelId} onChange={onChannel} tags={tags.data ?? []} tagId={tagId} onTag={onTag} />
         </div>
         {box === "resolvidas" ? (
           <div className="flex h-8 items-center gap-2 rounded-lg bg-muted px-2.5 text-xs">
@@ -255,6 +258,8 @@ function ConversationRow({ conv, active, showChannel, onClick }: { conv: Convers
         <span className="mt-1.5 flex items-center gap-1.5">
           {conv.customer && <span className="inline-flex min-w-0 items-center gap-1 truncate text-[11px] text-muted-foreground"><Icon name="building-2" className="h-3 w-3 shrink-0" /><span className="truncate">{conv.customer.name}</span></span>}
           {!conv.customer && conv.contact.isNew && <span className="text-[11px] text-muted-foreground">Contato novo</span>}
+          {conv.tags?.slice(0, 2).map((tag) => <TagChip key={tag.id} tag={tag} className="max-w-24" />)}
+          {(conv.tags?.length ?? 0) > 2 && <span className="text-[10px] text-muted-foreground">+{conv.tags.length - 2}</span>}
           <span className="ml-auto flex shrink-0 items-center gap-1">
             {conv.assignedUser
               ? <Tip text={`Com ${conv.assignedUser.name}`}><span><ContactAvatar name={conv.assignedUser.name} url={conv.assignedUser.imageUrl} size={18} /></span></Tip>
@@ -556,6 +561,11 @@ function Composer({ conv }: { conv: ConversationDetail }) {
   const [confirmNew, setConfirmNew] = useState<null | { kind: "text" | "file"; ptt?: boolean; file?: File; body?: string }>(null);
   const area = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
+  const replies = useQuickReplies();
+  const meta = useChatMeta();
+  const { user: me } = useAuth();
+  const [slashIndex, setSlashIndex] = useState(0);
+  const [slashOff, setSlashOff] = useState(false);
   const canReply = can("responder_conversas");
   const instagram = conv.channel.type === "instagram";
   const [, tick] = useState(0);
@@ -618,6 +628,22 @@ function Composer({ conv }: { conv: ConversationDetail }) {
   const firstLink = useMemo(() => !isNote && conv.contact.isNew && /(https?:\/\/|www\.)/i.test(text), [isNote, conv.contact.isNew, text]);
   const showMic = !isNote && !instagram && !file && !text.trim();
 
+  // respostas rápidas: "/" no começo da caixa abre a lista
+  const fold = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const slashQuery = /^\/[^\n]{0,40}$/.test(text) ? fold(text.slice(1)) : null;
+  const matches = slashQuery === null ? [] : (replies.data ?? [])
+    .filter((r) => !r.sector || r.sector === conv.sector)
+    .filter((r) => !slashQuery || r.shortcut.includes(slashQuery) || fold(r.title).includes(slashQuery))
+    .slice(0, 6);
+  const showSlash = !slashOff && slashQuery !== null && (matches.length > 0 || !replies.data?.length);
+  useEffect(() => { setSlashIndex(0); if (slashQuery === null) setSlashOff(false); }, [slashQuery]);
+  const applyReply = (reply: QuickReply) => {
+    const atendente = meta.data?.users.find((u) => u.id === Number(me?.sub))?.name ?? "";
+    setText(fillReply(reply.text, { nome: conv.contact.name || conv.contact.pushName, empresa: conv.customer?.name, atendente }));
+    void chatApi.post(`quick-replies/${reply.id}/used`).catch(() => undefined);
+    keepFocus();
+  };
+
   return (
     <footer className={cn("border-t px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] transition-colors sm:px-4", isNote && "bg-amber-50/70 dark:bg-amber-500/5")}
       onDragOver={(event) => { if (!isNote && !blocked && event.dataTransfer.types.includes("Files")) event.preventDefault(); }}
@@ -651,11 +677,30 @@ function Composer({ conv }: { conv: ConversationDetail }) {
           <VoiceRecorder onCancel={() => setRecording(false)} onDone={(voice) => upload.mutate({ upload: voice, caption: "", ptt: true })} />
         ) : (
           <>
+            {showSlash && (
+              <div className="mb-2 overflow-hidden rounded-xl border bg-background shadow-sm">
+                <p className="flex items-center gap-1.5 border-b px-3 py-1.5 text-[11px] text-muted-foreground"><Icon name="zap" className="h-3 w-3" />Respostas rápidas · ↑↓ escolhe, Enter usa, Esc fecha</p>
+                {matches.length ? matches.map((reply, i) => (
+                  <button key={reply.id} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => applyReply(reply)} onMouseEnter={() => setSlashIndex(i)}
+                    className={cn("flex w-full cursor-pointer items-start gap-3 px-3 py-2 text-left", i === slashIndex ? "bg-primary/8" : "hover:bg-muted")}>
+                    <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[11px]">/{reply.shortcut}</span>
+                    <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{reply.title}</span><span className="block truncate text-xs text-muted-foreground">{reply.text}</span></span>
+                  </button>
+                )) : (
+                  <p className="px-3 py-3 text-xs text-muted-foreground">Nenhuma resposta rápida ainda. <Link to="/conversas/respostas" className="font-medium text-primary hover:underline">Criar respostas</Link></p>
+                )}
+              </div>
+            )}
             {file && !isNote && <PendingFile file={file} onRemove={() => setFile(null)} />}
             <div className="flex items-end gap-2">
               {!isNote && (
                 <>
                   <input ref={picker} type="file" accept={ACCEPT} className="hidden" onChange={(event) => { choose(event.target.files?.[0]); event.target.value = ""; }} />
+                  <Tip text="Respostas rápidas (ou digite / na caixa)">
+                    <Button type="button" variant="ghost" className="hidden h-11 w-9 shrink-0 rounded-full p-0 text-muted-foreground sm:inline-flex" onClick={() => { setText((t) => (t.startsWith("/") ? t : "/")); setSlashOff(false); keepFocus(); }} aria-label="Respostas rápidas">
+                      <Icon name="zap" className="h-5 w-5" />
+                    </Button>
+                  </Tip>
                   <Tip text="Anexar foto, vídeo ou documento (até 16 MB)">
                     <Button type="button" variant="ghost" className="h-11 w-11 shrink-0 rounded-full p-0 text-muted-foreground" onClick={() => picker.current?.click()} disabled={busy} aria-label="Anexar arquivo">
                       <Icon name="paperclip" className="h-5 w-5" />
@@ -664,7 +709,15 @@ function Composer({ conv }: { conv: ConversationDetail }) {
                 </>
               )}
               <Textarea ref={area} value={text} onChange={(event) => setText(event.target.value)} rows={1}
-                onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); submit(); } }}
+                onKeyDown={(event) => {
+                  if (showSlash && matches.length) {
+                    if (event.key === "ArrowDown") { event.preventDefault(); setSlashIndex((i) => (i + 1) % matches.length); return; }
+                    if (event.key === "ArrowUp") { event.preventDefault(); setSlashIndex((i) => (i - 1 + matches.length) % matches.length); return; }
+                    if ((event.key === "Enter" && !event.shiftKey) || event.key === "Tab") { event.preventDefault(); applyReply(matches[slashIndex] ?? matches[0]); return; }
+                  }
+                  if (showSlash && event.key === "Escape") { event.preventDefault(); setSlashOff(true); return; }
+                  if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); submit(); }
+                }}
                 onPaste={(event) => { const pasted = event.clipboardData.files?.[0]; if (pasted && !isNote) { event.preventDefault(); choose(pasted); } }}
                 placeholder={placeholder} disabled={upload.isPending}
                 className={cn("field-sizing-content max-h-40 min-h-11 flex-1 resize-none rounded-2xl py-2.5 text-base sm:text-sm", isNote && "border-amber-500/40 bg-background")} />
@@ -697,36 +750,45 @@ function Composer({ conv }: { conv: ConversationDetail }) {
   );
 }
 
-/** Filtro por número: um botão compacto ao lado da busca, sem rolagem lateral. */
-function ChannelFilter({ channels, value, onChange }: { channels: { id: number; name: string; color?: string | null; status: string }[]; value?: number; onChange: (id?: number) => void }) {
+/** Filtro por número e etiqueta: um botão compacto ao lado da busca, sem rolagem lateral. */
+function ChannelFilter({ channels, value, onChange, tags, tagId, onTag }: { channels: { id: number; name: string; color?: string | null; status: string }[]; value?: number; onChange: (id?: number) => void; tags: ChatTag[]; tagId?: number; onTag: (id?: number) => void }) {
   const [open, setOpen] = useState(false);
   const current = channels.find((c) => c.id === value);
-  const pick = (id?: number) => { onChange(id); setOpen(false); };
+  const tag = tags.find((t) => t.id === tagId);
+  const active = (current ? 1 : 0) + (tag ? 1 : 0);
+  if (!channels.length && !tags.length) return null;
+  const row = (on: boolean, children: React.ReactNode, onClick: () => void, key: string) => (
+    <button key={key} type="button" onClick={() => { onClick(); setOpen(false); }}
+      className={cn("flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted", on && "bg-muted font-medium")}>
+      {children}{on && <Icon name="check" className="ml-auto h-3.5 w-3.5 text-primary" />}
+    </button>
+  );
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <Tip text={current ? `Só ${current.name}` : "Filtrar por número"}>
+      <Tip text={active ? "Filtros ligados" : "Filtrar por número ou etiqueta"}>
         <PopoverTrigger asChild>
-          <Button size="sm" variant="outline" aria-label="Filtrar por número" className={cn("h-9 shrink-0 gap-1.5 px-2.5", current && "border-primary/50")}>
-            {current ? <span className="h-2 w-2 rounded-full" style={{ background: current.color ?? "#149E5E" }} /> : <Icon name="smartphone" className="h-4 w-4" />}
-            <span className="hidden max-w-24 truncate text-xs sm:inline">{current ? current.name : "Todos"}</span>
-            <Icon name="chevron-down" className="h-3.5 w-3.5 text-muted-foreground" />
+          <Button size="sm" variant="outline" aria-label="Filtrar" className={cn("h-9 shrink-0 gap-1.5 px-2.5", active && "border-primary/50")}>
+            <Icon name="list-filter" className="h-4 w-4" />
+            <span className="hidden max-w-24 truncate text-xs sm:inline">{tag ? tag.name : current ? current.name : "Filtrar"}</span>
+            {active > 0 && <span className="grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">{active}</span>}
           </Button>
         </PopoverTrigger>
       </Tip>
-      <PopoverContent align="end" className="w-60 p-1">
-        <p className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Mostrar conversas de</p>
-        {[{ id: undefined as number | undefined, name: "Todos os números", color: null as string | null, status: "conectado" }, ...channels].map((c) => {
-          const on = c.id === value;
-          return (
-            <button key={c.id ?? "all"} type="button" onClick={() => pick(c.id)}
-              className={cn("flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted", on && "bg-muted font-medium")}>
-              {c.id === undefined ? <Icon name="layers" className="h-3.5 w-3.5 text-muted-foreground" /> : <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: c.color ?? "#149E5E" }} />}
-              <span className="min-w-0 flex-1 truncate">{c.name}</span>
-              {c.id !== undefined && c.status !== "conectado" && <Icon name="wifi-off" className="h-3.5 w-3.5 text-amber-600" />}
-              {on && <Icon name="check" className="h-3.5 w-3.5 text-primary" />}
-            </button>
-          );
-        })}
+      <PopoverContent align="end" className="scroll-fino max-h-96 w-64 overflow-y-auto p-1">
+        {channels.length > 0 && (
+          <>
+            <p className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Número</p>
+            {row(!value, <><Icon name="layers" className="h-3.5 w-3.5 text-muted-foreground" /><span className="flex-1 truncate">Todos os números</span></>, () => onChange(undefined), "all")}
+            {channels.map((c) => row(c.id === value, <><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: c.color ?? "#149E5E" }} /><span className="min-w-0 flex-1 truncate">{c.name}</span>{c.status !== "conectado" && <Icon name="wifi-off" className="h-3.5 w-3.5 text-amber-600" />}</>, () => onChange(c.id), `c${c.id}`))}
+          </>
+        )}
+        {tags.length > 0 && (
+          <>
+            <p className="mt-1 px-2 py-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Etiqueta</p>
+            {row(!tagId, <><Icon name="tags" className="h-3.5 w-3.5 text-muted-foreground" /><span className="flex-1 truncate">Todas as etiquetas</span></>, () => onTag(undefined), "tall")}
+            {tags.map((t) => row(t.id === tagId, <><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: t.color }} /><span className="min-w-0 flex-1 truncate">{t.name}</span></>, () => onTag(t.id), `t${t.id}`))}
+          </>
+        )}
       </PopoverContent>
     </Popover>
   );

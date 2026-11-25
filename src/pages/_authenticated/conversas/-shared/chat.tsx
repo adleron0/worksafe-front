@@ -51,22 +51,40 @@ export interface ConversationItem {
 export type Box = "abertas" | "minhas" | "sem_dono" | "nao_lidas" | "resolvidas";
 export interface ConversationList { items: ConversationItem[]; counts: Record<Exclude<Box, "resolvidas">, number> }
 export type MessageStatus = "queued" | "sending" | "sent" | "delivered" | "read" | "failed" | "received";
+export interface ChatMedia {
+  url?: string | null; mimetype?: string | null; fileName?: string | null; size?: number | null; seconds?: number | null; ptt?: boolean;
+  /** pending (baixando) | ok | failed | too_big */
+  state?: string; lat?: number; lng?: number;
+}
 export interface ChatMessage {
-  id: number; direction: "in" | "out" | "note"; type: string; text: string; media: Record<string, unknown> | null; status: MessageStatus; error: string | null;
+  id: number; direction: "in" | "out" | "note"; type: string; text: string; media: ChatMedia | null; status: MessageStatus; error: string | null;
   origin: string; sentAt: string; sentBy: string | null;
 }
 export interface ConversationDetail extends ConversationItem {
   channel: ConversationItem["channel"] & { status: ChannelStatus; phone: string | null; sector: string | null; botMode: BotMode };
   messages: ChatMessage[];
   hasMore: boolean;
+  /** Instagram: até quando dá para responder (24 h depois da última mensagem do cliente) */
+  replyUntil: string | null;
 }
+
+// ---------------------------------------------------------------- tempo real (estado)
+
+let liveOn = false;
+const liveListeners = new Set<() => void>();
+export const setChatLive = (value: boolean) => { if (liveOn !== value) { liveOn = value; liveListeners.forEach((fn) => fn()); } };
+/** true enquanto o tempo real (SSE) está ligado: as telas atualizam com menos frequência. */
+export const useChatLive = () => useSyncExternalStore((fn) => { liveListeners.add(fn); return () => liveListeners.delete(fn); }, () => liveOn);
+/** Intervalo de atualização: devagar com o tempo real ligado, rápido sem ele. */
+export const useLiveInterval = (fallbackMs: number, liveMs = 60000) => (useChatLive() ? liveMs : fallbackMs);
 
 export const useChatMeta = (enabled = true) => useQuery({ queryKey: [CHAT_KEY, "meta"], enabled, staleTime: 5 * 60 * 1000, queryFn: () => chatApi.get<ChatMeta>("meta") });
 export const useChannels = (enabled = true, refetchInterval: number | false = 15000) =>
   useQuery({ queryKey: [CHAT_KEY, "channels"], enabled, refetchInterval, queryFn: () => chatApi.get<Channel[]>("channels") });
 /** Conversas com mensagem não lida (contador do menu). */
 export function useChatUnread(enabled = true) {
-  const { data } = useQuery({ queryKey: [CHAT_KEY, "unread"], enabled, refetchInterval: 20000, retry: false, queryFn: () => chatApi.get<{ conversations: number }>("unread") });
+  const refetchInterval = useLiveInterval(20000, 120000);
+  const { data } = useQuery({ queryKey: [CHAT_KEY, "unread"], enabled, refetchInterval, retry: false, queryFn: () => chatApi.get<{ conversations: number }>("unread") });
   return data?.conversations ?? 0;
 }
 
@@ -141,11 +159,33 @@ export function WhatsAppLogo({ className = "h-5 w-5" }: { className?: string }) 
   );
 }
 
+/** Ícone do Instagram (marca). */
+export function InstagramLogo({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <defs>
+        <radialGradient id="ws-ig" cx="30%" cy="107%" r="150%">
+          <stop offset="0" stopColor="#fdf497" /><stop offset=".05" stopColor="#fdf497" /><stop offset=".45" stopColor="#fd5949" /><stop offset=".6" stopColor="#d6249f" /><stop offset=".9" stopColor="#285AEB" />
+        </radialGradient>
+      </defs>
+      <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#ws-ig)" />
+      <rect x="6.5" y="6.5" width="11" height="11" rx="5.5" fill="none" stroke="#fff" strokeWidth="1.8" />
+      <circle cx="17.3" cy="6.8" r="1.1" fill="#fff" />
+    </svg>
+  );
+}
+
+/** Logo do canal pelo tipo. */
+export const ChannelLogo = ({ type, className }: { type?: string | null; className?: string }) => (type === "instagram" ? <InstagramLogo className={className} /> : <WhatsAppLogo className={className} />);
+
+/** Telefone ou @usuário, conforme o canal. */
+export const contactHandle = (contact: { phone: string | null; pushName: string | null }, type?: string | null) => (type === "instagram" ? contact.pushName ?? "Instagram" : formatPhone(contact.phone));
+
 const STATUS: Record<ChannelStatus, { tone: StatusTone; label: string; pulse: boolean }> = {
   conectado: { tone: "success", label: "Conectado", pulse: true },
   aguardando: { tone: "warning", label: "Aguardando conexão", pulse: true },
   caiu: { tone: "warning", label: "Conexão caiu", pulse: true },
-  banido: { tone: "danger", label: "Bloqueado pelo WhatsApp", pulse: false },
+  banido: { tone: "danger", label: "Bloqueado", pulse: false },
   desconectado: { tone: "neutral", label: "Desconectado", pulse: false },
 };
 export const ChannelStatusBadge = ({ status }: { status: ChannelStatus }) => <StatusBadge tone={STATUS[status].tone} pulse={STATUS[status].pulse}>{STATUS[status].label}</StatusBadge>;

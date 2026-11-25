@@ -68,6 +68,7 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
   const sectorName = meta.sectors.find((s) => s.id === draft.sector)?.name;
   const toggleMember = (id: number) => set("memberIds", draft.memberIds.includes(id) ? draft.memberIds.filter((m) => m !== id) : [...draft.memberIds, id]);
   const { horario, limites } = draft.settings;
+  const instagram = channel?.type === "instagram";
 
   return (
     <form onSubmit={submit}>
@@ -77,10 +78,10 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
             <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Resumo</p>
             <SummaryRow label="Número"><span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: draft.color }} />{draft.name.trim() || "—"}</span></SummaryRow>
             <SummaryRow label="Setor">{sectorName ?? "—"}</SummaryRow>
-            <SummaryRow label="Bot">{bot ? `${bot.persona ?? bot.name} · ${meta.botModes.find((m) => m.id === draft.botMode)?.name}` : "Sem bot"}</SummaryRow>
+            {!instagram && <SummaryRow label="Bot">{bot ? `${bot.persona ?? bot.name} · ${meta.botModes.find((m) => m.id === draft.botMode)?.name}` : "Sem bot"}</SummaryRow>}
             <SummaryRow label="Equipe">{draft.memberIds.length ? `${draft.memberIds.length} ${draft.memberIds.length === 1 ? "pessoa" : "pessoas"}` : "—"}</SummaryRow>
-            <SummaryRow label="Horário">{horario.enabled ? `${horario.inicio}–${horario.fim}` : "Sempre"}</SummaryRow>
-            <SummaryRow label="Novos por dia">{limites.novosPorDia}</SummaryRow>
+            {!instagram && <SummaryRow label="Horário">{horario.enabled ? `${horario.inicio}–${horario.fim}` : "Sempre"}</SummaryRow>}
+            {!instagram && <SummaryRow label="Novos por dia">{limites.novosPorDia}</SummaryRow>}
           </div>
         </section>
         {error && <p className="px-1 text-sm text-red-500">{error}</p>}
@@ -130,6 +131,9 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
           </div>
         </FormSection>
 
+        {instagram ? (
+          <p className="flex items-start gap-2 rounded-card border bg-card px-4 py-3 text-sm text-muted-foreground"><Icon name="info" className="mt-0.5 h-4 w-4 shrink-0" />No Instagram, a resposta automática da Nina, o horário e o limite do dia ficam em Bots → Conectores. Aqui você escolhe o nome, o setor e quem da equipe atende.</p>
+        ) : (<>
         <FormSection title="Bot deste número" description="Recomendado começar com &quot;Sugere resposta&quot;: o bot escreve, e a equipe decide se envia.">
           <div className="sm:max-w-sm">
             <Label>Bot</Label>
@@ -202,6 +206,7 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
             Sempre ativos: intervalo de {draft.settings.intervalo.min} a {draft.settings.intervalo.max} s entre mensagens com "digitando…", sem link na primeira mensagem, sem encurtadores, sem o mesmo texto para muitos contatos e quem pede "parar" não recebe mais.
           </p>
         </FormSection>
+        </>)}
       </FormPageGrid>
     </form>
   );

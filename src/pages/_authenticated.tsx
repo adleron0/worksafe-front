@@ -8,6 +8,7 @@ import Footer from '@/template/Footer';
 import { HelpProvider } from '@/help/HelpContext';
 import { HelpCenter } from '@/help/HelpCenter';
 import { BotChatProvider, BotQuickChat } from '@/pages/_authenticated/bots/-shared/bot-chat';
+import { ChatLive } from '@/pages/_authenticated/conversas/-shared/live';
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: async ({ context }) => {
@@ -50,6 +51,7 @@ function AuthenticatedLayout() {
       </section>
       <HelpCenter />
       <BotQuickChat />
+      <ChatLive />
     </div>
     </BotChatProvider>
     </HelpProvider>

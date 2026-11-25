@@ -12,7 +12,7 @@ import PageHeader from "@/components/general-components/PageHeader";
 import { cn } from "@/lib/utils";
 import { BotAvatar } from "../../bots/-shared/avatar";
 import { Tip, errorMessage } from "../../comercial/-shared/commercial";
-import { CHAT_KEY, Channel, ChannelStatusBadge, ChatMeta, ContactAvatar, PAGES, WhatsAppLogo, chatApi, formatPhone, useChannels, useChatMeta } from "../-shared/chat";
+import { CHAT_KEY, Channel, ChannelLogo, ChannelStatusBadge, ChatMeta, ContactAvatar, PAGES, WhatsAppLogo, chatApi, formatPhone, useChannels, useChatMeta } from "../-shared/chat";
 import ConnectDialog from "../-shared/connect-dialog";
 
 interface Search { conectar?: number }
@@ -115,6 +115,7 @@ function ChannelCard({ channel, meta, manage, onConnect }: { channel: Channel; m
   const members = (meta?.users ?? []).filter((u) => channel.memberIds.includes(u.id));
   const stats = channel.stats ?? { sentToday: 0, newToday: 0, open: 0, unread: 0 };
   const connected = channel.status === "conectado";
+  const instagram = channel.type === "instagram";
 
   const action = useMutation({
     mutationFn: (kind: "desconectar" | "remover") => kind === "remover" ? chatApi.delete(`channels/${channel.id}`) : chatApi.post(`channels/${channel.id}/disconnect`),
@@ -125,14 +126,14 @@ function ChannelCard({ channel, meta, manage, onConnect }: { channel: Channel; m
   return (
     <article className="flex flex-col rounded-card border bg-card">
       <header className="flex items-start gap-3 p-4">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted"><WhatsAppLogo className="h-5 w-5" /></span>
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted"><ChannelLogo type={channel.type} className="h-5 w-5" /></span>
         <div className="min-w-0 flex-1">
           <h3 className="flex items-center gap-1.5 font-semibold leading-tight">
             <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: channel.color ?? "#149E5E" }} />
             <span className="truncate">{channel.name}</span>
           </h3>
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
-            <span className="truncate">{channel.phone ? formatPhone(channel.phone) : "Ainda não conectado"}</span>
+            <span className="truncate">{channel.phone ? (instagram ? `@${channel.phone}` : formatPhone(channel.phone)) : "Ainda não conectado"}</span>
             <ChannelStatusBadge status={channel.status} />
           </p>
         </div>
@@ -143,9 +144,10 @@ function ChannelCard({ channel, meta, manage, onConnect }: { channel: Channel; m
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild><Link to="/conversas/numeros/$channelId" params={{ channelId: String(channel.id) }}><Icon name="settings-2" className="mr-2 h-4 w-4" />Configurar</Link></DropdownMenuItem>
-              {connected && <DropdownMenuItem onSelect={() => setConfirm("desconectar")}><Icon name="unplug" className="mr-2 h-4 w-4" />Desconectar</DropdownMenuItem>}
+              {instagram && <DropdownMenuItem asChild><Link to="/bots/conectores" search={{ instagram: undefined, motivo: undefined }}><Icon name="cable" className="mr-2 h-4 w-4" />Conexão em Conectores</Link></DropdownMenuItem>}
+              {connected && !instagram && <DropdownMenuItem onSelect={() => setConfirm("desconectar")}><Icon name="unplug" className="mr-2 h-4 w-4" />Desconectar</DropdownMenuItem>}
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600 focus:text-red-600" onSelect={() => setConfirm("remover")}><Icon name="trash-2" className="mr-2 h-4 w-4" />Remover número</DropdownMenuItem>
+              <DropdownMenuItem className="text-red-600 focus:text-red-600" onSelect={() => setConfirm("remover")}><Icon name="trash-2" className="mr-2 h-4 w-4" />{instagram ? "Tirar da caixa de entrada" : "Remover número"}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -158,12 +160,12 @@ function ChannelCard({ channel, meta, manage, onConnect }: { channel: Channel; m
           <dt className="text-muted-foreground">Setor</dt>
           <dd className="truncate font-medium">{sector?.name ?? "—"}</dd>
         </div>
-        <div className="flex items-center justify-between gap-3">
+        {!instagram && <div className="flex items-center justify-between gap-3">
           <dt className="text-muted-foreground">Bot</dt>
           <dd className="flex min-w-0 items-center gap-1.5">
             {bot ? <><BotAvatar look={bot.avatar} size={18} still /><span className="truncate font-medium">{bot.persona ?? bot.name}</span><span className="truncate text-muted-foreground">· {channel.botMode === "desligado" ? "desligado" : mode?.name.toLowerCase()}</span></> : <span className="text-muted-foreground">Sem bot</span>}
           </dd>
-        </div>
+        </div>}
         <div className="flex items-center justify-between gap-3">
           <dt className="text-muted-foreground">Equipe</dt>
           <dd className="flex items-center gap-1.5">
@@ -177,10 +179,17 @@ function ChannelCard({ channel, meta, manage, onConnect }: { channel: Channel; m
         </div>
       </dl>
 
+      {instagram ? (
+        <p className="flex items-start gap-2 border-t px-4 py-3 text-[12px] leading-snug text-muted-foreground">
+          <Icon name="clock-3" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>O Instagram só deixa responder até 24 h depois da última mensagem do cliente. Limites do dia e resposta da Nina ficam em <Link to="/bots/conectores" search={{ instagram: undefined, motivo: undefined }} className="font-medium text-primary hover:underline">Conectores</Link>.</span>
+        </p>
+      ) : (
       <div className="grid grid-cols-2 gap-4 border-t px-4 py-3">
         <Meter label="Enviadas hoje" value={stats.sentToday} max={channel.settings.limites.porDia} hint="Mensagens que o sistema mandou hoje por este número. Passando do limite, as próximas esperam na fila até amanhã." />
         <Meter label="Contatos novos hoje" value={stats.newToday} max={channel.settings.limites.novosPorDia} hint="Pessoas que nunca escreveram para este número e receberam a primeira mensagem hoje. É o que mais pesa para o WhatsApp bloquear." />
       </div>
+      )}
 
       <footer className="mt-auto flex items-center gap-2 border-t px-4 py-3">
         {connected ? (
@@ -193,6 +202,8 @@ function ChannelCard({ channel, meta, manage, onConnect }: { channel: Channel; m
             </Button>
             {manage && <Tip text="Configurar"><Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to="/conversas/numeros/$channelId" params={{ channelId: String(channel.id) }} aria-label="Configurar"><Icon name="settings-2" className="h-4 w-4" /></Link></Button></Tip>}
           </>
+        ) : instagram ? (
+          <Button asChild size="sm" className="flex-1"><Link to="/bots/conectores" search={{ instagram: undefined, motivo: undefined }}><Icon name="cable" className="mr-1.5 h-4 w-4" />Conectar em Conectores</Link></Button>
         ) : manage ? (
           <Button size="sm" className="flex-1" onClick={onConnect} disabled={channel.status === "banido"}>
             <Icon name={channel.status === "banido" ? "ban" : "qr-code"} className="mr-1.5 h-4 w-4" />{channel.status === "banido" ? "Número bloqueado" : channel.status === "desconectado" ? "Conectar" : "Conectar de novo"}
@@ -203,8 +214,8 @@ function ChannelCard({ channel, meta, manage, onConnect }: { channel: Channel; m
       <ConfirmDialog open={confirm === "desconectar"} onOpenChange={(open) => !open && setConfirm(null)} title="Desconectar este número?"
         description="As conversas ficam no sistema, mas as mensagens novas param de chegar até conectar de novo pelo QR code."
         onConfirm={() => action.mutate("desconectar")} />
-      <ConfirmDialog open={confirm === "remover"} onOpenChange={(open) => !open && setConfirm(null)} title={`Remover ${channel.name}?`}
-        description="O número sai do sistema e é desconectado do WhatsApp. As conversas dele deixam de aparecer na caixa de entrada."
+      <ConfirmDialog open={confirm === "remover"} onOpenChange={(open) => !open && setConfirm(null)} title={instagram ? "Tirar o Instagram da caixa de entrada?" : `Remover ${channel.name}?`}
+        description={instagram ? "As mensagens do Direct deixam de aparecer aqui. A conta continua conectada em Conectores e a Nina segue funcionando." : "O número sai do sistema e é desconectado do WhatsApp. As conversas dele deixam de aparecer na caixa de entrada."}
         slideLabel="Deslize para remover" onConfirm={() => action.mutate("remover")} />
     </article>
   );

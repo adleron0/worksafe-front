@@ -19,8 +19,10 @@ import { cn } from "@/lib/utils";
 import { Tip, errorMessage } from "../../comercial/-shared/commercial";
 import {
   Box, CHAT_KEY, ChatMessage, ConversationDetail, ConversationItem, ConversationList, PAGES, TICK_LABEL,
-  ChannelPill, ContactAvatar, MessageTicks, WhatsAppLogo, chatApi, contactName, dayLabel, formatPhone, timeBr, useChannels, useChatMeta, useMedia, when,
+  ChannelLogo, ChannelPill, ContactAvatar, InstagramLogo, MessageTicks, WhatsAppLogo, chatApi, contactHandle, contactName, dayLabel, timeBr, useChannels, useChatMeta, useLiveInterval, useMedia, when,
 } from "../-shared/chat";
+import { setSound, useChatSound } from "../-shared/live";
+import { ACCEPT, MAX_FILE, MessageMedia, PendingFile, VoiceRecorder } from "./-components/media";
 
 interface Search { conversa?: number; caixa?: Box; numero?: number }
 
@@ -134,6 +136,8 @@ function EmptyChat() {
 function ConversationListPane({ box, channelId, current, onPick, onBox, onChannel }: {
   box: Box; channelId?: number; current?: number; onPick: (id: number) => void; onBox: (box: Box) => void; onChannel: (id?: number) => void;
 }) {
+  const listMs = useLiveInterval(LIST_MS, 30000);
+  const sound = useChatSound();
   const { can } = useVerify();
   const [search, setSearch] = useState("");
   const [term, setTerm] = useState("");
@@ -142,7 +146,7 @@ function ConversationListPane({ box, channelId, current, onPick, onBox, onChanne
   useEffect(() => { const timer = setTimeout(() => setTerm(search.trim()), 300); return () => clearTimeout(timer); }, [search]);
   const list = useQuery({
     queryKey: [CHAT_KEY, "list", box, channelId ?? null, term],
-    refetchInterval: LIST_MS,
+    refetchInterval: listMs,
     placeholderData: keepPreviousData,
     queryFn: () => chatApi.get<ConversationList>("conversations", { box, channelId, search: term || undefined }),
   });
@@ -158,6 +162,9 @@ function ConversationListPane({ box, channelId, current, onPick, onBox, onChanne
           {list.isFetching && !list.isLoading && <Icon name="loader-circle" className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
           <Tip text={box === "resolvidas" ? "Voltar às abertas" : "Ver resolvidas"}>
             <Button size="sm" variant={box === "resolvidas" ? "default" : "outline"} className="h-8 w-8 p-0" aria-label="Resolvidas" onClick={() => onBox(box === "resolvidas" ? "abertas" : "resolvidas")}><Icon name="archive" className="h-4 w-4" /></Button>
+          </Tip>
+          <Tip text={sound ? "Som de mensagem nova ligado" : "Som de mensagem nova desligado"}>
+            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground" aria-label="Som de mensagem nova" onClick={() => setSound(!sound)}><Icon name={sound ? "bell-ring" : "bell-off"} className="h-4 w-4" /></Button>
           </Tip>
           {can("responder_conversas") && (
             <Tip text="Começar uma conversa com um número">
@@ -235,6 +242,7 @@ function ConversationRow({ conv, active, showChannel, onClick }: { conv: Convers
       <ContactAvatar name={name} url={conv.contact.avatarUrl} size={44} color={showChannel ? conv.channel.color : null} />
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline gap-2">
+          {conv.channel.type === "instagram" && <InstagramLogo className="h-3.5 w-3.5 shrink-0 self-center" />}
           <span className={cn("truncate text-[14px]", unread ? "font-bold" : "font-semibold")}>{name}</span>
           <span className={cn("ml-auto shrink-0 text-[11px] tabular-nums", unread ? "font-semibold text-primary" : "text-muted-foreground")}>{when(conv.lastMessageAt)}</span>
         </span>
@@ -322,7 +330,8 @@ function StartDialog({ open, onOpenChange, onStarted }: { open: boolean; onOpenC
 // ---------------------------------------------------------------- a conversa
 
 function useConversation(id: number) {
-  return useQuery({ queryKey: [CHAT_KEY, "conversation", id], refetchInterval: CHAT_MS, queryFn: () => chatApi.get<ConversationDetail>(`conversations/${id}`) });
+  const refetchInterval = useLiveInterval(CHAT_MS, 45000);
+  return useQuery({ queryKey: [CHAT_KEY, "conversation", id], refetchInterval, queryFn: () => chatApi.get<ConversationDetail>(`conversations/${id}`) });
 }
 
 function ChatPane({ id, wide, onBack, panel, onPanel }: { id: number; wide: boolean; onBack: () => void; panel: boolean; onPanel?: () => void }) {
@@ -365,7 +374,7 @@ function ChatPane({ id, wide, onBack, panel, onPanel }: { id: number; wide: bool
         <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate font-semibold">{name || " "}</p>
           <p className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
-            {data && <>{formatPhone(data.contact.phone)}<span className="text-border">•</span><span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: data.channel.color ?? "#149E5E" }} />{data.channel.name}</span></>}
+            {data && <><ChannelLogo type={data.channel.type} className="h-3 w-3 shrink-0" />{contactHandle(data.contact, data.channel.type) !== name && <>{contactHandle(data.contact, data.channel.type)}<span className="text-border">•</span></>}<span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: data.channel.color ?? "#149E5E" }} />{data.channel.name}</span></>}
           </p>
         </div>
         {data && can("responder_conversas") && !mine && !resolved && (
@@ -454,9 +463,6 @@ function TransferMenu({ conv, onChange }: { conv: ConversationDetail; onChange: 
   );
 }
 
-const MEDIA_ICON: Record<string, string> = { image: "image", audio: "mic", video: "video", document: "file-text", sticker: "sticker", location: "map-pin", contact: "contact-round", other: "message-square" };
-const MEDIA_LABEL: Record<string, string> = { image: "Foto", audio: "Áudio", video: "Vídeo", document: "Documento", sticker: "Figurinha", location: "Localização", contact: "Contato", other: "Mensagem" };
-
 function Bubble({ message, conversationId, grouped }: { message: ChatMessage; conversationId: number; grouped: boolean }) {
   const queryClient = useQueryClient();
   const retry = useMutation({
@@ -489,14 +495,7 @@ function Bubble({ message, conversationId, grouped }: { message: ChatMessage; co
         out ? "rounded-2xl rounded-br-md bg-primary-soft text-foreground" : "rounded-2xl rounded-bl-md bg-background",
         grouped && (out ? "rounded-br-2xl" : "rounded-bl-2xl"),
         message.status === "failed" && "ring-1 ring-red-400")}>
-        {media && (
-          <span className="mb-1 flex items-center gap-2 rounded-lg bg-foreground/5 px-2 py-1.5 text-xs text-muted-foreground">
-            <Icon name={MEDIA_ICON[message.type] ?? "paperclip"} className="h-4 w-4" />
-            {(message.media?.fileName as string) || MEDIA_LABEL[message.type] || "Anexo"}
-            {message.type === "audio" && typeof message.media?.seconds === "number" && <span className="tabular-nums">{Math.floor(Number(message.media.seconds) / 60)}:{String(Number(message.media.seconds) % 60).padStart(2, "0")}</span>}
-            <span className="ml-auto text-[10px] opacity-70">abre no celular</span>
-          </span>
-        )}
+        {media && <MessageMedia message={message} out={out} />}
         {message.text && <span className="whitespace-pre-wrap break-words">{message.text}</span>}
         <span className="float-right mt-1 ml-2 flex translate-y-0.5 items-center gap-1 text-[10px] text-muted-foreground">
           {out && message.sentBy && <span className="hidden max-w-24 truncate group-hover:inline">{message.sentBy}</span>}
@@ -513,66 +512,151 @@ function Bubble({ message, conversationId, grouped }: { message: ChatMessage; co
   );
 }
 
+/** "Pode responder por mais 3 h" (Instagram: 24 h depois da última mensagem do cliente). */
+function windowLeft(until: string | null) {
+  if (!until) return { open: false, label: "" };
+  const ms = new Date(until).getTime() - Date.now();
+  if (ms <= 0) return { open: false, label: "" };
+  const hours = Math.floor(ms / 3600000);
+  return { open: true, label: hours >= 1 ? `${hours} h` : `${Math.max(1, Math.round(ms / 60000))} min`, soon: ms < 2 * 3600000 };
+}
+
 function Composer({ conv }: { conv: ConversationDetail }) {
   const { can } = useVerify();
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<"reply" | "note">("reply");
   const [text, setText] = useState("");
-  const [confirmNew, setConfirmNew] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [recording, setRecording] = useState(false);
+  const [confirmNew, setConfirmNew] = useState<null | { kind: "text" | "file"; ptt?: boolean; file?: File }>(null);
   const area = useRef<HTMLTextAreaElement>(null);
+  const picker = useRef<HTMLInputElement>(null);
   const canReply = can("responder_conversas");
-  const blocked = conv.contact.optOut ? "Este cliente pediu para não receber mais mensagens." : conv.channel.status === "banido" ? "Este número foi bloqueado pelo WhatsApp." : conv.channel.status !== "conectado" ? "O número desta conversa está desconectado." : !canReply ? "Você pode ler, mas não responder (falta a permissão \"responder_conversas\")." : "";
+  const instagram = conv.channel.type === "instagram";
+  const [, tick] = useState(0);
+  useEffect(() => { if (!instagram) return; const t = setInterval(() => tick((n) => n + 1), 60000); return () => clearInterval(t); }, [instagram]);
+  const win = windowLeft(conv.replyUntil);
+  const blocked = conv.contact.optOut ? "Este cliente pediu para não receber mais mensagens."
+    : conv.channel.status === "banido" ? "Este número foi bloqueado pelo WhatsApp."
+    : conv.channel.status !== "conectado" ? (instagram ? "A conta do Instagram está desconectada." : "O número desta conversa está desconectado.")
+    : instagram && !win.open ? "Passaram 24 h desde a última mensagem do cliente. O Instagram só libera a resposta quando ele escrever de novo."
+    : !canReply ? "Você pode ler, mas não responder (falta a permissão \"responder_conversas\")." : "";
   const isNote = mode === "note";
 
+  const done = () => { setText(""); setFile(null); setRecording(false); queryClient.invalidateQueries({ queryKey: [CHAT_KEY] }); area.current?.focus(); };
+  const failed = (err: unknown, retry: { kind: "text" | "file"; ptt?: boolean; file?: File }) => {
+    const res = (err as { response?: { status?: number; data?: { code?: string } } }).response;
+    if (res?.status === 409 && res.data?.code === "confirm_new") return setConfirmNew(retry);
+    toast({ title: isNote ? "Não foi possível salvar a nota" : "Não foi possível enviar", description: errorMessage(err), variant: "destructive" });
+  };
   const send = useMutation({
     mutationFn: ({ body, confirmed }: { body: string; confirmed?: boolean }) => isNote
       ? chatApi.post(`conversations/${conv.id}/notes`, { text: body })
       : chatApi.post(`conversations/${conv.id}/messages`, { text: body, confirmedNew: confirmed }),
-    onSuccess: () => { setText(""); queryClient.invalidateQueries({ queryKey: [CHAT_KEY] }); area.current?.focus(); },
-    onError: (err: unknown) => {
-      const res = (err as { response?: { status?: number; data?: { code?: string } } }).response;
-      if (res?.status === 409 && res.data?.code === "confirm_new") return setConfirmNew(true);
-      toast({ title: isNote ? "Não foi possível salvar a nota" : "Não foi possível enviar", description: errorMessage(err), variant: "destructive" });
-    },
+    onSuccess: done,
+    onError: (err) => failed(err, { kind: "text" }),
   });
-  const submit = () => { const body = text.trim(); if (body && !send.isPending && (isNote || !blocked)) send.mutate({ body }); };
-  const placeholder = isNote ? "Nota interna: só a equipe vê" : `Mensagem para ${contactName(conv.contact)}`;
+  const upload = useMutation({
+    mutationFn: ({ upload, caption, ptt, confirmed }: { upload: File; caption: string; ptt?: boolean; confirmed?: boolean }) => {
+      const form = new FormData();
+      form.append("file", upload);
+      if (caption) form.append("caption", caption);
+      if (ptt) form.append("ptt", "true");
+      if (confirmed) form.append("confirmedNew", "true");
+      return chatApi.post(`conversations/${conv.id}/media`, form);
+    },
+    onSuccess: done,
+    onError: (err, vars) => failed(err, { kind: "file", ptt: vars.ptt, file: vars.upload }),
+  });
+  const busy = send.isPending || upload.isPending;
+
+  const choose = (picked: File | undefined) => {
+    if (!picked) return;
+    if (picked.size > MAX_FILE) return toast({ title: "Arquivo grande demais", description: "O limite do WhatsApp é 16 MB. Mande um link ou um arquivo menor.", variant: "destructive" });
+    setMode("reply");
+    setFile(picked);
+    area.current?.focus();
+  };
+  const submit = () => {
+    if (busy) return;
+    if (!isNote && file) { if (!blocked) upload.mutate({ upload: file, caption: text.trim() }); return; }
+    const body = text.trim();
+    if (body && (isNote || !blocked)) send.mutate({ body });
+  };
+  const placeholder = isNote ? "Nota interna: só a equipe vê" : file ? "Legenda (opcional)" : `Mensagem para ${contactName(conv.contact)}`;
   const firstLink = useMemo(() => !isNote && conv.contact.isNew && /(https?:\/\/|www\.)/i.test(text), [isNote, conv.contact.isNew, text]);
+  const showMic = !isNote && !instagram && !file && !text.trim();
 
   return (
-    <footer className={cn("border-t px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] transition-colors sm:px-4", isNote && "bg-amber-50/70 dark:bg-amber-500/5")}>
+    <footer className={cn("border-t px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] transition-colors sm:px-4", isNote && "bg-amber-50/70 dark:bg-amber-500/5")}
+      onDragOver={(event) => { if (!isNote && !blocked && event.dataTransfer.types.includes("Files")) event.preventDefault(); }}
+      onDrop={(event) => { if (isNote || blocked) return; event.preventDefault(); choose(event.dataTransfer.files?.[0]); }}>
       <div className="mx-auto max-w-3xl">
         <div className="mb-1.5 flex items-center gap-1">
           {([["reply", "message-circle", "Responder"], ["note", "sticky-note", "Nota interna"]] as const).map(([key, icon, label]) => (
             <button key={key} type="button" onClick={() => { setMode(key); area.current?.focus(); }}
-              className={cn("flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors", mode === key ? (key === "note" ? "bg-amber-500/15 text-amber-800 dark:text-amber-300" : "bg-primary/10 text-primary") : "text-muted-foreground hover:bg-muted")}>
+              className={cn("flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap transition-colors", mode === key ? (key === "note" ? "bg-amber-500/15 text-amber-800 dark:text-amber-300" : "bg-primary/10 text-primary") : "text-muted-foreground hover:bg-muted")}>
               <Icon name={icon} className="h-3.5 w-3.5" />{label}
             </button>
           ))}
-          {!isNote && conv.channel.botMode === "sugere" && <span className="ml-auto hidden items-center gap-1 text-[11px] text-muted-foreground sm:flex"><Icon name="sparkles" className="h-3 w-3" />sugestões do bot chegam na fase dos bots</span>}
+          {!isNote && instagram && win.open && (
+            <Tip text="O Instagram só deixa responder até 24 h depois da última mensagem do cliente.">
+              <span className={cn("ml-auto flex items-center gap-1 text-[11px]", win.soon ? "font-medium text-amber-700 dark:text-amber-300" : "text-muted-foreground")}><Icon name="clock-3" className="h-3 w-3" />pode responder por mais {win.label}</span>
+            </Tip>
+          )}
         </div>
         {!isNote && blocked ? (
           <p className="flex items-start gap-2 rounded-xl bg-muted px-3 py-2.5 text-xs text-muted-foreground">
-            <Icon name="lock" className="mt-0.5 h-3.5 w-3.5 shrink-0" />{blocked}
-            {conv.channel.status !== "conectado" && can("canais_conversas") && <Link to={PAGES.channels} className="ml-auto shrink-0 font-medium text-primary hover:underline">Ver números</Link>}
+            <Icon name={instagram && !win.open && conv.channel.status === "conectado" ? "clock-3" : "lock"} className="mt-0.5 h-3.5 w-3.5 shrink-0" />{blocked}
+            {conv.channel.status !== "conectado" && instagram && <Link to="/bots/conectores" search={{ instagram: undefined, motivo: undefined }} className="ml-auto shrink-0 font-medium text-primary hover:underline">Conectores</Link>}
+            {conv.channel.status !== "conectado" && !instagram && can("canais_conversas") && <Link to={PAGES.channels} className="ml-auto shrink-0 font-medium text-primary hover:underline">Ver números</Link>}
           </p>
+        ) : recording ? (
+          <VoiceRecorder onCancel={() => setRecording(false)} onDone={(voice) => upload.mutate({ upload: voice, caption: "", ptt: true })} />
         ) : (
-          <div className="flex items-end gap-2">
-            <Textarea ref={area} value={text} onChange={(event) => setText(event.target.value)} rows={1}
-              onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); submit(); } }}
-              placeholder={placeholder} disabled={send.isPending}
-              className={cn("field-sizing-content max-h-40 min-h-11 flex-1 resize-none rounded-2xl py-2.5 text-base sm:text-sm", isNote && "border-amber-500/40 bg-background")} />
-            <Button type="button" onClick={submit} disabled={send.isPending || !text.trim()} aria-label={isNote ? "Salvar nota" : "Enviar"}
-              className={cn("h-11 w-11 shrink-0 rounded-full p-0", isNote && "bg-amber-500 text-white hover:bg-amber-600")}>
-              <Icon name={send.isPending ? "loader-circle" : isNote ? "check" : "send-horizontal"} className={cn("h-5 w-5", send.isPending && "animate-spin")} />
-            </Button>
-          </div>
+          <>
+            {file && !isNote && <PendingFile file={file} onRemove={() => setFile(null)} />}
+            <div className="flex items-end gap-2">
+              {!isNote && (
+                <>
+                  <input ref={picker} type="file" accept={ACCEPT} className="hidden" onChange={(event) => { choose(event.target.files?.[0]); event.target.value = ""; }} />
+                  <Tip text="Anexar foto, vídeo ou documento (até 16 MB)">
+                    <Button type="button" variant="ghost" className="h-11 w-11 shrink-0 rounded-full p-0 text-muted-foreground" onClick={() => picker.current?.click()} disabled={busy} aria-label="Anexar arquivo">
+                      <Icon name="paperclip" className="h-5 w-5" />
+                    </Button>
+                  </Tip>
+                </>
+              )}
+              <Textarea ref={area} value={text} onChange={(event) => setText(event.target.value)} rows={1}
+                onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); submit(); } }}
+                onPaste={(event) => { const pasted = event.clipboardData.files?.[0]; if (pasted && !isNote) { event.preventDefault(); choose(pasted); } }}
+                placeholder={placeholder} disabled={busy}
+                className={cn("field-sizing-content max-h-40 min-h-11 flex-1 resize-none rounded-2xl py-2.5 text-base sm:text-sm", isNote && "border-amber-500/40 bg-background")} />
+              {showMic ? (
+                <Tip text="Gravar áudio">
+                  <Button type="button" onClick={() => setRecording(true)} disabled={busy} aria-label="Gravar áudio" className="h-11 w-11 shrink-0 rounded-full p-0">
+                    <Icon name={busy ? "loader-circle" : "mic"} className={cn("h-5 w-5", busy && "animate-spin")} />
+                  </Button>
+                </Tip>
+              ) : (
+                <Button type="button" onClick={submit} disabled={busy || (!text.trim() && !(file && !isNote))} aria-label={isNote ? "Salvar nota" : "Enviar"}
+                  className={cn("h-11 w-11 shrink-0 rounded-full p-0", isNote && "bg-amber-500 text-white hover:bg-amber-600")}>
+                  <Icon name={busy ? "loader-circle" : isNote ? "check" : "send-horizontal"} className={cn("h-5 w-5", busy && "animate-spin")} />
+                </Button>
+              )}
+            </div>
+          </>
         )}
         {firstLink && <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-amber-700 dark:text-amber-300"><Icon name="triangle-alert" className="h-3 w-3" />Esta pessoa ainda não respondeu: mande sem link por enquanto.</p>}
       </div>
-      <ConfirmDialog open={confirmNew} onOpenChange={setConfirmNew} title="Essa pessoa pediu o contato?"
+      <ConfirmDialog open={!!confirmNew} onOpenChange={(open) => !open && setConfirmNew(null)} title="Essa pessoa pediu o contato?"
         description="Ela nunca escreveu para este número. Mandar mensagem para quem não pediu é o que mais leva o WhatsApp a bloquear."
-        onConfirm={() => send.mutate({ body: text.trim(), confirmed: true })} />
+        onConfirm={() => {
+          const retry = confirmNew;
+          setConfirmNew(null);
+          if (retry?.kind === "file" && retry.file) upload.mutate({ upload: retry.file, caption: retry.ptt ? "" : text.trim(), ptt: retry.ptt, confirmed: true });
+          else send.mutate({ body: text.trim(), confirmed: true });
+        }} />
     </footer>
   );
 }
@@ -599,10 +683,10 @@ function ContactPanel({ id }: { id: number }) {
         <ContactAvatar name={name} url={data.contact.avatarUrl} size={72} />
         <div className="min-w-0">
           <p className="truncate font-semibold">{name}</p>
-          {data.contact.pushName && data.contact.pushName !== name && <p className="truncate text-xs text-muted-foreground">No WhatsApp: {data.contact.pushName}</p>}
+          {data.contact.pushName && data.contact.pushName !== name && <p className="truncate text-xs text-muted-foreground">{data.channel.type === "instagram" ? "No Instagram" : "No WhatsApp"}: {data.contact.pushName}</p>}
         </div>
-        <button type="button" onClick={() => copy(formatPhone(data.contact.phone))} className="flex cursor-pointer items-center gap-1.5 rounded-full bg-background px-3 py-1 text-xs font-medium shadow-xs hover:bg-muted">
-          <WhatsAppLogo className="h-3.5 w-3.5" />{formatPhone(data.contact.phone)}<Icon name="copy" className="h-3 w-3 text-muted-foreground" />
+        <button type="button" onClick={() => copy(contactHandle(data.contact, data.channel.type))} className="flex cursor-pointer items-center gap-1.5 rounded-full bg-background px-3 py-1 text-xs font-medium shadow-xs hover:bg-muted">
+          <ChannelLogo type={data.channel.type} className="h-3.5 w-3.5" />{contactHandle(data.contact, data.channel.type)}<Icon name="copy" className="h-3 w-3 text-muted-foreground" />
         </button>
         {data.contact.optOut && <TagBadge icon="bell-off" color="#dc2626">pediu para não receber</TagBadge>}
       </div>
@@ -617,7 +701,7 @@ function ContactPanel({ id }: { id: number }) {
         ) : (
           <div className="rounded-xl border border-dashed bg-background/60 p-3 text-xs text-muted-foreground">
             <p className="flex items-center gap-1.5 font-medium text-foreground"><Icon name="link-2-off" className="h-3.5 w-3.5" />Sem cliente vinculado</p>
-            <p className="mt-1">O sistema liga sozinho quando o telefone bate com o cadastro de um cliente ou de um contato dele.</p>
+            <p className="mt-1">{data.channel.type === "instagram" ? "No Instagram não vem telefone: o vínculo com o cliente chega na próxima fase." : "O sistema liga sozinho quando o telefone bate com o cadastro de um cliente ou de um contato dele."}</p>
           </div>
         )}
       </PanelSection>

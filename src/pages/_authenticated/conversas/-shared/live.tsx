@@ -28,25 +28,25 @@ export function setSound(on: boolean) {
 }
 export const useChatSound = () => useSyncExternalStore((fn) => { soundListeners.add(fn); return () => soundListeners.delete(fn); }, soundOn);
 
-/** Dois toques curtos e baixos (sem arquivo de som). */
+/** "Pop": bolha curta e suave (sem arquivo de som). */
 function ding() {
   if (!soundOn()) return;
   try {
     const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new Ctx();
-    [0, 0.13].forEach((at, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = i ? 1046 : 784;
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime + at);
-      gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + at + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + at + 0.18);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(ctx.currentTime + at);
-      osc.stop(ctx.currentTime + at + 0.2);
-    });
-    setTimeout(() => void ctx.close(), 600);
+    const t = ctx.currentTime + 0.02;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(420, t);
+    osc.frequency.exponentialRampToValueAtTime(880, t + 0.06);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.22, t + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.16);
+    setTimeout(() => void ctx.close(), 500);
   } catch { /* navegador sem áudio */ }
 }
 

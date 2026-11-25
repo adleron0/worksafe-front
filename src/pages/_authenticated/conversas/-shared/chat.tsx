@@ -1,0 +1,177 @@
+import { useSyncExternalStore } from "react";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/services/api";
+import Icon from "@/components/general-components/Icon";
+import StatusBadge, { StatusTone } from "@/components/general-components/StatusBadge";
+import { cn } from "@/lib/utils";
+
+/** Conversas: tipos (espelham a API), chamadas e pedaços de tela reaproveitados. */
+
+export const CHAT_KEY = "chat";
+export const PAGES = { inbox: "/conversas/caixa", channels: "/conversas/numeros", newChannel: "/conversas/numeros/novo" } as const;
+
+export const chatApi = {
+  get: async <T,>(path: string, params?: Record<string, unknown>) => (await api.get<T>(`chat/${path}`, { params })).data,
+  post: async <T,>(path: string, body?: unknown) => (await api.post<T>(`chat/${path}`, body ?? {})).data,
+  put: async <T,>(path: string, body?: unknown) => (await api.put<T>(`chat/${path}`, body ?? {})).data,
+  patch: async <T,>(path: string, body?: unknown) => (await api.patch<T>(`chat/${path}`, body ?? {})).data,
+  delete: async <T,>(path: string) => (await api.delete<T>(`chat/${path}`)).data,
+};
+
+export type ChannelStatus = "desconectado" | "aguardando" | "conectado" | "caiu" | "banido";
+export type BotMode = "desligado" | "sugere" | "triagem" | "atende";
+export interface ChatSettings {
+  limites: { novosPorDia: number; porMinuto: number; porHora: number; porDia: number };
+  intervalo: { min: number; max: number };
+  horario: { enabled: boolean; dias: number[]; inicio: string; fim: string; mensagemFora: string };
+}
+export interface Channel {
+  id: number; type: "whatsapp" | "instagram"; name: string; color: string | null; sector: string | null; defaultBotId: number | null; botMode: BotMode;
+  phone: string | null; profileName: string | null; status: ChannelStatus; statusReason: string | null; statusAt: string | null; connectedAt: string | null;
+  settings: ChatSettings; memberIds: number[]; termsOk: boolean; historyDays: number;
+  stats?: { sentToday: number; newToday: number; open: number; unread: number };
+}
+export interface ChatMeta {
+  sectors: { id: string; name: string }[];
+  botModes: { id: BotMode; name: string; description: string }[];
+  terms: { version: string; title: string; intro: string; riscos: string[]; protecoes: string[]; boasPraticas: string[]; aceite: string };
+  defaults: ChatSettings;
+  bots: { id: number; name: string; persona: string | null; role: string | null; avatar: string | null; key: string }[];
+  users: { id: number; name: string; imageUrl: string | null }[];
+  serverReady: boolean;
+}
+export type ConversationStatus = "aberta" | "aguardando" | "resolvida";
+export interface ConversationItem {
+  id: number; status: ConversationStatus; sector: string | null; unread: number; lastMessageAt: string | null; lastMessagePreview: string | null; lastDirection: "in" | "out" | null;
+  channel: { id: number; name: string; color: string | null; type: string };
+  contact: { id: number; name: string | null; pushName: string | null; phone: string | null; avatarUrl: string | null; optOut: boolean; isNew: boolean };
+  customer: { id: number; name: string } | null;
+  assignedUser: { id: number; name: string; imageUrl: string | null } | null;
+}
+export type Box = "abertas" | "minhas" | "sem_dono" | "nao_lidas" | "resolvidas";
+export interface ConversationList { items: ConversationItem[]; counts: Record<Exclude<Box, "resolvidas">, number> }
+export type MessageStatus = "queued" | "sending" | "sent" | "delivered" | "read" | "failed" | "received";
+export interface ChatMessage {
+  id: number; direction: "in" | "out" | "note"; type: string; text: string; media: Record<string, unknown> | null; status: MessageStatus; error: string | null;
+  origin: string; sentAt: string; sentBy: string | null;
+}
+export interface ConversationDetail extends ConversationItem {
+  channel: ConversationItem["channel"] & { status: ChannelStatus; phone: string | null; sector: string | null; botMode: BotMode };
+  messages: ChatMessage[];
+  hasMore: boolean;
+}
+
+export const useChatMeta = (enabled = true) => useQuery({ queryKey: [CHAT_KEY, "meta"], enabled, staleTime: 5 * 60 * 1000, queryFn: () => chatApi.get<ChatMeta>("meta") });
+export const useChannels = (enabled = true, refetchInterval: number | false = 15000) =>
+  useQuery({ queryKey: [CHAT_KEY, "channels"], enabled, refetchInterval, queryFn: () => chatApi.get<Channel[]>("channels") });
+/** Conversas com mensagem não lida (contador do menu). */
+export function useChatUnread(enabled = true) {
+  const { data } = useQuery({ queryKey: [CHAT_KEY, "unread"], enabled, refetchInterval: 20000, retry: false, queryFn: () => chatApi.get<{ conversations: number }>("unread") });
+  return data?.conversations ?? 0;
+}
+
+/** Tela larga (desktop): três colunas. Abaixo disso, uma tela de cada vez. */
+export function useMedia(query: string) {
+  return useSyncExternalStore(
+    (notify) => { const list = window.matchMedia(query); list.addEventListener("change", notify); return () => list.removeEventListener("change", notify); },
+    () => window.matchMedia(query).matches,
+  );
+}
+
+// ---------------------------------------------------------------- formatação
+
+/** 5511912345678 → (11) 91234-5678 */
+export function formatPhone(value: string | null | undefined) {
+  const digits = String(value ?? "").replace(/\D/g, "");
+  const local = digits.startsWith("55") && digits.length >= 12 ? digits.slice(2) : digits;
+  if (local.length === 11) return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+  if (local.length === 10) return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+  return value ? `+${digits}` : "";
+}
+export const contactName = (contact: Pick<ConversationItem["contact"], "name" | "pushName" | "phone">) => contact.name || contact.pushName || formatPhone(contact.phone) || "Contato";
+export const timeBr = (value: string) => new Date(value).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+/** Hora se for hoje, "ontem", dia da semana nesta semana, senão a data curta. */
+export function when(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  const today = new Date();
+  const days = Math.floor((new Date(today.toDateString()).getTime() - new Date(date.toDateString()).getTime()) / 86400000);
+  if (days <= 0) return timeBr(value);
+  if (days === 1) return "ontem";
+  if (days < 7) return date.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+}
+export function dayLabel(value: string) {
+  const date = new Date(value);
+  const days = Math.floor((new Date(new Date().toDateString()).getTime() - new Date(date.toDateString()).getTime()) / 86400000);
+  if (days <= 0) return "Hoje";
+  if (days === 1) return "Ontem";
+  return date.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+}
+
+// ---------------------------------------------------------------- pedaços de tela
+
+export function ContactAvatar({ name, url, size = 44, color, className }: { name: string | null; url?: string | null; size?: number; color?: string | null; className?: string }) {
+  const clean = (name ?? "").replace(/[^\p{L}\p{N} ]/gu, "").trim();
+  const parts = clean.split(/\s+/).filter(Boolean);
+  const letters = parts.length > 1 ? `${parts[0][0]}${parts[parts.length - 1][0]}` : (parts[0] ?? "?").slice(0, 2);
+  let hash = 0;
+  for (const char of clean) hash = (hash * 31 + char.charCodeAt(0)) % 360;
+  return (
+    <span className={cn("relative inline-grid shrink-0", className)} style={{ width: size, height: size }}>
+      {url
+        ? <img src={url} alt="" className="h-full w-full rounded-full object-cover" referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+        : (
+          <span className="grid h-full w-full place-items-center rounded-full font-semibold text-white select-none" style={{ fontSize: size * 0.36, background: `linear-gradient(135deg, hsl(${hash} 45% 52%), hsl(${(hash + 35) % 360} 50% 40%))` }}>
+            {letters.toUpperCase()}
+          </span>
+        )}
+      {color && <span className="absolute -right-0.5 -bottom-0.5 rounded-full ring-2 ring-background" style={{ width: Math.max(10, size * 0.28), height: Math.max(10, size * 0.28), background: color }} />}
+    </span>
+  );
+}
+
+/** Ícone do WhatsApp (marca), na cor oficial. */
+export function WhatsAppLogo({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path fill="#25D366" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Z" />
+      <path fill="#fff" d="M17.3 14.6c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1l-.9 1.1c-.2.2-.3.2-.6.1a8 8 0 0 1-2.4-1.5 9 9 0 0 1-1.7-2.1c-.2-.3 0-.4.1-.6l.5-.5.3-.5v-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6a1.1 1.1 0 0 0-.8.4 3.4 3.4 0 0 0-1 2.5 5.9 5.9 0 0 0 1.2 3.1 13.5 13.5 0 0 0 5.2 4.6c1.9.8 2.6.9 3.5.7a3 3 0 0 0 2-1.4 2.4 2.4 0 0 0 .2-1.4c-.1-.1-.3-.2-.6-.3Z" />
+    </svg>
+  );
+}
+
+const STATUS: Record<ChannelStatus, { tone: StatusTone; label: string; pulse: boolean }> = {
+  conectado: { tone: "success", label: "Conectado", pulse: true },
+  aguardando: { tone: "warning", label: "Aguardando conexão", pulse: true },
+  caiu: { tone: "warning", label: "Conexão caiu", pulse: true },
+  banido: { tone: "danger", label: "Bloqueado pelo WhatsApp", pulse: false },
+  desconectado: { tone: "neutral", label: "Desconectado", pulse: false },
+};
+export const ChannelStatusBadge = ({ status }: { status: ChannelStatus }) => <StatusBadge tone={STATUS[status].tone} pulse={STATUS[status].pulse}>{STATUS[status].label}</StatusBadge>;
+
+/** Selo do número na conversa: bolinha na cor do canal + nome. */
+export function ChannelPill({ channel, className }: { channel: { name: string; color: string | null }; className?: string }) {
+  return (
+    <span className={cn("inline-flex max-w-full items-center gap-1.5 rounded-full border bg-background px-2 py-0.5 text-[11px] font-medium text-muted-foreground", className)}>
+      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: channel.color ?? "#149E5E" }} />
+      <span className="truncate">{channel.name}</span>
+    </span>
+  );
+}
+
+/** ✓ enviada · ✓✓ entregue · ✓✓ azul lida · relógio na fila · ! falhou */
+export function MessageTicks({ status, className }: { status: MessageStatus; className?: string }) {
+  if (status === "queued" || status === "sending") return <Icon name="clock-3" className={cn("h-3.5 w-3.5 opacity-70", className)} />;
+  if (status === "failed") return <Icon name="circle-alert" className={cn("h-3.5 w-3.5 text-red-500", className)} />;
+  if (status === "sent") return <Icon name="check" className={cn("h-3.5 w-3.5 opacity-70", className)} />;
+  if (status === "delivered") return <Icon name="check-check" className={cn("h-3.5 w-3.5 opacity-70", className)} />;
+  if (status === "read") return <Icon name="check-check" className={cn("h-3.5 w-3.5 text-sky-500", className)} />;
+  return null;
+}
+
+export const TICK_LABEL: Partial<Record<MessageStatus, string>> = {
+  queued: "Na fila: sai em instantes, no ritmo do número", sending: "Enviando…", sent: "Enviada", delivered: "Entregue", read: "Lida", failed: "Não foi enviada",
+};
+
+export const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];

@@ -16,7 +16,7 @@ export interface SidebarLink extends SidebarAccess {
   icon: string;
   path: string;
   /** Contador ao lado do nome (ex.: conversas não lidas do Instagram). */
-  badge?: "instagramUnread";
+  badge?: "instagramUnread" | "chatUnread";
 }
 
 /** Rótulo pequeno que separa partes de um submenu (ex.: "cadastros"). */
@@ -45,6 +45,17 @@ export const groups: SidebarGroup[] = [
   {
     label: "Vendas",
     items: [
+      {
+        title: "Conversas",
+        icon: "messages-square",
+        path: "/conversas",
+        permissions: ["view_conversas", "todas_conversas", "canais_conversas"],
+        badge: "chatUnread",
+        subitems: [
+          { title: "Caixa de entrada", permissions: ["view_conversas", "todas_conversas", "canais_conversas"], icon: "inbox", path: "/conversas/caixa", badge: "chatUnread" },
+          { title: "Números", permissions: ["canais_conversas"], icon: "smartphone", path: "/conversas/numeros" },
+        ],
+      },
       {
         title: "Clientes",
         icon: "heart-handshake",

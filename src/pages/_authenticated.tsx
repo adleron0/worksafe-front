@@ -31,7 +31,8 @@ export const Route = createFileRoute('/_authenticated')({
  */
 function AuthenticatedLayout() {
   const location = useRouterState({ select: (state) => state.location });
-  const appScreen = location.pathname === '/bots/conversas' || location.pathname === '/bots/instagram';
+  const inbox = location.pathname === '/conversas/caixa';
+  const appScreen = location.pathname === '/bots/conversas' || location.pathname === '/bots/instagram' || inbox;
   const search = location.search as { bot?: number; conversa?: string; aba?: string };
   const chatOpen = location.pathname === '/bots/conversas' ? !!search.bot : appScreen && !!search.conversa && search.aba !== 'comentarios';
   return (
@@ -42,7 +43,7 @@ function AuthenticatedLayout() {
       <section id='main' className='w-full h-full min-w-0 flex flex-col bg-muted/40'>
         <div className={chatOpen ? 'max-lg:hidden' : ''}><Header /></div>
         <div className={appScreen ? 'max-lg:hidden' : ''}><BreadCrumbs /></div>
-        <main className={`w-full h-full p-4 overflow-y-scroll ${appScreen ? 'max-lg:p-0 max-lg:overflow-hidden' : ''}`}>
+        <main className={`w-full h-full p-4 overflow-y-scroll ${appScreen ? 'max-lg:p-0 max-lg:overflow-hidden' : ''} ${inbox ? 'lg:overflow-hidden' : ''}`}>
           <Outlet />
         </main>
         <div className={appScreen ? 'max-lg:hidden' : ''}><Footer /></div>

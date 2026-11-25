@@ -287,6 +287,12 @@
   .scroll-oculto::-webkit-scrollbar {
     display: none;
   }
+  /* fundo da conversa (Conversas): pontinhos discretos, como papel de parede de chat */
+  .chat-wallpaper {
+    background-color: hsl(var(--muted) / 0.45);
+    background-image: radial-gradient(hsl(var(--foreground) / 0.06) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
   @supports (-moz-appearance: none) {
     .scroll-fino {
       scrollbar-width: thin;

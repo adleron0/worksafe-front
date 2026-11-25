@@ -101,6 +101,8 @@ import { Route as AuthenticatedFinanceiroFaturarFaturarRouteImport } from './pag
 import { Route as AuthenticatedFinanceiroContasBancariasContasBancariasRouteImport } from './pages/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
 import { Route as AuthenticatedFinanceiroConciliacaoConciliacaoRouteImport } from './pages/_authenticated/financeiro/_conciliacao/conciliacao'
 import { Route as AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport } from './pages/_authenticated/financeiro/_centros-custo/centros-custo'
+import { Route as AuthenticatedConversasConversasNumerosRouteImport } from './pages/_authenticated/conversas/_conversas/numeros'
+import { Route as AuthenticatedConversasConversasCaixaRouteImport } from './pages/_authenticated/conversas/_conversas/caixa'
 import { Route as AuthenticatedComercialVendedoresVendedoresRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores'
 import { Route as AuthenticatedComercialPropostasPropostasRouteImport } from './pages/_authenticated/comercial/_propostas/propostas'
 import { Route as AuthenticatedComercialNegociacoesNegociacoesRouteImport } from './pages/_authenticated/comercial/_negociacoes/negociacoes'
@@ -165,6 +167,8 @@ import { Route as AuthenticatedFinanceiroFornecedoresFornecedoresNovaRouteImport
 import { Route as AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRouteImport } from './pages/_authenticated/financeiro/_fornecedores/fornecedores_.$supplierId'
 import { Route as AuthenticatedFinanceiroContasBancariasContasBancariasNovaRouteImport } from './pages/_authenticated/financeiro/_contas-bancarias/contas-bancarias_.nova'
 import { Route as AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRouteImport } from './pages/_authenticated/financeiro/_contas-bancarias/contas-bancarias_.$bankAccountId'
+import { Route as AuthenticatedConversasConversasNumerosNovoRouteImport } from './pages/_authenticated/conversas/_conversas/numeros_.novo'
+import { Route as AuthenticatedConversasConversasNumerosChannelIdRouteImport } from './pages/_authenticated/conversas/_conversas/numeros_.$channelId'
 import { Route as AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores_.$sellerId'
 import { Route as AuthenticatedComercialPropostasPropostasNovaRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.nova'
 import { Route as AuthenticatedComercialPropostasPropostasProposalIdRouteImport } from './pages/_authenticated/comercial/_propostas/propostas_.$proposalId'
@@ -717,6 +721,18 @@ const AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute =
     path: '/financeiro/centros-custo',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedConversasConversasNumerosRoute =
+  AuthenticatedConversasConversasNumerosRouteImport.update({
+    id: '/conversas/_conversas/numeros',
+    path: '/conversas/numeros',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedConversasConversasCaixaRoute =
+  AuthenticatedConversasConversasCaixaRouteImport.update({
+    id: '/conversas/_conversas/caixa',
+    path: '/conversas/caixa',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComercialVendedoresVendedoresRoute =
   AuthenticatedComercialVendedoresVendedoresRouteImport.update({
     id: '/comercial/_vendedores/vendedores',
@@ -1107,6 +1123,18 @@ const AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute =
       getParentRoute: () => AuthenticatedRoute,
     } as any,
   )
+const AuthenticatedConversasConversasNumerosNovoRoute =
+  AuthenticatedConversasConversasNumerosNovoRouteImport.update({
+    id: '/conversas/_conversas/numeros_/novo',
+    path: '/conversas/numeros/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedConversasConversasNumerosChannelIdRoute =
+  AuthenticatedConversasConversasNumerosChannelIdRouteImport.update({
+    id: '/conversas/_conversas/numeros_/$channelId',
+    path: '/conversas/numeros/$channelId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComercialVendedoresVendedoresSellerIdRoute =
   AuthenticatedComercialVendedoresVendedoresSellerIdRouteImport.update({
     id: '/comercial/_vendedores/vendedores_/$sellerId',
@@ -1292,6 +1320,8 @@ export interface FileRoutesByFullPath {
   '/comercial/negociacoes': typeof AuthenticatedComercialNegociacoesNegociacoesRoute
   '/comercial/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
+  '/conversas/caixa': typeof AuthenticatedConversasConversasCaixaRoute
+  '/conversas/numeros': typeof AuthenticatedConversasConversasNumerosRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   '/financeiro/conciliacao': typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   '/financeiro/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -1369,6 +1399,8 @@ export interface FileRoutesByFullPath {
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/conversas/numeros/$channelId': typeof AuthenticatedConversasConversasNumerosChannelIdRoute
+  '/conversas/numeros/novo': typeof AuthenticatedConversasConversasNumerosNovoRoute
   '/financeiro/contas-bancarias/$bankAccountId': typeof AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute
   '/financeiro/contas-bancarias/nova': typeof AuthenticatedFinanceiroContasBancariasContasBancariasNovaRoute
   '/financeiro/fornecedores/$supplierId': typeof AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute
@@ -1468,6 +1500,8 @@ export interface FileRoutesByTo {
   '/comercial/negociacoes': typeof AuthenticatedComercialNegociacoesNegociacoesRoute
   '/comercial/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
+  '/conversas/caixa': typeof AuthenticatedConversasConversasCaixaRoute
+  '/conversas/numeros': typeof AuthenticatedConversasConversasNumerosRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   '/financeiro/conciliacao': typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   '/financeiro/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -1545,6 +1579,8 @@ export interface FileRoutesByTo {
   '/comercial/propostas/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/comercial/propostas/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/comercial/vendedores/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/conversas/numeros/$channelId': typeof AuthenticatedConversasConversasNumerosChannelIdRoute
+  '/conversas/numeros/novo': typeof AuthenticatedConversasConversasNumerosNovoRoute
   '/financeiro/contas-bancarias/$bankAccountId': typeof AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute
   '/financeiro/contas-bancarias/nova': typeof AuthenticatedFinanceiroContasBancariasContasBancariasNovaRoute
   '/financeiro/fornecedores/$supplierId': typeof AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute
@@ -1648,6 +1684,8 @@ export interface FileRoutesById {
   '/_authenticated/comercial/_negociacoes/negociacoes': typeof AuthenticatedComercialNegociacoesNegociacoesRoute
   '/_authenticated/comercial/_propostas/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/_authenticated/comercial/_vendedores/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
+  '/_authenticated/conversas/_conversas/caixa': typeof AuthenticatedConversasConversasCaixaRoute
+  '/_authenticated/conversas/_conversas/numeros': typeof AuthenticatedConversasConversasNumerosRoute
   '/_authenticated/financeiro/_centros-custo/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   '/_authenticated/financeiro/_conciliacao/conciliacao': typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   '/_authenticated/financeiro/_contas-bancarias/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -1725,6 +1763,8 @@ export interface FileRoutesById {
   '/_authenticated/comercial/_propostas/propostas_/$proposalId': typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   '/_authenticated/comercial/_propostas/propostas_/nova': typeof AuthenticatedComercialPropostasPropostasNovaRoute
   '/_authenticated/comercial/_vendedores/vendedores_/$sellerId': typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  '/_authenticated/conversas/_conversas/numeros_/$channelId': typeof AuthenticatedConversasConversasNumerosChannelIdRoute
+  '/_authenticated/conversas/_conversas/numeros_/novo': typeof AuthenticatedConversasConversasNumerosNovoRoute
   '/_authenticated/financeiro/_contas-bancarias/contas-bancarias_/$bankAccountId': typeof AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute
   '/_authenticated/financeiro/_contas-bancarias/contas-bancarias_/nova': typeof AuthenticatedFinanceiroContasBancariasContasBancariasNovaRoute
   '/_authenticated/financeiro/_fornecedores/fornecedores_/$supplierId': typeof AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute
@@ -1827,6 +1867,8 @@ export interface FileRouteTypes {
     | '/comercial/negociacoes'
     | '/comercial/propostas'
     | '/comercial/vendedores'
+    | '/conversas/caixa'
+    | '/conversas/numeros'
     | '/financeiro/centros-custo'
     | '/financeiro/conciliacao'
     | '/financeiro/contas-bancarias'
@@ -1904,6 +1946,8 @@ export interface FileRouteTypes {
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
     | '/comercial/vendedores/$sellerId'
+    | '/conversas/numeros/$channelId'
+    | '/conversas/numeros/novo'
     | '/financeiro/contas-bancarias/$bankAccountId'
     | '/financeiro/contas-bancarias/nova'
     | '/financeiro/fornecedores/$supplierId'
@@ -2003,6 +2047,8 @@ export interface FileRouteTypes {
     | '/comercial/negociacoes'
     | '/comercial/propostas'
     | '/comercial/vendedores'
+    | '/conversas/caixa'
+    | '/conversas/numeros'
     | '/financeiro/centros-custo'
     | '/financeiro/conciliacao'
     | '/financeiro/contas-bancarias'
@@ -2080,6 +2126,8 @@ export interface FileRouteTypes {
     | '/comercial/propostas/$proposalId'
     | '/comercial/propostas/nova'
     | '/comercial/vendedores/$sellerId'
+    | '/conversas/numeros/$channelId'
+    | '/conversas/numeros/novo'
     | '/financeiro/contas-bancarias/$bankAccountId'
     | '/financeiro/contas-bancarias/nova'
     | '/financeiro/fornecedores/$supplierId'
@@ -2182,6 +2230,8 @@ export interface FileRouteTypes {
     | '/_authenticated/comercial/_negociacoes/negociacoes'
     | '/_authenticated/comercial/_propostas/propostas'
     | '/_authenticated/comercial/_vendedores/vendedores'
+    | '/_authenticated/conversas/_conversas/caixa'
+    | '/_authenticated/conversas/_conversas/numeros'
     | '/_authenticated/financeiro/_centros-custo/centros-custo'
     | '/_authenticated/financeiro/_conciliacao/conciliacao'
     | '/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
@@ -2259,6 +2309,8 @@ export interface FileRouteTypes {
     | '/_authenticated/comercial/_propostas/propostas_/$proposalId'
     | '/_authenticated/comercial/_propostas/propostas_/nova'
     | '/_authenticated/comercial/_vendedores/vendedores_/$sellerId'
+    | '/_authenticated/conversas/_conversas/numeros_/$channelId'
+    | '/_authenticated/conversas/_conversas/numeros_/novo'
     | '/_authenticated/financeiro/_contas-bancarias/contas-bancarias_/$bankAccountId'
     | '/_authenticated/financeiro/_contas-bancarias/contas-bancarias_/nova'
     | '/_authenticated/financeiro/_fornecedores/fornecedores_/$supplierId'
@@ -2956,6 +3008,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/conversas/_conversas/numeros': {
+      id: '/_authenticated/conversas/_conversas/numeros'
+      path: '/conversas/numeros'
+      fullPath: '/conversas/numeros'
+      preLoaderRoute: typeof AuthenticatedConversasConversasNumerosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/conversas/_conversas/caixa': {
+      id: '/_authenticated/conversas/_conversas/caixa'
+      path: '/conversas/caixa'
+      fullPath: '/conversas/caixa'
+      preLoaderRoute: typeof AuthenticatedConversasConversasCaixaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_vendedores/vendedores': {
       id: '/_authenticated/comercial/_vendedores/vendedores'
       path: '/comercial/vendedores'
@@ -3404,6 +3470,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/conversas/_conversas/numeros_/novo': {
+      id: '/_authenticated/conversas/_conversas/numeros_/novo'
+      path: '/conversas/numeros/novo'
+      fullPath: '/conversas/numeros/novo'
+      preLoaderRoute: typeof AuthenticatedConversasConversasNumerosNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/conversas/_conversas/numeros_/$channelId': {
+      id: '/_authenticated/conversas/_conversas/numeros_/$channelId'
+      path: '/conversas/numeros/$channelId'
+      fullPath: '/conversas/numeros/$channelId'
+      preLoaderRoute: typeof AuthenticatedConversasConversasNumerosChannelIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comercial/_vendedores/vendedores_/$sellerId': {
       id: '/_authenticated/comercial/_vendedores/vendedores_/$sellerId'
       path: '/comercial/vendedores/$sellerId'
@@ -3596,6 +3676,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComercialNegociacoesNegociacoesRoute: typeof AuthenticatedComercialNegociacoesNegociacoesRoute
   AuthenticatedComercialPropostasPropostasRoute: typeof AuthenticatedComercialPropostasPropostasRoute
   AuthenticatedComercialVendedoresVendedoresRoute: typeof AuthenticatedComercialVendedoresVendedoresRoute
+  AuthenticatedConversasConversasCaixaRoute: typeof AuthenticatedConversasConversasCaixaRoute
+  AuthenticatedConversasConversasNumerosRoute: typeof AuthenticatedConversasConversasNumerosRoute
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute: typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   AuthenticatedFinanceiroConciliacaoConciliacaoRoute: typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   AuthenticatedFinanceiroContasBancariasContasBancariasRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -3669,6 +3751,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComercialPropostasPropostasProposalIdRoute: typeof AuthenticatedComercialPropostasPropostasProposalIdRoute
   AuthenticatedComercialPropostasPropostasNovaRoute: typeof AuthenticatedComercialPropostasPropostasNovaRoute
   AuthenticatedComercialVendedoresVendedoresSellerIdRoute: typeof AuthenticatedComercialVendedoresVendedoresSellerIdRoute
+  AuthenticatedConversasConversasNumerosChannelIdRoute: typeof AuthenticatedConversasConversasNumerosChannelIdRoute
+  AuthenticatedConversasConversasNumerosNovoRoute: typeof AuthenticatedConversasConversasNumerosNovoRoute
   AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute
   AuthenticatedFinanceiroContasBancariasContasBancariasNovaRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasNovaRoute
   AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute: typeof AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute
@@ -3777,6 +3861,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialPropostasPropostasRoute,
   AuthenticatedComercialVendedoresVendedoresRoute:
     AuthenticatedComercialVendedoresVendedoresRoute,
+  AuthenticatedConversasConversasCaixaRoute:
+    AuthenticatedConversasConversasCaixaRoute,
+  AuthenticatedConversasConversasNumerosRoute:
+    AuthenticatedConversasConversasNumerosRoute,
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute:
     AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute,
   AuthenticatedFinanceiroConciliacaoConciliacaoRoute:
@@ -3919,6 +4007,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialPropostasPropostasNovaRoute,
   AuthenticatedComercialVendedoresVendedoresSellerIdRoute:
     AuthenticatedComercialVendedoresVendedoresSellerIdRoute,
+  AuthenticatedConversasConversasNumerosChannelIdRoute:
+    AuthenticatedConversasConversasNumerosChannelIdRoute,
+  AuthenticatedConversasConversasNumerosNovoRoute:
+    AuthenticatedConversasConversasNumerosNovoRoute,
   AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute:
     AuthenticatedFinanceiroContasBancariasContasBancariasBankAccountIdRoute,
   AuthenticatedFinanceiroContasBancariasContasBancariasNovaRoute:

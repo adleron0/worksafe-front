@@ -28,9 +28,11 @@ export interface ChatSettings {
   bot?: { instrucoes: string; foraDoHorario: boolean; limitePorConversa: number };
   /** nome de quem respondeu na frente de cada mensagem enviada pelo sistema */
   assinatura: { enabled: boolean; formato: "primeiro" | "completo" };
+  /** áudios dos clientes viram texto */
+  transcrever?: boolean;
 }
 export interface Channel {
-  id: number; type: "whatsapp" | "instagram"; name: string; color: string | null; sector: string | null; defaultBotId: number | null; botMode: BotMode;
+  id: number; type: "whatsapp" | "instagram"; provider?: "evolution" | "cloud" | "meta"; name: string; color: string | null; sector: string | null; defaultBotId: number | null; botMode: BotMode;
   phone: string | null; profileName: string | null; status: ChannelStatus; statusReason: string | null; statusAt: string | null; connectedAt: string | null;
   settings: ChatSettings; memberIds: number[]; termsOk: boolean; historyDays: number;
   stats?: { sentToday: number; newToday: number; open: number; unread: number };
@@ -97,6 +99,8 @@ export interface ChatMedia {
   url?: string | null; mimetype?: string | null; fileName?: string | null; size?: number | null; seconds?: number | null; ptt?: boolean;
   /** pending (baixando) | ok | failed | too_big */
   state?: string; lat?: number; lng?: number;
+  /** áudio transcrito (pending | ok | failed) */
+  transcript?: string | null; transcriptState?: string | null;
 }
 export interface ChatMessage {
   id: number; direction: "in" | "out" | "note"; type: string; text: string; media: ChatMedia | null; status: MessageStatus; error: string | null;

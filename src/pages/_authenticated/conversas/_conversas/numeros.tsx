@@ -135,6 +135,7 @@ function ChannelCard({ channel, meta, manage, onConnect }: { channel: Channel; m
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
             <span className="truncate">{channel.phone ? (instagram ? `@${channel.phone}` : formatPhone(channel.phone)) : "Ainda não conectado"}</span>
             <ChannelStatusBadge status={channel.status} />
+            {channel.provider === "cloud" && <Tip text="WhatsApp oficial (API da Meta): sem risco de bloqueio por integração não oficial; mensagem livre só até 24 h depois da última do cliente."><span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400"><Icon name="badge-check" className="h-3 w-3" />Oficial</span></Tip>}
           </p>
         </div>
         {manage && (
@@ -221,6 +222,8 @@ function ChannelCard({ channel, meta, manage, onConnect }: { channel: Channel; m
           </>
         ) : instagram ? (
           <Button asChild size="sm" className="flex-1"><Link to="/bots/conectores" search={{ instagram: undefined, motivo: undefined }}><Icon name="cable" className="mr-1.5 h-4 w-4" />Conectar em Conectores</Link></Button>
+        ) : manage && channel.provider === "cloud" ? (
+          <Button asChild size="sm" className="flex-1"><Link to="/conversas/numeros/$channelId" params={{ channelId: String(channel.id) }}><Icon name="badge-check" className="mr-1.5 h-4 w-4" />Conectar o oficial</Link></Button>
         ) : manage ? (
           <Button size="sm" className="flex-1" onClick={onConnect} disabled={channel.status === "banido"}>
             <Icon name={channel.status === "banido" ? "ban" : "qr-code"} className="mr-1.5 h-4 w-4" />{channel.status === "banido" ? "Número bloqueado" : channel.status === "desconectado" ? "Conectar" : "Conectar de novo"}

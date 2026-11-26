@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
-import { Tip } from "../../../comercial/-shared/commercial";
-import { ChatMessage } from "../../-shared/chat";
+import { Tip, errorMessage } from "../../../comercial/-shared/commercial";
+import { CHAT_KEY, ChatMessage, chatApi } from "../../-shared/chat";
 
 /** Mídia das conversas: o que aparece no balão e as ferramentas de anexo e áudio. */
 
@@ -21,7 +23,7 @@ const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.fl
 
 // ---------------------------------------------------------------- no balão
 
-export function MessageMedia({ message, out, onRetry, retrying }: { message: ChatMessage; out: boolean; onRetry?: () => void; retrying?: boolean }) {
+export function MessageMedia({ message, out, onRetry, retrying, conversationId }: { message: ChatMessage; out: boolean; onRetry?: () => void; retrying?: boolean; conversationId?: number }) {
   const media = message.media ?? {};
   const [viewer, setViewer] = useState(false);
   const [broken, setBroken] = useState(false);
@@ -86,7 +88,14 @@ export function MessageMedia({ message, out, onRetry, retrying }: { message: Cha
   if (type === "video") {
     return <video src={media.url} controls preload="metadata" className="-mx-1.5 -mt-0.5 mb-1 block max-h-80 w-full min-w-56 max-w-xs rounded-xl bg-black" />;
   }
-  if (type === "audio") return <AudioPlayer src={media.url} seconds={media.seconds ?? null} voice={!!media.ptt} out={out} />;
+  if (type === "audio") {
+    return (
+      <>
+        <AudioPlayer src={media.url} seconds={media.seconds ?? null} voice={!!media.ptt} out={out} />
+        {!out && conversationId ? <Transcript message={message} conversationId={conversationId} /> : null}
+      </>
+    );
+  }
   return (
     <a href={media.url} target="_blank" rel="noreferrer" download={media.fileName ?? undefined} className="mb-1 flex min-w-56 items-center gap-3 rounded-lg bg-foreground/5 px-2.5 py-2 transition-colors hover:bg-foreground/10">
       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-background text-primary"><Icon name="file-text" className="h-4 w-4" /></span>
@@ -274,5 +283,35 @@ export function VoiceRecorder({ onCancel, onDone }: { onCancel: () => void; onDo
         <Icon name="send-horizontal" className="h-5 w-5" />
       </Button>
     </div>
+  );
+}
+
+/** Texto do áudio (transcrito sozinho ou pedido aqui). */
+function Transcript({ message, conversationId }: { message: ChatMessage; conversationId: number }) {
+  const queryClient = useQueryClient();
+  const media = message.media ?? {};
+  const [open, setOpen] = useState(true);
+  const ask = useMutation({
+    mutationFn: () => chatApi.post(`conversations/${conversationId}/messages/${message.id}/transcribe`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [CHAT_KEY, "conversation", conversationId] }),
+    onError: (err) => toast({ title: "Não deu para transcrever", description: errorMessage(err), variant: "destructive" }),
+  });
+  if (media.transcriptState === "pending" || ask.isPending) {
+    return <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground"><Icon name="loader-circle" className="h-3 w-3 animate-spin" />Transcrevendo…</p>;
+  }
+  if (media.transcript) {
+    return (
+      <div className="mt-1 max-w-xs">
+        <button type="button" onClick={() => setOpen(!open)} className="flex cursor-pointer items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground">
+          <Icon name="captions" className="h-3 w-3" />Transcrição<Icon name={open ? "chevron-up" : "chevron-down"} className="h-3 w-3" />
+        </button>
+        {open && <p className="mt-0.5 text-[13px] italic leading-snug text-foreground/80">{media.transcript}</p>}
+      </div>
+    );
+  }
+  return (
+    <button type="button" onClick={() => ask.mutate()} className="mt-1 flex cursor-pointer items-center gap-1 text-[11px] font-medium text-primary hover:underline">
+      <Icon name="captions" className="h-3 w-3" />{media.transcriptState === "failed" ? "Transcrição falhou · tentar de novo" : "Transcrever"}
+    </button>
   );
 }

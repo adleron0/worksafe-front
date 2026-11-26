@@ -15,6 +15,7 @@ import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-comp
 import { cn } from "@/lib/utils";
 import { BotAvatar } from "../../../bots/-shared/avatar";
 import HiddenContacts from "./HiddenContacts";
+import CloudSection from "./CloudSection";
 import { NumField, errorMessage } from "../../../comercial/-shared/commercial";
 import { BotMode, CHAT_KEY, Channel, ChatMeta, ChatSettings, ContactAvatar, DAYS, PAGES, chatApi } from "../../-shared/chat";
 
@@ -164,6 +165,16 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
           )}
           {assinatura.enabled && <p className="text-xs text-muted-foreground">Assim o cliente vê. Na caixa de entrada a mensagem aparece sem o nome, que já fica no balão. Mensagens pelo celular e a resposta automática de fora do horário não levam nome.</p>}
         </FormSection>
+
+        <FormSection title="Áudios" description="Os áudios que os clientes mandam viram texto embaixo do player. Ajuda a ler rápido, buscar depois e o bot entender o que o cliente pediu.">
+          <label className="flex items-center gap-3">
+            <Switch checked={draft.settings.transcrever !== false} onCheckedChange={(checked) => setDraft((current) => ({ ...current, settings: { ...current.settings, transcrever: checked } }))} />
+            <span className="text-sm">{draft.settings.transcrever !== false ? "Transcrever os áudios dos clientes" : "Não transcrever (dá para pedir em cada áudio)"}</span>
+          </label>
+          <p className="text-xs text-muted-foreground">Usa a chave da Groq (ou da OpenAI) cadastrada em Bots → Chaves de IA. Custa centavos por hora de áudio.</p>
+        </FormSection>
+
+        {channel && !instagram && <CloudSection channel={channel} />}
 
         {channel && <HiddenContacts channelId={channel.id} whatsapp={!instagram} />}
 

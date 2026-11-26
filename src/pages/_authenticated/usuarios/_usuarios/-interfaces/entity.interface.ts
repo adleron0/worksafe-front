@@ -30,4 +30,6 @@ export interface IEntity {
   zipCode?: string | null;
   // Campo bankAccount (JSON string com dados PIX)
   bankAccount?: string | null;
+  /** CNPJs do grupo que vê (vazio = todos) */
+  entityIds?: number[];
 }

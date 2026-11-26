@@ -13,6 +13,7 @@ import DropUpload from "@/components/general-components/DropUpload";
 import CalendarPicker from "@/components/general-components/Calendar";
 import { ApiError, Response } from "@/general-interfaces/api.interface";
 import { FormPageGrid, FormSection } from "@/components/general-components/FormPage";
+import { formatCnpj, useEntities } from "@/components/general-components/EntitySelect";
 
 interface UserFormProps {
   formData?: IEntity;
@@ -59,6 +60,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
     pixType: z.string().optional(),
     pixKey: z.string().optional(),
     bankAccount: z.string().optional(),
+    entityIds: z.array(z.number()).optional(),
   }).refine((data) => {
     if (!formData && !data.password) {
       return false;
@@ -120,7 +122,10 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
       return "";
     })(),
     bankAccount: formData?.bankAccount || "",
+    entityIds: formData?.entityIds ?? [],
   });
+  // CNPJs do grupo: só aparece quando há mais de um
+  const { entities, multi: multiEntities } = useEntities();
   const initialFormRef = useRef(dataForm);
 
   const [preview, setPreview] = useState<string | null>(null); // Preview da imagem quando for editar
@@ -273,6 +278,10 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
     delete dataToSend.pixKey;
 
     if (!onlyPassword) delete dataToSend.password;
+
+    // vai como JSON: o formulário pode seguir em multipart (foto)
+    if (!self && multiEntities && layout === "page" && onlyPassword !== 'only') dataToSend.entityIds = JSON.stringify(dataForm.entityIds ?? []);
+    else delete dataToSend.entityIds;
 
     if (formData) {
       updateUserMutation(dataToSend);
@@ -561,6 +570,20 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
       {errors.profileId && <p className="text-red-500 text-sm">{errors.profileId}</p>}
     </div>
   );
+  const entitiesField = (
+    <div className="sm:col-span-2">
+      <Label htmlFor="entityIds">CNPJs que pode ver</Label>
+      <Select
+        name="entityIds"
+        multiple
+        options={entities.map((e) => ({ id: String(e.id), name: `${e.tradeName} · ${formatCnpj(e.cnpj)}` }))}
+        state={(dataForm.entityIds ?? []).map(String)}
+        placeholder="Todos os CNPJs"
+        onChange={(_, value) => setDataForm((prev) => ({ ...prev, entityIds: (Array.isArray(value) ? value : value ? [value] : []).map(Number).filter((n) => n > 0) }))}
+      />
+      <p className="text-xs text-muted-foreground mt-1">Vazio: vê todos. Escolhendo, a pessoa só vê notas, financeiro, propostas, obras e turmas desses CNPJs.</p>
+    </div>
+  );
   const passwordField = (
     <div>
       <Label htmlFor="password">Senha <span>*</span></Label>
@@ -650,6 +673,7 @@ const UserForm = ({ formData, onlyPassword, openSheet, self, defaultIsSeller = f
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {onlyPassword !== 'only' && !self && profileField}
                 {(onlyPassword === 'only' || onlyPassword === 'both') && passwordField}
+                {onlyPassword !== 'only' && !self && multiEntities && entitiesField}
               </div>
             </FormSection>
           )}

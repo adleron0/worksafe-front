@@ -54,6 +54,7 @@ export const groups: SidebarGroup[] = [
         subitems: [
           { title: "Caixa de entrada", permissions: ["view_conversas", "todas_conversas", "canais_conversas"], icon: "inbox", path: "/conversas/caixa", badge: "chatUnread" },
           { title: "Respostas e etiquetas", permissions: ["view_conversas", "todas_conversas", "canais_conversas"], icon: "zap", path: "/conversas/respostas" },
+          { title: "Métricas", permissions: ["todas_conversas", "canais_conversas"], icon: "chart-column", path: "/conversas/metricas" },
           { title: "Números", permissions: ["canais_conversas"], icon: "smartphone", path: "/conversas/numeros" },
         ],
       },

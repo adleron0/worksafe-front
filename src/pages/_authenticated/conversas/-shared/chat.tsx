@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 /** Conversas: tipos (espelham a API), chamadas e pedaços de tela reaproveitados. */
 
 export const CHAT_KEY = "chat";
-export const PAGES = { inbox: "/conversas/caixa", channels: "/conversas/numeros", newChannel: "/conversas/numeros/novo" } as const;
+export const PAGES = { inbox: "/conversas/caixa", channels: "/conversas/numeros", newChannel: "/conversas/numeros/novo", metrics: "/conversas/metricas" } as const;
 
 export const chatApi = {
   get: async <T,>(path: string, params?: Record<string, unknown>) => (await api.get<T>(`chat/${path}`, { params })).data,
@@ -47,6 +47,38 @@ export interface ChatMeta {
   tagColors: string[];
   serverReady: boolean;
 }
+export interface ChannelHealth {
+  id: number; name: string; type: "whatsapp" | "instagram"; provider: string; status: ChannelStatus; statusReason: string | null; statusAt: string | null; connectedAt: string | null; phone: string | null;
+  level: "ok" | "atencao" | "erro";
+  warnings: { level: "erro" | "atencao"; text: string }[];
+  usage: { minute: number; hour: number; day: number; newToday: number; limits: ChatSettings["limites"] };
+  queue: { queued: number; oldestAt: string | null };
+  week: { inbound: number; outbound: number; talked: number; answered: number; replyRate: number | null; optOuts: number; drops: number; uptime: number | null };
+  failed24: number; lastInboundAt: string | null; lastOutboundAt: string | null;
+  events: { id: number; status: ChannelStatus; reason: string | null; createdAt: string }[];
+}
+export interface FirstResponse { turns: number; answered: number; unanswered: number; medianSec: number | null; avgSec: number | null; humanMedianSec: number | null; within5m: number | null; within1h: number | null; byBot: number }
+export interface ChatMetrics {
+  days: number; from: string; channels: { id: number; name: string }[];
+  totals: { conversations: number; newContacts: number; inbound: number; outbound: number; outHuman: number; outBot: number; outPhone: number; outAuto: number; resolved: number; open: number; waiting: number } | null;
+  firstResponse: FirstResponse | null;
+  bySector: { sector: string | null; name: string; conversations: number; inbound: number; outbound: number; open: number; medianSec: number | null; within1h: number | null; unanswered: number }[];
+  byUser: { userId: number; name: string; imageUrl: string | null; messages: number; conversations: number; firstResponses: number; medianSec: number | null; open: number }[];
+  byChannel: { channelId: number; name: string; color: string | null; type: string; conversations: number; inbound: number; outbound: number; medianSec: number | null; unanswered: number }[];
+  byDay: { day: string; inbound: number; outbound: number }[];
+  byHour: { hour: number; inbound: number }[];
+}
+/** 45 s · 12 min · 2 h 10 min · 3 dias */
+export function duration(sec: number | null | undefined) {
+  if (sec === null || sec === undefined) return "—";
+  if (sec < 60) return `${Math.round(sec)} s`;
+  const min = Math.round(sec / 60);
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 48) return min % 60 ? `${h} h ${min % 60} min` : `${h} h`;
+  return `${Math.round(h / 24)} dias`;
+}
+export const useChannelHealth = (id: number, enabled = true) => useQuery({ queryKey: [CHAT_KEY, "health", id], enabled, refetchInterval: 30000, queryFn: () => chatApi.get<ChannelHealth>(`channels/${id}/health`) });
 export type ConversationStatus = "aberta" | "aguardando" | "resolvida";
 export interface ConversationItem {
   id: number; status: ConversationStatus; sector: string | null; unread: number; lastMessageAt: string | null; lastMessagePreview: string | null; lastDirection: "in" | "out" | null;
@@ -232,6 +264,7 @@ const STATUS: Record<ChannelStatus, { tone: StatusTone; label: string; pulse: bo
   banido: { tone: "danger", label: "Bloqueado", pulse: false },
   desconectado: { tone: "neutral", label: "Desconectado", pulse: false },
 };
+export const channelStatusLabel = (status: ChannelStatus) => STATUS[status]?.label ?? status;
 export const ChannelStatusBadge = ({ status }: { status: ChannelStatus }) => <StatusBadge tone={STATUS[status].tone} pulse={STATUS[status].pulse}>{STATUS[status].label}</StatusBadge>;
 
 /** Selo do número na conversa: bolinha na cor do canal + nome. */

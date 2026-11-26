@@ -144,6 +144,7 @@ function ChannelCard({ channel, meta, manage, onConnect }: { channel: Channel; m
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild><Link to="/conversas/numeros/$channelId" params={{ channelId: String(channel.id) }}><Icon name="settings-2" className="mr-2 h-4 w-4" />Configurar</Link></DropdownMenuItem>
+              {!instagram && <DropdownMenuItem asChild><Link to="/conversas/numeros/$channelId/saude" params={{ channelId: String(channel.id) }}><Icon name="heart-pulse" className="mr-2 h-4 w-4" />Saúde do número</Link></DropdownMenuItem>}
               {instagram && <DropdownMenuItem asChild><Link to="/bots/conectores" search={{ instagram: undefined, motivo: undefined }}><Icon name="cable" className="mr-2 h-4 w-4" />Conexão em Conectores</Link></DropdownMenuItem>}
               {connected && !instagram && <DropdownMenuItem onSelect={() => setConfirm("desconectar")}><Icon name="unplug" className="mr-2 h-4 w-4" />Desconectar</DropdownMenuItem>}
               <DropdownMenuSeparator />
@@ -153,7 +154,12 @@ function ChannelCard({ channel, meta, manage, onConnect }: { channel: Channel; m
         )}
       </header>
 
-      {channel.statusReason && !connected && <p className="mx-4 -mt-1 mb-3 rounded-lg bg-muted px-2.5 py-1.5 text-[11px] leading-snug text-muted-foreground">{channel.statusReason}</p>}
+      {channel.statusReason && !connected && (
+        <p className="mx-4 -mt-1 mb-3 rounded-lg bg-muted px-2.5 py-1.5 text-[11px] leading-snug text-muted-foreground">
+          {channel.statusReason}
+          {manage && !instagram && (channel.status === "caiu" || channel.status === "banido") && <> <Link to="/conversas/numeros/$channelId/saude" params={{ channelId: String(channel.id) }} className="font-medium text-primary hover:underline">Ver a saúde do número</Link></>}
+        </p>
+      )}
 
       <dl className="grid gap-2 border-t px-4 py-3 text-[13px]">
         <div className="flex items-center justify-between gap-3">
@@ -210,6 +216,7 @@ function ChannelCard({ channel, meta, manage, onConnect }: { channel: Channel; m
                 {stats.unread > 0 && <span className="ml-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground">{stats.unread}</span>}
               </Link>
             </Button>
+            {manage && <Tip text="Saúde do número"><Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to="/conversas/numeros/$channelId/saude" params={{ channelId: String(channel.id) }} aria-label="Saúde do número"><Icon name="heart-pulse" className="h-4 w-4" /></Link></Button></Tip>}
             {manage && <Tip text="Configurar"><Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to="/conversas/numeros/$channelId" params={{ channelId: String(channel.id) }} aria-label="Configurar"><Icon name="settings-2" className="h-4 w-4" /></Link></Button></Tip>}
           </>
         ) : instagram ? (

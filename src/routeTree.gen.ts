@@ -108,6 +108,7 @@ import { Route as AuthenticatedFinanceiroConciliacaoConciliacaoRouteImport } fro
 import { Route as AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport } from './pages/_authenticated/financeiro/_centros-custo/centros-custo'
 import { Route as AuthenticatedConversasConversasRespostasRouteImport } from './pages/_authenticated/conversas/_conversas/respostas'
 import { Route as AuthenticatedConversasConversasNumerosRouteImport } from './pages/_authenticated/conversas/_conversas/numeros'
+import { Route as AuthenticatedConversasConversasMetricasRouteImport } from './pages/_authenticated/conversas/_conversas/metricas'
 import { Route as AuthenticatedConversasConversasCaixaRouteImport } from './pages/_authenticated/conversas/_conversas/caixa'
 import { Route as AuthenticatedComercialVendedoresVendedoresRouteImport } from './pages/_authenticated/comercial/_vendedores/vendedores'
 import { Route as AuthenticatedComercialPropostasPropostasRouteImport } from './pages/_authenticated/comercial/_propostas/propostas'
@@ -201,6 +202,7 @@ import { Route as AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesNovaRouteImport
 import { Route as AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRouteImport } from './pages/_authenticated/rh/_alocacao/mapa-de-alocacao_.atividades.$activityId'
 import { Route as AuthenticatedFinanceiroFiscalFiscalServicosNovoRouteImport } from './pages/_authenticated/financeiro/_fiscal/fiscal_.servicos.novo'
 import { Route as AuthenticatedFinanceiroFiscalFiscalServicosServiceIdRouteImport } from './pages/_authenticated/financeiro/_fiscal/fiscal_.servicos.$serviceId'
+import { Route as AuthenticatedConversasConversasNumerosChannelIdSaudeRouteImport } from './pages/_authenticated/conversas/_conversas/numeros_.$channelId_.saude'
 import { Route as AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRouteImport } from './pages/_authenticated/servicos/_ordens/ordens-de-servico_.$orderId_.rdo.$reportId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -774,6 +776,12 @@ const AuthenticatedConversasConversasNumerosRoute =
     path: '/conversas/numeros',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedConversasConversasMetricasRoute =
+  AuthenticatedConversasConversasMetricasRouteImport.update({
+    id: '/conversas/_conversas/metricas',
+    path: '/conversas/metricas',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedConversasConversasCaixaRoute =
   AuthenticatedConversasConversasCaixaRouteImport.update({
     id: '/conversas/_conversas/caixa',
@@ -1338,6 +1346,12 @@ const AuthenticatedFinanceiroFiscalFiscalServicosServiceIdRoute =
     path: '/financeiro/fiscal/servicos/$serviceId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedConversasConversasNumerosChannelIdSaudeRoute =
+  AuthenticatedConversasConversasNumerosChannelIdSaudeRouteImport.update({
+    id: '/conversas/_conversas/numeros_/$channelId_/saude',
+    path: '/conversas/numeros/$channelId/saude',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRoute =
   AuthenticatedServicosOrdensOrdensDeServicoOrderIdRdoReportIdRouteImport.update(
     {
@@ -1405,6 +1419,7 @@ export interface FileRoutesByFullPath {
   '/comercial/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/conversas/caixa': typeof AuthenticatedConversasConversasCaixaRoute
+  '/conversas/metricas': typeof AuthenticatedConversasConversasMetricasRoute
   '/conversas/numeros': typeof AuthenticatedConversasConversasNumerosRoute
   '/conversas/respostas': typeof AuthenticatedConversasConversasRespostasRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -1531,6 +1546,7 @@ export interface FileRoutesByFullPath {
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
   '/usuarios/$userId/editar': typeof AuthenticatedUsuariosUsuariosUserIdEditarRoute
   '/usuarios/$userId/permissoes': typeof AuthenticatedUsuariosUsuariosUserIdPermissoesRoute
+  '/conversas/numeros/$channelId/saude': typeof AuthenticatedConversasConversasNumerosChannelIdSaudeRoute
   '/financeiro/fiscal/servicos/$serviceId': typeof AuthenticatedFinanceiroFiscalFiscalServicosServiceIdRoute
   '/financeiro/fiscal/servicos/novo': typeof AuthenticatedFinanceiroFiscalFiscalServicosNovoRoute
   '/rh/mapa-de-alocacao/atividades/$activityId': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute
@@ -1597,6 +1613,7 @@ export interface FileRoutesByTo {
   '/comercial/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/comercial/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/conversas/caixa': typeof AuthenticatedConversasConversasCaixaRoute
+  '/conversas/metricas': typeof AuthenticatedConversasConversasMetricasRoute
   '/conversas/numeros': typeof AuthenticatedConversasConversasNumerosRoute
   '/conversas/respostas': typeof AuthenticatedConversasConversasRespostasRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -1723,6 +1740,7 @@ export interface FileRoutesByTo {
   '/treinamentos/turmas/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
   '/usuarios/$userId/editar': typeof AuthenticatedUsuariosUsuariosUserIdEditarRoute
   '/usuarios/$userId/permissoes': typeof AuthenticatedUsuariosUsuariosUserIdPermissoesRoute
+  '/conversas/numeros/$channelId/saude': typeof AuthenticatedConversasConversasNumerosChannelIdSaudeRoute
   '/financeiro/fiscal/servicos/$serviceId': typeof AuthenticatedFinanceiroFiscalFiscalServicosServiceIdRoute
   '/financeiro/fiscal/servicos/novo': typeof AuthenticatedFinanceiroFiscalFiscalServicosNovoRoute
   '/rh/mapa-de-alocacao/atividades/$activityId': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute
@@ -1793,6 +1811,7 @@ export interface FileRoutesById {
   '/_authenticated/comercial/_propostas/propostas': typeof AuthenticatedComercialPropostasPropostasRoute
   '/_authenticated/comercial/_vendedores/vendedores': typeof AuthenticatedComercialVendedoresVendedoresRoute
   '/_authenticated/conversas/_conversas/caixa': typeof AuthenticatedConversasConversasCaixaRoute
+  '/_authenticated/conversas/_conversas/metricas': typeof AuthenticatedConversasConversasMetricasRoute
   '/_authenticated/conversas/_conversas/numeros': typeof AuthenticatedConversasConversasNumerosRoute
   '/_authenticated/conversas/_conversas/respostas': typeof AuthenticatedConversasConversasRespostasRoute
   '/_authenticated/financeiro/_centros-custo/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -1919,6 +1938,7 @@ export interface FileRoutesById {
   '/_authenticated/treinamentos/_turmas/turmas_/nova': typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
   '/_authenticated/usuarios/_usuarios/$userId/editar': typeof AuthenticatedUsuariosUsuariosUserIdEditarRoute
   '/_authenticated/usuarios/_usuarios/$userId/permissoes': typeof AuthenticatedUsuariosUsuariosUserIdPermissoesRoute
+  '/_authenticated/conversas/_conversas/numeros_/$channelId_/saude': typeof AuthenticatedConversasConversasNumerosChannelIdSaudeRoute
   '/_authenticated/financeiro/_fiscal/fiscal_/servicos/$serviceId': typeof AuthenticatedFinanceiroFiscalFiscalServicosServiceIdRoute
   '/_authenticated/financeiro/_fiscal/fiscal_/servicos/novo': typeof AuthenticatedFinanceiroFiscalFiscalServicosNovoRoute
   '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/$activityId': typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute
@@ -1988,6 +2008,7 @@ export interface FileRouteTypes {
     | '/comercial/propostas'
     | '/comercial/vendedores'
     | '/conversas/caixa'
+    | '/conversas/metricas'
     | '/conversas/numeros'
     | '/conversas/respostas'
     | '/financeiro/centros-custo'
@@ -2114,6 +2135,7 @@ export interface FileRouteTypes {
     | '/treinamentos/turmas/nova'
     | '/usuarios/$userId/editar'
     | '/usuarios/$userId/permissoes'
+    | '/conversas/numeros/$channelId/saude'
     | '/financeiro/fiscal/servicos/$serviceId'
     | '/financeiro/fiscal/servicos/novo'
     | '/rh/mapa-de-alocacao/atividades/$activityId'
@@ -2180,6 +2202,7 @@ export interface FileRouteTypes {
     | '/comercial/propostas'
     | '/comercial/vendedores'
     | '/conversas/caixa'
+    | '/conversas/metricas'
     | '/conversas/numeros'
     | '/conversas/respostas'
     | '/financeiro/centros-custo'
@@ -2306,6 +2329,7 @@ export interface FileRouteTypes {
     | '/treinamentos/turmas/nova'
     | '/usuarios/$userId/editar'
     | '/usuarios/$userId/permissoes'
+    | '/conversas/numeros/$channelId/saude'
     | '/financeiro/fiscal/servicos/$serviceId'
     | '/financeiro/fiscal/servicos/novo'
     | '/rh/mapa-de-alocacao/atividades/$activityId'
@@ -2375,6 +2399,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comercial/_propostas/propostas'
     | '/_authenticated/comercial/_vendedores/vendedores'
     | '/_authenticated/conversas/_conversas/caixa'
+    | '/_authenticated/conversas/_conversas/metricas'
     | '/_authenticated/conversas/_conversas/numeros'
     | '/_authenticated/conversas/_conversas/respostas'
     | '/_authenticated/financeiro/_centros-custo/centros-custo'
@@ -2501,6 +2526,7 @@ export interface FileRouteTypes {
     | '/_authenticated/treinamentos/_turmas/turmas_/nova'
     | '/_authenticated/usuarios/_usuarios/$userId/editar'
     | '/_authenticated/usuarios/_usuarios/$userId/permissoes'
+    | '/_authenticated/conversas/_conversas/numeros_/$channelId_/saude'
     | '/_authenticated/financeiro/_fiscal/fiscal_/servicos/$serviceId'
     | '/_authenticated/financeiro/_fiscal/fiscal_/servicos/novo'
     | '/_authenticated/rh/_alocacao/mapa-de-alocacao_/atividades/$activityId'
@@ -3212,6 +3238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConversasConversasNumerosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/conversas/_conversas/metricas': {
+      id: '/_authenticated/conversas/_conversas/metricas'
+      path: '/conversas/metricas'
+      fullPath: '/conversas/metricas'
+      preLoaderRoute: typeof AuthenticatedConversasConversasMetricasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/conversas/_conversas/caixa': {
       id: '/_authenticated/conversas/_conversas/caixa'
       path: '/conversas/caixa'
@@ -3863,6 +3896,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceiroFiscalFiscalServicosServiceIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/conversas/_conversas/numeros_/$channelId_/saude': {
+      id: '/_authenticated/conversas/_conversas/numeros_/$channelId_/saude'
+      path: '/conversas/numeros/$channelId/saude'
+      fullPath: '/conversas/numeros/$channelId/saude'
+      preLoaderRoute: typeof AuthenticatedConversasConversasNumerosChannelIdSaudeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId': {
       id: '/_authenticated/servicos/_ordens/ordens-de-servico_/$orderId_/rdo/$reportId'
       path: '/servicos/ordens-de-servico/$orderId/rdo/$reportId'
@@ -3916,6 +3956,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComercialPropostasPropostasRoute: typeof AuthenticatedComercialPropostasPropostasRoute
   AuthenticatedComercialVendedoresVendedoresRoute: typeof AuthenticatedComercialVendedoresVendedoresRoute
   AuthenticatedConversasConversasCaixaRoute: typeof AuthenticatedConversasConversasCaixaRoute
+  AuthenticatedConversasConversasMetricasRoute: typeof AuthenticatedConversasConversasMetricasRoute
   AuthenticatedConversasConversasNumerosRoute: typeof AuthenticatedConversasConversasNumerosRoute
   AuthenticatedConversasConversasRespostasRoute: typeof AuthenticatedConversasConversasRespostasRoute
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute: typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
@@ -4038,6 +4079,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTreinamentosTurmasTurmasNovaRoute: typeof AuthenticatedTreinamentosTurmasTurmasNovaRoute
   AuthenticatedUsuariosUsuariosUserIdEditarRoute: typeof AuthenticatedUsuariosUsuariosUserIdEditarRoute
   AuthenticatedUsuariosUsuariosUserIdPermissoesRoute: typeof AuthenticatedUsuariosUsuariosUserIdPermissoesRoute
+  AuthenticatedConversasConversasNumerosChannelIdSaudeRoute: typeof AuthenticatedConversasConversasNumerosChannelIdSaudeRoute
   AuthenticatedFinanceiroFiscalFiscalServicosServiceIdRoute: typeof AuthenticatedFinanceiroFiscalFiscalServicosServiceIdRoute
   AuthenticatedFinanceiroFiscalFiscalServicosNovoRoute: typeof AuthenticatedFinanceiroFiscalFiscalServicosNovoRoute
   AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute: typeof AuthenticatedRhAlocacaoMapaDeAlocacaoAtividadesActivityIdRoute
@@ -4113,6 +4155,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedComercialVendedoresVendedoresRoute,
   AuthenticatedConversasConversasCaixaRoute:
     AuthenticatedConversasConversasCaixaRoute,
+  AuthenticatedConversasConversasMetricasRoute:
+    AuthenticatedConversasConversasMetricasRoute,
   AuthenticatedConversasConversasNumerosRoute:
     AuthenticatedConversasConversasNumerosRoute,
   AuthenticatedConversasConversasRespostasRoute:
@@ -4352,6 +4396,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedUsuariosUsuariosUserIdEditarRoute,
   AuthenticatedUsuariosUsuariosUserIdPermissoesRoute:
     AuthenticatedUsuariosUsuariosUserIdPermissoesRoute,
+  AuthenticatedConversasConversasNumerosChannelIdSaudeRoute:
+    AuthenticatedConversasConversasNumerosChannelIdSaudeRoute,
   AuthenticatedFinanceiroFiscalFiscalServicosServiceIdRoute:
     AuthenticatedFinanceiroFiscalFiscalServicosServiceIdRoute,
   AuthenticatedFinanceiroFiscalFiscalServicosNovoRoute:

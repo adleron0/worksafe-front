@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import useVerify from "@/hooks/use-verify";
+import { toast } from "@/hooks/use-toast";
 import Icon from "@/components/general-components/Icon";
 import { cn } from "@/lib/utils";
 import { CHAT_KEY, ContactAvatar, PAGES, chatApi, setChatLive } from "./chat";
@@ -14,7 +15,7 @@ import { CHAT_KEY, ContactAvatar, PAGES, chatApi, setChatLive } from "./chat";
  * Se o fluxo cair, as telas voltam a atualizar sozinhas a cada poucos segundos.
  */
 
-interface LiveEvent { kind: "message" | "status" | "conversation" | "channel"; channelId: number | null; conversationId: number | null; inbound: boolean; contactName: string | null; preview: string | null }
+interface LiveEvent { kind: "message" | "status" | "conversation" | "channel"; channelId: number | null; conversationId: number | null; inbound: boolean; contactName: string | null; preview: string | null; channelStatus?: string | null; channelName?: string | null; changed?: boolean }
 interface Notice { key: number; conversationId: number; name: string; preview: string }
 
 const SOUND_KEY = "ws-chat-sound";
@@ -86,6 +87,12 @@ function LiveStream() {
       let event: LiveEvent;
       try { event = JSON.parse(raw.data); } catch { return; }
       refresh();
+      // número caiu, foi bloqueado ou voltou: aviso em qualquer tela (uma vez por troca)
+      if (event.kind === "channel" && event.changed && event.channelStatus) {
+        const name = event.channelName || "Um número";
+        if (event.channelStatus === "caiu") toast({ title: `${name}: a conexão caiu`, description: "Abra o WhatsApp no celular. Se não voltar, conecte de novo em Conversas → Números.", variant: "destructive" });
+        if (event.channelStatus === "banido") toast({ title: `${name} foi bloqueado pelo WhatsApp`, description: "Os envios deste número foram pausados. Veja a saúde do número em Conversas → Números.", variant: "destructive" });
+      }
       if (event.kind !== "message" || !event.inbound || !event.conversationId) return;
       const open = here.current.path === PAGES.inbox && here.current.conversa === event.conversationId && document.visibilityState === "visible";
       if (open) return;

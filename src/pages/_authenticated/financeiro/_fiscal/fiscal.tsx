@@ -7,6 +7,7 @@ import useVerify from "@/hooks/use-verify";
 import Icon from "@/components/general-components/Icon";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
+import CalendarPicker from "@/components/general-components/Calendar";
 import PageHeader from "@/components/general-components/PageHeader";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import StatusBadge from "@/components/general-components/StatusBadge";
@@ -35,12 +36,12 @@ const pick = (v: string | string[]) => String(Array.isArray(v) ? v[0] ?? "" : v)
 
 interface FormState {
   environment: string; municipalRegistration: string; simplesNacional: string; simplesRegime: string; specialRegime: string;
-  simplesTotalRate: string; pisCofinsCst: string; dpsSeries: string; nextDpsNumber: string; nextDpsNumberTest: string; autoSendEmail: boolean; autoEmitTraining: boolean; defaultNotes: string;
+  simplesTotalRate: string; pisCofinsCst: string; dpsSeries: string; nextDpsNumber: string; nextDpsNumberTest: string; autoSendEmail: boolean; autoEmitTraining: boolean; ibsCbsEnabled: boolean; rentalNfseFrom: string; defaultNotes: string;
 }
 const formOf = (s: FiscalSettings): FormState => ({
   environment: s.environment, municipalRegistration: s.municipalRegistration ?? "", simplesNacional: String(s.simplesNacional), simplesRegime: s.simplesRegime ? String(s.simplesRegime) : "1",
   specialRegime: String(s.specialRegime), simplesTotalRate: s.simplesTotalRate !== null ? String(s.simplesTotalRate) : "", pisCofinsCst: s.pisCofinsCst, dpsSeries: s.dpsSeries,
-  nextDpsNumber: String(s.nextDpsNumber), nextDpsNumberTest: String(s.nextDpsNumberTest), autoSendEmail: s.autoSendEmail, autoEmitTraining: s.autoEmitTraining, defaultNotes: s.defaultNotes ?? "",
+  nextDpsNumber: String(s.nextDpsNumber), nextDpsNumberTest: String(s.nextDpsNumberTest), autoSendEmail: s.autoSendEmail, autoEmitTraining: s.autoEmitTraining, ibsCbsEnabled: s.ibsCbsEnabled, rentalNfseFrom: s.rentalNfseFrom ? s.rentalNfseFrom.slice(0, 10) : "", defaultNotes: s.defaultNotes ?? "",
 });
 
 /** Configuração fiscal: certificado A1, dados de emissão, série da DPS e serviços fiscais. */
@@ -66,6 +67,7 @@ function FiscalSettingsPage() {
         simplesNacional: Number(form.simplesNacional), simplesRegime: form.simplesNacional === "3" ? Number(form.simplesRegime) : null, specialRegime: Number(form.specialRegime),
         simplesTotalRate: form.simplesTotalRate === "" ? null : Number(form.simplesTotalRate.replace(",", ".")),
         nextDpsNumber: Number(form.nextDpsNumber), nextDpsNumberTest: Number(form.nextDpsNumberTest),
+        rentalNfseFrom: form.rentalNfseFrom || null,
       })).data;
     },
     onSuccess: (data) => { if (data) onSaved(data); toast({ title: "Configuração fiscal salva", variant: "success" }); },
@@ -98,6 +100,7 @@ function FiscalSettingsPage() {
     { id: "name", header: "Serviço", className: "min-w-[200px]", cell: (s) => <span className="font-medium">{s.name}{s.isDefault && <TagBadge className="ml-2">padrão</TagBadge>}</span> },
     { id: "code", header: "Código nacional", className: "min-w-[260px]", cell: (s) => <div className="max-w-[26rem]"><p className="font-mono text-xs">{s.nationalCode}</p><p className="text-xs text-muted-foreground truncate">{s.nationalLabel}</p></div> },
     { id: "nbs", header: "NBS", cell: (s) => <span className="font-mono text-xs">{s.nbsCode ?? "—"}</span> },
+    { id: "ibs", header: "IBS/CBS", cell: (s) => (s.ibsCbsClassTrib ? <span className="font-mono text-xs">{s.ibsCbsIndOp} · {s.ibsCbsClassTrib}</span> : <span className="text-xs text-muted-foreground">—</span>) },
     { id: "iss", header: "ISS", align: "right", cell: (s) => <span className="tabular-nums">{s.issRate !== null ? `${String(s.issRate).replace(".", ",")}%` : "—"}</span> },
     { id: "status", header: "Situação", cell: (s) => <StatusBadge tone={s.inactiveAt ? "neutral" : "success"} pulse={false}>{s.inactiveAt ? "Inativo" : "Ativo"}</StatusBadge> },
   ];
@@ -183,6 +186,16 @@ function FiscalSettingsPage() {
                 <Label>CST do PIS/COFINS (quando o cliente retém)</Label>
                 <Input name="pisCofinsCst" value={form.pisCofinsCst} maxLength={2} onValueChange={(_, v) => set("pisCofinsCst", String(v))} disabled={!canConfig} className="mt-1" />
               </div>
+            </div>
+          </FormSection>
+
+          <FormSection title="Reforma tributária e locação" description="IBS/CBS na nota e a NFS-e de locação de bens móveis. Ligue depois de confirmar os códigos com o contador.">
+            <label className="flex items-start gap-2 text-sm"><Checkbox className="mt-0.5" checked={form.ibsCbsEnabled} disabled={!canConfig} onCheckedChange={(v) => set("ibsCbsEnabled", v === true)} />
+              <span>Informar o grupo IBS/CBS na nota<span className="block text-xs text-muted-foreground">Vai o indicador da operação e o cClassTrib de cada serviço fiscal; os valores são calculados pelo ambiente nacional. Em 2026 a nota sem o grupo não é rejeitada; para o Simples, as regras valem a partir de 01/01/2027.</span></span></label>
+            <div className="max-w-xs">
+              <Label>NFS-e de locação de bens móveis a partir de</Label>
+              <CalendarPicker mode="natural" name="rentalNfseFrom" value={form.rentalNfseFrom || null} placeholder="ainda opcional" disabled={!canConfig} onValueChange={(_, v) => set("rentalNfseFrom", v ?? "")} className="mt-1" />
+              <p className="text-[11px] text-muted-foreground mt-0.5">Prevista para 01/01/2027 no Simples (confirme com o contador). Antes disso, emitir nota da locação é opcional. Código 99.04.01.</p>
             </div>
           </FormSection>
 

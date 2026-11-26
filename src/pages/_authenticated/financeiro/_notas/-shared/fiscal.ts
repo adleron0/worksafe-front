@@ -135,6 +135,10 @@ export interface ServiceCode {
   description: string;
   isDefault: boolean;
   inactiveAt: string | null;
+  ibsCbsIndOp: string | null;
+  ibsCbsClassTrib: string | null;
+  ibsCbsIndOpLabel: string | null;
+  ibsCbsSuggestion: { indOp: string; classTrib: string; name: string; note?: string } | null;
 }
 
 export interface FiscalSettings {
@@ -150,6 +154,8 @@ export interface FiscalSettings {
   nextDpsNumberTest: number;
   autoSendEmail: boolean;
   autoEmitTraining: boolean;
+  ibsCbsEnabled: boolean;
+  rentalNfseFrom: string | null;
   autoEmitTrainingSince: string | null;
   defaultNotes: string | null;
   certificateSubject: string | null;

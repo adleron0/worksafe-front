@@ -61,6 +61,8 @@ export default function ServiceCodeForm({ service }: { service: ServiceCode | nu
     issTaxation: String(service?.issTaxation ?? 1),
     description: service?.description ?? "",
     isDefault: service?.isDefault ?? false,
+    ibsCbsIndOp: service?.ibsCbsIndOp ?? "",
+    ibsCbsClassTrib: service?.ibsCbsClassTrib ?? "",
     active: !service?.inactiveAt,
   });
   const set = (key: keyof typeof state, value: unknown) => setState((prev) => ({ ...prev, [key]: value }));
@@ -70,6 +72,7 @@ export default function ServiceCodeForm({ service }: { service: ServiceCode | nu
       const body = {
         name: state.name, nationalCode: state.nationalCode, nbsCode: state.nbsCode || null, municipalCode: state.municipalCode || null,
         issRate: state.issRate === "" ? null : Number(state.issRate.replace(",", ".")), issTaxation: Number(state.issTaxation), description: state.description, isDefault: state.isDefault,
+        ibsCbsIndOp: state.ibsCbsIndOp || null, ibsCbsClassTrib: state.ibsCbsClassTrib || null,
         ...(service ? { active: state.active } : {}),
       };
       return service ? (await api.put<ServiceCode>(`fiscal/service-codes/${service.id}`, body)).data : (await api.post<ServiceCode>("fiscal/service-codes", body)).data;
@@ -119,11 +122,48 @@ export default function ServiceCodeForm({ service }: { service: ServiceCode | nu
         <p className="text-xs text-muted-foreground">No Simples, a alíquota só vai na nota quando o cliente retém o ISS; mesmo assim deixe aqui a alíquota do município.</p>
       </FormSection>
 
+      <IbsCbsSection nationalCode={state.nationalCode} indOp={state.ibsCbsIndOp} classTrib={state.ibsCbsClassTrib}
+        onChange={(indOp, classTrib) => setState((prev) => ({ ...prev, ibsCbsIndOp: indOp, ibsCbsClassTrib: classTrib }))} />
+
       <FormSection title="Texto padrão da discriminação" description="Vira a descrição do serviço na nota; dá para editar em cada nota.">
         <Input type="textArea" name="description" rows={4} value={state.description} onValueChange={(_, v) => set("description", String(v))}
           placeholder="ex.: Treinamento de trabalho em altura (NR-35) para {cliente}, competência {competencia}." />
         <p className="text-[11px] text-muted-foreground">Variáveis: {"{cliente}"}, {"{competencia}"}, {"{valor}"}, {"{liquido}"}, {"{pedido}"}, {"{referencia}"}.</p>
       </FormSection>
     </FormPageGrid>
+  );
+}
+
+/** Reforma tributária: indicador da operação (Anexo C) e cClassTrib, com a sugestão da tabela oficial. */
+function IbsCbsSection({ nationalCode, indOp, classTrib, onChange }: { nationalCode: string; indOp: string; classTrib: string; onChange: (indOp: string, classTrib: string) => void }) {
+  const { data: options } = useQuery({ queryKey: ["fiscalIndOp"], queryFn: async () => (await api.get<Array<{ code: string; description: string; place: string }>>("fiscal/catalog/indop")).data, staleTime: Infinity });
+  const { data: suggestion } = useQuery({
+    queryKey: ["fiscalIbsSuggestion", nationalCode],
+    queryFn: async () => (await api.get<{ indOp?: string; classTrib?: string; name?: string; note?: string }>("fiscal/catalog/ibscbs-suggestion", { params: { code: nationalCode } })).data,
+    enabled: nationalCode.length === 6,
+  });
+  const cst = classTrib.length >= 3 ? classTrib.slice(0, 3) : "";
+  return (
+    <FormSection title="IBS/CBS (reforma tributária)" description="Só vai na nota quando o IBS/CBS estiver ligado na configuração fiscal. Os valores são calculados pelo ambiente nacional.">
+      {suggestion?.indOp && (
+        <div className="rounded-lg border bg-muted/40 px-3 py-2 text-[13px] flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
+          <span>Sugestão da tabela oficial: indicador <b className="font-mono">{suggestion.indOp}</b> · cClassTrib <b className="font-mono">{suggestion.classTrib}</b> ({suggestion.name}){suggestion.note ? <span className="block text-xs text-amber-700">{suggestion.note}</span> : null}</span>
+          <Button type="button" size="sm" variant="outline" className="shrink-0" onClick={() => onChange(suggestion.indOp!, suggestion.classTrib!)}>Usar a sugestão</Button>
+        </div>
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="sm:col-span-2">
+          <Label>Indicador da operação</Label>
+          <Select name="ibsCbsIndOp" modal searchable state={indOp} placeholder="Selecione"
+            options={(options ?? []).map((o) => ({ id: o.code, name: `${o.code} — ${o.description}` })) as never[]}
+            onChange={(_, v) => onChange(pick(v), classTrib)} />
+        </div>
+        <div>
+          <Label>cClassTrib</Label>
+          <Input name="ibsCbsClassTrib" value={classTrib} maxLength={6} inputMode="numeric" placeholder="6 dígitos" onValueChange={(_, v) => onChange(indOp, String(v).replace(/\D/g, "").slice(0, 6))} className="mt-1" />
+          {cst && <p className="text-[11px] text-muted-foreground mt-0.5">CST {cst}</p>}
+        </div>
+      </div>
+    </FormSection>
   );
 }

@@ -23,6 +23,7 @@ import {
 } from "../-shared/chat";
 import { setSound, useChatSound } from "../-shared/live";
 import { ACCEPT, MAX_FILE, MessageMedia, PendingFile, VoiceRecorder } from "./-components/media";
+import { LinkPicker } from "./-components/CommercialSection";
 import ContactPanel from "./-components/ContactPanel";
 
 interface Search { conversa?: number; caixa?: Box; numero?: number; etiqueta?: number }
@@ -701,6 +702,7 @@ function Composer({ conv }: { conv: ConversationDetail }) {
                       <Icon name="zap" className="h-5 w-5" />
                     </Button>
                   </Tip>
+                  <LinkPicker conv={conv} onPick={(snippet) => { setText((t) => (t.trim() ? `${t.trimEnd()}\n${snippet}` : snippet)); keepFocus(); }} />
                   <Tip text="Anexar foto, vídeo ou documento (até 16 MB)">
                     <Button type="button" variant="ghost" className="h-11 w-11 shrink-0 rounded-full p-0 text-muted-foreground" onClick={() => picker.current?.click()} disabled={busy} aria-label="Anexar arquivo">
                       <Icon name="paperclip" className="h-5 w-5" />

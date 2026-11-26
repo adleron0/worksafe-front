@@ -1,6 +1,6 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,12 @@ import CustomerStep from "./-CustomerStep";
 import WizardSteps, { STEPS } from "./-WizardSteps";
 
 export const Route = createFileRoute("/_authenticated/comercial/_propostas/propostas_/nova")({
-  validateSearch: (search: Record<string, unknown>): { tipo?: ProposalKind } =>
-    (search.tipo === "locacao" || search.tipo === "treinamento" || search.tipo === "servico" ? { tipo: search.tipo } : {}),
+  validateSearch: (search: Record<string, unknown>): { tipo?: ProposalKind; cliente?: number; conversa?: number } => ({
+    ...(search.tipo === "locacao" || search.tipo === "treinamento" || search.tipo === "servico" ? { tipo: search.tipo } : {}),
+    // vindo de uma conversa: já com o cliente escolhido
+    ...(Number(search.cliente) > 0 ? { cliente: Number(search.cliente) } : {}),
+    ...(Number(search.conversa) > 0 ? { conversa: Number(search.conversa) } : {}),
+  }),
   component: NewProposalPage,
 });
 
@@ -24,9 +28,14 @@ function NewProposalPage() {
   const { can } = useVerify();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { tipo } = Route.useSearch();
+  const { tipo, cliente } = Route.useSearch();
   const [kind, setKind] = useState<ProposalKind>(tipo ?? "servico");
   const [customer, setCustomer] = useState<CustomerOption | null>(null);
+  const preset = useQuery({
+    queryKey: ["commercialCustomers", "id", cliente], enabled: !!cliente, staleTime: Infinity,
+    queryFn: () => commercialApi.get<CustomerOption[]>("proposals/customers", { id: cliente }),
+  });
+  useEffect(() => { if (!customer && preset.data?.[0]) setCustomer(preset.data[0]); }, [preset.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { mutate: create, isPending } = useMutation({
     mutationFn: () => {

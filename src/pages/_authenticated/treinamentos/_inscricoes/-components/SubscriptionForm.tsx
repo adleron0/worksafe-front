@@ -21,9 +21,11 @@ interface FormProps {
   isInsideModal?: boolean;
   /** "sheet": gaveta (dentro da turma); "page": tela própria de cadastro/edição. */
   layout?: "sheet" | "page";
+  /** valores iniciais de uma inscrição nova (ex.: nome e telefone vindos de uma conversa) */
+  initial?: Partial<IEntity>;
 }
 
-const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal = false, layout = "sheet" }: FormProps) => {
+const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal = false, layout = "sheet", initial }: FormProps) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
   
@@ -54,10 +56,11 @@ const SubscriptionForm = ({ formData, openSheet, entity, classId, isInsideModal 
         workedAt: "",
         occupation: "",
         subscribeStatus: "pending",
+        ...initial,
         classId: classId,
       });
     }
-  }, [formData, classId]);
+  }, [formData, classId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { mutate: create } = useMutation({
     mutationFn: async (data: IEntity) => {

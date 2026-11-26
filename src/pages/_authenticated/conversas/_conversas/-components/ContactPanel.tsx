@@ -17,6 +17,7 @@ import TagBadge from "@/components/general-components/TagBadge";
 import { formatDocumento } from "@/utils/documento";
 import { cn } from "@/lib/utils";
 import { Tip, errorMessage } from "../../../comercial/-shared/commercial";
+import CommercialSection from "./CommercialSection";
 import { CHAT_KEY, ChannelLogo, ChannelPill, ChatTag, ContactAvatar, ConversationDetail, TagChip, chatApi, contactHandle, contactName, useChatMeta, useChatTags, useLiveInterval } from "../../-shared/chat";
 
 /**
@@ -99,6 +100,8 @@ export default function ContactPanel({ id }: { id: number }) {
       </div>
 
       <CustomerSection conv={data} canEdit={canEdit} onLink={(customerId) => contact.mutate({ customerId })} linking={contact.isPending} />
+
+      <CommercialSection conv={data} />
 
       <TagsSection conv={data} canEdit={canEdit} onSaved={done} />
 

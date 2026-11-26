@@ -48,12 +48,26 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
-  const { data: googleOn } = useQuery({
+  // Última resposta guardada: na próxima visita a tela já abre certa, sem o
+  // formulário aparecer e sumir enquanto a API responde.
+  const { data: googleOn, isPending: googleChecking } = useQuery({
     queryKey: ["google-login-enabled"],
-    queryFn: googleEnabled,
+    queryFn: async () => {
+      const on = await googleEnabled();
+      try { localStorage.setItem("ws_google_on", on ? "1" : "0"); } catch { /* sem armazenamento */ }
+      return on;
+    },
+    placeholderData: () => {
+      try {
+        const v = localStorage.getItem("ws_google_on");
+        return v === null ? undefined : v === "1";
+      } catch { return undefined; }
+    },
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
+  // sem resposta guardada e ainda perguntando: reserva o espaço em vez de mostrar o formulário
+  const waitingGoogle = googleChecking && googleOn === undefined;
   const { control, handleSubmit } = useForm<LoginData>({
     defaultValues: {
       email: "",
@@ -221,11 +235,15 @@ function Login() {
             </p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">Entrar na intranet</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {googleOn
-                ? "Entre com a sua conta Google da empresa."
-                : "Use seu e-mail de acesso, sua senha e o CNPJ da empresa."}
+              {waitingGoogle
+                ? "Carregando…"
+                : googleOn
+                  ? "Entre com a sua conta Google da empresa."
+                  : "Use seu e-mail de acesso, sua senha e o CNPJ da empresa."}
             </p>
           </div>
+
+          {waitingGoogle && <div className="h-11 w-full animate-pulse rounded-xl bg-muted" />}
 
           {googleOn && (
             <>
@@ -255,7 +273,7 @@ function Login() {
             </>
           )}
 
-          {(!googleOn || showPasswordForm) && (
+          {!waitingGoogle && (!googleOn || showPasswordForm) && (
           <form onSubmit={handleSubmit(onSubmit)} className={`space-y-4 ${googleOn ? "mt-4" : ""}`}>
             <div className="space-y-1.5">
               <Label htmlFor="email">E-mail</Label>

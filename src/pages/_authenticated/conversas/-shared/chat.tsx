@@ -24,6 +24,8 @@ export interface ChatSettings {
   limites: { novosPorDia: number; porMinuto: number; porHora: number; porDia: number };
   intervalo: { min: number; max: number };
   horario: { enabled: boolean; dias: number[]; inicio: string; fim: string; mensagemFora: string };
+  /** o que o bot do número pode fazer */
+  bot?: { instrucoes: string; foraDoHorario: boolean; limitePorConversa: number };
   /** nome de quem respondeu na frente de cada mensagem enviada pelo sistema */
   assinatura: { enabled: boolean; formato: "primeiro" | "completo" };
 }
@@ -32,6 +34,8 @@ export interface Channel {
   phone: string | null; profileName: string | null; status: ChannelStatus; statusReason: string | null; statusAt: string | null; connectedAt: string | null;
   settings: ChatSettings; memberIds: number[]; termsOk: boolean; historyDays: number;
   stats?: { sentToday: number; newToday: number; open: number; unread: number };
+  /** aproveitamento dos rascunhos do bot nos últimos 30 dias */
+  botStats?: { total: number; enviada: number; editada: number; descartada: number; ignorada: number } | null;
 }
 export interface ChatMeta {
   sectors: { id: string; name: string }[];
@@ -67,14 +71,19 @@ export interface ChatMessage {
   origin: string; sentAt: string; sentBy: string | null;
 }
 export interface ConversationDetail extends ConversationItem {
-  channel: ConversationItem["channel"] & { status: ChannelStatus; phone: string | null; sector: string | null; botMode: BotMode };
+  channel: ConversationItem["channel"] & { status: ChannelStatus; phone: string | null; sector: string | null; botMode: BotMode; defaultBotId?: number | null };
   messages: ChatMessage[];
   hasMore: boolean;
   /** Instagram: até quando dá para responder (24 h depois da última mensagem do cliente) */
   replyUntil: string | null;
   /** como as minhas mensagens saem assinadas neste número (null = sem assinatura) */
   signature: string | null;
+  /** bot atendendo esta conversa (passar para bot / modo atende) */
+  bot?: ChatBotLite | null;
+  /** rascunho do bot esperando alguém enviar, editar ou descartar */
+  suggestion?: { id: number; text: string; createdAt: string; bot: ChatBotLite | null } | null;
 }
+export interface ChatBotLite { id: number; name: string; persona: string | null; avatar: string | null }
 
 // ---------------------------------------------------------------- tempo real (estado)
 

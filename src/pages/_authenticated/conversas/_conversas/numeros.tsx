@@ -160,12 +160,22 @@ function ChannelCard({ channel, meta, manage, onConnect }: { channel: Channel; m
           <dt className="text-muted-foreground">Setor</dt>
           <dd className="truncate font-medium">{sector?.name ?? "—"}</dd>
         </div>
-        {!instagram && <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <dt className="text-muted-foreground">Bot</dt>
           <dd className="flex min-w-0 items-center gap-1.5">
             {bot ? <><BotAvatar look={bot.avatar} size={18} still /><span className="truncate font-medium">{bot.persona ?? bot.name}</span><span className="truncate text-muted-foreground">· {channel.botMode === "desligado" ? "desligado" : mode?.name.toLowerCase()}</span></> : <span className="text-muted-foreground">Sem bot</span>}
           </dd>
-        </div>}
+        </div>
+        {channel.botStats && channel.botStats.total > 0 && (
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-muted-foreground">Rascunhos (30 dias)</dt>
+            <dd>
+              <Tip text={`${channel.botStats.enviada} enviados como estavam · ${channel.botStats.editada} editados · ${channel.botStats.descartada} descartados · ${channel.botStats.ignorada} ignorados (a pessoa escreveu outra coisa). Ajuda a decidir quando passar para triagem ou atende.`}>
+                <span className="font-medium tabular-nums">{Math.round(((channel.botStats.enviada + channel.botStats.editada) / channel.botStats.total) * 100)}% aproveitados</span>
+              </Tip>
+            </dd>
+          </div>
+        )}
         <div className="flex items-center justify-between gap-3">
           <dt className="text-muted-foreground">Equipe</dt>
           <dd className="flex items-center gap-1.5">

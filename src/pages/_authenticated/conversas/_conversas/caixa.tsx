@@ -24,6 +24,7 @@ import {
 import { setSound, useChatSound } from "../-shared/live";
 import { ACCEPT, MAX_FILE, MessageMedia, PendingFile, VoiceRecorder } from "./-components/media";
 import { LinkPicker } from "./-components/CommercialSection";
+import { AskSuggestion, BotBanner, HandToBotDialog, SuggestionCard } from "./-components/BotBits";
 import ContactPanel from "./-components/ContactPanel";
 
 interface Search { conversa?: number; caixa?: Box; numero?: number; etiqueta?: number }
@@ -370,6 +371,7 @@ function ChatPane({ id, wide, onBack, panel, onPanel }: { id: number; wide: bool
   });
 
   const [hiding, setHiding] = useState(false);
+  const [handing, setHanding] = useState(false);
   const hide = useMutation({
     mutationFn: () => chatApi.post(`conversations/${id}/hide`),
     onSuccess: () => { toast({ title: "Contato oculto", description: "Nada dele aparece ou é gravado no sistema. Para mostrar de novo: Números → Configurar.", variant: "success" }); invalidate(); onBack(); },
@@ -405,6 +407,9 @@ function ChatPane({ id, wide, onBack, panel, onPanel }: { id: number; wide: bool
               <Button size="sm" variant="ghost" className="h-9 w-9 shrink-0 p-0" aria-label="Mais ações"><Icon name="ellipsis-vertical" className="h-4 w-4" /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {data.channel.type === "whatsapp" && can("responder_conversas") && !data.bot && (
+                <DropdownMenuItem onSelect={() => setHanding(true)}><Icon name="bot" className="mr-2 h-4 w-4" />Passar para bot</DropdownMenuItem>
+              )}
               <DropdownMenuItem onSelect={() => setHiding(true)}><Icon name="eye-off" className="mr-2 h-4 w-4" />Ocultar do sistema</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -436,6 +441,7 @@ function ChatPane({ id, wide, onBack, panel, onPanel }: { id: number; wide: bool
       </div>
 
       {data && <Composer conv={data} />}
+      {handing && data && <HandToBotDialog conv={data} onClose={() => setHanding(false)} />}
       <ConfirmDialog open={hiding} onOpenChange={setHiding} title={`Ocultar ${name || "este contato"} do sistema?`}
         description="Para conversas pessoais. As mensagens dele são apagadas do sistema e as próximas não são gravadas. No celular nada muda. Dá para mostrar de novo em Números → Configurar, mas o que foi apagado não volta."
         slideLabel="Deslize para ocultar" onConfirm={() => hide.mutate()} />
@@ -557,6 +563,8 @@ function Composer({ conv }: { conv: ConversationDetail }) {
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<"reply" | "note">("reply");
   const [text, setText] = useState("");
+  /** o texto da caixa veio de uma sugestão do bot (para medir o aproveitamento) */
+  const [fromSuggestion, setFromSuggestion] = useState<number | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [recording, setRecording] = useState(false);
   const [confirmNew, setConfirmNew] = useState<null | { kind: "text" | "file"; ptt?: boolean; file?: File; body?: string }>(null);
@@ -590,9 +598,9 @@ function Composer({ conv }: { conv: ConversationDetail }) {
     toast({ title: isNote ? "Não foi possível salvar a nota" : "Não foi possível enviar", description: errorMessage(err), variant: "destructive" });
   };
   const send = useMutation({
-    mutationFn: ({ body, confirmed }: { body: string; confirmed?: boolean }) => isNote
+    mutationFn: ({ body, confirmed, suggestionId }: { body: string; confirmed?: boolean; suggestionId?: number | null }) => isNote
       ? chatApi.post(`conversations/${conv.id}/notes`, { text: body })
-      : chatApi.post(`conversations/${conv.id}/messages`, { text: body, confirmedNew: confirmed }),
+      : chatApi.post(`conversations/${conv.id}/messages`, { text: body, confirmedNew: confirmed, ...(suggestionId ? { suggestionId } : {}) }),
     onSuccess: done,
     onError: (err, vars) => failed(err, { kind: "text", body: vars.body }),
   });
@@ -623,7 +631,8 @@ function Composer({ conv }: { conv: ConversationDetail }) {
     if (!body || (!isNote && blocked)) return;
     setText("");
     keepFocus();
-    send.mutate({ body });
+    send.mutate({ body, suggestionId: isNote ? null : fromSuggestion });
+    setFromSuggestion(null);
   };
   const placeholder = isNote ? "Nota interna: só a equipe vê" : file ? "Legenda (opcional)" : `Mensagem para ${contactName(conv.contact)}`;
   const firstLink = useMemo(() => !isNote && conv.contact.isNew && /(https?:\/\/|www\.)/i.test(text), [isNote, conv.contact.isNew, text]);
@@ -650,6 +659,7 @@ function Composer({ conv }: { conv: ConversationDetail }) {
       onDragOver={(event) => { if (!isNote && !blocked && event.dataTransfer.types.includes("Files")) event.preventDefault(); }}
       onDrop={(event) => { if (isNote || blocked) return; event.preventDefault(); choose(event.dataTransfer.files?.[0]); }}>
       <div className="mx-auto max-w-3xl">
+        <BotBanner conv={conv} canReply={canReply} />
         <div className="mb-1.5 flex items-center gap-1">
           {([["reply", "message-circle", "Responder"], ["note", "sticky-note", "Nota interna"]] as const).map(([key, icon, label]) => (
             <button key={key} type="button" onClick={() => { setMode(key); keepFocus(); }}
@@ -678,6 +688,11 @@ function Composer({ conv }: { conv: ConversationDetail }) {
           <VoiceRecorder onCancel={() => setRecording(false)} onDone={(voice) => upload.mutate({ upload: voice, caption: "", ptt: true })} />
         ) : (
           <>
+            {!isNote && conv.suggestion && fromSuggestion !== conv.suggestion.id && !text.trim() && (
+              <SuggestionCard conv={conv} sending={send.isPending}
+                onUse={(value, id) => { setText(value); setFromSuggestion(id); keepFocus(); }}
+                onSend={(value, id) => send.mutate({ body: value, suggestionId: id })} />
+            )}
             {showSlash && (
               <div className="mb-2 overflow-hidden rounded-xl border bg-background shadow-sm">
                 <p className="flex items-center gap-1.5 border-b px-3 py-1.5 text-[11px] text-muted-foreground"><Icon name="zap" className="h-3 w-3" />Respostas rápidas · ↑↓ escolhe, Enter usa, Esc fecha</p>
@@ -702,6 +717,7 @@ function Composer({ conv }: { conv: ConversationDetail }) {
                       <Icon name="zap" className="h-5 w-5" />
                     </Button>
                   </Tip>
+                  <AskSuggestion conv={conv} />
                   <LinkPicker conv={conv} onPick={(snippet) => { setText((t) => (t.trim() ? `${t.trimEnd()}\n${snippet}` : snippet)); keepFocus(); }} />
                   <Tip text="Anexar foto, vídeo ou documento (até 16 MB)">
                     <Button type="button" variant="ghost" className="h-11 w-11 shrink-0 rounded-full p-0 text-muted-foreground" onClick={() => picker.current?.click()} disabled={busy} aria-label="Anexar arquivo">

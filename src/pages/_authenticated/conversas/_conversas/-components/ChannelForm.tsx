@@ -23,6 +23,8 @@ const COLORS = ["#149E5E", "#3E6F98", "#F0C419", "#E52127", "#78716C"];
 const MAX = { novosPorDia: 30, porMinuto: 20, porHora: 300, porDia: 1500 };
 const MODE_ICON: Record<BotMode, string> = { desligado: "user-round", sugere: "pencil-line", triagem: "route", atende: "bot-message-square" };
 
+const instagramOf = (channel?: Channel) => channel?.type === "instagram";
+
 interface Draft { name: string; color: string; sector: string; defaultBotId: number | null; botMode: BotMode; memberIds: number[]; settings: ChatSettings; historyDays: number }
 
 /** Cadastro e configuração de um número (tela própria, em seções). */
@@ -47,6 +49,9 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
   const setSignature = (patch: Partial<ChatSettings["assinatura"]>) => setDraft((current) => ({ ...current, settings: { ...current.settings, assinatura: { ...assinatura, ...patch } } }));
   const myName = meta.users.find((u) => u.id === Number(user?.sub))?.name?.trim() || "Seu nome";
   const shownName = assinatura.formato === "completo" ? myName : myName.split(" ")[0];
+  const botCfg = draft.settings.bot ?? { instrucoes: "", foraDoHorario: false, limitePorConversa: 20 };
+  const setBot = (patch: Partial<NonNullable<ChatSettings["bot"]>>) => setDraft((current) => ({ ...current, settings: { ...current.settings, bot: { ...botCfg, ...patch } } }));
+  const modes = instagramOf(channel) ? meta.botModes.filter((m) => m.id === "desligado" || m.id === "sugere") : meta.botModes;
   const setHours = (patch: Partial<ChatSettings["horario"]>) => setDraft((current) => ({ ...current, settings: { ...current.settings, horario: { ...current.settings.horario, ...patch } } }));
 
   const save = useMutation({
@@ -162,10 +167,10 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
 
         {channel && <HiddenContacts channelId={channel.id} whatsapp={!instagram} />}
 
-        {instagram ? (
-          <p className="flex items-start gap-2 rounded-card border bg-card px-4 py-3 text-sm text-muted-foreground"><Icon name="info" className="mt-0.5 h-4 w-4 shrink-0" />No Instagram, a resposta automática da Nina, o horário e o limite do dia ficam em Bots → Conectores. Aqui você escolhe o nome, o setor e quem da equipe atende.</p>
-        ) : (<>
-        <FormSection title="Bot deste número" description="Recomendado começar com &quot;Sugere resposta&quot;: o bot escreve, e a equipe decide se envia.">
+        {instagram && (
+          <p className="flex items-start gap-2 rounded-card border bg-card px-4 py-3 text-sm text-muted-foreground"><Icon name="info" className="mt-0.5 h-4 w-4 shrink-0" />No Instagram, a resposta automática da Nina, o horário e o limite do dia ficam em Bots → Conectores. Aqui o bot só escreve rascunhos para a equipe enviar.</p>
+        )}
+        <FormSection title="Bot deste número" description={instagram ? "O bot escreve um rascunho de resposta a cada mensagem; a equipe envia, edita ou descarta." : "Recomendado começar com \"Sugere resposta\": o bot escreve, e a equipe decide se envia."}>
           <div className="sm:max-w-sm">
             <Label>Bot</Label>
             <div className="mt-1">
@@ -176,9 +181,8 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
           </div>
           {bot && (
             <div className="grid gap-2 sm:grid-cols-2">
-              {meta.botModes.map((mode) => {
+              {modes.map((mode) => {
                 const on = draft.botMode === mode.id;
-                const soon = mode.id === "triagem" || mode.id === "atende";
                 return (
                   <button key={mode.id} type="button" onClick={() => set("botMode", mode.id)}
                     className={cn("flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-left transition-all", on ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-foreground/20 hover:bg-muted/40")}>
@@ -186,7 +190,7 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
                       {mode.id === "desligado" ? <Icon name={MODE_ICON[mode.id]} className="h-4 w-4" /> : on ? <Icon name={MODE_ICON[mode.id]} className="h-4 w-4" /> : <BotAvatar look={bot.avatar} size={24} still />}
                     </span>
                     <span className="min-w-0">
-                      <span className="flex items-center gap-1.5 text-sm font-medium">{mode.name}{mode.id === "sugere" && <span className="rounded-full bg-primary/12 px-1.5 text-[10px] font-semibold text-primary">recomendado</span>}{soon && <span className="rounded-full bg-muted px-1.5 text-[10px] font-medium text-muted-foreground">em breve</span>}</span>
+                      <span className="flex items-center gap-1.5 text-sm font-medium">{mode.name}{mode.id === "sugere" && <span className="rounded-full bg-primary/12 px-1.5 text-[10px] font-semibold text-primary">recomendado</span>}</span>
                       <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">{mode.description}</span>
                     </span>
                   </button>
@@ -194,8 +198,24 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
               })}
             </div>
           )}
+          {bot && draft.botMode !== "desligado" && (
+            <>
+              <div>
+                <Label htmlFor="botRules">O que o bot pode responder neste número</Label>
+                <Textarea id="botRules" value={botCfg.instrucoes} maxLength={4000} onChange={(event) => setBot({ instrucoes: event.target.value })} className="mt-1 min-h-24"
+                  placeholder="Ex.: Pode explicar nossos serviços e cursos e pedir cidade e prazo da obra. Preço só o que está na tabela de cursos. Desconto, cobrança e reclamação: passe para a equipe." />
+                <p className="mt-1 text-xs text-muted-foreground">Vale para os rascunhos e para quando o bot atende. Ele também usa as instruções e as ferramentas dele, sempre com as permissões de quem conectou o número.</p>
+              </div>
+              {!instagram && (draft.botMode === "triagem" || draft.botMode === "atende") && (
+                <div className="sm:max-w-xs">
+                  <LimitField label="Mensagens do bot por conversa" hint="Em 24 h. Passou disso, ele passa para a equipe." value={botCfg.limitePorConversa} max={60} onChange={(v) => setBot({ limitePorConversa: Math.min(60, Math.max(1, Math.round(v))) })} />
+                </div>
+              )}
+            </>
+          )}
         </FormSection>
 
+        {!instagram && (<>
         <FormSection title="Horário de atendimento" description="Fora do horário, o cliente recebe a mensagem abaixo (uma vez por conversa).">
           <label className="flex items-center gap-3">
             <Switch checked={horario.enabled} onCheckedChange={(checked) => setHours({ enabled: checked })} />
@@ -221,6 +241,14 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
                 <Textarea id="outOfHours" value={horario.mensagemFora} maxLength={1000} onChange={(event) => setHours({ mensagemFora: event.target.value })} className="mt-1 min-h-20"
                   placeholder="Olá! Nosso atendimento é de segunda a sexta, das 8h às 18h. Assim que abrirmos, respondemos você." />
               </div>
+              {bot && (
+                <label className="flex items-start gap-3">
+                  <Switch checked={botCfg.foraDoHorario} onCheckedChange={(checked) => setBot({ foraDoHorario: checked })} className="mt-0.5" />
+                  <span className="text-sm">{bot.persona ?? bot.name} atende fora do horário
+                    <span className="block text-xs text-muted-foreground">No lugar da mensagem acima, o bot conversa e passa para a equipe o que precisar de uma pessoa. Só nas conversas sem dono.</span>
+                  </span>
+                </label>
+              )}
             </>
           )}
         </FormSection>

@@ -14,6 +14,7 @@ import DataTable, { DataColumn, EmptyState } from "@/components/general-componen
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { cn } from "@/lib/utils";
+import { EntityBadge } from "@/components/general-components/EntitySelect";
 import { FINANCIAL_ABILITY, formatMoney } from "../-shared/financial";
 import { PAYABLES_KEY } from "../-shared/payables";
 import { formatDate, paymentMethodLabel } from "../_receber/-components/options";
@@ -32,7 +33,7 @@ const COLUMNS: DataColumn<Recurrence>[] = [
     id: "description", header: "Descrição", className: "min-w-[240px]",
     cell: (item) => (
       <div className="min-w-0 max-w-[22rem]">
-        <p className="font-semibold truncate">{item.description}</p>
+        <p className="font-semibold truncate">{item.description}{item.entity && <EntityBadge entity={item.entity} className="ml-1.5" />}</p>
         <p className={`${muted} truncate`}>
           {[item.supplier?.name ?? item.customer?.name, item.chartAccount && `${item.chartAccount.code} ${item.chartAccount.name}`, item.costCenter?.name].filter(Boolean).join(" · ") || "Sem classificação"}
         </p>

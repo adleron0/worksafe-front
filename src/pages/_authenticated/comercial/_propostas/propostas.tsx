@@ -15,6 +15,7 @@ import ListCard from "@/components/general-components/ListCard";
 import ListFooter from "@/components/general-components/ListFooter";
 import DataTable, { EmptyState } from "@/components/general-components/DataTable";
 import Select from "@/components/general-components/Select";
+import { EntityBadge, EntityFilter } from "@/components/general-components/EntitySelect";
 import SummaryCards, { SummaryCard } from "@/components/general-components/SummaryCards";
 import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, dateBr, errorMessage, money } from "../-shared/commercial";
@@ -58,6 +59,8 @@ function ProposalsPage() {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<StatusFilter>("");
   const [kind, setKind] = useState("");
+  // CNPJ do grupo (só aparece com mais de um)
+  const [entityId, setEntityId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [limit, setLimit] = useState(20);
@@ -72,8 +75,8 @@ function ProposalsPage() {
 
   // no kanban as colunas já são as situações: vêm todas de uma vez, sem paginação
   const params = kanban
-    ? { page: 0, limit: KANBAN_LIMIT, ...(kind ? { kind } : {}), ...(search.trim() ? { search: search.trim() } : {}), ...(archived ? { inactive: "true" } : {}) }
-    : { page, limit, ...(status ? { status: status === "negociacao" ? NEGOTIATION.join(",") : status } : {}), ...(kind ? { kind } : {}), ...(search.trim() ? { search: search.trim() } : {}), ...(archived ? { inactive: "true" } : {}) };
+    ? { page: 0, limit: KANBAN_LIMIT, ...(kind ? { kind } : {}), ...(entityId ? { entityId } : {}), ...(search.trim() ? { search: search.trim() } : {}), ...(archived ? { inactive: "true" } : {}) }
+    : { page, limit, ...(status ? { status: status === "negociacao" ? NEGOTIATION.join(",") : status } : {}), ...(kind ? { kind } : {}), ...(entityId ? { entityId } : {}), ...(search.trim() ? { search: search.trim() } : {}), ...(archived ? { inactive: "true" } : {}) };
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: [PROPOSALS_KEY, params],
     queryFn: () => commercialApi.get<ListResponse>("proposals", params),
@@ -157,7 +160,7 @@ function ProposalsPage() {
   ];
   // clicar no cartão já marcado volta para todas as situações
   const pickStatus = (next: string) => { setStatus(next === status ? "" : (next as StatusFilter)); setPage(0); };
-  const hasFilters = !!(search.trim() || kind || archived);
+  const hasFilters = !!(search.trim() || kind || entityId || archived);
 
   return (
     <>
@@ -203,12 +206,13 @@ function ProposalsPage() {
             options={Object.entries(KIND_LABEL).map(([id, name]) => ({ id, name }))}
             onChange={(_, value) => { setKind(String(value ?? "")); setPage(0); }} />
         </div>
+        <EntityFilter className="w-full lg:w-56" value={entityId} onChange={(id) => { setEntityId(id); setPage(0); }} />
         <div className="flex items-center gap-2 shrink-0">
           <Checkbox id="showArchived" checked={archived} onCheckedChange={(checked) => { setArchived(checked === true); setPage(0); }} />
           <Label htmlFor="showArchived" className="cursor-pointer text-sm font-normal">Mostrar arquivadas</Label>
         </div>
         {hasFilters && (
-          <Button variant="ghost" size="sm" className="h-8 gap-1 w-fit lg:ml-auto" onClick={() => { setSearch(""); setKind(""); setArchived(false); setPage(0); }}>
+          <Button variant="ghost" size="sm" className="h-8 gap-1 w-fit lg:ml-auto" onClick={() => { setSearch(""); setKind(""); setEntityId(null); setArchived(false); setPage(0); }}>
             <Icon name="eraser" className="w-4 h-4" /> Limpar filtros
           </Button>
         )}
@@ -217,7 +221,7 @@ function ProposalsPage() {
       {kanban && !error && (
         <div className="p-2">
           <KanbanView key={boardKey} data={data?.rows ?? []} columns={COLUMNS} statusField="status" isLoading={isLoading} storageKey="worksafe.comercial.propostas.kanban.hidden" columnWidth={240}
-            emptyMessage={search || kind ? "Nenhuma proposta com esses filtros." : "Nenhuma proposta ainda. Crie a primeira em \"Nova proposta\"."}
+            emptyMessage={search || kind || entityId ? "Nenhuma proposta com esses filtros." : "Nenhuma proposta ainda. Crie a primeira em \"Nova proposta\"."}
             onStatusChange={() => {
               // a situação de uma proposta muda dentro dela (enviar congela o documento, aceitar gera contrato)
               toast({ title: "A situação muda dentro da proposta", description: "Abra a proposta para enviar, registrar o aceite, a recusa ou cancelar." });
@@ -232,7 +236,10 @@ function ProposalsPage() {
                   </button>
                   <ProposalRowActions row={row} handlers={handlers} onCard />
                 </div>
-                <KindBadge kind={row.kind} />
+                <div className="flex flex-wrap gap-1">
+                  <KindBadge kind={row.kind} />
+                  <EntityBadge id={row.entityId} />
+                </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Icon name="file-text" className="w-3 h-3 text-muted-foreground" />
@@ -271,7 +278,7 @@ function ProposalsPage() {
             onRowClick={(row) => open(row.id)}
             rowClassName={(row) => (row.inactiveAt ? "opacity-60" : undefined)}
             actions={(row) => <ProposalRowActions row={row} handlers={handlers} />}
-            empty={search || status || kind
+            empty={search || status || kind || entityId
               ? <EmptyState icon="search-x" title="Nenhuma proposta com esses filtros." />
               : <EmptyState title="Nenhuma proposta ainda." description={'Crie a primeira em "Nova proposta".'}
                   action={canCreate && <Button size="sm" onClick={() => navigate({ to: "/comercial/propostas/nova" })}><Icon name="plus" className="w-4 h-4" /> Nova proposta</Button>} />} />

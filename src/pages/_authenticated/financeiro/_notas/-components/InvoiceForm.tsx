@@ -1,3 +1,4 @@
+import { EntitySelect, useEntities } from "@/components/general-components/EntitySelect";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,6 +22,8 @@ import { FEDERAL_TAXES, FederalTax, FISCAL_KEYS, formatDoc, Invoice, InvoiceOrig
 type TakerMode = "cliente" | "avulso";
 interface AddressState { cep: string; street: string; number: string; complement: string; district: string; cityName: string; uf: string }
 interface State {
+  /** CNPJ do grupo que emite (nulo = o da origem ou o padrão) */
+  entityId: number | null;
   takerMode: TakerMode;
   customerId: string;
   editTaker: boolean;
@@ -90,6 +93,7 @@ function stateFrom(invoice: Invoice | null): State {
   const t = invoice?.taker;
   const custom = !!invoice && invoice.takerKind !== "cliente";
   return {
+    entityId: invoice?.entityId ?? null,
     takerMode: invoice ? (invoice.takerKind === "cliente" ? "cliente" : "avulso") : "cliente",
     customerId: invoice?.customerId ? String(invoice.customerId) : "",
     editTaker: false,
@@ -133,8 +137,12 @@ export default function InvoiceForm({ invoice, external = false, draft }: { invo
   const touchedDescription = useRef(!!invoice?.description || !!draft?.description);
   // de onde a nota nasceu: ao autorizar, o sistema fatura essa origem com o número da nota
   const origin: (InvoiceOrigin & { label?: string }) | null = draft ? { ...draft.origin, label: draft.originLabel } : invoice?.origin && !invoice.originBilledAt ? invoice.origin : null;
-  const { data: settings } = useFiscalSettings();
-  const { data: services } = useServiceCodes();
+  // CNPJ emissor: o escolhido, senão o que a prévia resolveu (origem ou padrão)
+  const { defaultFor, multi } = useEntities();
+  const [resolvedEntity, setResolvedEntity] = useState<number | null>(invoice?.entityId ?? null);
+  const emitterId = state.entityId ?? resolvedEntity ?? defaultFor()?.id ?? null;
+  const { data: settings } = useFiscalSettings(true, emitterId);
+  const { data: services } = useServiceCodes(false, emitterId);
   const { can } = useVerify();
   const canListCustomers = can("list_clientes");
   const { data: customers, isLoading: loadingCustomers } = useQuery<Response | undefined>({
@@ -143,10 +151,13 @@ export default function InvoiceForm({ invoice, external = false, draft }: { invo
     enabled: canListCustomers,
   });
 
-  // serviço padrão na nota nova
+  // serviço padrão na nota nova (o padrão do próprio CNPJ vale mais que o de "todos");
+  // trocou o CNPJ e o serviço escolhido não vale para ele: volta para o padrão
   useEffect(() => {
-    if (!invoice && !state.serviceCodeId && services?.length) {
-      const preferred = services.find((s) => s.isDefault) ?? services[0];
+    if (!services?.length) return;
+    const valid = services.some((s) => String(s.id) === state.serviceCodeId);
+    if ((!invoice && !state.serviceCodeId) || (state.serviceCodeId && !valid)) {
+      const preferred = services.find((s) => s.isDefault && s.entityId) ?? services.find((s) => s.isDefault) ?? services[0];
       setState((prev) => ({ ...prev, serviceCodeId: String(preferred.id) }));
     }
   }, [services, invoice, state.serviceCodeId]);
@@ -164,6 +175,7 @@ export default function InvoiceForm({ invoice, external = false, draft }: { invo
       address: state.address.street || state.address.cep ? { ...state.address, cep: state.address.cep.replace(/\D/g, "") } : null,
     } : undefined;
     return {
+      entityId: state.entityId ?? undefined,
       takerKind: state.takerMode,
       customerId: state.takerMode === "cliente" ? Number(state.customerId) || undefined : undefined,
       taker: takerOverrides,
@@ -197,6 +209,7 @@ export default function InvoiceForm({ invoice, external = false, draft }: { invo
     enabled: ready && !!debounced.serviceCodeId && debounced.grossValue > 0,
     placeholderData: (previous) => previous,
   });
+  useEffect(() => { if (preview?.emitter?.entityId) setResolvedEntity(preview.emitter.entityId); }, [preview?.emitter?.entityId]);
 
   // descrição sugerida pelo modelo do serviço até a pessoa mexer nela
   useEffect(() => {
@@ -247,6 +260,7 @@ export default function InvoiceForm({ invoice, external = false, draft }: { invo
     <>
       <section className="rounded-card border bg-card p-4 flex flex-col gap-2.5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Prévia da nota</p>
+        {multi && preview?.emitter && <SummaryRow label="Emitente">{preview.emitter.tradeName}</SummaryRow>}
         <SummaryRow label="Tomador">{preview?.taker.name || customer?.name || "—"}</SummaryRow>
         <SummaryRow label="Valor do serviço" strong>{money(calc?.gross ?? state.grossValue)}</SummaryRow>
         {!!calc?.discount && <SummaryRow label="Desconto">− {money(calc.discount)}</SummaryRow>}
@@ -318,6 +332,13 @@ export default function InvoiceForm({ invoice, external = false, draft }: { invo
             ? "Esta nota cobre o contrato e não gera cobrança agora. Ao faturar cada parcela ou boletim, escolha \"Usar nota já emitida\": a conta a receber sai com o número desta nota e o saldo dela diminui."
             : "Quando a nota for autorizada, o sistema fatura essa origem com o número da nota: conta a receber, caução, comissão e retenções. O cliente e o valor vêm da origem."}</p>
         </div>
+      )}
+
+      {multi && (
+        <FormSection title="Emitente" description="O CNPJ do grupo que emite a nota: o certificado, a série e o regime são os dele. Sem escolha, vale o da origem (contrato, turma) ou o padrão.">
+          <EntitySelect label={null} value={state.entityId} clearable onChange={(id) => set("entityId", id)}
+            disabled={!!invoice?.dpsNumber && invoice.status !== "rascunho" && invoice.status !== "rejeitada"} />
+        </FormSection>
       )}
 
       <FormSection title="Tomador" description="Quem recebe a nota. Os dados vêm do cadastro; dá para corrigir só nesta nota.">

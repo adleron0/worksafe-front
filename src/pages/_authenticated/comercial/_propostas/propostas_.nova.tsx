@@ -5,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/general-components/Icon";
+import { EntitySelect } from "@/components/general-components/EntitySelect";
 import { COMMERCIAL_ABILITY, commercialApi, errorMessage } from "../-shared/commercial";
 import { CustomerOption, KIND_LABEL, PROPOSALS_KEY, PROPOSAL_KEY, Proposal, ProposalKind, formatCnpj } from "../-shared/proposals";
 import CustomerStep from "./-CustomerStep";
@@ -31,6 +32,8 @@ function NewProposalPage() {
   const { tipo, cliente } = Route.useSearch();
   const [kind, setKind] = useState<ProposalKind>(tipo ?? "servico");
   const [customer, setCustomer] = useState<CustomerOption | null>(null);
+  // CNPJ do grupo; nulo = o do tipo da proposta
+  const [entityId, setEntityId] = useState<number | null>(null);
   const preset = useQuery({
     queryKey: ["commercialCustomers", "id", cliente], enabled: !!cliente, staleTime: Infinity,
     queryFn: () => commercialApi.get<CustomerOption[]>("proposals/customers", { id: cliente }),
@@ -42,7 +45,7 @@ function NewProposalPage() {
       // a API manda o contato comercial padrão primeiro
       const contact = customer?.contacts?.[0];
       return commercialApi.post<Proposal>("proposals", {
-        kind, customerId: customer!.id, title: "Nova proposta",
+        kind, customerId: customer!.id, entityId, title: "Nova proposta",
         contactName: contact?.name, contactEmail: contact?.email ?? customer?.email, contactPhone: contact?.phone ?? customer?.phone,
       });
     },
@@ -73,7 +76,9 @@ function NewProposalPage() {
               <h2 className="text-lg font-semibold">{STEPS[0].heading}</h2>
               <p className="text-sm text-muted-foreground">{STEPS[0].description}</p>
             </div>
-            <CustomerStep kind={kind} onKind={setKind} selected={customer} onSelect={setCustomer} />
+            <CustomerStep kind={kind} onKind={(next) => { setKind(next); setEntityId(null); }} selected={customer} onSelect={setCustomer} />
+            <EntitySelect kind={kind} clearable value={entityId} onChange={setEntityId} className="sm:max-w-md"
+              hint="Sem escolha, vale o CNPJ do tipo da proposta." />
           </section>
 
           <div className="grid grid-cols-2 sm:flex sm:justify-between gap-2">

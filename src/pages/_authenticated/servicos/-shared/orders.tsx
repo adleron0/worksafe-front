@@ -17,7 +17,7 @@ import { PROPOSAL_KEY } from "../../comercial/-shared/proposals";
 export type OrderStatus = "a_liberar" | "a_mobilizar" | "agendada" | "em_execucao" | "concluida" | "encerrada" | "cancelada";
 
 export interface OrderRow {
-  id: number; number: string; status: OrderStatus; title: string; customer: { id: number; name: string };
+  id: number; number: string; entityId?: number | null; status: OrderStatus; title: string; customer: { id: number; name: string };
   proposal: { id: number; number: string } | null; customerOrderNumber: string | null;
   plannedStart: string | null; plannedEnd: string | null; startedAt: string | null; finishedAt: string | null;
   responsible: string | null; location: string | null; checklist: { done: number; total: number }; late: boolean;
@@ -34,7 +34,9 @@ export interface ScopeItem { type: string; description: string; unit: string | n
 export interface ScopeSection { title: string; kind: string; items: ScopeItem[] }
 export interface OrderEvent { id: number; type: string; from: OrderStatus | null; to: OrderStatus | null; note: string | null; at: string; user: string | null }
 export interface Order {
-  id: number; number: string; status: OrderStatus; statusLabel: string; nextStatuses: OrderStatus[]; title: string; description: string | null; statusNote: string | null; late: boolean;
+  id: number; number: string;
+  /** CNPJ do grupo (herdado da proposta) */
+  entityId?: number | null; status: OrderStatus; statusLabel: string; nextStatuses: OrderStatus[]; title: string; description: string | null; statusNote: string | null; late: boolean;
   customer: { id: number; name: string; corporateName: string; cnpj: string; phone: string | null; email: string | null } | null;
   proposal: { id: number; number: string } | null; contract: { id: number; number: string } | null;
   customerOrder: { number: string | null; date: string | null; fileUrl: string | null; fileName: string | null } | null;

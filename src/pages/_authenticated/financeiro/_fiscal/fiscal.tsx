@@ -18,7 +18,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { errorMessage } from "../../comercial/-shared/commercial";
-import { dateBr, FISCAL_KEYS, FiscalSettings, formatDoc, ServiceCode, useFiscalSettings, useServiceCodes } from "../_notas/-shared/fiscal";
+import StatusChips from "@/components/general-components/StatusChips";
+import { useEntities } from "@/components/general-components/EntitySelect";
+import { dateBr, FISCAL_KEYS, FiscalSettings, formatDoc, ServiceCode, useFiscalOverview, useFiscalSettings, useServiceCodes } from "../_notas/-shared/fiscal";
 
 export const Route = createFileRoute("/_authenticated/financeiro/_fiscal/fiscal")({
   component: FiscalSettingsPage,
@@ -49,20 +51,32 @@ function FiscalSettingsPage() {
   const { can } = useVerify();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: settings, isLoading, error } = useFiscalSettings(can("view_nfse"));
+  // cada CNPJ do grupo tem a própria configuração (certificado, série, regime)
+  const { entities, multi, byId } = useEntities();
+  const { data: overview } = useFiscalOverview(can("view_nfse") && multi);
+  const [entityId, setEntityId] = useState<number | null>(null);
+  const { data: settings, isLoading, error } = useFiscalSettings(can("view_nfse"), entityId);
   const { data: services, isLoading: loadingServices } = useServiceCodes(true);
   const [form, setForm] = useState<FormState | null>(null);
+  const params = settings ? { entityId: settings.entityId } : {};
+  // trocou de CNPJ: o formulário recomeça com a configuração dele
+  useEffect(() => { setForm(null); setFile(null); setPassword(""); }, [entityId]);
   const [file, setFile] = useState<File | null>(null);
   const [password, setPassword] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   useEffect(() => { if (settings && !form) setForm(formOf(settings)); }, [settings, form]);
   const set = (key: keyof FormState, value: string | boolean) => setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
-  const onSaved = (data: FiscalSettings) => { queryClient.setQueryData([FISCAL_KEYS.settings], data); setForm(formOf(data)); };
+  const onSaved = (data: FiscalSettings) => {
+    queryClient.setQueryData([FISCAL_KEYS.settings, entityId], data);
+    queryClient.invalidateQueries({ queryKey: [FISCAL_KEYS.settings] });
+    setForm(formOf(data));
+  };
 
   const save = useMutation({
     mutationFn: async () => {
       if (!form) return null;
       return (await api.put<FiscalSettings>("fiscal/settings", {
+        entityId: settings?.entityId,
         ...form,
         simplesNacional: Number(form.simplesNacional), simplesRegime: form.simplesNacional === "3" ? Number(form.simplesRegime) : null, specialRegime: Number(form.specialRegime),
         simplesTotalRate: form.simplesTotalRate === "" ? null : Number(form.simplesTotalRate.replace(",", ".")),
@@ -78,18 +92,18 @@ function FiscalSettingsPage() {
       const data = new FormData();
       data.append("file", file!);
       data.append("password", password);
-      return (await api.post<FiscalSettings>("fiscal/settings/certificate", data, { headers: { "Content-Type": "multipart/form-data" } })).data;
+      return (await api.post<FiscalSettings>("fiscal/settings/certificate", data, { params, headers: { "Content-Type": "multipart/form-data" } })).data;
     },
     onSuccess: (data) => { onSaved(data); setFile(null); setPassword(""); if (fileRef.current) fileRef.current.value = ""; toast({ title: "Certificado guardado", description: data.certificateSubject ?? undefined, variant: "success" }); },
     onError: (err) => toast({ title: "Certificado não aceito", description: errorMessage(err), variant: "destructive" }),
   });
   const remove = useMutation({
-    mutationFn: async () => (await api.delete<FiscalSettings>("fiscal/settings/certificate")).data,
+    mutationFn: async () => (await api.delete<FiscalSettings>("fiscal/settings/certificate", { params })).data,
     onSuccess: (data) => { onSaved(data); toast({ title: "Certificado removido", variant: "success" }); },
     onError: (err) => toast({ title: "Não foi possível remover", description: errorMessage(err), variant: "destructive" }),
   });
   const test = useMutation({
-    mutationFn: async () => (await api.post<{ ok: boolean; message: string }>("fiscal/settings/test")).data,
+    mutationFn: async () => (await api.post<{ ok: boolean; message: string }>("fiscal/settings/test", null, { params })).data,
     onSuccess: (data) => toast({ title: data.ok ? "Conexão funcionando" : "Falha na conexão", description: data.message, variant: data.ok ? "success" : "destructive" }),
     onError: (err) => toast({ title: "Não foi possível testar", description: errorMessage(err), variant: "destructive" }),
   });
@@ -98,6 +112,7 @@ function FiscalSettingsPage() {
   const canConfig = can("config_fiscal");
   const serviceColumns: DataColumn<ServiceCode>[] = [
     { id: "name", header: "Serviço", className: "min-w-[200px]", cell: (s) => <span className="font-medium">{s.name}{s.isDefault && <TagBadge className="ml-2">padrão</TagBadge>}</span> },
+    ...(multi ? [{ id: "entity", header: "CNPJ", cell: (s: ServiceCode) => <span className="text-xs whitespace-nowrap">{s.entityId ? byId.get(s.entityId)?.tradeName ?? "—" : "todos"}</span> }] : []),
     { id: "code", header: "Código nacional", className: "min-w-[260px]", cell: (s) => <div className="max-w-[26rem]"><p className="font-mono text-xs">{s.nationalCode}</p><p className="text-xs text-muted-foreground truncate">{s.nationalLabel}</p></div> },
     { id: "nbs", header: "NBS", cell: (s) => <span className="font-mono text-xs">{s.nbsCode ?? "—"}</span> },
     { id: "ibs", header: "IBS/CBS", cell: (s) => (s.ibsCbsClassTrib ? <span className="font-mono text-xs">{s.ibsCbsIndOp} · {s.ibsCbsClassTrib}</span> : <span className="text-xs text-muted-foreground">—</span>) },
@@ -108,6 +123,15 @@ function FiscalSettingsPage() {
   return (
     <>
       <PageHeader title="Configuração fiscal" description="Emissão de NFS-e pelo padrão nacional (Emissor Público Nacional): certificado, dados de emissão e serviços." />
+      {multi && (
+        <div className="mb-3 flex flex-col gap-1">
+          <p className="text-xs text-muted-foreground">Cada CNPJ do grupo tem o próprio certificado, série e regime. Escolha qual configurar:</p>
+          <StatusChips options={entities.map((e) => {
+            const o = overview?.find((x) => x.entityId === e.id);
+            return { value: String(e.id), label: e.tradeName, color: o ? (o.ready ? "#16a34a" : "#f59e0b") : e.color ?? undefined };
+          })} value={String(entityId ?? settings?.entityId ?? "")} onChange={(v) => setEntityId(Number(v) || null)} />
+        </div>
+      )}
       {isLoading && <FormPageSkeleton />}
       {error && <p className="text-destructive">{errorMessage(error)}</p>}
       {settings && form && (
@@ -119,6 +143,7 @@ function FiscalSettingsPage() {
               : <ul className="list-disc pl-4 text-xs text-amber-800 dark:text-amber-200 flex flex-col gap-1">{settings.pending.map((p) => <li key={p}>{p}</li>)}</ul>}
             <div className="border-t pt-2 flex flex-col gap-2">
               <SummaryRow label="Empresa">{settings.emitter.name}</SummaryRow>
+              {multi && <SummaryRow label="No grupo">{settings.emitter.tradeName}</SummaryRow>}
               <SummaryRow label="CNPJ">{formatDoc(settings.emitter.cnpj)}</SummaryRow>
               <SummaryRow label="Município">{settings.emitter.cityName ? `${settings.emitter.cityName}/${settings.emitter.uf}` : "—"}</SummaryRow>
               <SummaryRow label="Código IBGE">{settings.emitter.ibge ?? "não encontrado"}</SummaryRow>
@@ -129,7 +154,7 @@ function FiscalSettingsPage() {
           {canConfig && settings.hasCertificate && <Button type="button" variant="outline" disabled={test.isPending} onClick={() => test.mutate()}><Icon name="plug-zap" className="w-4 h-4" /> Testar conexão</Button>}
         </>}>
 
-          <FormSection title="Certificado digital (e-CNPJ A1)" description="O arquivo .pfx da empresa. Ele fica cifrado no servidor e nunca volta para a tela; serve para assinar e para entrar no ambiente nacional.">
+          <FormSection title={multi ? `Certificado digital de ${settings.emitter.tradeName} (e-CNPJ A1)` : "Certificado digital (e-CNPJ A1)"} description="O arquivo .pfx do CNPJ. Ele fica cifrado no servidor e nunca volta para a tela; serve para assinar e para entrar no ambiente nacional.">
             {settings.hasCertificate ? (
               <div className="rounded-lg border bg-muted/40 px-3 py-2 text-sm flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
                 <div className="min-w-0">

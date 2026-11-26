@@ -18,6 +18,7 @@ import MonthRangePicker from "@/components/general-components/MonthRangePicker";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ApiError } from "@/general-interfaces/api.interface";
+import { EntityBadge, EntityFilter, useEntities } from "@/components/general-components/EntitySelect";
 import { CHART_KEY, FINANCIAL_ABILITY } from "../-shared/financial";
 import { PAYABLES_KEY, PAYABLES_SUMMARY_KEY, Payable, PayableList } from "../-shared/payables";
 import {
@@ -50,6 +51,7 @@ function Payables() {
 
   const params = toParams({ ...filters, view, page: String(page), limit: String(limit) });
   const navigate = useNavigate();
+  const { multi } = useEntities();
   const [confirm, setConfirm] = useState<{ item: Payable; action: RowAction } | null>(null);
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery<PayableList | undefined, ApiError>({
     queryKey: [PAYABLES_KEY, "ledger", params],
@@ -107,7 +109,11 @@ function Payables() {
     { value: "pagas", label: "Pagas", color: "#16a34a" },
     { value: "excluidas", label: "Excluídas", color: "hsl(var(--border))" },
   ].map((chip) => ({ ...chip, count: countOf(chip.value) }));
-  const filtered = filterCount > 0 || !!filters.q;
+  const filtered = filterCount > 0 || !!filters.q || !!filters.entityId;
+  const baseColumns = payableColumns(today, { order: filters.order, onSort: (order) => set({ order }) });
+  const columns = multi
+    ? [baseColumns[0], { id: "entity", header: "Empresa", cell: (item: Payable) => <EntityBadge entity={item.entity ?? null} id={item.entityId} /> }, ...baseColumns.slice(1)]
+    : baseColumns;
   const CONFIRMS: Record<RowAction, { title: string; description: string; done: string }> = {
     unsettle: { title: "Estornar a baixa?", description: "A conta volta a ficar em aberto e o valor volta para o saldo da conta bancária.", done: "Baixa estornada!" },
     inactive: { title: "Excluir esta conta a pagar?", description: "Ela sai da lista e dos totais. Fica em Excluídas e pode ser restaurada.", done: "Conta excluída!" },
@@ -150,6 +156,8 @@ function Payables() {
           <MonthRangePicker className="sm:w-auto sm:min-w-44" align="end" placeholder="Competência"
             from={filters.accrualFrom || undefined} to={filters.accrualTo || undefined}
             onChange={(accrualFrom, accrualTo) => { selection.clear(); set({ accrualFrom, accrualTo }); }} />
+          <EntityFilter value={filters.entityId ? Number(filters.entityId) : null}
+            onChange={(id) => { selection.clear(); set({ entityId: id ? String(id) : "" }); }} />
         </div>
 
         <ListToolbar search={{ value: filters.q ?? "", onChange: (q) => set({ q }), placeholder: "Buscar descrição, fornecedor, CNPJ, nota, código ou valor" }}
@@ -186,7 +194,7 @@ function Payables() {
 
         <SelectionSummary total={data?.total} noun={["conta", "contas"]} selected={selection.selected.size} selectedTotal={selectedTotal} onClear={selection.clear} />
 
-        <DataTable rows={data?.rows} columns={payableColumns(today, { order: filters.order, onSort: (order) => set({ order }) })} getRowId={(item) => item.id} ariaLabel="Contas a pagar"
+        <DataTable rows={data?.rows} columns={columns} getRowId={(item) => item.id} ariaLabel="Contas a pagar"
           loading={isLoading || isFetching} error={isError ? error?.response?.data?.message || "erro desconhecido" : null} onRetry={() => refetch()}
           order={filters.order} onSort={(order) => set({ order })}
           selection={{ isSelected: (item) => selection.selected.has(item.id), toggle: selection.toggle, pageState: selection.pageState, togglePage: selection.togglePage }}

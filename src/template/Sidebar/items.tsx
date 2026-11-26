@@ -330,5 +330,6 @@ export const footerGroup: SidebarGroup = {
     },
     { title: "Integrações", icon: "unplug", path: "/integracoes", ability: "financeiro" },
     { title: "Empresa", icon: "settings", path: "/empresa" },
+    { title: "Empresas do grupo", icon: "building-2", path: "/empresa/cnpjs", permissions: ["config_empresas_grupo"] },
   ],
 };

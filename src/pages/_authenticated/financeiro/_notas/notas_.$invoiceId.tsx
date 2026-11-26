@@ -1,3 +1,4 @@
+import { EntityBadge } from "@/components/general-components/EntitySelect";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/services/api";
@@ -34,6 +35,7 @@ function InvoicePage() {
           <span className="flex items-center gap-1.5">
             <StatusBadge tone={STATUS_INFO[data.status].tone} pulse={STATUS_INFO[data.status].pulse}>{STATUS_INFO[data.status].label}</StatusBadge>
             {data.environment === "restrita" && data.provider === "sefin" && <TagBadge>ambiente de testes</TagBadge>}
+            <EntityBadge entity={data.entity ?? null} id={data.entityId} />
           </span>
         )}
         description={data ? data.taker.name : undefined} />

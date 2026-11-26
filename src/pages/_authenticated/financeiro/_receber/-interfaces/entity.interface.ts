@@ -1,5 +1,8 @@
 export interface IFinancialRecord {
   id: number;
+  /** CNPJ do grupo que recebe */
+  entityId?: number | null;
+  entity?: { id: number; tradeName: string; color?: string | null } | null;
   accrualDate: string;
   companyId: number;
   company?: {

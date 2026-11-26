@@ -1,4 +1,5 @@
 import Icon from "@/components/general-components/Icon";
+import { EntityBadge } from "@/components/general-components/EntitySelect";
 import StatusBadge from "@/components/general-components/StatusBadge";
 import type { DataColumn } from "@/components/general-components/DataTable";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,7 +23,10 @@ export const coursesColumns: DataColumn<IEntity>[] = [
             )}
           </Avatar>
           <div className="min-w-0">
-            <p className="font-medium truncate">{item.name}</p>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <p className="font-medium truncate">{item.name}</p>
+              <EntityBadge id={item.entityId} className="shrink-0" />
+            </div>
             <More lines={flags.length ? [`Destaques: ${flags.join(", ")}`] : []}>
               <p className={`${muted} truncate`}>
                 {item.hoursDuration} horas

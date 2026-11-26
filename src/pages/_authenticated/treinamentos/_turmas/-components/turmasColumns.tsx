@@ -1,5 +1,6 @@
 import StatusBadge from "@/components/general-components/StatusBadge";
 import TagBadge from "@/components/general-components/TagBadge";
+import { EntityBadge } from "@/components/general-components/EntitySelect";
 import type { DataColumn } from "@/components/general-components/DataTable";
 import { ONLINE_COURSES_ENABLED } from "@/lib/features";
 import { More, NameCell, formatDay, muted } from "../../-shared/lista";
@@ -23,8 +24,11 @@ export const turmasColumns: DataColumn<IEntity>[] = [
         item.periodClass === "LIMITED" && item.landingPagesDates,
         ONLINE_COURSES_ENABLED && item.hasOnlineCourse && "Curso online",
       ]}>
-        <NameCell name={item.name} image={item.imageUrl} square className="max-w-[22rem]"
-          sub={<>#{item.id} · {item.hoursDuration} horas · <span className="text-primary-soft-foreground">{item.openClass ? "Turma aberta" : "InCompany"}</span></>} />
+        <div className="flex items-center gap-2 min-w-0">
+          <NameCell name={item.name} image={item.imageUrl} square className="max-w-[22rem]"
+            sub={<>#{item.id} · {item.hoursDuration} horas · <span className="text-primary-soft-foreground">{item.openClass ? "Turma aberta" : "InCompany"}</span></>} />
+          <EntityBadge id={item.entityId} className="shrink-0" />
+        </div>
       </More>
     ),
   },

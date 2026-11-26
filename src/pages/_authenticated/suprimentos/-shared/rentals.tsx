@@ -20,7 +20,7 @@ export const rentalsApi = {
 };
 
 export interface RentalRow {
-  id: number; number: string; status: RentalStatus; statusLabel: string; stage: RentalStage; stageLabel: string; customer: string; customerId: number;
+  id: number; number: string; entityId?: number | null; status: RentalStatus; statusLabel: string; stage: RentalStage; stageLabel: string; customer: string; customerId: number;
   contract: { id: number; number: string } | null;
   startDate: string; expectedEnd: string | null; returnedAt: string | null; period: RentPeriod; billing: "periodo" | "unico"; late: boolean; fromContract: boolean;
   summary: string; ratePerPeriod: number; billed: number; toBill: boolean; pendingValue: number; deposit: number | null;
@@ -35,7 +35,7 @@ export interface RentalLine {
 }
 export interface RentalCharge { id: number; kind: string; kindLabel?: string; periodStart: string; periodEnd: string; value: number; description: string | null; financialRecordId: number | null; measurementId?: number | null; recordStatus: string | null }
 export interface Rental {
-  id: number; number: string; status: RentalStatus; statusLabel: string; nextStatuses: RentalStatus[]; stage: RentalStage; stageLabel: string;
+  id: number; number: string; entityId?: number | null; status: RentalStatus; statusLabel: string; nextStatuses: RentalStatus[]; stage: RentalStage; stageLabel: string;
   customer: { id: number; name: string } | null; contract: { id: number; number: string; title?: string; billingMode?: string; status?: string } | null; serviceOrder: { id: number; number: string } | null; proposalId: number | null;
   startDate: string; expectedEnd: string | null; deliveredAt: string | null; returnedAt: string | null;
   billing: "periodo" | "unico"; period: RentPeriod; periodLabel: string; billedUntil: string | null;

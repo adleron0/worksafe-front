@@ -11,6 +11,8 @@ export interface IEntity {
   image: File | null;
   companyId?: number;
   customerId?: number | null;
+  /** CNPJ do grupo da turma (vazio = o do curso) */
+  entityId?: number | null;
   courseId?: number;
   price?: number | 0;
   discountPrice?: number;

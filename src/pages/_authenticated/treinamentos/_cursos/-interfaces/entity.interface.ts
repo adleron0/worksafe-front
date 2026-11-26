@@ -10,6 +10,8 @@ export interface IEntity {
   yearOfValidation?: number;
   flags?: string;
   companyId?: number;
+  /** CNPJ do grupo que vende o curso (vazio = o de treinamentos) */
+  entityId?: number | null;
   imageUrl: string | null;
   image?: File | null;
   icon?: string;

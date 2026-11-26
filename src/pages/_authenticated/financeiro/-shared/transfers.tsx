@@ -12,10 +12,14 @@ import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import CalendarPicker from "@/components/general-components/Calendar";
 import { ApiError } from "@/general-interfaces/api.interface";
+import TagBadge from "@/components/general-components/TagBadge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FINANCIAL_ABILITY, formatMoney, useBankAccounts } from "./financial";
 import { formatDate, todayInput } from "../_receber/-components/options";
 
-interface Transfer { id: number; value: number | string; date: string; description: string | null; statementRef: string | null; fromBankAccount: { id: number; name: string }; toBankAccount: { id: number; name: string } }
+interface Transfer { id: number; value: number | string; date: string; description: string | null; statementRef: string | null; fromBankAccount: { id: number; name: string }; toBankAccount: { id: number; name: string };
+  /** as duas contas são de CNPJs diferentes do grupo (empréstimo entre empresas) */
+  betweenEntities?: boolean }
 const KEY = "financialTransfers";
 
 /** Transferências entre contas (caixa → banco, banco → banco): mexem no saldo das duas, sem ser receita nem despesa. */
@@ -45,6 +49,16 @@ export default function TransfersSection() {
           <div key={t.id} className="flex flex-wrap items-center gap-3 px-4 py-2 border-b last:border-b-0 text-sm">
             <span className="w-24 text-muted-foreground">{formatDate(t.date)}</span>
             <span className="flex-1 min-w-48">{t.fromBankAccount.name} <Icon name="arrow-right" className="w-3 h-3 inline" /> {t.toBankAccount.name}
+              {t.betweenEntities && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="ml-1.5 inline-flex cursor-help" tabIndex={0}><TagBadge icon="building-2" color="#d97706">entre empresas</TagBadge></span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    As contas são de CNPJs diferentes do grupo. Na contabilidade isso é um empréstimo entre as empresas (mútuo): uma fica devendo para a outra. Não entra como receita nem despesa.
+                  </TooltipContent>
+                </Tooltip>
+              )}
               {t.description && <span className="block text-xs text-muted-foreground">{t.description}</span>}
             </span>
             <span className="tabular-nums font-semibold">{formatMoney(t.value)}</span>

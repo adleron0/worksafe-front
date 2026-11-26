@@ -1,3 +1,4 @@
+import { EntityBadge, EntityFilter, useEntities } from "@/components/general-components/EntitySelect";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,7 +46,9 @@ function ReceivedPage() {
   const [target, setTarget] = useState<ReceivedInvoice | null>(null);
   const [form, setForm] = useState({ dueDate: in15(), value: 0, description: "" });
 
-  const params = { status: view === "todas" ? undefined : view, q: q || undefined };
+  const [entityId, setEntityId] = useState<number | null>(null);
+  const { multi } = useEntities();
+  const params = { entityId: entityId ?? undefined, status: view === "todas" ? undefined : view, q: q || undefined };
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: [KEY, params],
     queryFn: async () => (await api.get<ReceivedList>("fiscal/received", { params })).data,
@@ -83,6 +86,8 @@ function ReceivedPage() {
   const retained = (row: ReceivedInvoice) => FEDERAL_TAXES.filter((t) => (row.retentions?.[t.id] ?? 0) > 0);
 
   const columns: DataColumn<ReceivedInvoice>[] = [
+    // o CNPJ do grupo que tomou o serviço (a conta a pagar sai nele)
+    ...(multi ? [{ id: "entity", header: "Tomador", cell: (r: ReceivedInvoice) => <EntityBadge entity={r.entity ?? null} id={r.entityId} /> }] : []),
     {
       id: "number", header: "Nota",
       cell: (r) => <div className="whitespace-nowrap"><p className="font-semibold">Nº {r.number ?? "—"}</p><p className="text-xs text-muted-foreground">{dateBr(r.issuedAt)}</p></div>,
@@ -117,7 +122,10 @@ function ReceivedPage() {
         description="Notas fiscais de serviço que fornecedores emitiram para a empresa, buscadas no ambiente nacional." />
 
       <ListCard>
-        <StatusChips options={chips} value={view} onChange={setView} />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <StatusChips options={chips} value={view} onChange={setView} className="flex-1" />
+          <EntityFilter value={entityId} onChange={setEntityId} />
+        </div>
         <ListToolbar search={{ value: q, onChange: setQ, placeholder: "Buscar fornecedor, CNPJ ou número" }}>
           <ActionsMenu groups={[{ label: "Notas recebidas", items: [
             { id: "export", label: "Pacote do contador", icon: "folder-archive", onSelect: () => setExportOpen(true) },

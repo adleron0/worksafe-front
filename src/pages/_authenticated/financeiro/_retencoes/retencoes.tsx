@@ -18,6 +18,7 @@ import { FINANCIAL_ABILITY } from "../-shared/financial";
 import { errorMessage, money } from "../../comercial/-shared/commercial";
 import { RETENTION_TAXES } from "../../comercial/-shared/retentions";
 import RetentionDialog from "../-shared/RetentionDialog";
+import { EntityFilter } from "@/components/general-components/EntitySelect";
 
 export const Route = createFileRoute("/_authenticated/financeiro/_retencoes/retencoes")({
   component: RetentionsPage,
@@ -61,15 +62,17 @@ function RetentionsPage() {
   const [to, setTo] = useState(currentMonth());
   const [from, setFrom] = useState(shift(currentMonth(), -5));
   const [editing, setEditing] = useState<{ id: number; label: string } | null>(null);
+  // "Todas" = consolidado do grupo
+  const [entityId, setEntityId] = useState<number | null>(null);
   const monthOptions = useMemo(() => Array.from({ length: 36 }, (_, i) => shift(currentMonth(), -i)).map((m) => ({ id: m, name: monthLabel(m) })), []);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: [KEY, from, to],
-    queryFn: async () => (await api.get<Report>("financial/retentions", { params: { from, to } })).data,
+    queryKey: [KEY, from, to, entityId],
+    queryFn: async () => (await api.get<Report>("financial/retentions", { params: { from, to, ...(entityId ? { entityId } : {}) } })).data,
     placeholderData: (previous) => previous,
   });
   const { mutate: declare } = useMutation({
-    mutationFn: async ({ month, undo }: { month: string; undo?: boolean }) => (await api.post<{ updated: number }>("financial/retentions/declare", { month, undo })).data,
+    mutationFn: async ({ month, undo }: { month: string; undo?: boolean }) => (await api.post<{ updated: number }>("financial/retentions/declare", { month, undo, ...(entityId ? { entityId } : {}) })).data,
     onSuccess: (result, { undo }) => {
       queryClient.invalidateQueries({ queryKey: [KEY] });
       toast({ title: undo ? "Marcação desfeita" : "Retenções marcadas como informadas na guia", description: `${result.updated} retenção(ões).`, variant: "success" });
@@ -101,7 +104,7 @@ function RetentionsPage() {
           </ConfirmDialog>}
         </span>
       ) : canUpdate ? (
-        <ConfirmDialog title={`Retenções de ${monthLabel(m.month)} informadas na guia?`} description="Confirme que a guia do mês (DAS/ISS) foi apurada com estes valores como retidos, ou seja, sem pagar de novo o que o cliente recolheu."
+        <ConfirmDialog title={`Retenções de ${monthLabel(m.month)} informadas na guia?`} description={`Confirme que a guia do mês (DAS/ISS) foi apurada com estes valores como retidos, ou seja, sem pagar de novo o que o cliente recolheu.${entityId ? " A marcação vale só para as retenções deste CNPJ." : ""}`}
           onConfirm={() => declare({ month: m.month })}>
           <Button type="button" variant="outline" size="sm" className="h-7 text-xs">Marcar como informado</Button>
         </ConfirmDialog>
@@ -129,6 +132,7 @@ function RetentionsPage() {
         description={<span className="block max-w-3xl">O que os clientes descontaram das notas e recolheram eles mesmos. Na guia do mês (DAS, ISS), esse valor entra como <b>retido</b>: não pode ser pago de novo.</span>}
         actions={(
           <div className="flex flex-wrap items-end gap-2">
+            <EntityFilter value={entityId} onChange={setEntityId} />
             <div className="w-32"><Label className="text-xs">De</Label><Select name="from" state={from} options={monthOptions} onChange={(_, value) => setFrom(String(value))} /></div>
             <div className="w-32"><Label className="text-xs">Até</Label><Select name="to" state={to} options={monthOptions} onChange={(_, value) => setTo(String(value))} /></div>
           </div>

@@ -18,6 +18,8 @@ export interface EmployeeRow {
   id: number; name: string; registration: string | null; phone: string | null; contractType: string;
   roles: EmployeeRole[]; primaryRole: string | null; status: EmployeeStatus; statusLabel: string; statusUntil: string | null;
   admissionDate: string | null; terminationDate: string | null; hasUser: boolean; inactive: boolean;
+  /** CNPJ do grupo que registra a pessoa (empregador) */
+  entityId?: number | null;
   /** Sinal dos documentos (só vem para quem pode ver documentos). */
   documents?: "em_dia" | "a_vencer" | "vencido" | "sem_validade" | "faltando" | "vazia" | null;
 }

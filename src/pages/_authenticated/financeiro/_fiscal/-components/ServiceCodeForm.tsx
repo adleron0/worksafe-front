@@ -1,3 +1,4 @@
+import { EntitySelect } from "@/components/general-components/EntitySelect";
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -64,6 +65,7 @@ export default function ServiceCodeForm({ service }: { service: ServiceCode | nu
     ibsCbsIndOp: service?.ibsCbsIndOp ?? "",
     ibsCbsClassTrib: service?.ibsCbsClassTrib ?? "",
     active: !service?.inactiveAt,
+    entityId: service?.entityId ?? null as number | null,
   });
   const set = (key: keyof typeof state, value: unknown) => setState((prev) => ({ ...prev, [key]: value }));
 
@@ -72,7 +74,7 @@ export default function ServiceCodeForm({ service }: { service: ServiceCode | nu
       const body = {
         name: state.name, nationalCode: state.nationalCode, nbsCode: state.nbsCode || null, municipalCode: state.municipalCode || null,
         issRate: state.issRate === "" ? null : Number(state.issRate.replace(",", ".")), issTaxation: Number(state.issTaxation), description: state.description, isDefault: state.isDefault,
-        ibsCbsIndOp: state.ibsCbsIndOp || null, ibsCbsClassTrib: state.ibsCbsClassTrib || null,
+        ibsCbsIndOp: state.ibsCbsIndOp || null, ibsCbsClassTrib: state.ibsCbsClassTrib || null, entityId: state.entityId,
         ...(service ? { active: state.active } : {}),
       };
       return service ? (await api.put<ServiceCode>(`fiscal/service-codes/${service.id}`, body)).data : (await api.post<ServiceCode>("fiscal/service-codes", body)).data;
@@ -102,6 +104,8 @@ export default function ServiceCodeForm({ service }: { service: ServiceCode | nu
         <div><Label>Nome <span>*</span></Label><Input name="name" value={state.name} placeholder="ex.: Treinamento NR-35" onValueChange={(_, v) => set("name", String(v))} className="mt-1" /></div>
         <label className="flex items-center gap-2 text-sm"><Checkbox checked={state.isDefault} onCheckedChange={(v) => set("isDefault", v === true)} /> Serviço padrão (vem escolhido na nota nova)</label>
         {service && <label className="flex items-center gap-2 text-sm"><Checkbox checked={state.active} onCheckedChange={(v) => set("active", v === true)} /> Ativo</label>}
+        <EntitySelect label="Vale para o CNPJ" value={state.entityId} clearable emptyLabel="Todos os CNPJs do grupo" onChange={(id) => set("entityId", id)}
+          hint="Serviço de um CNPJ só aparece nas notas dele. O padrão vale por CNPJ." />
       </FormSection>
 
       <FormSection title="Código de tributação nacional" description="Da lista nacional de serviços (LC 116). Confirme com o contador qual código cada serviço usa.">

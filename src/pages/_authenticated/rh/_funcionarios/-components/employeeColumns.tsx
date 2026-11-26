@@ -1,4 +1,5 @@
 import type { DataColumn } from "@/components/general-components/DataTable";
+import { EntityBadge } from "@/components/general-components/EntitySelect";
 import { formatPHONE } from "@/utils/phone-mask";
 import { dateBr } from "../../../comercial/-shared/commercial";
 import { EmployeeRow, EmployeeStatusBadge } from "../../-shared/employees";
@@ -12,7 +13,10 @@ export const employeeColumns: DataColumn<EmployeeRow>[] = [
     id: "name", header: "Funcionário", className: "min-w-[220px]",
     cell: (row) => (
       <div className="min-w-0 max-w-[20rem]">
-        <p className="font-medium truncate">{row.name}</p>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <p className="font-medium truncate">{row.name}</p>
+          <EntityBadge id={row.entityId} className="shrink-0" />
+        </div>
         <p className={`${muted} truncate`}>{[row.registration && `matrícula ${row.registration}`, row.hasUser && "tem acesso ao sistema"].filter(Boolean).join(" · ") || "—"}</p>
       </div>
     ),

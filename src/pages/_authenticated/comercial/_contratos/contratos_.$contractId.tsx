@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import CalendarPicker from "@/components/general-components/Calendar";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import Icon from "@/components/general-components/Icon";
+import { EntityBadge } from "@/components/general-components/EntitySelect";
 import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, dateBr, errorMessage, money } from "../-shared/commercial";
 import {
@@ -108,6 +109,7 @@ function ContractPage() {
           <div className="flex flex-wrap items-center gap-2 mt-1">
             <h1 className="text-xl font-bold tabular-nums">{contract.number}</h1>
             <ContractStatusBadge status={contract.status} />
+            <EntityBadge id={contract.entityId} />
           </div>
           <p className="text-sm text-muted-foreground truncate">{contract.customer.name} · {contract.title} · {KIND_LABEL[contract.kind]}</p>
         </div>

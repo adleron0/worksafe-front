@@ -1,5 +1,6 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import UiStatusBadge from "@/components/general-components/StatusBadge";
+import { EntityBadge, EntitySelect } from "@/components/general-components/EntitySelect";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
@@ -228,7 +229,8 @@ function ProposalEditorPage() {
       .filter((section) => allowed.includes(section.kind))
       .map((section) => ({ ...section, items: section.items.filter((item) => allowed.includes(item.type)) }))
       .filter((section) => section.items.some((item) => !isBlankItem(item)));
-    return { ...d, kind, sections: kept.length ? kept : presetsOf(kind) };
+    // o CNPJ volta a ser o automático do novo tipo
+    return { ...d, kind, entityId: null, sections: kept.length ? kept : presetsOf(kind) };
   });
   const droppedBy = (kind: ProposalDraft["kind"]) => draft.sections.reduce((sum, section) => sum + section.items.filter((item) => !isBlankItem(item) && (!KIND_ITEMS[kind].includes(section.kind) || !KIND_ITEMS[kind].includes(item.type))).length, 0);
   const changeKind = (kind: ProposalDraft["kind"]) => {
@@ -292,6 +294,7 @@ function ProposalEditorPage() {
             <h1 className="text-xl font-bold tabular-nums">{proposal.number}</h1>
             <StatusBadge status={proposal.status} expired={proposal.expired} />
             {proposal.inactiveAt && <UiStatusBadge tone="neutral" pulse={false}>Arquivada</UiStatusBadge>}
+            <EntityBadge id={proposal.draft.entityId} />
             {!readOnly && <span className="text-xs text-muted-foreground">{saving ? "Salvando..." : calculating ? "Calculando..." : dirty ? "Alterações não salvas" : "Tudo salvo"}</span>}
           </div>
           <p className="text-sm text-muted-foreground truncate">{[customer.name, titled ? draft.title : null, KIND_LABEL[draft.kind]].filter(Boolean).join(" · ")}</p>
@@ -417,6 +420,11 @@ function ProposalEditorPage() {
           {tab === "cliente" && (
             <CustomerStep kind={draft.kind} onKind={changeKind} selected={customer} readOnly={readOnly}
               onSelect={(picked) => { setCustomer(picked); setDraftSafe((d) => ({ ...d, customerId: picked.id })); }} />
+          )}
+          {tab === "cliente" && (
+            <EntitySelect kind={draft.kind} clearable value={draft.entityId ?? null} disabled={readOnly || proposal.status !== "rascunho"} className="sm:max-w-md"
+              hint="Sem escolha, vale o CNPJ do tipo da proposta."
+              onChange={(id) => setDraftSafe((d) => ({ ...d, entityId: id }))} />
           )}
           {tab === "proposta" && <ProposalInfoStep draft={draft} setDraft={setDraftSafe} options={options} readOnly={readOnly} canSeeCosts={proposal.canSeeCosts} customer={customer} />}
           {tab === "itens" && rentalKind && <RentalPeriodPanel draft={draft} setDraft={setDraftSafe} readOnly={readOnly} availability={availability} />}

@@ -12,6 +12,7 @@ import ListCard from "@/components/general-components/ListCard";
 import ListToolbar from "@/components/general-components/ListToolbar";
 import StatusChips, { StatusChipOption } from "@/components/general-components/StatusChips";
 import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
+import { EntityBadge, EntityFilter } from "@/components/general-components/EntitySelect";
 import ViewToggle, { useStoredView } from "@/components/general-components/ViewToggle";
 import { dateBr, errorMessage, money } from "../../comercial/-shared/commercial";
 import { PERIOD_LABEL, RENTALS_ABILITY, RENTAL_KEYS, RENTAL_STAGES, RENTAL_STAGE_LABEL, RentalList, RentalRow, RentalStage, RentalStageBadge, rentalsApi } from "../-shared/rentals";
@@ -33,10 +34,12 @@ function RentalsPage() {
   const [view, changeView] = useStoredView("worksafe.suprimentos.locacoes.view", "kanban");
   const [stage, setStage] = useState("");
   const [search, setSearch] = useState("");
+  // CNPJ do grupo (só aparece com mais de um)
+  const [entityId, setEntityId] = useState<number | null>(null);
   const [boardKey, setBoardKey] = useState(0);
   const kanban = view === "kanban";
 
-  const params = { ...(!kanban && stage ? (stage === "cancelada" ? { status: "cancelada" } : { stage }) : {}), ...(search.trim() ? { search: search.trim() } : {}) };
+  const params = { ...(!kanban && stage ? (stage === "cancelada" ? { status: "cancelada" } : { stage }) : {}), ...(entityId ? { entityId } : {}), ...(search.trim() ? { search: search.trim() } : {}) };
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: [RENTAL_KEYS.list, params],
     queryFn: () => rentalsApi.get<RentalList>("", params),
@@ -60,7 +63,7 @@ function RentalsPage() {
     });
     open(rental.id);
   };
-  const empty = search || stage ? "Nenhuma ordem de locação com esses filtros." : "Nenhuma ordem de locação ainda. Ela nasce sozinha quando uma proposta de locação é aceita.";
+  const empty = search || stage || entityId ? "Nenhuma ordem de locação com esses filtros." : "Nenhuma ordem de locação ainda. Ela nasce sozinha quando uma proposta de locação é aceita.";
   const when = (row: RentalRow) => `${dateBr(row.startDate)}${row.expectedEnd ? ` a ${dateBr(row.expectedEnd)}` : " · até devolver"}`;
   const billBadge = (row: RentalRow) => (row.toBill
     ? <StatusBadge tone="warning">{row.fromContract ? `A faturar ${money(row.pendingValue)}` : "Faturar"}</StatusBadge>
@@ -77,6 +80,7 @@ function RentalsPage() {
         <div>
           <p className="font-semibold tabular-nums">{row.number}</p>
           <p className="text-xs text-muted-foreground tabular-nums">{row.contract ? row.contract.number : "sem venda"}</p>
+          <EntityBadge id={row.entityId} className="mt-0.5" />
         </div>
       ),
     },
@@ -108,6 +112,7 @@ function RentalsPage() {
         {!kanban && <StatusChips options={stageOptions} value={stage || "todas"} onChange={(value) => setStage(value === "todas" ? "" : value)} ariaLabel="Etapa" />}
 
         <ListToolbar search={{ value: search, onChange: setSearch, placeholder: "Buscar por número ou cliente..." }}>
+          <EntityFilter value={entityId} onChange={setEntityId} />
           {toBill > 0 && <p className="hidden md:block text-sm text-muted-foreground">{toBill} ordem(ns) com período para faturar</p>}
           <ViewToggle view={view} onChange={changeView} />
           <Button variant="outline" onClick={() => navigate({ to: "/suprimentos/locacoes/disponibilidade" })}><Icon name="chart-gantt" className="w-4 h-4" /> <span className="hidden sm:inline">Disponibilidade</span></Button>
@@ -141,8 +146,8 @@ function RentalsPage() {
           <DataTable rows={data?.rows} columns={columns} getRowId={(row) => row.id} ariaLabel="Ordens de locação"
             loading={isLoading || isFetching} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
             onRowClick={(row) => open(row.id)}
-            empty={search || stage
-              ? <EmptyState icon="search-x" title={empty} action={<Button variant="outline" size="sm" onClick={() => { setSearch(""); setStage(""); }}>Limpar filtros</Button>} />
+            empty={search || stage || entityId
+              ? <EmptyState icon="search-x" title={empty} action={<Button variant="outline" size="sm" onClick={() => { setSearch(""); setStage(""); setEntityId(null); }}>Limpar filtros</Button>} />
               : <EmptyState title="Nenhuma ordem de locação ainda." description="Ela nasce sozinha quando uma proposta de locação é aceita." />} />
         )}
         {(summary.cancelada ?? 0) > 0 && (kanban || !stage) && (

@@ -8,6 +8,7 @@ import { ApiError } from "@/general-interfaces/api.interface";
 import { Skeleton } from "@/components/ui/skeleton";
 import asaasLogo from "./images/asaas.png";
 import Icon from "@/components/general-components/Icon";
+import { useEntities } from "@/components/general-components/EntitySelect";
 
 // Lista de gateways disponíveis
 const AVAILABLE_GATEWAYS = [
@@ -37,6 +38,7 @@ interface GatewaysGridProps {
 
 const GatewaysGrid: React.FC<GatewaysGridProps> = ({ showHeader = true }) => {
   const { can } = useVerify();
+  const { multi, entities } = useEntities();
 
   const entity = {
     name: "Gateway",
@@ -58,12 +60,31 @@ const GatewaysGrid: React.FC<GatewaysGridProps> = ({ showHeader = true }) => {
     queryFn: async () => {
       return get(entity.model, "", [
         { key: "order-createdAt", value: "desc" },
+        { key: "show", value: "entity" },
       ]);
     },
   });
 
-  const getGatewayData = (gatewayId: string): ICompanyGateway | undefined => {
-    return data?.rows.find((g) => g.gateway === gatewayId);
+  /**
+   * Cada CNPJ do grupo pode ter a própria conta no gateway: um cartão por conta
+   * conectada e, com mais de um CNPJ, mais um cartão para conectar os que faltam.
+   */
+  const cardsFor = (gateway: (typeof AVAILABLE_GATEWAYS)[number]) => {
+    const configs = (data?.rows ?? []).filter((g) => g.gateway === gateway.id);
+    const used = new Set(configs.map((c) => c.entityId));
+    const free = entities.filter((e) => !used.has(e.id));
+    // conta sem CNPJ vale para o grupo todo: não dá para conectar outra
+    const canAddAnother = multi && free.length > 0 && !configs.some((c) => !c.entityId);
+    const cards = configs.map((config) => (
+      <GatewayCard key={config.id} gatewayInfo={gateway} gatewayData={config} entity={entity} />
+    ));
+    if (!configs.length || canAddAnother) {
+      cards.push(
+        <GatewayCard key={`${gateway.id}-novo`} gatewayInfo={gateway} entity={entity}
+          newEntityId={configs.length ? free[0]?.id : undefined} additional={configs.length > 0} />,
+      );
+    }
+    return cards;
   };
 
   if (!can(`view_${entity.ability}`)) return null;
@@ -119,14 +140,7 @@ const GatewaysGrid: React.FC<GatewaysGridProps> = ({ showHeader = true }) => {
             <CardSkeleton />
           </>
         ) : (
-          AVAILABLE_GATEWAYS.map((gateway) => (
-            <GatewayCard
-              key={gateway.id}
-              gatewayInfo={gateway}
-              gatewayData={getGatewayData(gateway.id)}
-              entity={entity}
-            />
-          ))
+          AVAILABLE_GATEWAYS.flatMap(cardsFor)
         )}
       </div>
     </div>

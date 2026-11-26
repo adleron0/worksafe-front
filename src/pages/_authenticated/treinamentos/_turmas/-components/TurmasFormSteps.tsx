@@ -38,6 +38,7 @@ const Schema = z
       .min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
     imageUrl: z.string().nullable(),
     customerId: z.number().optional().nullable(),
+    entityId: z.number().optional().nullable(),
     courseId: z.number().min(1, { message: "Escolha o curso" }),
     certificateId: z.number().optional().nullable(),
     highlightTheme: z.enum(["ouro", "prata", "holografico"]).optional().nullable(),

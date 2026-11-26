@@ -16,6 +16,7 @@ import DataTable, { EmptyState } from "@/components/general-components/DataTable
 import MonthRangePicker from "@/components/general-components/MonthRangePicker";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/general-interfaces/api.interface";
+import { EntityBadge, EntityFilter, useEntities } from "@/components/general-components/EntitySelect";
 import { RECEIVABLE_ENTITY } from "./-components/entity";
 import ReceivableRowActions from "./-components/ReceivableRowActions";
 import { receivableColumns } from "./-components/receivableColumns";
@@ -53,6 +54,7 @@ function Receivables() {
 
   const params = toParams({ ...filters, view, page: String(page), limit: String(limit) });
   const navigate = useNavigate();
+  const { multi } = useEntities();
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery<Response | undefined, ApiError>({
     queryKey: [LIST_KEY, "ledger", params],
     queryFn: () => get("financial", "receivables", params),
@@ -102,7 +104,11 @@ function Receivables() {
   const openEdit = (item: IFinancialRecord) => navigate({ to: "/financeiro/receber/$recordId", params: { recordId: String(item.id) } });
   const openNew = () => navigate({ to: "/financeiro/receber/nova" });
   const canEditRow = (item: IFinancialRecord) => canUpdate && !item.inactiveAt;
-  const filtered = filterCount > 0 || !!filters.q;
+  const filtered = filterCount > 0 || !!filters.q || !!filters.entityId;
+  const baseColumns = receivableColumns(data?.today, { order: filters.order, onSort: (order) => set({ order }) });
+  const columns = multi
+    ? [baseColumns[0], { id: "entity", header: "Empresa", cell: (item: IFinancialRecord) => <EntityBadge entity={item.entity ?? null} id={item.entityId} /> }, ...baseColumns.slice(1)]
+    : baseColumns;
 
   return (
     <>
@@ -116,6 +122,8 @@ function Receivables() {
           <MonthRangePicker className="sm:w-auto sm:min-w-44" align="end" placeholder="Competência"
             from={filters.accrualFrom || undefined} to={filters.accrualTo || undefined}
             onChange={(accrualFrom, accrualTo) => { selection.clear(); set({ accrualFrom, accrualTo }); }} />
+          <EntityFilter value={filters.entityId ? Number(filters.entityId) : null}
+            onChange={(id) => { selection.clear(); set({ entityId: id ? String(id) : "" }); }} />
         </div>
 
         <ListToolbar search={{ value: filters.q ?? "", onChange: (q) => set({ q }), placeholder: "Buscar cliente, aluno, CNPJ/CPF, NF, código ou valor" }}
@@ -152,7 +160,7 @@ function Receivables() {
 
         <SelectionSummary total={data?.total} noun={["conta", "contas"]} selected={selection.selected.size} selectedTotal={total(selectedRows)} onClear={selection.clear} />
 
-        <DataTable rows={data?.rows} columns={receivableColumns(data?.today, { order: filters.order, onSort: (order) => set({ order }) })} getRowId={(item) => item.id} ariaLabel="Contas a receber"
+        <DataTable rows={data?.rows} columns={columns} getRowId={(item) => item.id} ariaLabel="Contas a receber"
           loading={isLoading || isFetching} error={isError ? error?.response?.data?.message || "erro desconhecido" : null} onRetry={() => refetch()}
           order={filters.order} onSort={(order) => set({ order })}
           selection={{ isSelected: (item) => selection.selected.has(item.id), toggle: selection.toggle, pageState: selection.pageState, togglePage: selection.togglePage }}

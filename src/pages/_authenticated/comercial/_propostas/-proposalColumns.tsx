@@ -1,5 +1,6 @@
 import type { DataColumn } from "@/components/general-components/DataTable";
 import UiStatusBadge from "@/components/general-components/StatusBadge";
+import { EntityBadge } from "@/components/general-components/EntitySelect";
 import { dateBr, money } from "../-shared/commercial";
 import { FollowUpChip } from "../-shared/activities";
 import { KindBadge, ProposalRow, StatusBadge } from "../-shared/proposals";
@@ -18,6 +19,7 @@ export const proposalColumns: DataColumn<ProposalRow>[] = [
       <div className="flex flex-col items-start gap-0.5">
         <span className="font-semibold tabular-nums">{row.number}</span>
         <KindBadge kind={row.kind} />
+        <EntityBadge id={row.entityId} />
       </div>
     ),
   },

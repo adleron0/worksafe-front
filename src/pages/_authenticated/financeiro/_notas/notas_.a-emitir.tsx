@@ -1,3 +1,4 @@
+import { EntityBadge, useEntities } from "@/components/general-components/EntitySelect";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import useVerify from "@/hooks/use-verify";
@@ -24,6 +25,7 @@ function PendingPage() {
   const navigate = useNavigate();
   const { data, isLoading, error, refetch } = usePendingTraining(can("view_nfse"));
   const [selected, setSelected] = useState<number[]>([]);
+  const { multi } = useEntities();
   const rows = data ?? [];
   const chosen = rows.filter((r) => selected.includes(r.subscriptionId));
   // regra da nota: uma pessoa física, ou todas da mesma empresa
@@ -31,6 +33,8 @@ function PendingPage() {
     if (!chosen.length) return "Marque as inscrições da nota";
     if (chosen.some((r) => r.invoice)) return "Uma das marcadas já tem nota em andamento";
     if (chosen.length > 1) {
+      // cada CNPJ do grupo emite a sua nota
+      if (new Set(chosen.map((r) => r.entityId ?? 0)).size > 1) return "As marcadas são de turmas de CNPJs diferentes: uma nota por CNPJ";
       const companies = new Set(chosen.map((r) => r.customer?.id ?? 0));
       if (companies.size > 1 || companies.has(0)) return "Várias inscrições numa nota só quando são da mesma empresa";
     }
@@ -45,6 +49,7 @@ function PendingPage() {
       cell: (r) => <div className="min-w-0"><p className="font-medium truncate">{r.name}</p><p className="text-xs text-muted-foreground">{formatDoc(r.cpf)}</p></div>,
     },
     { id: "class", header: "Turma", className: "min-w-[200px]", cell: (r) => <p className="text-xs truncate max-w-[18rem]">{r.courseName}{r.className ? ` · ${r.className}` : ""}</p> },
+    ...(multi ? [{ id: "entity", header: "Emitente", cell: (r: PendingTraining) => <EntityBadge id={r.entityId} /> }] : []),
     { id: "customer", header: "Empresa", cell: (r) => <span className="text-xs">{r.customer?.name ?? <span className="text-muted-foreground">pessoa física</span>}</span> },
     { id: "paid", header: "Pago em", cell: (r) => <span className="whitespace-nowrap text-muted-foreground">{dateBr(r.paidAt)}</span> },
     { id: "value", header: "Valor", align: "right", cell: (r) => <span className="tabular-nums">{money(r.value)}</span> },

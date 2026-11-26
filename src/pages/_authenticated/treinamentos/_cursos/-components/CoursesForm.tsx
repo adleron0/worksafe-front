@@ -13,6 +13,7 @@ import SitePageFields, { SitePageValues } from "@/components/general-components/
 import IconPicker from "@/components/general-components/IconPicker";
 import ColorPickerInput from "@/components/general-components/ColorPickerInput";
 import { Label } from "@/components/ui/label";
+import { EntitySelect } from "@/components/general-components/EntitySelect";
 import { Button } from "@/components/ui/button";
 import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-components/FormPage";
 import {
@@ -66,6 +67,7 @@ const Form = ({ formData, close, entity }: FormProps) => {
     content: z.string().optional(),
     seoTitle: z.string().max(70, { message: "Título no Google com no máximo 70 caracteres" }).optional(),
     seoDescription: z.string().max(170, { message: "Descrição no Google com no máximo 170 caracteres" }).optional(),
+    entityId: z.number().nullable().optional(),
     imageUrl: z.string().nullable(), // Schema atualizado para validar image como File ou null
     image: z.instanceof(File).nullable().or(z.literal(null)).refine(
       (value) => value === null || value instanceof File,
@@ -95,6 +97,7 @@ const Form = ({ formData, close, entity }: FormProps) => {
     content: formData?.content || "",
     seoTitle: formData?.seoTitle || "",
     seoDescription: formData?.seoDescription || "",
+    entityId: formData?.entityId ?? null,
     imageUrl: formData?.imageUrl || "",
     image: formData?.image || null,
   });
@@ -295,6 +298,9 @@ const Form = ({ formData, close, entity }: FormProps) => {
             />
             {errorHint("name")}
           </div>
+
+          <EntitySelect kind="treinamento" clearable label="CNPJ que vende este curso" hint="As turmas do curso seguem este CNPJ."
+            value={dataForm.entityId} onChange={(id) => setDataForm((prev) => ({ ...prev, entityId: id }))} />
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">

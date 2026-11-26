@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Icon from "@/components/general-components/Icon";
+import { EntityBadge } from "@/components/general-components/EntitySelect";
 import { cn } from "@/lib/utils";
 import { RecordFilesPanel } from "@/pages/_authenticated/arquivos/-shared/record-files";
 import DecisionDialog, { DecisionExtra } from "../_propostas/-DecisionDialog";
@@ -110,6 +111,7 @@ function ProposalPanel({ proposalId, createdBy }: { proposalId: number; createdB
           <SheetTitle className="text-xl tabular-nums">{proposal.number}</SheetTitle>
           <StatusBadge status={status} expired={proposal.expired} />
           <KindBadge kind={proposal.draft.kind} />
+          <EntityBadge id={proposal.draft.entityId} />
           <span className="ml-auto text-lg font-semibold tabular-nums">{money(proposal.calc.totals.total)}</span>
         </div>
         <SheetDescription className="text-sm">
@@ -335,6 +337,7 @@ function SaleTab({ contractId }: { contractId: number }) {
       <div className="flex flex-wrap items-center gap-2">
         <Link to="/comercial/contratos/$contractId" params={{ contractId: String(contract.id) }} className="font-semibold tabular-nums hover:underline">{contract.number}</Link>
         <ContractStatusBadge status={contract.status} />
+        <EntityBadge id={contract.entityId} />
         <span className="text-muted-foreground">fechada em {dateBr(contract.acceptedAt)}</span>
         <span className="ml-auto font-semibold tabular-nums">{money(contract.value)}</span>
       </div>

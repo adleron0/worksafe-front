@@ -11,6 +11,7 @@ import Icon from "@/components/general-components/Icon";
 import Dialog from "@/components/general-components/Dialog";
 import ConfirmDialog from "@/components/general-components/ConfirmDialog";
 import AsaasForm from "./gatewaysForms/AsaasForm";
+import { EntityBadge } from "@/components/general-components/EntitySelect";
 import { ICompanyGateway } from "../-interfaces/entity.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
 
@@ -26,12 +27,18 @@ interface GatewayCardProps {
   gatewayInfo: GatewayInfo;
   gatewayData?: ICompanyGateway;
   entity: any;
+  /** CNPJ sugerido ao conectar uma conta nova */
+  newEntityId?: number;
+  /** cartão para conectar a conta de outro CNPJ do grupo */
+  additional?: boolean;
 }
 
 const GatewayCard: React.FC<GatewayCardProps> = ({
   gatewayInfo,
   gatewayData,
   entity,
+  newEntityId,
+  additional = false,
 }) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
@@ -133,6 +140,7 @@ const GatewayCard: React.FC<GatewayCardProps> = ({
           <AsaasForm
             formData={formData}
             entity={entity}
+            defaultEntityId={newEntityId}
             onClose={() => setOpenFormDialog(false)}
           />
         );
@@ -194,9 +202,14 @@ const GatewayCard: React.FC<GatewayCardProps> = ({
           {/* Informações do Gateway */}
           <div className="space-y-3 flex-1 flex flex-col">
             <div>
-              <h3 className="font-semibold text-lg mb-2">{gatewayInfo.name}</h3>
+              <h3 className="font-semibold text-lg mb-2 flex flex-wrap items-center gap-2">
+                {gatewayInfo.name}
+                {gatewayData && <EntityBadge entity={gatewayData.entity ?? null} id={gatewayData.entityId} />}
+              </h3>
               <p className="text-sm text-muted-foreground line-clamp-3">
-                {gatewayInfo.description}
+                {additional
+                  ? `Conecte a conta ${gatewayInfo.name} de outra empresa do grupo. Cada CNPJ pode ter a própria conta.`
+                  : gatewayInfo.description}
               </p>
             </div>
 

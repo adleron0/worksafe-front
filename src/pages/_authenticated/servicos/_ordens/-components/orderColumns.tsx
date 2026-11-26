@@ -1,4 +1,5 @@
 import Icon from "@/components/general-components/Icon";
+import { EntityBadge } from "@/components/general-components/EntitySelect";
 import type { DataColumn } from "@/components/general-components/DataTable";
 import { OrderRow, OrderStageBadge, periodText } from "../../-shared/orders";
 
@@ -18,6 +19,7 @@ export const orderColumns: DataColumn<OrderRow>[] = [
       <div className="min-w-0">
         <p className="font-semibold tabular-nums">{row.number}</p>
         <p className={`${muted} whitespace-nowrap`}><CustomerOrder row={row} /></p>
+        <EntityBadge id={row.entityId} className="mt-0.5" />
       </div>
     ),
   },

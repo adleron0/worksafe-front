@@ -11,6 +11,7 @@ import ListToolbar from "@/components/general-components/ListToolbar";
 import ListFooter from "@/components/general-components/ListFooter";
 import StatusChips from "@/components/general-components/StatusChips";
 import DataTable, { EmptyState } from "@/components/general-components/DataTable";
+import { EntityFilter } from "@/components/general-components/EntitySelect";
 import ViewToggle, { useStoredView } from "@/components/general-components/ViewToggle";
 import { errorMessage } from "../../comercial/-shared/commercial";
 import {
@@ -35,6 +36,8 @@ function OrdersPage() {
   const [view, changeView] = useStoredView("worksafe.servicos.os.view");
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
+  // CNPJ do grupo (só aparece com mais de um)
+  const [entityId, setEntityId] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   const [moving, setMoving] = useState<{ order: OrderRow; target: OrderStatus } | null>(null);
   // refaz o quadro quando um arrasto não vira passagem (ou enquanto o formulário da passagem não é confirmado)
@@ -42,8 +45,8 @@ function OrdersPage() {
   const kanban = view === "kanban";
 
   const params = kanban
-    ? { page: 0, limit: KANBAN_LIMIT, ...(search.trim() ? { search: search.trim() } : {}) }
-    : { page, limit: LIMIT, ...(status === "sem_rdo" ? { noReportToday: 1 } : status ? { status } : {}), ...(search.trim() ? { search: search.trim() } : {}) };
+    ? { page: 0, limit: KANBAN_LIMIT, ...(entityId ? { entityId } : {}), ...(search.trim() ? { search: search.trim() } : {}) }
+    : { page, limit: LIMIT, ...(status === "sem_rdo" ? { noReportToday: 1 } : status ? { status } : {}), ...(entityId ? { entityId } : {}), ...(search.trim() ? { search: search.trim() } : {}) };
   const { data, isLoading, error } = useQuery({
     queryKey: [ORDERS_KEY, params],
     queryFn: () => ordersApi.get<OrderList>("", params),
@@ -74,7 +77,7 @@ function OrdersPage() {
 
   const move = (row: OrderRow, target: OrderStatus) => setMoving({ order: row, target });
   const rowMenu = (row: OrderRow, onCard = false) => <OrderRowActions row={row} canUpdate={canUpdate} onOpen={open} onMove={move} onCard={onCard} />;
-  const empty = status === "sem_rdo" ? "Todas as obras em execução já têm RDO hoje." : search || status ? "Nenhuma ordem de serviço com esses filtros." : "Nenhuma ordem de serviço ainda. Ela nasce sozinha quando uma proposta de serviço é aceita.";
+  const empty = status === "sem_rdo" ? "Todas as obras em execução já têm RDO hoje." : search || status || entityId ? "Nenhuma ordem de serviço com esses filtros." : "Nenhuma ordem de serviço ainda. Ela nasce sozinha quando uma proposta de serviço é aceita.";
 
   return (
     <>
@@ -91,7 +94,9 @@ function OrdersPage() {
               ...((summary.em_execucao ?? 0) > 0 ? [{ value: "sem_rdo", label: "Sem RDO hoje" }] : []),
             ]} />
         )}
-        <ListToolbar search={{ value: search, onChange: (text) => { setSearch(text); setPage(0); }, placeholder: "Buscar por número, título ou cliente..." }} />
+        <ListToolbar search={{ value: search, onChange: (text) => { setSearch(text); setPage(0); }, placeholder: "Buscar por número, título ou cliente..." }}>
+          <EntityFilter value={entityId} onChange={(id) => { setEntityId(id); setPage(0); }} />
+        </ListToolbar>
 
         {kanban && error && <p className="text-sm text-destructive font-medium">Erro: {errorMessage(error)}</p>}
         {kanban && !error && (
@@ -133,7 +138,7 @@ function OrdersPage() {
             <DataTable rows={data?.rows} columns={orderColumns} getRowId={(row) => row.id} ariaLabel="Ordens de serviço" minWidth={880}
               loading={isLoading} error={error ? errorMessage(error) : null}
               onRowClick={(row) => open(row.id)} actions={(row) => rowMenu(row)}
-              empty={<EmptyState icon={search || status ? "search-x" : "inbox"} title={empty} />} />
+              empty={<EmptyState icon={search || status || entityId ? "search-x" : "inbox"} title={empty} />} />
             <ListFooter total={data?.total ?? 0} page={page} limit={LIMIT} limits={[LIMIT]} onPageChange={setPage} />
           </>
         )}

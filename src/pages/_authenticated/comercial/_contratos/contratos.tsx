@@ -8,6 +8,7 @@ import ListToolbar from "@/components/general-components/ListToolbar";
 import ListFooter from "@/components/general-components/ListFooter";
 import StatusChips from "@/components/general-components/StatusChips";
 import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
+import { EntityBadge, EntityFilter } from "@/components/general-components/EntitySelect";
 import { cn } from "@/lib/utils";
 import { COMMERCIAL_ABILITY, commercialApi, dateBr, errorMessage, money } from "../-shared/commercial";
 import { CONTRACTS_KEY, ContractRow, ContractStatus, ContractStatusBadge } from "../-shared/contracts";
@@ -31,6 +32,7 @@ const columns: DataColumn<ContractRow>[] = [
       <div>
         <p className="font-semibold tabular-nums">{row.number}</p>
         <p className="text-xs text-muted-foreground whitespace-nowrap">{KIND_LABEL[row.kind]} · {dateBr(row.acceptedAt)}</p>
+        <EntityBadge id={row.entityId} className="mt-0.5" />
       </div>
     ),
   },
@@ -58,9 +60,10 @@ function ContractsPage() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<"" | ContractStatus>("");
   const [search, setSearch] = useState("");
+  const [entityId, setEntityId] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   const [limit, setLimit] = useState(20);
-  const params = { page, limit, ...(status ? { status } : {}), ...(search.trim() ? { search: search.trim() } : {}) };
+  const params = { page, limit, ...(status ? { status } : {}), ...(entityId ? { entityId } : {}), ...(search.trim() ? { search: search.trim() } : {}) };
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: [CONTRACTS_KEY, params],
     queryFn: () => commercialApi.get<ListResponse>("contracts", params),
@@ -79,12 +82,13 @@ function ContractsPage() {
         <StatusChips<Filter> value={status || "todos"} onChange={(value) => { setStatus(value === "todos" ? "" : value); setPage(0); }}
           options={FILTERS.map((filter) => ({ value: filter.value, label: filter.label, count: filter.value === "todos" ? all : summary[filter.value]?.count ?? 0 }))} />
         <ListToolbar search={{ value: search, onChange: (text) => { setSearch(text); setPage(0); }, placeholder: "Buscar por número, título ou cliente..." }}>
+          <EntityFilter value={entityId} onChange={(id) => { setEntityId(id); setPage(0); }} />
           {summary.vigente && <p className="text-sm text-muted-foreground">Vigentes: <b className="text-foreground tabular-nums">{money(summary.vigente.total)}</b></p>}
         </ListToolbar>
         <DataTable rows={data?.rows} columns={columns} getRowId={(row) => row.id} ariaLabel="Contratos" minWidth={960}
           loading={isLoading || isFetching} error={error ? errorMessage(error) : null} onRetry={() => refetch()}
           onRowClick={(row) => open(row.id)}
-          empty={search || status
+          empty={search || status || entityId
             ? <EmptyState icon="search-x" title="Nenhum contrato com esses filtros." />
             : <EmptyState title="Nenhum contrato ainda." description="Um contrato nasce quando uma proposta é aceita." />} />
         <ListFooter total={data?.total ?? 0} page={page} limit={limit} limits={LIMITS}

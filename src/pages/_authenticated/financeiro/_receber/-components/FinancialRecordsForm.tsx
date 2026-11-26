@@ -16,6 +16,7 @@ import Icon from "@/components/general-components/Icon";
 import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-components/FormPage";
 import AccountSelect from "../../-shared/AccountSelect";
 import { useChartAccounts, useCostCenters } from "../../-shared/financial";
+import { EntityBadge, EntitySelect } from "@/components/general-components/EntitySelect";
 
 interface FormProps {
   formData: IFinancialRecord | null;
@@ -38,6 +39,7 @@ interface FormState {
   observations: string;
   chartAccountId: string;
   costCenterId: string;
+  entityId: number | null;
 }
 
 const INVOICE_TYPES = "application/pdf,application/xml,text/xml,image/*";
@@ -65,6 +67,7 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
     observations: formData?.observations ?? "",
     chartAccountId: formData?.chartAccountId ? String(formData.chartAccountId) : "",
     costCenterId: formData?.costCenterId ? String(formData.costCenterId) : "",
+    entityId: formData?.entityId ?? null,
   });
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
   const [removeInvoice, setRemoveInvoice] = useState(false);
@@ -125,6 +128,8 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
       paymentMethod: state.paymentMethod,
       installmentNumber: state.installmentNumber,
       installmentTotal: state.installmentTotal,
+      // vazio = automático (o banco usa o CNPJ da origem ou o padrão)
+      ...(state.entityId ? { entityId: state.entityId } : {}),
     };
   };
 
@@ -172,6 +177,7 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
           <SummaryRow label="Cliente">{gatewayOwned ? (formData?.customer?.name || formData?.trainee?.name || "—") : customerName ?? (formData?.trainee?.name || "—")}</SummaryRow>
           {state.installmentNumber && state.installmentTotal && <SummaryRow label="Parcela">{state.installmentNumber} de {state.installmentTotal}</SummaryRow>}
           <SummaryRow label="Situação">{statusLabel}</SummaryRow>
+          {gatewayOwned && formData?.entity && <SummaryRow label="Empresa"><EntityBadge entity={formData.entity} /></SummaryRow>}
           {isEdit && <SummaryRow label="Origem">{formData?.gateway === "manual" ? "Manual" : formData?.gateway.toUpperCase()}</SummaryRow>}
         </section>
 
@@ -237,6 +243,9 @@ const FinancialRecordsForm: React.FC<FormProps> = ({ formData, setOpenForm, enti
                 {hint("installmentNumber")}
               </div>
             </div>
+
+            <EntitySelect value={state.entityId} onChange={(id) => setState((prev) => ({ ...prev, entityId: id }))} clearable
+              label="Empresa que recebe (CNPJ)" hint="Em branco, o sistema escolhe sozinho pela origem ou pelo CNPJ padrão." />
           </FormSection>
         )}
 

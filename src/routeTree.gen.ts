@@ -38,6 +38,7 @@ import { Route as AuthenticatedSuprimentosFornecedoresRouteImport } from './page
 import { Route as AuthenticatedInventariosDashboardRouteImport } from './pages/_authenticated/inventarios/dashboard'
 import { Route as AuthenticatedInventariosAutorizadosRouteImport } from './pages/_authenticated/inventarios/autorizados'
 import { Route as AuthenticatedInventariosAccessControlRouteImport } from './pages/_authenticated/inventarios/access-control'
+import { Route as AuthenticatedEmpresaCnpjsRouteImport } from './pages/_authenticated/empresa/cnpjs'
 import { Route as AuthenticatedETagRouteImport } from './pages/_authenticated/e/$tag'
 import { Route as AuthenticatedClientesCustomerIdRouteImport } from './pages/_authenticated/clientes/$customerId'
 import { Route as AuthenticatedUsuariosUsuariosIndexRouteImport } from './pages/_authenticated/usuarios/_usuarios/index'
@@ -106,6 +107,8 @@ import { Route as AuthenticatedFinanceiroFaturarFaturarRouteImport } from './pag
 import { Route as AuthenticatedFinanceiroContasBancariasContasBancariasRouteImport } from './pages/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
 import { Route as AuthenticatedFinanceiroConciliacaoConciliacaoRouteImport } from './pages/_authenticated/financeiro/_conciliacao/conciliacao'
 import { Route as AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport } from './pages/_authenticated/financeiro/_centros-custo/centros-custo'
+import { Route as AuthenticatedEmpresaCnpjsNovoRouteImport } from './pages/_authenticated/empresa/cnpjs_.novo'
+import { Route as AuthenticatedEmpresaCnpjsEntityIdRouteImport } from './pages/_authenticated/empresa/cnpjs_.$entityId'
 import { Route as AuthenticatedConversasConversasRespostasRouteImport } from './pages/_authenticated/conversas/_conversas/respostas'
 import { Route as AuthenticatedConversasConversasNumerosRouteImport } from './pages/_authenticated/conversas/_conversas/numeros'
 import { Route as AuthenticatedConversasConversasMetricasRouteImport } from './pages/_authenticated/conversas/_conversas/metricas'
@@ -356,6 +359,12 @@ const AuthenticatedInventariosAccessControlRoute =
   AuthenticatedInventariosAccessControlRouteImport.update({
     id: '/inventarios/access-control',
     path: '/inventarios/access-control',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedEmpresaCnpjsRoute =
+  AuthenticatedEmpresaCnpjsRouteImport.update({
+    id: '/empresa/cnpjs',
+    path: '/empresa/cnpjs',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedETagRoute = AuthenticatedETagRouteImport.update({
@@ -762,6 +771,18 @@ const AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute =
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport.update({
     id: '/financeiro/_centros-custo/centros-custo',
     path: '/financeiro/centros-custo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedEmpresaCnpjsNovoRoute =
+  AuthenticatedEmpresaCnpjsNovoRouteImport.update({
+    id: '/empresa/cnpjs_/novo',
+    path: '/empresa/cnpjs/novo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedEmpresaCnpjsEntityIdRoute =
+  AuthenticatedEmpresaCnpjsEntityIdRouteImport.update({
+    id: '/empresa/cnpjs_/$entityId',
+    path: '/empresa/cnpjs/$entityId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedConversasConversasRespostasRoute =
@@ -1373,6 +1394,7 @@ export interface FileRoutesByFullPath {
   '/student/': typeof StudentIndexRoute
   '/clientes/$customerId': typeof AuthenticatedClientesCustomerIdRoute
   '/e/$tag': typeof AuthenticatedETagRoute
+  '/empresa/cnpjs': typeof AuthenticatedEmpresaCnpjsRoute
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
@@ -1422,6 +1444,8 @@ export interface FileRoutesByFullPath {
   '/conversas/metricas': typeof AuthenticatedConversasConversasMetricasRoute
   '/conversas/numeros': typeof AuthenticatedConversasConversasNumerosRoute
   '/conversas/respostas': typeof AuthenticatedConversasConversasRespostasRoute
+  '/empresa/cnpjs/$entityId': typeof AuthenticatedEmpresaCnpjsEntityIdRoute
+  '/empresa/cnpjs/novo': typeof AuthenticatedEmpresaCnpjsNovoRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   '/financeiro/conciliacao': typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   '/financeiro/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -1567,6 +1591,7 @@ export interface FileRoutesByTo {
   '/student': typeof StudentIndexRoute
   '/clientes/$customerId': typeof AuthenticatedClientesCustomerIdRoute
   '/e/$tag': typeof AuthenticatedETagRoute
+  '/empresa/cnpjs': typeof AuthenticatedEmpresaCnpjsRoute
   '/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
@@ -1616,6 +1641,8 @@ export interface FileRoutesByTo {
   '/conversas/metricas': typeof AuthenticatedConversasConversasMetricasRoute
   '/conversas/numeros': typeof AuthenticatedConversasConversasNumerosRoute
   '/conversas/respostas': typeof AuthenticatedConversasConversasRespostasRoute
+  '/empresa/cnpjs/$entityId': typeof AuthenticatedEmpresaCnpjsEntityIdRoute
+  '/empresa/cnpjs/novo': typeof AuthenticatedEmpresaCnpjsNovoRoute
   '/financeiro/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   '/financeiro/conciliacao': typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   '/financeiro/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -1765,6 +1792,7 @@ export interface FileRoutesById {
   '/student/': typeof StudentIndexRoute
   '/_authenticated/clientes/$customerId': typeof AuthenticatedClientesCustomerIdRoute
   '/_authenticated/e/$tag': typeof AuthenticatedETagRoute
+  '/_authenticated/empresa/cnpjs': typeof AuthenticatedEmpresaCnpjsRoute
   '/_authenticated/inventarios/access-control': typeof AuthenticatedInventariosAccessControlRoute
   '/_authenticated/inventarios/autorizados': typeof AuthenticatedInventariosAutorizadosRoute
   '/_authenticated/inventarios/dashboard': typeof AuthenticatedInventariosDashboardRoute
@@ -1814,6 +1842,8 @@ export interface FileRoutesById {
   '/_authenticated/conversas/_conversas/metricas': typeof AuthenticatedConversasConversasMetricasRoute
   '/_authenticated/conversas/_conversas/numeros': typeof AuthenticatedConversasConversasNumerosRoute
   '/_authenticated/conversas/_conversas/respostas': typeof AuthenticatedConversasConversasRespostasRoute
+  '/_authenticated/empresa/cnpjs_/$entityId': typeof AuthenticatedEmpresaCnpjsEntityIdRoute
+  '/_authenticated/empresa/cnpjs_/novo': typeof AuthenticatedEmpresaCnpjsNovoRoute
   '/_authenticated/financeiro/_centros-custo/centros-custo': typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   '/_authenticated/financeiro/_conciliacao/conciliacao': typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   '/_authenticated/financeiro/_contas-bancarias/contas-bancarias': typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -1962,6 +1992,7 @@ export interface FileRouteTypes {
     | '/student/'
     | '/clientes/$customerId'
     | '/e/$tag'
+    | '/empresa/cnpjs'
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
@@ -2011,6 +2042,8 @@ export interface FileRouteTypes {
     | '/conversas/metricas'
     | '/conversas/numeros'
     | '/conversas/respostas'
+    | '/empresa/cnpjs/$entityId'
+    | '/empresa/cnpjs/novo'
     | '/financeiro/centros-custo'
     | '/financeiro/conciliacao'
     | '/financeiro/contas-bancarias'
@@ -2156,6 +2189,7 @@ export interface FileRouteTypes {
     | '/student'
     | '/clientes/$customerId'
     | '/e/$tag'
+    | '/empresa/cnpjs'
     | '/inventarios/access-control'
     | '/inventarios/autorizados'
     | '/inventarios/dashboard'
@@ -2205,6 +2239,8 @@ export interface FileRouteTypes {
     | '/conversas/metricas'
     | '/conversas/numeros'
     | '/conversas/respostas'
+    | '/empresa/cnpjs/$entityId'
+    | '/empresa/cnpjs/novo'
     | '/financeiro/centros-custo'
     | '/financeiro/conciliacao'
     | '/financeiro/contas-bancarias'
@@ -2353,6 +2389,7 @@ export interface FileRouteTypes {
     | '/student/'
     | '/_authenticated/clientes/$customerId'
     | '/_authenticated/e/$tag'
+    | '/_authenticated/empresa/cnpjs'
     | '/_authenticated/inventarios/access-control'
     | '/_authenticated/inventarios/autorizados'
     | '/_authenticated/inventarios/dashboard'
@@ -2402,6 +2439,8 @@ export interface FileRouteTypes {
     | '/_authenticated/conversas/_conversas/metricas'
     | '/_authenticated/conversas/_conversas/numeros'
     | '/_authenticated/conversas/_conversas/respostas'
+    | '/_authenticated/empresa/cnpjs_/$entityId'
+    | '/_authenticated/empresa/cnpjs_/novo'
     | '/_authenticated/financeiro/_centros-custo/centros-custo'
     | '/_authenticated/financeiro/_conciliacao/conciliacao'
     | '/_authenticated/financeiro/_contas-bancarias/contas-bancarias'
@@ -2746,6 +2785,13 @@ declare module '@tanstack/react-router' {
       path: '/inventarios/access-control'
       fullPath: '/inventarios/access-control'
       preLoaderRoute: typeof AuthenticatedInventariosAccessControlRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/empresa/cnpjs': {
+      id: '/_authenticated/empresa/cnpjs'
+      path: '/empresa/cnpjs'
+      fullPath: '/empresa/cnpjs'
+      preLoaderRoute: typeof AuthenticatedEmpresaCnpjsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/e/$tag': {
@@ -3222,6 +3268,20 @@ declare module '@tanstack/react-router' {
       path: '/financeiro/centros-custo'
       fullPath: '/financeiro/centros-custo'
       preLoaderRoute: typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/empresa/cnpjs_/novo': {
+      id: '/_authenticated/empresa/cnpjs_/novo'
+      path: '/empresa/cnpjs/novo'
+      fullPath: '/empresa/cnpjs/novo'
+      preLoaderRoute: typeof AuthenticatedEmpresaCnpjsNovoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/empresa/cnpjs_/$entityId': {
+      id: '/_authenticated/empresa/cnpjs_/$entityId'
+      path: '/empresa/cnpjs/$entityId'
+      fullPath: '/empresa/cnpjs/$entityId'
+      preLoaderRoute: typeof AuthenticatedEmpresaCnpjsEntityIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/conversas/_conversas/respostas': {
@@ -3918,6 +3978,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedClientesCustomerIdRoute: typeof AuthenticatedClientesCustomerIdRoute
   AuthenticatedETagRoute: typeof AuthenticatedETagRoute
+  AuthenticatedEmpresaCnpjsRoute: typeof AuthenticatedEmpresaCnpjsRoute
   AuthenticatedInventariosAccessControlRoute: typeof AuthenticatedInventariosAccessControlRoute
   AuthenticatedInventariosAutorizadosRoute: typeof AuthenticatedInventariosAutorizadosRoute
   AuthenticatedInventariosDashboardRoute: typeof AuthenticatedInventariosDashboardRoute
@@ -3959,6 +4020,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedConversasConversasMetricasRoute: typeof AuthenticatedConversasConversasMetricasRoute
   AuthenticatedConversasConversasNumerosRoute: typeof AuthenticatedConversasConversasNumerosRoute
   AuthenticatedConversasConversasRespostasRoute: typeof AuthenticatedConversasConversasRespostasRoute
+  AuthenticatedEmpresaCnpjsEntityIdRoute: typeof AuthenticatedEmpresaCnpjsEntityIdRoute
+  AuthenticatedEmpresaCnpjsNovoRoute: typeof AuthenticatedEmpresaCnpjsNovoRoute
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute: typeof AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute
   AuthenticatedFinanceiroConciliacaoConciliacaoRoute: typeof AuthenticatedFinanceiroConciliacaoConciliacaoRoute
   AuthenticatedFinanceiroContasBancariasContasBancariasRoute: typeof AuthenticatedFinanceiroContasBancariasContasBancariasRoute
@@ -4095,6 +4158,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedClientesCustomerIdRoute: AuthenticatedClientesCustomerIdRoute,
   AuthenticatedETagRoute: AuthenticatedETagRoute,
+  AuthenticatedEmpresaCnpjsRoute: AuthenticatedEmpresaCnpjsRoute,
   AuthenticatedInventariosAccessControlRoute:
     AuthenticatedInventariosAccessControlRoute,
   AuthenticatedInventariosAutorizadosRoute:
@@ -4161,6 +4225,9 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedConversasConversasNumerosRoute,
   AuthenticatedConversasConversasRespostasRoute:
     AuthenticatedConversasConversasRespostasRoute,
+  AuthenticatedEmpresaCnpjsEntityIdRoute:
+    AuthenticatedEmpresaCnpjsEntityIdRoute,
+  AuthenticatedEmpresaCnpjsNovoRoute: AuthenticatedEmpresaCnpjsNovoRoute,
   AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute:
     AuthenticatedFinanceiroCentrosCustoCentrosCustoRoute,
   AuthenticatedFinanceiroConciliacaoConciliacaoRoute:

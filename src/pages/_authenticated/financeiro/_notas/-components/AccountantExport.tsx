@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { errorMessage } from "../../../comercial/-shared/commercial";
 import { openFile } from "../-shared/fiscal";
+import { EntitySelect, useEntities } from "@/components/general-components/EntitySelect";
 
 const MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
@@ -25,10 +26,14 @@ export default function AccountantExport({ open, onOpenChange }: { open: boolean
   const options = monthOptions();
   const [month, setMonth] = useState(options[1].id);
   const [busy, setBusy] = useState(false);
+  // cada CNPJ tem a própria escrituração: um pacote por CNPJ (ou todos, uma pasta por CNPJ)
+  const [entityId, setEntityId] = useState<number | null>(null);
+  const { byId } = useEntities();
+  const suffix = entityId ? `-${(byId.get(entityId)?.tradeName ?? "").toLowerCase().replace(/\s+/g, "-")}` : "";
   const download = async () => {
     setBusy(true);
     try {
-      await openFile("fiscal/export", `notas-fiscais-${month}.zip`, true, { month });
+      await openFile("fiscal/export", `notas-fiscais-${month}${suffix}.zip`, true, { month, ...(entityId ? { entityId: String(entityId) } : {}) });
       onOpenChange(false);
     } catch (error) {
       toast({ title: "Não consegui montar o pacote", description: errorMessage(error), variant: "destructive" });
@@ -44,6 +49,7 @@ export default function AccountantExport({ open, onOpenChange }: { open: boolean
           <DialogDescription>Um arquivo .zip com o XML e o PDF das notas emitidas no mês, o XML das notas recebidas de fornecedores e uma planilha com o resumo de valores e retenções.</DialogDescription>
         </DialogHeader>
         <div><Label>Competência</Label><Select name="month" options={options as never[]} state={month} onChange={(_, v) => setMonth(String(Array.isArray(v) ? v[0] ?? month : v))} modal /></div>
+        <EntitySelect label="CNPJ" value={entityId} clearable emptyLabel="Todos (uma pasta por CNPJ)" onChange={setEntityId} />
         <p className="text-xs text-muted-foreground">Notas de teste (produção restrita) ficam de fora.</p>
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>

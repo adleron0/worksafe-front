@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import Icon from "@/components/general-components/Icon";
+import { EntityBadge } from "@/components/general-components/EntitySelect";
 import { cn } from "@/lib/utils";
 import tailwindUtils from "@/utils/tailwind.utils";
 import { dateBr, errorMessage } from "../../comercial/-shared/commercial";
@@ -103,6 +104,7 @@ function OrderPage() {
           <div className="flex flex-wrap items-center gap-2 mt-1">
             <h1 className="text-xl font-bold tabular-nums">{order.number}</h1>
             <OrderStageBadge status={order.status} late={order.late} />
+            <EntityBadge id={order.entityId} />
             {order.publicEnabled && <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs text-muted-foreground"><Icon name="eye" className="w-3 h-3" /> cliente acompanha</span>}
           </div>
           <p className="text-sm text-muted-foreground truncate">{order.customer?.name} · {order.title}</p>

@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import CalendarPicker from "@/components/general-components/Calendar";
 import Icon from "@/components/general-components/Icon";
+import { EntityBadge } from "@/components/general-components/EntitySelect";
 import StatusBadge from "@/components/general-components/StatusBadge";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
@@ -167,6 +168,7 @@ function RentalSheet({ rentalId }: { rentalId: string }) {
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-bold tabular-nums">{rental?.number}</h1>
             {rental && <RentalStageBadge stage={rental.stage} />}
+            {rental && <EntityBadge id={rental.entityId} />}
           </div>
           {rental && (
             <p className="text-sm text-muted-foreground truncate">

@@ -10,6 +10,9 @@ export interface ICompanyGateway {
   createdAt: string;
   updatedAt: string;
   inactiveAt?: string | null;
+  /** CNPJ do grupo dono desta conta no gateway (um por CNPJ) */
+  entityId?: number | null;
+  entity?: { id: number; tradeName: string; color?: string | null } | null;
   
   // Relações
   company?: {

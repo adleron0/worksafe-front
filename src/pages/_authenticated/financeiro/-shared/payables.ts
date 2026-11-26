@@ -67,6 +67,9 @@ export interface Payable {
   recurrenceId?: number | null;
   recurrence?: { id: number; inactiveAt?: string | null; endDate?: string | null } | null;
   statementRef?: string | null;
+  /** CNPJ do grupo (vazio = automático) */
+  entityId?: number | null;
+  entity?: { id: number; tradeName: string; color?: string | null } | null;
 }
 
 interface Bucket { count: number; total: number }

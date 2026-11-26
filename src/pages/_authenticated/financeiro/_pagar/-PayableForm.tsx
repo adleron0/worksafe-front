@@ -13,6 +13,7 @@ import { ApiError } from "@/general-interfaces/api.interface";
 import AccountSelect from "../-shared/AccountSelect";
 import Icon from "@/components/general-components/Icon";
 import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-components/FormPage";
+import { EntitySelect } from "@/components/general-components/EntitySelect";
 
 /** Guias de imposto: cruzadas com os impostos retidos pelos clientes no mesmo mês. */
 const TAX_GUIDE_OPTIONS = [
@@ -72,6 +73,7 @@ export default function PayableForm({ formData, close, duplicate = false }: { fo
     count: "2",
     endDate: "",
     scope: "esta",
+    entityId: formData?.entityId ?? null as number | null,
   });
   const [files, setFiles] = useState<Partial<Record<string, File>>>({});
   const [removed, setRemoved] = useState<Column[]>([]);
@@ -115,12 +117,15 @@ export default function PayableForm({ formData, close, duplicate = false }: { fo
         supplierId: state.supplierId, description: state.description.trim(), value: state.value, dueDate: state.dueDate,
         paymentMethod: state.paymentMethod, documentNumber: state.documentNumber.trim(), serviceOrderId: state.serviceOrderId,
         chartAccountId: state.chartAccountId, costCenterId: state.costCenterId, observations: state.observations.trim(), taxKind: state.taxKind,
+        // vazio = automático (o banco usa o CNPJ da origem ou o padrão)
+        ...(state.entityId ? { entityId: state.entityId } : {}),
       };
       if (recurring) {
         return (await api.post("financial/recurrences", {
           kind: "payable", description: base.description, value: base.value, startDate: base.dueDate, endDate: state.endDate || null,
           supplierId: base.supplierId || null, chartAccountId: base.chartAccountId || null, costCenterId: base.costCenterId || null,
           serviceOrderId: base.serviceOrderId || null, paymentMethod: base.paymentMethod || null, observations: base.observations,
+          ...(state.entityId ? { entityId: state.entityId } : {}),
         })).data;
       }
       if (several) return (await api.post("financial-payables/installments", { ...base, count, mode: state.mode })).data;
@@ -282,6 +287,9 @@ export default function PayableForm({ formData, close, duplicate = false }: { fo
               <p className="text-xs text-muted-foreground">Para mudar o valor ou encerrar depois, use Financeiro → Recorrentes.</p>
             </div>
           )}
+
+          <EntitySelect value={state.entityId} onChange={(id) => setState((prev) => ({ ...prev, entityId: id }))} clearable
+            label="Empresa que paga (CNPJ)" hint="Em branco, o sistema escolhe sozinho pela origem ou pelo CNPJ padrão." />
 
           {inGroup && (
             <div className="rounded-lg bg-muted/50 p-3">

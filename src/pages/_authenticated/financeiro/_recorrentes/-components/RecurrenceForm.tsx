@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/general-interfaces/api.interface";
 import AccountSelect from "../../-shared/AccountSelect";
+import { EntitySelect } from "@/components/general-components/EntitySelect";
 import { formatMoney, useChartAccounts, useCostCenters } from "../../-shared/financial";
 import { PAYABLES_KEY, useSuppliers } from "../../-shared/payables";
 import { useCustomerOptions } from "../../-shared/ledger";
@@ -20,6 +21,7 @@ export interface Recurrence {
   id: number; kind: Kind; description: string; value: number; dayOfMonth: number; startDate: string; endDate: string | null;
   supplierId: number | null; customerId: number | null; chartAccountId: number | null; costCenterId: number | null; serviceOrderId: number | null;
   paymentMethod: string | null; observations: string | null; inactiveAt: string | null;
+  entityId?: number | null; entity?: { id: number; tradeName: string; color?: string | null } | null;
   supplier: { id: number; name: string } | null; customer: { id: number; name: string } | null;
   chartAccount: { id: number; code: string; name: string } | null; costCenter: { id: number; name: string } | null;
   upcoming: number; nextDue: string | null; yearTotal: number;
@@ -34,6 +36,7 @@ export default function RecurrenceForm({ kind, item, close }: { kind: Kind; item
     supplierId: item?.supplierId ? String(item.supplierId) : "", customerId: item?.customerId ? String(item.customerId) : "",
     chartAccountId: item?.chartAccountId ? String(item.chartAccountId) : "", costCenterId: item?.costCenterId ? String(item.costCenterId) : "",
     paymentMethod: item?.paymentMethod ?? "", observations: item?.observations ?? "",
+    entityId: item?.entityId ?? null as number | null,
   });
   const [error, setError] = useState("");
   const set = (name: string, value: string | number | string[] | null) => setState((prev) => ({ ...prev, [name]: Array.isArray(value) ? value[0] ?? "" : value ?? "" }));
@@ -47,6 +50,8 @@ export default function RecurrenceForm({ kind, item, close }: { kind: Kind; item
         kind, description: state.description.trim(), value: state.value, endDate: state.endDate || null,
         ...(kind === "payable" ? { supplierId: state.supplierId || null } : { customerId: state.customerId || null }),
         chartAccountId: state.chartAccountId || null, costCenterId: state.costCenterId || null, paymentMethod: state.paymentMethod || null, observations: state.observations,
+        // vazio = automático (o CNPJ padrão)
+        ...(state.entityId ? { entityId: state.entityId } : {}),
       };
       return isEdit ? (await api.put(`financial/recurrences/${item!.id}`, body)).data : (await api.post("financial/recurrences", { ...body, startDate: state.startDate })).data;
     },
@@ -114,6 +119,9 @@ export default function RecurrenceForm({ kind, item, close }: { kind: Kind; item
               <Select name="paymentMethod" options={paymentMethodOptions} state={state.paymentMethod} onChange={set} placeholder="A definir" clearable modal />
             </div>
           </div>
+          <EntitySelect value={state.entityId} onChange={(id) => setState((prev) => ({ ...prev, entityId: id }))} clearable
+            label={kind === "payable" ? "Empresa que paga (CNPJ)" : "Empresa que recebe (CNPJ)"}
+            hint="Vale para todos os meses lançados. Em branco, o sistema usa o CNPJ padrão." />
         </FormSection>
 
         <FormSection title="Período" description={isEdit ? "A mudança vale para os lançamentos em aberto de hoje em diante. Os já vencidos e os pagos não mudam." : "Lance uma vez; o sistema cria um lançamento por mês."}>

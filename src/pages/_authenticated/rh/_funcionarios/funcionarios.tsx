@@ -5,6 +5,7 @@ import useVerify from "@/hooks/use-verify";
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/general-components/Icon";
 import Select from "@/components/general-components/Select";
+import { EntityFilter } from "@/components/general-components/EntitySelect";
 import PageHeader from "@/components/general-components/PageHeader";
 import ListCard from "@/components/general-components/ListCard";
 import ListToolbar from "@/components/general-components/ListToolbar";
@@ -30,8 +31,9 @@ function EmployeesPage() {
   const [professionalId, setProfessionalId] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [entityId, setEntityId] = useState<number | null>(null);
 
-  const params = { page, limit: LIMIT, ...(status ? { status } : {}), ...(professionalId ? { professionalId } : {}), ...(search.trim() ? { search: search.trim() } : {}) };
+  const params = { page, limit: LIMIT, ...(status ? { status } : {}), ...(professionalId ? { professionalId } : {}), ...(search.trim() ? { search: search.trim() } : {}), ...(entityId ? { entityId } : {}) };
   const { data, isLoading, error } = useQuery({
     queryKey: [EMPLOYEES_KEY, params],
     queryFn: () => employeesApi.get<EmployeeList>("", params),
@@ -43,7 +45,8 @@ function EmployeesPage() {
   if (!can(`view_${EMPLOYEES_ABILITY}`)) return null;
   const summary = data?.summary ?? {};
   const working = Object.entries(summary).reduce((sum, [key, count]) => (key === "desligado" ? sum : sum + (count ?? 0)), 0);
-  const empty = search || status || professionalId ? "Nenhum funcionário com esses filtros." : "Nenhum funcionário cadastrado ainda.";
+  const filtered = Boolean(search || status || professionalId || entityId);
+  const empty = filtered ? "Nenhum funcionário com esses filtros." : "Nenhum funcionário cadastrado ainda.";
 
   const canCreate = can(`create_${EMPLOYEES_ABILITY}`);
 
@@ -58,6 +61,7 @@ function EmployeesPage() {
             ...(options?.statuses ?? []).map(({ id, name }) => ({ value: id as string, label: name, count: summary[id] ?? 0, color: STATUS_COLOR[id] })),
           ]} />
         <ListToolbar search={{ value: search, onChange: (text) => { setSearch(text); setPage(0); }, placeholder: options?.canSeePersonal ? "Buscar por nome, matrícula ou CPF..." : "Buscar por nome ou matrícula..." }}>
+          <EntityFilter value={entityId} onChange={(id) => { setEntityId(id); setPage(0); }} />
           <div className="w-48 sm:w-60">
             <Select name="professionalId" state={professionalId} clearable placeholder="Todas as funções" modal={false} options={options?.professionals ?? []}
               onChange={(_, value) => { setProfessionalId(String(value ?? "")); setPage(0); }} />
@@ -67,7 +71,7 @@ function EmployeesPage() {
 
         <DataTable rows={data?.rows} columns={employeeColumns} getRowId={(row) => row.id} ariaLabel="Funcionários" minWidth={880}
           loading={isLoading} error={error ? errorMessage(error) : null} onRowClick={(row) => open(row.id)}
-          empty={search || status || professionalId
+          empty={filtered
             ? <EmptyState icon="search-x" title={empty} />
             : <EmptyState title={empty} action={canCreate && <Button size="sm" onClick={() => open("novo")}><Icon name="plus" className="w-4 h-4" /> Novo funcionário</Button>} />} />
 

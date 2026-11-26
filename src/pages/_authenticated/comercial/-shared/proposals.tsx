@@ -41,7 +41,9 @@ export interface DraftSection { uid: string; id?: number; title: string; kind: I
 export interface DraftInstallment { uid: string; percent: number | null; amount: number | null; dueRule: DueRule; dueDate: string | null; dueDays: number | null; workPercent?: number | null; description: string | null }
 
 export interface ProposalDraft {
-  kind: ProposalKind; customerId: number; contactName: string | null; contactEmail: string | null; contactPhone: string | null;
+  kind: ProposalKind; customerId: number;
+  /** CNPJ do grupo que vende; nulo = o do tipo da proposta (a API decide) */
+  entityId?: number | null; contactName: string | null; contactEmail: string | null; contactPhone: string | null;
   requester: string | null; department: string | null; title: string; description: string | null; sellerId: number | null;
   validUntil: string | null; referenceDate: string; workDays: number; weekendDays: number;
   contingencyRate: number; commissionRate?: number; commissionBase?: "faturado" | "lucro"; commissionInPrice?: boolean;
@@ -142,7 +144,7 @@ export const EVENT_LABEL: Record<string, string> = {
 };
 
 export interface ProposalRow {
-  id: number; number: string; revision: number; kind: ProposalKind; status: ProposalStatus; title: string; total: number;
+  id: number; number: string; revision: number; kind: ProposalKind; entityId?: number | null; status: ProposalStatus; title: string; total: number;
   validUntil: string | null; createdAt: string; sentAt: string | null; inactiveAt: string | null; seller: string | null; expired: boolean;
   /** nome de quem criou a proposta */
   createdBy?: string | null;

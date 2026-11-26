@@ -14,6 +14,7 @@ import Icon from "@/components/general-components/Icon";
 import StatusBadge from "@/components/general-components/StatusBadge";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
+import { EntitySelect } from "@/components/general-components/EntitySelect";
 import { Tip, dateBr, errorMessage } from "../../comercial/-shared/commercial";
 import {
   EMPLOYEES_ABILITY, EMPLOYEES_KEY, EMPLOYEE_KEY, EMPLOYEE_OPTIONS_KEY, Employee, EmployeeEvent, EmployeeEventDialog, EmployeeOptions, EmployeeStatusBadge, employeesApi, periodText,
@@ -30,12 +31,15 @@ export const Route = createFileRoute("/_authenticated/rh/_funcionarios/funcionar
 interface Draft {
   name: string; registration: string; contractType: string; admissionDate: string; phone: string; roles: string[]; primaryRoleId: string; userId: string; notes: string;
   cpf: string; rg: string; birthDate: string; email: string; emergencyName: string; emergencyPhone: string;
+  /** empregador (CNPJ do grupo); null = o padrão */
+  entityId: number | null;
 }
 const draftOf = (employee?: Employee): Draft => ({
   name: employee?.name ?? "", registration: employee?.registration ?? "", contractType: employee?.contractType ?? "clt", admissionDate: employee?.admissionDate ?? "", phone: employee?.phone ?? "",
   roles: employee?.roles.map((role) => String(role.id)) ?? [], primaryRoleId: String(employee?.roles.find((role) => role.isPrimary)?.id ?? ""), userId: employee?.user ? String(employee.user.id) : "",
   notes: employee?.notes ?? "", cpf: employee?.cpf ?? "", rg: employee?.rg ?? "", birthDate: employee?.birthDate ?? "", email: employee?.email ?? "",
   emergencyName: employee?.emergencyName ?? "", emergencyPhone: employee?.emergencyPhone ?? "",
+  entityId: employee?.entityId ?? null,
 });
 const PERIOD_TYPES = ["ferias", "afastamento", "suspensao"];
 
@@ -75,6 +79,8 @@ function EmployeePage() {
       const body = {
         name: value.name.trim(), registration: value.registration.trim(), contractType: value.contractType, admissionDate: value.admissionDate || null, phone: value.phone,
         roles: value.roles.map(Number), primaryRoleId: Number(value.primaryRoleId) || null, userId: value.userId || null, notes: value.notes.trim(),
+        // vazio = a API mantém o empregador atual (ou usa o CNPJ padrão no cadastro novo)
+        ...(value.entityId ? { entityId: value.entityId } : {}),
         // dados pessoais só vão quando a pessoa pode vê-los; senão a API guarda o que já tem
         ...(seesPersonal ? { cpf: value.cpf, rg: value.rg.trim(), birthDate: value.birthDate || null, email: value.email.trim(), emergencyName: value.emergencyName.trim(), emergencyPhone: value.emergencyPhone } : {}),
       };
@@ -187,6 +193,8 @@ function EmployeePage() {
                 <Input id="phone" name="phone" format="phone" value={draft.phone} disabled={!editable} onValueChange={(_, value) => set("phone", String(value))} className="mt-1" />
               </div>
             </div>
+            <EntitySelect label="Empregador (CNPJ)" clearable disabled={!editable} value={draft.entityId} onChange={(id) => set("entityId", id)}
+              hint="O CNPJ que registra a pessoa. Ela pode trabalhar em obra ou turma de outro CNPJ do grupo." />
           </section>
 
           <section className="rounded-card border bg-card p-4 grid gap-4">

@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { ApiError } from "@/general-interfaces/api.interface";
 import { cn } from "@/lib/utils";
+import { EntityFilter } from "@/components/general-components/EntitySelect";
 import { FINANCIAL_ABILITY, formatMoney, useBankAccounts } from "../-shared/financial";
 import { QUICK_RANGES, downloadXlsx } from "../-shared/ledger";
 import { plusDays } from "../-shared/payables";
@@ -31,6 +32,8 @@ function Reports() {
   const { can } = useVerify();
   const search = Route.useSearch();
   const [tab, setTab] = useState<"caixa" | "dre">(search.aba === "dre" ? "dre" : "caixa");
+  // "Todas" = consolidado do grupo; vale para as duas abas
+  const [entityId, setEntityId] = useState<number | null>(null);
   if (!can(`view_${FINANCIAL_ABILITY}`)) return null;
   return (
     <>
@@ -39,12 +42,15 @@ function Reports() {
           <h1 className="text-xl font-bold">Relatórios financeiros</h1>
           <p className="text-sm text-muted-foreground">Fluxo de caixa (o que entrou, saiu e vai entrar e sair) e o resultado do mês (DRE).</p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+        <EntityFilter value={entityId} onChange={setEntityId} />
         <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
           <Button size="sm" className="h-7" variant={tab === "caixa" ? "default" : "ghost"} onClick={() => setTab("caixa")}><Icon name="chart-line" className="w-4 h-4" /> Fluxo de caixa</Button>
           <Button size="sm" className="h-7" variant={tab === "dre" ? "default" : "ghost"} onClick={() => setTab("dre")}><Icon name="scale" className="w-4 h-4" /> DRE</Button>
         </div>
+        </div>
       </div>
-      {tab === "caixa" ? <CashFlow /> : <Dre />}
+      {tab === "caixa" ? <CashFlow entityId={entityId} /> : <Dre entityId={entityId} />}
     </>
   );
 }
@@ -75,13 +81,15 @@ const FLOW_RANGES = [
   { id: "6m", label: "Próximos 6 meses", range: () => [`${todayInput().slice(0, 7)}-01`, plusDays(todayInput(), 183)] },
 ];
 
-function CashFlow() {
+const entityParam = (entityId: number | null) => (entityId ? [{ key: "entityId", value: String(entityId) }] : []);
+
+function CashFlow({ entityId }: { entityId: number | null }) {
   const [from, setFrom] = useState(`${todayInput().slice(0, 7)}-01`);
   const [to, setTo] = useState(plusDays(todayInput(), 60));
   const [group, setGroup] = useState("week");
   const [banks, setBanks] = useState<string[]>([]);
   const { data: bankAccounts } = useBankAccounts();
-  const params = [{ key: "from", value: from }, { key: "to", value: to }, { key: "group", value: group }, ...(banks.length ? [{ key: "bankAccountId", value: banks.join(",") }] : [])];
+  const params = [{ key: "from", value: from }, { key: "to", value: to }, { key: "group", value: group }, ...(banks.length ? [{ key: "bankAccountId", value: banks.join(",") }] : []), ...entityParam(entityId)];
   const { data, isLoading, isError, error } = useQuery<Flow | undefined, ApiError>({
     queryKey: [REPORTS_KEY, "cash-flow", params],
     queryFn: () => get("financial", "reports/cash-flow", params),
@@ -211,12 +219,12 @@ const monthsBack = (n: number) => {
   return new Date(Date.UTC(y, m - 1 - n, 1)).toISOString().slice(0, 7);
 };
 
-function Dre() {
+function Dre({ entityId }: { entityId: number | null }) {
   const [from, setFrom] = useState(monthsBack(5));
   const [to, setTo] = useState(todayInput().slice(0, 7));
   const [basis, setBasis] = useState("competencia");
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const params = [{ key: "from", value: from }, { key: "to", value: to }, { key: "basis", value: basis }];
+  const params = [{ key: "from", value: from }, { key: "to", value: to }, { key: "basis", value: basis }, ...entityParam(entityId)];
   const { data, isLoading, isError, error } = useQuery<DreData | undefined, ApiError>({
     queryKey: [REPORTS_KEY, "dre", params],
     queryFn: () => get("financial", "reports/dre", params),

@@ -7,6 +7,7 @@ import { HelpCircle } from "lucide-react";
 import DropUpload from "@/components/general-components/DropUpload";
 import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
+import { EntitySelect, useEntities } from "@/components/general-components/EntitySelect";
 import { FormData } from "../TurmasFormSteps";
 import { Response } from "@/general-interfaces/api.interface";
 import { ApiError } from "@/general-interfaces/api.interface";
@@ -117,6 +118,13 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors, section }: StepProps) =
     if (!courses) return null;
     return courses?.rows?.find((course) => course.id === id);
   };
+
+  // CNPJ da turma: sem escolha, vale o do curso (mostrado como "automático")
+  const { byId } = useEntities();
+  const courseEntity = (() => {
+    const course = dataForm.courseId ? (findCourseById(dataForm.courseId) as Course | null) : null;
+    return course?.entityId ? byId.get(course.entityId) : undefined;
+  })();
 
   // Função genérica para atualizar um campo do formulário com base em outro valor
   const updateFormField = <T,>(
@@ -259,6 +267,11 @@ const Step1BasicInfo = ({ dataForm, setDataForm, errors, section }: StepProps) =
           <p className="text-red-500 text-sm mt-1">{errors.courseId}</p>
         )}
       </div>
+
+      <EntitySelect kind="treinamento" clearable label="CNPJ da turma"
+        hint="Sem escolha, vale o CNPJ do curso. A nota e o pagamento saem por este CNPJ."
+        emptyLabel={courseEntity ? `${courseEntity.tradeName} (o do curso)` : undefined}
+        value={dataForm.entityId} onChange={(id) => setDataForm((prev) => ({ ...prev, entityId: id }))} />
 
       {/* Seleção de Certificado */}
       <div>

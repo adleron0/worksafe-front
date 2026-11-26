@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { EntityBadge, EntityFilter, useEntities } from "@/components/general-components/EntitySelect";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/services/api";
 import StatusBadge from "@/components/general-components/StatusBadge";
@@ -27,11 +29,15 @@ function BankAccounts() {
   });
   const balanceOf = (id: number) => balances?.find((b) => b.id === id)?.balance;
   const startOf = (id: number) => balances?.find((b) => b.id === id)?.start;
+  const { multi } = useEntities();
+  const [entityId, setEntityId] = useState<number | null>(null);
 
   return (
     <>
     <SimpleCrud<BankAccount>
       entity={BANK_ACCOUNT_ENTITY}
+      listParams={entityId ? [{ key: "entityId", value: entityId }] : []}
+      toolbarExtra={<EntityFilter value={entityId} onChange={setEntityId} />}
       columns={[
         { id: "name", header: "Conta", mobile: "title", cell: (item) => (
           <div className="min-w-0">
@@ -43,6 +49,7 @@ function BankAccounts() {
             {(bankLine(item) || item.pixKey) && <p className="text-xs text-muted-foreground truncate">{[bankLine(item), item.pixKey && `Pix: ${item.pixKey}`].filter(Boolean).join(" · ")}</p>}
           </div>
         ) },
+        ...(multi ? [{ id: "entity", header: "Empresa", cell: (item: BankAccount) => <EntityBadge id={item.entityId} /> }] : []),
         { id: "type", header: "Tipo", cell: (item) => <span className="text-muted-foreground">{bankTypeLabel(item.type)}</span> },
         { id: "balance", header: "Saldo", align: "right", mobile: "end", className: "whitespace-nowrap", cell: (item) => (
           <div>

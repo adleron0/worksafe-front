@@ -50,6 +50,8 @@ export interface BankAccount {
   gateway?: string | null;
   isDefault: boolean;
   inactiveAt?: string | null;
+  /** CNPJ do grupo dono da conta */
+  entityId?: number | null;
   _count?: { financialRecords: number; payables?: number };
 }
 

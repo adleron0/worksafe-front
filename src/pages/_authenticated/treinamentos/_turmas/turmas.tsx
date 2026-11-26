@@ -15,6 +15,7 @@ import DataTable, { EmptyState } from "@/components/general-components/DataTable
 import SideForm from "@/components/general-components/SideForm";
 import Icon from "@/components/general-components/Icon";
 import { Button } from "@/components/ui/button";
+import { EntityFilter } from "@/components/general-components/EntitySelect";
 import TurmasRowActions from "./-components/TurmasRowActions";
 import { turmasColumns } from "./-components/turmasColumns";
 import { LIMITS, countFilters } from "../-shared/lista";
@@ -171,6 +172,7 @@ function List() {
         </div>
 
         <ListToolbar onOpenFilters={() => setOpenSearch(true)} filterCount={filterCount}>
+          <EntityFilter value={searchParams.entityId ?? null} onChange={(id) => setSearchParams((prev) => ({ ...prev, entityId: id ?? undefined, page: 0 }))} />
           {canCreate && <Button onClick={openNew}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">Nova {entity.name}</span></Button>}
         </ListToolbar>
 

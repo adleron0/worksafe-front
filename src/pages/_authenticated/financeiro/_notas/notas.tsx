@@ -17,7 +17,8 @@ import DataTable, { DataColumn, EmptyState } from "@/components/general-componen
 import { Button } from "@/components/ui/button";
 import { errorMessage, money } from "../../comercial/-shared/commercial";
 import AccountantExport from "./-components/AccountantExport";
-import { dateBr, FISCAL_KEYS, formatDoc, Invoice, InvoiceList, InvoiceStatus, STATUS_INFO, useFiscalSettings, usePendingTraining } from "./-shared/fiscal";
+import { EntityBadge, EntityFilter, useEntities } from "@/components/general-components/EntitySelect";
+import { dateBr, FISCAL_KEYS, formatDoc, Invoice, InvoiceList, InvoiceStatus, STATUS_INFO, useFiscalOverview, useFiscalSettings, usePendingTraining } from "./-shared/fiscal";
 
 export const Route = createFileRoute("/_authenticated/financeiro/_notas/notas")({
   component: InvoicesPage,
@@ -38,12 +39,16 @@ function InvoicesPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [exportOpen, setExportOpen] = useState(false);
+  const [entityId, setEntityId] = useState<number | null>(null);
+  const { multi } = useEntities();
+  // com vários CNPJs, o aviso mostra o que falta em cada um
+  const { data: overview } = useFiscalOverview(can("view_nfse") && multi);
   const canEmit = can("emitir_nfse");
   const { data: settings } = useFiscalSettings(can("view_nfse"));
   const { data: pendingTraining } = usePendingTraining(can("view_nfse"));
   const toEmit = (pendingTraining ?? []).filter((p) => !p.invoice).length;
 
-  const params = { status: view === "todas" ? undefined : view, q: q || undefined, from: from ? `${from}-01` : undefined, to: to ? lastDay(to) : undefined, page, limit };
+  const params = { entityId: entityId ?? undefined, status: view === "todas" ? undefined : view, q: q || undefined, from: from ? `${from}-01` : undefined, to: to ? lastDay(to) : undefined, page, limit };
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: [FISCAL_KEYS.invoices, params],
     queryFn: async () => (await api.get<InvoiceList>("fiscal/invoices", { params })).data,
@@ -74,6 +79,7 @@ function InvoicesPage() {
         </div>
       ),
     },
+    ...(multi ? [{ id: "entity", header: "Emitente", cell: (row: Invoice) => <EntityBadge entity={row.entity ?? null} id={row.entityId} /> }] : []),
     {
       id: "taker", header: "Tomador", className: "min-w-[220px]",
       cell: (row) => (
@@ -101,13 +107,25 @@ function InvoicesPage() {
       ),
     },
   ];
-  const filtered = !!q || !!from || view !== "todas";
+  const filtered = !!q || !!from || view !== "todas" || !!entityId;
 
   return (
     <>
       <PageHeader title="Notas fiscais" description="Notas fiscais de serviço (NFS-e Nacional): emita, acompanhe, cancele e envie ao cliente." className="mb-0" />
 
-      {settings && !settings.ready && (
+      {multi && overview && overview.some((o) => !o.ready) && (
+        <div className="my-3 rounded-card border border-amber-300 bg-amber-50 dark:bg-amber-950 text-amber-900 dark:text-amber-100 px-4 py-3 text-sm">
+          <p className="font-semibold flex items-center gap-1.5"><Icon name="triangle-alert" className="w-4 h-4" /> Falta pouco para emitir notas pelo sistema</p>
+          {overview.filter((o) => !o.ready).map((o) => (
+            <div key={o.entityId} className="mt-1">
+              <p className="font-medium">{o.tradeName}</p>
+              <ul className="list-disc pl-5">{o.pending.map((p) => <li key={p}>{p}</li>)}</ul>
+            </div>
+          ))}
+          {can("config_fiscal") && <Link to="/financeiro/fiscal" className="underline font-medium mt-1 inline-block">Abrir a configuração fiscal</Link>}
+        </div>
+      )}
+      {!multi && settings && !settings.ready && (
         <div className="my-3 rounded-card border border-amber-300 bg-amber-50 dark:bg-amber-950 text-amber-900 dark:text-amber-100 px-4 py-3 text-sm">
           <p className="font-semibold flex items-center gap-1.5"><Icon name="triangle-alert" className="w-4 h-4" /> Falta pouco para emitir notas pelo sistema</p>
           <ul className="list-disc pl-5 mt-1">{settings.pending.map((p) => <li key={p}>{p}</li>)}</ul>
@@ -135,6 +153,7 @@ function InvoicesPage() {
       <ListCard className="mt-3">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <StatusChips options={chips} value={view} onChange={(v) => { setView(v); setPage(1); }} className="flex-1" />
+          <EntityFilter value={entityId} onChange={(id) => { setEntityId(id); setPage(1); }} />
           <MonthRangePicker className="sm:w-auto sm:min-w-44" align="end" placeholder="Competência" from={from || undefined} to={to || undefined}
             onChange={(f, t) => { setFrom(f); setTo(t); setPage(1); }} />
         </div>
@@ -159,7 +178,7 @@ function InvoicesPage() {
           onRowClick={open}
           rowClassName={(row) => (row.status === "cancelada" || row.status === "substituida" ? "opacity-60" : undefined)}
           empty={filtered
-            ? <EmptyState icon="search-x" title="Nenhuma nota com esses filtros." action={<Button variant="outline" size="sm" onClick={() => { setQ(""); setFrom(""); setTo(""); setView("todas"); }}>Limpar filtros</Button>} />
+            ? <EmptyState icon="search-x" title="Nenhuma nota com esses filtros." action={<Button variant="outline" size="sm" onClick={() => { setQ(""); setFrom(""); setTo(""); setView("todas"); setEntityId(null); }}>Limpar filtros</Button>} />
             : <EmptyState title="Nenhuma nota ainda." description="A primeira nota pode ser avulsa: escolha o cliente, o serviço e o valor." action={canEmit && <Button size="sm" onClick={() => navigate({ to: "/financeiro/notas/nova" })}><Icon name="plus" className="w-4 h-4" /> Nova nota</Button>} />} />
 
         <ListFooter total={data?.total ?? 0} page={page} limit={limit} limits={LIMITS} onPageChange={setPage} onLimitChange={(n) => { setLimit(n); setPage(1); }} />

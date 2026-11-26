@@ -34,9 +34,15 @@ export interface TakerSnapshot {
   address?: { ibge: string | null; cityName?: string | null; uf?: string | null; cep: string; street: string; number: string; complement?: string | null; district: string } | null;
 }
 
+/** CNPJ do grupo de um registro, como as listas mostram. */
+export interface EntityRef { tradeName: string; color: string | null; cnpj: string }
+
 export interface Invoice {
   id: number;
   status: InvoiceStatus;
+  /** CNPJ do grupo que emite a nota */
+  entityId: number | null;
+  entity?: EntityRef | null;
   statusLabel: string;
   provider: "sefin" | "externa";
   environment: "restrita" | "producao";
@@ -124,6 +130,8 @@ export interface InvoiceList {
 
 export interface ServiceCode {
   id: number;
+  /** CNPJ do grupo (nulo = vale para todos) */
+  entityId: number | null;
   name: string;
   nationalCode: string;
   nationalLabel: string | null;
@@ -142,6 +150,7 @@ export interface ServiceCode {
 }
 
 export interface FiscalSettings {
+  entityId: number;
   environment: "restrita" | "producao";
   municipalRegistration: string | null;
   simplesNacional: number;
@@ -165,13 +174,15 @@ export interface FiscalSettings {
   certificateUpdatedAt: string | null;
   certificateDaysLeft: number | null;
   hasCertificate: boolean;
-  emitter: { cnpj: string; name: string; ibge: string | null; cityName: string | null; uf: string | null; address: string };
+  emitter: { entityId: number; tradeName: string; cnpj: string; name: string; ibge: string | null; cityName: string | null; uf: string | null; address: string };
   serviceCodes: number;
   ready: boolean;
   pending: string[];
 }
 
 export interface Preview {
+  entityId: number;
+  emitter: { entityId: number; tradeName: string; cnpj: string; name: string };
   taker: TakerSnapshot;
   description: string;
   notes: string | null;
@@ -190,12 +201,27 @@ export interface Preview {
 
 export const FISCAL_KEYS = { settings: "fiscalSettings", invoices: "fiscalInvoices", invoice: "fiscalInvoice", services: "fiscalServiceCodes" } as const;
 
-export function useFiscalSettings(enabled = true) {
-  return useQuery({ queryKey: [FISCAL_KEYS.settings], queryFn: async () => (await api.get<FiscalSettings>("fiscal/settings")).data, enabled });
+/** Configuração fiscal de um CNPJ do grupo (sem `entityId`, a do CNPJ padrão). */
+export function useFiscalSettings(enabled = true, entityId?: number | null) {
+  return useQuery({
+    queryKey: [FISCAL_KEYS.settings, entityId ?? null],
+    queryFn: async () => (await api.get<FiscalSettings>("fiscal/settings", { params: entityId ? { entityId } : {} })).data,
+    enabled,
+  });
 }
 
-export function useServiceCodes(all = false) {
-  return useQuery({ queryKey: [FISCAL_KEYS.services, all], queryFn: async () => (await api.get<ServiceCode[]>("fiscal/service-codes", { params: all ? { all: 1 } : {} })).data });
+/** Situação fiscal de cada CNPJ do grupo (pronto para emitir? o que falta?). */
+export interface FiscalOverview { entityId: number; tradeName: string; cnpj: string; color: string | null; environment: "restrita" | "producao"; hasCertificate: boolean; certificateDaysLeft: number | null; ready: boolean; pending: string[] }
+export function useFiscalOverview(enabled = true) {
+  return useQuery({ queryKey: [FISCAL_KEYS.settings, "overview"], queryFn: async () => (await api.get<FiscalOverview[]>("fiscal/settings/overview")).data, enabled });
+}
+
+/** Serviços fiscais; com `entityId`, só os que valem para aquele CNPJ (os dele e os de todos). */
+export function useServiceCodes(all = false, entityId?: number | null) {
+  return useQuery({
+    queryKey: [FISCAL_KEYS.services, all, entityId ?? null],
+    queryFn: async () => (await api.get<ServiceCode[]>("fiscal/service-codes", { params: { ...(all ? { all: 1 } : {}), ...(entityId ? { entityId } : {}) } })).data,
+  });
 }
 
 export const formatDoc = (doc?: string | null) => {
@@ -229,6 +255,8 @@ export async function openFile(path: string, fileName: string, download = false,
 /** Inscrição paga de turma aberta sem nota (GET fiscal/training/pending). */
 export interface PendingTraining {
   subscriptionId: number;
+  /** CNPJ da turma: a nota sai por ele */
+  entityId: number | null;
   name: string;
   cpf: string;
   email: string;
@@ -249,6 +277,8 @@ export function usePendingTraining(enabled = true) {
 export type ReceivedStatus = "nova" | "lancada" | "ignorada" | "cancelada";
 export interface ReceivedInvoice {
   id: number;
+  entityId: number | null;
+  entity?: EntityRef | null;
   nsu: number;
   accessKey: string;
   number: string | null;

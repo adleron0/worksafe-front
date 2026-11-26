@@ -6,6 +6,7 @@ import Input from "@/components/general-components/Input";
 import Select from "@/components/general-components/Select";
 import CalendarPicker from "@/components/general-components/Calendar";
 import { FormPageGrid, FormSection, SummaryRow } from "@/components/general-components/FormPage";
+import { EntitySelect, useEntities } from "@/components/general-components/EntitySelect";
 import { SimpleEntity, SimplePages, useSimpleSave } from "../-shared/SimpleCrud";
 import { BankAccount, bankTypeLabel, bankTypeOptions, formatMoney, gatewayOptions } from "../-shared/financial";
 
@@ -43,7 +44,9 @@ export default function BankAccountForm({ formData, close, onSaved }: { formData
     openingBalance: Number(formData?.openingBalance ?? 0),
     openingBalanceDate: formData?.openingBalanceDate ? formData.openingBalanceDate.slice(0, 10) : "",
     isDefault: formData?.isDefault ?? false,
+    entityId: formData?.entityId ?? null as number | null,
   });
+  const { byId, multi } = useEntities();
   const { save, isPending, error, setError } = useSimpleSave(BANK_ACCOUNT_ENTITY, formData, close, onSaved);
   const set = (name: string, value: string | number | string[] | null) =>
     setState((prev) => ({ ...prev, [name]: Array.isArray(value) ? value[0] ?? "" : value ?? "" }));
@@ -56,7 +59,9 @@ export default function BankAccountForm({ formData, close, onSaved }: { formData
     if (isGateway && !state.gateway) return setError("Escolha o provedor");
     setError("");
     // "" limpa o campo na API (o FormData não envia null)
-    save({ ...state, name: state.name.trim(), gateway: isGateway ? state.gateway : "", isDefault: String(state.isDefault) });
+    const { entityId, ...rest } = state;
+    // sem CNPJ escolhido, o banco usa o padrão
+    save({ ...rest, ...(entityId ? { entityId } : {}), name: state.name.trim(), gateway: isGateway ? state.gateway : "", isDefault: String(state.isDefault) });
   };
 
   const gatewayName = gatewayOptions.find((g) => g.id === state.gateway)?.name;
@@ -69,6 +74,7 @@ export default function BankAccountForm({ formData, close, onSaved }: { formData
           <SummaryRow label="Data do saldo">{state.openingBalanceDate ? state.openingBalanceDate.split("-").reverse().join("/") : "Data inicial do financeiro"}</SummaryRow>
           <SummaryRow label="Conta">{state.name.trim() || "—"}</SummaryRow>
           <SummaryRow label="Tipo">{bankTypeLabel(state.type)}</SummaryRow>
+          {multi && <SummaryRow label="Empresa">{(state.entityId && byId.get(state.entityId)?.tradeName) || "Automático"}</SummaryRow>}
           {isGateway && <SummaryRow label="Provedor">{gatewayName ?? "—"}</SummaryRow>}
           <SummaryRow label="Padrão na baixa">{state.isDefault ? "Sim" : "Não"}</SummaryRow>
         </section>
@@ -88,6 +94,8 @@ export default function BankAccountForm({ formData, close, onSaved }: { formData
               <Label htmlFor="type">Tipo</Label>
               <Select name="type" options={bankTypeOptions} state={state.type} onChange={set} placeholder="Selecione" modal />
             </div>
+            <EntitySelect value={state.entityId} onChange={(id) => setState((prev) => ({ ...prev, entityId: id }))}
+              label="A quem pertence a conta" hint="O CNPJ do grupo que é dono desta conta." className="sm:col-span-2" />
             {isGateway && (
               <div>
                 <Label htmlFor="gateway">Provedor <span>*</span></Label>

@@ -9,7 +9,7 @@ export interface CustomerOrder { number: string | null; date: string | null; fil
 export type ContractStatus = "vigente" | "concluido" | "cancelado";
 
 export interface ContractRow {
-  id: number; number: string; kind: ProposalKind; status: ContractStatus; title: string; value: number; acceptedAt: string; proposalId: number;
+  id: number; number: string; kind: ProposalKind; entityId?: number | null; status: ContractStatus; title: string; value: number; acceptedAt: string; proposalId: number;
   customer: { id: number; name: string }; installments: number; billed: number; received: number; toBill: number;
 }
 
@@ -33,7 +33,9 @@ export interface ContractClassSlot {
 }
 
 export interface Contract {
-  id: number; number: string; kind: ProposalKind; status: ContractStatus; title: string; value: number; acceptedAt: string;
+  id: number; number: string; kind: ProposalKind;
+  /** CNPJ do grupo que vendeu (herdado da proposta) */
+  entityId?: number | null; status: ContractStatus; title: string; value: number; acceptedAt: string;
   startDate: string | null; endDate: string | null; notes: string | null; statusNote: string | null; customerOrder: CustomerOrder; serviceOrder?: { id: number; number: string; status: string } | null;
   customer: CustomerOption; proposal: { id: number; number: string } | null; documentHash: string | null; hasDocument: boolean;
   signer: { name?: string; cpf?: string; role?: string; email?: string; ip?: string; userAgent?: string; at?: string; codeVerified?: boolean; manual?: boolean; note?: string } | null;

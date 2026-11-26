@@ -12,17 +12,21 @@ import {
   ICompanyGatewayForm,
 } from "../../-interfaces/entity.interface";
 import { IDefaultEntity } from "@/general-interfaces/defaultEntity.interface";
+import { EntitySelect } from "@/components/general-components/EntitySelect";
 
 interface AsaasFormProps {
   formData: ICompanyGateway | null;
   entity: IDefaultEntity;
   onClose: () => void;
+  /** CNPJ sugerido ao conectar uma conta nova */
+  defaultEntityId?: number;
 }
 
 const AsaasForm: React.FC<AsaasFormProps> = ({
   formData,
   entity,
   onClose,
+  defaultEntityId,
 }) => {
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
@@ -34,6 +38,7 @@ const AsaasForm: React.FC<AsaasFormProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [entityId, setEntityId] = useState<number | null>(formData?.entityId ?? defaultEntityId ?? null);
 
   useEffect(() => {
     if (formData) {
@@ -49,8 +54,9 @@ const AsaasForm: React.FC<AsaasFormProps> = ({
         active: true,
       });
     }
+    setEntityId(formData?.entityId ?? defaultEntityId ?? null);
     setErrors({});
-  }, [formData]);
+  }, [formData, defaultEntityId]);
 
   const handleChange = (
     name: string,
@@ -138,6 +144,8 @@ const AsaasForm: React.FC<AsaasFormProps> = ({
         token: form.token,
       }),
       active: form.active,
+      // sem escolha, a API usa o CNPJ padrão
+      ...(entityId ? { entityId } : {}),
     };
 
     if (formData) {
@@ -182,6 +190,9 @@ const AsaasForm: React.FC<AsaasFormProps> = ({
           </svg>
         </a>
       </div>
+
+      <EntitySelect value={entityId} onChange={setEntityId} label="Empresa dona da conta Asaas (CNPJ)"
+        hint="As cobranças desta empresa saem por esta conta. Cada CNPJ pode ter a própria conta Asaas." />
 
       {/* Token de API */}
       <div className="space-y-2">

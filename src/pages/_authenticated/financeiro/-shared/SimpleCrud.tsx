@@ -41,13 +41,17 @@ interface SimpleCrudProps<T extends Row> {
   /** formulário em tela própria (cadastros com mais de 4 campos): rotas de novo e de edição */
   pages?: SimplePages;
   inactivateWarning?: string;
+  /** filtros extras da lista (ex.: entityId), mandados para a API */
+  listParams?: Array<{ key: string; value: string | number }>;
+  /** campos extras na barra da lista (ex.: filtro de empresa) */
+  toolbarExtra?: React.ReactNode;
 }
 
 /** Rotas das telas de cadastro: `edit` tem um parâmetro (`param`) com o id. */
 export interface SimplePages { list: string; new: string; edit: string; param: string }
 
 /** Listagem + gaveta de cadastro dos cadastros simples do financeiro. */
-export default function SimpleCrud<T extends Row>({ entity, columns, renderForm, pages, inactivateWarning }: SimpleCrudProps<T>) {
+export default function SimpleCrud<T extends Row>({ entity, columns, renderForm, pages, inactivateWarning, listParams = [], toolbarExtra }: SimpleCrudProps<T>) {
   const { can } = useVerify();
   const navigate = useNavigate();
   const { showLoader, hideLoader } = useLoader();
@@ -58,9 +62,10 @@ export default function SimpleCrud<T extends Row>({ entity, columns, renderForm,
   const listKey = simpleListKey(entity);
 
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery<{ rows: T[]; total: number } | undefined, ApiError>({
-    queryKey: [listKey, searchParams],
+    queryKey: [listKey, searchParams, listParams],
     queryFn: () => get(entity.model, "", [
       ...Object.entries(searchParams).map(([key, value]) => ({ key, value })),
+      ...listParams,
       { key: "order-name", value: "asc" },
       { key: "show", value: "_count" },
     ]),
@@ -124,6 +129,7 @@ export default function SimpleCrud<T extends Row>({ entity, columns, renderForm,
 
       <ListCard>
         <ListToolbar search={{ value: searchParams["like-name"] ?? "", onChange: handleTextSearch, placeholder: "Buscar pelo nome" }}>
+          {toolbarExtra}
           {canCreate && <Button onClick={openNew}><Icon name="plus" className="w-4 h-4" /> <span className="hidden sm:inline">{novo}</span></Button>}
         </ListToolbar>
 
@@ -133,8 +139,8 @@ export default function SimpleCrud<T extends Row>({ entity, columns, renderForm,
           onRowClick={(item) => { if (canUpdate && !item.inactiveAt) edit(item); }}
           rowClassName={(item) => (item.inactiveAt ? "opacity-60" : undefined)}
           actions={rowActions}
-          empty={searchParams["like-name"]
-            ? <EmptyState icon="search-x" title="Nada encontrado com esse nome." action={<Button variant="outline" size="sm" onClick={() => handleTextSearch("")}>Limpar busca</Button>} />
+          empty={searchParams["like-name"] || listParams.length
+            ? <EmptyState icon="search-x" title={searchParams["like-name"] ? "Nada encontrado com esse nome." : "Nada encontrado com esse filtro."} action={<Button variant="outline" size="sm" onClick={() => handleTextSearch("")}>Limpar busca</Button>} />
             : <EmptyState title={`Nenhum${entity.article === "a" ? "a" : ""} ${entity.name.toLowerCase()} cadastrad${entity.article}.`} action={canCreate && <Button size="sm" onClick={openNew}><Icon name="plus" className="w-4 h-4" /> {novo}</Button>} />} />
 
         <ListFooter total={data?.total ?? 0} page={searchParams.page} limit={searchParams.limit} limits={[10, 30, 50, 100]}

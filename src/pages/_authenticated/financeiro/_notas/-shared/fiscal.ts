@@ -85,7 +85,8 @@ export interface Invoice {
 }
 
 export interface InvoiceOrigin {
-  kind: "installments" | "measurement" | "rental";
+  kind: "installments" | "measurement" | "rental" | "contract";
+  mode?: "total" | "saldo" | "livre";
   contractId: number;
   installmentIds?: number[];
   measurementId?: number;

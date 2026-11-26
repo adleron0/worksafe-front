@@ -27,6 +27,7 @@ import { KIND_LABEL, formatCnpj } from "../-shared/proposals";
 import { docLabel } from "@/utils/documento";
 import VagasDoItem, { useContractReservations } from "@/pages/_authenticated/treinamentos/_turmas/-empresas/VagasDoItem";
 import { useBotContext } from "@/pages/_authenticated/bots/-shared/bot-chat";
+import { ContractFiscalCard } from "../../financeiro/_notas/-shared/ContractFiscal";
 
 export const Route = createFileRoute("/_authenticated/comercial/_contratos/contratos_/$contractId")({
   component: ContractPage,
@@ -317,6 +318,7 @@ function ContractPage() {
         <aside className="grid gap-4">
           <CustomerOrderCard contractId={contract.id} order={contract.customerOrder} canEdit={canUpdate} onSaved={apply} />
           <RetentionRatesCard contract={contract} canEdit={canUpdate} onSaved={apply} />
+          <ContractFiscalCard contractId={contract.id} />
           <section className="rounded-card border bg-card p-4 text-sm grid gap-1">
             <h2 className="font-semibold text-base">Cliente</h2>
             <p className="font-medium">{contract.customer.corporateName}</p>

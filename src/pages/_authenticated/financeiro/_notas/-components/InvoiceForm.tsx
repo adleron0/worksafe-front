@@ -176,7 +176,7 @@ export default function InvoiceForm({ invoice, external = false, draft }: { invo
       receivable: origin
         ? { dueDate: state.dueDate || undefined, paymentMethod: state.paymentMethod }
         : state.createReceivable ? { create: true, dueDate: state.dueDate, paymentMethod: state.paymentMethod } : undefined,
-      origin: origin ? { kind: origin.kind, contractId: origin.contractId, installmentIds: origin.installmentIds, measurementId: origin.measurementId, rentalId: origin.rentalId } : undefined,
+      origin: origin ? { kind: origin.kind, contractId: origin.contractId, installmentIds: origin.installmentIds, measurementId: origin.measurementId, rentalId: origin.rentalId, mode: origin.mode } : undefined,
     };
   }, [state, origin]);
 
@@ -305,7 +305,9 @@ export default function InvoiceForm({ invoice, external = false, draft }: { invo
       {origin && (
         <div className="rounded-card border border-primary/40 bg-primary-soft p-4 text-sm">
           <p className="font-semibold flex items-center gap-1.5"><Icon name="link" className="w-4 h-4" /> Nota de {origin.label ?? "uma origem do contrato"}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Quando a nota for autorizada, o sistema fatura essa origem com o número da nota: conta a receber, caução, comissão e retenções. O cliente e o valor vêm da origem.</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{origin.kind === "contract"
+            ? "Esta nota cobre o contrato e não gera cobrança agora. Ao faturar cada parcela ou boletim, escolha \"Usar nota já emitida\": a conta a receber sai com o número desta nota e o saldo dela diminui."
+            : "Quando a nota for autorizada, o sistema fatura essa origem com o número da nota: conta a receber, caução, comissão e retenções. O cliente e o valor vêm da origem."}</p>
         </div>
       )}
 
@@ -384,8 +386,9 @@ export default function InvoiceForm({ invoice, external = false, draft }: { invo
 
       <FormSection title="Valores e retenções" description="Informe as alíquotas que o cliente retém; o sistema calcula os valores e o líquido.">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div><Label>Valor do serviço <span>*</span></Label><Input name="grossValue" format="currency" value={state.grossValue} disabled={!!origin} onValueChange={(_, v) => set("grossValue", Number(v) || 0)} className="mt-1" />
-            {origin && <p className="text-[11px] text-muted-foreground mt-0.5">O valor da origem (antes da caução).</p>}</div>
+          <div><Label>Valor do serviço <span>*</span></Label><Input name="grossValue" format="currency" value={state.grossValue} disabled={!!origin && origin.mode !== "livre"} onValueChange={(_, v) => set("grossValue", Number(v) || 0)} className="mt-1" />
+            {origin && origin.mode !== "livre" && <p className="text-[11px] text-muted-foreground mt-0.5">O valor da origem (antes da caução).</p>}
+            {origin?.mode === "livre" && <p className="text-[11px] text-muted-foreground mt-0.5">Valor livre: adiantamento, aditivo ou parte do contrato.</p>}</div>
           <div><Label>Desconto incondicionado</Label><Input name="discountValue" format="currency" value={state.discountValue} onValueChange={(_, v) => set("discountValue", Number(v) || 0)} className="mt-1" /></div>
           <div><Label>Alíquota do ISS (%)</Label><Input name="issRate" value={state.issRate} inputMode="decimal" placeholder="a do serviço fiscal" onValueChange={(_, v) => set("issRate", String(v))} className="mt-1" /></div>
         </div>
@@ -411,7 +414,7 @@ export default function InvoiceForm({ invoice, external = false, draft }: { invo
         <div><Label>Observações da nota</Label><Input type="textArea" name="notes" rows={2} value={state.notes} placeholder={settings?.defaultNotes ?? ""} onValueChange={(_, v) => set("notes", String(v))} className="mt-1" /></div>
       </FormSection>
 
-      {origin && (
+      {origin && origin.kind !== "contract" && (
         <FormSection title="Cobrança" description="A conta a receber sai do faturamento da origem quando a nota for autorizada.">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ import {
 } from "../-shared/measurement";
 import { WorkReport, WorkReportPaper, printWorkReport } from "../-shared/measurement-report";
 import EmitNfseCallout from "../../financeiro/_notas/-shared/EmitNfseCallout";
+import { contractFiscalKey, UseIssuedInvoice } from "../../financeiro/_notas/-shared/ContractFiscal";
 
 type Done = (contract: Contract) => void;
 const plusDays = (days: number) => { const d = new Date(); d.setDate(d.getDate() + days); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
@@ -296,9 +297,15 @@ export function WorkBillDialog({ contract, measurement, onClose, onDone }: {
   const [form, setForm] = useState({ invoiceNumber: "", invoiceIssuedAt: todayIso(), dueDate: plusDays(30), paymentMethod: "boleto" });
   const [retentions, setRetentions] = useState<RetentionState>(() => retentionState(measurement.invoiceValue, contract.retentionRates));
   const [error, setError] = useState("");
+  const queryClient = useQueryClient();
+  const [covering, setCovering] = useState<{ id: number; number: string; issuedAt: string | null } | null>(null);
+  const pickCovering = (inv: typeof covering) => {
+    setCovering(inv);
+    setForm((f) => ({ ...f, invoiceNumber: inv?.number ?? "", invoiceIssuedAt: inv?.issuedAt ? new Date(new Date(inv.issuedAt).getTime() - 3 * 3600 * 1000).toISOString().slice(0, 10) : todayIso() }));
+  };
   const { mutate, isPending } = useMutation({
-    mutationFn: () => commercialApi.post<Contract>(`contracts/${contract.id}/works/${measurement.id}/bill`, { ...form, retentions: retentionList(retentions) }),
-    onSuccess: (result) => { onDone(result); toast({ title: `${measurement.label} faturado`, description: "A conta a receber já aparece em Financeiro → Contas a Receber.", variant: "success" }); onClose(); },
+    mutationFn: () => commercialApi.post<Contract>(`contracts/${contract.id}/works/${measurement.id}/bill`, { ...form, retentions: retentionList(retentions), fiscalInvoiceId: covering?.id }),
+    onSuccess: (result) => { queryClient.invalidateQueries({ queryKey: contractFiscalKey(contract.id) }); onDone(result); toast({ title: `${measurement.label} faturado`, description: "A conta a receber já aparece em Financeiro → Contas a Receber.", variant: "success" }); onClose(); },
     onError: (err) => setError(errorMessage(err)),
   });
   return (
@@ -318,12 +325,13 @@ export function WorkBillDialog({ contract, measurement, onClose, onDone }: {
           setError(""); mutate();
         }}>
           <EmitNfseCallout origin={{ kind: "measurement", contractId: contract.id, measurementId: measurement.id }} onLeave={onClose} />
+          <UseIssuedInvoice contractId={contract.id} amount={measurement.invoiceValue} value={covering?.id ?? null} onChange={pickCovering} />
           <WorkLinesTable lines={measurement.lines} invoiceValue={measurement.invoiceValue} depositValue={measurement.depositValue} value={measurement.value} />
           <div className="grid sm:grid-cols-2 gap-3">
             <div><Label htmlFor="workNf">Número da nota <span>*</span></Label>
-              <ShadInput id="workNf" className="mt-1" value={form.invoiceNumber} maxLength={60} autoFocus onChange={(e) => setForm((f) => ({ ...f, invoiceNumber: e.target.value }))} /></div>
+              <ShadInput id="workNf" className="mt-1" value={form.invoiceNumber} maxLength={60} autoFocus disabled={!!covering} onChange={(e) => setForm((f) => ({ ...f, invoiceNumber: e.target.value }))} /></div>
             <div><Label>Data da nota <span>*</span></Label>
-              <CalendarPicker mode="single" name="workIssued" className="mt-1 w-full" value={form.invoiceIssuedAt} fromYear={2024} toYear={2040} onValueChange={(_, value) => setForm((f) => ({ ...f, invoiceIssuedAt: value ?? "" }))} /></div>
+              <CalendarPicker mode="single" name="workIssued" className="mt-1 w-full" value={form.invoiceIssuedAt} disabled={!!covering} fromYear={2024} toYear={2040} onValueChange={(_, value) => setForm((f) => ({ ...f, invoiceIssuedAt: value ?? "" }))} /></div>
             <div><Label>Vencimento <span>*</span></Label>
               <CalendarPicker mode="single" name="workDue" className="mt-1 w-full" value={form.dueDate} fromYear={2024} toYear={2040} onValueChange={(_, value) => setForm((f) => ({ ...f, dueDate: value ?? "" }))} /></div>
             <div><Label>Forma de pagamento</Label>

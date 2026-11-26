@@ -113,7 +113,7 @@ export default function InvoiceView({ invoice }: { invoice: Invoice }) {
           </div>
         )}
         {invoice.origin?.label && (
-          <p className="rounded-card border bg-muted/50 p-3 text-sm flex items-center gap-1.5"><Icon name="link" className="w-4 h-4" /> Nota de {invoice.origin.label}{invoice.originBilledAt ? " · faturada" : ""}</p>
+          <p className="rounded-card border bg-muted/50 p-3 text-sm flex items-center gap-1.5"><Icon name="link" className="w-4 h-4" /> Nota de {invoice.origin.label}{invoice.origin.kind === "contract" ? " · as parcelas usam o saldo desta nota ao serem faturadas" : invoice.originBilledAt ? " · faturada" : ""}</p>
         )}
         {invoice.status === "cancelada" && <p className="rounded-card border bg-muted p-3 text-sm">Cancelada em {dateTimeBr(invoice.cancelledAt)}: {invoice.cancelReason}</p>}
         {invoice.status === "substituida" && invoice.replacedById && (

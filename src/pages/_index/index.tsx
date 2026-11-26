@@ -17,7 +17,7 @@ import { LoginData } from "@/general-interfaces/auth.interface";
 import { useAuth } from "@/context/AuthContext";
 import { formatCNPJ, unformatCNPJ } from "@/utils/cpnj-mask";
 import DynamicLogo from "@/components/general-components/DynamicLogo";
-import { ArrowUpRight, Building2, ChevronDown, KeyRound, Lock, Mail, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Building2, KeyRound, Lock, Mail, ShieldCheck } from "lucide-react";
 import {
   GOOGLE_ERRORS,
   exchangeGoogleTicket,
@@ -46,7 +46,6 @@ function Login() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
   // Última resposta guardada: na próxima visita a tela já abre certa, sem o
   // formulário aparecer e sumir enquanto a API responde.
@@ -269,19 +268,12 @@ function Login() {
                   </a>
                 )}
               </Button>
-              <button
-                type="button"
-                onClick={() => setShowPasswordForm((v) => !v)}
-                className="mx-auto mt-4 flex items-center gap-1 text-xs text-muted-foreground transition hover:text-foreground"
-              >
-                Entrar com e-mail e senha
-                <ChevronDown className={`h-3.5 w-3.5 transition ${showPasswordForm ? "rotate-180" : ""}`} />
-              </button>
             </>
           )}
 
-          {!waitingGoogle && (!googleOn || showPasswordForm) && (
-          <form onSubmit={handleSubmit(onSubmit)} className={`space-y-4 ${googleOn ? "mt-4" : ""}`}>
+          {/* senha só existe com o login do Google desligado (base local/demo ou emergência) */}
+          {!waitingGoogle && !googleOn && (
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">E-mail</Label>
               <div className="relative">
@@ -356,9 +348,9 @@ function Login() {
             <span className="text-xs text-muted-foreground">sem acesso?</span>
             <Separator className="flex-1" />
           </div>
-          <Button variant="outline" className="h-11 w-full rounded-xl">
-            Falar com o suporte
-          </Button>
+          <p className="text-center text-sm text-muted-foreground">
+            Entre com a conta Google da empresa e peça o seu perfil: um gestor recebe o pedido e libera o acesso.
+          </p>
 
           <p className="mt-8 text-center text-xs text-muted-foreground">
             Ao entrar você concorda com os{" "}

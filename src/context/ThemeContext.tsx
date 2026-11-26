@@ -131,44 +131,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   const applyTheme = useCallback((primaryColor: string, secondaryColor: string | null, faviconUrl: string | null) => {
     generateTheme(primaryColor, secondaryColor || undefined);
     
-    // Aplicar favicon
-    if (faviconUrl) {
-      // Detectar o tipo de imagem baseado na URL
-      let imageType = 'image/x-icon'; // padrão
-      if (faviconUrl.includes('.png')) {
-        imageType = 'image/png';
-      } else if (faviconUrl.includes('.webp')) {
-        imageType = 'image/webp';
-      } else if (faviconUrl.includes('.jpg') || faviconUrl.includes('.jpeg')) {
-        imageType = 'image/jpeg';
-      } else if (faviconUrl.includes('.svg')) {
-        imageType = 'image/svg+xml';
-      }
-      
-      // Remover TODOS os favicons existentes primeiro
-      const allFavicons = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]');
-      allFavicons.forEach(fav => fav.remove());
-      
-      // Criar novo favicon
-      const favicon = document.createElement('link');
-      favicon.rel = 'icon';
-      favicon.type = imageType;
-      // Adicionar timestamp para forçar recarregamento
-      const timestamp = new Date().getTime();
-      favicon.href = `${faviconUrl}${faviconUrl.includes('?') ? '&' : '?'}t=${timestamp}`;
-      
-      // Especificar sizes para garantir proporção quadrada
-      favicon.setAttribute('sizes', 'any'); // 'any' permite que o navegador use o tamanho apropriado
-      
-      // Adicionar ao head
-      document.head.appendChild(favicon);
-      
-      // Para melhor compatibilidade, adicionar também apple-touch-icon
-      const appleTouchIcon = document.createElement('link');
-      appleTouchIcon.rel = 'apple-touch-icon';
-      appleTouchIcon.href = faviconUrl;
-      document.head.appendChild(appleTouchIcon);
-    }
+    // favicon é fixo (WorkSafe, em public/favicon.ico): o sistema não é multiempresa
+    void faviconUrl;
   }, []);
 
   // Função principal para carregar o tema

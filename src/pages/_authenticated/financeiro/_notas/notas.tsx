@@ -16,7 +16,7 @@ import MonthRangePicker from "@/components/general-components/MonthRangePicker";
 import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import { Button } from "@/components/ui/button";
 import { errorMessage, money } from "../../comercial/-shared/commercial";
-import { dateBr, FISCAL_KEYS, formatDoc, Invoice, InvoiceList, InvoiceStatus, STATUS_INFO, useFiscalSettings } from "./-shared/fiscal";
+import { dateBr, FISCAL_KEYS, formatDoc, Invoice, InvoiceList, InvoiceStatus, STATUS_INFO, useFiscalSettings, usePendingTraining } from "./-shared/fiscal";
 
 export const Route = createFileRoute("/_authenticated/financeiro/_notas/notas")({
   component: InvoicesPage,
@@ -38,6 +38,8 @@ function InvoicesPage() {
   const [limit, setLimit] = useState(20);
   const canEmit = can("emitir_nfse");
   const { data: settings } = useFiscalSettings(can("view_nfse"));
+  const { data: pendingTraining } = usePendingTraining(can("view_nfse"));
+  const toEmit = (pendingTraining ?? []).filter((p) => !p.invoice).length;
 
   const params = { status: view === "todas" ? undefined : view, q: q || undefined, from: from ? `${from}-01` : undefined, to: to ? lastDay(to) : undefined, page, limit };
   const { data, isLoading, isFetching, error, refetch } = useQuery({
@@ -111,6 +113,14 @@ function InvoicesPage() {
         </div>
       )}
 
+      {toEmit > 0 && (
+        <button type="button" onClick={() => navigate({ to: "/financeiro/notas/a-emitir" })}
+          className="mt-3 w-full text-left rounded-card border border-primary/40 bg-primary-soft px-4 py-2.5 text-sm flex items-center justify-between gap-2">
+          <span className="flex items-center gap-1.5"><Icon name="graduation-cap" className="w-4 h-4" /> <b>{toEmit}</b> inscrição(ões) paga(s) de turma aberta sem nota</span>
+          <span className="underline font-medium shrink-0">Notas a emitir</span>
+        </button>
+      )}
+
       {data && data.summary.authorized > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 my-3">
           <div className="rounded-lg border px-3 py-2"><p className="text-xs text-muted-foreground">Autorizadas no recorte</p><p className="text-lg font-semibold tabular-nums">{data.summary.authorized}</p></div>
@@ -132,6 +142,7 @@ function InvoicesPage() {
               label: "Notas",
               items: [
                 { id: "external", label: "Registrar nota emitida fora", icon: "file-input", hidden: !canEmit, onSelect: () => navigate({ to: "/financeiro/notas/nova", search: { externa: "1" } as never }) },
+                { id: "pending", label: "Notas a emitir (treinamento)", icon: "graduation-cap", onSelect: () => navigate({ to: "/financeiro/notas/a-emitir" }) },
                 { id: "config", label: "Configuração fiscal", icon: "settings", hidden: !can("config_fiscal"), onSelect: () => navigate({ to: "/financeiro/fiscal" }) },
               ],
             },

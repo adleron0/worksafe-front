@@ -169,6 +169,7 @@ import { Route as AuthenticatedFinanceiroReceberReceberRecordIdRouteImport } fro
 import { Route as AuthenticatedFinanceiroPagarPagarNovaRouteImport } from './pages/_authenticated/financeiro/_pagar/pagar_.nova'
 import { Route as AuthenticatedFinanceiroPagarPagarPayableIdRouteImport } from './pages/_authenticated/financeiro/_pagar/pagar_.$payableId'
 import { Route as AuthenticatedFinanceiroNotasNotasNovaRouteImport } from './pages/_authenticated/financeiro/_notas/notas_.nova'
+import { Route as AuthenticatedFinanceiroNotasNotasAEmitirRouteImport } from './pages/_authenticated/financeiro/_notas/notas_.a-emitir'
 import { Route as AuthenticatedFinanceiroNotasNotasInvoiceIdRouteImport } from './pages/_authenticated/financeiro/_notas/notas_.$invoiceId'
 import { Route as AuthenticatedFinanceiroFornecedoresFornecedoresNovaRouteImport } from './pages/_authenticated/financeiro/_fornecedores/fornecedores_.nova'
 import { Route as AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRouteImport } from './pages/_authenticated/financeiro/_fornecedores/fornecedores_.$supplierId'
@@ -1141,6 +1142,12 @@ const AuthenticatedFinanceiroNotasNotasNovaRoute =
     path: '/financeiro/notas/nova',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanceiroNotasNotasAEmitirRoute =
+  AuthenticatedFinanceiroNotasNotasAEmitirRouteImport.update({
+    id: '/financeiro/_notas/notas_/a-emitir',
+    path: '/financeiro/notas/a-emitir',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedFinanceiroNotasNotasInvoiceIdRoute =
   AuthenticatedFinanceiroNotasNotasInvoiceIdRouteImport.update({
     id: '/financeiro/_notas/notas_/$invoiceId',
@@ -1473,6 +1480,7 @@ export interface FileRoutesByFullPath {
   '/financeiro/fornecedores/$supplierId': typeof AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute
   '/financeiro/fornecedores/nova': typeof AuthenticatedFinanceiroFornecedoresFornecedoresNovaRoute
   '/financeiro/notas/$invoiceId': typeof AuthenticatedFinanceiroNotasNotasInvoiceIdRoute
+  '/financeiro/notas/a-emitir': typeof AuthenticatedFinanceiroNotasNotasAEmitirRoute
   '/financeiro/notas/nova': typeof AuthenticatedFinanceiroNotasNotasNovaRoute
   '/financeiro/pagar/$payableId': typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
   '/financeiro/pagar/nova': typeof AuthenticatedFinanceiroPagarPagarNovaRoute
@@ -1662,6 +1670,7 @@ export interface FileRoutesByTo {
   '/financeiro/fornecedores/$supplierId': typeof AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute
   '/financeiro/fornecedores/nova': typeof AuthenticatedFinanceiroFornecedoresFornecedoresNovaRoute
   '/financeiro/notas/$invoiceId': typeof AuthenticatedFinanceiroNotasNotasInvoiceIdRoute
+  '/financeiro/notas/a-emitir': typeof AuthenticatedFinanceiroNotasNotasAEmitirRoute
   '/financeiro/notas/nova': typeof AuthenticatedFinanceiroNotasNotasNovaRoute
   '/financeiro/pagar/$payableId': typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
   '/financeiro/pagar/nova': typeof AuthenticatedFinanceiroPagarPagarNovaRoute
@@ -1855,6 +1864,7 @@ export interface FileRoutesById {
   '/_authenticated/financeiro/_fornecedores/fornecedores_/$supplierId': typeof AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute
   '/_authenticated/financeiro/_fornecedores/fornecedores_/nova': typeof AuthenticatedFinanceiroFornecedoresFornecedoresNovaRoute
   '/_authenticated/financeiro/_notas/notas_/$invoiceId': typeof AuthenticatedFinanceiroNotasNotasInvoiceIdRoute
+  '/_authenticated/financeiro/_notas/notas_/a-emitir': typeof AuthenticatedFinanceiroNotasNotasAEmitirRoute
   '/_authenticated/financeiro/_notas/notas_/nova': typeof AuthenticatedFinanceiroNotasNotasNovaRoute
   '/_authenticated/financeiro/_pagar/pagar_/$payableId': typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
   '/_authenticated/financeiro/_pagar/pagar_/nova': typeof AuthenticatedFinanceiroPagarPagarNovaRoute
@@ -2047,6 +2057,7 @@ export interface FileRouteTypes {
     | '/financeiro/fornecedores/$supplierId'
     | '/financeiro/fornecedores/nova'
     | '/financeiro/notas/$invoiceId'
+    | '/financeiro/notas/a-emitir'
     | '/financeiro/notas/nova'
     | '/financeiro/pagar/$payableId'
     | '/financeiro/pagar/nova'
@@ -2236,6 +2247,7 @@ export interface FileRouteTypes {
     | '/financeiro/fornecedores/$supplierId'
     | '/financeiro/fornecedores/nova'
     | '/financeiro/notas/$invoiceId'
+    | '/financeiro/notas/a-emitir'
     | '/financeiro/notas/nova'
     | '/financeiro/pagar/$payableId'
     | '/financeiro/pagar/nova'
@@ -2428,6 +2440,7 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro/_fornecedores/fornecedores_/$supplierId'
     | '/_authenticated/financeiro/_fornecedores/fornecedores_/nova'
     | '/_authenticated/financeiro/_notas/notas_/$invoiceId'
+    | '/_authenticated/financeiro/_notas/notas_/a-emitir'
     | '/_authenticated/financeiro/_notas/notas_/nova'
     | '/_authenticated/financeiro/_pagar/pagar_/$payableId'
     | '/_authenticated/financeiro/_pagar/pagar_/nova'
@@ -3600,6 +3613,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceiroNotasNotasNovaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/financeiro/_notas/notas_/a-emitir': {
+      id: '/_authenticated/financeiro/_notas/notas_/a-emitir'
+      path: '/financeiro/notas/a-emitir'
+      fullPath: '/financeiro/notas/a-emitir'
+      preLoaderRoute: typeof AuthenticatedFinanceiroNotasNotasAEmitirRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/financeiro/_notas/notas_/$invoiceId': {
       id: '/_authenticated/financeiro/_notas/notas_/$invoiceId'
       path: '/financeiro/notas/$invoiceId'
@@ -3941,6 +3961,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute: typeof AuthenticatedFinanceiroFornecedoresFornecedoresSupplierIdRoute
   AuthenticatedFinanceiroFornecedoresFornecedoresNovaRoute: typeof AuthenticatedFinanceiroFornecedoresFornecedoresNovaRoute
   AuthenticatedFinanceiroNotasNotasInvoiceIdRoute: typeof AuthenticatedFinanceiroNotasNotasInvoiceIdRoute
+  AuthenticatedFinanceiroNotasNotasAEmitirRoute: typeof AuthenticatedFinanceiroNotasNotasAEmitirRoute
   AuthenticatedFinanceiroNotasNotasNovaRoute: typeof AuthenticatedFinanceiroNotasNotasNovaRoute
   AuthenticatedFinanceiroPagarPagarPayableIdRoute: typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
   AuthenticatedFinanceiroPagarPagarNovaRoute: typeof AuthenticatedFinanceiroPagarPagarNovaRoute
@@ -4216,6 +4237,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedFinanceiroFornecedoresFornecedoresNovaRoute,
   AuthenticatedFinanceiroNotasNotasInvoiceIdRoute:
     AuthenticatedFinanceiroNotasNotasInvoiceIdRoute,
+  AuthenticatedFinanceiroNotasNotasAEmitirRoute:
+    AuthenticatedFinanceiroNotasNotasAEmitirRoute,
   AuthenticatedFinanceiroNotasNotasNovaRoute:
     AuthenticatedFinanceiroNotasNotasNovaRoute,
   AuthenticatedFinanceiroPagarPagarPayableIdRoute:

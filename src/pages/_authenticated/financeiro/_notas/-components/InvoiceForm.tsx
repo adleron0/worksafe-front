@@ -62,9 +62,16 @@ const pick = (v: string | string[]) => String(Array.isArray(v) ? v[0] ?? "" : v)
 /** Estado do formulário a partir do rascunho sugerido pela origem (parcela, boletim, OL). */
 function stateFromDraft(draft: OriginDraft): State {
   const base = stateFrom(null);
+  const t = draft.taker;
   return {
     ...base,
-    customerId: String(draft.customerId),
+    // inscrição de pessoa física: tomador digitado a partir da inscrição (dá para corrigir)
+    takerMode: draft.takerKind === "avulso" ? "avulso" : "cliente",
+    document: t?.document ?? "",
+    name: t?.name ?? "",
+    email: t?.email ?? "",
+    address: t?.address ? { cep: t.address.cep ?? "", street: t.address.street ?? "", number: t.address.number ?? "", complement: t.address.complement ?? "", district: t.address.district ?? "", cityName: t.address.cityName ?? "", uf: t.address.uf ?? "" } : base.address,
+    customerId: draft.customerId ? String(draft.customerId) : "",
     serviceCodeId: draft.serviceCodeId ? String(draft.serviceCodeId) : "",
     description: draft.description,
     competence: draft.competence,
@@ -176,7 +183,7 @@ export default function InvoiceForm({ invoice, external = false, draft }: { invo
       receivable: origin
         ? { dueDate: state.dueDate || undefined, paymentMethod: state.paymentMethod }
         : state.createReceivable ? { create: true, dueDate: state.dueDate, paymentMethod: state.paymentMethod } : undefined,
-      origin: origin ? { kind: origin.kind, contractId: origin.contractId, installmentIds: origin.installmentIds, measurementId: origin.measurementId, rentalId: origin.rentalId, mode: origin.mode } : undefined,
+      origin: origin ? { kind: origin.kind, contractId: origin.contractId, installmentIds: origin.installmentIds, measurementId: origin.measurementId, rentalId: origin.rentalId, mode: origin.mode, subscriptionIds: origin.subscriptionIds } : undefined,
     };
   }, [state, origin]);
 
@@ -305,7 +312,9 @@ export default function InvoiceForm({ invoice, external = false, draft }: { invo
       {origin && (
         <div className="rounded-card border border-primary/40 bg-primary-soft p-4 text-sm">
           <p className="font-semibold flex items-center gap-1.5"><Icon name="link" className="w-4 h-4" /> Nota de {origin.label ?? "uma origem do contrato"}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{origin.kind === "contract"
+          <p className="text-xs text-muted-foreground mt-0.5">{origin.kind === "subscriptions"
+            ? "A inscrição já foi paga: a nota se liga ao pagamento, sem criar outra cobrança. Confira o CPF e o nome do tomador."
+            : origin.kind === "contract"
             ? "Esta nota cobre o contrato e não gera cobrança agora. Ao faturar cada parcela ou boletim, escolha \"Usar nota já emitida\": a conta a receber sai com o número desta nota e o saldo dela diminui."
             : "Quando a nota for autorizada, o sistema fatura essa origem com o número da nota: conta a receber, caução, comissão e retenções. O cliente e o valor vêm da origem."}</p>
         </div>
@@ -414,7 +423,7 @@ export default function InvoiceForm({ invoice, external = false, draft }: { invo
         <div><Label>Observações da nota</Label><Input type="textArea" name="notes" rows={2} value={state.notes} placeholder={settings?.defaultNotes ?? ""} onValueChange={(_, v) => set("notes", String(v))} className="mt-1" /></div>
       </FormSection>
 
-      {origin && origin.kind !== "contract" && (
+      {origin && origin.kind !== "contract" && origin.kind !== "subscriptions" && (
         <FormSection title="Cobrança" description="A conta a receber sai do faturamento da origem quando a nota for autorizada.">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

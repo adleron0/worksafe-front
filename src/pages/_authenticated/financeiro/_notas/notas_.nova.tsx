@@ -7,13 +7,13 @@ import { errorMessage } from "../../comercial/-shared/commercial";
 import { OriginDraft } from "./-shared/fiscal";
 import InvoiceForm from "./-components/InvoiceForm";
 
-type Search = { externa?: string; origem?: string; contrato?: string; parcelas?: string; boletim?: string; ol?: string; modo?: string };
+type Search = { externa?: string; origem?: string; contrato?: string; parcelas?: string; boletim?: string; ol?: string; modo?: string; inscricoes?: string };
 const str = (v: unknown) => (v === undefined || v === null || v === "" ? undefined : String(v));
 
 export const Route = createFileRoute("/_authenticated/financeiro/_notas/notas_/nova")({
   validateSearch: (search: Record<string, unknown>): Search => ({
     externa: search.externa === "1" || search.externa === 1 ? "1" : undefined,
-    origem: str(search.origem), contrato: str(search.contrato), parcelas: str(search.parcelas), boletim: str(search.boletim), ol: str(search.ol), modo: str(search.modo),
+    origem: str(search.origem), contrato: str(search.contrato), parcelas: str(search.parcelas), boletim: str(search.boletim), ol: str(search.ol), modo: str(search.modo), inscricoes: str(search.inscricoes),
   }),
   component: NewInvoice,
 });
@@ -23,11 +23,11 @@ function NewInvoice() {
   const { can } = useVerify();
   const search = Route.useSearch();
   const external = search.externa === "1";
-  const fromOrigin = !!search.origem && !!search.contrato;
+  const fromOrigin = !!search.origem && (!!search.contrato || !!search.inscricoes);
   const { data: draft, isLoading, error } = useQuery({
-    queryKey: ["fiscalFromOrigin", search.origem, search.contrato, search.parcelas, search.boletim, search.ol, search.modo],
+    queryKey: ["fiscalFromOrigin", search.origem, search.contrato, search.parcelas, search.boletim, search.ol, search.modo, search.inscricoes],
     queryFn: async () => (await api.get<OriginDraft>("fiscal/invoices/from-origin", {
-      params: { kind: search.origem, contractId: search.contrato, installmentIds: search.parcelas, measurementId: search.boletim, rentalId: search.ol, mode: search.modo },
+      params: { kind: search.origem, contractId: search.contrato, installmentIds: search.parcelas, measurementId: search.boletim, rentalId: search.ol, mode: search.modo, subscriptionIds: search.inscricoes },
     })).data,
     enabled: fromOrigin && can("emitir_nfse"),
     retry: false,

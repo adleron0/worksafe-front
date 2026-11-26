@@ -85,7 +85,8 @@ export interface Invoice {
 }
 
 export interface InvoiceOrigin {
-  kind: "installments" | "measurement" | "rental" | "contract";
+  kind: "installments" | "measurement" | "rental" | "contract" | "subscriptions";
+  subscriptionIds?: number[];
   mode?: "total" | "saldo" | "livre";
   contractId: number;
   installmentIds?: number[];
@@ -97,15 +98,16 @@ export interface InvoiceOrigin {
 
 /** Rascunho sugerido a partir de uma origem (GET fiscal/invoices/from-origin). */
 export interface OriginDraft {
-  takerKind: "cliente";
-  customerId: number;
+  takerKind: "cliente" | "avulso";
+  customerId: number | null;
+  taker?: Partial<TakerSnapshot>;
   serviceCodeId: number | null;
   grossValue: number;
   competence: string;
   issWithheld: boolean;
   issRate: number | null;
   retentions: Partial<Record<FederalTax, { rate?: number | null }>>;
-  reference: string;
+  reference: string | null;
   order: string | null;
   description: string;
   origin: InvoiceOrigin;
@@ -147,6 +149,8 @@ export interface FiscalSettings {
   nextDpsNumber: number;
   nextDpsNumberTest: number;
   autoSendEmail: boolean;
+  autoEmitTraining: boolean;
+  autoEmitTrainingSince: string | null;
   defaultNotes: string | null;
   certificateSubject: string | null;
   certificateDocument: string | null;
@@ -214,4 +218,23 @@ export async function openFile(path: string, fileName: string, download = false)
     window.open(url, "_blank", "noopener");
   }
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+/** Inscrição paga de turma aberta sem nota (GET fiscal/training/pending). */
+export interface PendingTraining {
+  subscriptionId: number;
+  name: string;
+  cpf: string;
+  email: string;
+  classId: number | null;
+  className: string | null;
+  courseName: string | null;
+  customer: { id: number; name: string } | null;
+  value: number;
+  paidAt: string | null;
+  invoice: { id: number; status: InvoiceStatus } | null;
+}
+
+export function usePendingTraining(enabled = true) {
+  return useQuery({ queryKey: ["fiscalPendingTraining"], queryFn: async () => (await api.get<PendingTraining[]>("fiscal/training/pending")).data, enabled });
 }

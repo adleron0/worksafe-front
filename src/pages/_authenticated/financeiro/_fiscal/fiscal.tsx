@@ -35,12 +35,12 @@ const pick = (v: string | string[]) => String(Array.isArray(v) ? v[0] ?? "" : v)
 
 interface FormState {
   environment: string; municipalRegistration: string; simplesNacional: string; simplesRegime: string; specialRegime: string;
-  simplesTotalRate: string; pisCofinsCst: string; dpsSeries: string; nextDpsNumber: string; nextDpsNumberTest: string; autoSendEmail: boolean; defaultNotes: string;
+  simplesTotalRate: string; pisCofinsCst: string; dpsSeries: string; nextDpsNumber: string; nextDpsNumberTest: string; autoSendEmail: boolean; autoEmitTraining: boolean; defaultNotes: string;
 }
 const formOf = (s: FiscalSettings): FormState => ({
   environment: s.environment, municipalRegistration: s.municipalRegistration ?? "", simplesNacional: String(s.simplesNacional), simplesRegime: s.simplesRegime ? String(s.simplesRegime) : "1",
   specialRegime: String(s.specialRegime), simplesTotalRate: s.simplesTotalRate !== null ? String(s.simplesTotalRate) : "", pisCofinsCst: s.pisCofinsCst, dpsSeries: s.dpsSeries,
-  nextDpsNumber: String(s.nextDpsNumber), nextDpsNumberTest: String(s.nextDpsNumberTest), autoSendEmail: s.autoSendEmail, defaultNotes: s.defaultNotes ?? "",
+  nextDpsNumber: String(s.nextDpsNumber), nextDpsNumberTest: String(s.nextDpsNumberTest), autoSendEmail: s.autoSendEmail, autoEmitTraining: s.autoEmitTraining, defaultNotes: s.defaultNotes ?? "",
 });
 
 /** Configuração fiscal: certificado A1, dados de emissão, série da DPS e serviços fiscais. */
@@ -196,6 +196,8 @@ function FiscalSettingsPage() {
 
           <FormSection title="Envio e textos" description="O que acontece depois que a nota é autorizada.">
             <label className="flex items-center gap-2 text-sm"><Checkbox checked={form.autoSendEmail} disabled={!canConfig} onCheckedChange={(v) => set("autoSendEmail", v === true)} /> Enviar o PDF e o XML ao contato fiscal do cliente automaticamente</label>
+            <label className="flex items-start gap-2 text-sm"><Checkbox className="mt-0.5" checked={form.autoEmitTraining} disabled={!canConfig} onCheckedChange={(v) => set("autoEmitTraining", v === true)} />
+              <span>Emitir sozinho a nota da inscrição paga em turma aberta<span className="block text-xs text-muted-foreground">Só para os pagamentos de depois de ligar. Inscrição com dado faltando fica como rascunho em Notas a emitir. Vaga paga por contrato tem a nota pelo contrato.</span></span></label>
             <div>
               <Label>Observações padrão da nota</Label>
               <Input type="textArea" name="defaultNotes" rows={3} value={form.defaultNotes} onValueChange={(_, v) => set("defaultNotes", String(v))} disabled={!canConfig} className="mt-1"

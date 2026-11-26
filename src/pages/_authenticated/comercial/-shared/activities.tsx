@@ -48,7 +48,7 @@ export const ACTIVITY_TYPES: Array<{ id: ActivityType; name: string; icon: strin
 ];
 const TYPE_ICON = Object.fromEntries(ACTIVITY_TYPES.map((type) => [type.id, type.icon])) as Record<ActivityType, string>;
 /** Horas de meia em meia, do começo ao fim do dia de trabalho. */
-const TIME_OPTIONS = Array.from({ length: 30 }, (_, index) => {
+export const TIME_OPTIONS = Array.from({ length: 30 }, (_, index) => {
   const time = `${String(6 + Math.floor(index / 2)).padStart(2, "0")}:${index % 2 ? "30" : "00"}`;
   return { id: time, name: time };
 });
@@ -83,11 +83,11 @@ type Mode = "registrar" | "agendar";
 interface UserOption { id: number; name: string }
 
 /** Campos de "marcar o próximo retorno", usados ao registrar um contato e ao concluir um agendado. */
-interface NextState { on: boolean; type: ActivityType; subject: string; dueDate: string; dueTime: string }
-const emptyNext = (): NextState => ({ on: false, type: "ligacao", subject: "", dueDate: "", dueTime: "" });
-const nextPayload = (next: NextState) => (next.on && next.dueDate ? { type: next.type, subject: next.subject, dueDate: next.dueDate, dueTime: next.dueTime || null } : undefined);
+export interface NextState { on: boolean; type: ActivityType; subject: string; dueDate: string; dueTime: string }
+export const emptyNext = (): NextState => ({ on: false, type: "ligacao", subject: "", dueDate: "", dueTime: "" });
+export const nextPayload = (next: NextState) => (next.on && next.dueDate ? { type: next.type, subject: next.subject, dueDate: next.dueDate, dueTime: next.dueTime || null } : undefined);
 
-function NextFields({ next, onChange }: { next: NextState; onChange: (next: NextState) => void }) {
+export function NextFields({ next, onChange }: { next: NextState; onChange: (next: NextState) => void }) {
   const set = <K extends keyof NextState>(key: K, value: NextState[K]) => onChange({ ...next, [key]: value });
   return (
     <div className="rounded-md border p-3">

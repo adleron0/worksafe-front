@@ -18,8 +18,9 @@ interface LiveEvent { kind: "message" | "status" | "conversation" | "channel"; c
 interface Notice { key: number; conversationId: number; name: string; preview: string }
 
 const SOUND_KEY = "ws-chat-sound";
+/** Desligado por padrão (fase de testes): só toca para quem ligar no sininho da caixa. */
 export function soundOn() {
-  try { return localStorage.getItem(SOUND_KEY) !== "off"; } catch { return true; }
+  try { return localStorage.getItem(SOUND_KEY) === "on"; } catch { return false; }
 }
 const soundListeners = new Set<() => void>();
 export function setSound(on: boolean) {

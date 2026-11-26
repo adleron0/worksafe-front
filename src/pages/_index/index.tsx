@@ -171,59 +171,66 @@ function Login() {
 
   return (
     <main className="flex min-h-screen w-full flex-col bg-background md:flex-row">
-      {/* Painel da marca: sempre grafite, com as faixas diagonais da identidade */}
-      <aside className="relative isolate flex w-full flex-col justify-between overflow-hidden bg-[#141312] px-6 py-8 text-white md:min-h-screen md:w-[46%] md:px-14 md:py-12">
-        <div aria-hidden className="pointer-events-none absolute -right-24 -top-1/4 -z-10 h-[150%] w-2/3 -skew-x-[24deg] bg-[linear-gradient(90deg,rgb(229_33_39/0.12)_0_62%,rgb(240_196_25/0.1)_62%_100%)]" />
+      {/* Painel da marca: grafite liso, institucional */}
+      <aside className="relative isolate flex w-full flex-col justify-between overflow-hidden bg-[#111413] px-6 py-7 text-white md:min-h-screen md:w-[44%] md:px-14 md:py-12">
+        {/* grade fina e brilho suave da cor da marca, quase imperceptíveis */}
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 opacity-[0.05] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_top_left,black_30%,transparent_75%)]"
+        />
+        <div aria-hidden className="absolute -bottom-40 -left-40 -z-10 h-96 w-96 rounded-full bg-[#149E5E]/15 blur-3xl" />
+
         <div className="flex items-center justify-between gap-4">
-          <DynamicLogo width={170} height={56} forceWhite />
+          <DynamicLogo width={160} height={44} forceWhite />
           <a
             href="https://worksafebrasil.com.br"
             className="hidden items-center gap-1.5 text-xs text-white/60 transition hover:text-white md:inline-flex"
           >
-            Ir para o site <ArrowUpRight className="h-3.5 w-3.5" />
+            worksafebrasil.com.br <ArrowUpRight className="h-3.5 w-3.5" />
           </a>
         </div>
 
         <div className="mt-8 max-w-md md:mt-0">
-          <span className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
-            <span aria-hidden className="ws-cut" />
-            Intranet WorkSafe
-          </span>
-          <h1 className="mt-4 font-condensed text-5xl uppercase leading-[0.92] md:text-7xl">
-            Área restrita à <span className="text-ws-yellow-400">equipe</span>
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-[#3FC488]">Sistema de gestão</p>
+          <h1 className="mt-3 text-2xl font-semibold leading-tight tracking-tight md:text-4xl">
+            Gestão integrada da WorkSafe Brasil
           </h1>
-          <p className="mt-4 text-sm text-white/70 md:text-base">
-            Sistema interno de gestão: turmas e certificados, comercial, obras e serviços, estoque, financeiro e
-            pessoas.
+          <p className="mt-3 hidden text-sm leading-relaxed text-white/65 md:block md:text-base">
+            Treinamentos e certificados, comercial, obras e serviços, estoque, financeiro e pessoas em um só lugar.
           </p>
-          <ul className="mt-6 hidden flex-wrap gap-2 md:flex">
+          <ul className="mt-8 hidden space-y-3 text-sm text-white/75 md:block">
             {[
-              ["Resgate", "bg-ws-red-500"],
-              ["Treinamentos", "bg-emerald-500"],
-              ["Serviços", "bg-ws-yellow-500"],
-              ["Loja e locações", "bg-ws-blue-500"],
-            ].map(([label, dot]) => (
-              <li key={label} className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-3 py-1 text-xs text-white/80">
-                <span className={`h-1.5 w-1.5 rounded-full ${dot}`} /> {label}
+              "Entrada com a conta Google da empresa",
+              "Cada pessoa vê só o que a sua função exige",
+              "Acessos registrados e protegidos",
+            ].map((item) => (
+              <li key={item} className="flex items-center gap-3">
+                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#149E5E]/20 text-[#3FC488]">
+                  <ShieldCheck className="h-3 w-3" />
+                </span>
+                {item}
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="mt-8 hidden md:block">
-          <p className="flex items-center gap-2 text-xs text-white/50">
-            <Lock className="h-3.5 w-3.5" /> Acesso exclusivo para colaboradores. Os acessos são registrados.
+        <div className="mt-8 hidden border-t border-white/10 pt-6 md:block">
+          <p className="flex items-center gap-2 text-xs text-white/55">
+            <Lock className="h-3.5 w-3.5" /> Acesso exclusivo para colaboradores e convidados.
           </p>
-          <p className="mt-2 text-xs text-white/50">
+          <p className="mt-2 text-xs text-white/55">
             Procurando validar um certificado?{" "}
-            <a href="/certificados" className="text-white/80 underline-offset-4 hover:text-white hover:underline">
+            <a href="/certificados" className="text-white underline-offset-4 hover:underline">
               Consulte aqui
             </a>
             .
           </p>
+          <p className="mt-4 text-[11px] text-white/35">
+            © {new Date().getFullYear()} Worksafe Serviços Ltda ·{" "}
+            <a href="https://www.worksafebrasil.com.br/privacidade" className="hover:text-white/70">Privacidade</a> ·{" "}
+            <a href="https://www.worksafebrasil.com.br/termos" className="hover:text-white/70">Termos</a>
+          </p>
         </div>
-        {/* assinatura das quatro frentes */}
-        <div aria-hidden className="ws-fita absolute inset-x-0 bottom-0" />
       </aside>
 
       {/* Formulário */}
@@ -233,7 +240,7 @@ function Login() {
             <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               <ShieldCheck className="h-4 w-4 text-primary" /> Acesso seguro
             </p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">Entrar na intranet</h2>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">Entrar no sistema</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {waitingGoogle
                 ? "Carregando…"
@@ -354,7 +361,10 @@ function Login() {
           </Button>
 
           <p className="mt-8 text-center text-xs text-muted-foreground">
-            Ao entrar você concorda com os Termos de Uso e a Política de Privacidade.
+            Ao entrar você concorda com os{" "}
+            <a href="https://www.worksafebrasil.com.br/termos" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">Termos de Uso</a>{" "}
+            e a{" "}
+            <a href="https://www.worksafebrasil.com.br/privacidade" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">Política de Privacidade</a>.
           </p>
           <p className="mt-3 text-center text-xs text-muted-foreground md:hidden">
             Validar um certificado?{" "}

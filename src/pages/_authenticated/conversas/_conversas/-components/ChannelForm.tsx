@@ -24,7 +24,6 @@ const COLORS = ["#149E5E", "#3E6F98", "#F0C419", "#E52127", "#78716C"];
 const MAX = { novosPorDia: 30, porMinuto: 20, porHora: 300, porDia: 1500 };
 const MODE_ICON: Record<BotMode, string> = { desligado: "user-round", sugere: "pencil-line", triagem: "route", atende: "bot-message-square" };
 
-const instagramOf = (channel?: Channel) => channel?.type === "instagram";
 
 interface Draft { name: string; color: string; sector: string; defaultBotId: number | null; botMode: BotMode; memberIds: number[]; settings: ChatSettings; historyDays: number }
 
@@ -52,7 +51,7 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
   const shownName = assinatura.formato === "completo" ? myName : myName.split(" ")[0];
   const botCfg = draft.settings.bot ?? { instrucoes: "", foraDoHorario: false, limitePorConversa: 20 };
   const setBot = (patch: Partial<NonNullable<ChatSettings["bot"]>>) => setDraft((current) => ({ ...current, settings: { ...current.settings, bot: { ...botCfg, ...patch } } }));
-  const modes = instagramOf(channel) ? meta.botModes.filter((m) => m.id === "desligado" || m.id === "sugere") : meta.botModes;
+  const modes = meta.botModes;
   const setHours = (patch: Partial<ChatSettings["horario"]>) => setDraft((current) => ({ ...current, settings: { ...current.settings, horario: { ...current.settings.horario, ...patch } } }));
 
   const save = useMutation({
@@ -89,10 +88,10 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
             <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Resumo</p>
             <SummaryRow label="Número"><span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: draft.color }} />{draft.name.trim() || "—"}</span></SummaryRow>
             <SummaryRow label="Setor">{sectorName ?? "—"}</SummaryRow>
-            {!instagram && <SummaryRow label="Bot">{bot ? `${bot.persona ?? bot.name} · ${meta.botModes.find((m) => m.id === draft.botMode)?.name}` : "Sem bot"}</SummaryRow>}
+            <SummaryRow label="Bot">{bot ? `${bot.persona ?? bot.name} · ${meta.botModes.find((m) => m.id === draft.botMode)?.name}` : "Sem bot"}</SummaryRow>
             <SummaryRow label="Assinatura">{assinatura.enabled ? (assinatura.formato === "completo" ? "Nome completo" : "Primeiro nome") : "Sem nome"}</SummaryRow>
             <SummaryRow label="Equipe">{draft.memberIds.length ? `${draft.memberIds.length} ${draft.memberIds.length === 1 ? "pessoa" : "pessoas"}` : "—"}</SummaryRow>
-            {!instagram && <SummaryRow label="Horário">{horario.enabled ? `${horario.inicio}–${horario.fim}` : "Sempre"}</SummaryRow>}
+            <SummaryRow label="Horário">{horario.enabled ? `${horario.inicio}–${horario.fim}` : "Sempre"}</SummaryRow>
             {!instagram && <SummaryRow label="Novos por dia">{limites.novosPorDia}</SummaryRow>}
           </div>
         </section>
@@ -179,9 +178,9 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
         {channel && <HiddenContacts channelId={channel.id} whatsapp={!instagram} />}
 
         {instagram && (
-          <p className="flex items-start gap-2 rounded-card border bg-card px-4 py-3 text-sm text-muted-foreground"><Icon name="info" className="mt-0.5 h-4 w-4 shrink-0" />No Instagram, a resposta automática da Nina, o horário e o limite do dia ficam em Bots → Conectores. Aqui o bot só escreve rascunhos para a equipe enviar.</p>
+          <p className="flex items-start gap-2 rounded-card border bg-card px-4 py-3 text-sm text-muted-foreground"><Icon name="info" className="mt-0.5 h-4 w-4 shrink-0" />No Instagram, o bot responde pelo Direct só até 24 h depois da última mensagem do cliente (regra da Meta). O limite de respostas por dia fica em Bots → Conectores.</p>
         )}
-        <FormSection title="Bot deste número" description={instagram ? "O bot escreve um rascunho de resposta a cada mensagem; a equipe envia, edita ou descarta." : "Recomendado começar com \"Sugere resposta\": o bot escreve, e a equipe decide se envia."}>
+        <FormSection title="Bot deste número" description={"Recomendado começar com \"Sugere resposta\": o bot escreve, e a equipe decide se envia."}>
           <div className="sm:max-w-sm">
             <Label>Bot</Label>
             <div className="mt-1">
@@ -217,7 +216,7 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
                   placeholder="Ex.: Pode explicar nossos serviços e cursos e pedir cidade e prazo da obra. Preço só o que está na tabela de cursos. Desconto, cobrança e reclamação: passe para a equipe." />
                 <p className="mt-1 text-xs text-muted-foreground">Vale para os rascunhos e para quando o bot atende. Ele também usa as instruções e as ferramentas dele, sempre com as permissões de quem conectou o número.</p>
               </div>
-              {!instagram && (draft.botMode === "triagem" || draft.botMode === "atende") && (
+              {(draft.botMode === "triagem" || draft.botMode === "atende") && (
                 <div className="sm:max-w-xs">
                   <LimitField label="Mensagens do bot por conversa" hint="Em 24 h. Passou disso, ele passa para a equipe." value={botCfg.limitePorConversa} max={60} onChange={(v) => setBot({ limitePorConversa: Math.min(60, Math.max(1, Math.round(v))) })} />
                 </div>
@@ -226,8 +225,7 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
           )}
         </FormSection>
 
-        {!instagram && (<>
-        <FormSection title="Horário de atendimento" description="Fora do horário, o cliente recebe a mensagem abaixo (uma vez por conversa).">
+        <FormSection title="Horário de atendimento" description={instagram ? "Fora do horário o bot não age, a não ser que você ligue o atendimento fora do horário." : "Fora do horário, o cliente recebe a mensagem abaixo (uma vez por conversa)."}>
           <label className="flex items-center gap-3">
             <Switch checked={horario.enabled} onCheckedChange={(checked) => setHours({ enabled: checked })} />
             <span className="text-sm">{horario.enabled ? "Atende só no horário abaixo" : "Atende a qualquer hora"}</span>
@@ -247,16 +245,16 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
                 <TimeField label="Começa às" value={horario.inicio} onChange={(inicio) => setHours({ inicio })} />
                 <TimeField label="Termina às" value={horario.fim} onChange={(fim) => setHours({ fim })} />
               </div>
-              <div>
+              {!instagram && <div>
                 <Label htmlFor="outOfHours">Mensagem fora do horário</Label>
                 <Textarea id="outOfHours" value={horario.mensagemFora} maxLength={1000} onChange={(event) => setHours({ mensagemFora: event.target.value })} className="mt-1 min-h-20"
                   placeholder="Olá! Nosso atendimento é de segunda a sexta, das 8h às 18h. Assim que abrirmos, respondemos você." />
-              </div>
+              </div>}
               {bot && (
                 <label className="flex items-start gap-3">
                   <Switch checked={botCfg.foraDoHorario} onCheckedChange={(checked) => setBot({ foraDoHorario: checked })} className="mt-0.5" />
                   <span className="text-sm">{bot.persona ?? bot.name} atende fora do horário
-                    <span className="block text-xs text-muted-foreground">No lugar da mensagem acima, o bot conversa e passa para a equipe o que precisar de uma pessoa. Só nas conversas sem dono.</span>
+                    <span className="block text-xs text-muted-foreground">{instagram ? "O bot" : "No lugar da mensagem acima, o bot"} conversa e passa para a equipe o que precisar de uma pessoa. Só nas conversas sem dono.</span>
                   </span>
                 </label>
               )}
@@ -264,6 +262,7 @@ export default function ChannelForm({ channel, meta, close }: { channel?: Channe
           )}
         </FormSection>
 
+        {!instagram && (<>
         <FormSection title="Proteção contra bloqueio" description="Limites deste número. Os tetos não podem ser passados: eles existem para o WhatsApp não bloquear o número.">
           <div className="grid gap-4 sm:grid-cols-2">
             <LimitField label="Contatos novos por dia" hint="Quem nunca escreveu para este número" value={limites.novosPorDia} max={MAX.novosPorDia} onChange={(v) => setLimit("novosPorDia", v)} />

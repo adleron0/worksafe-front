@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import Icon from "@/components/general-components/Icon";
 import NumberInput from "@/components/general-components/Number";
 import Select from "@/components/general-components/Select";
@@ -73,16 +72,15 @@ const ROWS: Array<{ key: keyof InstagramSettings; icon: string; label: string; h
   { key: "post", icon: "square", label: "Publicar posts", help: "Posts no feed e carrosséis.", max: META_PUBLISH_CAP, unit: "posts" },
   { key: "story", icon: "smartphone", label: "Publicar stories", help: "Stories com imagem pronta.", max: META_PUBLISH_CAP, unit: "stories" },
   { key: "ler_mensagens", icon: "inbox", label: "Ler mensagens", help: "Os bots e a caixa do Instagram leem o Direct da empresa." },
-  { key: "responder_mensagens", icon: "message-circle-reply", label: "Responder mensagens", help: "Respostas no Direct (só até 24 horas depois da última mensagem do cliente, regra da Meta).", max: 1000, unit: "respostas" },
+  { key: "responder_mensagens", icon: "message-circle-reply", label: "Responder mensagens", help: "Respostas no Direct (só até 24 horas depois da última mensagem do cliente, regra da Meta). Quem responde sozinho é o bot do Instagram, configurado em Conversas → Números.", max: 1000, unit: "respostas" },
   { key: "comentarios", icon: "message-square-text", label: "Comentários", help: "Ler, responder e ocultar comentários dos posts.", max: 1000, unit: "respostas" },
 ];
 const AUTO_TEXT: Partial<Record<keyof InstagramSettings, string>> = {
   post: "No automático o bot publica sem mostrar o cartão de confirmação.",
   story: "No automático o bot publica o story sem mostrar o cartão de confirmação.",
-  responder_mensagens: "No automático o bot responde sozinho, sem cartão, dentro do horário e das instruções abaixo.",
+  responder_mensagens: "No automático, quando um bot ou o Claude (MCP) usa a ferramenta de responder no Direct, a resposta sai sem cartão dentro do horário abaixo.",
   comentarios: "No automático o bot responde e oculta comentários sem mostrar o cartão de confirmação.",
 };
-const INSTRUCTIONS_PLACEHOLDER = "Exemplo: responda dúvidas sobre turmas, datas e valores, sempre consultando o sistema antes. Se perguntarem sobre outro assunto (orçamento de serviço, reclamação, parceria), não responda: deixe para a equipe.";
 
 /** "O que os bots podem fazer" no Instagram: liga/desliga, modo e limite por ação. Só com a conta conectada e conectores_bots. */
 export function InstagramRules() {
@@ -104,7 +102,6 @@ export function InstagramRules() {
   const reply = draft.responder_mensagens;
   const publishSum = draft.post.limitePorDia + draft.story.limitePorDia;
   const overCap = publishSum > META_PUBLISH_CAP;
-  const needsInstructions = reply.enabled && reply.mode === "automatico" && !reply.instrucoes.trim();
   const badHours = reply.horario.inicio >= reply.horario.fim;
 
   return (
@@ -146,7 +143,7 @@ export function InstagramRules() {
                 {row.key === "responder_mensagens" && reply.mode === "automatico" && (
                   <div className="grid gap-3 rounded-lg bg-muted/50 p-3">
                     <div className="flex flex-wrap items-center gap-2 text-xs">
-                      <span className="text-muted-foreground">Responde sozinho das</span>
+                      <span className="text-muted-foreground">Sem cartão das</span>
                       <div className="w-24"><Select name="inicio" options={TIMES} state={reply.horario.inicio} onChange={(_, time) => set("responder_mensagens", { horario: { ...reply.horario, inicio: String(time) } })} /></div>
                       <span className="text-muted-foreground">às</span>
                       <div className="w-24"><Select name="fim" options={TIMES} state={reply.horario.fim} onChange={(_, time) => set("responder_mensagens", { horario: { ...reply.horario, fim: String(time) } })} /></div>
@@ -156,14 +153,7 @@ export function InstagramRules() {
                       </label>
                     </div>
                     {badHours && <p className="text-xs text-destructive">O início precisa ser antes do fim.</p>}
-                    <p className="text-xs text-muted-foreground">Fora desse horário as mensagens ficam para a equipe responder pela caixa do Instagram.</p>
-                    <div>
-                      <p className="mb-1 text-xs font-medium">Instruções para a resposta automática</p>
-                      <Textarea value={reply.instrucoes} onChange={(event) => set("responder_mensagens", { instrucoes: event.target.value })} maxLength={4000} placeholder={INSTRUCTIONS_PLACEHOLDER} className="min-h-28 bg-background text-sm" />
-                      <p className={`mt-1 text-xs ${needsInstructions ? "text-destructive" : "text-muted-foreground"}`}>
-                        {needsInstructions ? "Escreva as instruções: sem elas o automático não pode ser salvo." : "Diga quais assuntos o bot resolve sozinho. O que estiver fora fica para a equipe."}
-                      </p>
-                    </div>
+                    <p className="text-xs text-muted-foreground">Fora desse horário a ferramenta volta a pedir confirmação.</p>
                   </div>
                 )}
               </div>
@@ -176,7 +166,7 @@ export function InstagramRules() {
           {overCap ? `A Meta aceita no máximo ${META_PUBLISH_CAP} publicações por dia: posts + stories somam ${publishSum}.` : `Posts + stories: ${publishSum} de ${META_PUBLISH_CAP} por dia (teto da Meta).`}
         </p>
         {dirty && <Button type="button" variant="ghost" size="sm" onClick={() => saved.data && setDraft(structuredClone(saved.data))}>Desfazer</Button>}
-        <Button type="button" size="sm" onClick={() => save.mutate(draft)} disabled={!dirty || save.isPending || overCap || needsInstructions || badHours}>
+        <Button type="button" size="sm" onClick={() => save.mutate(draft)} disabled={!dirty || save.isPending || overCap || badHours}>
           <Icon name={save.isPending ? "loader-circle" : "check"} className={`mr-1 h-4 w-4 ${save.isPending ? "animate-spin" : ""}`} /> {save.isPending ? "Salvando…" : dirty ? "Salvar" : "Salvo"}
         </Button>
       </div>

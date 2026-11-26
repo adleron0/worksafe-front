@@ -199,7 +199,7 @@ function ChannelCard({ channel, meta, manage, onConnect }: { channel: Channel; m
       {instagram ? (
         <p className="flex items-start gap-2 border-t px-4 py-3 text-[12px] leading-snug text-muted-foreground">
           <Icon name="clock-3" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span>O Instagram só deixa responder até 24 h depois da última mensagem do cliente. Limites do dia e resposta da Nina ficam em <Link to="/bots/conectores" search={{ instagram: undefined, motivo: undefined }} className="font-medium text-primary hover:underline">Conectores</Link>.</span>
+          <span>O Instagram só deixa responder até 24 h depois da última mensagem do cliente. O bot que responde fica em Configurar; o limite de respostas do dia fica em <Link to="/bots/conectores" search={{ instagram: undefined, motivo: undefined }} className="font-medium text-primary hover:underline">Conectores</Link>.</span>
         </p>
       ) : (
       <div className="grid grid-cols-2 gap-4 border-t px-4 py-3">

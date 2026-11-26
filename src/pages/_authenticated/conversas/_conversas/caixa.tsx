@@ -407,7 +407,7 @@ function ChatPane({ id, wide, onBack, panel, onPanel }: { id: number; wide: bool
               <Button size="sm" variant="ghost" className="h-9 w-9 shrink-0 p-0" aria-label="Mais ações"><Icon name="ellipsis-vertical" className="h-4 w-4" /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {data.channel.type === "whatsapp" && can("responder_conversas") && !data.bot && (
+              {can("responder_conversas") && !data.bot && (
                 <DropdownMenuItem onSelect={() => setHanding(true)}><Icon name="bot" className="mr-2 h-4 w-4" />Passar para bot</DropdownMenuItem>
               )}
               <DropdownMenuItem onSelect={() => setHiding(true)}><Icon name="eye-off" className="mr-2 h-4 w-4" />Ocultar do sistema</DropdownMenuItem>

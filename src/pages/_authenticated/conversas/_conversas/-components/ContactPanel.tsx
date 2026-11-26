@@ -17,7 +17,7 @@ import TagBadge from "@/components/general-components/TagBadge";
 import { formatDocumento } from "@/utils/documento";
 import { cn } from "@/lib/utils";
 import { Tip, errorMessage } from "../../../comercial/-shared/commercial";
-import { CHAT_KEY, ChannelLogo, ChannelPill, ContactAvatar, ConversationDetail, chatApi, contactHandle, contactName, useChatMeta, useLiveInterval } from "../../-shared/chat";
+import { CHAT_KEY, ChannelLogo, ChannelPill, ChatTag, ContactAvatar, ConversationDetail, TagChip, chatApi, contactHandle, contactName, useChatMeta, useChatTags, useLiveInterval } from "../../-shared/chat";
 
 /**
  * Ficha do contato (lado direito da conversa; no celular, painel por cima):
@@ -99,6 +99,8 @@ export default function ContactPanel({ id }: { id: number }) {
       </div>
 
       <CustomerSection conv={data} canEdit={canEdit} onLink={(customerId) => contact.mutate({ customerId })} linking={contact.isPending} />
+
+      <TagsSection conv={data} canEdit={canEdit} onSaved={done} />
 
       <PanelSection title="Atendimento">
         <div className="grid gap-3">
@@ -302,5 +304,69 @@ function CustomerSearch({ onPick, disabled, asMenu }: { onPick: (id: number) => 
         </div>
       </PopoverContent>
     </Popover>
+  );
+}
+
+/** Etiquetas da conversa: chips com "x" e um "+" que lista, marca e cria. */
+function TagsSection({ conv, canEdit, onSaved }: { conv: ConversationDetail; canEdit: boolean; onSaved: (out: ConversationDetail) => void }) {
+  const queryClient = useQueryClient();
+  const tags = useChatTags();
+  const [open, setOpen] = useState(false);
+  const [term, setTerm] = useState("");
+  const selected = conv.tags ?? [];
+  const save = useMutation({
+    mutationFn: (tagIds: number[]) => chatApi.put<ConversationDetail>(`conversations/${conv.id}/tags`, { tagIds }),
+    onSuccess: (out) => { onSaved(out); queryClient.invalidateQueries({ queryKey: [CHAT_KEY, "tags"] }); },
+    onError: (err) => toast({ title: "Não deu certo", description: errorMessage(err), variant: "destructive" }),
+  });
+  const create = useMutation({
+    mutationFn: (name: string) => chatApi.post<ChatTag>("tags", { name }),
+    onSuccess: (tag) => { setTerm(""); save.mutate([...selected.map((t) => t.id).filter((id) => id !== tag.id), tag.id]); },
+    onError: (err) => toast({ title: "Não deu para criar", description: errorMessage(err), variant: "destructive" }),
+  });
+  const toggle = (id: number) => save.mutate(selected.some((t) => t.id === id) ? selected.filter((t) => t.id !== id).map((t) => t.id) : [...selected.map((t) => t.id), id]);
+  const clean = term.trim();
+  const list = (tags.data ?? []).filter((t) => !clean || t.name.toLowerCase().includes(clean.toLowerCase()));
+  const exact = (tags.data ?? []).some((t) => t.name.toLowerCase() === clean.toLowerCase());
+
+  return (
+    <PanelSection title="Etiquetas">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {selected.map((tag) => <TagChip key={tag.id} tag={tag} className="text-[11px]" onRemove={canEdit ? () => toggle(tag.id) : undefined} />)}
+        {!selected.length && !canEdit && <span className="text-xs text-muted-foreground">Sem etiquetas</span>}
+        {canEdit && (
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <button type="button" className="flex cursor-pointer items-center gap-1 rounded-full border border-dashed px-2 py-0.5 text-[11px] text-muted-foreground hover:border-foreground/30 hover:text-foreground">
+                <Icon name="plus" className="h-3 w-3" />{selected.length ? "Etiqueta" : "Adicionar etiqueta"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-60 p-2">
+              <input value={term} onChange={(event) => setTerm(event.target.value)} maxLength={40} autoFocus placeholder="Buscar ou criar etiqueta"
+                onKeyDown={(event) => { if (event.key === "Enter" && clean) { event.preventDefault(); const hit = list.find((t) => t.name.toLowerCase() === clean.toLowerCase()); if (hit) toggle(hit.id); else create.mutate(clean); } }}
+                className="h-8 w-full rounded-md border bg-background px-2 text-sm outline-none focus:border-primary" />
+              <div className="scroll-fino mt-2 max-h-56 overflow-y-auto">
+                {list.map((tag) => {
+                  const on = selected.some((t) => t.id === tag.id);
+                  return (
+                    <button key={tag.id} type="button" onClick={() => toggle(tag.id)} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: tag.color }} />
+                      <span className="min-w-0 flex-1 truncate">{tag.name}</span>
+                      {on && <Icon name="check" className="h-3.5 w-3.5 text-primary" />}
+                    </button>
+                  );
+                })}
+                {clean && !exact && (
+                  <button type="button" disabled={create.isPending} onClick={() => create.mutate(clean)} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-primary hover:bg-muted">
+                    <Icon name="plus" className="h-3.5 w-3.5" />Criar "{clean}"
+                  </button>
+                )}
+                {!clean && !list.length && <p className="px-2 py-2 text-xs text-muted-foreground">Digite o nome para criar a primeira etiqueta.</p>}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+      </div>
+    </PanelSection>
   );
 }

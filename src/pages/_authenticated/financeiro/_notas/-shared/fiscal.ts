@@ -210,8 +210,8 @@ export const dateTimeBr = (iso?: string | null) => (iso ? new Date(iso).toLocale
 export const todayIso = () => new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
 
 /** Baixa ou abre um arquivo protegido da API (PDF/XML da nota). */
-export async function openFile(path: string, fileName: string, download = false) {
-  const response = await api.get<Blob>(path, { responseType: "blob", params: download ? { download: 1 } : {} });
+export async function openFile(path: string, fileName: string, download = false, params: Record<string, string> = {}) {
+  const response = await api.get<Blob>(path, { responseType: "blob", params: download ? { ...params, download: 1 } : params });
   const url = URL.createObjectURL(response.data);
   if (download) {
     const link = document.createElement("a");
@@ -244,3 +244,33 @@ export interface PendingTraining {
 export function usePendingTraining(enabled = true) {
   return useQuery({ queryKey: ["fiscalPendingTraining"], queryFn: async () => (await api.get<PendingTraining[]>("fiscal/training/pending")).data, enabled });
 }
+
+/** NFS-e que fornecedores emitiram contra a empresa (GET fiscal/received). */
+export type ReceivedStatus = "nova" | "lancada" | "ignorada" | "cancelada";
+export interface ReceivedInvoice {
+  id: number;
+  nsu: number;
+  accessKey: string;
+  number: string | null;
+  issuedAt: string | null;
+  competence: string | null;
+  issuerDocument: string;
+  issuerName: string;
+  description: string | null;
+  grossValue: number;
+  netValue: number;
+  issWithheld: boolean;
+  issValue: number;
+  retentions: Partial<Record<FederalTax, number>> | null;
+  status: ReceivedStatus;
+  supplierId: number | null;
+  payableId: number | null;
+}
+export interface ReceivedList { data: ReceivedInvoice[]; byStatus: Partial<Record<ReceivedStatus, number>>; syncedAt: string | null }
+
+export const RECEIVED_STATUS: Record<ReceivedStatus, { label: string; tone: StatusTone }> = {
+  nova: { label: "A lançar", tone: "warning" },
+  lancada: { label: "Lançada", tone: "success" },
+  ignorada: { label: "Ignorada", tone: "neutral" },
+  cancelada: { label: "Cancelada", tone: "neutral" },
+};

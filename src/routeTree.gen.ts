@@ -169,6 +169,7 @@ import { Route as AuthenticatedFinanceiroReceberReceberNovaRouteImport } from '.
 import { Route as AuthenticatedFinanceiroReceberReceberRecordIdRouteImport } from './pages/_authenticated/financeiro/_receber/receber_.$recordId'
 import { Route as AuthenticatedFinanceiroPagarPagarNovaRouteImport } from './pages/_authenticated/financeiro/_pagar/pagar_.nova'
 import { Route as AuthenticatedFinanceiroPagarPagarPayableIdRouteImport } from './pages/_authenticated/financeiro/_pagar/pagar_.$payableId'
+import { Route as AuthenticatedFinanceiroNotasNotasRecebidasRouteImport } from './pages/_authenticated/financeiro/_notas/notas_.recebidas'
 import { Route as AuthenticatedFinanceiroNotasNotasNovaRouteImport } from './pages/_authenticated/financeiro/_notas/notas_.nova'
 import { Route as AuthenticatedFinanceiroNotasNotasAEmitirRouteImport } from './pages/_authenticated/financeiro/_notas/notas_.a-emitir'
 import { Route as AuthenticatedFinanceiroNotasNotasInvoiceIdRouteImport } from './pages/_authenticated/financeiro/_notas/notas_.$invoiceId'
@@ -1143,6 +1144,12 @@ const AuthenticatedFinanceiroPagarPagarPayableIdRoute =
     path: '/financeiro/pagar/$payableId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanceiroNotasNotasRecebidasRoute =
+  AuthenticatedFinanceiroNotasNotasRecebidasRouteImport.update({
+    id: '/financeiro/_notas/notas_/recebidas',
+    path: '/financeiro/notas/recebidas',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedFinanceiroNotasNotasNovaRoute =
   AuthenticatedFinanceiroNotasNotasNovaRouteImport.update({
     id: '/financeiro/_notas/notas_/nova',
@@ -1490,6 +1497,7 @@ export interface FileRoutesByFullPath {
   '/financeiro/notas/$invoiceId': typeof AuthenticatedFinanceiroNotasNotasInvoiceIdRoute
   '/financeiro/notas/a-emitir': typeof AuthenticatedFinanceiroNotasNotasAEmitirRoute
   '/financeiro/notas/nova': typeof AuthenticatedFinanceiroNotasNotasNovaRoute
+  '/financeiro/notas/recebidas': typeof AuthenticatedFinanceiroNotasNotasRecebidasRoute
   '/financeiro/pagar/$payableId': typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
   '/financeiro/pagar/nova': typeof AuthenticatedFinanceiroPagarPagarNovaRoute
   '/financeiro/receber/$recordId': typeof AuthenticatedFinanceiroReceberReceberRecordIdRoute
@@ -1681,6 +1689,7 @@ export interface FileRoutesByTo {
   '/financeiro/notas/$invoiceId': typeof AuthenticatedFinanceiroNotasNotasInvoiceIdRoute
   '/financeiro/notas/a-emitir': typeof AuthenticatedFinanceiroNotasNotasAEmitirRoute
   '/financeiro/notas/nova': typeof AuthenticatedFinanceiroNotasNotasNovaRoute
+  '/financeiro/notas/recebidas': typeof AuthenticatedFinanceiroNotasNotasRecebidasRoute
   '/financeiro/pagar/$payableId': typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
   '/financeiro/pagar/nova': typeof AuthenticatedFinanceiroPagarPagarNovaRoute
   '/financeiro/receber/$recordId': typeof AuthenticatedFinanceiroReceberReceberRecordIdRoute
@@ -1876,6 +1885,7 @@ export interface FileRoutesById {
   '/_authenticated/financeiro/_notas/notas_/$invoiceId': typeof AuthenticatedFinanceiroNotasNotasInvoiceIdRoute
   '/_authenticated/financeiro/_notas/notas_/a-emitir': typeof AuthenticatedFinanceiroNotasNotasAEmitirRoute
   '/_authenticated/financeiro/_notas/notas_/nova': typeof AuthenticatedFinanceiroNotasNotasNovaRoute
+  '/_authenticated/financeiro/_notas/notas_/recebidas': typeof AuthenticatedFinanceiroNotasNotasRecebidasRoute
   '/_authenticated/financeiro/_pagar/pagar_/$payableId': typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
   '/_authenticated/financeiro/_pagar/pagar_/nova': typeof AuthenticatedFinanceiroPagarPagarNovaRoute
   '/_authenticated/financeiro/_receber/receber_/$recordId': typeof AuthenticatedFinanceiroReceberReceberRecordIdRoute
@@ -2070,6 +2080,7 @@ export interface FileRouteTypes {
     | '/financeiro/notas/$invoiceId'
     | '/financeiro/notas/a-emitir'
     | '/financeiro/notas/nova'
+    | '/financeiro/notas/recebidas'
     | '/financeiro/pagar/$payableId'
     | '/financeiro/pagar/nova'
     | '/financeiro/receber/$recordId'
@@ -2261,6 +2272,7 @@ export interface FileRouteTypes {
     | '/financeiro/notas/$invoiceId'
     | '/financeiro/notas/a-emitir'
     | '/financeiro/notas/nova'
+    | '/financeiro/notas/recebidas'
     | '/financeiro/pagar/$payableId'
     | '/financeiro/pagar/nova'
     | '/financeiro/receber/$recordId'
@@ -2455,6 +2467,7 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro/_notas/notas_/$invoiceId'
     | '/_authenticated/financeiro/_notas/notas_/a-emitir'
     | '/_authenticated/financeiro/_notas/notas_/nova'
+    | '/_authenticated/financeiro/_notas/notas_/recebidas'
     | '/_authenticated/financeiro/_pagar/pagar_/$payableId'
     | '/_authenticated/financeiro/_pagar/pagar_/nova'
     | '/_authenticated/financeiro/_receber/receber_/$recordId'
@@ -3626,6 +3639,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceiroPagarPagarPayableIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/financeiro/_notas/notas_/recebidas': {
+      id: '/_authenticated/financeiro/_notas/notas_/recebidas'
+      path: '/financeiro/notas/recebidas'
+      fullPath: '/financeiro/notas/recebidas'
+      preLoaderRoute: typeof AuthenticatedFinanceiroNotasNotasRecebidasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/financeiro/_notas/notas_/nova': {
       id: '/_authenticated/financeiro/_notas/notas_/nova'
       path: '/financeiro/notas/nova'
@@ -3984,6 +4004,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFinanceiroNotasNotasInvoiceIdRoute: typeof AuthenticatedFinanceiroNotasNotasInvoiceIdRoute
   AuthenticatedFinanceiroNotasNotasAEmitirRoute: typeof AuthenticatedFinanceiroNotasNotasAEmitirRoute
   AuthenticatedFinanceiroNotasNotasNovaRoute: typeof AuthenticatedFinanceiroNotasNotasNovaRoute
+  AuthenticatedFinanceiroNotasNotasRecebidasRoute: typeof AuthenticatedFinanceiroNotasNotasRecebidasRoute
   AuthenticatedFinanceiroPagarPagarPayableIdRoute: typeof AuthenticatedFinanceiroPagarPagarPayableIdRoute
   AuthenticatedFinanceiroPagarPagarNovaRoute: typeof AuthenticatedFinanceiroPagarPagarNovaRoute
   AuthenticatedFinanceiroReceberReceberRecordIdRoute: typeof AuthenticatedFinanceiroReceberReceberRecordIdRoute
@@ -4264,6 +4285,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedFinanceiroNotasNotasAEmitirRoute,
   AuthenticatedFinanceiroNotasNotasNovaRoute:
     AuthenticatedFinanceiroNotasNotasNovaRoute,
+  AuthenticatedFinanceiroNotasNotasRecebidasRoute:
+    AuthenticatedFinanceiroNotasNotasRecebidasRoute,
   AuthenticatedFinanceiroPagarPagarPayableIdRoute:
     AuthenticatedFinanceiroPagarPagarPayableIdRoute,
   AuthenticatedFinanceiroPagarPagarNovaRoute:

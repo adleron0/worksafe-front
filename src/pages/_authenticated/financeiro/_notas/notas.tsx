@@ -16,6 +16,7 @@ import MonthRangePicker from "@/components/general-components/MonthRangePicker";
 import DataTable, { DataColumn, EmptyState } from "@/components/general-components/DataTable";
 import { Button } from "@/components/ui/button";
 import { errorMessage, money } from "../../comercial/-shared/commercial";
+import AccountantExport from "./-components/AccountantExport";
 import { dateBr, FISCAL_KEYS, formatDoc, Invoice, InvoiceList, InvoiceStatus, STATUS_INFO, useFiscalSettings, usePendingTraining } from "./-shared/fiscal";
 
 export const Route = createFileRoute("/_authenticated/financeiro/_notas/notas")({
@@ -36,6 +37,7 @@ function InvoicesPage() {
   const [to, setTo] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [exportOpen, setExportOpen] = useState(false);
   const canEmit = can("emitir_nfse");
   const { data: settings } = useFiscalSettings(can("view_nfse"));
   const { data: pendingTraining } = usePendingTraining(can("view_nfse"));
@@ -143,6 +145,8 @@ function InvoicesPage() {
               items: [
                 { id: "external", label: "Registrar nota emitida fora", icon: "file-input", hidden: !canEmit, onSelect: () => navigate({ to: "/financeiro/notas/nova", search: { externa: "1" } as never }) },
                 { id: "pending", label: "Notas a emitir (treinamento)", icon: "graduation-cap", onSelect: () => navigate({ to: "/financeiro/notas/a-emitir" }) },
+                { id: "received", label: "Notas recebidas (fornecedores)", icon: "inbox", onSelect: () => navigate({ to: "/financeiro/notas/recebidas" }) },
+                { id: "export", label: "Pacote do contador", icon: "folder-archive", onSelect: () => setExportOpen(true) },
                 { id: "config", label: "Configuração fiscal", icon: "settings", hidden: !can("config_fiscal"), onSelect: () => navigate({ to: "/financeiro/fiscal" }) },
               ],
             },
@@ -160,6 +164,7 @@ function InvoicesPage() {
 
         <ListFooter total={data?.total ?? 0} page={page} limit={limit} limits={LIMITS} onPageChange={setPage} onLimitChange={(n) => { setLimit(n); setPage(1); }} />
       </ListCard>
+      <AccountantExport open={exportOpen} onOpenChange={setExportOpen} />
     </>
   );
 }
